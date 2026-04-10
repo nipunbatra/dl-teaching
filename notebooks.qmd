@@ -1,0 +1,7 @@
+---
+title: "Notebooks"
+---
+
+Interactive Jupyter notebooks for hands-on practice. All notebooks use **PyTorch**.
+
+*Notebooks will be added as the course progresses.*

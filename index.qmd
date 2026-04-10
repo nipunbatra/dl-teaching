@@ -1,0 +1,78 @@
+---
+title: "ES 667: Deep Learning"
+subtitle: "IIT Gandhinagar · Aug 2026 · Prof. Nipun Batra"
+---
+
+[Course website](https://nipunbatra.github.io/dl-2026/){.btn .btn-primary .btn-sm}
+[GitHub repo](https://github.com/nipunbatra/dl-teaching){.btn .btn-outline-secondary .btn-sm}
+
+---
+
+## Module 1: Foundations & Deep Networks (Lectures 1–3)
+
+| Lec | Topic | Slides | Notebook |
+|:---:|-------|:------:|:--------:|
+| 1 | Why Deep Learning + MLP Recap | [HTML](html/lec01-why-dl-lecture.html) · [PDF](pdf/lec01-why-dl-lecture.pdf) | |
+| 2 | Universal Approximation & Going Deep | | |
+| 3 | Training Deep Networks in Practice | | |
+
+## Module 2: Optimization (Lectures 4–5)
+
+| Lec | Topic | Slides | Notebook |
+|:---:|-------|:------:|:--------:|
+| 4 | SGD Variants | | |
+| 5 | Adam & Learning Rate Schedules | | |
+
+## Module 3: Regularization (Lectures 6–7)
+
+| Lec | Topic | Slides | Notebook |
+|:---:|-------|:------:|:--------:|
+| 6 | Classical Regularization | | |
+| 7 | Modern Regularization | | |
+
+## Module 4: CNNs & Visual Recognition (Lectures 8–10)
+
+| Lec | Topic | Slides | Notebook |
+|:---:|-------|:------:|:--------:|
+| 8 | CNN Deep Dive + Classic Architectures | | |
+| 9 | Modern Architectures & Transfer Learning | | |
+| 10 | Object Detection, Localization & Segmentation | | |
+
+## Module 5: Sequence Models (Lectures 11–12)
+
+| Lec | Topic | Slides | Notebook |
+|:---:|-------|:------:|:--------:|
+| 11 | RNNs, LSTMs, GRUs | | |
+| 12 | Seq2Seq & Applications | | |
+
+## Module 6: Attention & Transformers (Lectures 13–15)
+
+| Lec | Topic | Slides | Notebook |
+|:---:|-------|:------:|:--------:|
+| 13 | Attention Mechanism | | |
+| 14 | The Transformer | | |
+| 15 | Tokenization & Pretraining | | |
+
+## Module 7: LLMs & Vision-Language Models (Lectures 16–18)
+
+| Lec | Topic | Slides | Notebook |
+|:---:|-------|:------:|:--------:|
+| 16 | Large Language Models | | |
+| 17 | Alignment & Finetuning | | |
+| 18 | Vision-Language Models | | |
+
+## Module 8: Generative Models (Lectures 19–22)
+
+| Lec | Topic | Slides | Notebook |
+|:---:|-------|:------:|:--------:|
+| 19 | Autoencoders & VAEs | | |
+| 20 | GANs | | |
+| 21 | Diffusion Models: Theory | | |
+| 22 | Diffusion Models: Practice | | |
+
+## Module 9: Frontiers & Wrap-up (Lectures 23–24)
+
+| Lec | Topic | Slides | Notebook |
+|:---:|-------|:------:|:--------:|
+| 23 | Self-Supervised & Contrastive Learning | | |
+| 24 | Efficient DL & Open Problems | | |

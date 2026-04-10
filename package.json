@@ -1,0 +1,21 @@
+{
+  "name": "dl-teaching",
+  "version": "1.0.0",
+  "description": "ES 667: Deep Learning — IIT Gandhinagar · Aug 2026 · Prof. Nipun Batra",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nipunbatra/dl-teaching.git"
+  },
+  "keywords": [],
+  "author": "Nipun Batra",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@marp-team/marp-cli": "^4.2.3",
+    "@marp-team/marp-core": "^4.2.0",
+    "puppeteer": "^24.32.1"
+  }
+}

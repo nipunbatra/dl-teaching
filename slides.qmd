@@ -1,0 +1,7 @@
+---
+title: "Slides"
+---
+
+All lecture slides are available in HTML (for browser) and PDF (for download).
+
+See the [Home page](index.qmd) for the full schedule with links.

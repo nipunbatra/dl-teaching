@@ -1,0 +1,34 @@
+project:
+  type: website
+  output-dir: .
+  render:
+    - "*.qmd"
+    - "labs/*.ipynb"
+    - "notebooks/*.ipynb"
+    - "!slides/"
+
+website:
+  title: "ES 667: Deep Learning"
+  navbar:
+    title: "ES 667"
+    left:
+      - text: "Home"
+        href: index.qmd
+      - text: "Slides"
+        href: slides.qmd
+      - text: "Notebooks"
+        href: notebooks.qmd
+      - text: "Course Website"
+        href: https://nipunbatra.github.io/dl-2026/
+  page-footer:
+    left: "Course materials by Prof. Nipun Batra, IIT Gandhinagar"
+    right:
+      - icon: github
+        href: https://github.com/nipunbatra/dl-teaching
+
+format:
+  html:
+    theme:
+      light: [cosmo, custom.scss]
+      dark: [darkly, custom.scss]
+    toc: false
