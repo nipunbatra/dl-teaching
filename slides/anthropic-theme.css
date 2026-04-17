@@ -1,0 +1,331 @@
+/* @theme anthropic
+ *
+ * Anthropic-inspired Marp theme: cream paper, rust accent, serif headlines,
+ * minimal chrome. Mirrors the look of github.com/nipunbatra/caqm.
+ *
+ * Preserves all class selectors used in the existing `dl-theme` so
+ * lectures switch with a single front-matter edit:
+ *     theme: dl-theme        ->  theme: anthropic
+ *
+ * Classes supported:
+ *   title-slide · section-divider · summary-slide
+ *   code-heavy · compact · math-heavy
+ */
+
+@import 'default';
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --paper:       #F0EEE5;
+  --paper-alt:   #EAE7DC;
+  --ink:         #1F1F1E;
+  --muted:       #6B6A65;
+  --rule:        #C9C4B5;
+  --accent:      #D97757;     /* Claude rust — primary */
+  --accent-soft: #EAD3C5;
+  --sage:        #7B9E89;
+  --slate:       #4A6670;
+  --wine:        #A8324B;
+  --ochre:       #C9A961;
+  --code-bg:     #EEEBDF;
+  --code-ink:    #2D2B26;
+}
+
+/* ----- base ---------------------------------------------------------- */
+section {
+  font-family: 'Inter', -apple-system, 'Helvetica Neue', sans-serif;
+  font-size: 22px;
+  line-height: 1.45;
+  color: var(--ink);
+  background: var(--paper);
+  padding: 48px 56px 56px 56px;
+  letter-spacing: 0.005em;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+/* top-right attribution on every slide (except title/section) */
+section::before {
+  content: 'Nipun Batra · ES 667 Deep Learning · IIT Gandhinagar';
+  position: absolute;
+  top: 14px;
+  right: 24px;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+section.title-slide::before, section.section-divider::before { content: ''; }
+
+/* paginate / footer */
+section::after {
+  color: var(--muted);
+  font-size: 12px;
+  right: 24px;
+  bottom: 12px;
+}
+
+/* ----- typography ---------------------------------------------------- */
+h1, h2, h3, h4 {
+  font-family: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  line-height: 1.18;
+}
+section h1 {
+  font-size: 34px;
+  margin: 0 0 4px 0;
+  padding: 0;
+  background: none;
+  color: var(--ink);
+  text-shadow: none;
+}
+section h1::after {
+  content: '';
+  display: block;
+  width: 64px;
+  height: 3px;
+  background: var(--accent);
+  margin-top: 10px;
+  border-radius: 2px;
+}
+section h2 {
+  font-size: 22px;
+  margin: 4px 0 12px 0;
+  padding: 0;
+  color: var(--muted);
+  font-style: italic;
+  font-weight: 400;
+  background: none;
+}
+section h3 {
+  font-size: 19px;
+  color: var(--ink);
+  margin: 14px 0 6px;
+  padding: 0;
+  font-weight: 600;
+}
+section h4 {
+  font-size: 16px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 12px 0 4px;
+  font-weight: 500;
+}
+
+p, li, td, th { color: var(--ink); }
+strong { color: var(--ink); font-weight: 600; }
+em { color: var(--muted); font-style: italic; }
+
+section > *:not(h1):not(h2):not(h3):not(h4) { padding-left: 0; padding-right: 0; }
+section > p:first-of-type, section > ul:first-of-type,
+section > ol:first-of-type, section > div:first-of-type { margin-top: 10px; }
+
+/* lists ---------------------------------------------------------------- */
+ul, ol { margin: 0; padding-left: 1.15em; }
+li { margin: 4px 0; line-height: 1.4; }
+li::marker { color: var(--accent); }
+
+/* links ---------------------------------------------------------------- */
+a, a:visited {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--accent);
+}
+
+/* code ----------------------------------------------------------------- */
+code {
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-size: 0.88em;
+  background: var(--code-bg);
+  color: var(--code-ink);
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--rule);
+}
+pre {
+  background: var(--code-bg);
+  color: var(--code-ink);
+  padding: 14px 18px;
+  border-radius: 6px;
+  border: 1px solid var(--rule);
+  overflow-x: auto;
+  margin: 10px 0;
+  box-shadow: none;
+}
+pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.78em;
+  line-height: 1.45;
+  color: var(--code-ink);
+}
+
+/* tables --------------------------------------------------------------- */
+table {
+  border-collapse: collapse;
+  margin: 10px 0;
+  font-size: 18px;
+  width: 100%;
+}
+th, td {
+  border-bottom: 1px solid var(--rule);
+  padding: 6px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  color: var(--muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  background: none;
+  border-bottom: 1.5px solid var(--ink);
+}
+
+/* blockquote ----------------------------------------------------------- */
+blockquote {
+  border-left: 3px solid var(--accent);
+  padding: 2px 0 2px 14px;
+  margin: 10px 0;
+  color: var(--muted);
+  font-style: italic;
+  background: none;
+}
+
+/* images --------------------------------------------------------------- */
+img { display: block; margin: 8px auto; max-height: 58vh; }
+
+/* ----- title-slide --------------------------------------------------- */
+section.title-slide {
+  background: var(--paper);
+  padding: 72px 72px 56px 72px;
+  justify-content: center;
+}
+section.title-slide h1 {
+  font-size: 56px;
+  color: var(--ink);
+  line-height: 1.05;
+  margin: 0;
+  padding: 0;
+}
+section.title-slide h1::after {
+  width: 100px;
+  height: 4px;
+  margin-top: 22px;
+}
+section.title-slide h2 {
+  font-size: 26px;
+  color: var(--muted);
+  font-style: italic;
+  margin-top: 10px;
+  padding: 0;
+}
+section.title-slide p {
+  color: var(--muted);
+  font-size: 19px;
+  margin: 10px 0 0;
+}
+section.title-slide strong {
+  font-family: 'Fraunces', Georgia, serif;
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 22px;
+}
+section.title-slide em { color: var(--accent); font-style: normal; font-weight: 500; }
+
+/* ----- section-divider ---------------------------------------------- */
+section.section-divider {
+  background: var(--paper-alt);
+  justify-content: center;
+  padding: 72px;
+}
+section.section-divider h1 {
+  font-size: 44px;
+  color: var(--accent);
+  padding: 0;
+  margin: 0;
+}
+section.section-divider h1::after { display: none; }
+section.section-divider h2 {
+  font-size: 22px;
+  margin-top: 14px;
+  color: var(--muted);
+  font-style: italic;
+}
+section.section-divider h3 {
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+section.section-divider p, section.section-divider strong {
+  font-size: 19px;
+  color: var(--ink);
+}
+
+/* ----- summary-slide ------------------------------------------------- */
+section.summary-slide {
+  background: var(--paper);
+}
+section.summary-slide h1 {
+  color: var(--ink);
+  font-size: 30px;
+}
+section.summary-slide h1::before {
+  content: 'Summary · ';
+  color: var(--accent);
+  font-style: italic;
+}
+
+/* ----- code-heavy / compact ----------------------------------------- */
+section.code-heavy {
+  font-size: 19px;
+}
+section.code-heavy pre {
+  font-size: 15px;
+  margin: 6px 0;
+  padding: 12px 16px;
+}
+section.code-heavy pre code { font-size: 0.85em; line-height: 1.35; }
+section.code-heavy p, section.code-heavy li { margin: 2px 0; }
+section.code-heavy ul, section.code-heavy ol { margin: 4px 0; }
+
+section.compact {
+  font-size: 18px;
+}
+section.compact li { margin: 2px 0; }
+section.compact pre { font-size: 14px; padding: 10px 14px; }
+section.compact p, section.compact li { line-height: 1.3; }
+section.compact table { font-size: 15px; }
+section.compact table th, section.compact table td { padding: 3px 8px; }
+
+/* ----- math-heavy ---------------------------------------------------- */
+section.math-heavy { font-size: 22px; }
+section.math-heavy .MathJax { color: var(--ink); }
+.MathJax_Display, mjx-container { color: var(--ink) !important; }
+mjx-container[display="true"] { margin: 10px 0 !important; }
+
+/* ----- utilities ----------------------------------------------------- */
+.pill {
+  display: inline-block;
+  padding: 1px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.8em;
+  font-weight: 500;
+}
+.callout {
+  background: var(--paper-alt);
+  border-left: 3px solid var(--accent);
+  padding: 10px 14px;
+  margin: 10px 0;
+  border-radius: 2px;
+}
