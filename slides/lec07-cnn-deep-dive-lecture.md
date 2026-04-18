@@ -77,6 +77,39 @@ $$O = \left\lfloor \frac{W - K + 2P}{S} \right\rfloor + 1$$
 
 ---
 
+# A small numeric check
+
+Input `(3, 224, 224)` (RGB ImageNet image). Apply `Conv2d(3, 64, kernel_size=7, stride=2, padding=3)`:
+
+$$O = \lfloor (224 - 7 + 6)/2 \rfloor + 1 = 112$$
+
+Output shape: `(64, 112, 112)`. Compare to MLP · same layer would be $224^2 \cdot 3 \cdot (64 \cdot 112^2) \approx 10^{11}$ ops. The conv is $7^2 \cdot 3 \cdot 64 \cdot 112^2 \approx 1.2 \cdot 10^8$ ops — nearly 1000× cheaper.
+
+<div class="insight">
+
+Parameters are *shared* across positions, and each output depends on a small region. That's what makes the conv *orders of magnitude* cheaper than an equivalent MLP — not a marginal win.
+
+</div>
+
+---
+
+# The four hyperparameters, in one picture
+
+For every conv layer, think in this order:
+
+1. **kernel size** — the *field of view* (3 for modern nets, 7 only at the stem).
+2. **stride** — how fast the filter steps (1 to preserve, 2 to halve).
+3. **padding** — how much zero-boundary to add (so output size matches or shrinks predictably).
+4. **dilation** — gap between kernel taps (used in segmentation to widen RF without more params).
+
+<div class="keypoint">
+
+99% of production CNNs only use (1, 2). Segmentation (L9) uses (4). Advanced audio / video sometimes uses (4). For images, reach for `kernel_size=3, padding=1, stride=1 or 2` — nearly every other choice is a specific research idea.
+
+</div>
+
+---
+
 # Pooling · the other downsample
 
 $$\text{MaxPool}(x) = \max_{i, j \in \text{window}}\, x_{ij}$$
@@ -92,6 +125,23 @@ Pooling adds **translation invariance** (shift input → same output).
 </div>
 
 In 2026, stride-2 convolutions often replace pooling entirely (avoid info loss).
+
+---
+
+# Why pooling works · the invariance argument
+
+Imagine a cat in the corner of an image vs centered. Should the network's answer depend on *where* the cat is?
+
+- For classification · **no** (it's still a cat).
+- For segmentation · **yes** (we need the pixels back).
+
+<div class="math-box">
+
+Pooling creates a small *"I don't care exactly where"* window. Stacks of pool+conv compound this: by layer 5, the network cares about the cat's presence, not its exact pixel position.
+
+</div>
+
+This is the **invariance gradient** a classification CNN builds — conv1 nearly equivariant (tells you where), final global pool fully invariant (tells you what).
 
 ---
 
@@ -134,6 +184,29 @@ How deep features "see" far-away pixels
 Fewer params + more non-linearities → richer function class at lower cost.
 
 **VGG (2014)** built its whole architecture around this observation.
+
+---
+
+# Worked RF calculation · a 5-layer CNN
+
+Imagine five conv layers, all $3 \times 3$, stride 1. Per layer, RF grows by $(K - 1) = 2$.
+
+| Layer | Receptive field | What it "sees" |
+|:-:|:-:|:-:|
+| Input | 1 | single pixel |
+| Conv1 | 3 | tiny patch |
+| Conv2 | 5 | edge-length corner |
+| Conv3 | 7 | small feature |
+| Conv4 | 9 | object part |
+| Conv5 | 11 | object |
+
+Add stride-2 anywhere and the downstream RF **doubles** per stride. A ResNet-50 has RF ≈ 500 in the final block — it can see the whole image.
+
+<div class="insight">
+
+Next time you read an architecture diagram, compute RF mentally: deeper nets = larger RF = more *context* per pixel. This is the capacity that lets CNNs understand objects, not just textures.
+
+</div>
 
 ---
 
@@ -198,6 +271,40 @@ $$y_{i,j,c'} = \sum_{c=1}^{C_\text{in}} w_{c,c'}\, x_{i,j,c}$$
 
 ---
 
+# 1×1 conv · worked example
+
+Input tensor `(256, 14, 14)` — 256 channels at 14×14 spatial resolution.
+Apply `Conv2d(256, 64, kernel_size=1)` → `(64, 14, 14)`.
+
+<div class="math-box">
+
+- Parameters: $256 \cdot 64 = 16{,}384$ (plus bias).
+- FLOPs: $256 \cdot 64 \cdot 14 \cdot 14 \approx 3.2 \text{M}$ per forward pass.
+
+</div>
+
+What did we just do? Took **256 channels at each spatial position, mixed them linearly to 64 channels.** Spatial structure preserved. Channel structure compressed.
+
+A 3×3 conv immediately after now runs 4× cheaper because the depth is 4× smaller. That's the **bottleneck trick**: sandwich 3×3 convs between 1×1 compressions.
+
+---
+
+# AlexNet → VGG · the "just add depth" years
+
+Between 2012 and 2014, the field converged on a recipe:
+
+1. Keep convolution kernels **small** (3×3) and **many**.
+2. **Stack deeper** until you run out of memory or accuracy plateaus.
+3. Use **ReLU + dropout + batch-norm** to make deeper nets trainable.
+
+<div class="insight">
+
+By 2015, people tried to go deeper than 25 layers and networks **stopped learning**. Adding layers made *training* loss worse — not a generalization issue. This pointed at the *optimization* problem that ResNet (next lecture) solved with skip connections.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 4
@@ -229,6 +336,35 @@ The inductive bias is the prior. With the right prior you need less data and les
 <div class="insight">
 
 Vision Transformers (L18) give up most of this inductive bias — they need pretraining on far more data to compensate.
+
+</div>
+
+---
+
+# Inductive bias · the data-efficiency plot
+
+<div class="columns">
+<div>
+
+### Small data (≤ 10⁴ images)
+
+- **CNN wins** — the prior does the heavy lifting.
+- MLP barely learns anything; ViT is worse than CNN.
+
+</div>
+<div>
+
+### Huge data (≥ 10⁸ images)
+
+- **ViT matches or beats CNN** — enough data to overcome the missing prior.
+- The "ImageNet-21k threshold" from Dosovitskiy 2020.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+**The bias is a free data multiplier.** A CNN at 50k images behaves like a ViT at 500k. If your dataset is small, use a CNN (or start from a pretrained CNN).
 
 </div>
 

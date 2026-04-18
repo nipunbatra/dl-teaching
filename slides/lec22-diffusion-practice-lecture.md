@@ -74,6 +74,20 @@ At each diffusion step, every spatial position can **attend to** any text token 
 
 ---
 
+# Cross-attention · why it works for text conditioning
+
+Self-attention inside the U-Net mixes spatial positions. **Cross**-attention *between spatial features and text features* is where the prompt enters.
+
+<div class="keypoint">
+
+At a high-resolution block · each pixel asks "which prompt tokens matter for me?". A cat pixel pays attention to "cat" in the prompt; a sky pixel to "sky". The result is **spatially localized conditioning** — a single prompt can steer different regions differently.
+
+</div>
+
+Visualizing the cross-attention maps reveals exactly this — each word has a blob of pixels that listened most to it. This is the mechanism behind DreamBooth, Prompt-to-Prompt, and every prompt-editing technique.
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 2
@@ -138,6 +152,24 @@ Same network learns both modes. At inference, you run it twice and extrapolate. 
 
 ---
 
+# Picking a CFG scale · practical guide
+
+| $w$ | What you get |
+|:-:|:-:|
+| 1 | pure conditional · ignores extrapolation |
+| 3 | subtle prompt adherence · natural-looking |
+| 7 | Stable Diffusion default · balanced |
+| 12+ | strong adherence · saturated colors, artifacts |
+| 25+ | cartoonish oversaturation; often broken |
+
+<div class="insight">
+
+CFG trades **diversity for prompt adherence**. Low $w$ produces many different interpretations; high $w$ produces a narrower, more on-prompt distribution. Treat $w$ as a hyperparameter you sweep for each task.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 3
@@ -145,6 +177,20 @@ Same network learns both modes. At inference, you run it twice and extrapolate. 
 # Latent diffusion
 
 The one trick that made Stable Diffusion ship
+
+---
+
+# Why diffuse in latent space · the intuition
+
+Most pixels in an image are *correlated*. A patch of blue sky has hundreds of near-identical pixel values. Diffusing each one independently is wasteful.
+
+<div class="keypoint">
+
+A pretrained VAE has already absorbed the **perceptually redundant** structure · the latent is a near-minimal representation. Diffusion then only has to model the *interesting* (high-entropy) dimensions.
+
+</div>
+
+Result · 48× fewer dimensions, same perceptual quality, ~10× faster sampling. This is the single change that made Stable Diffusion runnable on consumer GPUs.
 
 ---
 
@@ -209,6 +255,20 @@ This is the only thing you train.
 # Faster sampling
 
 DDIM and DiT
+
+---
+
+# Why 1000 steps · the quick math
+
+DDPM's forward process adds tiny Gaussian noise at each of $T$ steps. To keep the final distribution close to $\mathcal{N}(0, I)$ and each step's noise increment small (so the reverse can be Gaussian too), $T$ has to be large — 1000 is the typical choice.
+
+<div class="keypoint">
+
+Small per-step noise → easier inverse problem for the network. But then the reverse loop has **1000 forward passes** — painful at inference.
+
+</div>
+
+DDIM (next slide) breaks this by reinterpreting the reverse process as *non-Markovian*, so you can skip steps without retraining.
 
 ---
 

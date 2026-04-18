@@ -46,6 +46,55 @@ Bahdanau et al. 2014 · "Neural Machine Translation by Jointly Learning to Align
 
 ---
 
+# Why one vector can't hold everything
+
+Think about translating a 40-word English sentence into French. A Seq2Seq encoder has to compress:
+
+- every word's identity
+- the full syntactic structure
+- the tense, number, gender, mood of every verb and noun
+- the coreference chains ("it" refers to "the box")
+- the sentiment
+
+...into a **single 512-dim vector**. One number for every 0.3 bits of meaning.
+
+<div class="warning">
+
+No matter how big you make that vector, there's always a sentence that exceeds it. The information-theoretic problem is **fundamental**, not an engineering issue.
+
+</div>
+
+---
+
+# The shift in viewpoint
+
+<div class="columns">
+<div>
+
+### Old · push mode
+
+Encoder *pushes* a summary forward. Decoder takes whatever fits.
+
+- One-shot summarization.
+- Lossy — compression is mandatory.
+
+</div>
+<div>
+
+### New · pull mode
+
+Decoder *pulls* information on demand. Encoder keeps everything around.
+
+- No compression required.
+- Decoder chooses what's relevant *per step*.
+
+</div>
+</div>
+
+Attention is the mechanism for the *pull* — a differentiable version of "look up the word I need right now."
+
+---
+
 # Four questions
 
 1. What does attention look like — literally, as a heatmap?
@@ -105,6 +154,28 @@ Two parameterizations · one abstraction
 
 ---
 
+# A 3×3 worked example · before the math
+
+Source · "the cat slept"      Target step · decoding French for "cat" → *"chat"*
+
+<div class="math-box">
+
+Encoder states (toy 2-d): $h_1 = [1, 0]$ (the), $h_2 = [0, 1]$ (cat), $h_3 = [0.2, 0.1]$ (slept)
+
+Decoder state: $s_t = [0.1, 0.9]$ (about to emit *chat*)
+
+Raw scores (dot products): $s_t \cdot h_1 = 0.1$, $s_t \cdot h_2 = 0.9$, $s_t \cdot h_3 = 0.11$
+
+Softmax: $[0.24, 0.54, 0.22]$ — *"cat"* gets the largest weight.
+
+Context: $c_t = 0.24 h_1 + 0.54 h_2 + 0.22 h_3 = [0.29, 0.56]$
+
+</div>
+
+The decoder reads a **weighted mixture**, dominated by the relevant word. That's one step of attention.
+
+---
+
 # Bahdanau (additive) attention · 2014
 
 Compute an alignment score between decoder state $s_{t}$ and encoder state $h_i$ via a **learned network**:
@@ -138,6 +209,21 @@ This is the version Vaswani et al. kept for the Transformer in 2017, with one sm
 
 ---
 
+# Why multiplicative won
+
+Two reasons the ML community moved from Bahdanau to Luong:
+
+1. **Hardware** — a dot product is one matrix multiply; GPUs love it. Bahdanau's MLP has element-wise tanh, which is slower per op and harder to batch.
+2. **Enough capacity elsewhere** — once we added learned $W_Q, W_K$ projections (next section), we no longer needed the $\tanh(W_1 h + W_2 s)$ to *learn* the similarity. The dot product of projections already gives it.
+
+<div class="insight">
+
+Pattern in DL · keep the core operation small + fast, push learning into the linear layers around it. This is also why attention beat CNN for sequences — CNN's inductive bias was baked in; attention's bias is *learned*.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 3
@@ -165,6 +251,46 @@ Attention is the **soft** version of this:
 - **Value** — what each encoder state actually *contains*.
 
 Score keys against the query → softmax → use weights to blend values.
+
+---
+
+# Soft retrieval · why three roles not one
+
+You could imagine an attention mechanism where $K$ and $V$ are the same thing. Early models did exactly this (Luong 2015). So why separate them?
+
+<div class="keypoint">
+
+**Keys say "what I am"; values say "what I contribute."**
+
+A word like "bank" in a sentence should be *found* by the query "financial", but *contribute* the full contextual embedding. Keys for retrieval, values for content.
+
+</div>
+
+- $K$ optimized for similarity with plausible queries.
+- $V$ optimized to carry whatever downstream layers need.
+
+Separating them doubles the parameter count of one head but roughly doubles the expressiveness too.
+
+---
+
+# The Python-dict mental model · extended
+
+```python
+# Hard retrieval
+db = {k1: v1, k2: v2, k3: v3}
+out = db[query]                      # exact match → one value
+
+# Soft retrieval (attention)
+scores  = [sim(query, k) for k in [k1, k2, k3]]   # similarities
+weights = softmax(scores)                          # probabilities
+out     = weights[0]*v1 + weights[1]*v2 + weights[2]*v3
+```
+
+<div class="insight">
+
+Attention is **differentiable dictionary lookup**. The network's parameters shape what "sim" means and what each key/value represents. Everything else is the soft version of `db[query]`.
+
+</div>
 
 ---
 
@@ -229,6 +355,24 @@ With $d_k = 512$: raw scores are $\sim \pm 22$. Softmax of $[22, -22, 22, \ldots
 
 ---
 
+# Numeric demo · softmax at different scales
+
+<div class="math-box">
+
+Raw logits $[s_1, s_2, s_3] = [2.0, 1.0, 0.5]$. Softmax behaves nicely:
+
+| temperature | softmax |
+|:-:|:-:|
+| /1    | (0.58, 0.21, 0.13, ...) — soft |
+| /4    | (0.40, 0.30, 0.26, ...) — very soft |
+| ×10   | (0.9999, 4e-5, 2e-7) — one-hot |
+
+</div>
+
+Dot products without scaling behave like the bottom row — **effectively one-hot**. Divide by $\sqrt{d_k}$ and you land back on the top row. The scaling is doing exactly the role of a temperature denominator, derived from variance analysis rather than tuned by hand.
+
+---
+
 # In pictures
 
 ![w:920px](figures/lec12/svg/sqrt_dk_scaling.svg)
@@ -248,6 +392,22 @@ If softmax outputs are (nearly) one-hot, then attention picks **one** encoder st
 $$\text{Attn}(Q, K, V) = \text{softmax}\!\left(\frac{Q K^\top}{\sqrt{d_k}}\right) V$$
 
 Scores stay in a healthy range → softmax stays soft → gradients keep flowing.
+
+---
+
+# The $\sqrt{d_k}$ derivation in three lines
+
+Assume $Q, K$ entries are i.i.d. with zero mean and unit variance.
+
+$$\mathbb{E}[Q^\top K] = 0, \quad \text{Var}[Q^\top K] = \sum_{k=1}^{d_k} \text{Var}[Q_k K_k] = d_k$$
+
+So $Q^\top K \sim \mathcal{N}(0, d_k)$. Dividing by $\sqrt{d_k}$ makes the variance **1** — independent of dimension.
+
+<div class="keypoint">
+
+**Why this matters** · the same attention block can be used at $d_k = 64$ or $d_k = 4096$ without retuning temperatures. The scaling is *dimension-invariant* by construction.
+
+</div>
 
 ---
 
@@ -290,6 +450,94 @@ This is the idea that killed RNNs and gave us Transformers (L13).
 
 ---
 
+# Self-attention · 3 tokens, by hand
+
+Sentence · "the cat slept"     token embeddings $x_1, x_2, x_3 \in \mathbb{R}^d$.
+
+After projecting: $Q, K, V$ are each a $3 \times d_k$ matrix.
+
+<div class="math-box">
+
+$$QK^\top / \sqrt{d_k} = \begin{bmatrix} s_{11} & s_{12} & s_{13} \\ s_{21} & s_{22} & s_{23} \\ s_{31} & s_{32} & s_{33} \end{bmatrix}$$
+
+Row $i$ says: *how much does token $i$ want to look at every other token?*
+
+Softmax per row → 3×3 attention matrix $A$. Output $A V$ is again $3 \times d_k$.
+
+</div>
+
+Every output row is a weighted blend of value rows — a contextualized embedding for that token.
+
+---
+
+# Self-attention vs convolution · same goal, different bias
+
+<div class="columns">
+<div>
+
+### Convolution
+
+- Each output depends on a **fixed** local window.
+- Inductive bias: *locality*.
+- Parameters: shared kernel.
+
+</div>
+<div>
+
+### Self-attention
+
+- Each output depends on **all** positions.
+- Inductive bias: *learned* from data.
+- Parameters: Q, K, V projections.
+
+</div>
+</div>
+
+<div class="insight">
+
+Convolution bakes in "nearby tokens matter"; self-attention lets the network decide from data whether nearby or far-away tokens matter. When you have lots of data, *learned* bias wins over *hand-designed* bias. That's the whole arc of the 2017–2025 vision revolution in one sentence.
+
+</div>
+
+---
+
+# Causal self-attention · two lines to make GPT
+
+To make attention *autoregressive* (can't peek at future tokens), mask out the upper triangle before softmax:
+
+```python
+scores = Q @ K.transpose(-2, -1) / math.sqrt(d_k)     # (n, n)
+mask   = torch.triu(torch.ones_like(scores), diagonal=1).bool()
+scores.masked_fill_(mask, float('-inf'))              # future → -inf
+weights = scores.softmax(dim=-1)                      # rows still sum to 1
+```
+
+<div class="keypoint">
+
+**That's the only difference between BERT-style (bidirectional) and GPT-style (causal) attention.** Same module, different mask. L13 uses this trick to build a decoder.
+
+</div>
+
+---
+
+# Complexity · the O(n²) wall
+
+Self-attention on a sequence of length $n$:
+- $Q K^\top$ builds an $n \times n$ matrix → **$O(n^2)$ memory** and **$O(n^2 d)$ compute**.
+- Double the context → 4× the cost.
+
+<div class="warning">
+
+At $n = 8{,}192$ and $d = 4096$, one head's attention matrix is already **64 MB per layer**. Scaling context to 1M tokens naively would need 500 GB per layer. This is the wall that motivates:
+
+- **FlashAttention** (L23) · recompute attention in tiles, avoiding the full $n \times n$ matrix.
+- **Sparse / local / linear attention** (reading) · trade off quality for $O(n \log n)$ or $O(n)$.
+- **KV caching** (L23) · don't redo the whole computation at every generation step.
+
+</div>
+
+---
+
 # The four kinds of attention you will meet
 
 | Type | Q comes from | K, V come from | Used in |
@@ -324,6 +572,29 @@ One slide of consequences
 Without attention · no Transformer · no BERT · no GPT · no Claude · no diffusion text conditioning. A single 2014 paper seeded the next decade.
 
 </div>
+
+---
+
+# "Attention Is All You Need" · the 2017 pivot
+
+Vaswani et al.'s one-page insight · drop the RNN entirely, use **only** attention plus FFNs plus positional encodings.
+
+<div class="paper">
+
+Before: encoders and decoders were RNNs *with* attention as a helper. After: attention was the load-bearing operation; RNN was gone.
+
+</div>
+
+Consequence table:
+
+| Axis | RNN+attention | Transformer |
+|------|---------------|-------------|
+| Sequential compute | yes (unrolled) | no (parallel) |
+| Long-range path | $O(n)$ hops | $O(1)$ hops |
+| Training throughput | slow | 10–20× faster |
+| Scaling | plateaus at ~1B | trained to 1T+ |
+
+Every major model since 2018 (BERT, GPT-*, T5, Claude, Llama) is this architecture, plus or minus details. **L13 builds it from parts.**
 
 ---
 

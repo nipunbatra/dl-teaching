@@ -62,6 +62,24 @@ It worked. ViT-Huge pretrained on 300M images beat CNN SOTA on ImageNet by 2021.
 
 ---
 
+# From pixels to tokens · the recipe
+
+An image is a grid of pixels. A Transformer wants a sequence of vectors. Bridge · **patchify**.
+
+<div class="math-box">
+
+Take a 224×224 RGB image. Split into 16×16 patches:
+- Number of patches: $(224/16)^2 = 196$
+- Each patch: $16 \times 16 \times 3 = 768$ numbers → flatten → linear-project to $d$-dim.
+
+Add a special `[CLS]` token + learned **positional embeddings**, and feed the 197-token sequence through a standard Transformer.
+
+</div>
+
+The patchify linear layer is conceptually a strided convolution with kernel size = patch size. Everything else is vanilla Transformer.
+
+---
+
 # How ViT works
 
 ![w:920px](figures/lec18/svg/vit_patches.svg)
@@ -99,6 +117,32 @@ It worked. ViT-Huge pretrained on 300M images beat CNN SOTA on ImageNet by 2021.
 
 ---
 
+# ViT in PyTorch · 30 lines
+
+```python
+class ViT(nn.Module):
+    def __init__(self, image_size=224, patch=16, dim=768, depth=12, heads=12, classes=1000):
+        super().__init__()
+        self.patch_embed = nn.Conv2d(3, dim, kernel_size=patch, stride=patch)   # patchify
+        n_patches = (image_size // patch) ** 2
+        self.cls_token = nn.Parameter(torch.randn(1, 1, dim))
+        self.pos_embed = nn.Parameter(torch.randn(1, n_patches + 1, dim))
+        self.blocks = nn.ModuleList([TransformerBlock(dim, heads) for _ in range(depth)])
+        self.norm = nn.LayerNorm(dim)
+        self.head = nn.Linear(dim, classes)
+
+    def forward(self, x):
+        x = self.patch_embed(x).flatten(2).transpose(1, 2)      # (B, N, D)
+        cls = self.cls_token.expand(x.size(0), -1, -1)
+        x = torch.cat([cls, x], dim=1) + self.pos_embed
+        for b in self.blocks: x = b(x)
+        return self.head(self.norm(x[:, 0]))                    # CLS → class logits
+```
+
+Literally a Transformer from L13 with a patch-embed preamble. No vision-specific ops.
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 2
@@ -112,6 +156,24 @@ The paper that launched zero-shot vision
 # CLIP · dual encoder
 
 ![w:920px](figures/lec18/svg/clip_dual_encoder.svg)
+
+---
+
+# CLIP · the core idea
+
+Train on (image, caption) pairs scraped from the web. Push matching pairs close in embedding space, push mismatched pairs far apart.
+
+<div class="keypoint">
+
+Build a **shared space** where images and captions live together. Once it exists, you can:
+
+- **Retrieve images** from a text query (nearest caption embedding).
+- **Classify zero-shot** · pick the closest *caption template* to the image.
+- **Guide generation** · diffusion models condition on CLIP text features.
+
+</div>
+
+The training objective is InfoNCE (L17), extended across two modalities instead of two augmentations.
 
 ---
 
@@ -171,6 +233,24 @@ CLIP is the **default general-purpose vision-language model** in 2026. For retri
 
 ---
 
+# Prompt engineering · for vision
+
+Zero-shot CLIP is sensitive to how you phrase the class label. Changing the prompt template affects accuracy by **~10% absolute on ImageNet.**
+
+| Template | ImageNet zero-shot |
+|:-:|:-:|
+| `"{label}"` (bare word) | 63% |
+| `"a photo of a {label}"` | 68% |
+| `"a photo of a {label}, a type of pet"` (for pets dataset) | 72% |
+
+<div class="insight">
+
+The model's "understanding" of a class is mediated by the caption distribution it was trained on. If most cat images were captioned "a photo of a cat", matching that template works best. Prompt-engineering for vision is *not* a trick — it's matching the training distribution.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 3
@@ -210,6 +290,23 @@ Surprisingly good. The LLM brings reasoning; CLIP brings vision understanding; t
 
 ---
 
+# LLaVA · why just a linear projection works
+
+The LLM's token embeddings sit in a $d$-dim space that *already* represents concepts. CLIP's image features also represent concepts. Both learn from natural data; both capture similar structure.
+
+<div class="keypoint">
+
+A single learned linear map is enough to align them — the hard work was already done during pretraining. The projection only has to rotate and scale.
+
+</div>
+
+- Stage 1 · freeze both encoders, train **only the projection** on caption data.
+- Stage 2 · unfreeze the LLM, fine-tune on instruction data.
+
+Total new parameters · ~10M in the projection. That's how a 7B LLM becomes multimodal with **under 0.15% extra weights.**
+
+---
+
 # Flamingo · cross-attention bridge
 
 Alayrac et al. 2022 · an alternative approach:
@@ -235,6 +332,42 @@ Both approaches work. LLaVA is simpler and became dominant in open-source; Flami
 # Multimodal LLMs in 2026
 
 The frontier
+
+---
+
+# Native-multimodal vs bolt-on
+
+Two philosophies emerged:
+
+<div class="columns">
+<div>
+
+### Bolt-on (LLaVA, Flamingo)
+
+Start from a pretrained LLM and bolt a vision tower on top. Simpler, cheaper.
+
+- Vision tower stays "foreign" to the LLM.
+- Often weaker on tight text-vision interaction.
+
+</div>
+<div>
+
+### Native (Gemini, GPT-4o)
+
+Train from scratch on interleaved text + image + audio tokens.
+
+- Unified tokenization across modalities.
+- Stronger multi-modal reasoning.
+- More expensive to train from zero.
+
+</div>
+</div>
+
+<div class="insight">
+
+The 2026 frontier leans **native**. Bolt-on stays dominant for open-source, where you can't afford pretraining from scratch.
+
+</div>
 
 ---
 

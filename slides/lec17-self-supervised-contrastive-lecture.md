@@ -148,6 +148,40 @@ Pretrained SimCLR features, fine-tuned, match or beat supervised ImageNet on man
 
 ---
 
+# Temperature · the forgotten hyperparameter
+
+The InfoNCE softmax uses a temperature $\tau$ inside: $\text{sim}(z_i, z_j) / \tau$.
+
+- **Small $\tau$ (≈ 0.07)** · sharper softmax → hard negatives dominate gradient. SimCLR's choice.
+- **Large $\tau$ (≥ 1.0)** · all negatives contribute equally → gradient is softer.
+
+<div class="keypoint">
+
+$\tau$ controls *which negatives the model pays attention to*. Too small and training is noisy / unstable. Too large and training is slow. It's also what CLIP learns as a trainable scalar (L18).
+
+</div>
+
+---
+
+# Augmentation matters · *hugely*
+
+Chen et al. swept augmentation pairs. Accuracy (linear-probe on ImageNet):
+
+| Augmentation pair | Accuracy |
+|:-:|:-:|
+| crop only | 40% |
+| color-jitter only | 28% |
+| crop + color-jitter | 56% |
+| crop + color + blur | 64% |
+
+<div class="insight">
+
+Contrastive learning is as much about **what invariances you pick** as about the loss. You're telling the model · "ignore crops, ignore color shifts, ignore blur — but pay attention to content." Those choices **become** the downstream invariances of the representation.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 3
@@ -178,6 +212,24 @@ The asymmetry (predictor + EMA + stop-grad) prevents collapse without needing ne
 
 ---
 
+# Why doesn't BYOL collapse?
+
+Without negatives, the obvious failure mode is $f(x) = \text{const}$ — both networks output the same vector, loss is zero. Why doesn't this happen?
+
+<div class="keypoint">
+
+Three forces prevent collapse:
+
+1. **Predictor head** introduces asymmetry — online must *predict* target, not match it directly.
+2. **Stop-gradient** on the target prevents the target from moving to meet the online's output.
+3. **EMA update** gives the target a momentum that trails the online; the online can never "catch" its target exactly.
+
+</div>
+
+Grill et al. had to run the training for 300 epochs to verify it really didn't collapse — nobody initially believed it.
+
+---
+
 # MoCo, SwAV, and the contrastive zoo
 
 The 2019–2021 era had many flavors:
@@ -192,6 +244,23 @@ The 2019–2021 era had many flavors:
 | **Barlow Twins** | decorrelate representations across views |
 
 By 2023 the community mostly converged on masked autoencoding (MAE) and self-distillation (DINO).
+
+---
+
+# The pattern across all these methods
+
+Zoom out. Every SSL method is a variation on **"create a task the model can only solve if it learns features."**
+
+<div class="keypoint">
+
+- **Predict the future** (GPT, word2vec) — temporal / sequential structure.
+- **Predict the missing part** (BERT, MAE) — contextual structure.
+- **Match two views of the same thing** (SimCLR, MoCo) — invariance to nuisance.
+- **Predict what a teacher thinks** (BYOL, DINO, knowledge distillation) — relational structure.
+
+</div>
+
+The architecture and loss differ, but the meta-idea is the same · **make the data supervise itself**.
 
 ---
 

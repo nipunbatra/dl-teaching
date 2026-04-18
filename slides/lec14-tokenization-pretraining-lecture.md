@@ -63,6 +63,24 @@ Subword tokenization is the compromise: common words as single tokens, rare word
 
 ---
 
+# A concrete failure · character LMs
+
+Train a character-level Transformer on Wikipedia. It *works* — GPT-like samples of readable English.
+
+But it's expensive:
+- A 1000-word page → ~6000 characters → 6000 attention positions → **36M attention entries per layer**.
+- Equivalent word-level model: 1000 tokens → **1M entries**. 36× cheaper.
+
+Plus · character LMs have to *learn* that "t-h-e" is a word, unit by unit. That's capacity wasted on a solved problem.
+
+<div class="insight">
+
+Subwords compromise: keep common sequences as one unit (saving sequence length), split rare sequences (keeping open vocabulary). The winning middle path.
+
+</div>
+
+---
+
 # The sweet spot · subwords
 
 Ideal subword tokenizer:
@@ -121,6 +139,46 @@ def train_bpe(corpus, n_merges):
 ```
 
 At inference, apply the same merge rules in order → tokenize any new string.
+
+---
+
+# Worked BPE · "low lower newest widest"
+
+Start at the character level:
+
+```
+"l o w", "l o w e r", "n e w e s t", "w i d e s t"
+```
+
+Count pairs: `(e, s)` appears 2×, `(s, t)` appears 2×, `(l, o)` appears 2×, `(o, w)` appears 2×...
+
+<div class="math-box">
+
+**Merge 1**: `(e, s) → es` · tokens: `l o w`, `l o w e r`, `n e w es t`, `w i d es t`
+**Merge 2**: `(es, t) → est` · tokens: `l o w`, `l o w e r`, `n e w est`, `w i d est`
+**Merge 3**: `(l, o) → lo` · tokens: `lo w`, `lo w e r`, `n e w est`, `w i d est`
+**Merge 4**: `(lo, w) → low` · tokens: `low`, `low e r`, `n e w est`, `w i d est`
+
+</div>
+
+With four merges we've built `low`, `est` as single tokens — exactly the reusable subwords. At inference, apply merges 1-4 in order to any new word.
+
+---
+
+# Why byte-level BPE is the default
+
+Two breakthroughs GPT-2 introduced:
+
+1. **Start from bytes (0–255), not Unicode characters.** Every possible string becomes tokenizable, including emojis, foreign scripts, binary garbage.
+2. **Pretokenize by regex** before BPE, to avoid crossing word boundaries ("New York" stays as two separate merge chains).
+
+<div class="keypoint">
+
+Result · a 50k-token vocab that covers English, code, Japanese, emoji, and anything else users throw at it. No `<unk>` token needed.
+
+</div>
+
+Llama, GPT-*, Mistral, Claude all use byte-level BPE with minor tweaks. SentencePiece is the same idea packaged for cross-language training.
 
 ---
 
@@ -192,6 +250,24 @@ Bad for: generation — can't autoregressively extend.
 
 ---
 
+# BERT · why mask 15%?
+
+- Mask **too few** · most sequences see no loss signal → slow training.
+- Mask **too many** · target is too hard, context too sparse.
+
+15% was found empirically. Of those 15%:
+- 80% actually replaced by `[MASK]`
+- 10% replaced by a random token (adds noise, helps robustness)
+- 10% left unchanged (so the model can't cheat by ignoring unmasked positions)
+
+<div class="insight">
+
+This mask-then-reconstruct recipe is the same idea as the denoising autoencoder from L19 — BERT is essentially a denoising autoencoder over language, using a Transformer encoder as the denoiser.
+
+</div>
+
+---
+
 # GPT · decoder-only · causal LM
 
 Objective: predict the **next token** given all previous tokens.
@@ -208,6 +284,26 @@ Causal attention mask → model can only look backward.
 
 Great for: generation, chat, code, anything where you produce text one token at a time.
 Bad for: bidirectional understanding tasks (but at scale, GPT-3+ closed this gap anyway).
+
+---
+
+# GPT · why causal loss is so rich
+
+One tiny objective — predict the next token — forces the model to reason about:
+
+- **Syntax** · closing brackets, matching tenses, agreement
+- **Semantics** · what words follow each other meaningfully
+- **World knowledge** · "The capital of France is …" requires a fact
+- **Reasoning** · "If all A are B, and x is A, then x is …" requires logic
+- **Style** · code continuations, formal-register, poetry
+
+<div class="keypoint">
+
+Every position in a 2048-token window is a little training example. A 1T-token corpus gives you $10^{12}$ supervised tasks for free — no human labeling needed.
+
+</div>
+
+This scale-and-generality combo is why *next-token prediction* — despite looking trivial — ended up subsuming most of NLP.
 
 ---
 
@@ -280,6 +376,26 @@ Next-token prediction is so rich a task that a model good at it ends up learning
 </div>
 
 This is the "foundation" in foundation model.
+
+---
+
+# Scaling recap · 5 years of LLMs in one chart
+
+| Year | Model | Params | Tokens | Notable |
+|:-:|:-:|:-:|:-:|:-:|
+| 2018 | BERT-base | 110M | 3.3B | first pretrained Transformer in production |
+| 2019 | GPT-2 | 1.5B | 40B | "too dangerous to release" |
+| 2020 | GPT-3 | 175B | 300B | first few-shot emergence |
+| 2022 | Chinchilla | 70B | 1.4T | train-compute optimal |
+| 2023 | Llama 2 70B | 70B | 2T | open weights, Chinchilla-ish |
+| 2024 | Llama 3 8B | 8B | 15T | aggressively over-trained for inference |
+| 2026 | frontier LLMs | 1T+ | 10T+ | multi-modal, reasoning, tool use |
+
+<div class="insight">
+
+Architecture has barely changed (decoder-only Transformer). What scaled: compute, data, careful engineering. "Attention + scale" really was the thing. L15 goes into the mechanical details.
+
+</div>
 
 ---
 
