@@ -237,6 +237,8 @@ Now $z$ is a *deterministic* function of $\mu$ and $\sigma$ (and the noise $\eps
 
 ---
 
+<!-- _class: code-heavy -->
+
 # VAE in PyTorch · the whole thing
 
 ```python

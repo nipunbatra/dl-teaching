@@ -174,6 +174,8 @@ Score keys against the query → softmax → use weights to blend values.
 
 ---
 
+<!-- _class: code-heavy -->
+
 # QKV · projections from the same input
 
 Crucially, $Q, K, V$ are all **linear projections of the input**:

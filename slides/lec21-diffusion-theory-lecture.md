@@ -188,6 +188,8 @@ In plain words:
 
 ---
 
+<!-- _class: code-heavy -->
+
 # DDPM in PyTorch · 30 lines
 
 ```python

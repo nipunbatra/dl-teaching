@@ -235,11 +235,19 @@ Megatron-LM. Required for >10B. Heavy all-reduce bandwidth.
 </div>
 </div>
 
+---
+
+# Pipeline + 3D parallelism
+
 ### Pipeline parallel (PP)
 
 Split the **layer stack** across GPUs. Layer 1-10 on GPU 1, layer 11-20 on GPU 2, etc. Bubble of idle time unless you use micro-batching.
 
+<div class="keypoint">
+
 **Modern training runs combine all three** (3D parallelism). Add ZeRO (sharded optimizer state) and you get the full picture.
+
+</div>
 
 ---
 

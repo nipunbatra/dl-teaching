@@ -729,6 +729,12 @@ criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
 - **BN · LN · RMSNorm** — same family, three axes. BN for CNNs, LN for Transformers, RMSNorm for LLMs.
 - **Pre-norm &gt; post-norm** for deep Transformers.
 
+---
+
+<!-- _class: summary-slide -->
+
+# Lecture 6 — what's next
+
 ### Read before Lecture 7
 
 **Prince** — Ch 10 · *Convolutional networks*.

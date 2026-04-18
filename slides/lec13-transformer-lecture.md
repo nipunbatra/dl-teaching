@@ -73,6 +73,8 @@ The genius was **gluing them together** into one block you can safely stack.
 
 ---
 
+<!-- _class: code-heavy -->
+
 # The block in PyTorch · 20 lines
 
 ```python

@@ -138,6 +138,8 @@ These aren't deep insights — they are a cookbook that made GANs actually train
 
 ---
 
+<!-- _class: code-heavy -->
+
 # Generator in PyTorch · DCGAN
 
 ```python
