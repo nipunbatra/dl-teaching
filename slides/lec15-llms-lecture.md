@@ -117,6 +117,12 @@ Problems:
 
 ---
 
+# RoPE · rotation in pictures
+
+![w:920px](figures/lec15/svg/rope_rotation.svg)
+
+---
+
 # RoPE · rotate Q and K by position
 
 <div class="math-box">
@@ -200,6 +206,12 @@ How you fit a 70B model on real hardware
 
 ---
 
+# Distributed training · three parallelisms
+
+![w:920px](figures/lec15/svg/distributed_training.svg)
+
+---
+
 # Three parallelism strategies
 
 <div class="columns">
@@ -254,6 +266,12 @@ Almost no one trains from scratch. **Everyone fine-tunes** open-weight models (L
 # Emergent abilities
 
 When more params unlock new behaviors
+
+---
+
+# Emergent abilities · the curves
+
+![w:920px](figures/lec15/svg/emergent_abilities.svg)
 
 ---
 

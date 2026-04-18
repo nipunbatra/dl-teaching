@@ -144,6 +144,34 @@ Both $\mu$ and $\sigma$ are network outputs. During training:
 
 ---
 
+# ELBO geometry
+
+![w:920px](figures/lec19/svg/elbo_geometry.svg)
+
+---
+
+# Deriving the ELBO · one line at a time
+
+<div class="math-box">
+
+Start from the log marginal:
+
+$$\log p(x) = \log \int p(x, z)\, dz$$
+
+Multiply and divide by $q(z|x)$ inside the integral:
+
+$$= \log \int q(z|x) \cdot \frac{p(x, z)}{q(z|x)}\, dz = \log\, \mathbb{E}_{q}\!\left[\frac{p(x, z)}{q(z|x)}\right]$$
+
+By Jensen's inequality (log is concave):
+
+$$\geq \mathbb{E}_{q}\!\left[\log \frac{p(x, z)}{q(z|x)}\right] = \mathbb{E}_q[\log p(x|z)] - \text{KL}(q(z|x)\,\|\,p(z))$$
+
+That's the ELBO — a rigorous lower bound, tight when $q \to p(z|x)$.
+
+</div>
+
+---
+
 # The ELBO · reconstruction + KL
 
 <div class="math-box">
@@ -180,6 +208,12 @@ The KL is what **structures** the latent space · it pulls every encoded distrib
 <!-- _class: section-divider -->
 
 ### PART 4
+
+# Reparameterization in one picture
+
+![w:920px](figures/lec19/svg/reparam_trick.svg)
+
+---
 
 # The reparameterization trick
 
@@ -257,6 +291,12 @@ Tuning `BETA`:
 ### PART 5
 
 # Generating with a VAE
+
+---
+
+# Latent-space interpolation · in pictures
+
+![w:920px](figures/lec19/svg/vae_interpolation.svg)
 
 ---
 

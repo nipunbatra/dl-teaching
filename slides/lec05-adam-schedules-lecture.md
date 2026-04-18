@@ -159,6 +159,26 @@ Same idea for $v_t$ and $\beta_2$.
 
 ---
 
+# Worked example · bias correction in action
+
+<div class="math-box">
+
+Suppose the true gradient is $g = 1.0$ at every step. With $\beta_1 = 0.9$, starting $m_0 = 0$:
+
+| step $t$ | $m_t = 0.9 m_{t-1} + 0.1 g$ | $\hat{m}_t = m_t / (1 - 0.9^t)$ |
+|:-:|:-:|:-:|
+| 1 | 0.100 | **1.000** |
+| 2 | 0.190 | **1.000** |
+| 3 | 0.271 | **1.000** |
+| 10 | 0.651 | **1.000** |
+| 100 | 1.000 | 1.000 |
+
+</div>
+
+Without correction, the first step would use $m_1 = 0.1$ — ten times too small. Adam's step would therefore be **10× smaller than the optimal at t=1**, wasting the early training phase. The $(1 - \beta_1^t)$ denominator fixes it exactly.
+
+---
+
 # When does bias correction matter?
 
 For $\beta_1 = 0.9$:

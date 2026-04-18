@@ -128,6 +128,24 @@ Each factor is $W^\top \cdot \text{diag}(\tanh'(\cdot))$.
 
 ---
 
+# Worked example · BPTT on 3 timesteps
+
+<div class="math-box">
+
+Consider a tiny RNN with scalar state · $h_t = \tanh(w h_{t-1} + x_t)$ · $w = 0.5$ · $\tanh'(\cdot) \le 1$.
+
+$$\frac{\partial h_3}{\partial h_0} = \underbrace{w \tanh'(\cdot)}_{\le 0.5} \cdot \underbrace{w \tanh'(\cdot)}_{\le 0.5} \cdot \underbrace{w \tanh'(\cdot)}_{\le 0.5} \approx 0.125$$
+
+- 3 steps · gradient at most 0.125 (already 8× smaller)
+- 10 steps · $\le 0.5^{10} \approx 10^{-3}$
+- 50 steps · $\le 0.5^{50} \approx 10^{-15}$
+
+</div>
+
+**That's why vanilla RNNs can't learn dependencies across more than ~20 timesteps.** Every step in the product pulls the gradient toward zero if $|w \tanh'| < 1$, or toward infinity if $> 1$. LSTMs (next) sidestep this via additive gated updates.
+
+---
+
 # Truncated BPTT · the practical fix
 
 For long sequences (thousands of steps), full BPTT is expensive.

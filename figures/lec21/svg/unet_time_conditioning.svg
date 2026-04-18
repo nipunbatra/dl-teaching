@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .enc    { fill:#DCE3E6; stroke:#4A6670; stroke-width:1.4; rx:4; ry:4; }
+      .dec    { fill:#EAD3C5; stroke:#D97757; stroke-width:1.4; rx:4; ry:4; }
+      .bridge { fill:#F6F0DF; stroke:#C9A961; stroke-width:1.4; rx:4; ry:4; }
+      .time   { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.3; rx:3; ry:3; }
+      .sin    { stroke:#7B9E89; fill:none; stroke-width:1.5; }
+      .skip   { stroke:#7B9E89; fill:none; stroke-width:1.8; stroke-dasharray:4 3; }
+      .ink    { stroke:#1F1F1E; fill:none; stroke-width:1.3; }
+      .tinj   { stroke:#D97757; fill:none; stroke-width:1.5; stroke-dasharray:3 2; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+    <marker id="uc-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/></marker>
+    <marker id="uc-t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#D97757"/></marker>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Time-conditioned U-Net · sinusoidal t embedding injected into every block</text>
+
+  <!-- Time embedding path (top) -->
+  <g transform="translate(40, 60)">
+    <text x="0" y="-6" class="tag" fill="#D97757">TIME EMBEDDING</text>
+
+    <rect class="time" x="0" y="0" width="60" height="30"/>
+    <text x="30" y="20" text-anchor="middle" class="mono" fill="#7B9E89">t · scalar</text>
+
+    <rect class="time" x="80" y="0" width="140" height="30"/>
+    <text x="150" y="20" text-anchor="middle" class="mono" fill="#7B9E89">sin + cos embed</text>
+
+    <rect class="time" x="240" y="0" width="100" height="30"/>
+    <text x="290" y="20" text-anchor="middle" class="mono" fill="#7B9E89">MLP</text>
+
+    <rect class="time" x="360" y="0" width="80" height="30"/>
+    <text x="400" y="20" text-anchor="middle" class="mono" fill="#7B9E89">t_emb</text>
+
+    <g class="ink" marker-end="url(#uc-a)">
+      <line x1="60"  y1="15" x2="80"  y2="15"/>
+      <line x1="220" y1="15" x2="240" y2="15"/>
+      <line x1="340" y1="15" x2="360" y2="15"/>
+    </g>
+  </g>
+
+  <!-- U-Net main path -->
+  <!-- Input image (top-left) -->
+  <g transform="translate(40, 140)">
+    <rect class="enc" x="0" y="0" width="80" height="40"/>
+    <text x="40" y="22" text-anchor="middle" class="mono" fill="#4A6670">x_t</text>
+    <text x="40" y="36" text-anchor="middle" class="mut" fill="#4A6670">64×64×4</text>
+  </g>
+
+  <!-- Encoder ladder -->
+  <g transform="translate(150, 130)">
+    <rect class="enc" x="0"   y="10"  width="90" height="40"/>
+    <text x="45" y="30" text-anchor="middle" class="mono" fill="#4A6670">conv 1 + t_emb</text>
+    <text x="45" y="44" text-anchor="middle" class="mut" fill="#4A6670">64 → 128</text>
+
+    <rect class="enc" x="0"   y="70"  width="80" height="40"/>
+    <text x="40" y="90" text-anchor="middle" class="mono" fill="#4A6670">conv 2 + t_emb</text>
+    <text x="40" y="104" text-anchor="middle" class="mut" fill="#4A6670">128 → 256</text>
+
+    <rect class="enc" x="0"   y="130" width="70" height="40"/>
+    <text x="35" y="150" text-anchor="middle" class="mono" fill="#4A6670">conv 3 + t_emb</text>
+    <text x="35" y="164" text-anchor="middle" class="mut" fill="#4A6670">256 → 512</text>
+  </g>
+
+  <!-- Bottleneck -->
+  <g transform="translate(400, 270)">
+    <rect class="bridge" x="0" y="0" width="160" height="50"/>
+    <text x="80" y="22" text-anchor="middle" class="mono" fill="#C9A961">attention block</text>
+    <text x="80" y="40" text-anchor="middle" class="mut" fill="#C9A961">8×8 · 512 ch</text>
+  </g>
+
+  <!-- Decoder ladder -->
+  <g transform="translate(680, 130)">
+    <rect class="dec" x="0"   y="130" width="70" height="40"/>
+    <text x="35" y="150" text-anchor="middle" class="mono" fill="#D97757">upconv 3 + t_emb</text>
+
+    <rect class="dec" x="0"   y="70"  width="80" height="40"/>
+    <text x="40" y="90" text-anchor="middle" class="mono" fill="#D97757">upconv 2 + t_emb</text>
+
+    <rect class="dec" x="0"   y="10"  width="90" height="40"/>
+    <text x="45" y="30" text-anchor="middle" class="mono" fill="#D97757">upconv 1 + t_emb</text>
+  </g>
+
+  <!-- Output -->
+  <g transform="translate(810, 140)">
+    <rect class="dec" x="0" y="0" width="80" height="40"/>
+    <text x="40" y="22" text-anchor="middle" class="mono" fill="#D97757">ε_θ(x_t, t)</text>
+    <text x="40" y="36" text-anchor="middle" class="mut" fill="#D97757">predicted noise</text>
+  </g>
+
+  <!-- Main forward arrows -->
+  <g class="ink" marker-end="url(#uc-a)">
+    <line x1="120" y1="160" x2="150" y2="150"/>
+    <line x1="195" y1="180" x2="195" y2="200"/>
+    <line x1="235" y1="220" x2="400" y2="285"/>
+    <line x1="560" y1="295" x2="700" y2="285"/>
+    <line x1="760" y1="255" x2="760" y2="230"/>
+    <line x1="760" y1="210" x2="760" y2="175"/>
+    <line x1="770" y1="160" x2="810" y2="160"/>
+  </g>
+
+  <!-- Skip connections (green dashed) -->
+  <g class="skip" marker-end="url(#uc-a)">
+    <path d="M 240 150 Q 500 100 680 150"/>
+    <path d="M 240 200 Q 500 180 680 220"/>
+    <path d="M 240 260 Q 480 260 680 270"/>
+  </g>
+
+  <!-- Time injection arrows (rust dashed) into every block -->
+  <g class="tinj" marker-end="url(#uc-t)">
+    <line x1="440" y1="80"  x2="195" y2="150"/>
+    <line x1="440" y1="80"  x2="195" y2="200"/>
+    <line x1="440" y1="80"  x2="195" y2="260"/>
+    <line x1="440" y1="80"  x2="480" y2="290"/>
+    <line x1="440" y1="80"  x2="715" y2="270"/>
+    <line x1="440" y1="80"  x2="720" y2="215"/>
+    <line x1="440" y1="80"  x2="725" y2="150"/>
+  </g>
+
+  <!-- Caption -->
+  <g transform="translate(40, 365)">
+    <text x="440" y="0" text-anchor="middle" class="mut" font-style="italic">
+      Same U-Net <tspan fill="#D97757" font-weight="600">learns to denoise at every noise level</tspan>. Time embedding tells each block "how noisy is this?".
+    </text>
+  </g>
+</svg>

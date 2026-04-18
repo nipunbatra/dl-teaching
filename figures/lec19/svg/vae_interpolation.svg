@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .box    { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1; }
+      .axis   { stroke:#1F1F1E; stroke-width:1; fill:none; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .digit  { stroke:#1F1F1E; fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Latent-space interpolation · morph one digit into another by walking z linearly</text>
+
+  <!-- Row of 8 digits: 7 → 2 interpolation -->
+  <g transform="translate(40, 80)">
+    <text x="440" y="-10" text-anchor="middle" class="tag">INTERPOLATE  α = 0 → 1 · z = (1−α)·z₇ + α·z₂</text>
+
+    <!-- Start: 7 -->
+    <rect class="box" x="0" y="0" width="100" height="100"/>
+    <path class="digit" d="M 20 25 L 80 25 L 45 80"/>
+    <text x="50" y="120" text-anchor="middle" class="mono">α = 0</text>
+    <text x="50" y="135" text-anchor="middle" class="mut">"7"</text>
+
+    <!-- α = 1/7 · start losing horizontal stroke, hints of curve -->
+    <rect class="box" x="110" y="0" width="100" height="100"/>
+    <path class="digit" d="M 130 27 L 185 27 L 158 78"/>
+    <path class="digit" d="M 160 60 Q 155 65 150 65" stroke-width="1.5" opacity="0.4"/>
+    <text x="160" y="120" text-anchor="middle" class="mono">α = 1/7</text>
+
+    <!-- α = 2/7 · slightly curving 7 -->
+    <rect class="box" x="220" y="0" width="100" height="100"/>
+    <path class="digit" d="M 240 30 L 290 28 L 272 60 L 250 76"/>
+    <text x="270" y="120" text-anchor="middle" class="mono">α = 2/7</text>
+
+    <!-- α = 3/7 · ambiguous -->
+    <rect class="box" x="330" y="0" width="100" height="100"/>
+    <path class="digit" d="M 345 35 Q 360 25 385 30 Q 395 40 385 52 L 360 78 L 395 78"/>
+    <text x="380" y="120" text-anchor="middle" class="mono">α = 3/7</text>
+
+    <!-- α = 4/7 · hybrid -->
+    <rect class="box" x="440" y="0" width="100" height="100"/>
+    <path class="digit" d="M 455 35 Q 470 25 495 30 Q 505 42 488 55 L 460 78 L 505 78"/>
+    <text x="490" y="120" text-anchor="middle" class="mono">α = 4/7</text>
+
+    <!-- α = 5/7 · mostly 2 -->
+    <rect class="box" x="550" y="0" width="100" height="100"/>
+    <path class="digit" d="M 565 32 Q 582 22 605 30 Q 615 42 593 56 L 565 78 L 615 78"/>
+    <text x="600" y="120" text-anchor="middle" class="mono">α = 5/7</text>
+
+    <!-- α = 6/7 · almost 2 -->
+    <rect class="box" x="660" y="0" width="100" height="100"/>
+    <path class="digit" d="M 675 30 Q 693 20 716 28 Q 728 42 703 56 L 673 78 L 724 78"/>
+    <text x="710" y="120" text-anchor="middle" class="mono">α = 6/7</text>
+
+    <!-- α = 1 · 2 -->
+    <rect class="box" x="770" y="0" width="100" height="100"/>
+    <path class="digit" d="M 785 30 Q 803 20 826 28 Q 838 42 813 56 L 783 78 L 834 78"/>
+    <text x="820" y="120" text-anchor="middle" class="mono">α = 1</text>
+    <text x="820" y="135" text-anchor="middle" class="mut">"2"</text>
+  </g>
+
+  <!-- Latent space view (bottom) -->
+  <g transform="translate(40, 250)">
+    <rect x="0" y="0" width="880" height="100" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <text x="14" y="22" class="tag">LATENT SPACE (2D projection)</text>
+
+    <!-- x axis -->
+    <line x1="40" y1="70" x2="840" y2="70" class="axis"/>
+
+    <!-- z_7 marker -->
+    <circle cx="120" cy="70" r="8" fill="#D97757"/>
+    <text x="120" y="95" text-anchor="middle" class="mono" fill="#D97757">z₇</text>
+
+    <!-- z_2 marker -->
+    <circle cx="760" cy="70" r="8" fill="#7B9E89"/>
+    <text x="760" y="95" text-anchor="middle" class="mono" fill="#7B9E89">z₂</text>
+
+    <!-- interpolation path -->
+    <line x1="128" y1="70" x2="752" y2="70" stroke="#4A6670" stroke-width="1.5" stroke-dasharray="5 3"/>
+
+    <!-- intermediate sample points -->
+    <circle cx="220" cy="70" r="4" fill="#4A6670"/>
+    <circle cx="320" cy="70" r="4" fill="#4A6670"/>
+    <circle cx="420" cy="70" r="4" fill="#4A6670"/>
+    <circle cx="520" cy="70" r="4" fill="#4A6670"/>
+    <circle cx="620" cy="70" r="4" fill="#4A6670"/>
+    <circle cx="720" cy="70" r="4" fill="#4A6670"/>
+
+    <text x="440" y="50" text-anchor="middle" class="mut" font-style="italic">smooth, continuous latent space · every α gives a valid decoded digit</text>
+  </g>
+</svg>

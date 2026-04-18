@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .axis  { stroke:#1F1F1E; stroke-width:1; fill:none; }
+      .data  { fill:#7B9E89; opacity:0.6; }
+      .arrow { stroke:#D97757; fill:none; stroke-width:1.2; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+    <marker id="sf-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#D97757"/></marker>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Score field · ∇_x log p(x) points toward high-density regions (the data)</text>
+
+  <g transform="translate(80, 70)">
+    <rect x="0" y="0" width="800" height="280" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <!-- "data manifold" — two Gaussian blobs representing data distribution -->
+    <ellipse class="data" cx="250" cy="140" rx="60" ry="40"/>
+    <ellipse class="data" cx="550" cy="140" rx="60" ry="40"/>
+
+    <text x="250" y="88" text-anchor="middle" class="mono" fill="#7B9E89">p(x) mode 1</text>
+    <text x="550" y="88" text-anchor="middle" class="mono" fill="#7B9E89">p(x) mode 2</text>
+
+    <!-- Score vector field: arrows point toward nearest mode -->
+    <!-- Left of mode 1: arrows point right -->
+    <g class="arrow" marker-end="url(#sf-a)">
+      <!-- Column far-left -->
+      <line x1="50"  y1="60"  x2="80"  y2="90"/>
+      <line x1="50"  y1="110" x2="80"  y2="125"/>
+      <line x1="50"  y1="160" x2="80"  y2="155"/>
+      <line x1="50"  y1="210" x2="80"  y2="195"/>
+      <line x1="50"  y1="250" x2="80"  y2="220"/>
+
+      <!-- Column left-middle -->
+      <line x1="130" y1="60"  x2="170" y2="100"/>
+      <line x1="130" y1="110" x2="170" y2="128"/>
+      <line x1="130" y1="160" x2="170" y2="152"/>
+      <line x1="130" y1="210" x2="170" y2="190"/>
+      <line x1="130" y1="250" x2="170" y2="215"/>
+
+      <!-- Inside mode 1: small/zero arrows -->
+      <!-- Omit center arrows to show score ~ 0 at peak -->
+      <line x1="230" y1="60"  x2="245" y2="100"/>
+      <line x1="270" y1="60"  x2="255" y2="100"/>
+      <line x1="230" y1="220" x2="245" y2="185"/>
+      <line x1="270" y1="220" x2="255" y2="185"/>
+
+      <!-- Between modes: arrows toward nearest -->
+      <line x1="340" y1="60"  x2="315" y2="90"/>
+      <line x1="340" y1="210" x2="315" y2="188"/>
+      <line x1="340" y1="130" x2="315" y2="140"/>
+
+      <line x1="420" y1="60"  x2="420" y2="100"/>
+      <line x1="420" y1="210" x2="420" y2="185"/>
+      <line x1="380" y1="160" x2="355" y2="150"/>
+      <line x1="460" y1="160" x2="485" y2="150"/>
+
+      <!-- mode 2 vicinity -->
+      <line x1="530" y1="60"  x2="545" y2="100"/>
+      <line x1="570" y1="60"  x2="555" y2="100"/>
+      <line x1="530" y1="220" x2="545" y2="185"/>
+      <line x1="570" y1="220" x2="555" y2="185"/>
+
+      <line x1="620" y1="60"  x2="600" y2="90"/>
+      <line x1="620" y1="210" x2="600" y2="185"/>
+      <line x1="620" y1="130" x2="600" y2="135"/>
+
+      <!-- Right side -->
+      <line x1="700" y1="60"  x2="670" y2="100"/>
+      <line x1="700" y1="110" x2="670" y2="125"/>
+      <line x1="700" y1="160" x2="670" y2="155"/>
+      <line x1="700" y1="210" x2="670" y2="190"/>
+      <line x1="700" y1="250" x2="670" y2="220"/>
+
+      <line x1="770" y1="60"  x2="735" y2="110"/>
+      <line x1="770" y1="110" x2="735" y2="125"/>
+      <line x1="770" y1="160" x2="735" y2="155"/>
+      <line x1="770" y1="210" x2="735" y2="195"/>
+      <line x1="770" y1="250" x2="735" y2="220"/>
+    </g>
+
+    <text x="400" y="270" text-anchor="middle" class="mut">arrows = ∇ log p(x) · point toward higher data density</text>
+  </g>
+
+  <!-- Bottom caption -->
+  <g transform="translate(80, 335)">
+    <text x="400" y="0" text-anchor="middle" class="mut" font-style="italic">
+      A diffusion model <tspan fill="#D97757" font-weight="600">learns this vector field</tspan>. Langevin sampling = take small steps along it + a little noise → arrive at a mode = sample from p(x).
+    </text>
+  </g>
+</svg>

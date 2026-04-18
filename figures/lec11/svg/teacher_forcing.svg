@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .cell   { fill:#EAD3C5; stroke:#D97757; stroke-width:1.3; rx:3; ry:3; }
+      .truth  { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.3; rx:3; ry:3; }
+      .pred   { fill:#F6F0DF; stroke:#C9A961; stroke-width:1.3; rx:3; ry:3; }
+      .bad    { fill:#F6D4CC; stroke:#A8324B; stroke-width:1.3; rx:3; ry:3; }
+      .ink    { stroke:#1F1F1E; fill:none; stroke-width:1.2; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+    <marker id="tf-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/></marker>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Teacher forcing · feed ground-truth history during training · no error cascade</text>
+
+  <!-- TOP: Autoregressive (inference) -->
+  <g transform="translate(40, 70)">
+    <text x="0" y="-6" class="tag" fill="#A8324B">AUTOREGRESSIVE · decoder feeds its own prediction</text>
+
+    <rect class="cell" x="50" y="20" width="80" height="40"/>
+    <text x="90" y="42" text-anchor="middle" class="mono">RNN_0</text>
+
+    <rect class="cell" x="180" y="20" width="80" height="40"/>
+    <text x="220" y="42" text-anchor="middle" class="mono">RNN_1</text>
+
+    <rect class="cell" x="310" y="20" width="80" height="40"/>
+    <text x="350" y="42" text-anchor="middle" class="mono">RNN_2</text>
+
+    <rect class="cell" x="440" y="20" width="80" height="40"/>
+    <text x="480" y="42" text-anchor="middle" class="mono">RNN_3</text>
+
+    <!-- Predictions (below cells) -->
+    <rect class="pred" x="60" y="80" width="60" height="26"/>
+    <text x="90" y="98" text-anchor="middle" class="mono">ŷ₀ = "Le"</text>
+    <rect class="bad" x="190" y="80" width="60" height="26"/>
+    <text x="220" y="98" text-anchor="middle" class="mono" fill="#A8324B">ŷ₁ = "The"</text>
+    <rect class="bad" x="320" y="80" width="60" height="26"/>
+    <text x="350" y="98" text-anchor="middle" class="mono" fill="#A8324B">ŷ₂ = "cat"</text>
+    <rect class="bad" x="450" y="80" width="60" height="26"/>
+    <text x="480" y="98" text-anchor="middle" class="mono" fill="#A8324B">ŷ₃ = "??"</text>
+
+    <!-- Inputs feed from previous prediction -->
+    <g class="ink" marker-end="url(#tf-a)">
+      <line x1="90"  y1="60" x2="90"  y2="78"/>
+      <line x1="220" y1="60" x2="220" y2="78"/>
+      <line x1="350" y1="60" x2="350" y2="78"/>
+      <line x1="480" y1="60" x2="480" y2="78"/>
+      <!-- Prediction flows to next cell input -->
+      <path d="M 120 96 Q 180 110 180 60" fill="none"/>
+      <path d="M 250 96 Q 310 110 310 60" fill="none"/>
+      <path d="M 380 96 Q 440 110 440 60" fill="none"/>
+    </g>
+    <path d="M 120 96 Q 180 110 180 60" stroke="#A8324B" fill="none" marker-end="url(#tf-a)"/>
+    <path d="M 250 96 Q 310 110 310 60" stroke="#A8324B" fill="none" marker-end="url(#tf-a)"/>
+    <path d="M 380 96 Q 440 110 440 60" stroke="#A8324B" fill="none" marker-end="url(#tf-a)"/>
+
+    <text x="280" y="140" class="mut" fill="#A8324B">wrong prediction at t=1 cascades through all subsequent steps · unstable training</text>
+  </g>
+
+  <!-- BOTTOM: Teacher forcing -->
+  <g transform="translate(40, 230)">
+    <text x="0" y="-6" class="tag" fill="#7B9E89">TEACHER FORCING · feed ground-truth history</text>
+
+    <rect class="cell" x="50" y="20" width="80" height="40"/>
+    <text x="90" y="42" text-anchor="middle" class="mono">RNN_0</text>
+
+    <rect class="cell" x="180" y="20" width="80" height="40"/>
+    <text x="220" y="42" text-anchor="middle" class="mono">RNN_1</text>
+
+    <rect class="cell" x="310" y="20" width="80" height="40"/>
+    <text x="350" y="42" text-anchor="middle" class="mono">RNN_2</text>
+
+    <rect class="cell" x="440" y="20" width="80" height="40"/>
+    <text x="480" y="42" text-anchor="middle" class="mono">RNN_3</text>
+
+    <!-- Ground-truth tokens (above) -->
+    <rect class="truth" x="60"  y="-40" width="60" height="26"/>
+    <text x="90" y="-22" text-anchor="middle" class="mono" fill="#7B9E89">"L'"</text>
+    <rect class="truth" x="190" y="-40" width="60" height="26"/>
+    <text x="220" y="-22" text-anchor="middle" class="mono" fill="#7B9E89">"animal"</text>
+    <rect class="truth" x="320" y="-40" width="60" height="26"/>
+    <text x="350" y="-22" text-anchor="middle" class="mono" fill="#7B9E89">"n'a"</text>
+    <rect class="truth" x="450" y="-40" width="60" height="26"/>
+    <text x="480" y="-22" text-anchor="middle" class="mono" fill="#7B9E89">"pas"</text>
+
+    <!-- Predictions below (independent training signals) -->
+    <rect class="pred" x="60"  y="80" width="60" height="26"/>
+    <text x="90"  y="98" text-anchor="middle" class="mono">ŷ₀</text>
+    <rect class="pred" x="190" y="80" width="60" height="26"/>
+    <text x="220" y="98" text-anchor="middle" class="mono">ŷ₁</text>
+    <rect class="pred" x="320" y="80" width="60" height="26"/>
+    <text x="350" y="98" text-anchor="middle" class="mono">ŷ₂</text>
+    <rect class="pred" x="450" y="80" width="60" height="26"/>
+    <text x="480" y="98" text-anchor="middle" class="mono">ŷ₃</text>
+
+    <g class="ink" marker-end="url(#tf-a)">
+      <line x1="90"  y1="-14" x2="90"  y2="20"/>
+      <line x1="220" y1="-14" x2="220" y2="20"/>
+      <line x1="350" y1="-14" x2="350" y2="20"/>
+      <line x1="480" y1="-14" x2="480" y2="20"/>
+      <line x1="90"  y1="60" x2="90"  y2="78"/>
+      <line x1="220" y1="60" x2="220" y2="78"/>
+      <line x1="350" y1="60" x2="350" y2="78"/>
+      <line x1="480" y1="60" x2="480" y2="78"/>
+    </g>
+
+    <text x="280" y="140" class="mut" fill="#7B9E89">every step conditioned on correct prefix · stable parallel training · the standard</text>
+  </g>
+
+  <!-- Right-side panel: trade-off -->
+  <g transform="translate(620, 130)">
+    <rect x="0" y="0" width="300" height="170" fill="#EEEBDF" stroke="#C9C4B5"/>
+    <text x="14" y="22" class="tag">TRADE-OFF · EXPOSURE BIAS</text>
+    <text x="14" y="44" class="mut">Training · decoder always sees truth.</text>
+    <text x="14" y="60" class="mut">Inference · decoder sees its own wrong</text>
+    <text x="14" y="76" class="mut">predictions it was never trained on.</text>
+    <text x="14" y="100" class="mono" fill="#A8324B">→ distribution shift at test time</text>
+    <text x="14" y="122" class="mut">Mitigations:</text>
+    <text x="14" y="138" class="mut">• scheduled sampling (Bengio 2015)</text>
+    <text x="14" y="154" class="mut">• Transformer-scale just hides it</text>
+  </g>
+</svg>

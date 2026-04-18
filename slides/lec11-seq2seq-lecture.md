@@ -124,6 +124,12 @@ But at **training**, if the decoder's first prediction is wrong, the error compo
 
 # Teacher forcing · the fix
 
+![w:920px](figures/lec11/svg/teacher_forcing.svg)
+
+---
+
+# The two training regimes side-by-side
+
 During training, **feed the ground-truth previous token** as the decoder's input, not its own previous prediction.
 
 <div class="columns">
@@ -148,6 +154,12 @@ Effect: every target step is trained independently given the correct history. **
 ---
 
 # Exposure bias · the price you pay
+
+![w:900px](figures/lec11/svg/exposure_bias.svg)
+
+---
+
+# Exposure bias · explained
 
 <div class="warning">
 
@@ -189,6 +201,12 @@ Example (simplified):
 
 > greedy: "The dog is running" (but doesn't quite fit context)
 > better: "The puppies are running" (total prob higher)
+
+---
+
+# Beam search · the tree
+
+![w:880px](figures/lec11/svg/beam_search_tree.svg)
 
 ---
 

@@ -106,6 +106,30 @@ No iteration needed during training. Sample $t$ uniformly, compute $x_t$ in clos
 
 ---
 
+# Noise schedules · in one chart
+
+![w:920px](figures/lec21/svg/alpha_schedule.svg)
+
+---
+
+# Noise schedules · the numbers
+
+| $t$ | Linear α̅_t | Cosine α̅_t | What's left |
+|-----|-------------|-------------|-------------|
+| 0 | 1.00 | 1.00 | clean signal |
+| 250 | 0.62 | 0.82 | linear: 38% destroyed · cosine: 18% |
+| 500 | 0.17 | 0.50 | linear: already mostly gone |
+| 750 | 0.02 | 0.18 | linear: essentially pure noise |
+| 1000 | 0.00 | 0.00 | both: N(0, I) |
+
+<div class="insight">
+
+Linear schedule wastes computation on steps near $T$ where everything is noise anyway. Cosine keeps the middle range useful — the middle is where the model actually learns.
+
+</div>
+
+---
+
 # Noise schedules · linear vs cosine
 
 Two common schedules:
@@ -196,6 +220,12 @@ The network architecture is a **U-Net** (L9) with time-step conditioning injecte
 
 ---
 
+# Network architecture · in one picture
+
+![w:920px](figures/lec21/svg/unet_time_conditioning.svg)
+
+---
+
 # Network architecture · U-Net with time
 
 A diffusion model's $\epsilon_\theta(x_t, t)$ is typically a U-Net:
@@ -220,6 +250,12 @@ For 512×512 images · ~1B param U-Net; ~50 steps of sampling; ~5 seconds on a s
 # Connection to score matching
 
 Same thing, different derivation
+
+---
+
+# The score field in one picture
+
+![w:920px](figures/lec21/svg/score_field.svg)
 
 ---
 
