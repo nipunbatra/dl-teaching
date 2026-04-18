@@ -65,15 +65,15 @@ Each lecture maps to one or more UDL chapters — see the tables below and the f
 | # | Topic | UDL | Slides | Notebook |
 |:---:|------|:---:|:------:|:--------:|
 | 12 | Attention Mechanism | Ch 12 | [HTML](html/lec12-attention-lecture.html) · [PDF](pdf/lec12-attention-lecture.pdf) | |
-| 13 | The Transformer — Built Live | Ch 12 | | |
-| 14 | Tokenization &amp; Pretraining Paradigms | Ch 12 | | |
+| 13 | The Transformer — Built Live | Ch 12 | [HTML](html/lec13-transformer-lecture.html) · [PDF](pdf/lec13-transformer-lecture.pdf) | |
+| 14 | Tokenization &amp; Pretraining Paradigms | Ch 12 | [HTML](html/lec14-tokenization-pretraining-lecture.html) · [PDF](pdf/lec14-tokenization-pretraining-lecture.pdf) | |
 
 ## Module 7 · LLMs (L15–L16)
 
 | # | Topic | Reading | Slides | Notebook |
 |:---:|------|:-------:|:------:|:--------:|
-| 15 | Large Language Models | Chinchilla + HF course | | |
-| 16 | Alignment &amp; Fine-tuning | HF PEFT + DPO | | |
+| 15 | Large Language Models | Chinchilla + HF course | [HTML](html/lec15-llms-lecture.html) · [PDF](pdf/lec15-llms-lecture.pdf) | |
+| 16 | Alignment &amp; Fine-tuning | HF PEFT + DPO | [HTML](html/lec16-alignment-finetuning-lecture.html) · [PDF](pdf/lec16-alignment-finetuning-lecture.pdf) | |
 
 ## Module 8 · Self-Supervised &amp; Vision-Language (L17–L18)
 

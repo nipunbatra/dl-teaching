@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .axis  { stroke:#1F1F1E; stroke-width:1; fill:none; }
+      .cell  { stroke:none; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Sinusoidal positional encoding — a unique vector per position, continuous in d</text>
+
+  <!-- LEFT: heatmap of PE matrix (pos x dim) -->
+  <g transform="translate(60, 80)">
+    <text x="200" y="-10" text-anchor="middle" class="tag">PE[pos, 2i] = sin(pos / 10000^{2i/d})</text>
+    <rect x="0" y="0" width="400" height="240" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <!-- Simulate: rows=pos (20), cols=dim (16). Render with sin/cos coloring.
+         For each cell, opacity based on sin(pos / 10000^{2i/d}) mapping to shade -->
+    <g>
+      <!-- We'll generate a fixed pattern by hand: alternating bands, compressed at high i -->
+      <!-- Row 0-19 with 16 columns; cell = 25 wide × 12 high -->
+      <!-- Simplified: use discrete color bands -->
+      <!-- Because verbose: generate with JS in a <script>? No, SVG static. Render ~20x16 = 320 cells -->
+      <!-- Pre-computed pattern: use a formula-like gradient -->
+      <!-- For simplicity, use horizontal bands per dimension with phase shift per row -->
+    </g>
+
+    <!-- Actually: draw 20 rows × 16 cols using inline computation impossible; use representative bands -->
+    <!-- Instead, show a gradient-like pattern using rect with varying opacity -->
+    <g>
+      <!-- row 0: high freq in columns 0-4, low freq later -->
+      <!-- Build 20 rows manually with opacity tied to sin(row * 2^col) -->
+      <!-- 20 rows × 16 columns = 320 rects; doable but verbose -->
+
+      <!-- Simplified representation: wavelength-shortening bars -->
+      <!-- Col 0 (highest freq): alternating every row -->
+      <!-- ... Col 15 (lowest freq): nearly constant -->
+
+      <!-- Programmatically: just show 5 columns with visible periodicity -->
+
+      <!-- Col 0 -->
+      <rect class="cell" x="0" y="0" width="25" height="12" fill="#d97757" fill-opacity="0.9"/>
+      <rect class="cell" x="0" y="12" width="25" height="12" fill="#4a6670" fill-opacity="0.9"/>
+      <rect class="cell" x="0" y="24" width="25" height="12" fill="#d97757" fill-opacity="0.9"/>
+      <rect class="cell" x="0" y="36" width="25" height="12" fill="#4a6670" fill-opacity="0.9"/>
+      <rect class="cell" x="0" y="48" width="25" height="12" fill="#d97757" fill-opacity="0.9"/>
+      <rect class="cell" x="0" y="60" width="25" height="12" fill="#4a6670" fill-opacity="0.9"/>
+      <rect class="cell" x="0" y="72" width="25" height="12" fill="#d97757" fill-opacity="0.9"/>
+      <rect class="cell" x="0" y="84" width="25" height="12" fill="#4a6670" fill-opacity="0.9"/>
+      <rect class="cell" x="0" y="96" width="25" height="12" fill="#d97757" fill-opacity="0.9"/>
+      <rect class="cell" x="0" y="108" width="25" height="12" fill="#4a6670" fill-opacity="0.9"/>
+      <rect class="cell" x="0" y="120" width="25" height="12" fill="#d97757" fill-opacity="0.9"/>
+      <rect class="cell" x="0" y="132" width="25" height="12" fill="#4a6670" fill-opacity="0.9"/>
+      <rect class="cell" x="0" y="144" width="25" height="12" fill="#d97757" fill-opacity="0.9"/>
+      <rect class="cell" x="0" y="156" width="25" height="12" fill="#4a6670" fill-opacity="0.9"/>
+      <rect class="cell" x="0" y="168" width="25" height="12" fill="#d97757" fill-opacity="0.9"/>
+      <rect class="cell" x="0" y="180" width="25" height="12" fill="#4a6670" fill-opacity="0.9"/>
+      <rect class="cell" x="0" y="192" width="25" height="12" fill="#d97757" fill-opacity="0.9"/>
+      <rect class="cell" x="0" y="204" width="25" height="12" fill="#4a6670" fill-opacity="0.9"/>
+      <rect class="cell" x="0" y="216" width="25" height="12" fill="#d97757" fill-opacity="0.9"/>
+      <rect class="cell" x="0" y="228" width="25" height="12" fill="#4a6670" fill-opacity="0.9"/>
+
+      <!-- Col 1 (period 4) -->
+      <rect class="cell" x="50" y="0"   width="25" height="24" fill="#d97757" fill-opacity="0.8"/>
+      <rect class="cell" x="50" y="24"  width="25" height="24" fill="#4a6670" fill-opacity="0.8"/>
+      <rect class="cell" x="50" y="48"  width="25" height="24" fill="#d97757" fill-opacity="0.8"/>
+      <rect class="cell" x="50" y="72"  width="25" height="24" fill="#4a6670" fill-opacity="0.8"/>
+      <rect class="cell" x="50" y="96"  width="25" height="24" fill="#d97757" fill-opacity="0.8"/>
+      <rect class="cell" x="50" y="120" width="25" height="24" fill="#4a6670" fill-opacity="0.8"/>
+      <rect class="cell" x="50" y="144" width="25" height="24" fill="#d97757" fill-opacity="0.8"/>
+      <rect class="cell" x="50" y="168" width="25" height="24" fill="#4a6670" fill-opacity="0.8"/>
+      <rect class="cell" x="50" y="192" width="25" height="24" fill="#d97757" fill-opacity="0.8"/>
+      <rect class="cell" x="50" y="216" width="25" height="24" fill="#4a6670" fill-opacity="0.8"/>
+
+      <!-- Col 2 (period 8) -->
+      <rect class="cell" x="100" y="0"   width="25" height="48" fill="#d97757" fill-opacity="0.7"/>
+      <rect class="cell" x="100" y="48"  width="25" height="48" fill="#4a6670" fill-opacity="0.7"/>
+      <rect class="cell" x="100" y="96"  width="25" height="48" fill="#d97757" fill-opacity="0.7"/>
+      <rect class="cell" x="100" y="144" width="25" height="48" fill="#4a6670" fill-opacity="0.7"/>
+      <rect class="cell" x="100" y="192" width="25" height="48" fill="#d97757" fill-opacity="0.7"/>
+
+      <!-- Col 3 (period 16 - lower visible frequency) -->
+      <rect class="cell" x="150" y="0"   width="25" height="80" fill="#d97757" fill-opacity="0.55"/>
+      <rect class="cell" x="150" y="80"  width="25" height="80" fill="#4a6670" fill-opacity="0.55"/>
+      <rect class="cell" x="150" y="160" width="25" height="80" fill="#d97757" fill-opacity="0.55"/>
+
+      <!-- Col 4+ (period >=32 — barely oscillates within 20 rows) -->
+      <rect class="cell" x="200" y="0"   width="25" height="120" fill="#d97757" fill-opacity="0.4"/>
+      <rect class="cell" x="200" y="120" width="25" height="120" fill="#4a6670" fill-opacity="0.4"/>
+
+      <rect class="cell" x="250" y="0"   width="25" height="240" fill="#d97757" fill-opacity="0.3"/>
+      <rect class="cell" x="300" y="0"   width="25" height="240" fill="#4a6670" fill-opacity="0.25"/>
+      <rect class="cell" x="350" y="0"   width="25" height="240" fill="#d97757" fill-opacity="0.2"/>
+    </g>
+
+    <!-- axis labels -->
+    <text x="200" y="258" text-anchor="middle" class="mut">dimension i →  (low freq to high freq wavelength)</text>
+    <text x="-10" y="120" transform="rotate(-90 -10 120)" text-anchor="middle" class="mut">position pos →</text>
+  </g>
+
+  <!-- RIGHT: explanation and formulas -->
+  <g transform="translate(540, 80)">
+    <text x="0" y="-10" class="tag">WHY THIS SHAPE</text>
+
+    <rect x="0" y="0" width="360" height="240" fill="#EEEBDF" stroke="#C9C4B5"/>
+
+    <text x="14" y="24" class="mono" font-weight="600">PE_{pos, 2i}   = sin(pos / 10000^{2i/d})</text>
+    <text x="14" y="44" class="mono" font-weight="600">PE_{pos, 2i+1} = cos(pos / 10000^{2i/d})</text>
+
+    <text x="14" y="80" class="mono" font-weight="600">Three useful properties</text>
+
+    <g class="mut">
+      <text x="14" y="102">① unique vector per position (up to d dims)</text>
+      <text x="14" y="124">② nearby positions have similar PEs (smoothness)</text>
+      <text x="14" y="146">③ PE_{pos+k} is a linear function of PE_{pos}</text>
+      <text x="14" y="162">    → the model can learn to attend by offset</text>
+      <text x="14" y="194">④ extrapolates to longer sequences than trained on</text>
+      <text x="14" y="216">    (in principle — in practice, learned PEs are safer)</text>
+    </g>
+  </g>
+
+  <!-- Bottom -->
+  <g transform="translate(60, 360)">
+    <text x="420" y="0" text-anchor="middle" class="mut" font-style="italic">
+      Low-index dims (left) oscillate fast; high-index dims (right) are almost constant. Think of it as a
+      <tspan fill="#D97757" font-weight="600">multi-resolution clock</tspan> — minute hand, hour hand, day-of-week, week-of-year.
+    </text>
+  </g>
+</svg>

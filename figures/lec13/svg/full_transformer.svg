@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .enc    { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.3; rx:4; ry:4; }
+      .dec    { fill:#EAD3C5; stroke:#D97757; stroke-width:1.3; rx:4; ry:4; }
+      .norm   { fill:#F6F0DF; stroke:#C9A961; stroke-width:1.3; rx:4; ry:4; }
+      .leaf   { fill:#EAE7DC; stroke:#6B6A65; stroke-width:1; }
+      .ink    { stroke:#1F1F1E; fill:none; stroke-width:1.2; }
+      .cross  { stroke:#D97757; fill:none; stroke-width:1.8; stroke-dasharray:4 2; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+    <marker id="ft-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/></marker>
+    <marker id="ft-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#D97757"/></marker>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">The full Transformer · encoder-decoder · N stacked layers per side</text>
+
+  <!-- ENCODER STACK (left) -->
+  <g transform="translate(80, 80)">
+    <text x="140" y="-8" text-anchor="middle" class="tag" fill="#7B9E89">ENCODER × N</text>
+
+    <rect class="leaf" x="90" y="0" width="100" height="26"/>
+    <text x="140" y="18" text-anchor="middle" class="mono">source tokens</text>
+    <rect class="leaf" x="90" y="36" width="100" height="20"/>
+    <text x="140" y="50" text-anchor="middle" class="mono">+ PE</text>
+
+    <!-- Encoder block -->
+    <rect class="enc" x="40" y="70" width="200" height="50"/>
+    <text x="140" y="90" text-anchor="middle" class="mono" fill="#7B9E89" font-weight="600">Multi-Head Self-Attn</text>
+    <text x="140" y="108" text-anchor="middle" class="mut" fill="#7B9E89">+ Norm + Residual</text>
+    <rect class="enc" x="40" y="130" width="200" height="50"/>
+    <text x="140" y="150" text-anchor="middle" class="mono" fill="#7B9E89" font-weight="600">Feed-Forward</text>
+    <text x="140" y="168" text-anchor="middle" class="mut" fill="#7B9E89">+ Norm + Residual</text>
+
+    <!-- Repeated N times (stacked) -->
+    <text x="140" y="200" text-anchor="middle" class="mono">× N = 6</text>
+    <rect class="enc" x="40" y="220" width="200" height="30" opacity="0.6"/>
+    <text x="140" y="238" text-anchor="middle" class="mut" fill="#7B9E89">(same block, new weights)</text>
+
+    <!-- Arrows -->
+    <g class="ink" marker-end="url(#ft-a)">
+      <line x1="140" y1="26" x2="140" y2="36"/>
+      <line x1="140" y1="56" x2="140" y2="70"/>
+      <line x1="140" y1="120" x2="140" y2="130"/>
+      <line x1="140" y1="180" x2="140" y2="205"/>
+      <line x1="140" y1="210" x2="140" y2="220"/>
+    </g>
+  </g>
+
+  <!-- DECODER STACK (right) -->
+  <g transform="translate(520, 80)">
+    <text x="140" y="-8" text-anchor="middle" class="tag" fill="#D97757">DECODER × N</text>
+
+    <rect class="leaf" x="90" y="0" width="100" height="26"/>
+    <text x="140" y="18" text-anchor="middle" class="mono">target tokens</text>
+    <text x="140" y="22" text-anchor="middle" class="mut" font-size="9">(shifted right)</text>
+    <rect class="leaf" x="90" y="36" width="100" height="20"/>
+    <text x="140" y="50" text-anchor="middle" class="mono">+ PE</text>
+
+    <!-- Block 1: causal self-attn -->
+    <rect class="dec" x="40" y="70" width="200" height="50"/>
+    <text x="140" y="90" text-anchor="middle" class="mono" fill="#D97757" font-weight="600">Masked Self-Attn</text>
+    <text x="140" y="108" text-anchor="middle" class="mut" fill="#D97757">(causal — no peeking ahead)</text>
+
+    <!-- Block 2: cross-attn -->
+    <rect class="dec" x="40" y="130" width="200" height="50"/>
+    <text x="140" y="150" text-anchor="middle" class="mono" fill="#D97757" font-weight="600">Cross-Attention</text>
+    <text x="140" y="168" text-anchor="middle" class="mut" fill="#D97757">Q from decoder · K,V from encoder</text>
+
+    <!-- FFN -->
+    <rect class="dec" x="40" y="190" width="200" height="50"/>
+    <text x="140" y="210" text-anchor="middle" class="mono" fill="#D97757" font-weight="600">Feed-Forward</text>
+    <text x="140" y="228" text-anchor="middle" class="mut" fill="#D97757">+ Norm + Residual</text>
+
+    <text x="140" y="258" text-anchor="middle" class="mono">× N = 6</text>
+  </g>
+
+  <!-- Encoder output → decoder (cross-attention K,V) -->
+  <path class="cross" marker-end="url(#ft-c)" d="M 320 300 Q 420 260 520 150"/>
+  <text x="420" y="250" text-anchor="middle" class="mono" fill="#D97757">encoder K, V</text>
+
+  <!-- Output head -->
+  <g transform="translate(520, 360)">
+    <rect class="norm" x="40" y="0" width="200" height="30"/>
+    <text x="140" y="20" text-anchor="middle" class="mono" fill="#C9A961">LayerNorm</text>
+    <rect class="dec" x="40" y="40" width="200" height="30"/>
+    <text x="140" y="60" text-anchor="middle" class="mono" fill="#D97757" font-weight="600">Linear · d_model → V</text>
+    <rect class="norm" x="40" y="80" width="200" height="30"/>
+    <text x="140" y="100" text-anchor="middle" class="mono" fill="#C9A961">softmax → probs</text>
+  </g>
+  <line x1="660" y1="340" x2="660" y2="360" class="ink" marker-end="url(#ft-a)"/>
+
+  <!-- Output -->
+  <g transform="translate(760, 415)">
+    <rect x="0" y="0" width="140" height="30" fill="#F0EEE5" stroke="#1F1F1E"/>
+    <text x="70" y="20" text-anchor="middle" class="mono">P(next token)</text>
+  </g>
+  <line x1="660" y1="470" x2="760" y2="430" class="ink" marker-end="url(#ft-a)"/>
+
+  <!-- Caption -->
+  <g transform="translate(60, 475)">
+    <text x="420" y="0" text-anchor="middle" class="mut" font-style="italic">
+      Encoder-decoder = translation. <tspan fill="#7B9E89" font-weight="600">Encoder-only</tspan> = BERT.
+      <tspan fill="#D97757" font-weight="600">Decoder-only</tspan> (drop cross-attn) = GPT, Llama, Claude.
+    </text>
+  </g>
+</svg>

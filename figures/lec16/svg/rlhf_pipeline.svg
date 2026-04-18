@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .stage    { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.3; rx:4; ry:4; }
+      .stage-a  { fill:#EAD3C5; stroke:#D97757; stroke-width:1.4; rx:4; ry:4; }
+      .stage-s  { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.4; rx:4; ry:4; }
+      .stage-b  { fill:#DCE3E6; stroke:#4A6670; stroke-width:1.4; rx:4; ry:4; }
+      .ink      { stroke:#1F1F1E; fill:none; stroke-width:1.3; }
+      .mono     { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut      { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl      { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag      { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+    <marker id="rl-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/></marker>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">RLHF vs DPO — both align a pretrained model, one adds a reward model step, one doesn't</text>
+
+  <!-- RLHF pipeline (top) -->
+  <g transform="translate(30, 70)">
+    <text x="450" y="-10" text-anchor="middle" class="tag" fill="#A8324B">RLHF · InstructGPT / original 2022</text>
+
+    <!-- Stage 1: base -->
+    <rect class="stage-b" x="0" y="0" width="150" height="70"/>
+    <text x="75" y="22" text-anchor="middle" class="mono" fill="#4A6670" font-weight="600">Step 1 · Base LM</text>
+    <text x="75" y="40" text-anchor="middle" class="mut" fill="#4A6670">Pretrained</text>
+    <text x="75" y="54" text-anchor="middle" class="mut" fill="#4A6670">Llama 70B, etc.</text>
+
+    <!-- Stage 2: SFT -->
+    <rect class="stage-a" x="200" y="0" width="150" height="70"/>
+    <text x="275" y="22" text-anchor="middle" class="mono" fill="#D97757" font-weight="600">Step 2 · SFT</text>
+    <text x="275" y="40" text-anchor="middle" class="mut" fill="#D97757">Supervised fine-tune</text>
+    <text x="275" y="54" text-anchor="middle" class="mut" fill="#D97757">on (prompt, response)</text>
+
+    <!-- Stage 3: Reward Model -->
+    <rect class="stage-s" x="400" y="0" width="200" height="70"/>
+    <text x="500" y="22" text-anchor="middle" class="mono" fill="#7B9E89" font-weight="600">Step 3 · Reward Model</text>
+    <text x="500" y="40" text-anchor="middle" class="mut" fill="#7B9E89">Train r_φ(x, y) from</text>
+    <text x="500" y="54" text-anchor="middle" class="mut" fill="#7B9E89">human preference pairs</text>
+
+    <!-- Stage 4: PPO -->
+    <rect class="stage-a" x="650" y="0" width="250" height="70"/>
+    <text x="775" y="22" text-anchor="middle" class="mono" fill="#D97757" font-weight="600">Step 4 · PPO optimization</text>
+    <text x="775" y="40" text-anchor="middle" class="mut" fill="#D97757">Policy π_θ ← maximize r_φ(x, π_θ(x))</text>
+    <text x="775" y="54" text-anchor="middle" class="mut" fill="#D97757">with KL penalty to SFT</text>
+
+    <!-- Arrows -->
+    <g class="ink" marker-end="url(#rl-a)">
+      <line x1="150" y1="35" x2="200" y2="35"/>
+      <line x1="350" y1="35" x2="400" y2="35"/>
+      <line x1="600" y1="35" x2="650" y2="35"/>
+    </g>
+    <text x="900" y="35" class="mono" fill="#A8324B" font-weight="600">→ aligned</text>
+  </g>
+
+  <!-- Divider -->
+  <line x1="30" y1="190" x2="930" y2="190" stroke="#C9C4B5" stroke-dasharray="3 3"/>
+
+  <!-- DPO pipeline (bottom) -->
+  <g transform="translate(30, 220)">
+    <text x="450" y="-10" text-anchor="middle" class="tag" fill="#7B9E89">DPO · Rafailov 2023 · no reward model</text>
+
+    <rect class="stage-b" x="0" y="0" width="150" height="70"/>
+    <text x="75" y="22" text-anchor="middle" class="mono" fill="#4A6670" font-weight="600">Step 1 · Base LM</text>
+    <text x="75" y="40" text-anchor="middle" class="mut" fill="#4A6670">Pretrained</text>
+
+    <rect class="stage-a" x="200" y="0" width="150" height="70"/>
+    <text x="275" y="22" text-anchor="middle" class="mono" fill="#D97757" font-weight="600">Step 2 · SFT</text>
+    <text x="275" y="40" text-anchor="middle" class="mut" fill="#D97757">Supervised fine-tune</text>
+    <text x="275" y="54" text-anchor="middle" class="mut" fill="#D97757">on (prompt, response)</text>
+
+    <!-- Skip reward model entirely -->
+    <g transform="translate(400, 0)">
+      <rect width="500" height="70" fill="#D8E3DE" stroke="#7B9E89" stroke-width="1.4" stroke-dasharray="4 3" rx="4"/>
+      <text x="250" y="22" text-anchor="middle" class="mono" fill="#7B9E89" font-weight="600">Step 3 · DPO objective (one loss, no PPO)</text>
+      <text x="250" y="42" text-anchor="middle" class="mut" fill="#7B9E89">maximize log σ[β log (π_θ(y_w)/π_ref(y_w)) − β log (π_θ(y_l)/π_ref(y_l))]</text>
+      <text x="250" y="58" text-anchor="middle" class="mut" fill="#7B9E89" font-style="italic">directly on preference pairs · no RL loop</text>
+    </g>
+
+    <g class="ink" marker-end="url(#rl-a)">
+      <line x1="150" y1="35" x2="200" y2="35"/>
+      <line x1="350" y1="35" x2="400" y2="35"/>
+    </g>
+    <text x="920" y="35" class="mono" fill="#7B9E89" font-weight="600">→ aligned</text>
+  </g>
+
+  <!-- Comparison table -->
+  <g transform="translate(30, 340)">
+    <rect x="0" y="0" width="900" height="90" fill="#EEEBDF" stroke="#C9C4B5"/>
+    <text x="14" y="22" class="tag">WHY DPO REPLACED MOST RLHF BY 2024</text>
+    <g class="mut">
+      <text x="14"  y="44">• One stage instead of two (no reward model to train, debug, balance)</text>
+      <text x="14"  y="62">• Simpler code — pure supervised loss, no PPO</text>
+      <text x="14"  y="80">• Often matches RLHF quality on benchmarks; still debated for top-tier quality</text>
+      <text x="460" y="44">• Anthropic / OpenAI / Google still use RLHF variants at the frontier</text>
+      <text x="460" y="62">• Open-source (Mistral, Hugging Face) has converged on DPO</text>
+      <text x="460" y="80" font-style="italic">• 2025 variants: IPO, KTO, SimPO — all refinements of DPO</text>
+    </g>
+  </g>
+</svg>

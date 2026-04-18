@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .q-head { fill:#EAD3C5; stroke:#D97757; stroke-width:1.3; rx:3; ry:3; }
+      .k-head { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.3; rx:3; ry:3; }
+      .v-head { fill:#DCE3E6; stroke:#4A6670; stroke-width:1.3; rx:3; ry:3; }
+      .ink    { stroke:#6B6A65; fill:none; stroke-width:0.8; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Attention variants — cheapen the KV-cache, not the Q heads</text>
+
+  <!-- Multi-Head Attention (MHA) -->
+  <g transform="translate(60, 70)">
+    <text x="130" y="-10" text-anchor="middle" class="tag">MHA · Vanilla</text>
+
+    <!-- 8 Q heads -->
+    <g transform="translate(0, 20)">
+      <text x="-10" y="12" text-anchor="end" class="mut">Q</text>
+      <rect class="q-head" x="0"   y="0" width="28" height="20"/>
+      <rect class="q-head" x="32"  y="0" width="28" height="20"/>
+      <rect class="q-head" x="64"  y="0" width="28" height="20"/>
+      <rect class="q-head" x="96"  y="0" width="28" height="20"/>
+      <rect class="q-head" x="128" y="0" width="28" height="20"/>
+      <rect class="q-head" x="160" y="0" width="28" height="20"/>
+      <rect class="q-head" x="192" y="0" width="28" height="20"/>
+      <rect class="q-head" x="224" y="0" width="28" height="20"/>
+    </g>
+    <!-- 8 K heads -->
+    <g transform="translate(0, 60)">
+      <text x="-10" y="12" text-anchor="end" class="mut">K</text>
+      <rect class="k-head" x="0"   y="0" width="28" height="20"/>
+      <rect class="k-head" x="32"  y="0" width="28" height="20"/>
+      <rect class="k-head" x="64"  y="0" width="28" height="20"/>
+      <rect class="k-head" x="96"  y="0" width="28" height="20"/>
+      <rect class="k-head" x="128" y="0" width="28" height="20"/>
+      <rect class="k-head" x="160" y="0" width="28" height="20"/>
+      <rect class="k-head" x="192" y="0" width="28" height="20"/>
+      <rect class="k-head" x="224" y="0" width="28" height="20"/>
+    </g>
+    <!-- 8 V heads -->
+    <g transform="translate(0, 90)">
+      <text x="-10" y="12" text-anchor="end" class="mut">V</text>
+      <rect class="v-head" x="0"   y="0" width="28" height="20"/>
+      <rect class="v-head" x="32"  y="0" width="28" height="20"/>
+      <rect class="v-head" x="64"  y="0" width="28" height="20"/>
+      <rect class="v-head" x="96"  y="0" width="28" height="20"/>
+      <rect class="v-head" x="128" y="0" width="28" height="20"/>
+      <rect class="v-head" x="160" y="0" width="28" height="20"/>
+      <rect class="v-head" x="192" y="0" width="28" height="20"/>
+      <rect class="v-head" x="224" y="0" width="28" height="20"/>
+    </g>
+
+    <text x="130" y="140" text-anchor="middle" class="mono">8 Q · 8 K · 8 V</text>
+    <text x="130" y="156" text-anchor="middle" class="mut">baseline</text>
+    <text x="130" y="180" text-anchor="middle" class="mono" fill="#A8324B">KV-cache = 8 · 2 · N · d_k</text>
+  </g>
+
+  <!-- Multi-Query Attention (MQA) -->
+  <g transform="translate(380, 70)">
+    <text x="130" y="-10" text-anchor="middle" class="tag" fill="#7B9E89">MQA · one K, one V</text>
+
+    <g transform="translate(0, 20)">
+      <text x="-10" y="12" text-anchor="end" class="mut">Q</text>
+      <rect class="q-head" x="0"   y="0" width="28" height="20"/>
+      <rect class="q-head" x="32"  y="0" width="28" height="20"/>
+      <rect class="q-head" x="64"  y="0" width="28" height="20"/>
+      <rect class="q-head" x="96"  y="0" width="28" height="20"/>
+      <rect class="q-head" x="128" y="0" width="28" height="20"/>
+      <rect class="q-head" x="160" y="0" width="28" height="20"/>
+      <rect class="q-head" x="192" y="0" width="28" height="20"/>
+      <rect class="q-head" x="224" y="0" width="28" height="20"/>
+    </g>
+    <g transform="translate(0, 60)">
+      <text x="-10" y="12" text-anchor="end" class="mut">K</text>
+      <rect class="k-head" x="112" y="0" width="28" height="20"/>
+    </g>
+    <g transform="translate(0, 90)">
+      <text x="-10" y="12" text-anchor="end" class="mut">V</text>
+      <rect class="v-head" x="112" y="0" width="28" height="20"/>
+    </g>
+
+    <text x="130" y="140" text-anchor="middle" class="mono">8 Q · 1 K · 1 V</text>
+    <text x="130" y="156" text-anchor="middle" class="mut" fill="#7B9E89">all Q heads share one K/V</text>
+    <text x="130" y="180" text-anchor="middle" class="mono" fill="#7B9E89">KV-cache = 2 · N · d_k (1/8)</text>
+  </g>
+
+  <!-- Grouped-Query Attention (GQA) -->
+  <g transform="translate(700, 70)">
+    <text x="130" y="-10" text-anchor="middle" class="tag" fill="#D97757">GQA · 2 K/V groups</text>
+
+    <g transform="translate(0, 20)">
+      <text x="-10" y="12" text-anchor="end" class="mut">Q</text>
+      <rect class="q-head" x="0"   y="0" width="28" height="20"/>
+      <rect class="q-head" x="32"  y="0" width="28" height="20"/>
+      <rect class="q-head" x="64"  y="0" width="28" height="20"/>
+      <rect class="q-head" x="96"  y="0" width="28" height="20"/>
+      <rect class="q-head" x="128" y="0" width="28" height="20"/>
+      <rect class="q-head" x="160" y="0" width="28" height="20"/>
+      <rect class="q-head" x="192" y="0" width="28" height="20"/>
+      <rect class="q-head" x="224" y="0" width="28" height="20"/>
+    </g>
+    <g transform="translate(0, 60)">
+      <text x="-10" y="12" text-anchor="end" class="mut">K</text>
+      <rect class="k-head" x="48"  y="0" width="28" height="20"/>
+      <rect class="k-head" x="176" y="0" width="28" height="20"/>
+    </g>
+    <g transform="translate(0, 90)">
+      <text x="-10" y="12" text-anchor="end" class="mut">V</text>
+      <rect class="v-head" x="48"  y="0" width="28" height="20"/>
+      <rect class="v-head" x="176" y="0" width="28" height="20"/>
+    </g>
+    <!-- Bracket annotations showing groups -->
+    <g stroke="#D97757" fill="none" stroke-width="1">
+      <path d="M -2 4 C -6 0 0 0 0 0 L 124 0 C 130 0 130 4 130 4"/>
+      <path d="M 126 4 C 122 0 128 0 128 0 L 252 0 C 258 0 258 4 258 4"/>
+    </g>
+
+    <text x="130" y="140" text-anchor="middle" class="mono">8 Q · 2 K · 2 V</text>
+    <text x="130" y="156" text-anchor="middle" class="mut" fill="#D97757">4 Q heads per K/V group</text>
+    <text x="130" y="180" text-anchor="middle" class="mono" fill="#D97757">KV-cache = 2 · 2 · N · d_k (1/4)</text>
+  </g>
+
+  <!-- Why this matters -->
+  <g transform="translate(60, 260)">
+    <rect x="0" y="0" width="840" height="110" fill="#EEEBDF" stroke="#C9C4B5"/>
+    <text x="14" y="22" class="tag">WHY IT MATTERS</text>
+    <text x="14" y="44" class="mut">During <tspan fill="#1F1F1E" font-weight="600">autoregressive decoding</tspan>, the KV-cache has to be kept in memory for every past token.</text>
+    <text x="14" y="62" class="mut">At long context (100k+ tokens) this dominates inference cost — reducing K/V heads gives near-linear savings.</text>
+    <text x="14" y="84" class="mut" font-style="italic">MQA (Shazeer 2019) was aggressive — lost some quality. GQA (Ainslie 2023) found the sweet spot;</text>
+    <text x="14" y="100" class="mut" font-style="italic">Llama 2 70B and most modern LLMs use GQA.</text>
+  </g>
+</svg>

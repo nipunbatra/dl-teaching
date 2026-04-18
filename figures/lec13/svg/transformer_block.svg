@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .box    { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.3; rx:4; ry:4; }
+      .norm   { fill:#F6F0DF; stroke:#C9A961; stroke-width:1.3; rx:4; ry:4; }
+      .attn   { fill:#EAD3C5; stroke:#D97757; stroke-width:1.3; rx:4; ry:4; }
+      .ffn    { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.3; rx:4; ry:4; }
+      .ink    { stroke:#1F1F1E; fill:none; stroke-width:1.3; }
+      .skip   { stroke:#D97757; fill:none; stroke-width:2.2; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:12px; fill:#1F1F1E; }
+      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+    <marker id="tb-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/></marker>
+    <marker id="tb-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#D97757"/></marker>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">The Transformer block — pre-norm version (modern default)</text>
+
+  <!-- Input -->
+  <rect class="box" x="420" y="60" width="120" height="30"/>
+  <text x="480" y="80" text-anchor="middle" class="mono">input  x</text>
+
+  <!-- LayerNorm 1 -->
+  <rect class="norm" x="420" y="115" width="120" height="34"/>
+  <text x="480" y="137" text-anchor="middle" class="mono" fill="#C9A961">LayerNorm</text>
+
+  <!-- Multi-head self-attention -->
+  <rect class="attn" x="380" y="170" width="200" height="50"/>
+  <text x="480" y="192" text-anchor="middle" class="mono" fill="#D97757" font-weight="600">Multi-Head Self-Attention</text>
+  <text x="480" y="208" text-anchor="middle" class="mut" fill="#D97757">h heads · d_k = d / h</text>
+
+  <!-- Add (residual 1) -->
+  <circle cx="480" cy="250" r="14" fill="#EAD3C5" stroke="#D97757" stroke-width="1.4"/>
+  <text x="480" y="254" text-anchor="middle" class="mono" font-weight="600">+</text>
+
+  <!-- LayerNorm 2 -->
+  <rect class="norm" x="420" y="290" width="120" height="34"/>
+  <text x="480" y="312" text-anchor="middle" class="mono" fill="#C9A961">LayerNorm</text>
+
+  <!-- FFN -->
+  <rect class="ffn" x="380" y="345" width="200" height="60"/>
+  <text x="480" y="365" text-anchor="middle" class="mono" fill="#7B9E89" font-weight="600">Feed-Forward</text>
+  <text x="480" y="380" text-anchor="middle" class="mono" fill="#7B9E89">d → 4d → d</text>
+  <text x="480" y="395" text-anchor="middle" class="mut" fill="#7B9E89">GELU / SiLU</text>
+
+  <!-- Output -->
+  <circle cx="480" cy="430" r="14" fill="#EAD3C5" stroke="#D97757" stroke-width="1.4"/>
+  <text x="480" y="434" text-anchor="middle" class="mono" font-weight="600">+</text>
+
+  <!-- Main path arrows -->
+  <g class="ink" marker-end="url(#tb-a)">
+    <line x1="480" y1="90"  x2="480" y2="115"/>
+    <line x1="480" y1="149" x2="480" y2="170"/>
+    <line x1="480" y1="220" x2="480" y2="236"/>
+    <line x1="480" y1="264" x2="480" y2="290"/>
+    <line x1="480" y1="324" x2="480" y2="345"/>
+    <line x1="480" y1="405" x2="480" y2="416"/>
+  </g>
+
+  <!-- Skip 1 (input → after attn) -->
+  <path class="skip" marker-end="url(#tb-s)" d="M 540 75 L 620 75 L 620 250 L 496 250"/>
+  <text x="628" y="160" class="mono" fill="#D97757">residual</text>
+
+  <!-- Skip 2 (after attn → after FFN) -->
+  <path class="skip" marker-end="url(#tb-s)" d="M 540 270 L 620 270 L 620 430 L 496 430"/>
+
+  <!-- LEFT annotations -->
+  <g transform="translate(40, 100)">
+    <rect x="0" y="0" width="290" height="60" fill="#F6F0DF" stroke="#C9A961"/>
+    <text x="14" y="20" class="tag" fill="#C9A961">PRE-NORM</text>
+    <text x="14" y="40" class="mut">Norm BEFORE the sublayer.</text>
+    <text x="14" y="56" class="mut">Skip path stays untouched → clean gradient highway.</text>
+  </g>
+
+  <g transform="translate(40, 200)">
+    <rect x="0" y="0" width="290" height="60" fill="#EAD3C5" stroke="#D97757"/>
+    <text x="14" y="20" class="tag" fill="#D97757">MULTI-HEAD ATTN</text>
+    <text x="14" y="40" class="mut">h parallel attention heads, each of width d/h.</text>
+    <text x="14" y="56" class="mut">Outputs concatenated → output projection W_O.</text>
+  </g>
+
+  <g transform="translate(40, 340)">
+    <rect x="0" y="0" width="290" height="70" fill="#D8E3DE" stroke="#7B9E89"/>
+    <text x="14" y="20" class="tag" fill="#7B9E89">FEED-FORWARD</text>
+    <text x="14" y="40" class="mut">Position-wise MLP · same weights every position.</text>
+    <text x="14" y="56" class="mut">Expansion ratio 4× · ~2/3 of the block's params.</text>
+    <text x="14" y="70" class="mut">Where "computation happens."</text>
+  </g>
+
+  <!-- output y -->
+  <g transform="translate(660, 420)">
+    <rect class="box" x="0" y="0" width="100" height="30"/>
+    <text x="50" y="20" text-anchor="middle" class="mono">output  y</text>
+  </g>
+  <line x1="494" y1="430" x2="660" y2="435" class="ink" marker-end="url(#tb-a)"/>
+</svg>
