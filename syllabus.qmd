@@ -8,7 +8,7 @@ subtitle: "Lecture-by-lecture reading map for Prince · *Understanding Deep Lear
 >
 > The course follows the UDL chapter order closely. Read the cited chapter(s) **before** each lecture.
 >
-> **23 lectures total.** L6 (Regularization) is comprehensive — spans two class sessions.
+> **24 lectures total.** L6 (Regularization) is comprehensive — spans two class sessions.
 
 ## Module 1 · Foundations &amp; Going Deep { .module-1 }
 
@@ -81,16 +81,18 @@ subtitle: "Lecture-by-lecture reading map for Prince · *Understanding Deep Lear
 
 | # | Lecture | Reading |
 |:-:|---------|---------|
-| 23 | Efficient Inference, Agents &amp; Open Problems | Chip Huyen blog; HF inference docs; Dao 2022 (FlashAttention); Hinton 2015 (distillation); Anthropic interpretability blog |
+| 23 | Efficient Inference (KV-cache, quantization, FlashAttention, distillation, speculative decoding) | Chip Huyen blog; HF inference docs; Dao 2022 (FlashAttention); Hinton 2015 (distillation); Leviathan 2022 (speculative decoding); Kwon 2023 (vLLM) |
+| 24 | Frontier · Agents, Reasoning, Interpretability + Course Recap | Yao 2022 (ReAct); Wei 2022 (CoT); OpenAI o1 blog; Anthropic interpretability blog; Elhage 2021 (circuits) |
 
 ---
 
-## Where UDL doesn't cover · four lectures
+## Where UDL doesn't cover
 
 - **L9 · Detection &amp; Segmentation** — UDL does not cover OD/segmentation. Use Bishop Ch 10 + CS231n notes.
 - **L15 · LLMs at scale** — scaling laws, RoPE, GQA, distributed training. Use Chinchilla paper + HF course.
 - **L16 · Alignment &amp; Fine-tuning** — LoRA, RLHF, DPO. Use HF PEFT docs + DPO paper.
-- **L23 · Efficient Inference + frontier** — KV-cache, quantization, agents, interpretability. Use Chip Huyen blog + HF docs.
+- **L23 · Efficient Inference** — KV-cache, quantization, FlashAttention. Blog posts + papers.
+- **L24 · Frontier · Agents, Reasoning, Interpretability** — active 2024–26 research. Curated blogs + papers.
 
 ---
 

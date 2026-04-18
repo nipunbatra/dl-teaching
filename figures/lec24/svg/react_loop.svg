@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .llm      { fill:#EAD3C5; stroke:#D97757; stroke-width:1.4; rx:4; ry:4; }
+      .tool     { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.3; rx:4; ry:4; }
+      .world    { fill:#DCE3E6; stroke:#4A6670; stroke-width:1.3; rx:4; ry:4; }
+      .thought  { fill:#F6F0DF; stroke:#C9A961; stroke-width:1.2; rx:3; ry:3; }
+      .user     { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.2; rx:3; ry:3; }
+      .loop     { stroke:#D97757; fill:none; stroke-width:2; stroke-dasharray:5 3; }
+      .ink      { stroke:#1F1F1E; fill:none; stroke-width:1.2; }
+      .mono     { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut      { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl      { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag      { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+    <marker id="re-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/></marker>
+    <marker id="re-l" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#D97757"/></marker>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">ReAct loop — LLM thinks, acts, observes, repeats until done</text>
+
+  <!-- User task -->
+  <g transform="translate(40, 80)">
+    <rect class="user" x="0" y="0" width="180" height="50"/>
+    <text x="90" y="22" text-anchor="middle" class="mono">user task:</text>
+    <text x="90" y="40" text-anchor="middle" class="mono">"book a flight for Monday"</text>
+  </g>
+
+  <!-- LLM at center -->
+  <g transform="translate(390, 170)">
+    <rect class="llm" x="0" y="0" width="180" height="80"/>
+    <text x="90" y="28" text-anchor="middle" class="mono" fill="#D97757" font-weight="600">LLM agent</text>
+    <text x="90" y="48" text-anchor="middle" class="mut" fill="#D97757">think → act → observe</text>
+    <text x="90" y="66" text-anchor="middle" class="mut" fill="#D97757">(Claude 4, GPT-5, ...)</text>
+  </g>
+
+  <!-- Thought -->
+  <g transform="translate(150, 210)">
+    <rect class="thought" x="0" y="0" width="180" height="40"/>
+    <text x="90" y="22" text-anchor="middle" class="mono" fill="#C9A961">Thought:</text>
+    <text x="90" y="36" text-anchor="middle" class="mut" fill="#C9A961">"I need flight options first"</text>
+  </g>
+
+  <!-- Tools -->
+  <g transform="translate(630, 90)">
+    <text x="100" y="-6" class="tag" fill="#7B9E89">TOOLS AVAILABLE</text>
+    <rect class="tool" x="0" y="0" width="200" height="30"/>
+    <text x="100" y="20" text-anchor="middle" class="mono" fill="#7B9E89">search_flights(from, to, date)</text>
+    <rect class="tool" x="0" y="40" width="200" height="30"/>
+    <text x="100" y="60" text-anchor="middle" class="mono" fill="#7B9E89">book_flight(flight_id)</text>
+    <rect class="tool" x="0" y="80" width="200" height="30"/>
+    <text x="100" y="100" text-anchor="middle" class="mono" fill="#7B9E89">send_email(to, body)</text>
+    <rect class="tool" x="0" y="120" width="200" height="30"/>
+    <text x="100" y="140" text-anchor="middle" class="mono" fill="#7B9E89">get_calendar(date_range)</text>
+  </g>
+
+  <!-- Action -->
+  <g transform="translate(600, 300)">
+    <rect class="tool" x="0" y="0" width="220" height="30"/>
+    <text x="110" y="20" text-anchor="middle" class="mono" fill="#7B9E89">Action: search_flights("BLR", "DEL", "Mon")</text>
+  </g>
+
+  <!-- Observation -->
+  <g transform="translate(630, 350)">
+    <rect class="world" x="0" y="0" width="220" height="40"/>
+    <text x="110" y="18" text-anchor="middle" class="mono" fill="#4A6670">Observation:</text>
+    <text x="110" y="34" text-anchor="middle" class="mut" fill="#4A6670">"found 12 flights. best: AI564..."</text>
+  </g>
+
+  <!-- Arrows -->
+  <g class="ink" marker-end="url(#re-a)">
+    <!-- user → LLM -->
+    <line x1="220" y1="110" x2="390" y2="195"/>
+    <!-- LLM → thought (inside reasoning) -->
+    <line x1="395" y1="215" x2="330" y2="220"/>
+    <!-- LLM → action -->
+    <line x1="575" y1="235" x2="620" y2="300"/>
+    <!-- Action → observation -->
+    <line x1="720" y1="335" x2="720" y2="355"/>
+  </g>
+
+  <!-- Loop arrow (observation back to LLM) -->
+  <path class="loop" marker-end="url(#re-l)" d="M 630 370 L 400 370 L 300 300 L 390 250"/>
+  <text x="300" y="330" class="mono" fill="#D97757">repeat until done</text>
+
+  <!-- Bottom caption -->
+  <g transform="translate(40, 395)">
+    <text x="440" y="0" text-anchor="middle" class="mut" font-style="italic">
+      <tspan fill="#D97757" font-weight="600">ReAct</tspan> · Yao et al. 2022 · interleave <tspan font-family="'JetBrains Mono'">Thought</tspan>, <tspan font-family="'JetBrains Mono'">Action</tspan>, <tspan font-family="'JetBrains Mono'">Observation</tspan>. Underpins every modern agent · Claude Code, GPT operator, LangChain, AutoGen.
+    </text>
+  </g>
+</svg>

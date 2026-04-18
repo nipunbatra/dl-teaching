@@ -39,6 +39,19 @@ first5: dirs
 	@echo "Done: L1-L5 HTML"
 
 # Convenience: build HTML for the first 7 lectures (merged reg as L6, CNN as L7)
+first24: dirs
+	@echo "Building HTML for L1-L24..."
+	@for n in 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24; do \
+		for f in $(SLIDES_DIR)/lec$$n-*.md; do \
+			if [ -f "$$f" ]; then \
+				name=$$(basename "$$f" .md); \
+				echo "  $$f -> $(HTML_DIR)/$$name.html"; \
+				npx marp "$$f" -o "$(HTML_DIR)/$$name.html" --html --allow-local-files --theme-set $(THEME); \
+			fi \
+		done \
+	done
+	@echo "Done: L1-L24 HTML"
+
 first21: dirs
 	@echo "Building HTML for L1-L21..."
 	@for n in 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21; do \

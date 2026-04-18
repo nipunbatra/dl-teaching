@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .tok-old   { fill:#DCE3E6; stroke:#4A6670; stroke-width:1.2; rx:2; ry:2; }
+      .tok-cur   { fill:#EAD3C5; stroke:#D97757; stroke-width:1.5; rx:2; ry:2; }
+      .kvcache   { fill:#F6F0DF; stroke:#C9A961; stroke-width:1.4; rx:3; ry:3; }
+      .recompute { fill:#F6D4CC; stroke:#A8324B; stroke-width:1.2; rx:3; ry:3; }
+      .ink       { stroke:#1F1F1E; fill:none; stroke-width:1.2; }
+      .mono      { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut       { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl       { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag       { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">KV-cache · reuse past attention states instead of recomputing every step</text>
+
+  <!-- WITHOUT KV cache (top) -->
+  <g transform="translate(30, 70)">
+    <text x="0" y="-6" class="tag" fill="#A8324B">WITHOUT CACHE · recompute all K, V every token</text>
+
+    <!-- Generating token 4: recompute K, V for all 4 positions -->
+    <g transform="translate(0, 10)">
+      <text x="0" y="10" class="mono">step 4:</text>
+
+      <rect class="recompute" x="70"  y="0" width="50" height="30"/>
+      <text x="95"  y="18" text-anchor="middle" class="mono" fill="#A8324B">K₁, V₁</text>
+
+      <rect class="recompute" x="130" y="0" width="50" height="30"/>
+      <text x="155" y="18" text-anchor="middle" class="mono" fill="#A8324B">K₂, V₂</text>
+
+      <rect class="recompute" x="190" y="0" width="50" height="30"/>
+      <text x="215" y="18" text-anchor="middle" class="mono" fill="#A8324B">K₃, V₃</text>
+
+      <rect class="recompute" x="250" y="0" width="50" height="30"/>
+      <text x="275" y="18" text-anchor="middle" class="mono" fill="#A8324B">K₄, V₄</text>
+
+      <text x="320" y="18" class="mut" fill="#A8324B">← all recomputed!</text>
+    </g>
+
+    <text x="0" y="55" class="mut">Cost scales as <tspan font-family="'JetBrains Mono'">O(N²)</tspan> · generating N tokens takes N² attention computations total.</text>
+  </g>
+
+  <!-- WITH KV cache (bottom) -->
+  <g transform="translate(30, 170)">
+    <text x="0" y="-6" class="tag" fill="#7B9E89">WITH CACHE · store past K, V; only compute the new one</text>
+
+    <!-- Step 1 -->
+    <g transform="translate(0, 10)">
+      <text x="0" y="10" class="mono">step 1:</text>
+      <rect class="tok-cur" x="70" y="0" width="50" height="30"/>
+      <text x="95" y="18" text-anchor="middle" class="mono" fill="#D97757">K₁, V₁</text>
+      <rect class="kvcache" x="180" y="0" width="140" height="30"/>
+      <text x="250" y="20" text-anchor="middle" class="mono" fill="#C9A961">cache: [K₁, V₁]</text>
+    </g>
+
+    <!-- Step 2 -->
+    <g transform="translate(0, 50)">
+      <text x="0" y="10" class="mono">step 2:</text>
+      <rect class="tok-old" x="70"  y="0" width="50" height="30"/>
+      <text x="95"  y="18" text-anchor="middle" class="mono" fill="#4A6670">reuse K₁</text>
+      <rect class="tok-cur" x="130" y="0" width="50" height="30"/>
+      <text x="155" y="18" text-anchor="middle" class="mono" fill="#D97757">new K₂</text>
+      <rect class="kvcache" x="200" y="0" width="160" height="30"/>
+      <text x="280" y="20" text-anchor="middle" class="mono" fill="#C9A961">cache: [K₁, K₂]</text>
+    </g>
+
+    <!-- Step 3 -->
+    <g transform="translate(0, 90)">
+      <text x="0" y="10" class="mono">step 3:</text>
+      <rect class="tok-old" x="70"  y="0" width="50" height="30"/>
+      <text x="95"  y="18" text-anchor="middle" class="mono" fill="#4A6670">reuse K₁</text>
+      <rect class="tok-old" x="130" y="0" width="50" height="30"/>
+      <text x="155" y="18" text-anchor="middle" class="mono" fill="#4A6670">reuse K₂</text>
+      <rect class="tok-cur" x="190" y="0" width="50" height="30"/>
+      <text x="215" y="18" text-anchor="middle" class="mono" fill="#D97757">new K₃</text>
+      <rect class="kvcache" x="260" y="0" width="180" height="30"/>
+      <text x="350" y="20" text-anchor="middle" class="mono" fill="#C9A961">cache: [K₁, K₂, K₃]</text>
+    </g>
+
+    <!-- Step 4 -->
+    <g transform="translate(0, 130)">
+      <text x="0" y="10" class="mono">step 4:</text>
+      <rect class="tok-old" x="70"  y="0" width="50" height="30"/>
+      <text x="95"  y="18" text-anchor="middle" class="mono" fill="#4A6670">reuse K₁</text>
+      <rect class="tok-old" x="130" y="0" width="50" height="30"/>
+      <text x="155" y="18" text-anchor="middle" class="mono" fill="#4A6670">reuse K₂</text>
+      <rect class="tok-old" x="190" y="0" width="50" height="30"/>
+      <text x="215" y="18" text-anchor="middle" class="mono" fill="#4A6670">reuse K₃</text>
+      <rect class="tok-cur" x="250" y="0" width="50" height="30"/>
+      <text x="275" y="18" text-anchor="middle" class="mono" fill="#D97757">new K₄</text>
+      <rect class="kvcache" x="320" y="0" width="200" height="30"/>
+      <text x="420" y="20" text-anchor="middle" class="mono" fill="#C9A961">cache: [K₁, K₂, K₃, K₄]</text>
+    </g>
+
+    <text x="0" y="180" class="mut">Cost is <tspan font-family="'JetBrains Mono'" fill="#7B9E89" font-weight="600">O(N)</tspan> · compute one new K, V per step. Attention still attends to all N.</text>
+  </g>
+
+  <!-- Right side: memory math -->
+  <g transform="translate(620, 70)">
+    <rect x="0" y="0" width="310" height="180" fill="#EEEBDF" stroke="#C9C4B5"/>
+    <text x="14" y="22" class="tag">KV-CACHE MEMORY</text>
+    <text x="14" y="44" class="mono" font-size="12">M = 2 · L · H · d_h · T · B · bytes</text>
+
+    <text x="14" y="74" class="mut">Llama 70B · L=80 · H=64 · d_h=128</text>
+    <text x="14" y="94" class="mut">T=32k context · B=1 · bf16 = 2 bytes</text>
+    <text x="14" y="116" class="mono">M = 2 · 80 · 64 · 128 · 32k · 1 · 2</text>
+    <text x="14" y="136" class="mono" fill="#A8324B" font-weight="600">M ≈ 84 GB per request</text>
+
+    <text x="14" y="164" class="mut" font-style="italic">Larger than the weights themselves.</text>
+  </g>
+
+  <!-- Footer -->
+  <g transform="translate(40, 370)">
+    <rect x="0" y="0" width="880" height="40" fill="#D8E3DE" stroke="#7B9E89"/>
+    <text x="440" y="24" text-anchor="middle" class="mut" fill="#7B9E89" font-style="italic">
+      Modern LLM inference is <tspan fill="#1F1F1E" font-weight="600">memory-bound on the KV-cache</tspan> — not compute-bound. GQA/MQA (L15), quantization, and paged attention all exist to shrink it.
+    </text>
+  </g>
+</svg>

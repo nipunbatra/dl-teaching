@@ -89,13 +89,14 @@ Each lecture maps to one or more UDL chapters — see the tables below and the f
 | 19 | Autoencoders &amp; VAEs | Ch 17 | [HTML](html/lec19-autoencoders-vae-lecture.html) · [PDF](pdf/lec19-autoencoders-vae-lecture.pdf) | |
 | 20 | GANs | Ch 15 | [HTML](html/lec20-gans-lecture.html) · [PDF](pdf/lec20-gans-lecture.pdf) | |
 | 21 | Diffusion Models — Theory | Ch 18 | [HTML](html/lec21-diffusion-theory-lecture.html) · [PDF](pdf/lec21-diffusion-theory-lecture.pdf) | |
-| 22 | Diffusion Models — Practice | Ch 18 + `diffusers` | | |
+| 22 | Diffusion Models — Practice | Ch 18 + `diffusers` | [HTML](html/lec22-diffusion-practice-lecture.html) · [PDF](pdf/lec22-diffusion-practice-lecture.pdf) | |
 
-## Module 10 · Wrap-up (L23)
+## Module 10 · Wrap-up (L23–L24)
 
 | # | Topic | Reading | Slides | Notebook |
 |:---:|------|:-------:|:------:|:--------:|
-| 23 | Efficient Inference, Agents, Open Problems | Chip Huyen + HF inference | | |
+| 23 | Efficient Inference (KV-cache, quantization, FlashAttention) | Chip Huyen + HF inference | [HTML](html/lec23-efficient-inference-lecture.html) · [PDF](pdf/lec23-efficient-inference-lecture.pdf) | |
+| 24 | Frontier · Agents, Reasoning, Interpretability | Anthropic interp + o1 blog | [HTML](html/lec24-frontier-wrapup-lecture.html) · [PDF](pdf/lec24-frontier-wrapup-lecture.pdf) | |
 
 ---
 

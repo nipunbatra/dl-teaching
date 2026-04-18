@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .fp32    { fill:#DCE3E6; stroke:#4A6670; stroke-width:1.4; rx:3; ry:3; }
+      .fp16    { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.4; rx:3; ry:3; }
+      .bf16    { fill:#F6F0DF; stroke:#C9A961; stroke-width:1.4; rx:3; ry:3; }
+      .int8    { fill:#EAD3C5; stroke:#D97757; stroke-width:1.4; rx:3; ry:3; }
+      .int4    { fill:#F6D4CC; stroke:#A8324B; stroke-width:1.4; rx:3; ry:3; }
+      .mono    { font-family:'JetBrains Mono', monospace; font-size:12px; fill:#1F1F1E; }
+      .mut     { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl     { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag     { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Quantization ladder · 8× memory savings, almost no quality loss</text>
+
+  <!-- Ladder of bit widths -->
+  <g transform="translate(60, 70)">
+    <!-- FP32 -->
+    <rect class="fp32" x="0" y="0" width="800" height="44"/>
+    <text x="20" y="18" class="tag" fill="#4A6670">FP32 · 32 bits</text>
+    <text x="20" y="36" class="mono">70B model · 280 GB · training default</text>
+    <text x="780" y="28" text-anchor="end" class="mono" fill="#4A6670" font-weight="600">1.00×</text>
+
+    <!-- FP16 -->
+    <rect class="fp16" x="0" y="60" width="400" height="40"/>
+    <text x="20" y="78" class="tag" fill="#7B9E89">FP16 · 16 bits (IEEE half)</text>
+    <text x="20" y="96" class="mono">140 GB · limited range, training tricky</text>
+    <text x="380" y="86" text-anchor="end" class="mono" fill="#7B9E89" font-weight="600">0.50×</text>
+
+    <!-- BF16 -->
+    <rect class="bf16" x="0" y="110" width="400" height="40"/>
+    <text x="20" y="128" class="tag" fill="#C9A961">BF16 · 16 bits (brain float)</text>
+    <text x="20" y="146" class="mono">140 GB · FP32 range, FP16 size · 2026 default</text>
+    <text x="380" y="136" text-anchor="end" class="mono" fill="#C9A961" font-weight="600">0.50×</text>
+
+    <!-- INT8 -->
+    <rect class="int8" x="0" y="160" width="200" height="40"/>
+    <text x="20" y="178" class="tag" fill="#D97757">INT8 · 8 bits</text>
+    <text x="20" y="196" class="mono">70 GB · negligible quality loss</text>
+    <text x="180" y="186" text-anchor="end" class="mono" fill="#D97757" font-weight="600">0.25×</text>
+
+    <!-- INT4 (NF4) -->
+    <rect class="int4" x="0" y="210" width="100" height="40"/>
+    <text x="10" y="228" class="tag" fill="#A8324B">INT4 (NF4)</text>
+    <text x="10" y="246" class="mono" font-size="10">35 GB</text>
+    <text x="90" y="236" text-anchor="end" class="mono" fill="#A8324B" font-weight="600">0.125×</text>
+  </g>
+
+  <!-- Quality vs size trade-off -->
+  <g transform="translate(60, 330)">
+    <rect x="0" y="0" width="840" height="60" fill="#EEEBDF" stroke="#C9C4B5"/>
+    <text x="14" y="22" class="tag">WHAT YOU LOSE AT EACH STEP</text>
+    <text x="14" y="42" class="mut">FP32 → BF16 · essentially <tspan fill="#7B9E89" font-weight="600">zero</tspan> quality loss, enables 2× larger models on same hardware.</text>
+    <text x="14" y="58" class="mut">BF16 → INT8 → NF4 · &lt;1% accuracy drop with per-channel scaling + GPTQ/AWQ calibration · &amp; AWQ &gt; GPTQ &gt; naive at low bits.</text>
+  </g>
+</svg>
