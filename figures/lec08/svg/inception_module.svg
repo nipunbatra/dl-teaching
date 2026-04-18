@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .box    { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.3; rx:4; ry:4; }
+      .box-a  { fill:#EAD3C5; stroke:#D97757; stroke-width:1.3; rx:4; ry:4; }
+      .box-s  { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.3; rx:4; ry:4; }
+      .box-b  { fill:#DCE3E6; stroke:#4A6670; stroke-width:1.3; rx:4; ry:4; }
+      .ink    { stroke:#1F1F1E; fill:none; stroke-width:1.2; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+    <marker id="im-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/></marker>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Inception module — try multiple kernel sizes in parallel, let SGD pick</text>
+
+  <!-- Input bottleneck -->
+  <g transform="translate(430, 60)">
+    <rect class="box" x="0" y="0" width="100" height="34"/>
+    <text x="50" y="22" text-anchor="middle" class="mono">previous layer</text>
+  </g>
+
+  <!-- Four parallel branches -->
+  <!-- Branch 1: 1x1 -->
+  <g transform="translate(80, 140)">
+    <rect class="box-a" x="0" y="0" width="140" height="44"/>
+    <text x="70" y="18" text-anchor="middle" class="mono" fill="#D97757" font-weight="600">1×1 conv</text>
+    <text x="70" y="34" text-anchor="middle" class="mut">small receptive field</text>
+  </g>
+
+  <!-- Branch 2: 1x1 → 3x3 -->
+  <g transform="translate(260, 140)">
+    <rect class="box-a" x="0" y="0" width="140" height="30"/>
+    <text x="70" y="20" text-anchor="middle" class="mono" fill="#D97757" font-weight="600">1×1  (reduce)</text>
+    <rect class="box-s" x="0" y="40" width="140" height="44"/>
+    <text x="70" y="58" text-anchor="middle" class="mono" fill="#7B9E89" font-weight="600">3×3 conv</text>
+    <text x="70" y="74" text-anchor="middle" class="mut">medium receptive field</text>
+  </g>
+
+  <!-- Branch 3: 1x1 → 5x5 -->
+  <g transform="translate(440, 140)">
+    <rect class="box-a" x="0" y="0" width="140" height="30"/>
+    <text x="70" y="20" text-anchor="middle" class="mono" fill="#D97757" font-weight="600">1×1  (reduce)</text>
+    <rect class="box-s" x="0" y="40" width="140" height="44"/>
+    <text x="70" y="58" text-anchor="middle" class="mono" fill="#7B9E89" font-weight="600">5×5 conv</text>
+    <text x="70" y="74" text-anchor="middle" class="mut">wide receptive field</text>
+  </g>
+
+  <!-- Branch 4: maxpool → 1x1 -->
+  <g transform="translate(620, 140)">
+    <rect class="box-b" x="0" y="0" width="140" height="30"/>
+    <text x="70" y="20" text-anchor="middle" class="mono" fill="#4A6670" font-weight="600">3×3 maxpool</text>
+    <rect class="box-a" x="0" y="40" width="140" height="44"/>
+    <text x="70" y="58" text-anchor="middle" class="mono" fill="#D97757" font-weight="600">1×1 conv</text>
+    <text x="70" y="74" text-anchor="middle" class="mut">pooled features</text>
+  </g>
+
+  <!-- Concat at bottom -->
+  <g transform="translate(330, 230)">
+    <rect x="0" y="0" width="300" height="44" fill="#F6F0DF" stroke="#C9A961" stroke-width="1.4" rx="4"/>
+    <text x="150" y="22" text-anchor="middle" class="mono" fill="#C9A961" font-weight="600">concat along channel dim</text>
+    <text x="150" y="38" text-anchor="middle" class="mut" fill="#C9A961">4 feature-map stacks → one tensor</text>
+  </g>
+
+  <g transform="translate(430, 300)">
+    <rect class="box" x="0" y="0" width="100" height="34"/>
+    <text x="50" y="22" text-anchor="middle" class="mono">next layer</text>
+  </g>
+
+  <!-- Arrows -->
+  <g class="ink" marker-end="url(#im-a)">
+    <!-- previous → 4 branches -->
+    <line x1="480" y1="94" x2="150" y2="140"/>
+    <line x1="480" y1="94" x2="330" y2="140"/>
+    <line x1="480" y1="94" x2="510" y2="140"/>
+    <line x1="480" y1="94" x2="690" y2="140"/>
+
+    <!-- branch 2: 1x1 → 3x3 -->
+    <line x1="330" y1="170" x2="330" y2="180"/>
+    <!-- branch 3: 1x1 → 5x5 -->
+    <line x1="510" y1="170" x2="510" y2="180"/>
+    <!-- branch 4: pool → 1x1 -->
+    <line x1="690" y1="170" x2="690" y2="180"/>
+
+    <!-- 4 branches → concat -->
+    <line x1="150" y1="184" x2="380" y2="230"/>
+    <line x1="330" y1="224" x2="430" y2="230"/>
+    <line x1="510" y1="224" x2="510" y2="230"/>
+    <line x1="690" y1="224" x2="580" y2="230"/>
+
+    <!-- concat → next -->
+    <line x1="480" y1="274" x2="480" y2="300"/>
+  </g>
+
+  <!-- Caption at bottom -->
+  <g transform="translate(60, 355)">
+    <text x="420" y="0" text-anchor="middle" class="mut" font-style="italic">
+      <tspan fill="#D97757" font-weight="600">1×1 convolutions</tspan> reduce channel count before the expensive 3×3 and 5×5 —
+      the parameter-efficiency trick that made 22-layer GoogLeNet feasible.
+    </text>
+  </g>
+</svg>

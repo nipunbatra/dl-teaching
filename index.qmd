@@ -50,7 +50,7 @@ Each lecture maps to one or more UDL chapters — see the tables below and the f
 | # | Topic | UDL | Slides | Notebook |
 |:---:|------|:---:|:------:|:--------:|
 | 7 | CNN Deep Dive + Classic Architectures | Ch 10 | [HTML](html/lec07-cnn-deep-dive-lecture.html) · [PDF](pdf/lec07-cnn-deep-dive-lecture.pdf) | |
-| 8 | Modern Architectures &amp; Transfer Learning | Ch 10, 11 | | |
+| 8 | Modern Architectures &amp; Transfer Learning | Ch 10, 11 | [HTML](html/lec08-modern-cnns-transfer-lecture.html) · [PDF](pdf/lec08-modern-cnns-transfer-lecture.pdf) | |
 | 9 | Object Detection, Localization &amp; Segmentation | Bishop Ch 10 | | |
 
 ## Module 5 · Sequence Models (L10–L11)

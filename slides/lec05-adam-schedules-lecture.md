@@ -230,6 +230,12 @@ Why one learning rate isn't enough over a full run
 
 ![w:920px](figures/lec05/svg/lr_schedules.svg)
 
+<div class="realworld">
+
+▶ Interactive: sliders for peak LR and warmup — [lr-schedule-visualizer](https://nipunbatra.github.io/interactive-articles/lr-schedule-visualizer/).
+
+</div>
+
 ---
 
 # Schedules in PyTorch

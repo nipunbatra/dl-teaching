@@ -109,6 +109,12 @@ How deep features "see" far-away pixels
 
 ![w:920px](figures/lec07/svg/receptive_field.svg)
 
+<div class="realworld">
+
+▶ Interactive: drag depth/kernel/stride and watch RF grow live — [receptive-field-grower](https://nipunbatra.github.io/interactive-articles/receptive-field-grower/).
+
+</div>
+
 ---
 
 # The VGG insight · stack 3×3, not 7×7
