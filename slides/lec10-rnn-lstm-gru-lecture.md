@@ -77,6 +77,55 @@ An MLP has **no inductive bias for time** — it would need to relearn what each
 
 ---
 
+# RNN · step-by-step on "I love deep learning"
+
+Embed each token to a 4-d vector, $x_1, x_2, x_3, x_4$. Initialize $h_0 = \mathbf{0}$.
+
+<div class="math-box">
+
+| step | input | hidden update | result |
+|:-:|:-:|:-:|:-:|
+| 1 | $x_1$ (I) | $\tanh(W x_1 + U h_0)$ | $h_1$ · encodes "I" |
+| 2 | $x_2$ (love) | $\tanh(W x_2 + U h_1)$ | $h_2$ · encodes "I love" |
+| 3 | $x_3$ (deep) | $\tanh(W x_3 + U h_2)$ | $h_3$ · encodes "I love deep" |
+| 4 | $x_4$ (learning) | $\tanh(W x_4 + U h_3)$ | $h_4$ · full sentence summary |
+
+</div>
+
+$W, U$ are **shared** across steps. The same weights process "I" at step 1 and "learning" at step 4 — unlike an MLP, which would learn a separate `(token, position)` feature at every slot.
+
+---
+
+# The three RNN use-patterns
+
+<div class="columns">
+<div>
+
+### Many-to-one
+
+- Input: sequence
+- Output: one label at the end
+- e.g., sentiment classification
+
+</div>
+<div>
+
+### One-to-many
+
+- Input: one feature vector
+- Output: a sequence
+- e.g., image captioning
+
+</div>
+</div>
+
+**Many-to-many** (in sync) · e.g., POS tagging — one label per input token.
+**Many-to-many** (encoder-decoder) · e.g., translation — input sequence, output sequence, different lengths. This is the Seq2Seq pattern covered in L11.
+
+Four shapes, same cell.
+
+---
+
 # RNN in PyTorch · by hand
 
 ```python
@@ -166,6 +215,23 @@ Typical $K = 32$ to $256$. Keeps training tractable at the cost of losing very-l
 
 ---
 
+# Gradient clipping · the second fix
+
+Exploding gradients are worse than vanishing — one bad step can destroy weeks of training. Clip by global norm:
+
+```python
+torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+opt.step()
+```
+
+<div class="keypoint">
+
+Pascanu et al. 2013 showed clipping at norm ~1 makes RNN training robust. Still the default for any sequence model — RNN, LSTM, Transformer. Cheap insurance against numerical catastrophe.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 3
@@ -207,6 +273,28 @@ $$\mathbf{h}_t = \mathbf{o}_t \odot \tanh(\mathbf{c}_t) \quad \text{(hidden outp
 </div>
 
 Four learnable weight matrices · three gates in $[0, 1]$ · one candidate in $[-1, 1]$.
+
+---
+
+# Each gate · in plain English
+
+- **Forget gate $\mathbf{f}_t$** · "what should I erase from the cell state?"
+  - Close to 0 · forget (reset a counter, flush old context)
+  - Close to 1 · keep it around (persistent memory)
+
+- **Input gate $\mathbf{i}_t$** · "how much of the new candidate should I actually write?"
+  - Close to 0 · ignore this input
+  - Close to 1 · accept fully
+
+- **Output gate $\mathbf{o}_t$** · "what of the cell state do I expose to downstream layers?"
+  - Close to 0 · keep memory silent
+  - Close to 1 · project it out
+
+<div class="keypoint">
+
+The LSTM's "memory" is the cell state $\mathbf{c}_t$; the gates are **learned controllers** that decide when to write, keep, or read. Think of it as a differentiable tiny memory cell plus a learned read/write scheduler.
+
+</div>
 
 ---
 

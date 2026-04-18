@@ -80,6 +80,35 @@ Skip connections · bottleneck blocks
 
 ---
 
+# Why skip connections work · the gradient argument
+
+Ordinary layer · $h_{l+1} = F(h_l)$. Gradient must pass through $F$'s Jacobian at every level. 152 layers of that → product of 152 Jacobians → vanishing or exploding.
+
+Residual layer · $h_{l+1} = h_l + F(h_l)$. Gradient:
+$$\frac{\partial \mathcal{L}}{\partial h_l} = \frac{\partial \mathcal{L}}{\partial h_{l+1}} \cdot \left(I + \frac{\partial F}{\partial h_l}\right)$$
+
+<div class="keypoint">
+
+The identity path sends the gradient through **unchanged**. Deep gradients stop vanishing at construction time, not through training luck. This is why 152 layers is easy but 34 plain layers was impossible.
+
+</div>
+
+---
+
+# Why skip connections also help forward pass
+
+When a new block isn't useful yet, residual = 0 is the easiest thing to learn — the identity mapping just passes $h_l$ through.
+
+<div class="insight">
+
+**Adding blocks can only improve or at worst no-op**, never hurt. Before ResNet, adding layers to a working network often made it worse (degradation problem). After ResNet, deeper ≥ shallower — you just keep adding.
+
+</div>
+
+Same idea shows up as LSTM's cell state (L10) and Transformer's residual stream (L13). Skip connections are the single most load-bearing design in modern deep learning.
+
+---
+
 # The ResNet-CNN block
 
 ![w:920px](figures/lec08/svg/resnet_bottleneck.svg)
@@ -166,6 +195,24 @@ Accuracy drop: ~1%. Speed-up: ~8–10×. Ships in every mobile / edge model sinc
 
 ---
 
+# Why edge models care about FLOPs
+
+A phone has ~10 W total power; a datacenter GPU draws 300 W just to idle. Efficient nets let you run:
+
+| Model | FLOPs | iPhone inference |
+|:-:|:-:|:-:|
+| ResNet-50 | 4.1 G | ~90 ms |
+| MobileNetV2 | 0.3 G | ~15 ms |
+| MobileNetV3-S | 0.06 G | ~4 ms |
+
+<div class="keypoint">
+
+Real-time on-device tasks (camera AR, live caption, wake-word) need ≤30 ms budget. MobileNet-style splits are the reason such apps exist.
+
+</div>
+
+---
+
 # MobileNet variants · a decade of improvements
 
 | Model | Year | Key idea |
@@ -239,6 +286,20 @@ The skill you'll use 90% of the time
 
 # The premise
 
+## What transfer learning *is*, in one line
+
+Start from a model that already knows something relevant, adapt it to your new task with a fraction of the data and compute.
+
+<div class="keypoint">
+
+The pretrained network is a **learned prior**. You're not training from random init — you're fine-tuning a near-working initialization. In most vision tasks this is worth ≈ 1–2 orders of magnitude of training data.
+
+</div>
+
+---
+
+# The premise
+
 ImageNet pretraining gives you a **generic vision stack**:
 
 - Early layers detect edges, textures — *universal*, works for any image domain.
@@ -297,6 +358,24 @@ fastai popularized "1cycle + discriminative LRs" for transfer learning — often
 </div>
 
 In those cases — pre-train on a closer domain, or use self-supervised methods (coming in L17).
+
+---
+
+# Pick-the-right-backbone table
+
+| Scenario | Backbone | Why |
+|:-:|:-:|:-:|
+| ImageNet-like natural photos | ResNet-50 or ConvNeXt | strong + well-supported |
+| Very small labeled data | CLIP ViT features | cross-domain generalization |
+| Edge / real-time | MobileNet-V3 | latency budget |
+| High-res medical / satellite | ConvNeXt-large or DINOv2 | captures fine detail |
+| Arbitrary RGB, unknown domain | DINOv2 frozen features | best general-purpose SSL |
+
+<div class="realworld">
+
+In 2026, **DINOv2** (self-supervised on 142M images) is often the starting point for vision-backbone features — even better than ImageNet-supervised ResNets for downstream tasks.
+
+</div>
 
 ---
 

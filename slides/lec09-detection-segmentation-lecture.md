@@ -112,6 +112,46 @@ Two primitives every detector needs
 
 ---
 
+# IoU · a quick worked example
+
+Predicted box · $(x_1, y_1, x_2, y_2) = (50, 50, 150, 150)$ · area = 100 × 100 = 10,000.
+Ground-truth box · $(100, 100, 200, 200)$ · area = 10,000.
+
+Intersection · $(100, 100, 150, 150)$ · area = 50 × 50 = 2,500.
+Union · 10,000 + 10,000 − 2,500 = 17,500.
+
+$$\text{IoU} = 2{,}500 / 17{,}500 \approx 0.14$$
+
+<div class="insight">
+
+An IoU below 0.5 is almost always considered a miss. Detectors report mAP at multiple IoU thresholds because a box that's 90% right (IoU 0.9) is much more useful than one that's 60% right (IoU 0.6) — the metric penalizes imprecision.
+
+</div>
+
+---
+
+# NMS · by pseudocode
+
+```python
+def nms(boxes, scores, iou_threshold=0.5):
+    idx = scores.argsort(descending=True)
+    keep = []
+    while len(idx):
+        i = idx[0]
+        keep.append(i)
+        # drop any later box that overlaps >threshold with this one
+        idx = [j for j in idx[1:] if iou(boxes[i], boxes[j]) < iou_threshold]
+    return keep
+```
+
+<div class="keypoint">
+
+**Greedy** — the highest-confidence box wins in its neighborhood. Lower-confidence duplicates get suppressed. A fundamental primitive · every detector uses some form of NMS (Faster R-CNN, YOLO) or its learned replacement (DETR's Hungarian matching).
+
+</div>
+
+---
+
 # mAP · mean Average Precision
 
 The headline metric for detection:
@@ -186,6 +226,39 @@ $$\mathcal{L} = \lambda_\text{coord} \sum \mathcal{L}_\text{box} + \sum \mathcal
 </div>
 
 Anchor boxes are predefined aspect ratios — the model predicts *deltas* from them, not absolute coordinates.
+
+---
+
+# Why predict deltas, not absolute boxes?
+
+<div class="keypoint">
+
+A conv layer is **translation equivariant** — the same filter at different spatial positions produces the same feature. If you asked it to predict **absolute** $(x, y)$, every spatial location would have to re-derive its own position. Instead we predict **$\Delta$ from a known anchor** at each location, and the conv output is the offset.
+
+</div>
+
+- `anchor = (x_a, y_a, w_a, h_a)` · known, per-cell
+- `predict (tx, ty, tw, th)` · 4 scalars from the conv
+- `box = (x_a + tx·w_a, y_a + ty·h_a, w_a · exp(tw), h_a · exp(th))`
+
+That exponential makes width/height positive; the anchor does the heavy lifting so the network only has to learn a small correction.
+
+---
+
+# Speed vs accuracy · a detector comparison
+
+| Detector | mAP (COCO) | FPS (V100) | Notes |
+|:-:|:-:|:-:|:-:|
+| Faster R-CNN | 42 | ~5 | accuracy king, slow |
+| YOLOv8-m | 50 | ~250 | production default |
+| DETR | 44 | ~30 | elegant, data-hungry |
+| RT-DETR | 53 | ~100 | real-time Transformer-based |
+
+<div class="insight">
+
+Choose by constraint · real-time camera feed → YOLO. Labeled-data poor → DETR with good augmentations. Highest accuracy → large backbone + Faster R-CNN variant. There is no universally-best detector.
+
+</div>
 
 ---
 
@@ -281,6 +354,32 @@ Every modern segmentation net (DeepLab, SegFormer) uses this pattern.
 
 ---
 
+# Segmentation loss functions
+
+- **Pixel-wise cross-entropy** · default. Per-pixel softmax over $C$ classes.
+- **Dice loss** · $1 - \frac{2|P \cap T|}{|P| + |T|}$ — robust to class imbalance (small objects).
+- **Focal loss** · down-weights easy pixels so the model focuses on boundaries.
+- **Boundary loss** · emphasize pixel accuracy near object edges.
+
+<div class="warning">
+
+**Class imbalance** is the #1 problem in segmentation. A medical image with 99% background pixels will optimize to "predict background always" under plain CE. Dice loss (or weighted CE) is what you reach for first.
+
+</div>
+
+---
+
+# Why U-Net caught on in medical imaging
+
+Ronneberger 2015 targeted electron microscopy cell segmentation. Two reasons it spread:
+
+1. **Small data tolerance** · medical datasets are in the hundreds. U-Net's strong spatial prior (encoder-decoder + skip) makes this workable.
+2. **Permissive license + simple architecture** · anyone could port it to any framework in a day.
+
+By 2020, U-Net was the default segmentation network not just in medicine but in satellite imagery, materials science, audio-spectrogram analysis, and later **diffusion models** (L21 / L22) — where the same encoder-decoder-with-skips handles noise-to-image mapping.
+
+---
+
 # Instance segmentation · Mask R-CNN (brief)
 
 Built on Faster R-CNN. Adds a third head:
@@ -326,6 +425,23 @@ SAM changed segmentation the way CLIP changed classification — you don't need 
 In 2026: for most segmentation tasks, start with SAM-2 and fine-tune only if the domain is truly specialized (medical, satellite).
 
 </div>
+
+---
+
+# The open-vocabulary shift
+
+Classical detectors and segmenters had a **fixed class list** — if you trained for COCO's 80 classes, you couldn't detect "a purple thermos" without retraining.
+
+<div class="keypoint">
+
+**Open-vocabulary** models (OWLv2, GroundingDINO, SAM with text prompts) take a *text query* and localize it. Built by combining detector architectures with CLIP text embeddings.
+
+</div>
+
+- `"find the red bicycle"` → bounding box
+- `"segment everything that looks like a tree"` → masks
+
+The 2024–2026 frontier is fully prompt-driven vision: you describe what you want, the model localizes and segments it.
 
 ---
 

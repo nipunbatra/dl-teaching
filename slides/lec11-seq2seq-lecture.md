@@ -70,6 +70,35 @@ Two separate RNNs:
 
 ---
 
+# The whole idea in one sentence
+
+**Compress source into a vector · decompress into target.**
+
+<div class="keypoint">
+
+Two unrolled RNNs, back to back, trained end-to-end. No grammar rules, no alignment dictionaries, no phrase tables — the representations are learned from parallel corpus data alone. This was radically new in 2014; by 2016 it was state-of-the-art in production MT.
+
+</div>
+
+The same encoder-decoder pattern returns in T5 (L14), Stable Diffusion (L22), and every modular ML system that maps between domains.
+
+---
+
+# Shared vs separate vocabularies
+
+Two design choices:
+
+- **Separate vocab** · source is 40k English tokens, target is 40k French tokens, each with its own embedding matrix. Clean; embeddings can specialize.
+- **Shared vocab** · one vocabulary for both, one embedding matrix. Saves parameters; lets the model see "Paris" as the same token in both languages.
+
+<div class="realworld">
+
+Modern multilingual models (mT5, NLLB, Whisper) share vocab via SentencePiece — a single token stream covers 100+ languages. Today's LLMs do the same.
+
+</div>
+
+---
+
 # The architecture
 
 ![w:920px](figures/lec11/svg/seq2seq_bottleneck.svg)
@@ -153,6 +182,22 @@ Effect: every target step is trained independently given the correct history. **
 
 ---
 
+# Teacher forcing · why it's OK pragmatically
+
+Even though training ≠ inference, teacher forcing works because:
+
+1. **Loss is averaged over all time steps** · bad predictions at step 10 aren't penalized harder than bad predictions at step 1. Every position gets balanced gradient.
+2. **The model learns conditional distributions $P(y_t | y_{<t})$** · if you give it the right $y_{<t}$ at inference (as in a perfect rollout), it generalizes.
+3. **Huge speedup from parallelization** · with ground truth, all decoder steps can be computed in parallel (one big matrix multiply) instead of sequentially.
+
+<div class="insight">
+
+The "you're training on a distribution you won't see at inference" critique is real (exposure bias, next slide). But empirically it's tolerated because the alternative — fully autoregressive training — is 10-100× slower.
+
+</div>
+
+---
+
 # Exposure bias · the price you pay
 
 ![w:900px](figures/lec11/svg/exposure_bias.svg)
@@ -201,6 +246,24 @@ Example (simplified):
 
 > greedy: "The dog is running" (but doesn't quite fit context)
 > better: "The puppies are running" (total prob higher)
+
+---
+
+# Greedy fails · the canonical example
+
+Imagine the true best translation is "The cat sits on the mat" (probability 0.7).
+
+At step 1, probabilities are:
+- "The" · 0.6 (leads to the correct sequence)
+- "A" · 0.8 (leads to "A feline rests...", probability 0.5)
+
+Greedy picks "A" because it's locally higher. But the full-sequence score is lower than starting with "The".
+
+<div class="warning">
+
+**Local optima are not global optima.** Greedy decoding is a greedy search on the product of conditional probabilities — it commits at every step. Beam search (next) mitigates by keeping multiple candidates alive until the sequence ends.
+
+</div>
 
 ---
 

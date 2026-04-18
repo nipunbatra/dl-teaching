@@ -75,6 +75,39 @@ What makes neural-net optimization hard
 
 ---
 
+# The condition number · in numbers
+
+Consider the quadratic $\mathcal{L}(\theta) = \frac{1}{2}(10 \theta_1^2 + \theta_2^2)$. Hessian eigenvalues $\lambda_1 = 10$, $\lambda_2 = 1$. **Condition number** $\kappa = 10$.
+
+<div class="math-box">
+
+For GD to converge, $\eta < 2/\lambda_\max = 0.2$.
+Rate of contraction along $\theta_1$: $|1 - \eta \lambda_1| \le 1 - 0.2 \cdot 10 \cdot ? $...
+Along $\theta_2$: $|1 - \eta| \approx 0.8$ per step.
+
+</div>
+
+The small direction moves **10× slower** than the large one wants to. Vanilla GD must pick a step small enough for $\lambda_\max$; every other direction then crawls.
+
+**In deep nets $\kappa$ is often 10³–10⁶.** This is why momentum, adaptive LR, and normalization all help — they rescale so that $\kappa$ matters less.
+
+---
+
+# Why high-dim loss is mostly saddles
+
+Random-matrix intuition: for a Hessian in $D$ dimensions with i.i.d. eigenvalue signs, probability all positive is $2^{-D}$.
+
+<div class="keypoint">
+
+At $D = 10^8$ parameters, **true local minima are exponentially rare**. Almost every critical point is a saddle — some directions go down, some up.
+
+</div>
+
+Good news · you almost never get stuck at a true local minimum.
+Bad news · you *do* get stuck near saddles, where the gradient is small in many directions. This is where momentum's memory saves you — it carries you past the flat region in the direction you were already going.
+
+---
+
 # Mini-batch noise is not always bad
 
 Gradient from a batch is a *noisy estimate* of the full gradient.
@@ -115,6 +148,43 @@ Replace **position updates** with **velocity updates**. A ball rolling down the 
 - averages out back-and-forth from noise
 
 Formally — keep an exponential moving average of past gradients.
+
+---
+
+# Momentum · numerical trace
+
+Let gradients in a ravine look like: $g_t = [\pm 1, 0.1]$ (flipping sign on $\theta_1$ every step, small consistent push on $\theta_2$).
+
+<div class="math-box">
+
+With $\beta = 0.9$, EMA settles to:
+- $v_{t,1}$ · average of $\pm 1$ oscillations → **near zero**
+- $v_{t,2}$ · average of $0.1$ → **0.1** (preserved)
+
+</div>
+
+Vanilla SGD zig-zags $\pm 1$ on $\theta_1$. Momentum cancels that out — direction 2 gets all the step budget. **Zig-zag in, drift out.**
+
+The same EMA mechanism shows up in Adam (L5), batch-norm running stats, and target networks in RL. One primitive, many uses.
+
+---
+
+# Momentum = one more hyperparameter?
+
+Yes — but a forgiving one.
+
+| β | effective memory | behavior |
+|:-:|:-:|:-:|
+| 0.5 | 2 steps | barely smooths |
+| 0.9 | 10 steps | **sensible default** |
+| 0.95 | 20 steps | slower to respond to curvature changes |
+| 0.99 | 100 steps | heavy; needs gradient clipping |
+
+<div class="insight">
+
+Most practitioners set $\beta = 0.9$ once and never touch it again. The knob you tune is $\eta$.
+
+</div>
 
 ---
 
@@ -229,6 +299,36 @@ In practice on deep nets, the gain is modest but free.
 
 ---
 
+# A geometric way to see Nesterov
+
+<div class="columns">
+<div>
+
+### Classical momentum
+
+1. Take step $\eta \beta v_{t-1}$ (momentum part)
+2. Add a correction based on gradient *at start*
+
+If the gradient at the start was misleading, you've committed before knowing.
+
+</div>
+<div>
+
+### Nesterov
+
+1. Tentatively move $\eta \beta v_{t-1}$ to a *lookahead* point
+2. Measure the gradient *there*
+3. Use that gradient for the real step
+
+Information from the landscape you're about to visit, not the one you're leaving.
+
+</div>
+</div>
+
+That's it · the same update, just measured at a smarter location.
+
+---
+
 # Nesterov in PyTorch · one flag
 
 ```python
@@ -294,6 +394,26 @@ If you double $\beta$ from $0.9$ to $0.95$, effective LR doubles — you may nee
 <div class="realworld">
 
 Practical recipe: fix $\beta = 0.9$; use the LR finder to pick $\eta$. Revisit $\beta$ only if training is unstable.
+
+</div>
+
+---
+
+# Debugging optimizer failures
+
+Common symptoms and fixes:
+
+| Symptom | Likely cause | Fix |
+|:-:|:-:|:-:|
+| Loss → NaN after step 1 | LR too high, fp16 overflow | halve $\eta$, enable gradient clipping |
+| Loss oscillates (±) | ravine + momentum too low | raise $\beta$ to 0.9 |
+| Loss plateaus for hundreds of steps | stuck near saddle | raise $\beta$ or switch to Adam |
+| Loss drops then climbs | overfitting (not optimizer) | add weight decay, lower $\eta$ |
+| Training slower than Keras example | no momentum | add `momentum=0.9` |
+
+<div class="insight">
+
+Most "my network doesn't train" bugs are optimizer-level. The debug ladder from L3 + this table catches ~90% of them in practice.
 
 </div>
 

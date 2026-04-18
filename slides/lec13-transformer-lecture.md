@@ -73,6 +73,36 @@ The genius was **gluing them together** into one block you can safely stack.
 
 ---
 
+# Pre-norm vs post-norm · a critical detail
+
+Vaswani 2017's original was **post-norm** · `x = LayerNorm(x + Sublayer(x))`. Everyone uses **pre-norm** now · `x = x + Sublayer(LayerNorm(x))`.
+
+<div class="keypoint">
+
+Why the switch? Pre-norm keeps the residual path *unnormalized* — gradients flow through $x$ directly. Post-norm squashes gradient magnitude at every layer, which destabilizes training past ~12 layers.
+
+</div>
+
+Xiong et al. 2020 showed pre-norm trains without warmup and scales to 100+ layers. Post-norm needs careful warmup and usually breaks past 24. **Pre-norm is a free upgrade** — if you write your own Transformer, use pre-norm.
+
+---
+
+# The FFN · not an afterthought
+
+Between each attention sublayer sits a two-layer MLP with a massive hidden size (4× d_model):
+
+$$\text{FFN}(x) = W_2 \cdot \text{GELU}(W_1 x)$$
+
+<div class="keypoint">
+
+**~⅔ of Transformer parameters live in the FFN**, not in attention. Attention mixes tokens; the FFN transforms each token independently with huge capacity. Recent interpretability work (Anthropic) shows FFN layers store *facts* and *concepts*; attention layers route information between them.
+
+</div>
+
+GELU activation (smoother than ReLU) is the standard choice. Llama 2+ uses SwiGLU, a slightly better variant.
+
+---
+
 <!-- _class: code-heavy -->
 
 # The block in PyTorch · 20 lines
@@ -140,6 +170,25 @@ Empirically, 8 or 16 heads is standard. Increasing beyond has diminishing return
 
 ---
 
+# The parameter accounting
+
+For a Transformer with $d_\text{model} = 512$, $d_\text{ff} = 2048$, $h = 8$ heads:
+
+<div class="math-box">
+
+| Component | Params |
+|:-:|:-:|
+| $W_Q, W_K, W_V, W_O$ (attention) | $4 \cdot 512^2 = 1.05M$ |
+| $W_1, W_2$ (FFN) | $2 \cdot 512 \cdot 2048 = 2.10M$ |
+| LayerNorm × 2 | ~2k (negligible) |
+| **Total per block** | **~3.15M** |
+
+</div>
+
+Note · attention params are **independent of sequence length** — the same weights process 10 tokens or 10,000. That's the big scaling advantage over RNNs, whose hidden state grows if you widen memory.
+
+---
+
 # Multi-head attention in PyTorch
 
 ```python
@@ -196,6 +245,22 @@ We need to inject **position information** into the token embeddings. The Transf
 # Sinusoidal positional encoding
 
 ![w:900px](figures/lec13/svg/positional_encoding.svg)
+
+---
+
+# Why sinusoidal · the clever part
+
+$$PE_{(pos, 2i)} = \sin(pos / 10000^{2i/d}), \quad PE_{(pos, 2i+1)} = \cos(pos / 10000^{2i/d})$$
+
+<div class="keypoint">
+
+Different frequencies give a **multi-scale clock** · some dimensions wrap every 2 positions, others every 10,000. The model can read position information at whatever scale it needs.
+
+</div>
+
+Nicer property · $PE_{pos+k}$ is a linear transformation of $PE_{pos}$ (rotation in each 2-dim subspace). The model can learn to attend to *relative* positions ("3 steps to my left") using dot products of these embeddings — no need to memorize absolute positions.
+
+Learned embeddings work too but don't extrapolate past training length. Sinusoidal does.
 
 ---
 
@@ -317,6 +382,24 @@ class GPT(nn.Module):
 ```
 
 Train this on Tiny Shakespeare → working Shakespeare-in-the-style-of generator. Seriously.
+
+---
+
+# Cross-attention · for the encoder-decoder case
+
+In the original Vaswani Transformer the *decoder* has **three** sublayers, not two:
+
+1. **Self-attention** (causal) over target tokens generated so far.
+2. **Cross-attention** · Q from decoder, K/V from encoder output. This is how decoder reads source.
+3. **FFN** as usual.
+
+<div class="keypoint">
+
+Cross-attention is the Bahdanau-attention mechanism from L12, with learned Q/K/V projections. The encoder produces a rich representation of the source; the decoder queries it at every step.
+
+</div>
+
+GPT and Llama drop the encoder and cross-attention entirely — decoder-only. T5 keeps them for translation. Stable Diffusion uses cross-attention to inject text conditioning into images (L22).
 
 ---
 
