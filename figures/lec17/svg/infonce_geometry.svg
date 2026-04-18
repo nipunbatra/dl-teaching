@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .ink { fill: #1F1F1E; }
+    .muted { fill: #6B6B69; }
+    .rust { fill: #D97757; stroke: #D97757; }
+    .sage { fill: #7B9E89; stroke: #7B9E89; }
+    .slate { fill: #4A6670; stroke: #4A6670; }
+    .wine { fill: #A8324B; stroke: #A8324B; }
+    .thin { stroke: #4A6670; stroke-width: 1.2; fill: none; opacity: 0.4; }
+    .title { font-size: 18px; font-weight: 600; }
+    .label { font-size: 13px; }
+    .caption { font-size: 12px; fill: #6B6B69; }
+    .arrow { stroke: #1F1F1E; stroke-width: 1.5; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="380"/>
+
+  <!-- Left: before training (features random) -->
+  <text x="200" y="40" class="ink title" text-anchor="middle">Before training · features scattered</text>
+  <circle cx="200" cy="190" r="120" fill="none" stroke="#4A6670" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.5"/>
+  <text x="200" y="320" class="caption" text-anchor="middle">unit hypersphere</text>
+
+  <!-- Scattered points, different colors mixed -->
+  <g>
+    <circle cx="155" cy="140" r="6" class="rust"/>
+    <circle cx="180" cy="160" r="6" class="rust"/>
+    <circle cx="240" cy="130" r="6" class="sage"/>
+    <circle cx="165" cy="220" r="6" class="sage"/>
+    <circle cx="220" cy="240" r="6" class="wine"/>
+    <circle cx="260" cy="190" r="6" class="wine"/>
+    <circle cx="140" cy="175" r="6" class="slate"/>
+    <circle cx="250" cy="165" r="6" class="slate"/>
+    <circle cx="195" cy="260" r="6" class="rust"/>
+    <circle cx="230" cy="220" r="6" class="sage"/>
+  </g>
+
+  <!-- Middle: arrow + loss formula -->
+  <g transform="translate(430,150)">
+    <path class="arrow" d="M 0 40 L 100 40" marker-end="url(#arrowhead)"/>
+    <text x="50" y="25" class="ink label" text-anchor="middle">InfoNCE</text>
+    <text x="50" y="70" class="caption" text-anchor="middle">pull · + · push</text>
+  </g>
+
+  <!-- Right: after training (clustered) -->
+  <text x="760" y="40" class="ink title" text-anchor="middle">After InfoNCE · same-class clumps</text>
+  <circle cx="760" cy="190" r="120" fill="none" stroke="#4A6670" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.5"/>
+  <text x="760" y="320" class="caption" text-anchor="middle">unit hypersphere</text>
+
+  <!-- Clustered: rust top-left, sage top-right, wine bottom -->
+  <g>
+    <!-- rust cluster top-left -->
+    <circle cx="695" cy="130" r="6" class="rust"/>
+    <circle cx="715" cy="125" r="6" class="rust"/>
+    <circle cx="705" cy="145" r="6" class="rust"/>
+    <!-- sage cluster top-right -->
+    <circle cx="820" cy="135" r="6" class="sage"/>
+    <circle cx="810" cy="150" r="6" class="sage"/>
+    <circle cx="830" cy="120" r="6" class="sage"/>
+    <!-- wine cluster bottom-left -->
+    <circle cx="705" cy="250" r="6" class="wine"/>
+    <circle cx="720" cy="240" r="6" class="wine"/>
+    <circle cx="700" cy="235" r="6" class="wine"/>
+    <!-- slate cluster bottom-right -->
+    <circle cx="815" cy="245" r="6" class="slate"/>
+    <circle cx="800" cy="260" r="6" class="slate"/>
+    <circle cx="825" cy="230" r="6" class="slate"/>
+  </g>
+
+  <!-- Pull arrow (green, same cluster) -->
+  <path d="M 695 130 Q 700 120 715 125" stroke="#7B9E89" stroke-width="1.8" fill="none" marker-end="url(#greenarrow)"/>
+  <!-- Push arrow (red, different clusters) -->
+  <path d="M 710 140 L 810 145" stroke="#A8324B" stroke-width="1.5" fill="none" stroke-dasharray="4 3" opacity="0.5"/>
+
+  <!-- legend -->
+  <g transform="translate(460,260)">
+    <circle cx="0" cy="0" r="5" class="sage"/>
+    <text x="12" y="4" class="caption">same class · pull together</text>
+    <circle cx="0" cy="22" r="5" class="wine"/>
+    <text x="12" y="26" class="caption">different class · push apart</text>
+  </g>
+
+  <defs>
+    <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+    </marker>
+    <marker id="greenarrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#7B9E89"/>
+    </marker>
+  </defs>
+</svg>

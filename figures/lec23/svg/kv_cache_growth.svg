@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .ink { fill: #1F1F1E; }
+    .muted { fill: #6B6B69; }
+    .rust { stroke: #D97757; fill: none; stroke-width: 2.2; }
+    .sage { stroke: #7B9E89; fill: none; stroke-width: 2.2; }
+    .ruststroke { stroke: #D97757; stroke-width: 1.5; }
+    .sagestroke { stroke: #7B9E89; stroke-width: 1.5; }
+    .title { font-size: 17px; font-weight: 600; }
+    .label { font-size: 13px; }
+    .tick { font-size: 11px; fill: #6B6B69; }
+    .caption { font-size: 12px; fill: #6B6B69; }
+    .axis { stroke: #1F1F1E; stroke-width: 1.2; fill: none; }
+    .grid { stroke: #CFCBBE; stroke-width: 0.5; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="400"/>
+  <text x="480" y="32" class="ink title" text-anchor="middle">Cost per generated token · with vs without KV cache</text>
+
+  <!-- Axes -->
+  <g transform="translate(80,70)">
+    <!-- grid -->
+    <g class="grid">
+      <line x1="0" y1="50" x2="780" y2="50"/>
+      <line x1="0" y1="110" x2="780" y2="110"/>
+      <line x1="0" y1="170" x2="780" y2="170"/>
+      <line x1="0" y1="230" x2="780" y2="230"/>
+    </g>
+
+    <!-- axes -->
+    <path class="axis" d="M 0 0 L 0 260 L 780 260"/>
+
+    <!-- y-axis label -->
+    <text x="-60" y="130" class="ink label" transform="rotate(-90, -60, 130)" text-anchor="middle">compute per token</text>
+
+    <!-- y ticks -->
+    <text x="-8" y="264" class="tick" text-anchor="end">O(1)</text>
+    <text x="-8" y="174" class="tick" text-anchor="end">O(n)</text>
+    <text x="-8" y="114" class="tick" text-anchor="end">O(n²)</text>
+    <text x="-8" y="54"  class="tick" text-anchor="end">O(n³)</text>
+
+    <!-- x-axis label -->
+    <text x="390" y="295" class="ink label" text-anchor="middle">generated tokens n</text>
+    <text x="10"   y="275" class="tick">0</text>
+    <text x="260"  y="275" class="tick">500</text>
+    <text x="520"  y="275" class="tick">1000</text>
+    <text x="770"  y="275" class="tick">2000</text>
+
+    <!-- Without KV cache: O(n²) curve (recomputes all past for each new token) -->
+    <path class="rust" d="M 0 258 Q 100 250 200 230 T 400 160 Q 550 100 700 40 L 780 20"/>
+
+    <!-- With KV cache: O(n) curve (just one new token's attn each step) -->
+    <path class="sage" d="M 0 258 L 780 200"/>
+
+    <!-- Shade savings -->
+    <path d="M 0 258 Q 100 250 200 230 T 400 160 Q 550 100 700 40 L 780 20 L 780 200 L 0 258 Z"
+          fill="#D97757" opacity="0.08"/>
+
+    <!-- Labels on curves -->
+    <text x="600" y="55" class="rust" fill="#D97757" font-size="13" font-weight="600">no cache · O(n²) recompute</text>
+    <text x="600" y="190" class="sage" fill="#7B9E89" font-size="13" font-weight="600">with KV cache · O(n) per step</text>
+
+    <!-- Annotation arrow -->
+    <path d="M 500 120 L 460 220" stroke="#1F1F1E" stroke-width="1" fill="none" marker-end="url(#arr)"/>
+    <text x="510" y="115" class="caption">savings grow as context grows</text>
+  </g>
+
+  <!-- Footer note -->
+  <text x="480" y="385" class="caption" text-anchor="middle">
+    Llama-70B · 4K context · without cache: ~4× slower and ~16× more FLOPs per token
+  </text>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+    </marker>
+  </defs>
+</svg>

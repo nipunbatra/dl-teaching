@@ -53,6 +53,36 @@ Two networks · adversarial training
 
 ---
 
+# Two networks, one game
+
+![w:900px](figures/lec20/svg/minimax_game.svg)
+
+<div class="realworld">
+
+▶ Interactive: scrub through training steps; watch G's distribution slide onto the real one and D(x) flatten to 0.5 — [gan-minimax-dance](https://nipunbatra.github.io/interactive-articles/gan-minimax-dance/).
+
+</div>
+
+---
+
+# The forger-and-detective analogy
+
+<div class="keypoint">
+
+**G is a counterfeiter.** It makes fake paintings and tries to pass them off as real.
+
+**D is an art detective.** It sees a mix of real and fake paintings and labels each.
+
+</div>
+
+- D gets feedback: *"that one was fake — here's how I should have known"*. D gets better.
+- G gets D's gradient: *"here's what fooled you, and here's what didn't"*. G gets better.
+- Eventually · G paints indistinguishably from real. D is reduced to random guessing.
+
+That's the **Nash equilibrium** — and it's what the math below formalizes.
+
+---
+
 # The minimax objective
 
 <div class="math-box">
@@ -93,6 +123,8 @@ for batch in loader:
 ---
 
 # The non-saturating trick
+
+**Intuition** · early in training, $D$ always wins — fakes look nothing like real. So $D(G(z)) \approx 0$, and $\log(1 - D(G(z))) \approx \log 1 = 0$. Flat. **No gradient for G to improve.**
 
 The original G objective — minimize $\log(1 - D(G(z)))$ — **saturates** when $D$ is confident about fake samples. Gradient goes to zero.
 

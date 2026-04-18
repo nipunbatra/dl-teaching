@@ -86,6 +86,8 @@ The trick that makes generation feel "on-prompt"
 
 # CFG · the extrapolation trick
 
+**Intuition** · at each denoising step, the unconditional prediction is "what *any* image wants to do right now." The conditional prediction is "what a *prompt-matching* image wants to do." The **difference vector** points *toward* the prompt.
+
 <div class="math-box">
 
 $$\epsilon_\text{CFG} = \epsilon_\theta(x_t, \emptyset) + w \cdot \big(\epsilon_\theta(x_t, c) - \epsilon_\theta(x_t, \emptyset)\big)$$
@@ -94,7 +96,7 @@ $$\epsilon_\text{CFG} = \epsilon_\theta(x_t, \emptyset) + w \cdot \big(\epsilon_
 - $\epsilon_\theta(x_t, c)$ · conditional, given prompt $c$.
 - $w$ · the guidance scale. Default ~7.
 
-Run **both** at inference, linearly extrapolate in the $c$ direction. $w = 1$ gives plain conditional; $w > 1$ amplifies prompt adherence.
+Take that difference and **walk $w\times$ as far in that direction**. $w = 1$ gives plain conditional; $w > 1$ over-shoots to amplify prompt adherence; $w = 0$ ignores the prompt.
 
 </div>
 

@@ -110,6 +110,28 @@ $$\mathcal{L}_{i,j} = -\log \frac{\exp(\text{sim}(z_i, z_j) / \tau)}{\sum_{k \ne
 
 ---
 
+# InfoNCE · geometrically
+
+![w:900px](figures/lec17/svg/infonce_geometry.svg)
+
+---
+
+# InfoNCE in plain English
+
+Read the loss $\mathcal{L}_{i,j} = -\log \frac{\exp(\text{sim}(z_i, z_j)/\tau)}{\sum_k \exp(\text{sim}(z_i, z_k)/\tau)}$ one piece at a time:
+
+- **Numerator** — similarity to the *one* positive. We want this **high**.
+- **Denominator** — sum of similarities to *all* $2N-1$ items in the batch. We want this **low** (except for the one positive already in the sum).
+- **Temperature $\tau$** — sharpens or softens the softmax. Smaller $\tau$ = sharper contrast, harder negatives matter more.
+
+<div class="keypoint">
+
+It's a **softmax classification** problem · "given $z_i$, which of the $2N-1$ candidates is its positive partner?" Cross-entropy with $2N-1$ classes, no labels needed — the positive is the *other augmentation of the same image*.
+
+</div>
+
+---
+
 # Why SimCLR works
 
 Three ingredients (Chen et al. 2020 ablations):

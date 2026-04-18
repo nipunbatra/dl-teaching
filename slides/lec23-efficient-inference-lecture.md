@@ -77,6 +77,26 @@ Where most of the memory pressure lives
 
 ---
 
+# Cost with vs without cache
+
+![w:900px](figures/lec23/svg/kv_cache_growth.svg)
+
+---
+
+# Why caching KV works
+
+**Observation** · attention at step $t$ computes $Q_t K_{1:t}^\top$ · we need **every past K**, but $K_i$ doesn't change once token $i$ is generated.
+
+<div class="keypoint">
+
+The V vectors have the same property. So cache $K$ and $V$ as you go — each new token does **O(1) new computation for K/V** and **O(t) for the attention dot-product**, instead of O(t²) re-doing everything.
+
+</div>
+
+Memory grows linearly with context, but saves an order of magnitude in compute. The reason KV-cache is the first thing *any* LLM inference stack implements.
+
+---
+
 # KV-cache math · Llama 70B
 
 <div class="math-box">

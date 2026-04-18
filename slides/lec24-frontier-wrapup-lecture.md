@@ -151,6 +151,12 @@ CoT emerges at scale (~60B params). Below that, adding "think step by step" does
 
 ---
 
+# The scaling laws recap · in one figure
+
+![w:900px](figures/lec24/svg/scaling_laws.svg)
+
+---
+
 # A new scaling axis
 
 Until 2024, the only scaling axis was **training compute**. In 2024+ we added **test-time compute**.
