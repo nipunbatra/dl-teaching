@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .gen    { fill:#EAD3C5; stroke:#D97757; stroke-width:1.4; rx:4; ry:4; }
+      .disc   { fill:#DCE3E6; stroke:#4A6670; stroke-width:1.4; rx:4; ry:4; }
+      .real   { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.3; rx:3; ry:3; }
+      .fake   { fill:#F6D4CC; stroke:#A8324B; stroke-width:1.3; rx:3; ry:3; }
+      .noise  { fill:#F6F0DF; stroke:#C9A961; stroke-width:1.3; rx:3; ry:3; }
+      .ink    { stroke:#1F1F1E; fill:none; stroke-width:1.3; }
+      .grad-g { stroke:#D97757; fill:none; stroke-width:2.2; stroke-dasharray:5 3; }
+      .grad-d { stroke:#4A6670; fill:none; stroke-width:2.2; stroke-dasharray:5 3; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+    <marker id="gn-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/></marker>
+    <marker id="gn-o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#D97757"/></marker>
+    <marker id="gn-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4A6670"/></marker>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">GAN — generator tries to fool discriminator; discriminator tries not to be fooled</text>
+
+  <!-- Noise -->
+  <g transform="translate(40, 120)">
+    <rect class="noise" x="0" y="0" width="80" height="50"/>
+    <text x="40" y="22" text-anchor="middle" class="mono" fill="#C9A961">z ~ N(0,I)</text>
+    <text x="40" y="40" text-anchor="middle" class="mut" fill="#C9A961">noise</text>
+  </g>
+
+  <!-- Generator -->
+  <g transform="translate(170, 110)">
+    <rect class="gen" x="0" y="0" width="120" height="70"/>
+    <text x="60" y="24" text-anchor="middle" class="mono" fill="#D97757" font-weight="600">Generator G</text>
+    <text x="60" y="42" text-anchor="middle" class="mut" fill="#D97757">z → fake sample</text>
+    <text x="60" y="58" text-anchor="middle" class="mut" fill="#D97757">e.g. DCGAN ConvT</text>
+  </g>
+
+  <!-- Fake sample -->
+  <g transform="translate(330, 100)">
+    <rect class="fake" x="0" y="0" width="90" height="90"/>
+    <g transform="translate(10, 10)">
+      <ellipse cx="35" cy="30" rx="22" ry="18" fill="#A8324B" opacity="0.55"/>
+      <circle cx="27" cy="28" r="2" fill="#1F1F1E"/>
+      <circle cx="43" cy="28" r="2" fill="#1F1F1E"/>
+      <ellipse cx="35" cy="55" rx="14" ry="6" fill="#A8324B" opacity="0.4"/>
+    </g>
+    <text x="45" y="108" text-anchor="middle" class="mono" fill="#A8324B">G(z)</text>
+    <text x="45" y="122" text-anchor="middle" class="mut" fill="#A8324B">"fake"</text>
+  </g>
+
+  <!-- Real sample -->
+  <g transform="translate(330, 230)">
+    <rect class="real" x="0" y="0" width="90" height="90"/>
+    <g transform="translate(10, 10)">
+      <ellipse cx="35" cy="30" rx="24" ry="20" fill="#7B9E89" opacity="0.6"/>
+      <circle cx="27" cy="27" r="2.5" fill="#1F1F1E"/>
+      <circle cx="43" cy="27" r="2.5" fill="#1F1F1E"/>
+      <path d="M 30 45 Q 35 50 40 45" stroke="#1F1F1E" stroke-width="1" fill="none"/>
+    </g>
+    <text x="45" y="108" text-anchor="middle" class="mono" fill="#7B9E89">x</text>
+    <text x="45" y="122" text-anchor="middle" class="mut" fill="#7B9E89">"real" (from dataset)</text>
+  </g>
+
+  <!-- Discriminator -->
+  <g transform="translate(480, 170)">
+    <rect class="disc" x="0" y="0" width="140" height="90"/>
+    <text x="70" y="28" text-anchor="middle" class="mono" fill="#4A6670" font-weight="600">Discriminator D</text>
+    <text x="70" y="48" text-anchor="middle" class="mut" fill="#4A6670">classifies real vs fake</text>
+    <text x="70" y="64" text-anchor="middle" class="mut" fill="#4A6670">outputs D(x) ∈ [0, 1]</text>
+    <text x="70" y="80" text-anchor="middle" class="mut" fill="#4A6670">1 = real, 0 = fake</text>
+  </g>
+
+  <!-- Output probability -->
+  <g transform="translate(680, 190)">
+    <rect x="0" y="0" width="80" height="50" fill="#F0EEE5" stroke="#1F1F1E" rx="3"/>
+    <text x="40" y="22" text-anchor="middle" class="mono">D(x)</text>
+    <text x="40" y="40" text-anchor="middle" class="mut">or D(G(z))</text>
+  </g>
+
+  <!-- Arrows forward -->
+  <g class="ink" marker-end="url(#gn-a)">
+    <line x1="120" y1="145" x2="170" y2="145"/>
+    <line x1="290" y1="145" x2="330" y2="145"/>
+    <line x1="420" y1="145" x2="480" y2="200"/>
+    <line x1="420" y1="275" x2="480" y2="220"/>
+    <line x1="620" y1="215" x2="680" y2="215"/>
+  </g>
+
+  <!-- Backward arrows (two separate objectives) -->
+  <g>
+    <!-- D gradient (uses label): goes from output back to D -->
+    <path class="grad-d" d="M 720 240 Q 620 300 580 270" marker-end="url(#gn-s)"/>
+    <text x="640" y="305" class="mono" fill="#4A6670">∇_D on CE(label, D)</text>
+
+    <!-- G gradient: flows from output through D back to G -->
+    <path class="grad-g" d="M 720 185 Q 620 100 290 100" marker-end="url(#gn-o)"/>
+    <text x="450" y="95" class="mono" fill="#D97757">∇_G maximises log D(G(z))</text>
+  </g>
+
+  <!-- Minimax objective -->
+  <g transform="translate(60, 345)">
+    <rect x="0" y="0" width="840" height="80" fill="#EEEBDF" stroke="#C9C4B5"/>
+    <text x="14" y="22" class="tag">MINIMAX OBJECTIVE</text>
+    <text x="420" y="48" text-anchor="middle" class="mono" font-size="14">
+      min_G max_D  E[ log D(x) ] + E[ log (1 − D(G(z))) ]
+    </text>
+    <text x="420" y="68" text-anchor="middle" class="mut" font-style="italic">
+      D maximises → distinguish real from fake · G minimises → fool D
+    </text>
+  </g>
+</svg>

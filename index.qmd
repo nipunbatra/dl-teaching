@@ -79,16 +79,16 @@ Each lecture maps to one or more UDL chapters — see the tables below and the f
 
 | # | Topic | UDL | Slides | Notebook |
 |:---:|------|:---:|:------:|:--------:|
-| 17 | Self-Supervised &amp; Contrastive Learning | Ch 14 | | |
-| 18 | Vision-Language Models | Ch 12 + CLIP | | |
+| 17 | Self-Supervised &amp; Contrastive Learning | Ch 14 | [HTML](html/lec17-self-supervised-contrastive-lecture.html) · [PDF](pdf/lec17-self-supervised-contrastive-lecture.pdf) | |
+| 18 | Vision-Language Models | Ch 12 + CLIP | [HTML](html/lec18-vision-language-lecture.html) · [PDF](pdf/lec18-vision-language-lecture.pdf) | |
 
 ## Module 9 · Generative Models (L19–L22)
 
 | # | Topic | UDL | Slides | Notebook |
 |:---:|------|:---:|:------:|:--------:|
-| 19 | Autoencoders &amp; VAEs | Ch 17 | | |
-| 20 | GANs | Ch 15 | | |
-| 21 | Diffusion Models — Theory | Ch 18 | | |
+| 19 | Autoencoders &amp; VAEs | Ch 17 | [HTML](html/lec19-autoencoders-vae-lecture.html) · [PDF](pdf/lec19-autoencoders-vae-lecture.pdf) | |
+| 20 | GANs | Ch 15 | [HTML](html/lec20-gans-lecture.html) · [PDF](pdf/lec20-gans-lecture.pdf) | |
+| 21 | Diffusion Models — Theory | Ch 18 | [HTML](html/lec21-diffusion-theory-lecture.html) · [PDF](pdf/lec21-diffusion-theory-lecture.pdf) | |
 | 22 | Diffusion Models — Practice | Ch 18 + `diffusers` | | |
 
 ## Module 10 · Wrap-up (L23)

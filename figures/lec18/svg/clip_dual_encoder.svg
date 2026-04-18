@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .box    { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.3; rx:4; ry:4; }
+      .enc-v  { fill:#DCE3E6; stroke:#4A6670; stroke-width:1.4; rx:4; ry:4; }
+      .enc-t  { fill:#EAD3C5; stroke:#D97757; stroke-width:1.4; rx:4; ry:4; }
+      .match  { fill:#7B9E89; stroke:none; opacity:0.85; }
+      .miss   { fill:#F0EEE5; stroke:#C9C4B5; stroke-width:0.6; }
+      .cross  { fill:#D97757; opacity:0.2; stroke:#A8324B; }
+      .ink    { stroke:#1F1F1E; fill:none; stroke-width:1.2; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+    <marker id="cl-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/></marker>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">CLIP — dual encoder · align image and text embeddings via contrastive loss</text>
+
+  <!-- Image side (top) -->
+  <g transform="translate(40, 80)">
+    <text x="0" y="-6" class="tag">IMAGE BATCH</text>
+
+    <rect class="box" x="0" y="10" width="60" height="40"/>
+    <text x="30" y="34" text-anchor="middle" class="mono">img₁</text>
+    <rect class="box" x="0" y="60" width="60" height="40"/>
+    <text x="30" y="84" text-anchor="middle" class="mono">img₂</text>
+    <rect class="box" x="0" y="110" width="60" height="40"/>
+    <text x="30" y="134" text-anchor="middle" class="mono">img₃</text>
+    <text x="30" y="172" text-anchor="middle" class="mono">...</text>
+    <rect class="box" x="0" y="180" width="60" height="40"/>
+    <text x="30" y="204" text-anchor="middle" class="mono">img_N</text>
+  </g>
+
+  <!-- Image encoder -->
+  <g transform="translate(120, 130)">
+    <rect class="enc-v" x="0" y="0" width="90" height="60"/>
+    <text x="45" y="22" text-anchor="middle" class="mono" fill="#4A6670" font-weight="600">Image encoder</text>
+    <text x="45" y="42" text-anchor="middle" class="mut" fill="#4A6670">ViT-L</text>
+    <text x="45" y="56" text-anchor="middle" class="mut" fill="#4A6670" font-style="italic">shared for batch</text>
+  </g>
+
+  <!-- Text side (bottom-left) -->
+  <g transform="translate(40, 320)">
+    <text x="0" y="-6" class="tag" fill="#D97757">TEXT BATCH</text>
+
+    <rect class="box" x="0" y="10" width="180" height="20"/>
+    <text x="90" y="25" text-anchor="middle" class="mono">"a photo of a cat"</text>
+    <rect class="box" x="0" y="36" width="180" height="20"/>
+    <text x="90" y="51" text-anchor="middle" class="mono">"a dog in a park"</text>
+    <rect class="box" x="0" y="62" width="180" height="20"/>
+    <text x="90" y="77" text-anchor="middle" class="mono">"the Eiffel Tower"</text>
+  </g>
+
+  <!-- Text encoder -->
+  <g transform="translate(240, 340)">
+    <rect class="enc-t" x="0" y="0" width="90" height="60"/>
+    <text x="45" y="22" text-anchor="middle" class="mono" fill="#D97757" font-weight="600">Text encoder</text>
+    <text x="45" y="42" text-anchor="middle" class="mut" fill="#D97757">Transformer</text>
+  </g>
+
+  <!-- Embedding outputs (middle) -->
+  <!-- Image embeddings as row vectors -->
+  <g transform="translate(260, 90)">
+    <rect x="0" y="10" width="40" height="12" fill="#4A6670" opacity="0.7"/>
+    <text x="20" y="20" text-anchor="middle" class="mono" font-size="9" fill="#F0EEE5">I₁</text>
+    <rect x="0" y="60" width="40" height="12" fill="#4A6670" opacity="0.7"/>
+    <text x="20" y="70" text-anchor="middle" class="mono" font-size="9" fill="#F0EEE5">I₂</text>
+    <rect x="0" y="110" width="40" height="12" fill="#4A6670" opacity="0.7"/>
+    <text x="20" y="120" text-anchor="middle" class="mono" font-size="9" fill="#F0EEE5">I₃</text>
+    <text x="20" y="150" text-anchor="middle" class="mono" font-size="9">...</text>
+    <rect x="0" y="180" width="40" height="12" fill="#4A6670" opacity="0.7"/>
+    <text x="20" y="190" text-anchor="middle" class="mono" font-size="9" fill="#F0EEE5">I_N</text>
+  </g>
+
+  <!-- Text embeddings as column vectors -->
+  <g transform="translate(360, 240)">
+    <rect x="0" y="0" width="12" height="40" fill="#D97757" opacity="0.7"/>
+    <text x="6" y="24" text-anchor="middle" class="mono" font-size="9" fill="#F0EEE5">T₁</text>
+    <rect x="50" y="0" width="12" height="40" fill="#D97757" opacity="0.7"/>
+    <text x="56" y="24" text-anchor="middle" class="mono" font-size="9" fill="#F0EEE5">T₂</text>
+    <rect x="100" y="0" width="12" height="40" fill="#D97757" opacity="0.7"/>
+    <text x="106" y="24" text-anchor="middle" class="mono" font-size="9" fill="#F0EEE5">T₃</text>
+    <text x="150" y="24" text-anchor="middle" class="mono" font-size="9">...</text>
+    <rect x="180" y="0" width="12" height="40" fill="#D97757" opacity="0.7"/>
+    <text x="186" y="24" text-anchor="middle" class="mono" font-size="9" fill="#F0EEE5">T_N</text>
+  </g>
+
+  <!-- Similarity matrix -->
+  <g transform="translate(430, 80)">
+    <text x="110" y="-10" text-anchor="middle" class="tag" fill="#7B9E89">SIMILARITY I · T<tspan font-size="8">⊤</tspan> / τ</text>
+    <g>
+      <!-- 5x5 matrix, diagonal highlighted -->
+      <rect class="match" x="0"   y="0"   width="30" height="30"/>
+      <rect class="miss"  x="30"  y="0"   width="30" height="30"/>
+      <rect class="miss"  x="60"  y="0"   width="30" height="30"/>
+      <rect class="miss"  x="90"  y="0"   width="30" height="30"/>
+      <rect class="miss"  x="120" y="0"   width="30" height="30"/>
+
+      <rect class="miss"  x="0"   y="30"  width="30" height="30"/>
+      <rect class="match" x="30"  y="30"  width="30" height="30"/>
+      <rect class="miss"  x="60"  y="30"  width="30" height="30"/>
+      <rect class="miss"  x="90"  y="30"  width="30" height="30"/>
+      <rect class="miss"  x="120" y="30"  width="30" height="30"/>
+
+      <rect class="miss"  x="0"   y="60"  width="30" height="30"/>
+      <rect class="miss"  x="30"  y="60"  width="30" height="30"/>
+      <rect class="match" x="60"  y="60"  width="30" height="30"/>
+      <rect class="miss"  x="90"  y="60"  width="30" height="30"/>
+      <rect class="miss"  x="120" y="60"  width="30" height="30"/>
+
+      <rect class="miss"  x="0"   y="90"  width="30" height="30"/>
+      <rect class="miss"  x="30"  y="90"  width="30" height="30"/>
+      <rect class="miss"  x="60"  y="90"  width="30" height="30"/>
+      <rect class="match" x="90"  y="90"  width="30" height="30"/>
+      <rect class="miss"  x="120" y="90"  width="30" height="30"/>
+
+      <rect class="miss"  x="0"   y="120" width="30" height="30"/>
+      <rect class="miss"  x="30"  y="120" width="30" height="30"/>
+      <rect class="miss"  x="60"  y="120" width="30" height="30"/>
+      <rect class="miss"  x="90"  y="120" width="30" height="30"/>
+      <rect class="match" x="120" y="120" width="30" height="30"/>
+    </g>
+    <text x="75" y="170" text-anchor="middle" class="mono" fill="#7B9E89">N × N pairs per batch</text>
+    <text x="75" y="185" text-anchor="middle" class="mut" fill="#7B9E89">diagonal = positives</text>
+  </g>
+
+  <!-- Loss formula -->
+  <g transform="translate(640, 100)">
+    <rect x="0" y="0" width="280" height="100" fill="#EEEBDF" stroke="#C9C4B5"/>
+    <text x="14" y="22" class="tag">INFONCE LOSS</text>
+    <text x="140" y="48" text-anchor="middle" class="mono" font-size="12">ℒ = ½ · [CE(rows) + CE(cols)]</text>
+    <text x="14" y="68" class="mut">symmetric · image and text</text>
+    <text x="14" y="82" class="mut">both classify over N options</text>
+    <text x="14" y="96" class="mut" font-style="italic">temperature τ is learned</text>
+  </g>
+
+  <!-- Zero-shot insight -->
+  <g transform="translate(640, 240)">
+    <rect x="0" y="0" width="280" height="150" fill="#D8E3DE" stroke="#7B9E89"/>
+    <text x="14" y="22" class="tag" fill="#7B9E89">ZERO-SHOT CLASSIFICATION</text>
+    <text x="14" y="42" class="mut" fill="#7B9E89">At inference, write text for each class:</text>
+    <text x="14" y="60" class="mono" font-size="10">"a photo of a {cat/dog/car/...}"</text>
+    <text x="14" y="82" class="mut" fill="#7B9E89">Encode all options. Pick the one</text>
+    <text x="14" y="96" class="mut" fill="#7B9E89">whose text embedding is closest</text>
+    <text x="14" y="110" class="mut" fill="#7B9E89">to the image embedding.</text>
+    <text x="14" y="134" class="mut" fill="#7B9E89" font-style="italic">No training on the task.</text>
+  </g>
+
+  <!-- Arrows -->
+  <g class="ink" marker-end="url(#cl-a)">
+    <line x1="65" y1="160" x2="120" y2="160"/>
+    <line x1="210" y1="160" x2="255" y2="160"/>
+    <line x1="225" y1="370" x2="240" y2="370"/>
+    <line x1="335" y1="370" x2="365" y2="290"/>
+  </g>
+</svg>

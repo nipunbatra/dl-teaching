@@ -1,0 +1,163 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .img    { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1; rx:3; ry:3; }
+      .fwd    { stroke:#A8324B; fill:none; stroke-width:1.8; }
+      .rev    { stroke:#7B9E89; fill:none; stroke-width:1.8; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+    <marker id="fr-f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#A8324B"/></marker>
+    <marker id="fr-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7B9E89"/></marker>
+    <pattern id="noise-mid" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect x="0" y="0" width="4" height="4" fill="#F0EEE5"/>
+      <circle cx="1" cy="1" r="0.5" fill="#1F1F1E" opacity="0.3"/>
+      <circle cx="3" cy="3" r="0.5" fill="#1F1F1E" opacity="0.5"/>
+    </pattern>
+    <pattern id="noise-heavy" x="0" y="0" width="3" height="3" patternUnits="userSpaceOnUse">
+      <rect x="0" y="0" width="3" height="3" fill="#F0EEE5"/>
+      <circle cx="0.5" cy="0.5" r="0.5" fill="#1F1F1E" opacity="0.7"/>
+      <circle cx="2" cy="2" r="0.5" fill="#1F1F1E" opacity="0.6"/>
+      <circle cx="1.5" cy="0.5" r="0.5" fill="#1F1F1E" opacity="0.5"/>
+    </pattern>
+    <pattern id="noise-full" x="0" y="0" width="3" height="3" patternUnits="userSpaceOnUse">
+      <rect x="0" y="0" width="3" height="3" fill="#6B6A65"/>
+      <circle cx="0.5" cy="0.5" r="0.5" fill="#F0EEE5"/>
+      <circle cx="2" cy="2" r="0.5" fill="#F0EEE5"/>
+      <circle cx="1.5" cy="0.5" r="0.3" fill="#1F1F1E"/>
+    </pattern>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Diffusion — forward corrupts image with noise; reverse learns to denoise</text>
+
+  <!-- Top row: forward process (left to right) -->
+  <g transform="translate(40, 80)">
+    <text x="0" y="-10" class="tag" fill="#A8324B">FORWARD · ADD GAUSSIAN NOISE · q(x_t | x_{t-1})</text>
+
+    <!-- x_0: clean -->
+    <g transform="translate(0, 20)">
+      <rect class="img" x="0" y="0" width="80" height="80"/>
+      <g transform="translate(10, 10)">
+        <ellipse cx="30" cy="25" rx="22" ry="16" fill="#D97757" opacity="0.8"/>
+        <circle cx="22" cy="22" r="2.5" fill="#1F1F1E"/>
+        <circle cx="38" cy="22" r="2.5" fill="#1F1F1E"/>
+        <path d="M 25 40 Q 30 45 35 40" stroke="#1F1F1E" fill="none" stroke-width="1.2"/>
+      </g>
+      <text x="40" y="98" text-anchor="middle" class="mono">x₀</text>
+      <text x="40" y="112" text-anchor="middle" class="mut">clean</text>
+    </g>
+
+    <!-- x_t/4: slight noise -->
+    <g transform="translate(140, 20)">
+      <rect class="img" x="0" y="0" width="80" height="80"/>
+      <g transform="translate(10, 10)">
+        <ellipse cx="30" cy="25" rx="22" ry="16" fill="#D97757" opacity="0.65"/>
+        <circle cx="22" cy="22" r="2.5" fill="#1F1F1E"/>
+        <circle cx="38" cy="22" r="2.5" fill="#1F1F1E"/>
+      </g>
+      <rect class="img" x="0" y="0" width="80" height="80" fill="url(#noise-mid)" opacity="0.3"/>
+      <text x="40" y="98" text-anchor="middle" class="mono">x_{t=200}</text>
+      <text x="40" y="112" text-anchor="middle" class="mut">slightly noisy</text>
+    </g>
+
+    <!-- x_t/2: medium -->
+    <g transform="translate(280, 20)">
+      <rect class="img" x="0" y="0" width="80" height="80"/>
+      <g transform="translate(10, 10)">
+        <ellipse cx="30" cy="25" rx="22" ry="16" fill="#D97757" opacity="0.4"/>
+      </g>
+      <rect class="img" x="0" y="0" width="80" height="80" fill="url(#noise-heavy)" opacity="0.6"/>
+      <text x="40" y="98" text-anchor="middle" class="mono">x_{t=500}</text>
+      <text x="40" y="112" text-anchor="middle" class="mut">half noise</text>
+    </g>
+
+    <!-- x_3t/4: mostly noise -->
+    <g transform="translate(420, 20)">
+      <rect class="img" x="0" y="0" width="80" height="80" fill="url(#noise-heavy)"/>
+      <text x="40" y="98" text-anchor="middle" class="mono">x_{t=800}</text>
+      <text x="40" y="112" text-anchor="middle" class="mut">mostly noise</text>
+    </g>
+
+    <!-- x_T: pure noise -->
+    <g transform="translate(560, 20)">
+      <rect class="img" x="0" y="0" width="80" height="80" fill="url(#noise-full)"/>
+      <text x="40" y="98" text-anchor="middle" class="mono">x_T</text>
+      <text x="40" y="112" text-anchor="middle" class="mut">N(0, I)</text>
+    </g>
+
+    <!-- Forward arrows -->
+    <g class="fwd" marker-end="url(#fr-f)">
+      <line x1="85"  y1="60" x2="135" y2="60"/>
+      <line x1="225" y1="60" x2="275" y2="60"/>
+      <line x1="365" y1="60" x2="415" y2="60"/>
+      <line x1="505" y1="60" x2="555" y2="60"/>
+    </g>
+    <text x="345" y="50" text-anchor="middle" class="mono" fill="#A8324B">T = 1000 steps</text>
+  </g>
+
+  <!-- Bottom row: reverse process (right to left) -->
+  <g transform="translate(40, 240)">
+    <text x="0" y="-10" class="tag" fill="#7B9E89">REVERSE · LEARN TO DENOISE · p_θ(x_{t-1} | x_t)</text>
+
+    <!-- Repeat the same squares, but arrows go the other way -->
+    <g transform="translate(0, 20)">
+      <rect class="img" x="0" y="0" width="80" height="80"/>
+      <g transform="translate(10, 10)">
+        <ellipse cx="30" cy="25" rx="22" ry="16" fill="#D97757" opacity="0.8"/>
+        <circle cx="22" cy="22" r="2.5" fill="#1F1F1E"/>
+        <circle cx="38" cy="22" r="2.5" fill="#1F1F1E"/>
+        <path d="M 25 40 Q 30 45 35 40" stroke="#1F1F1E" fill="none" stroke-width="1.2"/>
+      </g>
+      <text x="40" y="98" text-anchor="middle" class="mono">x₀</text>
+      <text x="40" y="112" text-anchor="middle" class="mut" fill="#7B9E89">generated!</text>
+    </g>
+
+    <g transform="translate(140, 20)">
+      <rect class="img" x="0" y="0" width="80" height="80"/>
+      <g transform="translate(10, 10)">
+        <ellipse cx="30" cy="25" rx="22" ry="16" fill="#D97757" opacity="0.65"/>
+        <circle cx="22" cy="22" r="2.5" fill="#1F1F1E"/>
+        <circle cx="38" cy="22" r="2.5" fill="#1F1F1E"/>
+      </g>
+      <rect class="img" x="0" y="0" width="80" height="80" fill="url(#noise-mid)" opacity="0.3"/>
+      <text x="40" y="98" text-anchor="middle" class="mono">x_{t=200}</text>
+    </g>
+
+    <g transform="translate(280, 20)">
+      <rect class="img" x="0" y="0" width="80" height="80"/>
+      <g transform="translate(10, 10)">
+        <ellipse cx="30" cy="25" rx="22" ry="16" fill="#D97757" opacity="0.4"/>
+      </g>
+      <rect class="img" x="0" y="0" width="80" height="80" fill="url(#noise-heavy)" opacity="0.6"/>
+      <text x="40" y="98" text-anchor="middle" class="mono">x_{t=500}</text>
+    </g>
+
+    <g transform="translate(420, 20)">
+      <rect class="img" x="0" y="0" width="80" height="80" fill="url(#noise-heavy)"/>
+      <text x="40" y="98" text-anchor="middle" class="mono">x_{t=800}</text>
+    </g>
+
+    <g transform="translate(560, 20)">
+      <rect class="img" x="0" y="0" width="80" height="80" fill="url(#noise-full)"/>
+      <text x="40" y="98" text-anchor="middle" class="mono">x_T</text>
+      <text x="40" y="112" text-anchor="middle" class="mut" fill="#7B9E89">start here</text>
+    </g>
+
+    <g class="rev" marker-end="url(#fr-r)">
+      <line x1="135" y1="70" x2="85"  y2="70"/>
+      <line x1="275" y1="70" x2="225" y2="70"/>
+      <line x1="415" y1="70" x2="365" y2="70"/>
+      <line x1="555" y1="70" x2="505" y2="70"/>
+    </g>
+    <text x="345" y="60" text-anchor="middle" class="mono" fill="#7B9E89">ε_θ(x_t, t) predicts noise · subtract · repeat T times</text>
+  </g>
+
+  <!-- Bottom text -->
+  <g transform="translate(60, 395)">
+    <text x="420" y="0" text-anchor="middle" class="mut" font-style="italic">
+      Forward process is <tspan fill="#A8324B" font-weight="600">fixed</tspan> · reverse is <tspan fill="#7B9E89" font-weight="600">learned</tspan> · neural network ε_θ predicts the noise at each step.
+    </text>
+  </g>
+</svg>
