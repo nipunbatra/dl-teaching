@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .axis  { stroke:#1F1F1E; stroke-width:1; fill:none; }
+      .bar-p { fill:#4A6670; }
+      .bar-ns{ fill:#A8324B; }
+      .bar-sc{ fill:#7B9E89; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Why divide by √d_k — without it, softmax collapses to one-hot</text>
+
+  <!-- Panel 1: small d_k, no scaling -->
+  <g transform="translate(40, 70)">
+    <text x="130" y="-8" text-anchor="middle" class="tag">d_k = 4 · no scaling</text>
+    <rect x="0" y="0" width="260" height="180" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <line x1="0" y1="170" x2="260" y2="170" class="axis"/>
+    <!-- Q·K values: small, softly peaked -->
+    <rect class="bar-p" x="40"  y="90"  width="30" height="80"/>
+    <rect class="bar-p" x="80"  y="60"  width="30" height="110"/>
+    <rect class="bar-p" x="120" y="20"  width="30" height="150"/>
+    <rect class="bar-p" x="160" y="80"  width="30" height="90"/>
+    <rect class="bar-p" x="200" y="100" width="30" height="70"/>
+    <text x="55"  y="180" text-anchor="middle" class="mono">0.5</text>
+    <text x="95"  y="180" text-anchor="middle" class="mono">1.0</text>
+    <text x="135" y="180" text-anchor="middle" class="mono">1.5</text>
+    <text x="175" y="180" text-anchor="middle" class="mono">0.6</text>
+    <text x="215" y="180" text-anchor="middle" class="mono">0.3</text>
+    <text x="130" y="200" text-anchor="middle" class="mut">Q·K values (nicely scaled)</text>
+  </g>
+
+  <!-- Panel 2: large d_k, no scaling → peaky -->
+  <g transform="translate(340, 70)">
+    <text x="130" y="-8" text-anchor="middle" class="tag" fill="#A8324B">d_k = 512 · no scaling</text>
+    <rect x="0" y="0" width="260" height="180" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <line x1="0" y1="170" x2="260" y2="170" class="axis"/>
+    <!-- Q·K values: HUGE -->
+    <rect class="bar-ns" x="40"  y="165" width="30" height="5"/>
+    <rect class="bar-ns" x="80"  y="160" width="30" height="10"/>
+    <rect class="bar-ns" x="120" y="10"  width="30" height="160"/>
+    <rect class="bar-ns" x="160" y="167" width="30" height="3"/>
+    <rect class="bar-ns" x="200" y="168" width="30" height="2"/>
+    <text x="55"  y="180" text-anchor="middle" class="mono" fill="#A8324B">2</text>
+    <text x="95"  y="180" text-anchor="middle" class="mono" fill="#A8324B">5</text>
+    <text x="135" y="180" text-anchor="middle" class="mono" fill="#A8324B" font-weight="600">30</text>
+    <text x="175" y="180" text-anchor="middle" class="mono" fill="#A8324B">3</text>
+    <text x="215" y="180" text-anchor="middle" class="mono" fill="#A8324B">1</text>
+    <text x="130" y="200" text-anchor="middle" class="mut" fill="#A8324B">Q·K values blow up</text>
+  </g>
+
+  <!-- Panel 3: large d_k, with scaling -->
+  <g transform="translate(640, 70)">
+    <text x="130" y="-8" text-anchor="middle" class="tag" fill="#7B9E89">d_k = 512 · ÷√d_k</text>
+    <rect x="0" y="0" width="260" height="180" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <line x1="0" y1="170" x2="260" y2="170" class="axis"/>
+    <!-- Q·K/sqrt(d_k) values: back to nice range -->
+    <rect class="bar-sc" x="40"  y="90"  width="30" height="80"/>
+    <rect class="bar-sc" x="80"  y="60"  width="30" height="110"/>
+    <rect class="bar-sc" x="120" y="20"  width="30" height="150"/>
+    <rect class="bar-sc" x="160" y="80"  width="30" height="90"/>
+    <rect class="bar-sc" x="200" y="100" width="30" height="70"/>
+    <text x="55"  y="180" text-anchor="middle" class="mono" fill="#7B9E89">0.5</text>
+    <text x="95"  y="180" text-anchor="middle" class="mono" fill="#7B9E89">1.0</text>
+    <text x="135" y="180" text-anchor="middle" class="mono" fill="#7B9E89">1.5</text>
+    <text x="175" y="180" text-anchor="middle" class="mono" fill="#7B9E89">0.6</text>
+    <text x="215" y="180" text-anchor="middle" class="mono" fill="#7B9E89">0.3</text>
+    <text x="130" y="200" text-anchor="middle" class="mut" fill="#7B9E89">back to nice range</text>
+  </g>
+
+  <!-- Softmax outputs -->
+  <g transform="translate(40, 280)">
+    <text x="130" y="-8" text-anchor="middle" class="tag">softmax → probs</text>
+    <rect x="0" y="0" width="260" height="90" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <line x1="0" y1="80" x2="260" y2="80" class="axis"/>
+    <rect class="bar-p" x="40"  y="60" width="30" height="20"/>
+    <rect class="bar-p" x="80"  y="52" width="30" height="28"/>
+    <rect class="bar-p" x="120" y="30" width="30" height="50"/>
+    <rect class="bar-p" x="160" y="55" width="30" height="25"/>
+    <rect class="bar-p" x="200" y="65" width="30" height="15"/>
+    <text x="130" y="105" text-anchor="middle" class="mut">reasonable distribution</text>
+  </g>
+
+  <g transform="translate(340, 280)">
+    <text x="130" y="-8" text-anchor="middle" class="tag" fill="#A8324B">softmax with large logits</text>
+    <rect x="0" y="0" width="260" height="90" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <line x1="0" y1="80" x2="260" y2="80" class="axis"/>
+    <rect class="bar-ns" x="40"  y="79" width="30" height="1"/>
+    <rect class="bar-ns" x="80"  y="79" width="30" height="1"/>
+    <rect class="bar-ns" x="120" y="5"  width="30" height="75"/>
+    <rect class="bar-ns" x="160" y="79" width="30" height="1"/>
+    <rect class="bar-ns" x="200" y="79" width="30" height="1"/>
+    <text x="130" y="105" text-anchor="middle" class="mut" fill="#A8324B">one-hot collapse · gradient dies</text>
+  </g>
+
+  <g transform="translate(640, 280)">
+    <text x="130" y="-8" text-anchor="middle" class="tag" fill="#7B9E89">softmax after ÷√d_k</text>
+    <rect x="0" y="0" width="260" height="90" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <line x1="0" y1="80" x2="260" y2="80" class="axis"/>
+    <rect class="bar-sc" x="40"  y="60" width="30" height="20"/>
+    <rect class="bar-sc" x="80"  y="52" width="30" height="28"/>
+    <rect class="bar-sc" x="120" y="30" width="30" height="50"/>
+    <rect class="bar-sc" x="160" y="55" width="30" height="25"/>
+    <rect class="bar-sc" x="200" y="65" width="30" height="15"/>
+    <text x="130" y="105" text-anchor="middle" class="mut" fill="#7B9E89">healthy distribution preserved</text>
+  </g>
+</svg>

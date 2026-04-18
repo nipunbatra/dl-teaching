@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .node    { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.2; }
+      .node-g  { fill:#EAD3C5; stroke:#D97757; stroke-width:1.4; }
+      .node-b  { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.4; }
+      .ink     { stroke:#1F1F1E; fill:none; stroke-width:1; }
+      .mono    { font-family:'JetBrains Mono', monospace; font-size:10px; fill:#1F1F1E; }
+      .mut     { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl     { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag     { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Decoding — four ways to pick the next token</text>
+
+  <!-- GREEDY -->
+  <g transform="translate(40, 70)">
+    <text x="140" y="-8" text-anchor="middle" class="tag" fill="#D97757">GREEDY</text>
+    <rect x="0" y="0" width="280" height="140" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <circle class="node" cx="140" cy="20" r="10"/>
+    <text x="140" y="24" text-anchor="middle" class="mono">start</text>
+
+    <circle class="node-g" cx="70"  cy="70" r="12"/>
+    <text x="70" y="74" text-anchor="middle" class="mono">0.6</text>
+    <circle class="node" cx="140" cy="70" r="10"/>
+    <text x="140" y="74" text-anchor="middle" class="mono">0.3</text>
+    <circle class="node" cx="210" cy="70" r="10"/>
+    <text x="210" y="74" text-anchor="middle" class="mono">0.1</text>
+
+    <g class="ink">
+      <line x1="140" y1="30" x2="70" y2="58"/>
+      <line x1="140" y1="30" x2="140" y2="60"/>
+      <line x1="140" y1="30" x2="210" y2="58"/>
+    </g>
+
+    <circle class="node-g" cx="70" cy="120" r="12"/>
+    <text x="70" y="124" text-anchor="middle" class="mono">0.7</text>
+    <line x1="70" y1="82" x2="70" y2="108" class="ink"/>
+
+    <text x="140" y="160" text-anchor="middle" class="mut">picks top-1 at each step</text>
+  </g>
+
+  <!-- BEAM SEARCH -->
+  <g transform="translate(340, 70)">
+    <text x="140" y="-8" text-anchor="middle" class="tag" fill="#7B9E89">BEAM SEARCH (k=2)</text>
+    <rect x="0" y="0" width="280" height="140" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <circle class="node" cx="140" cy="20" r="10"/>
+
+    <circle class="node-b" cx="70"  cy="70" r="12"/>
+    <text x="70" y="74" text-anchor="middle" class="mono">0.6</text>
+    <circle class="node-b" cx="140" cy="70" r="12"/>
+    <text x="140" y="74" text-anchor="middle" class="mono">0.3</text>
+    <circle class="node" cx="210" cy="70" r="10"/>
+    <text x="210" y="74" text-anchor="middle" class="mono">0.1</text>
+
+    <g class="ink">
+      <line x1="140" y1="30" x2="70"  y2="58"/>
+      <line x1="140" y1="30" x2="140" y2="58"/>
+      <line x1="140" y1="30" x2="210" y2="58"/>
+    </g>
+
+    <!-- Second level: expand both kept beams -->
+    <circle class="node" cx="40"   cy="120" r="9"/>
+    <text x="40" y="123" text-anchor="middle" class="mono">.42</text>
+    <circle class="node-b" cx="85" cy="120" r="11"/>
+    <text x="85" y="123" text-anchor="middle" class="mono">.56</text>
+    <circle class="node" cx="170" cy="120" r="9"/>
+    <text x="170" y="123" text-anchor="middle" class="mono">.21</text>
+    <circle class="node-b" cx="215" cy="120" r="11"/>
+    <text x="215" y="123" text-anchor="middle" class="mono">.27</text>
+
+    <g class="ink">
+      <line x1="70" y1="82" x2="40"  y2="111"/>
+      <line x1="70" y1="82" x2="85"  y2="109"/>
+      <line x1="140" y1="82" x2="170" y2="111"/>
+      <line x1="140" y1="82" x2="215" y2="109"/>
+    </g>
+
+    <text x="140" y="160" text-anchor="middle" class="mut">keeps top-k paths each step</text>
+  </g>
+
+  <!-- TOP-K -->
+  <g transform="translate(40, 240)">
+    <text x="140" y="-8" text-anchor="middle" class="tag" fill="#4A6670">TOP-K SAMPLING (k=3)</text>
+    <rect x="0" y="0" width="280" height="100" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <!-- Show bars: truncate to top 3, renormalize, sample -->
+    <g>
+      <rect x="20" y="60" width="30" height="30" fill="#D97757"/>
+      <text x="35" y="54" text-anchor="middle" class="mono">.45</text>
+      <rect x="60" y="70" width="30" height="20" fill="#D97757"/>
+      <text x="75" y="64" text-anchor="middle" class="mono">.30</text>
+      <rect x="100" y="78" width="30" height="12" fill="#D97757"/>
+      <text x="115" y="72" text-anchor="middle" class="mono">.18</text>
+      <rect x="140" y="85" width="30" height="5" fill="#C9C4B5"/>
+      <text x="155" y="82" text-anchor="middle" class="mono">.04</text>
+      <rect x="180" y="88" width="30" height="2" fill="#C9C4B5"/>
+      <text x="195" y="86" text-anchor="middle" class="mono">.02</text>
+    </g>
+    <line x1="135" y1="30" x2="135" y2="95" stroke="#4A6670" stroke-dasharray="4 2"/>
+    <text x="142" y="40" class="mono" fill="#4A6670">cutoff</text>
+
+    <text x="140" y="120" text-anchor="middle" class="mut">sample from top 3 only</text>
+  </g>
+
+  <!-- NUCLEUS / top-p -->
+  <g transform="translate(340, 240)">
+    <text x="140" y="-8" text-anchor="middle" class="tag" fill="#A8324B">NUCLEUS (top-p=0.9)</text>
+    <rect x="0" y="0" width="280" height="100" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <!-- keep smallest set whose cumulative prob >= 0.9 -->
+    <g>
+      <rect x="20" y="60" width="30" height="30" fill="#A8324B"/>
+      <text x="35" y="54" text-anchor="middle" class="mono">.45</text>
+      <rect x="60" y="70" width="30" height="20" fill="#A8324B"/>
+      <text x="75" y="64" text-anchor="middle" class="mono">.30</text>
+      <rect x="100" y="78" width="30" height="12" fill="#A8324B"/>
+      <text x="115" y="72" text-anchor="middle" class="mono">.18</text>
+      <rect x="140" y="85" width="30" height="5" fill="#C9C4B5"/>
+      <text x="155" y="82" text-anchor="middle" class="mono">.04</text>
+      <rect x="180" y="88" width="30" height="2" fill="#C9C4B5"/>
+      <text x="195" y="86" text-anchor="middle" class="mono">.02</text>
+    </g>
+    <path d="M 5 35 Q 100 35 135 55" stroke="#A8324B" fill="none" stroke-width="1.2"/>
+    <text x="40" y="32" class="mono" fill="#A8324B">Σ ≥ 0.9</text>
+
+    <text x="140" y="120" text-anchor="middle" class="mut">adaptive cutoff by cumulative probability</text>
+  </g>
+
+  <!-- Bottom -->
+  <g transform="translate(60, 370)">
+    <text x="420" y="0" text-anchor="middle" class="mut" font-style="italic">
+      <tspan fill="#D97757" font-weight="600">Greedy</tspan>/<tspan fill="#7B9E89" font-weight="600">beam</tspan> — deterministic, safe, can be repetitive.
+      <tspan fill="#A8324B" font-weight="600">Top-p</tspan> (nucleus) is the 2026 LLM default.
+    </text>
+  </g>
+</svg>

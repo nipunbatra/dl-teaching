@@ -51,20 +51,20 @@ Each lecture maps to one or more UDL chapters — see the tables below and the f
 |:---:|------|:---:|:------:|:--------:|
 | 7 | CNN Deep Dive + Classic Architectures | Ch 10 | [HTML](html/lec07-cnn-deep-dive-lecture.html) · [PDF](pdf/lec07-cnn-deep-dive-lecture.pdf) | |
 | 8 | Modern Architectures &amp; Transfer Learning | Ch 10, 11 | [HTML](html/lec08-modern-cnns-transfer-lecture.html) · [PDF](pdf/lec08-modern-cnns-transfer-lecture.pdf) | |
-| 9 | Object Detection, Localization &amp; Segmentation | Bishop Ch 10 | | |
+| 9 | Object Detection, Localization &amp; Segmentation | Bishop Ch 10 | [HTML](html/lec09-detection-segmentation-lecture.html) · [PDF](pdf/lec09-detection-segmentation-lecture.pdf) | |
 
 ## Module 5 · Sequence Models (L10–L11)
 
 | # | Topic | Reading | Slides | Notebook |
 |:---:|------|:-------:|:------:|:--------:|
-| 10 | RNNs, LSTMs, GRUs | Bishop Ch 12 | | |
-| 11 | Seq2Seq &amp; Motivation for Attention | Bishop Ch 12 | | |
+| 10 | RNNs, LSTMs, GRUs | Bishop Ch 12 | [HTML](html/lec10-rnn-lstm-gru-lecture.html) · [PDF](pdf/lec10-rnn-lstm-gru-lecture.pdf) | |
+| 11 | Seq2Seq &amp; Motivation for Attention | Bishop Ch 12 | [HTML](html/lec11-seq2seq-lecture.html) · [PDF](pdf/lec11-seq2seq-lecture.pdf) | |
 
 ## Module 6 · Attention &amp; Transformers (L12–L14)
 
 | # | Topic | UDL | Slides | Notebook |
 |:---:|------|:---:|:------:|:--------:|
-| 12 | Attention Mechanism | Ch 12 | | |
+| 12 | Attention Mechanism | Ch 12 | [HTML](html/lec12-attention-lecture.html) · [PDF](pdf/lec12-attention-lecture.pdf) | |
 | 13 | The Transformer — Built Live | Ch 12 | | |
 | 14 | Tokenization &amp; Pretraining Paradigms | Ch 12 | | |
 

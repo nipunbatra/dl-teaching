@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .cell   { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.3; }
+      .gate-f { fill:#F6D4CC; stroke:#A8324B; stroke-width:1.3; rx:3; ry:3; }
+      .gate-i { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.3; rx:3; ry:3; }
+      .gate-o { fill:#DCE3E6; stroke:#4A6670; stroke-width:1.3; rx:3; ry:3; }
+      .candidate{ fill:#F6F0DF; stroke:#C9A961; stroke-width:1.3; rx:3; ry:3; }
+      .belt   { stroke:#D97757; fill:none; stroke-width:2.4; }
+      .hidden { stroke:#4A6670; fill:none; stroke-width:1.8; }
+      .ink    { stroke:#1F1F1E; fill:none; stroke-width:1.2; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+    <marker id="ls-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/></marker>
+    <marker id="ls-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#D97757"/></marker>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">LSTM cell — three gates protect a cell state that runs like a conveyor belt</text>
+
+  <!-- The cell state belt (top, running left to right) -->
+  <g>
+    <line x1="40" y1="80" x2="920" y2="80" class="belt" marker-end="url(#ls-b)"/>
+    <text x="80" y="72" class="mono" fill="#D97757">c_{t-1}</text>
+    <text x="860" y="72" class="mono" fill="#D97757">c_t</text>
+    <text x="480" y="62" text-anchor="middle" class="mut" fill="#D97757" font-style="italic">cell state · "conveyor belt" — flows mostly unchanged</text>
+  </g>
+
+  <!-- Pointwise multiply (forget gate interaction) -->
+  <circle cx="280" cy="80" r="12" fill="#F6D4CC" stroke="#A8324B"/>
+  <text x="280" y="84" text-anchor="middle" class="mono" fill="#A8324B" font-weight="600">×</text>
+
+  <!-- Pointwise add (input interaction) -->
+  <circle cx="520" cy="80" r="12" fill="#D8E3DE" stroke="#7B9E89"/>
+  <text x="520" y="84" text-anchor="middle" class="mono" fill="#7B9E89" font-weight="600">+</text>
+
+  <!-- Hidden state input/output -->
+  <line x1="40" y1="380" x2="920" y2="380" class="hidden" marker-end="url(#ls-a)"/>
+  <text x="80" y="400" class="mono" fill="#4A6670">h_{t-1}</text>
+  <text x="860" y="400" class="mono" fill="#4A6670">h_t</text>
+  <line x1="480" y1="420" x2="480" y2="410" stroke="#4A6670"/>
+
+  <!-- Input x_t -->
+  <text x="200" y="430" class="mono">x_t</text>
+  <line x1="200" y1="410" x2="200" y2="380" class="ink" marker-end="url(#ls-a)"/>
+
+  <!-- Forget gate -->
+  <g transform="translate(230, 180)">
+    <rect class="gate-f" x="0" y="0" width="100" height="40"/>
+    <text x="50" y="22" text-anchor="middle" class="mono" fill="#A8324B" font-weight="600">σ (forget)</text>
+    <text x="50" y="36" text-anchor="middle" class="mut" fill="#A8324B" font-size="9">f_t</text>
+  </g>
+  <line x1="280" y1="180" x2="280" y2="92" class="ink" marker-end="url(#ls-a)"/>
+
+  <!-- Input gate + candidate -->
+  <g transform="translate(400, 180)">
+    <rect class="gate-i" x="0" y="0" width="100" height="40"/>
+    <text x="50" y="22" text-anchor="middle" class="mono" fill="#7B9E89" font-weight="600">σ (input)</text>
+    <text x="50" y="36" text-anchor="middle" class="mut" fill="#7B9E89" font-size="9">i_t</text>
+  </g>
+  <g transform="translate(520, 180)">
+    <rect class="candidate" x="0" y="0" width="100" height="40"/>
+    <text x="50" y="22" text-anchor="middle" class="mono" fill="#C9A961" font-weight="600">tanh</text>
+    <text x="50" y="36" text-anchor="middle" class="mut" fill="#C9A961" font-size="9">~c_t (candidate)</text>
+  </g>
+
+  <!-- Pointwise × between i and ~c -->
+  <circle cx="510" cy="140" r="10" fill="#F0EEE5" stroke="#1F1F1E"/>
+  <text x="510" y="144" text-anchor="middle" class="mono" font-size="10">×</text>
+  <g class="ink" marker-end="url(#ls-a)">
+    <line x1="450" y1="180" x2="504" y2="148"/>
+    <line x1="570" y1="180" x2="516" y2="148"/>
+    <line x1="510" y1="128" x2="514" y2="92"/>
+  </g>
+
+  <!-- Output gate -->
+  <g transform="translate(710, 180)">
+    <rect class="gate-o" x="0" y="0" width="100" height="40"/>
+    <text x="50" y="22" text-anchor="middle" class="mono" fill="#4A6670" font-weight="600">σ (output)</text>
+    <text x="50" y="36" text-anchor="middle" class="mut" fill="#4A6670" font-size="9">o_t</text>
+  </g>
+
+  <!-- tanh on cell state path that feeds output gate -->
+  <g transform="translate(640, 110)">
+    <rect class="candidate" x="0" y="0" width="60" height="26" rx="3"/>
+    <text x="30" y="18" text-anchor="middle" class="mono" fill="#C9A961">tanh</text>
+  </g>
+  <line x1="640" y1="123" x2="580" y2="123" class="ink" stroke-dasharray="3 2"/>
+  <line x1="700" y1="123" x2="730" y2="200" class="ink" stroke-dasharray="3 2"/>
+
+  <!-- Pointwise × for h_t output -->
+  <circle cx="800" cy="270" r="10" fill="#F0EEE5" stroke="#1F1F1E"/>
+  <text x="800" y="274" text-anchor="middle" class="mono" font-size="10">×</text>
+  <g class="ink" marker-end="url(#ls-a)">
+    <line x1="760" y1="220" x2="795" y2="262"/>
+    <line x1="800" y1="280" x2="800" y2="380"/>
+  </g>
+
+  <!-- Formulas -->
+  <g transform="translate(30, 240)">
+    <rect x="0" y="0" width="180" height="125" fill="#EEEBDF" stroke="#C9C4B5"/>
+    <text x="10" y="18" class="tag">FORMULAS</text>
+    <text x="10" y="38" class="mono" font-size="10" fill="#A8324B">f_t = σ(W_f [h_{t-1}, x_t])</text>
+    <text x="10" y="56" class="mono" font-size="10" fill="#7B9E89">i_t = σ(W_i [h_{t-1}, x_t])</text>
+    <text x="10" y="74" class="mono" font-size="10" fill="#4A6670">o_t = σ(W_o [h_{t-1}, x_t])</text>
+    <text x="10" y="92" class="mono" font-size="10" fill="#C9A961">~c = tanh(W_c [h_{t-1}, x_t])</text>
+    <text x="10" y="110" class="mono" font-size="10" fill="#1F1F1E">c_t = f·c_{t-1} + i·~c</text>
+    <text x="10" y="122" class="mono" font-size="10" fill="#1F1F1E">h_t = o · tanh(c_t)</text>
+  </g>
+</svg>
