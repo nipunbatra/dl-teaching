@@ -88,6 +88,35 @@ Train end-to-end. The bottleneck $d < n$ forces the network to learn a useful co
 
 ---
 
+# Autoencoder vs PCA · what's added
+
+PCA is **the** linear autoencoder with orthogonal weights. What does nonlinearity buy you?
+
+<div class="math-box">
+
+- PCA forces the latent space to be *linear subspace*. Fine for Gaussian-like data; poor for curved manifolds.
+- An autoencoder (MLP or CNN) can fold arbitrary manifolds — digits on a swiss-roll latent, faces on a curved surface, etc.
+
+</div>
+
+Concretely · PCA on MNIST reaches ~85% explained variance with 32 dims; a deep AE matches the full-data reconstruction at ~16 dims. Curved manifold vs linear subspace · nonlinearity buys 2× compression.
+
+---
+
+# Bottleneck intuition · why it's crucial
+
+If the latent $d \ge n$, the network can just copy · $z = x$, $g(z) = z$. Loss is zero but nothing learned.
+
+<div class="keypoint">
+
+The bottleneck $d \ll n$ **forces compression** · the network must keep only the most informative features. Anything redundant gets dropped. This is why autoencoders produce useful representations even without labels.
+
+</div>
+
+Modern variants add noise (denoising AE) or masking (MAE, L17) *instead of* a small bottleneck — same idea, different forcing.
+
+---
+
 # But autoencoders aren't generative
 
 Suppose you train an AE on MNIST. To *generate* a new digit, you'd:
