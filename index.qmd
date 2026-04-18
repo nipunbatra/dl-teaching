@@ -39,71 +39,70 @@ Each lecture maps to one or more UDL chapters — see the tables below and the f
 | 4 | SGD, Momentum, Nesterov | Ch 6 | [HTML](html/lec04-sgd-momentum-lecture.html) · [PDF](pdf/lec04-sgd-momentum-lecture.pdf) | |
 | 5 | Adam, AdamW, LR Schedules | Ch 6, 7 | [HTML](html/lec05-adam-schedules-lecture.html) · [PDF](pdf/lec05-adam-schedules-lecture.pdf) | |
 
-## Module 3 · Regularization (L6–L7)
+## Module 3 · Regularization (L6) — spans two sessions
 
 | # | Topic | UDL | Slides | Notebook |
 |:---:|------|:---:|:------:|:--------:|
-| 6 | Classical Regularization &amp; Data Augmentation | Ch 9 | [HTML](html/lec06-regularization-classical-lecture.html) · [PDF](pdf/lec06-regularization-classical-lecture.pdf) | |
-| 7 | Dropout &amp; Normalization | Ch 9, 11 | [HTML](html/lec07-dropout-normalization-lecture.html) · [PDF](pdf/lec07-dropout-normalization-lecture.pdf) | |
+| 6 | Regularization (classical + dropout + normalization) | Ch 9, 11 | [HTML](html/lec06-regularization-lecture.html) · [PDF](pdf/lec06-regularization-lecture.pdf) | |
 
-## Module 4 · CNNs &amp; Visual Recognition (L8–L10)
+## Module 4 · CNNs &amp; Visual Recognition (L7–L9)
 
 | # | Topic | UDL | Slides | Notebook |
 |:---:|------|:---:|:------:|:--------:|
-| 8 | CNN Deep Dive + Classic Architectures | Ch 10 | | |
-| 9 | Modern Architectures &amp; Transfer Learning | Ch 10, 11 | | |
-| 10 | Object Detection, Localization &amp; Segmentation | Bishop Ch 10 | | |
+| 7 | CNN Deep Dive + Classic Architectures | Ch 10 | [HTML](html/lec07-cnn-deep-dive-lecture.html) · [PDF](pdf/lec07-cnn-deep-dive-lecture.pdf) | |
+| 8 | Modern Architectures &amp; Transfer Learning | Ch 10, 11 | | |
+| 9 | Object Detection, Localization &amp; Segmentation | Bishop Ch 10 | | |
 
-## Module 5 · Sequence Models (L11–L12)
+## Module 5 · Sequence Models (L10–L11)
 
 | # | Topic | Reading | Slides | Notebook |
 |:---:|------|:-------:|:------:|:--------:|
-| 11 | RNNs, LSTMs, GRUs | Bishop Ch 12 | | |
-| 12 | Seq2Seq &amp; Motivation for Attention | Bishop Ch 12 | | |
+| 10 | RNNs, LSTMs, GRUs | Bishop Ch 12 | | |
+| 11 | Seq2Seq &amp; Motivation for Attention | Bishop Ch 12 | | |
 
-## Module 6 · Attention &amp; Transformers (L13–L15)
+## Module 6 · Attention &amp; Transformers (L12–L14)
 
 | # | Topic | UDL | Slides | Notebook |
 |:---:|------|:---:|:------:|:--------:|
-| 13 | Attention Mechanism | Ch 12 | | |
-| 14 | The Transformer — Built Live | Ch 12 | | |
-| 15 | Tokenization &amp; Pretraining Paradigms | Ch 12 | | |
+| 12 | Attention Mechanism | Ch 12 | | |
+| 13 | The Transformer — Built Live | Ch 12 | | |
+| 14 | Tokenization &amp; Pretraining Paradigms | Ch 12 | | |
 
-## Module 7 · LLMs (L16–L17)
+## Module 7 · LLMs (L15–L16)
 
 | # | Topic | Reading | Slides | Notebook |
 |:---:|------|:-------:|:------:|:--------:|
-| 16 | Large Language Models | Chinchilla + HF course | | |
-| 17 | Alignment &amp; Fine-tuning | HF PEFT + DPO | | |
+| 15 | Large Language Models | Chinchilla + HF course | | |
+| 16 | Alignment &amp; Fine-tuning | HF PEFT + DPO | | |
 
-## Module 8 · Self-Supervised &amp; Vision-Language (L18–L19)
-
-| # | Topic | UDL | Slides | Notebook |
-|:---:|------|:---:|:------:|:--------:|
-| 18 | Self-Supervised &amp; Contrastive Learning | Ch 14 | | |
-| 19 | Vision-Language Models | Ch 12 + CLIP | | |
-
-## Module 9 · Generative Models (L20–L23)
+## Module 8 · Self-Supervised &amp; Vision-Language (L17–L18)
 
 | # | Topic | UDL | Slides | Notebook |
 |:---:|------|:---:|:------:|:--------:|
-| 20 | Autoencoders &amp; VAEs | Ch 17 | | |
-| 21 | GANs | Ch 15 | | |
-| 22 | Diffusion Models — Theory | Ch 18 | | |
-| 23 | Diffusion Models — Practice | Ch 18 + `diffusers` | | |
+| 17 | Self-Supervised &amp; Contrastive Learning | Ch 14 | | |
+| 18 | Vision-Language Models | Ch 12 + CLIP | | |
 
-## Module 10 · Wrap-up (L24)
+## Module 9 · Generative Models (L19–L22)
+
+| # | Topic | UDL | Slides | Notebook |
+|:---:|------|:---:|:------:|:--------:|
+| 19 | Autoencoders &amp; VAEs | Ch 17 | | |
+| 20 | GANs | Ch 15 | | |
+| 21 | Diffusion Models — Theory | Ch 18 | | |
+| 22 | Diffusion Models — Practice | Ch 18 + `diffusers` | | |
+
+## Module 10 · Wrap-up (L23)
 
 | # | Topic | Reading | Slides | Notebook |
 |:---:|------|:-------:|:------:|:--------:|
-| 24 | Efficient Inference, Agents, Open Problems | Chip Huyen + HF inference | | |
+| 23 | Efficient Inference, Agents, Open Problems | Chip Huyen + HF inference | | |
 
 ---
 
 ## Code threads
 
-- **Language** · micrograd (L3) → MLP (L3) → Transformer (L13–14) → nanoGPT (L14–15) → LoRA fine-tune (L17)
-- **Vision** · MLP-MNIST (L1) → CNN-CIFAR (L8) → transfer-ResNet (L9) → ViT-CLIP (L19) → diffusion (L22–23)
+- **Language** · micrograd (L3) → MLP (L3) → Transformer (L12–13) → nanoGPT (L13–14) → LoRA fine-tune (L16)
+- **Vision** · MLP-MNIST (L1) → CNN-CIFAR (L7) → transfer-ResNet (L8) → ViT-CLIP (L18) → diffusion (L21–22)
 
 ## Canonical examples
 

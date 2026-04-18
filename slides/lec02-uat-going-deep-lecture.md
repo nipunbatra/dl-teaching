@@ -51,6 +51,12 @@ What a single hidden layer can — and can't — do
 
 ![w:900px](figures/lec02/svg/uat_bump_construction.svg)
 
+<div class="realworld">
+
+▶ Interactive: grow a 1-hidden-layer net and watch it fit a target curve — [universal-approximation](https://nipunbatra.github.io/interactive-articles/universal-approximation/).
+
+</div>
+
 ---
 
 # UAT · the formal statement
@@ -240,6 +246,12 @@ Before we fix depth, let's see it break
 # Sigmoid's fatal ceiling · 0.25
 
 ![w:900px](figures/lec02/svg/sigmoid_gradient_stack.svg)
+
+<div class="realworld">
+
+▶ Interactive: stack sigmoids and watch the gradient evaporate with depth — [vanishing-gradients](https://nipunbatra.github.io/interactive-articles/vanishing-gradients/).
+
+</div>
 
 ---
 

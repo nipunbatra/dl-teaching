@@ -140,6 +140,12 @@ PyTorch's `SGD(..., momentum=0.9)` uses an equivalent form.
 
 ![w:900px](figures/lec04/svg/sgd_zoo.svg)
 
+<div class="realworld">
+
+▶ Interactive: race SGD, momentum, Adam on a 2D quadratic — [optimizer-race](https://nipunbatra.github.io/interactive-articles/optimizer-race/).
+
+</div>
+
 ---
 
 # A concrete example · MNIST

@@ -240,6 +240,12 @@ The math that makes learning possible
 
 ![w:920px](figures/lec01/svg/softmax_visual.svg)
 
+<div class="realworld">
+
+▶ Interactive: drag the temperature slider, watch the distribution morph — [softmax-temperature](https://nipunbatra.github.io/interactive-articles/softmax-temperature/).
+
+</div>
+
 ---
 
 # Why exponentiate?

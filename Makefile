@@ -38,7 +38,7 @@ first5: dirs
 	done
 	@echo "Done: L1-L5 HTML"
 
-# Convenience: build HTML for the first 7 lectures (adds L6, L7)
+# Convenience: build HTML for the first 7 lectures (merged reg as L6, CNN as L7)
 first7: dirs
 	@echo "Building HTML for L1-L7..."
 	@for n in 01 02 03 04 05 06 07; do \
@@ -51,6 +51,20 @@ first7: dirs
 		done \
 	done
 	@echo "Done: L1-L7 HTML"
+
+# Convenience: build HTML for the first 6 lectures (L6 merged regularization)
+first6: dirs
+	@echo "Building HTML for L1-L6..."
+	@for n in 01 02 03 04 05 06; do \
+		for f in $(SLIDES_DIR)/lec$$n-*.md; do \
+			if [ -f "$$f" ]; then \
+				name=$$(basename "$$f" .md); \
+				echo "  $$f -> $(HTML_DIR)/$$name.html"; \
+				npx marp "$$f" -o "$(HTML_DIR)/$$name.html" --html --allow-local-files --theme-set $(THEME); \
+			fi \
+		done \
+	done
+	@echo "Done: L1-L6 HTML"
 
 # Create output directories and copy images
 dirs:
