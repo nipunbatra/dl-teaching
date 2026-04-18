@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .axis  { stroke:#1F1F1E; stroke-width:1.2; fill:none; }
+      .grid  { stroke:#C9C4B5; stroke-width:0.5; opacity:0.5; }
+      .train { stroke:#4A6670; stroke-width:2.4; fill:none; }
+      .val   { stroke:#A8324B; stroke-width:2.4; fill:none; }
+      .best  { stroke:#7B9E89; stroke-width:1.5; stroke-dasharray:4 3; fill:none; }
+      .gap   { fill:#C9A961; opacity:0.2; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">The gap between training and validation loss · what every training run looks like</text>
+
+  <g transform="translate(90, 70)">
+    <rect x="0" y="0" width="780" height="220" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <g class="grid">
+      <line x1="0" y1="55"  x2="780" y2="55"/>
+      <line x1="0" y1="110" x2="780" y2="110"/>
+      <line x1="0" y1="165" x2="780" y2="165"/>
+      <line x1="100" y1="0" x2="100" y2="220"/>
+      <line x1="200" y1="0" x2="200" y2="220"/>
+      <line x1="300" y1="0" x2="300" y2="220"/>
+      <line x1="400" y1="0" x2="400" y2="220"/>
+      <line x1="500" y1="0" x2="500" y2="220"/>
+      <line x1="600" y1="0" x2="600" y2="220"/>
+      <line x1="700" y1="0" x2="700" y2="220"/>
+    </g>
+
+    <line x1="0" y1="220" x2="780" y2="220" class="axis"/>
+    <line x1="0" y1="0" x2="0" y2="220" class="axis"/>
+
+    <!-- train loss: monotonically decreasing -->
+    <path class="train" d="M 10 40 Q 100 60 200 90 Q 300 115 450 155 Q 600 180 770 200"/>
+
+    <!-- val loss: decreases then increases -->
+    <path class="val" d="M 10 50 Q 100 75 200 105 Q 280 122 350 125 L 420 120 Q 500 125 600 145 Q 680 170 770 195"/>
+
+    <!-- gap shading from epoch 400 onward -->
+    <path class="gap" d="M 400 120 Q 500 125 600 145 Q 680 170 770 195 L 770 200 Q 600 180 450 155 Q 420 147 400 140 Z"/>
+
+    <!-- Best val marker -->
+    <circle cx="385" cy="122" r="6" fill="#7B9E89" stroke="#1F1F1E"/>
+    <line x1="385" y1="0" x2="385" y2="122" class="best"/>
+    <text x="390" y="12" class="mono" fill="#7B9E89" font-weight="600">best val · stop here</text>
+
+    <!-- overfit region label -->
+    <text x="600" y="80" class="mono" fill="#C9A961" font-weight="600">OVERFITTING ZONE</text>
+    <text x="600" y="96" class="mut" fill="#C9A961">train still ↓ · val ↑</text>
+
+    <!-- Early zone label -->
+    <text x="90" y="30" class="mut" font-style="italic">underfit</text>
+
+    <!-- Curves labels -->
+    <text x="770" y="196" class="mono" fill="#A8324B" text-anchor="end">val loss</text>
+    <text x="770" y="208" class="mono" fill="#4A6670" text-anchor="end">train loss</text>
+
+    <!-- Axis labels -->
+    <text x="390" y="250" text-anchor="middle" class="mut">epoch →</text>
+    <text x="-10" y="110" transform="rotate(-90 -10 110)" text-anchor="middle" class="mut">loss →</text>
+  </g>
+
+  <!-- Bottom insight -->
+  <g transform="translate(90, 320)">
+    <text x="390" y="0" text-anchor="middle" class="mut" font-style="italic" font-size="13">
+      <tspan fill="#4A6670">train loss</tspan> monotonically drops ·
+      <tspan fill="#A8324B">val loss</tspan> drops then rises ·
+      the <tspan fill="#C9A961" font-weight="600">gap</tspan> is overfitting ·
+      <tspan fill="#7B9E89" font-weight="600">stop</tspan> at the val minimum
+    </text>
+  </g>
+</svg>

@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Convolution Visualizer — ES 667</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+  :root{
+    --bg:#fdfcf9;--paper:#ffffff;--text:#2f2a22;--accent:#2c6fb7;
+    --warm:#d9622b;--border:#e2d8c6;--highlight:#fef3c7;
+    --cell:46px;--gap:2px;
+    --font-body:'Source Serif 4',Georgia,serif;
+    --font-ui:'Manrope',system-ui,sans-serif;
+  }
+
+  html{font-size:16px}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:var(--font-body);
+    line-height:1.5;
+    min-height:100vh;
+    display:flex;flex-direction:column;
+  }
+
+  /* ---------- HEADER ---------- */
+  header{
+    text-align:center;padding:2rem 1rem 1rem;
+  }
+  header h1{
+    font-family:var(--font-ui);font-weight:700;font-size:2rem;
+    color:var(--text);letter-spacing:-0.02em;
+  }
+  header p.tagline{
+    font-family:var(--font-ui);font-weight:400;font-size:1rem;
+    color:#7a7265;margin-top:.25rem;
+  }
+
+  /* ---------- MAIN ---------- */
+  main{flex:1;max-width:1200px;width:100%;margin:0 auto;padding:0 1.5rem 2rem}
+
+  /* ---------- KERNEL BUTTONS ---------- */
+  .kernel-bar{
+    display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;
+    margin:1.25rem 0;
+  }
+  .kernel-bar button{
+    font-family:var(--font-ui);font-weight:600;font-size:.85rem;
+    padding:.45rem 1rem;border-radius:6px;border:2px solid var(--border);
+    background:var(--paper);color:var(--text);cursor:pointer;
+    transition:all .15s ease;
+  }
+  .kernel-bar button:hover{border-color:var(--accent);color:var(--accent)}
+  .kernel-bar button.active{
+    background:var(--accent);color:#fff;border-color:var(--accent);
+  }
+
+  /* ---------- PANELS ---------- */
+  .panels{
+    display:flex;gap:2rem;justify-content:center;align-items:flex-start;
+    flex-wrap:wrap;margin-top:1rem;
+  }
+  .panel{
+    background:var(--paper);border:1px solid var(--border);
+    border-radius:10px;padding:1rem;
+    display:flex;flex-direction:column;align-items:center;
+  }
+  .panel h2{
+    font-family:var(--font-ui);font-weight:600;font-size:.9rem;
+    margin-bottom:.6rem;color:#7a7265;text-transform:uppercase;
+    letter-spacing:.06em;
+  }
+
+  /* ---------- GRIDS ---------- */
+  .grid{
+    display:inline-grid;gap:var(--gap);
+  }
+  .grid .cell{
+    width:var(--cell);height:var(--cell);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-ui);font-weight:600;font-size:.72rem;
+    border-radius:4px;border:1.5px solid var(--border);
+    transition:background .15s,border-color .15s,color .15s;
+    user-select:none;
+  }
+
+  /* Highlighted cells (kernel overlay on input) */
+  .cell.kernel-overlay{
+    border-color:var(--warm)!important;
+    box-shadow:inset 0 0 0 2px var(--highlight);
+  }
+  .cell.current-output{
+    border-color:var(--warm)!important;
+    box-shadow:0 0 0 2.5px var(--warm);
+  }
+
+  /* Kernel panel product display */
+  .kernel-product{
+    font-size:.62rem;font-weight:500;color:#7a7265;
+    margin-top:1px;
+  }
+
+  /* Custom kernel inputs */
+  .kernel-input{
+    width:var(--cell);height:var(--cell);
+    text-align:center;font-family:var(--font-ui);font-weight:600;
+    font-size:.82rem;border:1.5px solid var(--border);border-radius:4px;
+    background:var(--paper);color:var(--text);
+  }
+  .kernel-input:focus{outline:none;border-color:var(--accent)}
+
+  /* ---------- CONTROLS ---------- */
+  .controls-bar{
+    display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;
+    align-items:center;margin:1.25rem 0;
+  }
+  .controls-bar button{
+    font-family:var(--font-ui);font-weight:600;font-size:.85rem;
+    padding:.5rem 1.3rem;border-radius:6px;border:none;cursor:pointer;
+    transition:all .15s;
+  }
+  .btn-step{background:var(--accent);color:#fff}
+  .btn-step:hover{background:#24599a}
+  .btn-play{background:var(--warm);color:#fff}
+  .btn-play:hover{background:#b8511f}
+  .btn-play.playing{background:#a3452a}
+  .btn-reset{background:var(--paper);color:var(--text);border:2px solid var(--border)!important}
+  .btn-reset:hover{border-color:var(--accent)!important;color:var(--accent)}
+
+  .param-group{
+    display:flex;align-items:center;gap:.4rem;
+    font-family:var(--font-ui);font-size:.82rem;font-weight:500;
+  }
+  .param-group label{color:#7a7265}
+  .param-group select,.param-group input[type=range]{
+    font-family:var(--font-ui);font-size:.82rem;
+    border:1.5px solid var(--border);border-radius:4px;
+    padding:.2rem .4rem;background:var(--paper);color:var(--text);
+  }
+  .param-group input[type=range]{width:80px;cursor:pointer}
+  .param-group .param-val{
+    display:inline-block;min-width:1.2em;text-align:center;
+    font-weight:700;color:var(--accent);
+  }
+
+  /* ---------- COMPUTATION TEXT ---------- */
+  .computation-box{
+    background:var(--paper);border:1px solid var(--border);border-radius:10px;
+    padding:1rem 1.25rem;margin:1rem 0;
+    font-family:var(--font-ui);font-size:.82rem;
+    line-height:1.7;overflow-x:auto;
+    max-width:100%;
+  }
+  .computation-box .comp-label{
+    font-weight:700;color:var(--accent);margin-bottom:.2rem;
+  }
+  .computation-box .comp-expr{
+    font-family:'SF Mono',Consolas,monospace;font-size:.78rem;
+    word-break:break-all;color:var(--text);
+  }
+  .comp-result{font-weight:700;color:var(--warm)}
+
+  /* ---------- FORMULA ---------- */
+  .formula-box{
+    text-align:center;margin:1rem 0;
+    font-family:var(--font-ui);font-size:.88rem;color:#7a7265;
+  }
+  .formula-box .katex-display{margin:.3rem 0}
+  .formula-label{font-weight:600;margin-bottom:.25rem}
+  .dim-result{
+    font-family:var(--font-ui);font-weight:700;font-size:.9rem;
+    color:var(--accent);margin-top:.3rem;
+  }
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    text-align:center;padding:1.5rem 1rem;
+    font-family:var(--font-ui);font-weight:500;font-size:.82rem;
+    color:#9a9084;border-top:1px solid var(--border);
+  }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media(max-width:860px){
+    .panels{flex-direction:column;align-items:center}
+    :root{--cell:38px}
+  }
+  @media(max-width:480px){
+    :root{--cell:32px}
+    header h1{font-size:1.4rem}
+  }
+
+  /* ---------- EDITABLE INPUT GRID ---------- */
+  .input-cell-edit{
+    width:var(--cell);height:var(--cell);
+    text-align:center;font-family:var(--font-ui);font-weight:600;
+    font-size:.72rem;border:1.5px solid var(--border);border-radius:4px;
+    background:transparent;color:inherit;cursor:text;
+    padding:0;
+  }
+  .input-cell-edit:focus{outline:none;border-color:var(--accent)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Convolution Visualizer</h1>
+  <p class="tagline">Watch a kernel slide across an image, one dot product at a time</p>
+</header>
+
+<main>
+  <!-- Kernel presets -->
+  <div class="kernel-bar" id="kernelBar">
+    <button data-kernel="edgeH" class="active">Edge (H)</button>
+    <button data-kernel="edgeV">Edge (V)</button>
+    <button data-kernel="sharpen">Sharpen</button>
+    <button data-kernel="blur">Blur</button>
+    <button data-kernel="custom">Custom</button>
+  </div>
+
+  <!-- Custom kernel editor (hidden by default) -->
+  <div id="customKernelWrap" style="display:none;text-align:center;margin-bottom:.75rem">
+    <div class="grid" id="customKernelGrid" style="grid-template-columns:repeat(3,var(--cell))"></div>
+    <button id="applyCustom" style="margin-top:.5rem;font-family:var(--font-ui);font-weight:600;font-size:.8rem;padding:.35rem .9rem;border-radius:5px;border:2px solid var(--accent);background:var(--paper);color:var(--accent);cursor:pointer">Apply</button>
+  </div>
+
+  <!-- Three panels -->
+  <div class="panels">
+    <!-- Input -->
+    <div class="panel" id="inputPanel">
+      <h2>Input (8x8)</h2>
+      <div class="grid" id="inputGrid" style="grid-template-columns:repeat(8,var(--cell))"></div>
+      <p style="font-family:var(--font-ui);font-size:.7rem;color:#9a9084;margin-top:.5rem">Click a cell to edit its value</p>
+    </div>
+    <!-- Kernel / products -->
+    <div class="panel" id="kernelPanel">
+      <h2>Kernel (3x3)</h2>
+      <div class="grid" id="kernelGrid" style="grid-template-columns:repeat(3,var(--cell))"></div>
+      <div style="margin-top:.7rem">
+        <h2 style="font-size:.78rem;color:#7a7265;text-transform:uppercase;letter-spacing:.06em;font-family:var(--font-ui);font-weight:600">Element-wise Products</h2>
+        <div class="grid" id="productGrid" style="grid-template-columns:repeat(3,var(--cell))"></div>
+      </div>
+    </div>
+    <!-- Output -->
+    <div class="panel" id="outputPanel">
+      <h2 id="outputTitle">Output (6x6)</h2>
+      <div class="grid" id="outputGrid"></div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls-bar">
+    <button class="btn-step" id="btnStep">Step</button>
+    <button class="btn-play" id="btnPlay">Play</button>
+    <button class="btn-reset" id="btnReset">Reset</button>
+    <span class="param-group">
+      <label>Padding</label>
+      <input type="range" id="padSlider" min="0" max="2" value="0">
+      <span class="param-val" id="padVal">0</span>
+    </span>
+    <span class="param-group">
+      <label>Stride</label>
+      <select id="strideSelect">
+        <option value="1" selected>1</option>
+        <option value="2">2</option>
+      </select>
+    </span>
+    <span class="param-group">
+      <label>Speed</label>
+      <select id="speedSelect">
+        <option value="600">Slow</option>
+        <option value="333" selected>Normal</option>
+        <option value="150">Fast</option>
+      </select>
+    </span>
+  </div>
+
+  <!-- Computation -->
+  <div class="computation-box" id="computationBox">
+    <div class="comp-label">Dot product at current position:</div>
+    <div class="comp-expr" id="compExpr">Press <strong>Step</strong> or <strong>Play</strong> to begin.</div>
+  </div>
+
+  <!-- Formula -->
+  <div class="formula-box">
+    <div class="formula-label">Output dimension formula</div>
+    <div id="formulaKatex"></div>
+    <div class="dim-result" id="dimResult"></div>
+  </div>
+</main>
+
+<footer>ES 667: Deep Learning &middot; IIT Gandhinagar</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+
+/* ========== STATE ========== */
+const W=8, K=3;
+let padding=0, stride=1;
+let inputData=[];   // flat W*W
+let kernel=[];      // flat K*K  (always 3x3 for display; values may be fractional for blur)
+let kernelRaw=[];   // raw ints for display
+let isBlur=false;   // flag to show /9
+let outputData=[];  // flat outW*outW
+let outW=0;
+let curRow=0,curCol=0; // kernel position in output coords
+let posIndex=-1;    // linear position in output, -1 = not started
+let playing=false;
+let timer=null;
+
+/* ========== PRESETS ========== */
+const presets={
+  edgeH:[[-1,-1,-1],[0,0,0],[1,1,1]],
+  edgeV:[[-1,0,1],[-1,0,1],[-1,0,1]],
+  sharpen:[[0,-1,0],[-1,5,-1],[0,-1,0]],
+  blur:[[1,1,1],[1,1,1],[1,1,1]],
+};
+
+function defaultInput(){
+  const d=[];
+  for(let r=0;r<W;r++) for(let c=0;c<W;c++) d.push(c<4?200:50);
+  return d;
+}
+
+function computeOutW(){
+  return Math.floor((W - K + 2*padding)/stride)+1;
+}
+
+/* ========== INIT ========== */
+function init(){
+  inputData=defaultInput();
+  setKernel('edgeH');
+  buildCustomKernelGrid();
+  renderAll();
+  renderFormula();
+}
+
+function setKernel(name){
+  const m=presets[name];
+  isBlur=(name==='blur');
+  kernelRaw=m.flat();
+  kernel=isBlur? m.flat().map(v=>v/9): m.flat();
+  resetConvolution();
+}
+
+function setCustomKernel(vals){
+  isBlur=false;
+  kernelRaw=vals.slice();
+  kernel=vals.slice();
+  resetConvolution();
+}
+
+function resetConvolution(){
+  outW=computeOutW();
+  outputData=new Array(outW*outW).fill(null);
+  posIndex=-1;curRow=0;curCol=0;
+  stopPlay();
+  renderAll();
+  renderFormula();
+  document.getElementById('compExpr').innerHTML='Press <strong>Step</strong> or <strong>Play</strong> to begin.';
+}
+
+/* ========== PADDED INPUT ACCESS ========== */
+function paddedVal(r,c){
+  const rr=r-padding, cc=c-padding;
+  if(rr<0||rr>=W||cc<0||cc>=W) return 0;
+  return inputData[rr*W+cc];
+}
+
+/* ========== CONVOLUTION STEP ========== */
+function step(){
+  if(posIndex>=outW*outW-1) return false;
+  posIndex++;
+  curRow=Math.floor(posIndex/outW);
+  curCol=posIndex%outW;
+
+  // compute convolution value
+  const startR=curRow*stride;
+  const startC=curCol*stride;
+  let sum=0;
+  for(let kr=0;kr<K;kr++) for(let kc=0;kc<K;kc++){
+    sum+=paddedVal(startR+kr,startC+kc)*kernel[kr*K+kc];
+  }
+  outputData[posIndex]=Math.round(sum*100)/100;
+  renderAll();
+  renderComputation(startR,startC);
+  return true;
+}
+
+/* ========== PLAY / STOP ========== */
+function startPlay(){
+  if(playing) return;
+  playing=true;
+  document.getElementById('btnPlay').textContent='Pause';
+  document.getElementById('btnPlay').classList.add('playing');
+  const speed=parseInt(document.getElementById('speedSelect').value);
+  tick();
+  function tick(){
+    if(!playing) return;
+    if(!step()){stopPlay();return}
+    timer=setTimeout(tick,speed);
+  }
+}
+function stopPlay(){
+  playing=false;
+  clearTimeout(timer);
+  document.getElementById('btnPlay').textContent='Play';
+  document.getElementById('btnPlay').classList.remove('playing');
+}
+
+/* ========== RENDERING ========== */
+
+function cellColor(val,maxAbs){
+  // map absolute value to darkness
+  if(val===null) return {bg:'#f5f2ec',fg:'#c0b8a8'};
+  const a=maxAbs===0?0:Math.abs(val)/maxAbs;
+  // lerp between paper white and a deep tone
+  const isNeg=val<0;
+  if(isNeg){
+    // blue-ish for negative
+    const r=Math.round(255-a*(255-60));
+    const g=Math.round(255-a*(255-90));
+    const b=Math.round(255-a*(255-180));
+    return {bg:`rgb(${r},${g},${b})`,fg:a>.55?'#fff':'#2f2a22'};
+  } else {
+    // warm grey to dark
+    const r=Math.round(255-a*(255-50));
+    const g=Math.round(255-a*(255-46));
+    const b=Math.round(255-a*(255-42));
+    return {bg:`rgb(${r},${g},${b})`,fg:a>.55?'#fff':'#2f2a22'};
+  }
+}
+
+function renderInputGrid(){
+  const g=document.getElementById('inputGrid');
+  // Determine padded dimensions for display
+  const padW=W+2*padding;
+  g.style.gridTemplateColumns=`repeat(${padW},var(--cell))`;
+  g.innerHTML='';
+
+  // current kernel overlay positions
+  const overlaySet=new Set();
+  if(posIndex>=0){
+    const sr=curRow*stride, sc=curCol*stride;
+    for(let kr=0;kr<K;kr++) for(let kc=0;kc<K;kc++){
+      overlaySet.add((sr+kr)*padW+(sc+kc));
+    }
+  }
+
+  const maxAbs=255;
+  for(let r=0;r<padW;r++) for(let c=0;c<padW;c++){
+    const isPad=(r<padding||r>=padding+W||c<padding||c>=padding+W);
+    const val=isPad?0:inputData[(r-padding)*W+(c-padding)];
+    const {bg,fg}=cellColor(val,maxAbs);
+    const idx=r*padW+c;
+    const isOverlay=overlaySet.has(idx);
+
+    const div=document.createElement('div');
+    div.className='cell'+(isOverlay?' kernel-overlay':'');
+    div.style.background=isOverlay?'var(--highlight)':bg;
+    div.style.color=isOverlay?'#2f2a22':fg;
+    if(isPad){div.style.opacity='0.45';div.style.borderStyle='dashed'}
+
+    // Editable: click to edit
+    if(!isPad){
+      div.textContent=val;
+      div.style.cursor='pointer';
+      const rr=r-padding,cc=c-padding;
+      div.addEventListener('dblclick',()=>{
+        const inp=document.createElement('input');
+        inp.type='number';inp.className='input-cell-edit';
+        inp.value=inputData[rr*W+cc];
+        inp.min=0;inp.max=255;
+        div.textContent='';div.appendChild(inp);inp.focus();inp.select();
+        function commit(){
+          let v=parseInt(inp.value);if(isNaN(v))v=0;
+          v=Math.max(0,Math.min(255,v));
+          inputData[rr*W+cc]=v;
+          resetConvolution();
+        }
+        inp.addEventListener('blur',commit);
+        inp.addEventListener('keydown',e=>{if(e.key==='Enter')commit()});
+      });
+    } else {
+      div.textContent=0;
+    }
+    g.appendChild(div);
+  }
+}
+
+function renderKernelGrid(){
+  const g=document.getElementById('kernelGrid');
+  g.innerHTML='';
+  const maxAbs=Math.max(...kernelRaw.map(Math.abs),1);
+  for(let i=0;i<K*K;i++){
+    const v=kernelRaw[i];
+    const {bg,fg}=cellColor(v,maxAbs);
+    const div=document.createElement('div');
+    div.className='cell';
+    div.style.background=bg;div.style.color=fg;
+    div.textContent=isBlur? '1/9' : v;
+    g.appendChild(div);
+  }
+}
+
+function renderProductGrid(){
+  const g=document.getElementById('productGrid');
+  g.innerHTML='';
+  if(posIndex<0){
+    for(let i=0;i<K*K;i++){
+      const div=document.createElement('div');
+      div.className='cell';div.style.background='#f5f2ec';div.style.color='#c0b8a8';
+      div.textContent='--';
+      g.appendChild(div);
+    }
+    return;
+  }
+  const sr=curRow*stride, sc=curCol*stride;
+  const products=[];
+  for(let kr=0;kr<K;kr++) for(let kc=0;kc<K;kc++){
+    products.push(paddedVal(sr+kr,sc+kc)*kernel[kr*K+kc]);
+  }
+  const maxAbs=Math.max(...products.map(Math.abs),1);
+  for(let i=0;i<K*K;i++){
+    const p=Math.round(products[i]*100)/100;
+    const {bg,fg}=cellColor(p,maxAbs);
+    const div=document.createElement('div');
+    div.className='cell';
+    div.style.background=bg;div.style.color=fg;
+    div.innerHTML=`<span style="font-size:.7rem">${fmtNum(p)}</span>`;
+    g.appendChild(div);
+  }
+}
+
+function renderOutputGrid(){
+  const g=document.getElementById('outputGrid');
+  g.style.gridTemplateColumns=`repeat(${outW},var(--cell))`;
+  g.innerHTML='';
+  document.getElementById('outputTitle').textContent=`Output (${outW}x${outW})`;
+
+  // find max abs for coloring
+  const filled=outputData.filter(v=>v!==null);
+  const maxAbs=filled.length?Math.max(...filled.map(Math.abs),1):1;
+
+  for(let i=0;i<outW*outW;i++){
+    const v=outputData[i];
+    const {bg,fg}=cellColor(v,maxAbs);
+    const div=document.createElement('div');
+    div.className='cell';
+    div.style.background=bg;div.style.color=fg;
+    if(i===posIndex) div.classList.add('current-output');
+    div.textContent=v===null?'':fmtNum(v);
+    g.appendChild(div);
+  }
+}
+
+function fmtNum(n){
+  if(n===null||n===undefined) return '';
+  if(Number.isInteger(n)) return n;
+  return n.toFixed(1);
+}
+
+function renderAll(){
+  renderInputGrid();
+  renderKernelGrid();
+  renderProductGrid();
+  renderOutputGrid();
+}
+
+function renderComputation(sr,sc){
+  const parts=[];
+  let sum=0;
+  for(let kr=0;kr<K;kr++) for(let kc=0;kc<K;kc++){
+    const iv=paddedVal(sr+kr,sc+kc);
+    const kv=kernel[kr*K+kc];
+    const kvDisplay=isBlur?'1/9':fmtNum(kernelRaw[kr*K+kc]);
+    const prod=iv*kv;
+    sum+=prod;
+    parts.push(`(${iv} &times; ${kvDisplay})`);
+  }
+  sum=Math.round(sum*100)/100;
+  document.getElementById('compExpr').innerHTML=
+    parts.join(' + ')+` = <span class="comp-result">${fmtNum(sum)}</span>`;
+}
+
+function renderFormula(){
+  const el=document.getElementById('formulaKatex');
+  const dim=document.getElementById('dimResult');
+  const oW=computeOutW();
+  // render with KaTeX if loaded
+  function doRender(){
+    try{
+      katex.render(
+        `O = \\left\\lfloor \\frac{W - K + 2P}{S} \\right\\rfloor + 1 = \\left\\lfloor \\frac{${W} - ${K} + 2 \\cdot ${padding}}{${stride}} \\right\\rfloor + 1 = ${oW}`,
+        el,{displayMode:true,throwOnError:false}
+      );
+    }catch(e){
+      el.textContent=`O = floor((${W} - ${K} + 2*${padding}) / ${stride}) + 1 = ${oW}`;
+    }
+    dim.textContent=`Output: ${oW} x ${oW}`;
+  }
+  if(window.katex) doRender();
+  else{
+    // wait for KaTeX
+    const iv=setInterval(()=>{if(window.katex){clearInterval(iv);doRender()}},100);
+    setTimeout(()=>clearInterval(iv),5000);
+  }
+}
+
+/* ========== CUSTOM KERNEL EDITOR ========== */
+function buildCustomKernelGrid(){
+  const g=document.getElementById('customKernelGrid');
+  g.innerHTML='';
+  for(let i=0;i<9;i++){
+    const inp=document.createElement('input');
+    inp.type='number';inp.className='kernel-input';
+    inp.value=kernelRaw[i]||0;
+    inp.id='ck'+i;
+    g.appendChild(inp);
+  }
+}
+
+/* ========== EVENT LISTENERS ========== */
+
+// Kernel presets
+document.querySelectorAll('#kernelBar button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('#kernelBar button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const k=btn.dataset.kernel;
+    if(k==='custom'){
+      document.getElementById('customKernelWrap').style.display='block';
+      // populate custom grid with current kernel
+      for(let i=0;i<9;i++) document.getElementById('ck'+i).value=kernelRaw[i];
+    } else {
+      document.getElementById('customKernelWrap').style.display='none';
+      setKernel(k);
+      renderAll();renderFormula();
+    }
+  });
+});
+
+// Apply custom kernel
+document.getElementById('applyCustom').addEventListener('click',()=>{
+  const vals=[];
+  for(let i=0;i<9;i++){
+    let v=parseFloat(document.getElementById('ck'+i).value);
+    if(isNaN(v))v=0;
+    vals.push(v);
+  }
+  setCustomKernel(vals);
+  renderAll();renderFormula();
+});
+
+// Step
+document.getElementById('btnStep').addEventListener('click',()=>{
+  stopPlay();
+  step();
+});
+
+// Play / Pause
+document.getElementById('btnPlay').addEventListener('click',()=>{
+  if(playing) stopPlay(); else startPlay();
+});
+
+// Reset
+document.getElementById('btnReset').addEventListener('click',()=>{
+  resetConvolution();
+});
+
+// Padding
+document.getElementById('padSlider').addEventListener('input',e=>{
+  padding=parseInt(e.target.value);
+  document.getElementById('padVal').textContent=padding;
+  resetConvolution();
+});
+
+// Stride
+document.getElementById('strideSelect').addEventListener('change',e=>{
+  stride=parseInt(e.target.value);
+  resetConvolution();
+});
+
+// Speed (no reset needed, just affects next tick)
+
+/* ========== KEYBOARD SHORTCUTS ========== */
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
+  if(e.key===' '||e.key==='ArrowRight'){e.preventDefault();step()}
+  if(e.key==='p'){e.preventDefault();playing?stopPlay():startPlay()}
+  if(e.key==='r'){e.preventDefault();resetConvolution()}
+});
+
+/* ========== GO ========== */
+init();
+
+});
+</script>
+</body>
+</html>

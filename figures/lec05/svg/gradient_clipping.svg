@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .circle { fill:none; stroke:#D97757; stroke-width:1.5; stroke-dasharray:4 3; }
+      .axis   { stroke:#1F1F1E; stroke-width:1; fill:none; }
+      .g-big  { stroke:#A8324B; stroke-width:2.2; fill:none; }
+      .g-clip { stroke:#7B9E89; stroke-width:2.4; fill:none; }
+      .g-ok   { stroke:#4A6670; stroke-width:2; fill:none; }
+      .ghost  { fill:#6B6A65; opacity:0.3; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+    <marker id="gc-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#A8324B"/></marker>
+    <marker id="gc-gn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7B9E89"/></marker>
+    <marker id="gc-sl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4A6670"/></marker>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Gradient clipping — project long gradients back onto the unit-norm ball</text>
+
+  <!-- LEFT: vector diagram -->
+  <g transform="translate(80, 60)">
+    <text x="180" y="-8" text-anchor="middle" class="tag">GRADIENT VECTOR SPACE</text>
+    <rect x="0" y="0" width="360" height="260" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <!-- Axes -->
+    <line x1="180" y1="30"  x2="180" y2="230" class="axis"/>
+    <line x1="30"  y1="130" x2="330" y2="130" class="axis"/>
+
+    <!-- Clipping ball: radius 60 -->
+    <circle cx="180" cy="130" r="60" class="circle"/>
+    <text x="244" y="108" class="mono" fill="#D97757">∥g∥ = 1 ball</text>
+
+    <!-- Safe gradient (inside the ball) -->
+    <line x1="180" y1="130" x2="220" y2="100" class="g-ok" marker-end="url(#gc-sl)"/>
+    <text x="225" y="95" class="mono" fill="#4A6670">g₁ (safe)</text>
+
+    <!-- Big gradient arrow (clipped) -->
+    <line x1="180" y1="130" x2="290" y2="40" class="g-big" marker-end="url(#gc-red)" opacity="0.4"/>
+    <text x="295" y="30" class="mono" fill="#A8324B">g₂ (spike)</text>
+
+    <!-- Clipped version: same direction, unit length -->
+    <line x1="180" y1="130" x2="224" y2="94" class="g-clip" marker-end="url(#gc-gn)"/>
+    <text x="180" y="190" class="mono" fill="#7B9E89">g̃ = g · 1 / ∥g∥</text>
+
+    <!-- Ghost showing the tip outside -->
+    <circle cx="290" cy="40" r="3" class="ghost"/>
+  </g>
+
+  <!-- RIGHT: the rule -->
+  <g transform="translate(500, 70)">
+    <text x="0" y="-8" class="tag">THE RULE</text>
+
+    <rect x="0" y="0" width="400" height="240" fill="#EEEBDF" stroke="#C9C4B5"/>
+
+    <g class="mono" font-size="13">
+      <text x="14" y="30">if ∥g∥ &gt; max_norm:</text>
+      <text x="14" y="52">    g ← g · (max_norm / ∥g∥)</text>
+    </g>
+
+    <text x="14" y="88" class="tag">WHY THIS MATTERS</text>
+
+    <g class="mut">
+      <text x="14" y="110">• Adam scales steps by 1/√v̂ — a single g² spike</text>
+      <text x="14" y="126">  briefly produces a huge step.</text>
+      <text x="14" y="150">• RNNs / Transformers often see gradient spikes</text>
+      <text x="14" y="166">  from rare tokens or long contexts.</text>
+      <text x="14" y="190">• Clipping is <tspan fill="#7B9E89" font-weight="600">cheap insurance</tspan> — costs nothing when</text>
+      <text x="14" y="206">  gradients behave, saves the run when they don't.</text>
+    </g>
+
+    <rect x="0" y="218" width="400" height="22" fill="#D8E3DE" stroke="#7B9E89"/>
+    <text x="200" y="234" text-anchor="middle" class="mono" fill="#7B9E89" font-weight="600">LLMs: 1.0 · RNNs: 5.0 · CNNs: often unneeded</text>
+  </g>
+
+  <!-- footer -->
+  <g transform="translate(60, 335)">
+    <text x="420" y="0" text-anchor="middle" class="mono" font-size="13">
+      torch.nn.utils.clip_grad_norm_(model.parameters(), <tspan fill="#D97757" font-weight="600">max_norm=1.0</tspan>)   # between loss.backward() and optim.step()
+    </text>
+  </g>
+</svg>

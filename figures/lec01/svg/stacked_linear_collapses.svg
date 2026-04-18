@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .box   { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.3; rx:6; ry:6; }
+      .box-a { fill:#EAD3C5; stroke:#D97757; stroke-width:1.3; rx:6; ry:6; }
+      .box-r { fill:#F6D4CC; stroke:#A8324B; stroke-width:1.3; rx:6; ry:6; }
+      .leaf  { fill:#EAE7DC; stroke:#6B6A65; stroke-width:1; rx:18; ry:18; }
+      .ink   { stroke:#1F1F1E; fill:none; stroke-width:1.3; }
+      .mono  { font-family:'JetBrains Mono', monospace; fill:#1F1F1E; font-size:12px; }
+      .mono-b{ font-family:'JetBrains Mono', monospace; fill:#1F1F1E; font-size:14px; font-weight:600; }
+      .mut   { fill:#6B6A65; font-size:12px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .big   { fill:#A8324B; font-size:28px; font-family:Fraunces; font-weight:600; }
+    </style>
+    <marker id="sl-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/>
+    </marker>
+  </defs>
+
+  <text x="480" y="30" text-anchor="middle" class="ttl">Without σ: two layers = one layer (depth gives nothing)</text>
+
+  <!-- TOP ROW: two "linear" boxes -->
+  <g transform="translate(80, 80)">
+    <text x="0" y="-8" class="tag">STACKING TWO LINEAR LAYERS</text>
+
+    <rect class="leaf" x="0"   y="15" width="60" height="34"/>
+    <text x="30" y="37" text-anchor="middle" class="mono">x</text>
+
+    <rect class="box-r" x="110" y="5" width="150" height="54"/>
+    <text x="185" y="25" text-anchor="middle" class="tag" fill="#A8324B">LINEAR</text>
+    <text x="185" y="46" text-anchor="middle" class="mono">W₁x + b₁</text>
+
+    <rect class="leaf" x="300" y="15" width="40" height="34"/>
+    <text x="320" y="37" text-anchor="middle" class="mono">h</text>
+
+    <rect class="box-r" x="370" y="5" width="150" height="54"/>
+    <text x="445" y="25" text-anchor="middle" class="tag" fill="#A8324B">LINEAR</text>
+    <text x="445" y="46" text-anchor="middle" class="mono">W₂h + b₂</text>
+
+    <rect class="leaf" x="560" y="15" width="60" height="34"/>
+    <text x="590" y="37" text-anchor="middle" class="mono">ŷ</text>
+
+    <g class="ink" marker-end="url(#sl-a)">
+      <line x1="60"  y1="32" x2="110" y2="32"/>
+      <line x1="260" y1="32" x2="300" y2="32"/>
+      <line x1="340" y1="32" x2="370" y2="32"/>
+      <line x1="520" y1="32" x2="560" y2="32"/>
+    </g>
+  </g>
+
+  <!-- MIDDLE: algebra -->
+  <g transform="translate(80, 160)">
+    <rect x="0" y="0" width="800" height="75" fill="#EEEBDF" stroke="#C9C4B5"/>
+    <text x="400" y="28" text-anchor="middle" class="mono-b">
+      ŷ  =  W₂(W₁x + b₁) + b₂  =  <tspan fill="#A8324B">(W₂W₁)</tspan>x + <tspan fill="#A8324B">(W₂b₁ + b₂)</tspan>
+    </text>
+    <text x="400" y="54" text-anchor="middle" class="mut" font-style="italic">
+      group the products into one matrix, the biases into one vector — it is literally a single linear layer
+    </text>
+  </g>
+
+  <!-- Arrow between -->
+  <text x="480" y="265" text-anchor="middle" class="big">⇓</text>
+
+  <!-- BOTTOM ROW: one equivalent linear -->
+  <g transform="translate(240, 285)">
+    <text x="0" y="-8" class="tag" fill="#A8324B">EQUIVALENT TO</text>
+
+    <rect class="leaf" x="0" y="15" width="60" height="34"/>
+    <text x="30" y="37" text-anchor="middle" class="mono">x</text>
+
+    <rect class="box-r" x="110" y="5" width="240" height="54"/>
+    <text x="230" y="25" text-anchor="middle" class="tag" fill="#A8324B">ONE LINEAR LAYER</text>
+    <text x="230" y="46" text-anchor="middle" class="mono">W′x + b′</text>
+
+    <rect class="leaf" x="400" y="15" width="60" height="34"/>
+    <text x="430" y="37" text-anchor="middle" class="mono">ŷ</text>
+
+    <g class="ink" marker-end="url(#sl-a)">
+      <line x1="60"  y1="32" x2="110" y2="32"/>
+      <line x1="350" y1="32" x2="400" y2="32"/>
+    </g>
+  </g>
+
+  <text x="480" y="350" text-anchor="middle" class="mut" font-style="italic">
+    Conclusion · a depth-L linear network has the capacity of a single linear layer.
+    <tspan fill="#D97757" font-weight="600">Non-linearity is what makes depth meaningful.</tspan>
+  </text>
+</svg>

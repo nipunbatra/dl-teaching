@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .axis  { stroke:#1F1F1E; stroke-width:1.1; fill:none; }
+      .grid  { stroke:#C9C4B5; stroke-width:0.4; opacity:0.5; }
+      .adag  { stroke:#A8324B; stroke-width:2.4; fill:none; }
+      .adag-lr{ stroke:#A8324B; stroke-width:2.4; fill:none; stroke-dasharray:4 3; }
+      .rms   { stroke:#7B9E89; stroke-width:2.4; fill:none; }
+      .rms-lr{ stroke:#7B9E89; stroke-width:2.4; fill:none; stroke-dasharray:4 3; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">AdaGrad's flaw · G_t never forgets → effective LR decays to zero</text>
+
+  <!-- LEFT: G_t accumulates forever -->
+  <g transform="translate(60, 70)">
+    <text x="200" y="-8" text-anchor="middle" class="tag" fill="#A8324B">ADAGRAD — G_t = Σ g²</text>
+    <rect x="0" y="0" width="400" height="220" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <g class="grid">
+      <line x1="0" y1="55"  x2="400" y2="55"/>
+      <line x1="0" y1="110" x2="400" y2="110"/>
+      <line x1="0" y1="165" x2="400" y2="165"/>
+      <line x1="100" y1="0" x2="100" y2="220"/>
+      <line x1="200" y1="0" x2="200" y2="220"/>
+      <line x1="300" y1="0" x2="300" y2="220"/>
+    </g>
+    <line x1="0" y1="220" x2="400" y2="220" class="axis"/>
+    <line x1="0" y1="0" x2="0" y2="220" class="axis"/>
+
+    <!-- G_t grows monotonically, accelerating then plateau -->
+    <path class="adag" d="M 5 218 Q 100 140 200 90 Q 300 60 395 40"/>
+    <text x="240" y="75" class="mono" fill="#A8324B">G_t (grows forever)</text>
+
+    <!-- effective LR = η/√G : decays to 0 -->
+    <path class="adag-lr" d="M 5 20 Q 60 25 120 100 Q 200 170 395 210"/>
+    <text x="50" y="18" class="mono" fill="#A8324B">η/√G (→ 0)</text>
+
+    <text x="200" y="245" text-anchor="middle" class="mut">training step →  LR <tspan fill="#A8324B" font-weight="600">dies</tspan> before convergence</text>
+  </g>
+
+  <!-- RIGHT: RMSProp with EMA -->
+  <g transform="translate(500, 70)">
+    <text x="200" y="-8" text-anchor="middle" class="tag" fill="#7B9E89">RMSPROP — v_t = β·v + (1−β)·g²</text>
+    <rect x="0" y="0" width="400" height="220" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <g class="grid">
+      <line x1="0" y1="55"  x2="400" y2="55"/>
+      <line x1="0" y1="110" x2="400" y2="110"/>
+      <line x1="0" y1="165" x2="400" y2="165"/>
+      <line x1="100" y1="0" x2="100" y2="220"/>
+      <line x1="200" y1="0" x2="200" y2="220"/>
+      <line x1="300" y1="0" x2="300" y2="220"/>
+    </g>
+    <line x1="0" y1="220" x2="400" y2="220" class="axis"/>
+    <line x1="0" y1="0" x2="0" y2="220" class="axis"/>
+
+    <!-- v_t settles to a steady value (leaky EMA) -->
+    <path class="rms" d="M 5 218 Q 60 110 120 100 Q 240 108 395 110"/>
+    <text x="240" y="85" class="mono" fill="#7B9E89">v_t (bounded EMA)</text>
+
+    <!-- effective LR stays near a constant, slowly adapting -->
+    <path class="rms-lr" d="M 5 20 Q 60 90 120 110 Q 240 115 395 115"/>
+    <text x="50" y="18" class="mono" fill="#7B9E89">η/√v (stays finite)</text>
+
+    <text x="200" y="245" text-anchor="middle" class="mut">training step →  LR <tspan fill="#7B9E89" font-weight="600">lives</tspan> as long as gradient keeps flowing</text>
+  </g>
+
+  <!-- Bottom -->
+  <g transform="translate(60, 340)">
+    <text x="420" y="0" text-anchor="middle" class="mut" font-style="italic">
+      Hinton's insight · replace the sum with a <tspan fill="#7B9E89" font-weight="600">leaky EMA</tspan> — old squared gradients fade out.
+    </text>
+  </g>
+</svg>

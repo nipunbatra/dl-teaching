@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 420" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .ink   { stroke:#1F1F1E; fill:none; stroke-width:1.2; }
+      .ink-s { stroke:#6B6A65; fill:none; stroke-width:0.9; }
+      .accent{ stroke:#D97757; fill:none; stroke-width:1.4; }
+      .node  { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.2; }
+      .node-a{ fill:#EAD3C5; stroke:#D97757; stroke-width:1.2; }
+      .lbl   { fill:#1F1F1E; font-size:13px; }
+      .mut   { fill:#6B6A65; font-size:12px; }
+      .head  { fill:#1F1F1E; font-size:14px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter,sans-serif; }
+      .mono  { font-family:'JetBrains Mono', ui-monospace, monospace; fill:#4A6670; font-size:11px; }
+    </style>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6B6A65"/>
+    </marker>
+  </defs>
+
+  <!-- column x-coordinates -->
+  <g>
+    <text x="90"  y="30" class="tag" text-anchor="middle">INPUT</text>
+    <text x="290" y="30" class="tag" text-anchor="middle">HIDDEN 1</text>
+    <text x="490" y="30" class="tag" text-anchor="middle">HIDDEN 2</text>
+    <text x="720" y="30" class="tag" text-anchor="middle">OUTPUT (LOGITS)</text>
+  </g>
+
+  <!-- input layer: 4 neurons (show subset) -->
+  <g>
+    <circle cx="90" cy="90"  r="16" class="node"/>
+    <circle cx="90" cy="150" r="16" class="node"/>
+    <circle cx="90" cy="210" r="16" class="node"/>
+    <circle cx="90" cy="300" r="16" class="node"/>
+    <text x="90" y="246" class="mut" text-anchor="middle">⋮</text>
+    <text x="90" y="355" class="mono" text-anchor="middle">x ∈ ℝ⁷⁸⁴</text>
+  </g>
+
+  <!-- hidden 1: 5 neurons -->
+  <g>
+    <circle cx="290" cy="70"  r="18" class="node-a"/>
+    <circle cx="290" cy="130" r="18" class="node-a"/>
+    <circle cx="290" cy="190" r="18" class="node-a"/>
+    <circle cx="290" cy="250" r="18" class="node-a"/>
+    <circle cx="290" cy="310" r="18" class="node-a"/>
+    <text x="290" y="355" class="mono" text-anchor="middle">h₁ = σ(W₁x + b₁)</text>
+    <text x="290" y="370" class="mono" text-anchor="middle" opacity="0.7">∈ ℝ²⁵⁶</text>
+  </g>
+
+  <!-- hidden 2: 5 neurons -->
+  <g>
+    <circle cx="490" cy="70"  r="18" class="node-a"/>
+    <circle cx="490" cy="130" r="18" class="node-a"/>
+    <circle cx="490" cy="190" r="18" class="node-a"/>
+    <circle cx="490" cy="250" r="18" class="node-a"/>
+    <circle cx="490" cy="310" r="18" class="node-a"/>
+    <text x="490" y="355" class="mono" text-anchor="middle">h₂ = σ(W₂h₁ + b₂)</text>
+  </g>
+
+  <!-- output layer: 3 neurons -->
+  <g>
+    <circle cx="720" cy="140" r="16" class="node"/>
+    <circle cx="720" cy="200" r="16" class="node"/>
+    <circle cx="720" cy="260" r="16" class="node"/>
+    <text x="720" y="355" class="mono" text-anchor="middle">ŷ = W₃h₂ + b₃</text>
+    <text x="720" y="370" class="mono" text-anchor="middle" opacity="0.7">∈ ℝ¹⁰</text>
+  </g>
+
+  <!-- edges: input -> hidden1 (a sampling) -->
+  <g class="ink-s" opacity="0.35">
+    <line x1="106" y1="90"  x2="272" y2="70"/>
+    <line x1="106" y1="90"  x2="272" y2="130"/>
+    <line x1="106" y1="90"  x2="272" y2="250"/>
+    <line x1="106" y1="150" x2="272" y2="70"/>
+    <line x1="106" y1="150" x2="272" y2="190"/>
+    <line x1="106" y1="150" x2="272" y2="310"/>
+    <line x1="106" y1="210" x2="272" y2="130"/>
+    <line x1="106" y1="210" x2="272" y2="250"/>
+    <line x1="106" y1="300" x2="272" y2="190"/>
+    <line x1="106" y1="300" x2="272" y2="310"/>
+    <line x1="106" y1="300" x2="272" y2="70"/>
+  </g>
+  <!-- edges: hidden1 -> hidden2 -->
+  <g class="ink-s" opacity="0.35">
+    <line x1="308" y1="70"  x2="472" y2="130"/>
+    <line x1="308" y1="70"  x2="472" y2="250"/>
+    <line x1="308" y1="130" x2="472" y2="70"/>
+    <line x1="308" y1="130" x2="472" y2="190"/>
+    <line x1="308" y1="190" x2="472" y2="130"/>
+    <line x1="308" y1="190" x2="472" y2="310"/>
+    <line x1="308" y1="250" x2="472" y2="70"/>
+    <line x1="308" y1="250" x2="472" y2="190"/>
+    <line x1="308" y1="310" x2="472" y2="250"/>
+    <line x1="308" y1="310" x2="472" y2="310"/>
+  </g>
+  <!-- edges: hidden2 -> output -->
+  <g class="ink-s" opacity="0.35">
+    <line x1="508" y1="70"  x2="704" y2="140"/>
+    <line x1="508" y1="130" x2="704" y2="200"/>
+    <line x1="508" y1="190" x2="704" y2="140"/>
+    <line x1="508" y1="190" x2="704" y2="260"/>
+    <line x1="508" y1="250" x2="704" y2="200"/>
+    <line x1="508" y1="310" x2="704" y2="260"/>
+  </g>
+
+  <!-- Parameter count annotation -->
+  <g>
+    <line x1="90" y1="395" x2="720" y2="395" class="ink-s"/>
+    <text x="405" y="413" class="mut" text-anchor="middle" font-family="Inter, sans-serif">
+      Parameters: 256·784 + 256 + 256·256 + 256 + 10·256 + 10 = <tspan fill="#D97757" font-weight="600">269,322</tspan>
+    </text>
+  </g>
+</svg>

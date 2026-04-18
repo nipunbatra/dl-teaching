@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 320" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .box   { fill:#F0EEE5; stroke:#C9C4B5; stroke-width:0.8; }
+      .digit { stroke:#1F1F1E; fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+      .lbl   { fill:#6B6A65; font-size:10px; font-family:Inter, sans-serif; text-anchor:middle; }
+      .mono  { font-family:'JetBrains Mono', monospace; fill:#1F1F1E; font-size:12px; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">MNIST — our running example for today's lecture</text>
+
+  <!-- 2 rows × 10 columns grid of stylized digits -->
+  <g transform="translate(60, 70)">
+    <!-- row 1 -->
+    <g>
+      <rect class="box" x="0" y="0" width="80" height="80"/>
+      <path class="digit" d="M 28 20 L 52 20 L 52 60 L 28 60 Z M 28 40 L 52 40"/>
+      <text x="40" y="95" class="lbl">0</text>
+    </g>
+    <g transform="translate(90,0)">
+      <rect class="box" x="0" y="0" width="80" height="80"/>
+      <path class="digit" d="M 30 25 L 40 18 L 40 62"/>
+      <text x="40" y="95" class="lbl">1</text>
+    </g>
+    <g transform="translate(180,0)">
+      <rect class="box" x="0" y="0" width="80" height="80"/>
+      <path class="digit" d="M 24 25 Q 40 10 56 25 L 26 60 L 56 60"/>
+      <text x="40" y="95" class="lbl">2</text>
+    </g>
+    <g transform="translate(270,0)">
+      <rect class="box" x="0" y="0" width="80" height="80"/>
+      <path class="digit" d="M 24 20 L 54 20 Q 56 40 40 42 Q 58 44 56 60 L 24 60"/>
+      <text x="40" y="95" class="lbl">3</text>
+    </g>
+    <g transform="translate(360,0)">
+      <rect class="box" x="0" y="0" width="80" height="80"/>
+      <path class="digit" d="M 50 18 L 26 46 L 56 46 M 50 18 L 50 62"/>
+      <text x="40" y="95" class="lbl">4</text>
+    </g>
+    <g transform="translate(450,0)">
+      <rect class="box" x="0" y="0" width="80" height="80"/>
+      <path class="digit" d="M 56 18 L 26 18 L 24 40 Q 42 32 54 44 Q 56 62 28 60"/>
+      <text x="40" y="95" class="lbl">5</text>
+    </g>
+    <g transform="translate(540,0)">
+      <rect class="box" x="0" y="0" width="80" height="80"/>
+      <path class="digit" d="M 52 20 Q 24 30 28 50 Q 32 62 50 60 Q 60 55 56 42 Q 42 35 28 42"/>
+      <text x="40" y="95" class="lbl">6</text>
+    </g>
+    <g transform="translate(630,0)">
+      <rect class="box" x="0" y="0" width="80" height="80"/>
+      <path class="digit" d="M 24 20 L 56 20 L 36 62"/>
+      <text x="40" y="95" class="lbl">7</text>
+    </g>
+    <g transform="translate(720,0)">
+      <rect class="box" x="0" y="0" width="80" height="80"/>
+      <ellipse class="digit" cx="40" cy="32" rx="14" ry="10"/>
+      <ellipse class="digit" cx="40" cy="54" rx="16" ry="12"/>
+      <text x="40" y="95" class="lbl">8</text>
+    </g>
+    <g transform="translate(810,0)">
+      <rect class="box" x="0" y="0" width="80" height="80"/>
+      <ellipse class="digit" cx="40" cy="30" rx="14" ry="10"/>
+      <path class="digit" d="M 54 30 L 54 60 Q 50 66 34 62"/>
+      <text x="40" y="95" class="lbl">9</text>
+    </g>
+  </g>
+
+  <!-- Specs strip -->
+  <g transform="translate(60, 190)">
+    <rect x="0" y="0" width="840" height="100" fill="#EEEBDF" stroke="#C9C4B5"/>
+    <text x="14" y="22" class="tag">PROBLEM STATEMENT</text>
+    <text x="14" y="46" class="mono">input:   28 × 28 grayscale pixels  →  flatten to x ∈ ℝ^{784}</text>
+    <text x="14" y="66" class="mono">label:   y ∈ {0, 1, 2, …, 9}   (10 classes)</text>
+    <text x="14" y="86" class="mono">goal:    learn   f<tspan baseline-shift="sub" font-size="9">θ</tspan> : ℝ^{784} → ℝ^{10}       dataset: 60,000 train + 10,000 test</text>
+  </g>
+</svg>

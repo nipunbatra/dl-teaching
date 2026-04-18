@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .box   { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.3; rx:4; ry:4; }
+      .box-a { fill:#EAD3C5; stroke:#D97757; stroke-width:1.3; rx:4; ry:4; }
+      .ink   { stroke:#1F1F1E; fill:none; stroke-width:1.2; }
+      .acc   { stroke:#D97757; fill:none; stroke-width:2; stroke-dasharray:5 3; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:12px; fill:#1F1F1E; }
+      .sml   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#D97757; }
+      .lbl   { fill:#1F1F1E; font-size:13px; font-weight:600; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+    <marker id="crp-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/></marker>
+    <marker id="crp-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#D97757"/></marker>
+  </defs>
+
+  <text x="480" y="30" text-anchor="middle" class="ttl">Chain rule = product of Jacobians · one factor per layer</text>
+
+  <!-- Forward chain of layers -->
+  <g transform="translate(60, 100)">
+    <text x="0" y="-8" class="tag">FORWARD</text>
+
+    <!-- x -->
+    <rect class="box" x="0"   y="10" width="50" height="40"/>
+    <text x="25" y="34" text-anchor="middle" class="mono">x</text>
+
+    <rect class="box" x="100" y="10" width="90" height="40"/>
+    <text x="145" y="34" text-anchor="middle" class="mono">h₁</text>
+
+    <rect class="box" x="240" y="10" width="90" height="40"/>
+    <text x="285" y="34" text-anchor="middle" class="mono">h₂</text>
+
+    <text x="380" y="34" text-anchor="middle" class="mono">…</text>
+
+    <rect class="box" x="430" y="10" width="90" height="40"/>
+    <text x="475" y="34" text-anchor="middle" class="mono">h_{L-1}</text>
+
+    <rect class="box" x="570" y="10" width="90" height="40"/>
+    <text x="615" y="34" text-anchor="middle" class="mono">h_L = ŷ</text>
+
+    <rect class="box-a" x="720" y="10" width="120" height="40"/>
+    <text x="780" y="34" text-anchor="middle" class="mono" fill="#D97757">ℒ(ŷ, y)</text>
+
+    <g class="ink" marker-end="url(#crp-a)">
+      <line x1="50"  y1="30" x2="100" y2="30"/>
+      <line x1="190" y1="30" x2="240" y2="30"/>
+      <line x1="330" y1="30" x2="360" y2="30"/>
+      <line x1="400" y1="30" x2="430" y2="30"/>
+      <line x1="520" y1="30" x2="570" y2="30"/>
+      <line x1="660" y1="30" x2="720" y2="30"/>
+    </g>
+  </g>
+
+  <!-- Backward chain -->
+  <g transform="translate(60, 200)">
+    <text x="0" y="-8" class="tag" fill="#D97757">BACKWARD · multiply the Jacobians</text>
+
+    <!-- Jacobian boxes -->
+    <rect class="box-a" x="100"   y="10" width="90" height="40"/>
+    <text x="145" y="34" text-anchor="middle" class="sml">∂h₁/∂x</text>
+
+    <rect class="box-a" x="240" y="10" width="90" height="40"/>
+    <text x="285" y="34" text-anchor="middle" class="sml">∂h₂/∂h₁</text>
+
+    <text x="380" y="34" text-anchor="middle" class="mono">…</text>
+
+    <rect class="box-a" x="430" y="10" width="90" height="40"/>
+    <text x="475" y="34" text-anchor="middle" class="sml">∂h_{L-1}/∂h_{L-2}</text>
+
+    <rect class="box-a" x="570" y="10" width="90" height="40"/>
+    <text x="615" y="34" text-anchor="middle" class="sml">∂h_L/∂h_{L-1}</text>
+
+    <rect class="box-a" x="720" y="10" width="120" height="40"/>
+    <text x="780" y="34" text-anchor="middle" class="sml">∂ℒ/∂h_L</text>
+
+    <!-- multiply signs -->
+    <text x="215" y="34" text-anchor="middle" class="mono" fill="#6B6A65">×</text>
+    <text x="355" y="34" text-anchor="middle" class="mono" fill="#6B6A65">×</text>
+    <text x="405" y="34" text-anchor="middle" class="mono" fill="#6B6A65">×</text>
+    <text x="545" y="34" text-anchor="middle" class="mono" fill="#6B6A65">×</text>
+    <text x="690" y="34" text-anchor="middle" class="mono" fill="#6B6A65">×</text>
+  </g>
+
+  <!-- The punchline equation -->
+  <g transform="translate(60, 285)">
+    <rect x="0" y="0" width="840" height="55" fill="#EEEBDF" stroke="#C9C4B5"/>
+    <text x="420" y="25" text-anchor="middle" class="mono" font-size="14">
+      ∂ℒ/∂W₁  =  <tspan fill="#D97757" font-weight="600">∏</tspan><tspan baseline-shift="sub" font-size="9">l=1..L</tspan>  (∂h_l / ∂h_{l-1})  ·  (∂ℒ/∂h_L)  ·  (∂h₁/∂W₁)
+    </text>
+    <text x="420" y="45" text-anchor="middle" class="mut" font-style="italic">
+      <tspan fill="#A8324B">all factors &lt; 1 →</tspan> product vanishes.
+      <tspan fill="#D97757">all factors &gt; 1 →</tspan> product explodes.
+    </text>
+  </g>
+</svg>

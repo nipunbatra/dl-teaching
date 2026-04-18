@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .box   { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.3; rx:4; ry:4; }
+      .layer1{ fill:#F6D4CC; stroke:#A8324B; stroke-width:1.4; rx:4; ry:4; }
+      .layer2{ fill:#EAD3C5; stroke:#D97757; stroke-width:1.4; rx:4; ry:4; }
+      .layer3{ fill:#F6F0DF; stroke:#C9A961; stroke-width:1.4; rx:4; ry:4; }
+      .layer4{ fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.4; rx:4; ry:4; }
+      .layer5{ fill:#DCE3E6; stroke:#4A6670; stroke-width:1.4; rx:4; ry:4; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:12px; fill:#1F1F1E; }
+      .mono-b{ font-family:'JetBrains Mono', monospace; font-size:13px; fill:#1F1F1E; font-weight:600; }
+      .lbl   { fill:#1F1F1E; font-size:13px; font-weight:600; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Five layers of reproducibility · what future-you needs to rerun an experiment</text>
+
+  <!-- Layered stack visual -->
+  <g transform="translate(80, 80)">
+    <!-- Environment -->
+    <rect class="layer5" x="0" y="240" width="500" height="50"/>
+    <text x="20" y="265" class="lbl" fill="#4A6670">1 · ENVIRONMENT</text>
+    <text x="20" y="282" class="mut" fill="#4A6670">pip freeze · pyproject.toml · Docker tag · CUDA version</text>
+
+    <!-- Seed -->
+    <rect class="layer4" x="40" y="190" width="460" height="50"/>
+    <text x="60" y="215" class="lbl" fill="#7B9E89">2 · SEED</text>
+    <text x="60" y="232" class="mut" fill="#7B9E89">random · numpy · torch · cuDNN determinism flags</text>
+
+    <!-- Data -->
+    <rect class="layer3" x="80" y="140" width="420" height="50"/>
+    <text x="100" y="165" class="lbl" fill="#C9A961">3 · DATA</text>
+    <text x="100" y="182" class="mut" fill="#C9A961">path · SHA-256 checksum · split IDs · preprocessing script</text>
+
+    <!-- Config -->
+    <rect class="layer2" x="120" y="90" width="380" height="50"/>
+    <text x="140" y="115" class="lbl" fill="#D97757">4 · CONFIG</text>
+    <text x="140" y="132" class="mut" fill="#D97757">lr · batch · schedule · architecture · augmentations</text>
+
+    <!-- Code -->
+    <rect class="layer1" x="160" y="40" width="340" height="50"/>
+    <text x="180" y="65" class="lbl" fill="#A8324B">5 · CODE</text>
+    <text x="180" y="82" class="mut" fill="#A8324B">git commit hash · clean working tree · no uncommitted patches</text>
+  </g>
+
+  <!-- Right: practical checklist -->
+  <g transform="translate(640, 80)">
+    <text x="0" y="-8" class="tag">FLAG THESE IN EVERY RUN</text>
+    <rect x="0" y="0" width="280" height="230" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <g class="mono" transform="translate(14, 24)">
+      <text x="0" y="0">☐ git_hash = …</text>
+      <text x="0" y="22">☐ python --version</text>
+      <text x="0" y="44">☐ torch.__version__</text>
+      <text x="0" y="66">☐ CUDA driver version</text>
+      <text x="0" y="88">☐ seed = 42</text>
+      <text x="0" y="110">☐ dataset_sha256 = …</text>
+      <text x="0" y="132">☐ config.yaml → snapshot</text>
+      <text x="0" y="154">☐ GPU model · driver</text>
+      <text x="0" y="176">☐ run_id (uuid)</text>
+      <text x="0" y="198">☐ wandb URL or CSV path</text>
+    </g>
+  </g>
+
+  <!-- Footer -->
+  <text x="480" y="335" text-anchor="middle" class="mut" font-style="italic">
+    Rule · every training script begins by <tspan fill="#D97757" font-weight="600">logging these five layers</tspan> before step 1.
+  </text>
+</svg>

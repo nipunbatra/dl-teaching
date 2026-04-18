@@ -7,7 +7,7 @@ from pathlib import Path
 
 matplotlib.rcParams.update({
     'font.family': 'sans-serif',
-    'font.sans-serif': ['Inter', 'Helvetica', 'Arial', 'sans-serif'],
+    'font.sans-serif': ['Inter', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
     'font.size': 14,
     'axes.titlesize': 16,
     'axes.labelsize': 14,
@@ -143,22 +143,27 @@ def fig_loss_surface_contour():
     ax.contour(X, Y, Z, levels=15, colors='white', linewidths=0.3, alpha=0.5)
     plt.colorbar(cs, ax=ax, label='Loss')
 
-    # Mark key points
-    ax.plot(1, 1, 'o', color=SUCCESS, markersize=12, markeredgecolor='white',
+    # Find actual critical points numerically
+    from scipy.optimize import minimize
+    res = minimize(lambda p: (1-p[0])**2 + 3*(p[1]-p[0]**2)**2 + 0.5*np.sin(3*p[0])*np.cos(3*p[1]),
+                   x0=[0.9, 0.9], method='Nelder-Mead')
+    gmin = res.x
+
+    ax.plot(gmin[0], gmin[1], 'o', color=SUCCESS, markersize=12, markeredgecolor='white',
             markeredgewidth=2, zorder=5)
-    ax.annotate('Global min', (1, 1), (1.3, 1.4), fontsize=11,
+    ax.annotate('Local min', (gmin[0], gmin[1]), (gmin[0]+0.4, gmin[1]+0.4), fontsize=11,
                 color='white', fontweight='bold',
                 arrowprops=dict(arrowstyle='->', color='white', lw=1.5))
 
-    ax.plot(0, 0, '^', color=WARNING, markersize=12, markeredgecolor='white',
+    ax.plot(-0.5, 0.5, '^', color=WARNING, markersize=12, markeredgecolor='white',
             markeredgewidth=2, zorder=5)
-    ax.annotate('Saddle point', (0, 0), (-1.5, -0.5), fontsize=11,
+    ax.annotate('Another\nlocal min', (-0.5, 0.5), (-1.5, 1.0), fontsize=11,
                 color='white', fontweight='bold',
                 arrowprops=dict(arrowstyle='->', color='white', lw=1.5))
 
     ax.set_xlabel('Weight 1')
     ax.set_ylabel('Weight 2')
-    ax.set_title('Loss Landscape with Local Minima & Saddle Points')
+    ax.set_title('Non-Convex Loss Landscape (illustrative)')
     ax.spines[['top', 'right']].set_visible(False)
 
     plt.tight_layout()
@@ -273,7 +278,7 @@ def fig_dl_timeline():
         ax.plot(year, 0, 'o', color=color, markersize=14, markeredgecolor='white',
                 markeredgewidth=2, zorder=5)
         yoff = 0.6 if i % 2 == 0 else -0.8
-        ax.annotate(f"**{name}**\n{desc}", xy=(year, 0), xytext=(year, yoff),
+        ax.annotate(f"{name}\n{desc}", xy=(year, 0), xytext=(year, yoff),
                     fontsize=10, ha='center', va='center' if yoff > 0 else 'center',
                     color=color, fontweight='bold',
                     arrowprops=dict(arrowstyle='-', color=color, lw=1.5))
@@ -430,7 +435,7 @@ def fig_weight_init():
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
     inits = [
         ("Too Small ($\\sigma=0.01$)", 0.01, ACCENT),
-        ("Xavier ($\\sigma=\\sqrt{2/(n_{in}+n_{out})}$)", np.sqrt(2/(n_in+n_hidden)), SUCCESS),
+        ("He / Kaiming ($\\sigma=\\sqrt{2/n_{in}}$)", np.sqrt(2/n_in), SUCCESS),
         ("Too Large ($\\sigma=1.0$)", 1.0, WARNING),
     ]
 
@@ -458,7 +463,7 @@ def fig_weight_init():
         ax.grid(True, alpha=0.15)
 
     axes[0].set_ylabel('Density')
-    plt.suptitle('Effect of Weight Initialization on Activations (6-layer ReLU MLP)', fontsize=14, y=1.02)
+    plt.suptitle('Effect of Weight Initialization on Activations (6-layer ReLU MLP, illustrative)', fontsize=14, y=1.02)
     plt.tight_layout()
     plt.savefig(OUT / "weight_init_activations.png")
     plt.close()

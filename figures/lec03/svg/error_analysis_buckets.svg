@@ -1,0 +1,192 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .axis  { stroke:#1F1F1E; stroke-width:1.1; fill:none; }
+      .bar-a { fill:#D97757; }
+      .bar-s { fill:#4A6670; }
+      .bar-w { fill:#A8324B; }
+      .bar-b { fill:#7B9E89; }
+      .bar-l { fill:#C9A961; }
+      .box   { fill:#F0EEE5; stroke:#C9C4B5; stroke-width:1; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Error analysis — categorize 100 mistakes before you touch the model</text>
+
+  <!-- LEFT: sample grid of misclassified examples -->
+  <g transform="translate(30, 70)">
+    <text x="0" y="-10" class="tag">100 MISCLASSIFIED VAL EXAMPLES</text>
+
+    <!-- 10x10 grid of mini boxes, colored by category -->
+    <g>
+      <!-- row 1 -->
+      <rect class="box" x="0"  y="0"  width="22" height="22" fill="#F6F0DF" stroke="#C9A961"/>
+      <rect class="box" x="24" y="0"  width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+      <rect class="box" x="48" y="0"  width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+      <rect class="box" x="72" y="0"  width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+      <rect class="box" x="96" y="0"  width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+      <rect class="box" x="120" y="0" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+      <rect class="box" x="144" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+      <rect class="box" x="168" y="0" width="22" height="22" fill="#F6D4CC" stroke="#A8324B"/>
+      <rect class="box" x="192" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+      <rect class="box" x="216" y="0" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+
+      <!-- row 2 -->
+      <rect class="box" x="0"  y="24"  width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+      <rect class="box" x="24" y="24"  width="22" height="22" fill="#D8E3DE" stroke="#7B9E89"/>
+      <rect class="box" x="48" y="24"  width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+      <rect class="box" x="72" y="24"  width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+      <rect class="box" x="96" y="24"  width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+      <rect class="box" x="120" y="24" width="22" height="22" fill="#F6F0DF" stroke="#C9A961"/>
+      <rect class="box" x="144" y="24" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+      <rect class="box" x="168" y="24" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+      <rect class="box" x="192" y="24" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+      <rect class="box" x="216" y="24" width="22" height="22" fill="#F6F0DF" stroke="#C9A961"/>
+
+      <!-- remaining rows as colored sampling -->
+      <g transform="translate(0, 48)">
+        <!-- fill with mix -->
+        <rect class="box" x="0"  y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="24" y="0" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+        <rect class="box" x="48" y="0" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+        <rect class="box" x="72" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="96" y="0" width="22" height="22" fill="#F6D4CC" stroke="#A8324B"/>
+        <rect class="box" x="120" y="0" width="22" height="22" fill="#D8E3DE" stroke="#7B9E89"/>
+        <rect class="box" x="144" y="0" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+        <rect class="box" x="168" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="192" y="0" width="22" height="22" fill="#F6F0DF" stroke="#C9A961"/>
+        <rect class="box" x="216" y="0" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+      </g>
+      <g transform="translate(0, 72)">
+        <rect class="box" x="0"  y="0" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+        <rect class="box" x="24" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="48" y="0" width="22" height="22" fill="#F6F0DF" stroke="#C9A961"/>
+        <rect class="box" x="72" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="96" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="120" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="144" y="0" width="22" height="22" fill="#F6D4CC" stroke="#A8324B"/>
+        <rect class="box" x="168" y="0" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+        <rect class="box" x="192" y="0" width="22" height="22" fill="#D8E3DE" stroke="#7B9E89"/>
+        <rect class="box" x="216" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+      </g>
+      <g transform="translate(0, 96)">
+        <rect class="box" x="0"  y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="24" y="0" width="22" height="22" fill="#F6F0DF" stroke="#C9A961"/>
+        <rect class="box" x="48" y="0" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+        <rect class="box" x="72" y="0" width="22" height="22" fill="#D8E3DE" stroke="#7B9E89"/>
+        <rect class="box" x="96" y="0" width="22" height="22" fill="#F6F0DF" stroke="#C9A961"/>
+        <rect class="box" x="120" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="144" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="168" y="0" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+        <rect class="box" x="192" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="216" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+      </g>
+      <g transform="translate(0, 120)">
+        <rect class="box" x="0"  y="0" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+        <rect class="box" x="24" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="48" y="0" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+        <rect class="box" x="72" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="96" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="120" y="0" width="22" height="22" fill="#D8E3DE" stroke="#7B9E89"/>
+        <rect class="box" x="144" y="0" width="22" height="22" fill="#F6F0DF" stroke="#C9A961"/>
+        <rect class="box" x="168" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="192" y="0" width="22" height="22" fill="#F6F0DF" stroke="#C9A961"/>
+        <rect class="box" x="216" y="0" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+      </g>
+      <g transform="translate(0, 144)">
+        <rect class="box" x="0"  y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="24" y="0" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+        <rect class="box" x="48" y="0" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+        <rect class="box" x="72" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="96" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="120" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="144" y="0" width="22" height="22" fill="#F6F0DF" stroke="#C9A961"/>
+        <rect class="box" x="168" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="192" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="216" y="0" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+      </g>
+      <g transform="translate(0, 168)">
+        <rect class="box" x="0"  y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="24" y="0" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+        <rect class="box" x="48" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="72" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="96" y="0" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+        <rect class="box" x="120" y="0" width="22" height="22" fill="#F6F0DF" stroke="#C9A961"/>
+        <rect class="box" x="144" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="168" y="0" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+        <rect class="box" x="192" y="0" width="22" height="22" fill="#F6D4CC" stroke="#A8324B"/>
+        <rect class="box" x="216" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+      </g>
+      <g transform="translate(0, 192)">
+        <rect class="box" x="0"  y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="24" y="0" width="22" height="22" fill="#F6F0DF" stroke="#C9A961"/>
+        <rect class="box" x="48" y="0" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+        <rect class="box" x="72" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="96" y="0" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+        <rect class="box" x="120" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="144" y="0" width="22" height="22" fill="#D8E3DE" stroke="#7B9E89"/>
+        <rect class="box" x="168" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="192" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="216" y="0" width="22" height="22" fill="#F6F0DF" stroke="#C9A961"/>
+      </g>
+      <g transform="translate(0, 216)">
+        <rect class="box" x="0"  y="0" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+        <rect class="box" x="24" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="48" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="72" y="0" width="22" height="22" fill="#F6F0DF" stroke="#C9A961"/>
+        <rect class="box" x="96" y="0" width="22" height="22" fill="#D8E3DE" stroke="#7B9E89"/>
+        <rect class="box" x="120" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="144" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="168" y="0" width="22" height="22" fill="#DCE3E6" stroke="#4A6670"/>
+        <rect class="box" x="192" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+        <rect class="box" x="216" y="0" width="22" height="22" fill="#EAD3C5" stroke="#D97757"/>
+      </g>
+    </g>
+
+    <text x="119" y="268" text-anchor="middle" class="mut">100 squares · 100 examples</text>
+  </g>
+
+  <!-- RIGHT: bucket counts (horizontal bar chart) -->
+  <g transform="translate(340, 70)">
+    <text x="0" y="-10" class="tag">CATEGORIZE  →  PRIORITIZE BY COUNT</text>
+    <rect x="0" y="0" width="580" height="260" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <!-- Bucket rows -->
+    <g transform="translate(20, 20)">
+      <text x="0" y="12" class="mono">stroke variability</text>
+      <rect class="bar-a" x="170" y="0" width="224" height="16"/>
+      <text x="400" y="12" class="mono" fill="#D97757" font-weight="600">32</text>
+    </g>
+    <g transform="translate(20, 48)">
+      <text x="0" y="12" class="mono">4↔9 confusion</text>
+      <rect class="bar-s" x="170" y="0" width="196" height="16"/>
+      <text x="372" y="12" class="mono" fill="#4A6670" font-weight="600">28</text>
+    </g>
+    <g transform="translate(20, 76)">
+      <text x="0" y="12" class="mono">rotation</text>
+      <rect class="bar-a" x="170" y="0" width="126" height="16"/>
+      <text x="302" y="12" class="mono" fill="#D97757" font-weight="600">18</text>
+    </g>
+    <g transform="translate(20, 104)">
+      <text x="0" y="12" class="mono">label noise</text>
+      <rect class="bar-l" x="170" y="0" width="98" height="16"/>
+      <text x="274" y="12" class="mono" fill="#C9A961" font-weight="600">14</text>
+    </g>
+    <g transform="translate(20, 132)">
+      <text x="0" y="12" class="mono">blur / corruption</text>
+      <rect class="bar-w" x="170" y="0" width="56" height="16"/>
+      <text x="232" y="12" class="mono" fill="#A8324B" font-weight="600">8</text>
+    </g>
+
+    <!-- Decision strip -->
+    <g transform="translate(20, 180)">
+      <rect x="0" y="0" width="540" height="56" fill="#EEEBDF" stroke="#C9C4B5"/>
+      <text x="14" y="22" class="tag" fill="#D97757">DECISION</text>
+      <text x="14" y="42" class="mut">stroke + rotation = 50 of 100 → start with rotation / elastic augmentation</text>
+    </g>
+  </g>
+</svg>

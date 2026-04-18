@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .box-32 { fill:#DCE3E6; stroke:#4A6670; stroke-width:1.4; rx:4; ry:4; }
+      .box-16 { fill:#EAD3C5; stroke:#D97757; stroke-width:1.4; rx:4; ry:4; }
+      .box-bf { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.4; rx:4; ry:4; }
+      .cell   { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:0.8; }
+      .cell-s { fill:#D97757; opacity:0.6; }
+      .cell-e { fill:#4A6670; opacity:0.5; }
+      .cell-m { fill:#C9A961; opacity:0.5; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .hdr    { fill:#1F1F1E; font-size:13px; font-weight:600; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Mixed precision — trading bits for speed</text>
+
+  <!-- Headers -->
+  <g transform="translate(40, 70)">
+    <text x="0" y="0" class="tag">FP32  (default) · 32 bits</text>
+    <rect class="box-32" x="0" y="10" width="260" height="70"/>
+
+    <!-- sign bit -->
+    <rect class="cell cell-s" x="10" y="20" width="8" height="50"/>
+    <!-- 8 exponent -->
+    <g>
+      <rect class="cell cell-e" x="22" y="20" width="8" height="50"/>
+      <rect class="cell cell-e" x="32" y="20" width="8" height="50"/>
+      <rect class="cell cell-e" x="42" y="20" width="8" height="50"/>
+      <rect class="cell cell-e" x="52" y="20" width="8" height="50"/>
+      <rect class="cell cell-e" x="62" y="20" width="8" height="50"/>
+      <rect class="cell cell-e" x="72" y="20" width="8" height="50"/>
+      <rect class="cell cell-e" x="82" y="20" width="8" height="50"/>
+      <rect class="cell cell-e" x="92" y="20" width="8" height="50"/>
+    </g>
+    <!-- 23 mantissa -->
+    <g>
+      <rect class="cell cell-m" x="104" y="20" width="5.8" height="50"/>
+      <rect class="cell cell-m" x="111.8" y="20" width="5.8" height="50"/>
+      <rect class="cell cell-m" x="119.6" y="20" width="5.8" height="50"/>
+      <rect class="cell cell-m" x="127.4" y="20" width="5.8" height="50"/>
+      <rect class="cell cell-m" x="135.2" y="20" width="5.8" height="50"/>
+      <rect class="cell cell-m" x="143" y="20" width="5.8" height="50"/>
+      <rect class="cell cell-m" x="150.8" y="20" width="5.8" height="50"/>
+      <rect class="cell cell-m" x="158.6" y="20" width="5.8" height="50"/>
+      <rect class="cell cell-m" x="166.4" y="20" width="5.8" height="50"/>
+      <rect class="cell cell-m" x="174.2" y="20" width="5.8" height="50"/>
+      <rect class="cell cell-m" x="182" y="20" width="5.8" height="50"/>
+      <rect class="cell cell-m" x="189.8" y="20" width="5.8" height="50"/>
+      <rect class="cell cell-m" x="197.6" y="20" width="5.8" height="50"/>
+      <rect class="cell cell-m" x="205.4" y="20" width="5.8" height="50"/>
+      <rect class="cell cell-m" x="213.2" y="20" width="5.8" height="50"/>
+      <rect class="cell cell-m" x="221" y="20" width="5.8" height="50"/>
+      <rect class="cell cell-m" x="228.8" y="20" width="5.8" height="50"/>
+      <rect class="cell cell-m" x="236.6" y="20" width="5.8" height="50"/>
+      <rect class="cell cell-m" x="244.4" y="20" width="4.6" height="50"/>
+    </g>
+    <text x="14" y="95" class="mono">sign · 8 exp · 23 mantissa</text>
+    <text x="130" y="115" text-anchor="middle" class="mut">range ±10³⁸ · precision 7 decimals</text>
+  </g>
+
+  <!-- FP16 -->
+  <g transform="translate(340, 70)">
+    <text x="0" y="0" class="tag" fill="#D97757">FP16 · 16 bits  (IEEE half)</text>
+    <rect class="box-16" x="0" y="10" width="260" height="70"/>
+
+    <rect class="cell cell-s" x="60" y="20" width="8" height="50"/>
+    <g>
+      <rect class="cell cell-e" x="72" y="20" width="8" height="50"/>
+      <rect class="cell cell-e" x="82" y="20" width="8" height="50"/>
+      <rect class="cell cell-e" x="92" y="20" width="8" height="50"/>
+      <rect class="cell cell-e" x="102" y="20" width="8" height="50"/>
+      <rect class="cell cell-e" x="112" y="20" width="8" height="50"/>
+    </g>
+    <g>
+      <rect class="cell cell-m" x="124" y="20" width="8" height="50"/>
+      <rect class="cell cell-m" x="134" y="20" width="8" height="50"/>
+      <rect class="cell cell-m" x="144" y="20" width="8" height="50"/>
+      <rect class="cell cell-m" x="154" y="20" width="8" height="50"/>
+      <rect class="cell cell-m" x="164" y="20" width="8" height="50"/>
+      <rect class="cell cell-m" x="174" y="20" width="8" height="50"/>
+      <rect class="cell cell-m" x="184" y="20" width="8" height="50"/>
+      <rect class="cell cell-m" x="194" y="20" width="8" height="50"/>
+      <rect class="cell cell-m" x="204" y="20" width="8" height="50"/>
+      <rect class="cell cell-m" x="214" y="20" width="8" height="50"/>
+    </g>
+
+    <text x="14" y="95" class="mono">sign · 5 exp · 10 mantissa</text>
+    <text x="130" y="115" text-anchor="middle" class="mut">range ±6.5·10⁴ ·  precision ~3 decimals</text>
+  </g>
+
+  <!-- BF16 -->
+  <g transform="translate(40, 170)">
+    <text x="0" y="0" class="tag" fill="#7B9E89">BF16 · 16 bits (brain float, Ampere+ default)</text>
+    <rect class="box-bf" x="0" y="10" width="260" height="70"/>
+
+    <rect class="cell cell-s" x="30" y="20" width="8" height="50"/>
+    <g>
+      <rect class="cell cell-e" x="42" y="20" width="8" height="50"/>
+      <rect class="cell cell-e" x="52" y="20" width="8" height="50"/>
+      <rect class="cell cell-e" x="62" y="20" width="8" height="50"/>
+      <rect class="cell cell-e" x="72" y="20" width="8" height="50"/>
+      <rect class="cell cell-e" x="82" y="20" width="8" height="50"/>
+      <rect class="cell cell-e" x="92" y="20" width="8" height="50"/>
+      <rect class="cell cell-e" x="102" y="20" width="8" height="50"/>
+      <rect class="cell cell-e" x="112" y="20" width="8" height="50"/>
+    </g>
+    <g>
+      <rect class="cell cell-m" x="124" y="20" width="12" height="50"/>
+      <rect class="cell cell-m" x="138" y="20" width="12" height="50"/>
+      <rect class="cell cell-m" x="152" y="20" width="12" height="50"/>
+      <rect class="cell cell-m" x="166" y="20" width="12" height="50"/>
+      <rect class="cell cell-m" x="180" y="20" width="12" height="50"/>
+      <rect class="cell cell-m" x="194" y="20" width="12" height="50"/>
+      <rect class="cell cell-m" x="208" y="20" width="12" height="50"/>
+    </g>
+
+    <text x="14" y="95" class="mono">sign · 8 exp · 7 mantissa</text>
+    <text x="130" y="115" text-anchor="middle" class="mut">FP32 range · FP16 memory · sweet spot</text>
+  </g>
+
+  <!-- Right: the practical PyTorch recipe -->
+  <g transform="translate(340, 170)">
+    <text x="0" y="0" class="tag">PYTORCH · THE ACTUAL RECIPE</text>
+    <rect x="0" y="10" width="560" height="130" fill="#EEEBDF" stroke="#C9C4B5"/>
+    <g class="mono" font-size="12">
+      <text x="14" y="34">scaler = torch.amp.GradScaler()          # only needed for fp16</text>
+      <text x="14" y="58">with torch.amp.autocast('cuda',</text>
+      <text x="14" y="74">                         dtype=torch.bfloat16):</text>
+      <text x="14" y="90" fill="#D97757">    logits = model(x)                    # runs in bf16</text>
+      <text x="14" y="106" fill="#D97757">    loss   = criterion(logits, y)</text>
+      <text x="14" y="130">loss.backward(); opt.step(); opt.zero_grad()</text>
+    </g>
+  </g>
+
+  <!-- Footer -->
+  <g transform="translate(40, 320)">
+    <text x="440" y="0" text-anchor="middle" class="mut" font-style="italic">
+      Default in 2026 · use <tspan fill="#7B9E89" font-weight="600">BF16 autocast</tspan> on Ampere+ / TPU.
+      2× speedup, half the memory, no GradScaler needed.
+    </text>
+  </g>
+</svg>

@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .box   { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.3; rx:4; ry:4; }
+      .box-m { fill:#DCE3E6; stroke:#4A6670; stroke-width:1.4; rx:4; ry:4; }
+      .box-v { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.4; rx:4; ry:4; }
+      .box-u { fill:#EAD3C5; stroke:#D97757; stroke-width:1.4; rx:4; ry:4; }
+      .ink   { stroke:#1F1F1E; fill:none; stroke-width:1.2; }
+      .acc   { stroke:#D97757; fill:none; stroke-width:1.4; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:12px; fill:#1F1F1E; }
+      .mono-b{ font-family:'JetBrains Mono', monospace; font-size:12px; fill:#1F1F1E; font-weight:600; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+    <marker id="ac-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/></marker>
+    <marker id="ac-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#D97757"/></marker>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Adam — four pieces wired together</text>
+
+  <!-- Input: gradient -->
+  <g transform="translate(40, 80)">
+    <text x="0" y="-8" class="tag">INPUT</text>
+    <rect class="box" x="0" y="0" width="120" height="50"/>
+    <text x="60" y="22" text-anchor="middle" class="mono-b">g_t</text>
+    <text x="60" y="40" text-anchor="middle" class="mut">raw gradient</text>
+  </g>
+
+  <!-- g² -->
+  <g transform="translate(40, 180)">
+    <rect class="box" x="0" y="0" width="120" height="50"/>
+    <text x="60" y="22" text-anchor="middle" class="mono-b">g_t²</text>
+    <text x="60" y="40" text-anchor="middle" class="mut">element-wise square</text>
+  </g>
+
+  <!-- Arrow g → g² -->
+  <line x1="100" y1="130" x2="100" y2="180" class="ink" marker-end="url(#ac-a)"/>
+  <text x="110" y="155" class="mut">square</text>
+
+  <!-- 1st moment m_t -->
+  <g transform="translate(220, 80)">
+    <text x="0" y="-8" class="tag" fill="#4A6670">1ST MOMENT</text>
+    <rect class="box-m" x="0" y="0" width="180" height="50"/>
+    <text x="90" y="22" text-anchor="middle" class="mono-b" fill="#4A6670">m_t = β₁·m + (1−β₁)·g_t</text>
+    <text x="90" y="40" text-anchor="middle" class="mut" fill="#4A6670">EMA of gradient (momentum)</text>
+  </g>
+
+  <!-- 2nd moment v_t -->
+  <g transform="translate(220, 180)">
+    <text x="0" y="-8" class="tag" fill="#7B9E89">2ND MOMENT</text>
+    <rect class="box-v" x="0" y="0" width="180" height="50"/>
+    <text x="90" y="22" text-anchor="middle" class="mono-b" fill="#7B9E89">v_t = β₂·v + (1−β₂)·g_t²</text>
+    <text x="90" y="40" text-anchor="middle" class="mut" fill="#7B9E89">EMA of squared gradient</text>
+  </g>
+
+  <!-- Arrows from inputs -->
+  <line x1="160" y1="100" x2="220" y2="100" class="ink" marker-end="url(#ac-a)"/>
+  <line x1="160" y1="205" x2="220" y2="205" class="ink" marker-end="url(#ac-a)"/>
+
+  <!-- Bias correction -->
+  <g transform="translate(470, 80)">
+    <text x="0" y="-8" class="tag">BIAS CORRECT</text>
+    <rect class="box-m" x="0" y="0" width="180" height="50"/>
+    <text x="90" y="22" text-anchor="middle" class="mono-b" fill="#4A6670">m̂_t = m_t / (1 − β₁^t)</text>
+    <text x="90" y="40" text-anchor="middle" class="mut" fill="#4A6670">unbiased 1st moment</text>
+  </g>
+
+  <g transform="translate(470, 180)">
+    <text x="0" y="-8" class="tag">BIAS CORRECT</text>
+    <rect class="box-v" x="0" y="0" width="180" height="50"/>
+    <text x="90" y="22" text-anchor="middle" class="mono-b" fill="#7B9E89">v̂_t = v_t / (1 − β₂^t)</text>
+    <text x="90" y="40" text-anchor="middle" class="mut" fill="#7B9E89">unbiased 2nd moment</text>
+  </g>
+
+  <!-- Arrows m→m̂, v→v̂ -->
+  <line x1="400" y1="100" x2="470" y2="100" class="ink" marker-end="url(#ac-a)"/>
+  <line x1="400" y1="205" x2="470" y2="205" class="ink" marker-end="url(#ac-a)"/>
+
+  <!-- Update -->
+  <g transform="translate(720, 130)">
+    <text x="0" y="-10" class="tag" fill="#D97757">UPDATE</text>
+    <rect class="box-u" x="0" y="0" width="200" height="80"/>
+    <text x="100" y="26" text-anchor="middle" class="mono-b" fill="#D97757">θ ← θ − η ·</text>
+    <text x="100" y="52" text-anchor="middle" class="mono-b" fill="#D97757">m̂_t / (√v̂_t + ε)</text>
+    <text x="100" y="70" text-anchor="middle" class="mut" fill="#D97757">per-parameter step</text>
+  </g>
+
+  <!-- Arrows m̂, v̂ → update -->
+  <path class="acc" d="M 650 100 Q 700 100 720 155" marker-end="url(#ac-b)"/>
+  <path class="acc" d="M 650 205 Q 700 205 720 175" marker-end="url(#ac-b)"/>
+
+  <!-- Bottom defaults -->
+  <g transform="translate(60, 310)">
+    <rect x="0" y="0" width="840" height="80" fill="#EEEBDF" stroke="#C9C4B5"/>
+    <text x="14" y="22" class="tag">DEFAULTS THAT WORK</text>
+    <text x="14" y="44" class="mono">β₁ = 0.9      β₂ = 0.999      ε = 1e-8      η = 1e-3 (CNN) · 3e-4 (Transformer)</text>
+    <text x="14" y="64" class="mut" font-style="italic">Kingma &amp; Ba 2015 · "a single algorithm that works across a wide range of problems and hyperparameters"</text>
+  </g>
+</svg>

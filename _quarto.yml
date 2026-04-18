@@ -14,10 +14,14 @@ website:
     left:
       - text: "Home"
         href: index.qmd
+      - text: "Syllabus"
+        href: syllabus.qmd
       - text: "Slides"
         href: slides.qmd
       - text: "Notebooks"
         href: notebooks.qmd
+      - text: "UDL Book"
+        href: https://udlbook.github.io/udlbook/
       - text: "Course Website"
         href: https://nipunbatra.github.io/dl-2026/
   page-footer:

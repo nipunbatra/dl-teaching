@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .box   { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.2; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mono-b{ font-family:'JetBrains Mono', monospace; font-size:12px; fill:#1F1F1E; font-weight:600; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .big   { fill:#1F1F1E; font-size:28px; font-family:Fraunces; font-weight:600; }
+    </style>
+    <symbol id="catM" viewBox="0 0 100 100">
+      <path d="M 20 80 L 30 40 L 40 50 L 50 35 L 60 50 L 70 40 L 80 80 L 70 90 L 30 90 Z" fill="#D97757"/>
+      <circle cx="40" cy="55" r="3" fill="#1F1F1E"/>
+      <circle cx="60" cy="55" r="3" fill="#1F1F1E"/>
+    </symbol>
+    <symbol id="dogM" viewBox="0 0 100 100">
+      <ellipse cx="50" cy="65" rx="35" ry="28" fill="#4A6670"/>
+      <ellipse cx="30" cy="45" rx="10" ry="18" fill="#4A6670"/>
+      <ellipse cx="70" cy="45" rx="10" ry="18" fill="#4A6670"/>
+      <circle cx="42" cy="60" r="3" fill="#F0EEE5"/>
+      <circle cx="58" cy="60" r="3" fill="#F0EEE5"/>
+      <ellipse cx="50" cy="75" rx="5" ry="4" fill="#1F1F1E"/>
+    </symbol>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Mixup and CutMix — interpolate inputs <tspan fill="#D97757">and</tspan> labels</text>
+
+  <!-- MIXUP row -->
+  <g transform="translate(40, 70)">
+    <text x="0" y="-10" class="tag" fill="#D97757">MIXUP · pixel-wise blend</text>
+
+    <rect class="box" x="0"  y="10" width="110" height="110"/>
+    <use href="#catM" x="5" y="15" width="100" height="100"/>
+    <text x="55" y="140" text-anchor="middle" class="mono">image A</text>
+    <text x="55" y="156" text-anchor="middle" class="mut">"cat"</text>
+
+    <text x="135" y="75" text-anchor="middle" class="big">+</text>
+
+    <rect class="box" x="160" y="10" width="110" height="110"/>
+    <use href="#dogM" x="165" y="15" width="100" height="100"/>
+    <text x="215" y="140" text-anchor="middle" class="mono">image B</text>
+    <text x="215" y="156" text-anchor="middle" class="mut">"dog"</text>
+
+    <text x="295" y="75" text-anchor="middle" class="big">=</text>
+
+    <rect class="box" x="320" y="10" width="110" height="110"/>
+    <g opacity="0.7">
+      <use href="#catM" x="325" y="15" width="100" height="100"/>
+    </g>
+    <g opacity="0.5">
+      <use href="#dogM" x="325" y="15" width="100" height="100"/>
+    </g>
+    <text x="375" y="140" text-anchor="middle" class="mono">mixed image</text>
+    <text x="375" y="156" text-anchor="middle" class="mut">label = (0.7, 0.3)</text>
+  </g>
+
+  <!-- formula -->
+  <g transform="translate(520, 120)">
+    <rect x="0" y="0" width="400" height="70" fill="#EEEBDF" stroke="#C9C4B5"/>
+    <text x="200" y="26" text-anchor="middle" class="mono-b">x̃ = λ · x_A + (1−λ) · x_B</text>
+    <text x="200" y="46" text-anchor="middle" class="mono-b">ỹ = λ · y_A + (1−λ) · y_B</text>
+    <text x="200" y="62" text-anchor="middle" class="mut">λ ~ Beta(α, α), α = 0.2</text>
+  </g>
+
+  <!-- CUTMIX row -->
+  <g transform="translate(40, 230)">
+    <text x="0" y="-10" class="tag" fill="#7B9E89">CUTMIX · spatial patch replacement</text>
+
+    <rect class="box" x="0"  y="10" width="110" height="110"/>
+    <use href="#catM" x="5" y="15" width="100" height="100"/>
+    <text x="55" y="140" text-anchor="middle" class="mono">image A</text>
+    <text x="55" y="156" text-anchor="middle" class="mut">"cat"</text>
+
+    <text x="135" y="75" text-anchor="middle" class="big">⊕</text>
+
+    <rect class="box" x="160" y="10" width="110" height="110"/>
+    <use href="#dogM" x="165" y="15" width="100" height="100"/>
+    <text x="215" y="140" text-anchor="middle" class="mono">image B</text>
+    <text x="215" y="156" text-anchor="middle" class="mut">"dog"</text>
+
+    <text x="295" y="75" text-anchor="middle" class="big">=</text>
+
+    <rect class="box" x="320" y="10" width="110" height="110"/>
+    <use href="#catM" x="325" y="15" width="100" height="100"/>
+    <!-- paste dog patch in bottom-right -->
+    <rect x="380" y="70" width="50" height="50" fill="#F0EEE5" stroke="#7B9E89" stroke-width="2"/>
+    <use href="#dogM" x="380" y="75" width="45" height="45"/>
+    <text x="375" y="140" text-anchor="middle" class="mono">pasted image</text>
+    <text x="375" y="156" text-anchor="middle" class="mut">label = (0.8, 0.2)</text>
+  </g>
+
+  <!-- why they work -->
+  <g transform="translate(520, 260)">
+    <rect x="0" y="0" width="400" height="110" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <text x="14" y="20" class="tag">WHY THIS HELPS</text>
+    <text x="14" y="42" class="mut">✓ smooths the decision boundary</text>
+    <text x="14" y="60" class="mut">✓ forces model to consider whole image</text>
+    <text x="14" y="78" class="mut">✓ regularizer + improves calibration</text>
+    <text x="14" y="96" class="mut">✓ no extra data needed</text>
+  </g>
+</svg>

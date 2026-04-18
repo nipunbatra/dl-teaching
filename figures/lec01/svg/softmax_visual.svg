@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .axis  { stroke:#1F1F1E; stroke-width:1; fill:none; }
+      .grid  { stroke:#C9C4B5; stroke-width:0.4; }
+      .bar-n { fill:#4A6670; }
+      .bar-e { fill:#D97757; }
+      .bar-p { fill:#7B9E89; }
+      .bar-t { fill:#A8324B; }
+      .lbl   { fill:#1F1F1E; font-size:12px; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .big   { fill:#D97757; font-size:22px; font-family:Fraunces; font-weight:600; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Softmax in three acts · raw logits → exponentials → probabilities</text>
+
+  <!-- Panel 1: raw logits (can be negative) -->
+  <g transform="translate(40, 80)">
+    <text x="130" y="-8" text-anchor="middle" class="tag" fill="#4A6670">1 · RAW LOGITS z</text>
+    <rect x="0" y="0" width="260" height="200" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <!-- zero line -->
+    <line x1="0" y1="110" x2="260" y2="110" stroke="#1F1F1E" stroke-width="0.8" stroke-dasharray="3 2"/>
+    <text x="5" y="107" class="mono" fill="#6B6A65" font-size="10">0</text>
+
+    <!-- bars: cat +2.5, dog +1.0, car -0.5, bird -1.5 -->
+    <g>
+      <rect class="bar-n" x="20"  y="30"  width="40" height="80"/>
+      <text x="40"  y="22" text-anchor="middle" class="mono">+2.5</text>
+      <text x="40"  y="130" text-anchor="middle" class="mut">cat</text>
+
+      <rect class="bar-n" x="80"  y="75"  width="40" height="35"/>
+      <text x="100" y="67" text-anchor="middle" class="mono">+1.0</text>
+      <text x="100" y="130" text-anchor="middle" class="mut">dog</text>
+
+      <rect class="bar-n" x="140" y="110" width="40" height="18"/>
+      <text x="160" y="143" text-anchor="middle" class="mono">−0.5</text>
+      <text x="160" y="160" text-anchor="middle" class="mut">car</text>
+
+      <rect class="bar-n" x="200" y="110" width="40" height="55"/>
+      <text x="220" y="180" text-anchor="middle" class="mono">−1.5</text>
+      <text x="220" y="195" text-anchor="middle" class="mut">bird</text>
+    </g>
+
+    <text x="130" y="220" text-anchor="middle" class="mut" font-style="italic">can be any real number</text>
+  </g>
+
+  <!-- arrow 1 -->
+  <text x="325" y="190" text-anchor="middle" class="big">→</text>
+  <text x="325" y="215" text-anchor="middle" class="mono" fill="#D97757" font-size="10">exp(·)</text>
+
+  <!-- Panel 2: exponentials (all positive) -->
+  <g transform="translate(350, 80)">
+    <text x="130" y="-8" text-anchor="middle" class="tag" fill="#D97757">2 · EXPONENTIALS e^z</text>
+    <rect x="0" y="0" width="260" height="200" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <line x1="0" y1="190" x2="260" y2="190" class="axis"/>
+
+    <!-- e^2.5 ≈ 12.2 → ~155 px ; e^1 ≈ 2.7 → ~34 px ; e^-0.5 ≈ 0.61 → ~8 px ; e^-1.5 ≈ 0.22 → ~3 px -->
+    <g>
+      <rect class="bar-e" x="20"  y="30"  width="40" height="160"/>
+      <text x="40"  y="22" text-anchor="middle" class="mono">12.2</text>
+      <text x="40"  y="210" text-anchor="middle" class="mut">cat</text>
+
+      <rect class="bar-e" x="80"  y="155" width="40" height="35"/>
+      <text x="100" y="147" text-anchor="middle" class="mono">2.7</text>
+      <text x="100" y="210" text-anchor="middle" class="mut">dog</text>
+
+      <rect class="bar-e" x="140" y="182" width="40" height="8"/>
+      <text x="160" y="175" text-anchor="middle" class="mono">0.61</text>
+      <text x="160" y="210" text-anchor="middle" class="mut">car</text>
+
+      <rect class="bar-e" x="200" y="187" width="40" height="3"/>
+      <text x="220" y="180" text-anchor="middle" class="mono">0.22</text>
+      <text x="220" y="210" text-anchor="middle" class="mut">bird</text>
+    </g>
+
+    <text x="130" y="230" text-anchor="middle" class="mut" font-style="italic">always positive · big logits amplified</text>
+  </g>
+
+  <!-- arrow 2 -->
+  <text x="635" y="190" text-anchor="middle" class="big">→</text>
+  <text x="635" y="215" text-anchor="middle" class="mono" fill="#7B9E89" font-size="10">÷ sum</text>
+
+  <!-- Panel 3: probabilities -->
+  <g transform="translate(660, 80)">
+    <text x="130" y="-8" text-anchor="middle" class="tag" fill="#7B9E89">3 · PROBABILITIES p</text>
+    <rect x="0" y="0" width="260" height="200" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <line x1="0" y1="190" x2="260" y2="190" class="axis"/>
+
+    <!-- sum ≈ 15.73;  p(cat) = 0.776, p(dog) = 0.171, p(car) = 0.039, p(bird) = 0.014 -->
+    <!-- scale: 1.0 = 180 px -->
+    <g>
+      <rect class="bar-p" x="20"  y="50"  width="40" height="140"/>
+      <text x="40"  y="42" text-anchor="middle" class="mono">0.78</text>
+      <text x="40"  y="210" text-anchor="middle" class="mut">cat</text>
+
+      <rect class="bar-p" x="80"  y="159" width="40" height="31"/>
+      <text x="100" y="151" text-anchor="middle" class="mono">0.17</text>
+      <text x="100" y="210" text-anchor="middle" class="mut">dog</text>
+
+      <rect class="bar-p" x="140" y="183" width="40" height="7"/>
+      <text x="160" y="175" text-anchor="middle" class="mono">0.04</text>
+      <text x="160" y="210" text-anchor="middle" class="mut">car</text>
+
+      <rect class="bar-p" x="200" y="187" width="40" height="3"/>
+      <text x="220" y="180" text-anchor="middle" class="mono">0.01</text>
+      <text x="220" y="210" text-anchor="middle" class="mut">bird</text>
+    </g>
+
+    <text x="130" y="230" text-anchor="middle" class="mut" font-style="italic">sum to 1 · valid distribution</text>
+  </g>
+
+  <!-- Footer formula -->
+  <text x="480" y="330" text-anchor="middle" class="mono" font-size="14" fill="#1F1F1E">
+    softmax(z)ₖ  =  e^{zₖ}  /  Σⱼ e^{zⱼ}
+  </text>
+  <text x="480" y="355" text-anchor="middle" class="mut" font-style="italic">
+    Big logit → big probability. Negative logit → small positive probability. Never negative, always sums to 1.
+  </text>
+</svg>

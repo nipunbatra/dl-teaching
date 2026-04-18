@@ -1,6 +1,7 @@
 /* @theme dl-theme */
 
 @import 'default';
+/* Load Inter from Google Fonts (online), fall back to system sans-serif (offline) */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
@@ -19,7 +20,7 @@
 }
 
 section {
-  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-family: 'Inter', -apple-system, 'Helvetica Neue', 'Segoe UI', sans-serif;
   font-size: 22px;
   padding: 0;
   color: var(--text);

@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .axis  { stroke:#1F1F1E; stroke-width:1.1; }
+      .grid  { stroke:#C9C4B5; stroke-width:0.5; }
+      .curve { stroke:#1F1F1E; stroke-width:2.2; fill:none; }
+      .band-l{ fill:#DCE3E6; }
+      .band-g{ fill:#EAD3C5; opacity:0.7; }
+      .band-r{ fill:#F6D4CC; opacity:0.8; }
+      .marker{ fill:#D97757; stroke:#1F1F1E; stroke-width:1.2; }
+      .lbl   { fill:#1F1F1E; font-size:12px; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#4A6670; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">The LR finder — sweep from tiny to huge, watch where loss falls fastest</text>
+
+  <g transform="translate(100, 80)">
+    <rect x="0" y="0" width="760" height="220" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <!-- three colored regions -->
+    <rect class="band-l" x="0"   y="0" width="200" height="220"/>
+    <rect class="band-g" x="200" y="0" width="250" height="220"/>
+    <rect class="band-r" x="450" y="0" width="310" height="220"/>
+
+    <g class="grid">
+      <line x1="0"   y1="55"  x2="760" y2="55"/>
+      <line x1="0"   y1="110" x2="760" y2="110"/>
+      <line x1="0"   y1="165" x2="760" y2="165"/>
+    </g>
+    <line x1="0" y1="220" x2="760" y2="220" class="axis"/>
+    <line x1="0" y1="0"   x2="0"   y2="220" class="axis"/>
+
+    <!-- curve: flat, then steep drop, then explodes -->
+    <path class="curve" d="M 10 80 L 120 82 L 200 85 Q 280 120 350 190 Q 420 200 450 195 Q 500 180 540 150 Q 580 100 620 45 L 720 10 L 755 5"/>
+
+    <!-- marker at the steepest-descent point -->
+    <circle class="marker" cx="380" cy="175" r="8"/>
+    <line x1="380" y1="175" x2="380" y2="255" stroke="#D97757" stroke-dasharray="4 3" stroke-width="1.2"/>
+    <text x="380" y="273" class="lbl" fill="#D97757" font-weight="600" text-anchor="middle">pick this LR</text>
+    <text x="380" y="288" class="mut" fill="#D97757" text-anchor="middle">~1 decade before the minimum</text>
+
+    <!-- region labels -->
+    <text x="100" y="24" class="tag" fill="#4A6670" text-anchor="middle">TOO SMALL</text>
+    <text x="100" y="40" class="mut"  fill="#4A6670" text-anchor="middle">no progress</text>
+
+    <text x="325" y="24" class="tag" fill="#D97757" text-anchor="middle">SWEET SPOT</text>
+    <text x="325" y="40" class="mut"  fill="#D97757" text-anchor="middle">loss plummets</text>
+
+    <text x="605" y="24" class="tag" fill="#A8324B" text-anchor="middle">EXPLODES</text>
+    <text x="605" y="40" class="mut"  fill="#A8324B" text-anchor="middle">NaN or divergence</text>
+
+    <!-- x axis -->
+    <text x="380" y="245" class="mono" text-anchor="middle">log₁₀(learning rate) · 1e-7 → 1e+1</text>
+    <text x="-10" y="110" transform="rotate(-90 -10 110)" text-anchor="middle" class="mut">smoothed loss →</text>
+  </g>
+
+  <text x="480" y="330" text-anchor="middle" class="mut" font-style="italic">
+    Smith 2017 · run for one epoch increasing LR geometrically · plot loss · pick ~10× below the minimum
+  </text>
+</svg>

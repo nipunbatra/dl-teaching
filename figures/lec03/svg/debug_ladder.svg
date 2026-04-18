@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .rung  { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.2; rx:3; ry:3; }
+      .rung-ok { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.2; rx:3; ry:3; }
+      .rung-fail{ fill:#F6D4CC; stroke:#A8324B; stroke-width:1.2; rx:3; ry:3; }
+      .rail  { stroke:#6B6A65; stroke-width:1.4; }
+      .lbl   { fill:#1F1F1E; font-size:13px; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:12px; fill:#1F1F1E; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+    <marker id="arrD" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6B6A65"/>
+    </marker>
+  </defs>
+
+  <text x="480" y="30" text-anchor="middle" class="ttl">Andrej Karpathy's recipe — climb the debugging ladder one rung at a time</text>
+  <text x="480" y="50" text-anchor="middle" class="tag">NEVER skip a rung. If the current rung fails, debug HERE — don't tune above.</text>
+
+  <!-- left rail -->
+  <line x1="320" y1="80" x2="320" y2="400" class="rail"/>
+  <line x1="640" y1="80" x2="640" y2="400" class="rail"/>
+
+  <!-- Rungs (top → bottom) -->
+  <g>
+    <!-- 1 -->
+    <rect x="320" y="80"  width="320" height="40" class="rung"/>
+    <text x="340" y="105" class="mono" font-weight="600">1 · inspect the data</text>
+    <text x="660" y="95"  class="mut">print shapes, dtypes, ranges, label balance</text>
+    <text x="660" y="112" class="mut">Karpathy: <tspan font-style="italic">"become one with the data."</tspan></text>
+
+    <!-- 2 -->
+    <rect x="320" y="130" width="320" height="40" class="rung"/>
+    <text x="340" y="155" class="mono" font-weight="600">2 · build a dumb baseline</text>
+    <text x="660" y="145" class="mut">predict-the-mean for regression,</text>
+    <text x="660" y="162" class="mut">most-frequent-class for classification</text>
+
+    <!-- 3 -->
+    <rect x="320" y="180" width="320" height="40" class="rung-ok"/>
+    <text x="340" y="205" class="mono" font-weight="600" fill="#7B9E89">3 · overfit ONE batch</text>
+    <text x="660" y="195" class="mut">loss should reach ≈ 0.</text>
+    <text x="660" y="212" class="mut">If not: bug in model / loss / backprop.</text>
+
+    <!-- 4 -->
+    <rect x="320" y="230" width="320" height="40" class="rung"/>
+    <text x="340" y="255" class="mono" font-weight="600">4 · train a small version</text>
+    <text x="660" y="245" class="mut">sanity-check full pipeline on 1% of data</text>
+    <text x="660" y="262" class="mut">— loss curves, val accuracy, LR range</text>
+
+    <!-- 5 -->
+    <rect x="320" y="280" width="320" height="40" class="rung"/>
+    <text x="340" y="305" class="mono" font-weight="600">5 · find the learning rate</text>
+    <text x="660" y="295" class="mut">Smith's LR range test</text>
+    <text x="660" y="312" class="mut">pick 1 decade before divergence</text>
+
+    <!-- 6 -->
+    <rect x="320" y="330" width="320" height="40" class="rung"/>
+    <text x="340" y="355" class="mono" font-weight="600">6 · full run + regularize</text>
+    <text x="660" y="345" class="mut">weight decay, dropout, augmentation</text>
+    <text x="660" y="362" class="mut">(details in Lectures 6–7)</text>
+
+    <!-- 7 -->
+    <rect x="320" y="380" width="320" height="30" class="rung-fail"/>
+    <text x="340" y="400" class="mono" font-weight="600" fill="#A8324B">7 · error analysis · fix the biggest bucket</text>
+  </g>
+
+  <!-- left-side step numbers -->
+  <g>
+    <text x="30" y="100" class="tag">START</text>
+    <line x1="30" y1="112" x2="300" y2="112" class="rail" marker-end="url(#arrD)"/>
+    <text x="30" y="405" class="tag">SHIP</text>
+  </g>
+
+  <!-- climbing path -->
+  <g stroke="#D97757" stroke-width="2" fill="none" opacity="0.4">
+    <path d="M 300 100 L 310 100 L 310 150 L 300 150 L 300 200 L 310 200 L 310 250 L 300 250 L 300 300 L 310 300 L 310 350 L 300 350 L 300 400"/>
+  </g>
+</svg>

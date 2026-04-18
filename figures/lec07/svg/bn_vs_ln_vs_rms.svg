@@ -1,0 +1,194 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .cell    { fill:#F0EEE5; stroke:#6B6A65; stroke-width:0.6; }
+      .cell-bn { fill:#EAD3C5; stroke:#D97757; stroke-width:1.4; }
+      .cell-ln { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.4; }
+      .cell-rm { fill:#DCE3E6; stroke:#4A6670; stroke-width:1.4; }
+      .mono    { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut     { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl     { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag     { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .hdr     { fill:#1F1F1E; font-size:13px; font-weight:600; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">BatchNorm vs LayerNorm vs RMSNorm — same input tensor, three different axes</text>
+
+  <!-- Panel 1: BatchNorm (normalize across BATCH, per feature) -->
+  <g transform="translate(40, 70)">
+    <text x="140" y="-6" text-anchor="middle" class="tag" fill="#D97757">BATCHNORM · across batch, per feature</text>
+    <rect x="0" y="0" width="280" height="220" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <!-- grid of cells: rows = batch (5), cols = features (6) -->
+    <g transform="translate(40, 30)">
+      <!-- highlight column 2 (across batch dim) -->
+      <g>
+        <rect class="cell" x="0"    y="0"  width="28" height="28"/>
+        <rect class="cell-bn" x="28" y="0"  width="28" height="28"/>
+        <rect class="cell" x="56"   y="0"  width="28" height="28"/>
+        <rect class="cell" x="84"   y="0"  width="28" height="28"/>
+        <rect class="cell" x="112"  y="0"  width="28" height="28"/>
+        <rect class="cell" x="140"  y="0"  width="28" height="28"/>
+
+        <rect class="cell" x="0"    y="30" width="28" height="28"/>
+        <rect class="cell-bn" x="28" y="30" width="28" height="28"/>
+        <rect class="cell" x="56"   y="30" width="28" height="28"/>
+        <rect class="cell" x="84"   y="30" width="28" height="28"/>
+        <rect class="cell" x="112"  y="30" width="28" height="28"/>
+        <rect class="cell" x="140"  y="30" width="28" height="28"/>
+
+        <rect class="cell" x="0"    y="60" width="28" height="28"/>
+        <rect class="cell-bn" x="28" y="60" width="28" height="28"/>
+        <rect class="cell" x="56"   y="60" width="28" height="28"/>
+        <rect class="cell" x="84"   y="60" width="28" height="28"/>
+        <rect class="cell" x="112"  y="60" width="28" height="28"/>
+        <rect class="cell" x="140"  y="60" width="28" height="28"/>
+
+        <rect class="cell" x="0"    y="90" width="28" height="28"/>
+        <rect class="cell-bn" x="28" y="90" width="28" height="28"/>
+        <rect class="cell" x="56"   y="90" width="28" height="28"/>
+        <rect class="cell" x="84"   y="90" width="28" height="28"/>
+        <rect class="cell" x="112"  y="90" width="28" height="28"/>
+        <rect class="cell" x="140"  y="90" width="28" height="28"/>
+
+        <rect class="cell" x="0"    y="120" width="28" height="28"/>
+        <rect class="cell-bn" x="28" y="120" width="28" height="28"/>
+        <rect class="cell" x="56"   y="120" width="28" height="28"/>
+        <rect class="cell" x="84"   y="120" width="28" height="28"/>
+        <rect class="cell" x="112"  y="120" width="28" height="28"/>
+        <rect class="cell" x="140"  y="120" width="28" height="28"/>
+      </g>
+    </g>
+
+    <!-- axis labels -->
+    <text x="140" y="22" text-anchor="middle" class="mono">features →</text>
+    <text x="28" y="200" text-anchor="start" class="mut">sample 1</text>
+    <text x="28" y="212" text-anchor="start" class="mut">…</text>
+    <text x="155" y="50" class="mono" fill="#D97757">μ, σ computed</text>
+    <text x="155" y="64" class="mono" fill="#D97757">over this column</text>
+  </g>
+
+  <!-- Panel 2: LayerNorm -->
+  <g transform="translate(340, 70)">
+    <text x="140" y="-6" text-anchor="middle" class="tag" fill="#7B9E89">LAYERNORM · across features, per sample</text>
+    <rect x="0" y="0" width="280" height="220" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <g transform="translate(40, 30)">
+      <!-- highlight row 2 (across feature dim) -->
+      <g>
+        <rect class="cell" x="0"  y="0"  width="28" height="28"/>
+        <rect class="cell" x="28" y="0"  width="28" height="28"/>
+        <rect class="cell" x="56" y="0"  width="28" height="28"/>
+        <rect class="cell" x="84" y="0"  width="28" height="28"/>
+        <rect class="cell" x="112" y="0"  width="28" height="28"/>
+        <rect class="cell" x="140" y="0"  width="28" height="28"/>
+
+        <rect class="cell-ln" x="0"    y="30" width="28" height="28"/>
+        <rect class="cell-ln" x="28"   y="30" width="28" height="28"/>
+        <rect class="cell-ln" x="56"   y="30" width="28" height="28"/>
+        <rect class="cell-ln" x="84"   y="30" width="28" height="28"/>
+        <rect class="cell-ln" x="112"  y="30" width="28" height="28"/>
+        <rect class="cell-ln" x="140"  y="30" width="28" height="28"/>
+
+        <rect class="cell" x="0"   y="60" width="28" height="28"/>
+        <rect class="cell" x="28"  y="60" width="28" height="28"/>
+        <rect class="cell" x="56"  y="60" width="28" height="28"/>
+        <rect class="cell" x="84"  y="60" width="28" height="28"/>
+        <rect class="cell" x="112" y="60" width="28" height="28"/>
+        <rect class="cell" x="140" y="60" width="28" height="28"/>
+
+        <rect class="cell" x="0"   y="90" width="28" height="28"/>
+        <rect class="cell" x="28"  y="90" width="28" height="28"/>
+        <rect class="cell" x="56"  y="90" width="28" height="28"/>
+        <rect class="cell" x="84"  y="90" width="28" height="28"/>
+        <rect class="cell" x="112" y="90" width="28" height="28"/>
+        <rect class="cell" x="140" y="90" width="28" height="28"/>
+
+        <rect class="cell" x="0"   y="120" width="28" height="28"/>
+        <rect class="cell" x="28"  y="120" width="28" height="28"/>
+        <rect class="cell" x="56"  y="120" width="28" height="28"/>
+        <rect class="cell" x="84"  y="120" width="28" height="28"/>
+        <rect class="cell" x="112" y="120" width="28" height="28"/>
+        <rect class="cell" x="140" y="120" width="28" height="28"/>
+      </g>
+    </g>
+
+    <text x="155" y="68" class="mono" fill="#7B9E89">μ, σ over this row</text>
+    <text x="155" y="82" class="mono" fill="#7B9E89">(one sample)</text>
+  </g>
+
+  <!-- Panel 3: RMSNorm -->
+  <g transform="translate(640, 70)">
+    <text x="140" y="-6" text-anchor="middle" class="tag" fill="#4A6670">RMSNORM · row-wise RMS, no mean</text>
+    <rect x="0" y="0" width="280" height="220" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <g transform="translate(40, 30)">
+      <g>
+        <rect class="cell" x="0"  y="0"  width="28" height="28"/>
+        <rect class="cell" x="28" y="0"  width="28" height="28"/>
+        <rect class="cell" x="56" y="0"  width="28" height="28"/>
+        <rect class="cell" x="84" y="0"  width="28" height="28"/>
+        <rect class="cell" x="112" y="0"  width="28" height="28"/>
+        <rect class="cell" x="140" y="0"  width="28" height="28"/>
+
+        <rect class="cell-rm" x="0"    y="30" width="28" height="28"/>
+        <rect class="cell-rm" x="28"   y="30" width="28" height="28"/>
+        <rect class="cell-rm" x="56"   y="30" width="28" height="28"/>
+        <rect class="cell-rm" x="84"   y="30" width="28" height="28"/>
+        <rect class="cell-rm" x="112"  y="30" width="28" height="28"/>
+        <rect class="cell-rm" x="140"  y="30" width="28" height="28"/>
+
+        <rect class="cell" x="0"   y="60" width="28" height="28"/>
+        <rect class="cell" x="28"  y="60" width="28" height="28"/>
+        <rect class="cell" x="56"  y="60" width="28" height="28"/>
+        <rect class="cell" x="84"  y="60" width="28" height="28"/>
+        <rect class="cell" x="112" y="60" width="28" height="28"/>
+        <rect class="cell" x="140" y="60" width="28" height="28"/>
+
+        <rect class="cell" x="0"   y="90" width="28" height="28"/>
+        <rect class="cell" x="28"  y="90" width="28" height="28"/>
+        <rect class="cell" x="56"  y="90" width="28" height="28"/>
+        <rect class="cell" x="84"  y="90" width="28" height="28"/>
+        <rect class="cell" x="112" y="90" width="28" height="28"/>
+        <rect class="cell" x="140" y="90" width="28" height="28"/>
+
+        <rect class="cell" x="0"   y="120" width="28" height="28"/>
+        <rect class="cell" x="28"  y="120" width="28" height="28"/>
+        <rect class="cell" x="56"  y="120" width="28" height="28"/>
+        <rect class="cell" x="84"  y="120" width="28" height="28"/>
+        <rect class="cell" x="112" y="120" width="28" height="28"/>
+        <rect class="cell" x="140" y="120" width="28" height="28"/>
+      </g>
+    </g>
+
+    <text x="155" y="68" class="mono" fill="#4A6670">RMS of this row only</text>
+    <text x="155" y="82" class="mono" fill="#4A6670">no mean subtracted</text>
+  </g>
+
+  <!-- Bottom formula strip -->
+  <g transform="translate(40, 320)">
+    <rect x="0" y="0" width="880" height="80" fill="#EEEBDF" stroke="#C9C4B5"/>
+
+    <g transform="translate(14, 22)">
+      <text class="tag" fill="#D97757">BN</text>
+      <text x="0" y="20" class="mono">x̂ = (x − μ_batch) / √(σ²_batch + ε)</text>
+      <text x="0" y="36" class="mut">stats over N samples</text>
+      <text x="0" y="52" class="mut">→ CNNs</text>
+    </g>
+
+    <g transform="translate(310, 22)">
+      <text class="tag" fill="#7B9E89">LN</text>
+      <text x="0" y="20" class="mono">x̂ = (x − μ_sample) / √(σ²_sample + ε)</text>
+      <text x="0" y="36" class="mut">stats over D features</text>
+      <text x="0" y="52" class="mut">→ Transformers</text>
+    </g>
+
+    <g transform="translate(620, 22)">
+      <text class="tag" fill="#4A6670">RMSNorm</text>
+      <text x="0" y="20" class="mono">x̂ = x / √(mean(x²) + ε)</text>
+      <text x="0" y="36" class="mut">no mean, cheaper</text>
+      <text x="0" y="52" class="mut">→ modern LLMs</text>
+    </g>
+  </g>
+</svg>

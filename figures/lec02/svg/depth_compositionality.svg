@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 430" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .box    { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.2; rx:4; ry:4; }
+      .box-a  { fill:#EAD3C5; stroke:#D97757; stroke-width:1.2; rx:4; ry:4; }
+      .box-s  { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.2; rx:4; ry:4; }
+      .node   { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.2; }
+      .ink    { stroke:#1F1F1E; fill:none; stroke-width:1; }
+      .ink-s  { stroke:#6B6A65; fill:none; stroke-width:0.7; opacity:0.5; }
+      .lbl    { fill:#1F1F1E; font-size:12px; }
+      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .good   { fill:#7B9E89; font-weight:600; }
+      .bad    { fill:#A8324B; font-weight:600; }
+    </style>
+  </defs>
+
+  <text x="480" y="30" text-anchor="middle" class="ttl">Compositionality: deep reuses parts, shallow enumerates cases</text>
+
+  <!-- LEFT: deep network -->
+  <g transform="translate(30, 70)">
+    <text x="220" y="-6" text-anchor="middle" class="tag" fill="#7B9E89">DEEP · compositional</text>
+
+    <!-- edges (layer 1) -->
+    <g>
+      <rect class="box-s" x="10"  y="15"  width="70" height="30"/>
+      <text x="45" y="35" text-anchor="middle" class="lbl">edges</text>
+      <rect class="box-s" x="90"  y="15"  width="70" height="30"/>
+      <text x="125" y="35" text-anchor="middle" class="lbl">corners</text>
+      <rect class="box-s" x="170" y="15"  width="70" height="30"/>
+      <text x="205" y="35" text-anchor="middle" class="lbl">curves</text>
+      <rect class="box-s" x="250" y="15"  width="70" height="30"/>
+      <text x="285" y="35" text-anchor="middle" class="lbl">colors</text>
+      <rect class="box-s" x="330" y="15"  width="70" height="30"/>
+      <text x="365" y="35" text-anchor="middle" class="lbl">textures</text>
+    </g>
+    <!-- layer 2 parts -->
+    <g>
+      <rect class="box-s" x="30"  y="95"  width="80" height="30"/>
+      <text x="70" y="115" text-anchor="middle" class="lbl">eye</text>
+      <rect class="box-s" x="130" y="95"  width="80" height="30"/>
+      <text x="170" y="115" text-anchor="middle" class="lbl">fur</text>
+      <rect class="box-s" x="230" y="95"  width="80" height="30"/>
+      <text x="270" y="115" text-anchor="middle" class="lbl">wing</text>
+      <rect class="box-s" x="330" y="95"  width="80" height="30"/>
+      <text x="370" y="115" text-anchor="middle" class="lbl">leg</text>
+    </g>
+    <!-- layer 3 objects -->
+    <g>
+      <rect class="box-a" x="60"  y="180" width="80" height="34"/>
+      <text x="100" y="202" text-anchor="middle" class="lbl" font-weight="600">cat</text>
+      <rect class="box-a" x="170" y="180" width="80" height="34"/>
+      <text x="210" y="202" text-anchor="middle" class="lbl" font-weight="600">bird</text>
+      <rect class="box-a" x="280" y="180" width="80" height="34"/>
+      <text x="320" y="202" text-anchor="middle" class="lbl" font-weight="600">dog</text>
+    </g>
+    <!-- connections (sparse) -->
+    <g class="ink-s">
+      <line x1="45"  y1="45" x2="70"  y2="95"/>
+      <line x1="125" y1="45" x2="70"  y2="95"/>
+      <line x1="205" y1="45" x2="170" y2="95"/>
+      <line x1="365" y1="45" x2="170" y2="95"/>
+      <line x1="205" y1="45" x2="270" y2="95"/>
+      <line x1="285" y1="45" x2="270" y2="95"/>
+      <line x1="205" y1="45" x2="370" y2="95"/>
+      <line x1="285" y1="45" x2="370" y2="95"/>
+
+      <line x1="70"  y1="125" x2="100" y2="180"/>
+      <line x1="170" y1="125" x2="100" y2="180"/>
+      <line x1="170" y1="125" x2="210" y2="180"/>
+      <line x1="270" y1="125" x2="210" y2="180"/>
+      <line x1="370" y1="125" x2="320" y2="180"/>
+      <line x1="170" y1="125" x2="320" y2="180"/>
+    </g>
+    <text x="220" y="255" text-anchor="middle" class="mut">
+      Add a <tspan font-weight="600" fill="#1F1F1E">new class</tspan> "fox"? Reuse existing edges/eyes/fur — one new top-level node.
+    </text>
+    <text x="220" y="275" text-anchor="middle" class="good" font-size="13">Grows linearly in classes</text>
+  </g>
+
+  <!-- vertical divider -->
+  <line x1="480" y1="70" x2="480" y2="380" stroke="#C9C4B5" stroke-dasharray="3 3"/>
+
+  <!-- RIGHT: shallow network -->
+  <g transform="translate(510, 70)">
+    <text x="220" y="-6" text-anchor="middle" class="tag" fill="#A8324B">SHALLOW · enumerative</text>
+
+    <!-- one giant bank of detectors -->
+    <g>
+      <rect class="box-a" x="0"   y="40" width="80" height="30"/>
+      <text x="40"  y="60" text-anchor="middle" class="lbl">cat-pose-1</text>
+      <rect class="box-a" x="90"  y="40" width="80" height="30"/>
+      <text x="130" y="60" text-anchor="middle" class="lbl">cat-pose-2</text>
+      <rect class="box-a" x="180" y="40" width="80" height="30"/>
+      <text x="220" y="60" text-anchor="middle" class="lbl">cat-pose-3</text>
+      <rect class="box-a" x="270" y="40" width="80" height="30"/>
+      <text x="310" y="60" text-anchor="middle" class="lbl">cat-pose-4</text>
+      <rect class="box-a" x="360" y="40" width="80" height="30"/>
+      <text x="400" y="60" text-anchor="middle" class="lbl">cat-pose-5</text>
+
+      <rect class="box-a" x="0"   y="80" width="80" height="30"/>
+      <text x="40"  y="100" text-anchor="middle" class="lbl">bird-pose-1</text>
+      <rect class="box-a" x="90"  y="80" width="80" height="30"/>
+      <text x="130" y="100" text-anchor="middle" class="lbl">bird-pose-2</text>
+      <rect class="box-a" x="180" y="80" width="80" height="30"/>
+      <text x="220" y="100" text-anchor="middle" class="lbl">bird-pose-3</text>
+      <rect class="box-a" x="270" y="80" width="80" height="30"/>
+      <text x="310" y="100" text-anchor="middle" class="lbl">bird-pose-4</text>
+      <rect class="box-a" x="360" y="80" width="80" height="30"/>
+      <text x="400" y="100" text-anchor="middle" class="lbl">bird-pose-5</text>
+
+      <rect class="box-a" x="0"   y="120" width="80" height="30"/>
+      <text x="40"  y="140" text-anchor="middle" class="lbl">dog-pose-1</text>
+      <rect class="box-a" x="90"  y="120" width="80" height="30"/>
+      <text x="130" y="140" text-anchor="middle" class="lbl">dog-pose-2</text>
+      <rect class="box-a" x="180" y="120" width="80" height="30"/>
+      <text x="220" y="140" text-anchor="middle" class="lbl">dog-pose-3</text>
+      <rect class="box-a" x="270" y="120" width="80" height="30"/>
+      <text x="310" y="140" text-anchor="middle" class="lbl">dog-pose-4</text>
+      <rect class="box-a" x="360" y="120" width="80" height="30"/>
+      <text x="400" y="140" text-anchor="middle" class="lbl">dog-pose-5</text>
+
+      <text x="220" y="180" text-anchor="middle" class="mut">...and so on, enumerating every variation...</text>
+    </g>
+    <rect class="box" x="160" y="195" width="120" height="34"/>
+    <text x="220" y="217" text-anchor="middle" class="lbl" font-weight="600">label</text>
+    <text x="220" y="255" text-anchor="middle" class="mut">
+      Add a new class "fox"? Needs its <tspan font-weight="600" fill="#1F1F1E">own</tspan> bank of pose detectors from scratch.
+    </text>
+    <text x="220" y="275" text-anchor="middle" class="bad" font-size="13">Grows exponentially (parity ⇒ 2ⁿ)</text>
+  </g>
+
+  <!-- Bottom: the empirical payoff -->
+  <g transform="translate(60, 380)">
+    <text x="420" y="0" text-anchor="middle" class="mut" font-style="italic" font-size="13">
+      Telgarsky 2016 · there exist functions that depth-<tspan font-family="'JetBrains Mono'">k</tspan> networks compute with polynomial width,
+      but that need <tspan fill="#A8324B" font-weight="600">exponential width</tspan> at depth <tspan font-family="'JetBrains Mono'">O(k^{1/3})</tspan>.
+    </text>
+  </g>
+</svg>

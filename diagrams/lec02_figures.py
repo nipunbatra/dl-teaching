@@ -7,7 +7,7 @@ from pathlib import Path
 
 matplotlib.rcParams.update({
     'font.family': 'sans-serif',
-    'font.sans-serif': ['Inter', 'Helvetica', 'Arial', 'sans-serif'],
+    'font.sans-serif': ['Inter', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
     'font.size': 14,
     'axes.titlesize': 16,
     'axes.labelsize': 14,
@@ -220,7 +220,7 @@ def fig_resnet_vs_plain():
                  arrowprops=dict(arrowstyle='->', color=ACCENT, lw=1.5),
                  xytext=(70, 5))
 
-    plt.suptitle('The Degradation Problem: Deeper ≠ Better (without skip connections)',
+    plt.suptitle('The Degradation Problem (illustrative, inspired by He et al. 2015)',
                  fontsize=14, y=1.02)
     plt.tight_layout()
     plt.savefig(OUT / "resnet_vs_plain.png")
@@ -332,14 +332,11 @@ def fig_depth_compositionality():
                      facecolor='#6ee7b7', edgecolor=SUCCESS, linewidth=1.5))
         ax.text(0.89, y, f, ha='center', va='center', fontsize=9, color=SUCCESS)
 
-    # Arrows between layers
-    for i in range(3):
-        ax.annotate('', xy=(0.29, 0.65), xytext=(0.23, 0.65),
+    # Arrows between layers (one per gap)
+    arrow_xs = [(0.23, 0.29), (0.49, 0.55), (0.73, 0.79)]
+    for (sx, dx) in arrow_xs:
+        ax.annotate('', xy=(dx, 0.65), xytext=(sx, 0.65),
                     arrowprops=dict(arrowstyle='->', color='#94a3b8', lw=1.5))
-    ax.annotate('', xy=(0.55, 0.65), xytext=(0.49, 0.65),
-                arrowprops=dict(arrowstyle='->', color='#94a3b8', lw=1.5))
-    ax.annotate('', xy=(0.79, 0.65), xytext=(0.73, 0.65),
-                arrowprops=dict(arrowstyle='->', color='#94a3b8', lw=1.5))
 
     ax.text(0.5, -0.05, '3+3+3+2 = 11 reusable parts (not 9 combos!)',
             ha='center', fontsize=12, color=SUCCESS, fontweight='bold')
@@ -390,7 +387,7 @@ def fig_gradient_flow_comparison():
     ax.grid(True, alpha=0.15)
     ax.spines[['top', 'right']].set_visible(False)
 
-    plt.suptitle('Gradient Flow: Skip Connections Prevent Vanishing Gradients', fontsize=14, y=1.02)
+    plt.suptitle('Gradient Flow: Skip Connections Prevent Vanishing Gradients (illustrative)', fontsize=14, y=1.02)
     plt.tight_layout()
     plt.savefig(OUT / "gradient_flow_comparison.png")
     plt.close()

@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 300" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .axis  { stroke:#1F1F1E; stroke-width:1.4; }
+      .tick  { stroke:#6B6A65; stroke-width:1; }
+      .dot   { fill:#D97757; stroke:#1F1F1E; stroke-width:1; }
+      .dot-b { fill:#4A6670; stroke:#1F1F1E; stroke-width:1; }
+      .year  { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; letter-spacing:0.05em; }
+      .lbl   { fill:#1F1F1E; font-size:13px; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Three eras of deep learning</text>
+
+  <!-- main axis -->
+  <line x1="60" y1="180" x2="900" y2="180" class="axis"/>
+
+  <!-- year ticks -->
+  <g>
+    <!-- 1958 Perceptron -->
+    <line x1="85"  y1="175" x2="85"  y2="185" class="tick"/>
+    <text x="85"  y="205" text-anchor="middle" class="year">1958</text>
+    <circle cx="85" cy="180" r="5" class="dot-b"/>
+    <line x1="85" y1="180" x2="85" y2="130" class="tick"/>
+    <text x="85" y="118" text-anchor="middle" class="lbl">Perceptron</text>
+    <text x="85" y="102" text-anchor="middle" class="mut">Rosenblatt</text>
+
+    <!-- 1986 Backprop -->
+    <line x1="215" y1="175" x2="215" y2="185" class="tick"/>
+    <text x="215" y="205" text-anchor="middle" class="year">1986</text>
+    <circle cx="215" cy="180" r="5" class="dot-b"/>
+    <line x1="215" y1="180" x2="215" y2="150" class="tick"/>
+    <text x="215" y="138" text-anchor="middle" class="lbl">Backprop</text>
+    <text x="215" y="122" text-anchor="middle" class="mut">Rumelhart/Hinton/Williams</text>
+
+    <!-- 1998 LeNet -->
+    <line x1="310" y1="175" x2="310" y2="185" class="tick"/>
+    <text x="310" y="220" text-anchor="middle" class="year">1998</text>
+    <circle cx="310" cy="180" r="5" class="dot-b"/>
+    <line x1="310" y1="180" x2="310" y2="240" class="tick"/>
+    <text x="310" y="255" text-anchor="middle" class="lbl">LeNet-5</text>
+    <text x="310" y="270" text-anchor="middle" class="mut">LeCun · MNIST</text>
+
+    <!-- 2012 AlexNet (big milestone) -->
+    <line x1="460" y1="175" x2="460" y2="185" class="tick"/>
+    <text x="460" y="205" text-anchor="middle" class="year" font-weight="600" fill="#A8324B">2012</text>
+    <circle cx="460" cy="180" r="8" class="dot"/>
+    <line x1="460" y1="180" x2="460" y2="120" class="tick" stroke="#D97757"/>
+    <text x="460" y="108" text-anchor="middle" class="lbl" font-weight="600">AlexNet · ImageNet</text>
+    <text x="460" y="92" text-anchor="middle" class="mut">Krizhevsky/Sutskever/Hinton — GPU + ReLU</text>
+    <text x="460" y="76" text-anchor="middle" class="mut" font-style="italic" fill="#A8324B">"the inflection point"</text>
+
+    <!-- 2015 ResNet -->
+    <line x1="560" y1="175" x2="560" y2="185" class="tick"/>
+    <text x="560" y="220" text-anchor="middle" class="year">2015</text>
+    <circle cx="560" cy="180" r="6" class="dot"/>
+    <line x1="560" y1="180" x2="560" y2="240" class="tick"/>
+    <text x="560" y="255" text-anchor="middle" class="lbl">ResNet</text>
+    <text x="560" y="270" text-anchor="middle" class="mut">skip connections</text>
+
+    <!-- 2017 Transformer -->
+    <line x1="620" y1="175" x2="620" y2="185" class="tick"/>
+    <text x="620" y="205" text-anchor="middle" class="year">2017</text>
+    <circle cx="620" cy="180" r="6" class="dot"/>
+    <line x1="620" y1="180" x2="620" y2="150" class="tick"/>
+    <text x="620" y="138" text-anchor="middle" class="lbl">Transformer</text>
+    <text x="620" y="122" text-anchor="middle" class="mut">Vaswani et al.</text>
+
+    <!-- 2020 GPT-3 -->
+    <line x1="730" y1="175" x2="730" y2="185" class="tick"/>
+    <text x="730" y="220" text-anchor="middle" class="year">2020</text>
+    <circle cx="730" cy="180" r="6" class="dot"/>
+    <line x1="730" y1="180" x2="730" y2="240" class="tick"/>
+    <text x="730" y="255" text-anchor="middle" class="lbl">GPT-3</text>
+    <text x="730" y="270" text-anchor="middle" class="mut">175B params · emergent few-shot</text>
+
+    <!-- 2022-24 multimodal / diffusion -->
+    <line x1="830" y1="175" x2="830" y2="185" class="tick"/>
+    <text x="830" y="205" text-anchor="middle" class="year">2022-25</text>
+    <circle cx="830" cy="180" r="6" class="dot"/>
+    <line x1="830" y1="180" x2="830" y2="140" class="tick"/>
+    <text x="830" y="128" text-anchor="middle" class="lbl">LLMs &amp; Diffusion</text>
+    <text x="830" y="112" text-anchor="middle" class="mut">GPT-4/Claude/Stable Diffusion/Sora</text>
+  </g>
+
+  <!-- era shading -->
+  <g opacity="0.08">
+    <rect x="60"  y="175" width="340" height="12" fill="#4A6670"/>
+    <rect x="400" y="175" width="160" height="12" fill="#D97757"/>
+    <rect x="560" y="175" width="340" height="12" fill="#A8324B"/>
+  </g>
+  <text x="230" y="175" text-anchor="middle" class="mut" font-size="10" font-style="italic">classical · narrow</text>
+  <text x="480" y="175" text-anchor="middle" class="mut" font-size="10" font-style="italic" font-weight="600">CNN era</text>
+  <text x="730" y="175" text-anchor="middle" class="mut" font-size="10" font-style="italic">foundation-model era</text>
+</svg>

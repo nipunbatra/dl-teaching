@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Softmax & Temperature — ES 667</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+
+<style>
+:root {
+  --serif: 'Source Serif 4', Georgia, serif;
+  --sans: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+  --bg: #fdfcf9;
+  --paper: #ffffff;
+  --text: #2f2a22;
+  --muted: #6e665b;
+  --border: #e2d8c6;
+  --accent: #2c6fb7;
+  --warm: #d9622b;
+  --success: #1e7770;
+  --target: #d9622b;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; font-family: var(--serif); color: var(--text); background: var(--bg); line-height: 1.65; }
+
+.article { max-width: 980px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+.back-link { display: inline-block; margin-bottom: 1.5rem; color: var(--muted); text-decoration: none; font-family: var(--sans); font-size: 0.9rem; }
+.back-link:hover { color: var(--text); }
+.article-header { margin-bottom: 3rem; text-align: center; }
+.kicker { margin: 0 0 0.75rem; font-family: var(--sans); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); }
+h1 { margin: 0 auto 1rem; font-size: clamp(2.4rem, 5vw, 3.5rem); line-height: 1.1; letter-spacing: -0.02em; color: #1a1815; max-width: 18ch; }
+.abstract { margin: 0 auto 1rem; max-width: 62ch; font-size: 1.15rem; color: #4d463d; }
+.byline { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 1.4rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--muted); font-family: var(--sans); font-size: 0.92rem; }
+
+.step-section {
+  position: relative;
+  margin-top: 4rem;
+  padding: 3rem 2.5rem;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.03);
+}
+.step-badge {
+  position: absolute;
+  top: -16px;
+  left: 32px;
+  background: var(--accent);
+  color: white;
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.4rem 1.2rem;
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(44, 111, 183, 0.25);
+}
+h2 { margin: 0 0 1rem; font-size: clamp(1.6rem, 3.5vw, 2.2rem); line-height: 1.15; color: #1a1815; }
+h3 { margin-top: 2rem; margin-bottom: 0.8rem; font-size: 1.25rem; color: #1a1815; }
+p { max-width: 68ch; font-size: 1.1rem; }
+ul { max-width: 68ch; font-size: 1.1rem; padding-left: 1.4rem; }
+li { margin-bottom: 0.5rem; }
+.math-block { margin: 1.5rem 0; text-align: center; font-size: 1.05rem; }
+
+.control-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.4rem;
+  margin: 1.6rem 0;
+}
+.control-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.control-block label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.control-block label span {
+  font-family: var(--mono);
+  color: var(--warm);
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid var(--paper);
+  box-shadow: 0 2px 6px rgba(44,111,183,0.4);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 18px; height: 18px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid var(--paper);
+}
+input[type="number"] {
+  font-family: var(--mono);
+  font-size: 1rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--text);
+  width: 100%;
+}
+
+.logit-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.8rem;
+  margin: 1rem 0 1.5rem;
+}
+.logit-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+.logit-cell .label {
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.button-row {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin: 1rem 0;
+}
+.mode-button {
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 0.92rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--paper);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.mode-button:hover { border-color: var(--accent); }
+.mode-button.is-active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.action-btn {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 0.7rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.01em;
+}
+.action-btn--primary {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 2px 8px rgba(44,111,183,0.3);
+}
+.action-btn--primary:hover { background: #2461a3; transform: translateY(-1px); }
+.action-btn--ghost {
+  background: var(--paper);
+  color: var(--text);
+  border: 1.5px solid var(--border);
+}
+.action-btn--ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+.interactive-figure {
+  margin: 1.5rem 0;
+}
+.interactive-figure canvas {
+  display: block;
+  width: 100%;
+  background: #fbfaf6;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.interactive-figure figcaption {
+  margin-top: 0.7rem;
+  font-size: 0.92rem;
+  color: var(--muted);
+  text-align: center;
+  font-style: italic;
+}
+
+.stat-strip {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 1.5rem 0;
+}
+.stat-pill {
+  flex: 1 1 140px;
+  min-width: 140px;
+  background: var(--paper);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  text-align: left;
+}
+.stat-pill .stat-label {
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 600;
+}
+.stat-pill .stat-value {
+  font-family: var(--mono);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.stat-pill--accent { border-color: var(--accent); }
+.stat-pill--accent .stat-value { color: var(--accent); }
+.stat-pill--warm { border-color: var(--warm); }
+.stat-pill--warm .stat-value { color: var(--warm); }
+
+.callout {
+  margin: 2rem 0 0.5rem;
+  padding: 1.2rem 1.5rem;
+  border-radius: 12px;
+  border-left: 4px solid var(--accent);
+  background: rgba(44,111,183,0.05);
+  font-size: 1.02rem;
+}
+.callout strong { color: var(--accent); }
+.callout--think { border-left-color: var(--success); background: rgba(30,119,112,0.06); }
+.callout--think strong { color: var(--success); }
+.callout--warn { border-left-color: var(--warm); background: rgba(217,98,43,0.06); }
+.callout--warn strong { color: var(--warm); }
+
+.misconception-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.2rem;
+  margin: 1.5rem 0;
+}
+.misconception-card {
+  padding: 1.2rem 1.4rem;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background: var(--paper);
+}
+.misconception-icon {
+  display: inline-block;
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.7rem;
+  color: var(--warm);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: rgba(217,98,43,0.1);
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  margin-bottom: 0.6rem;
+}
+.misconception-card p { font-size: 0.95rem; max-width: none; }
+
+.examples-table-wrap { overflow-x: auto; margin: 1.5rem 0; }
+.examples-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+.examples-table th, .examples-table td {
+  text-align: left;
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+.examples-table th {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  background: #faf8f3;
+}
+.examples-table td:first-child { font-weight: 600; }
+
+footer {
+  margin-top: 4rem;
+  text-align: center;
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+@media (max-width: 640px) {
+  .step-section { padding: 2rem 1.4rem; }
+  .logit-grid { grid-template-columns: repeat(5, 1fr); gap: 0.4rem; }
+  .logit-cell .label { font-size: 0.65rem; }
+  input[type="number"] { font-size: 0.85rem; padding: 0.3rem 0.4rem; }
+  .stat-pill .stat-value { font-size: 1.2rem; }
+}
+</style>
+</head>
+<body>
+
+<article class="article">
+  <header class="article-header">
+    <a class="back-link" href="../">&larr; ES 667 Interactives</a>
+    <p class="kicker">Interactive Explainer</p>
+    <h1>Softmax &amp; Temperature</h1>
+    <p class="abstract">
+      The softmax function turns raw scores into probabilities. The temperature
+      knob $T$ controls how peaky or flat that distribution is&mdash;and is the
+      same dial that powers creativity in LLMs and knowledge in distillation.
+      This page lets you build the intuition with live formulas, live samples,
+      and live entropy.
+    </p>
+    <div class="byline">
+      <span>~12 min</span>
+      <span>Deep Learning &middot; Loss Functions &middot; Sampling</span>
+    </div>
+  </header>
+
+  <!-- ─── Prelude ─── -->
+  <section class="step-section" id="prelude">
+    <div class="step-badge">Prelude</div>
+    <h2>Why softmax exists</h2>
+    <p>
+      Your network's last layer outputs <em>logits</em>: raw real-valued scores
+      $z_1, z_2, \ldots, z_K$ for $K$ classes. They can be negative, larger than
+      one, anything. But to do classification or sample from the model, you need
+      a <em>probability distribution</em>: numbers in $[0,1]$ that sum to one.
+    </p>
+    <p>
+      You could just normalize: $p_k = z_k / \sum_j z_j$. But that fails if any
+      $z_k$ is negative. You could shift then normalize. But why pick that
+      particular shift? Softmax is the principled answer: it arises naturally
+      from the maximum likelihood framework, and it has a beautiful gradient.
+    </p>
+    <div class="math-block">
+      $$p_k = \mathrm{softmax}(\mathbf{z})_k = \dfrac{e^{z_k}}{\sum_{j=1}^{K} e^{z_j}}$$
+    </div>
+    <p>
+      Exponentiating guarantees positivity. Dividing by the sum guarantees they
+      add to one. The "temperature" version, which we'll meet in Step 2, scales
+      the logits before exponentiating&mdash;and with it comes one of the most
+      useful knobs in modern deep learning.
+    </p>
+  </section>
+
+  <!-- ─── Step 1 ─── -->
+  <section class="step-section" id="step-1">
+    <div class="step-badge">Step 1</div>
+    <h2>From logits to probabilities</h2>
+    <p>
+      Edit the five logit values below. The bar chart on the right shows the
+      resulting softmax probabilities at temperature $T = 1$. Notice how the
+      <em>relative order</em> is preserved: the largest logit becomes the
+      largest probability. Notice also how exponentiation amplifies
+      differences&mdash;a logit gap of 2 becomes a probability ratio of $e^2 \approx 7.4$.
+    </p>
+
+    <div class="logit-grid">
+      <div class="logit-cell"><div class="label">$z_1$</div><input type="number" id="step1-z0" step="0.1" value="2.0"></div>
+      <div class="logit-cell"><div class="label">$z_2$</div><input type="number" id="step1-z1" step="0.1" value="1.0"></div>
+      <div class="logit-cell"><div class="label">$z_3$</div><input type="number" id="step1-z2" step="0.1" value="0.5"></div>
+      <div class="logit-cell"><div class="label">$z_4$</div><input type="number" id="step1-z3" step="0.1" value="-0.5"></div>
+      <div class="logit-cell"><div class="label">$z_5$</div><input type="number" id="step1-z4" step="0.1" value="-1.0"></div>
+    </div>
+
+    <figure class="interactive-figure">
+      <canvas id="step1Canvas" width="900" height="320"></canvas>
+      <figcaption>Bars show softmax probabilities $p_k$ at $T = 1$. Numbers above each bar are the probability values.</figcaption>
+    </figure>
+
+    <div class="callout callout--think">
+      <strong>Try this.</strong>
+      Set all five logits to the same value (e.g. $z_k = 0$ for all $k$). What happens?
+      You get a uniform distribution&mdash;softmax has no preference when scores are tied.
+      Now make $z_1$ huge (say $10$). The probability mass collapses onto class 1.
+      That's the "soft argmax" behavior the function is named for.
+    </div>
+  </section>
+
+  <!-- ─── Step 2 ─── -->
+  <section class="step-section" id="step-2">
+    <div class="step-badge">Step 2</div>
+    <h2>The temperature dial</h2>
+    <p>
+      Now we add a knob. Divide every logit by a positive number $T$ before
+      taking softmax:
+    </p>
+    <div class="math-block">
+      $$p_k = \dfrac{e^{z_k / T}}{\sum_{j=1}^{K} e^{z_j / T}}$$
+    </div>
+    <ul>
+      <li><strong>$T \to 0$:</strong> the largest logit dominates. Distribution becomes one-hot (argmax).</li>
+      <li><strong>$T = 1$:</strong> standard softmax.</li>
+      <li><strong>$T \to \infty$:</strong> all logits become $\approx 0$. Distribution becomes uniform.</li>
+    </ul>
+    <p>
+      So $T$ smoothly interpolates between &ldquo;always pick the best&rdquo; and
+      &ldquo;pick uniformly at random&rdquo;. Slide the temperature below and watch
+      the distribution shift in real time.
+    </p>
+
+    <div class="control-row">
+      <div class="control-block">
+        <label>Temperature <span>$T$ = <span id="tempVal">1.00</span></span></label>
+        <input type="range" id="tempSlider" min="0.05" max="5.0" step="0.01" value="1.0">
+      </div>
+    </div>
+
+    <figure class="interactive-figure">
+      <canvas id="step2Canvas" width="900" height="320"></canvas>
+      <figcaption>Same logits as Step 1, now scaled by $1/T$. Drag the slider to see the distribution morph from peaky to uniform.</figcaption>
+    </figure>
+
+    <div class="stat-strip">
+      <div class="stat-pill stat-pill--accent">
+        <span class="stat-label">Entropy $H = -\sum p \log p$</span>
+        <span class="stat-value" id="entropyVal">—</span>
+      </div>
+      <div class="stat-pill stat-pill--warm">
+        <span class="stat-label">Max possible (uniform)</span>
+        <span class="stat-value" id="maxEntropyVal">—</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-label">Confidence (top prob)</span>
+        <span class="stat-value" id="topProbVal">—</span>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Connection to entropy.</strong>
+      As $T$ grows, the distribution flattens and its entropy $H$ rises toward
+      $\log K$ (the entropy of uniform). As $T \to 0$, $H \to 0$. Temperature is
+      literally a knob on the entropy of the output distribution.
+    </div>
+  </section>
+
+  <!-- ─── Step 3 ─── -->
+  <section class="step-section" id="step-3">
+    <div class="step-badge">Step 3</div>
+    <h2>Sampling: turning probabilities into picks</h2>
+    <p>
+      A probability distribution is just a recipe for randomness. To
+      <em>sample</em> from softmax, you draw a uniform random number $u \in [0,1]$
+      and walk along the cumulative probabilities until you exceed $u$.
+    </p>
+    <div class="math-block">
+      $$\text{Pick class } k \text{ if } \sum_{j < k} p_j \le u < \sum_{j \le k} p_j$$
+    </div>
+    <p>
+      Click <strong>Draw one sample</strong> below. A vertical orange line drops
+      onto the cumulative bar at position $u$, and the class it lands in is the
+      pick. Try it a few times. Now slide the temperature high&mdash;you'll see
+      every class sometimes get picked. Slide it low&mdash;always the same class.
+    </p>
+
+    <div class="control-row">
+      <div class="control-block">
+        <label>Temperature <span>$T$ = <span id="step3TempVal">1.00</span></span></label>
+        <input type="range" id="step3TempSlider" min="0.05" max="5.0" step="0.01" value="1.0">
+      </div>
+    </div>
+
+    <div class="button-row">
+      <button class="action-btn action-btn--primary" id="btn-draw-one">Draw one sample</button>
+      <button class="action-btn action-btn--ghost" id="btn-clear-samples">Clear</button>
+    </div>
+
+    <figure class="interactive-figure">
+      <canvas id="step3Canvas" width="900" height="260"></canvas>
+      <figcaption>Top bar: cumulative probabilities by class (each colored segment has width $p_k$). Orange marker: the random $u$ value. Beneath: a tally of recent draws.</figcaption>
+    </figure>
+
+    <div class="callout callout--think">
+      <strong>Why this matters.</strong>
+      When an LLM &ldquo;writes the next word&rdquo;, this is exactly what's
+      happening: the model outputs logits over the vocabulary, softmax converts
+      them to probabilities, and the next token is sampled. Low $T$ &rarr; safe,
+      repetitive text. High $T$ &rarr; creative but sometimes incoherent. You
+      have just controlled the dial that ChatGPT exposes as &ldquo;temperature&rdquo;.
+    </div>
+  </section>
+
+  <!-- ─── Step 4 ─── -->
+  <section class="step-section" id="step-4">
+    <div class="step-badge">Step 4</div>
+    <h2>Sampling at scale: the law of large numbers</h2>
+    <p>
+      One sample is random. A thousand samples should look like the underlying
+      distribution. Click <strong>Draw 1000</strong> and watch the empirical
+      histogram (filled) converge onto the true softmax probabilities (outline).
+    </p>
+    <p>
+      This is the cleanest sanity check that softmax actually computes a valid
+      probability distribution&mdash;the long-run frequencies match.
+    </p>
+
+    <div class="control-row">
+      <div class="control-block">
+        <label>Temperature <span>$T$ = <span id="step4TempVal">1.00</span></span></label>
+        <input type="range" id="step4TempSlider" min="0.05" max="5.0" step="0.01" value="1.0">
+      </div>
+      <div class="control-block">
+        <label>Sample count <span><span id="sampleCountVal">1000</span></span></label>
+        <input type="range" id="sampleCountSlider" min="10" max="10000" step="10" value="1000">
+      </div>
+    </div>
+
+    <div class="button-row">
+      <button class="action-btn action-btn--primary" id="btn-draw-many">Draw <span id="btn-draw-many-n">1000</span></button>
+      <button class="action-btn action-btn--ghost" id="btn-clear-many">Clear histogram</button>
+    </div>
+
+    <figure class="interactive-figure">
+      <canvas id="step4Canvas" width="900" height="340"></canvas>
+      <figcaption>Filled bars: empirical frequencies from your samples. Outlined bars: the exact softmax probabilities. As $N$ grows, they converge.</figcaption>
+    </figure>
+
+    <div class="stat-strip">
+      <div class="stat-pill">
+        <span class="stat-label">Total samples drawn</span>
+        <span class="stat-value" id="totalSamplesVal">0</span>
+      </div>
+      <div class="stat-pill stat-pill--accent">
+        <span class="stat-label">Max abs error</span>
+        <span class="stat-value" id="maxErrorVal">—</span>
+      </div>
+    </div>
+
+    <div class="callout callout--warn">
+      <strong>Try this.</strong>
+      Draw 100 samples, then 1,000, then 10,000 (use the slider). The filled
+      bars should snap closer to the outlines each time. The error shrinks like
+      $1/\sqrt{N}$&mdash;classic Monte Carlo convergence.
+    </div>
+  </section>
+
+  <!-- ─── Step 5 ─── -->
+  <section class="step-section" id="step-5">
+    <div class="step-badge">Step 5</div>
+    <h2>Where temperature shows up in practice</h2>
+    <div class="examples-table-wrap">
+      <table class="examples-table">
+        <thead>
+          <tr>
+            <th>Setting</th>
+            <th>What $T$ does</th>
+            <th>Typical value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>LLM text generation</td>
+            <td>Controls creativity vs. coherence of generated tokens</td>
+            <td>0.7 &ndash; 1.0 (creative), 0.0 &ndash; 0.3 (deterministic)</td>
+          </tr>
+          <tr>
+            <td>Knowledge distillation</td>
+            <td>Higher $T$ exposes the &ldquo;dark knowledge&rdquo; in the teacher's soft logits</td>
+            <td>$T \approx 4$ (Hinton et al. 2015)</td>
+          </tr>
+          <tr>
+            <td>Diffusion classifier-free guidance</td>
+            <td>Plays a similar role: trades fidelity for diversity</td>
+            <td>guidance scale $w \approx 3-7$</td>
+          </tr>
+          <tr>
+            <td>Reinforcement learning (Boltzmann exploration)</td>
+            <td>Selects actions: high $T$ explores, low $T$ exploits</td>
+            <td>annealed from high to low</td>
+          </tr>
+          <tr>
+            <td>Calibration</td>
+            <td>A single learned $T$ rescales overconfident model outputs</td>
+            <td>$T &gt; 1$ usually (temperature scaling)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      The same one-line formula&mdash;divide logits by $T$ before
+      softmax&mdash;runs through all of these. Once you understand the bar chart
+      above, you understand all of them.
+    </p>
+  </section>
+
+  <!-- ─── Step 6 ─── -->
+  <section class="step-section" id="step-6">
+    <div class="step-badge">Step 6</div>
+    <h2>Three things people get wrong about softmax</h2>
+    <div class="misconception-grid">
+      <div class="misconception-card">
+        <span class="misconception-icon">Myth</span>
+        <p><strong>&ldquo;Softmax outputs are calibrated probabilities.&rdquo;</strong><br>
+          They sum to one, so they look like probabilities. But modern deep
+          networks are typically <em>overconfident</em>&mdash;the largest softmax
+          value is much higher than the model's true accuracy on those examples.
+          Calibration (like learned temperature scaling) fixes this.</p>
+      </div>
+      <div class="misconception-card">
+        <span class="misconception-icon">Myth</span>
+        <p><strong>&ldquo;You should apply softmax then cross-entropy loss.&rdquo;</strong><br>
+          You should not. PyTorch's <code>CrossEntropyLoss</code> applies softmax
+          internally, and computing it twice gives wrong gradients. Pass raw
+          logits.</p>
+      </div>
+      <div class="misconception-card">
+        <span class="misconception-icon">Myth</span>
+        <p><strong>&ldquo;Lower temperature is always more accurate.&rdquo;</strong><br>
+          For greedy decoding ($T=0$), yes&mdash;but for evaluation across
+          a distribution, calibrated probabilities ($T \approx 1$) give better
+          uncertainty estimates and better downstream pipeline behavior.</p>
+      </div>
+    </div>
+
+    <div class="callout callout--warn" style="margin-top: 2rem;">
+      <strong>Final takeaway.</strong>
+      Softmax is the canonical way to turn unbounded scores into a probability
+      distribution. The temperature parameter $T$ smoothly trades determinism
+      for diversity by reshaping the entropy of that distribution. You now know
+      what the slider in every LLM API is actually doing.
+    </div>
+  </section>
+</article>
+
+<footer>ES 667: Deep Learning &middot; IIT Gandhinagar &middot; Prof. Nipun Batra</footer>
+
+<script>
+/* ───────────────────── Math helpers ───────────────────── */
+function softmax(logits, T) {
+  const scaled = logits.map(z => z / T);
+  const m = Math.max(...scaled);
+  const exps = scaled.map(s => Math.exp(s - m));
+  const Z = exps.reduce((a,b) => a+b, 0);
+  return exps.map(e => e / Z);
+}
+function entropyNats(p) {
+  let h = 0;
+  for (const pi of p) if (pi > 1e-12) h -= pi * Math.log(pi);
+  return h;
+}
+function sampleFromDist(p) {
+  const u = Math.random();
+  let acc = 0;
+  for (let i = 0; i < p.length; i++) {
+    acc += p[i];
+    if (u < acc) return i;
+  }
+  return p.length - 1;
+}
+
+/* ───────────────────── Constants ───────────────────── */
+const K = 5;
+const CLASS_LABELS = ['Class 1','Class 2','Class 3','Class 4','Class 5'];
+const COLORS = ['#2c6fb7', '#3f8ed1', '#5fa9d9', '#d9622b', '#e8944c'];
+
+/* ───────────────────── DPI helpers ───────────────────── */
+function fitCanvas(canvas) {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, w: rect.width, h: rect.height };
+}
+function roundRect(ctx, x, y, w, h, r) {
+  if (h <= 0) return;
+  r = Math.min(r, w/2, h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
+}
+
+/* ───────────────────── Step 1: Static softmax bars ───────────────────── */
+function getStep1Logits() {
+  return [0,1,2,3,4].map(i => parseFloat(document.getElementById('step1-z'+i).value) || 0);
+}
+function drawBars(canvas, probs, opts = {}) {
+  const { ctx, w, h } = fitCanvas(canvas);
+  ctx.clearRect(0, 0, w, h);
+  const padL = 50, padR = 24, padT = 30, padB = 56;
+  const cw = w - padL - padR;
+  const ch = h - padT - padB;
+
+  // gridlines
+  ctx.font = '500 11px Manrope, sans-serif';
+  ctx.fillStyle = '#7a7265';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  for (let t = 0; t <= 1.0; t += 0.2) {
+    const y = padT + ch * (1 - t);
+    ctx.strokeStyle = t === 0 ? 'rgba(47,42,34,0.18)' : 'rgba(47,42,34,0.07)';
+    ctx.lineWidth = t === 0 ? 1.2 : 1;
+    ctx.beginPath();
+    ctx.moveTo(padL - 4, y);
+    ctx.lineTo(padL + cw, y);
+    ctx.stroke();
+    ctx.fillText(t.toFixed(1), padL - 8, y);
+  }
+
+  const n = probs.length;
+  const barGap = Math.min(cw * 0.04, 16);
+  const barW = (cw - barGap * (n + 1)) / n;
+
+  for (let i = 0; i < n; i++) {
+    const p = probs[i];
+    const barH = p * ch;
+    const x = padL + barGap + i * (barW + barGap);
+    const y = padT + ch - barH;
+
+    const grad = ctx.createLinearGradient(x, y, x, y + barH);
+    grad.addColorStop(0, COLORS[i]);
+    grad.addColorStop(1, shade(COLORS[i], -18));
+    ctx.fillStyle = grad;
+    roundRect(ctx, x, y, barW, barH, 5);
+    ctx.fill();
+
+    // value above
+    ctx.fillStyle = '#2f2a22';
+    ctx.font = '700 13px Manrope, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(p.toFixed(3), x + barW / 2, y - 4);
+
+    // label below
+    ctx.fillStyle = '#6e665b';
+    ctx.font = '600 11px Manrope, sans-serif';
+    ctx.textBaseline = 'top';
+    ctx.fillText(CLASS_LABELS[i], x + barW / 2, padT + ch + 6);
+  }
+
+  // y-axis title
+  ctx.save();
+  ctx.translate(14, padT + ch / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = '#6e665b';
+  ctx.font = '600 11px Manrope, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('probability', 0, 0);
+  ctx.restore();
+}
+function shade(hex, percent) {
+  const c = parseInt(hex.slice(1), 16);
+  const r = Math.max(0, Math.min(255, ((c >> 16) & 0xff) + percent));
+  const g = Math.max(0, Math.min(255, ((c >> 8) & 0xff) + percent));
+  const b = Math.max(0, Math.min(255, (c & 0xff) + percent));
+  return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
+}
+
+const step1Canvas = document.getElementById('step1Canvas');
+function updateStep1() {
+  const z = getStep1Logits();
+  const p = softmax(z, 1.0);
+  drawBars(step1Canvas, p);
+}
+[0,1,2,3,4].forEach(i => {
+  document.getElementById('step1-z'+i).addEventListener('input', () => {
+    updateStep1();
+    updateStep2();   // share the same logits
+    updateStep3();
+    updateStep4();
+  });
+});
+
+/* ───────────────────── Step 2: Temperature ───────────────────── */
+const step2Canvas = document.getElementById('step2Canvas');
+const tempSlider = document.getElementById('tempSlider');
+const tempVal = document.getElementById('tempVal');
+const entropyVal = document.getElementById('entropyVal');
+const maxEntropyVal = document.getElementById('maxEntropyVal');
+const topProbVal = document.getElementById('topProbVal');
+
+let displayProbs2 = Array(K).fill(1/K);
+let targetProbs2 = Array(K).fill(1/K);
+
+function updateStep2() {
+  const z = getStep1Logits();
+  const T = parseFloat(tempSlider.value);
+  targetProbs2 = softmax(z, T);
+  tempVal.textContent = T.toFixed(2);
+  const H = entropyNats(targetProbs2);
+  entropyVal.textContent = H.toFixed(3) + ' nats';
+  maxEntropyVal.textContent = Math.log(K).toFixed(3) + ' nats';
+  topProbVal.textContent = Math.max(...targetProbs2).toFixed(3);
+}
+tempSlider.addEventListener('input', updateStep2);
+
+function animate2() {
+  const lerp = 0.18;
+  let dirty = false;
+  for (let i = 0; i < K; i++) {
+    const d = targetProbs2[i] - displayProbs2[i];
+    if (Math.abs(d) > 0.001) { displayProbs2[i] += d * lerp; dirty = true; }
+    else displayProbs2[i] = targetProbs2[i];
+  }
+  drawBars(step2Canvas, displayProbs2);
+  requestAnimationFrame(animate2);
+}
+
+/* ───────────────────── Step 3: Single sampling ───────────────────── */
+const step3Canvas = document.getElementById('step3Canvas');
+const step3TempSlider = document.getElementById('step3TempSlider');
+const step3TempVal = document.getElementById('step3TempVal');
+let recentSamples = [];   // last few sample picks
+let lastU = null;          // most recent random number drawn
+
+function step3Probs() {
+  const z = getStep1Logits();
+  const T = parseFloat(step3TempSlider.value);
+  return softmax(z, T);
+}
+function updateStep3() {
+  step3TempVal.textContent = parseFloat(step3TempSlider.value).toFixed(2);
+  drawStep3();
+}
+step3TempSlider.addEventListener('input', updateStep3);
+
+function drawStep3() {
+  const { ctx, w, h } = fitCanvas(step3Canvas);
+  ctx.clearRect(0, 0, w, h);
+  const probs = step3Probs();
+
+  // top: cumulative bar (one big segmented row)
+  const padL = 40, padR = 40, padT = 36;
+  const barH = 56;
+  const barW = w - padL - padR;
+  const y = padT;
+
+  // Draw segmented cumulative bar
+  let cum = 0;
+  for (let i = 0; i < K; i++) {
+    const segW = probs[i] * barW;
+    const x = padL + cum * barW;
+    const grad = ctx.createLinearGradient(x, y, x, y + barH);
+    grad.addColorStop(0, COLORS[i]);
+    grad.addColorStop(1, shade(COLORS[i], -18));
+    ctx.fillStyle = grad;
+    ctx.fillRect(x, y, segW, barH);
+
+    // segment label inside if wide enough
+    if (segW > 40) {
+      ctx.fillStyle = '#fff';
+      ctx.font = '700 11px Manrope, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(CLASS_LABELS[i] + ' (' + probs[i].toFixed(2) + ')', x + segW / 2, y + barH / 2);
+    }
+    cum += probs[i];
+  }
+  // border
+  ctx.strokeStyle = 'rgba(47,42,34,0.2)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(padL, y, barW, barH);
+
+  // Top axis (0 to 1)
+  ctx.fillStyle = '#6e665b';
+  ctx.font = '500 11px Manrope, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  for (let t = 0; t <= 1.001; t += 0.25) {
+    const tx = padL + t * barW;
+    ctx.fillText(t.toFixed(2), tx, y - 6);
+    ctx.strokeStyle = 'rgba(47,42,34,0.25)';
+    ctx.beginPath();
+    ctx.moveTo(tx, y - 4);
+    ctx.lineTo(tx, y);
+    ctx.stroke();
+  }
+
+  // Last drawn u marker
+  if (lastU !== null) {
+    const ux = padL + lastU * barW;
+    ctx.strokeStyle = '#d9622b';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(ux, y - 12);
+    ctx.lineTo(ux, y + barH + 14);
+    ctx.stroke();
+    // arrow
+    ctx.fillStyle = '#d9622b';
+    ctx.beginPath();
+    ctx.moveTo(ux - 5, y + barH + 14);
+    ctx.lineTo(ux + 5, y + barH + 14);
+    ctx.lineTo(ux, y + barH + 22);
+    ctx.closePath();
+    ctx.fill();
+    // u label
+    ctx.font = '700 12px Manrope, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('u = ' + lastU.toFixed(3), ux, y + barH + 24);
+  }
+
+  // Recent picks tally beneath
+  const tallyY = y + barH + 60;
+  ctx.fillStyle = '#2f2a22';
+  ctx.font = '600 12px Manrope, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText('Recent picks:', padL, tallyY);
+
+  let xOff = padL + 110;
+  const lookback = recentSamples.slice(-30);
+  for (let i = 0; i < lookback.length; i++) {
+    const cls = lookback[i];
+    ctx.fillStyle = COLORS[cls];
+    ctx.beginPath();
+    ctx.arc(xOff, tallyY + 6, 8, 0, Math.PI * 2);
+    ctx.fill();
+    xOff += 20;
+  }
+  if (recentSamples.length === 0) {
+    ctx.fillStyle = '#a09787';
+    ctx.font = 'italic 12px "Source Serif 4", serif';
+    ctx.fillText('(none yet — click "Draw one sample")', xOff, tallyY);
+  }
+}
+
+document.getElementById('btn-draw-one').addEventListener('click', () => {
+  const probs = step3Probs();
+  const u = Math.random();
+  lastU = u;
+  let acc = 0, picked = K - 1;
+  for (let i = 0; i < K; i++) {
+    acc += probs[i];
+    if (u < acc) { picked = i; break; }
+  }
+  recentSamples.push(picked);
+  drawStep3();
+});
+document.getElementById('btn-clear-samples').addEventListener('click', () => {
+  recentSamples = [];
+  lastU = null;
+  drawStep3();
+});
+
+/* ───────────────────── Step 4: Bulk sampling histogram ───────────────────── */
+const step4Canvas = document.getElementById('step4Canvas');
+const step4TempSlider = document.getElementById('step4TempSlider');
+const step4TempVal = document.getElementById('step4TempVal');
+const sampleCountSlider = document.getElementById('sampleCountSlider');
+const sampleCountVal = document.getElementById('sampleCountVal');
+const btnDrawManyN = document.getElementById('btn-draw-many-n');
+const totalSamplesVal = document.getElementById('totalSamplesVal');
+const maxErrorVal = document.getElementById('maxErrorVal');
+
+let histogram = Array(K).fill(0);
+let totalSamples = 0;
+
+function step4Probs() {
+  const z = getStep1Logits();
+  const T = parseFloat(step4TempSlider.value);
+  return softmax(z, T);
+}
+function updateStep4() {
+  step4TempVal.textContent = parseFloat(step4TempSlider.value).toFixed(2);
+  // when temperature changes, the histogram is no longer matching → reset
+  histogram = Array(K).fill(0);
+  totalSamples = 0;
+  totalSamplesVal.textContent = '0';
+  maxErrorVal.textContent = '—';
+  drawStep4();
+}
+step4TempSlider.addEventListener('input', updateStep4);
+sampleCountSlider.addEventListener('input', () => {
+  const n = parseInt(sampleCountSlider.value);
+  sampleCountVal.textContent = n;
+  btnDrawManyN.textContent = n;
+});
+
+function drawStep4() {
+  const { ctx, w, h } = fitCanvas(step4Canvas);
+  ctx.clearRect(0, 0, w, h);
+  const probs = step4Probs();
+  const padL = 50, padR = 24, padT = 30, padB = 60;
+  const cw = w - padL - padR;
+  const ch = h - padT - padB;
+
+  // gridlines
+  const yMax = Math.max(0.4, Math.max(...probs) * 1.25);
+  ctx.font = '500 11px Manrope, sans-serif';
+  ctx.fillStyle = '#7a7265';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  const ticks = 5;
+  for (let i = 0; i <= ticks; i++) {
+    const t = (i / ticks) * yMax;
+    const y = padT + ch * (1 - i / ticks);
+    ctx.strokeStyle = i === 0 ? 'rgba(47,42,34,0.18)' : 'rgba(47,42,34,0.07)';
+    ctx.lineWidth = i === 0 ? 1.2 : 1;
+    ctx.beginPath();
+    ctx.moveTo(padL - 4, y);
+    ctx.lineTo(padL + cw, y);
+    ctx.stroke();
+    ctx.fillText(t.toFixed(2), padL - 8, y);
+  }
+
+  const barGap = Math.min(cw * 0.04, 16);
+  const barW = (cw - barGap * (K + 1)) / K;
+
+  // empirical filled bars + true outlines
+  let maxErr = 0;
+  for (let i = 0; i < K; i++) {
+    const empirical = totalSamples > 0 ? histogram[i] / totalSamples : 0;
+    const x = padL + barGap + i * (barW + barGap);
+    // true outline (faint)
+    const trueH = (probs[i] / yMax) * ch;
+    const trueY = padT + ch - trueH;
+    ctx.strokeStyle = COLORS[i];
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 4]);
+    ctx.strokeRect(x, trueY, barW, trueH);
+    ctx.setLineDash([]);
+    // empirical filled
+    const empH = (empirical / yMax) * ch;
+    const empY = padT + ch - empH;
+    const grad = ctx.createLinearGradient(x, empY, x, empY + empH);
+    grad.addColorStop(0, COLORS[i] + 'dd');
+    grad.addColorStop(1, shade(COLORS[i], -22) + 'cc');
+    ctx.fillStyle = grad;
+    if (empH > 0) {
+      roundRect(ctx, x, empY, barW, empH, 4);
+      ctx.fill();
+    }
+    // labels below
+    ctx.fillStyle = '#6e665b';
+    ctx.font = '600 11px Manrope, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(CLASS_LABELS[i], x + barW / 2, padT + ch + 6);
+    ctx.font = '500 10px IBM Plex Mono, monospace';
+    ctx.fillStyle = '#a09787';
+    ctx.fillText('p=' + probs[i].toFixed(3), x + barW / 2, padT + ch + 22);
+    if (totalSamples > 0) {
+      ctx.fillStyle = COLORS[i];
+      ctx.fillText('emp=' + empirical.toFixed(3), x + barW / 2, padT + ch + 36);
+      const err = Math.abs(empirical - probs[i]);
+      if (err > maxErr) maxErr = err;
+    }
+  }
+
+  // legend
+  ctx.font = '500 11px Manrope, sans-serif';
+  ctx.fillStyle = '#6e665b';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  // dashed swatch
+  ctx.strokeStyle = '#6e665b';
+  ctx.setLineDash([5, 4]);
+  ctx.strokeRect(padL, padT - 20, 18, 12);
+  ctx.setLineDash([]);
+  ctx.fillText('true probability', padL + 24, padT - 18);
+  // filled swatch
+  ctx.fillStyle = '#6e665bcc';
+  ctx.fillRect(padL + 150, padT - 20, 18, 12);
+  ctx.fillStyle = '#6e665b';
+  ctx.fillText('empirical frequency', padL + 174, padT - 18);
+
+  if (totalSamples > 0) {
+    maxErrorVal.textContent = maxErr.toFixed(4);
+  }
+}
+
+document.getElementById('btn-draw-many').addEventListener('click', () => {
+  const probs = step4Probs();
+  const n = parseInt(sampleCountSlider.value);
+  for (let i = 0; i < n; i++) {
+    const k = sampleFromDist(probs);
+    histogram[k]++;
+    totalSamples++;
+  }
+  totalSamplesVal.textContent = totalSamples;
+  drawStep4();
+});
+document.getElementById('btn-clear-many').addEventListener('click', () => {
+  histogram = Array(K).fill(0);
+  totalSamples = 0;
+  totalSamplesVal.textContent = '0';
+  maxErrorVal.textContent = '—';
+  drawStep4();
+});
+
+/* ───────────────────── Init ───────────────────── */
+window.addEventListener('load', () => {
+  updateStep1();
+  updateStep2();
+  updateStep3();
+  updateStep4();
+  animate2();
+});
+window.addEventListener('resize', () => {
+  updateStep1();
+  drawStep3();
+  drawStep4();
+});
+</script>
+
+</body>
+</html>

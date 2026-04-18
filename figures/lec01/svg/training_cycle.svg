@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .box   { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.4; rx:6; ry:6; }
+      .box-a { fill:#EAD3C5; stroke:#D97757; stroke-width:1.4; rx:6; ry:6; }
+      .box-s { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.4; rx:6; ry:6; }
+      .box-b { fill:#DCE3E6; stroke:#4A6670; stroke-width:1.4; rx:6; ry:6; }
+      .box-r { fill:#F6D4CC; stroke:#A8324B; stroke-width:1.4; rx:6; ry:6; }
+      .ink   { stroke:#1F1F1E; fill:none; stroke-width:1.5; }
+      .loop  { stroke:#D97757; fill:none; stroke-width:2; stroke-dasharray:5 3; }
+      .mono  { font-family:'JetBrains Mono', monospace; fill:#1F1F1E; font-size:13px; font-weight:600; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:16px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .num   { fill:#D97757; font-size:20px; font-family:Fraunces; font-weight:600; font-style:italic; }
+    </style>
+    <marker id="tc-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#D97757"/>
+    </marker>
+  </defs>
+
+  <text x="480" y="32" text-anchor="middle" class="ttl">The training loop · five steps, repeated for every batch</text>
+
+  <!-- Center label -->
+  <g transform="translate(480, 240)">
+    <circle cx="0" cy="0" r="52" fill="#F0EEE5" stroke="#D97757" stroke-width="1.5" stroke-dasharray="3 3"/>
+    <text x="0" y="-4" text-anchor="middle" class="tag" fill="#D97757">FOR EACH BATCH</text>
+    <text x="0" y="18" text-anchor="middle" class="mut" font-style="italic">for each epoch</text>
+  </g>
+
+  <!-- 1. Forward (top) -->
+  <g transform="translate(480, 90)">
+    <rect class="box" x="-100" y="-35" width="200" height="70"/>
+    <text x="0" y="-12" text-anchor="middle" class="num">1</text>
+    <text x="0" y="10" text-anchor="middle" class="mono">logits = model(x)</text>
+    <text x="0" y="28" text-anchor="middle" class="mut">forward pass</text>
+  </g>
+
+  <!-- 2. Loss (right-upper) -->
+  <g transform="translate(780, 180)">
+    <rect class="box" x="-110" y="-35" width="220" height="70"/>
+    <text x="0" y="-12" text-anchor="middle" class="num">2</text>
+    <text x="0" y="10" text-anchor="middle" class="mono">loss = criterion(...)</text>
+    <text x="0" y="28" text-anchor="middle" class="mut">scalar error</text>
+  </g>
+
+  <!-- 3. Zero grad (right-lower) -->
+  <g transform="translate(780, 320)">
+    <rect class="box-s" x="-110" y="-35" width="220" height="70"/>
+    <text x="0" y="-12" text-anchor="middle" class="num">3</text>
+    <text x="0" y="10" text-anchor="middle" class="mono">optim.zero_grad()</text>
+    <text x="0" y="28" text-anchor="middle" class="mut">clear stale ∇</text>
+  </g>
+
+  <!-- 4. Backward (bottom) -->
+  <g transform="translate(480, 380)">
+    <rect class="box-a" x="-110" y="-30" width="220" height="60"/>
+    <text x="0" y="-6" text-anchor="middle" class="num">4</text>
+    <text x="0" y="16" text-anchor="middle" class="mono">loss.backward()</text>
+  </g>
+
+  <!-- 5. Step (left) -->
+  <g transform="translate(180, 320)">
+    <rect class="box-b" x="-110" y="-35" width="220" height="70"/>
+    <text x="0" y="-12" text-anchor="middle" class="num">5</text>
+    <text x="0" y="10" text-anchor="middle" class="mono">optim.step()</text>
+    <text x="0" y="28" text-anchor="middle" class="mut">θ ← θ − η∇</text>
+  </g>
+
+  <!-- Data source (top-left) -->
+  <g transform="translate(180, 180)">
+    <rect class="box-r" x="-110" y="-35" width="220" height="70"/>
+    <text x="0" y="-10" text-anchor="middle" class="tag" fill="#A8324B">GET A BATCH</text>
+    <text x="0" y="12" text-anchor="middle" class="mono">x, y = next(loader)</text>
+    <text x="0" y="28" text-anchor="middle" class="mut">from DataLoader</text>
+  </g>
+
+  <!-- Arrows between steps, forming a cycle -->
+  <g class="loop" marker-end="url(#tc-a)">
+    <!-- batch → forward -->
+    <path d="M 280 155 Q 340 105 380 90"/>
+    <!-- forward → loss -->
+    <path d="M 580 115 Q 660 135 700 155"/>
+    <!-- loss → zero_grad -->
+    <path d="M 780 215 Q 780 265 780 285"/>
+    <!-- zero_grad → backward -->
+    <path d="M 700 345 Q 650 370 590 380"/>
+    <!-- backward → step -->
+    <path d="M 370 380 Q 310 370 270 345"/>
+    <!-- step → batch -->
+    <path d="M 180 285 Q 180 240 180 215"/>
+  </g>
+</svg>

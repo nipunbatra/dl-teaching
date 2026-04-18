@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Numerical Tricks of the Trade — ES 667</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+
+<style>
+:root {
+  --serif: 'Source Serif 4', Georgia, serif;
+  --sans: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+  --bg: #fdfcf9;
+  --paper: #ffffff;
+  --text: #2f2a22;
+  --muted: #6e665b;
+  --border: #e2d8c6;
+  --accent: #2c6fb7;
+  --warm: #d9622b;
+  --success: #1e7770;
+  --danger: #c53030;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; font-family: var(--serif); color: var(--text); background: var(--bg); line-height: 1.65; }
+
+.article { max-width: 980px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+.back-link { display: inline-block; margin-bottom: 1.5rem; color: var(--muted); text-decoration: none; font-family: var(--sans); font-size: 0.9rem; }
+.back-link:hover { color: var(--text); }
+.article-header { margin-bottom: 3rem; text-align: center; }
+.kicker { margin: 0 0 0.75rem; font-family: var(--sans); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); }
+h1 { margin: 0 auto 1rem; font-size: clamp(2.2rem, 5vw, 3.2rem); line-height: 1.1; letter-spacing: -0.02em; color: #1a1815; max-width: 20ch; }
+.abstract { margin: 0 auto 1rem; max-width: 64ch; font-size: 1.12rem; color: #4d463d; }
+.byline { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 1.4rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--muted); font-family: var(--sans); font-size: 0.92rem; }
+
+.step-section {
+  position: relative;
+  margin-top: 4rem;
+  padding: 3rem 2.5rem;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.03);
+}
+.step-badge {
+  position: absolute;
+  top: -16px;
+  left: 32px;
+  background: var(--accent);
+  color: white;
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.4rem 1.2rem;
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(44, 111, 183, 0.25);
+}
+h2 { margin: 0 0 1rem; font-size: clamp(1.5rem, 3.5vw, 2rem); line-height: 1.15; color: #1a1815; }
+h3 { margin-top: 2rem; margin-bottom: 0.8rem; font-size: 1.2rem; color: #1a1815; }
+p { max-width: 68ch; font-size: 1.08rem; }
+ul { max-width: 68ch; font-size: 1.05rem; padding-left: 1.4rem; }
+li { margin-bottom: 0.5rem; }
+.math-block { margin: 1.4rem 0; text-align: center; font-size: 1.05rem; }
+
+/* Side-by-side naive vs stable comparison */
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.4rem;
+  margin: 1.5rem 0;
+}
+@media (max-width: 720px) {
+  .compare-grid { grid-template-columns: 1fr; }
+}
+.compare-card {
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 1.3rem 1.4rem;
+  background: #fbfaf6;
+}
+.compare-card.naive { border-color: rgba(197,48,48,0.4); background: rgba(197,48,48,0.04); }
+.compare-card.stable { border-color: rgba(30,119,112,0.4); background: rgba(30,119,112,0.04); }
+.compare-card .label {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.6rem;
+}
+.compare-card.naive .label { color: var(--danger); }
+.compare-card.stable .label { color: var(--success); }
+.compare-card .formula {
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  background: var(--paper);
+  padding: 0.6rem 0.9rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  margin: 0.7rem 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.compare-card .result {
+  font-family: var(--mono);
+  font-size: 1.15rem;
+  font-weight: 600;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  margin-top: 0.7rem;
+  word-break: break-all;
+}
+.compare-card.naive .result.broken { color: var(--danger); }
+.compare-card.stable .result.ok { color: var(--success); }
+.compare-card .step-explanation {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 0.5rem;
+  white-space: pre-wrap;
+}
+
+.control-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.4rem;
+  margin: 1.6rem 0;
+}
+.control-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.control-block label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.control-block label span {
+  font-family: var(--mono);
+  color: var(--warm);
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid var(--paper);
+  box-shadow: 0 2px 6px rgba(44,111,183,0.4);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 18px; height: 18px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid var(--paper);
+}
+input[type="number"] {
+  font-family: var(--mono);
+  font-size: 1rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--text);
+}
+
+.callout {
+  margin: 1.8rem 0 0.5rem;
+  padding: 1.1rem 1.4rem;
+  border-radius: 12px;
+  border-left: 4px solid var(--accent);
+  background: rgba(44,111,183,0.05);
+  font-size: 1.0rem;
+}
+.callout strong { color: var(--accent); }
+.callout--think { border-left-color: var(--success); background: rgba(30,119,112,0.06); }
+.callout--think strong { color: var(--success); }
+.callout--warn { border-left-color: var(--warm); background: rgba(217,98,43,0.06); }
+.callout--warn strong { color: var(--warm); }
+
+.examples-table-wrap { overflow-x: auto; margin: 1.5rem 0; }
+.examples-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+.examples-table th, .examples-table td {
+  text-align: left;
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+.examples-table th {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  background: #faf8f3;
+}
+.examples-table td:first-child { font-weight: 600; font-family: var(--mono); font-size: 0.9rem; }
+.examples-table .ok { color: var(--success); font-family: var(--mono); }
+.examples-table .bad { color: var(--danger); font-family: var(--mono); }
+
+footer {
+  margin-top: 4rem;
+  text-align: center;
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.float-info {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--muted);
+  background: #faf8f3;
+  border-left: 3px solid var(--border);
+  padding: 0.6rem 1rem;
+  margin: 0.8rem 0;
+}
+
+.preset-btns {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0.8rem 0;
+}
+.preset-btn {
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  border: 1.5px solid var(--border);
+  background: var(--paper);
+  color: var(--text);
+  cursor: pointer;
+}
+.preset-btn:hover { border-color: var(--accent); }
+.preset-btn.danger:hover { border-color: var(--danger); }
+
+.callout--info {
+  border-left-color: var(--accent);
+  background: rgba(44,111,183,0.05);
+}
+
+.formula-derive {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  background: #faf8f3;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  margin: 1rem 0;
+  white-space: pre-wrap;
+  line-height: 1.7;
+}
+</style>
+</head>
+<body>
+
+<article class="article">
+  <header class="article-header">
+    <a class="back-link" href="../">&larr; ES 667 Interactives</a>
+    <p class="kicker">Interactive Explainer</p>
+    <h1>Numerical Tricks of the Trade</h1>
+    <p class="abstract">
+      Floating point math has limits&mdash;$e^{1000}$ overflows to infinity,
+      $\log(0)$ explodes to $-\infty$, and small differences vanish to zero.
+      Modern deep learning would be impossible without a handful of tricks
+      that keep the math honest. This page lets you watch the naive computation
+      break, then watch the trick fix it.
+    </p>
+    <div class="byline">
+      <span>~14 min</span>
+      <span>Deep Learning &middot; Numerical Stability &middot; Floating Point</span>
+    </div>
+  </header>
+
+  <!-- ─── Prelude ─── -->
+  <section class="step-section" id="prelude">
+    <div class="step-badge">Prelude</div>
+    <h2>The problem with $e^{1000}$</h2>
+    <p>
+      Float64 (the default in NumPy) can represent numbers up to about
+      $10^{308}$. Float32 (the default in PyTorch) only up to about $10^{38}$.
+      That sounds enormous&mdash;until you realize that $e^{100} \approx 10^{43}$
+      already overflows float32, and $e^{1000} \approx 10^{434}$ overflows
+      everything.
+    </p>
+    <p>
+      This is not a hypothetical concern. Logits in a real network easily reach
+      magnitudes of 50 or 100. Cross-entropy losses divide by tiny probabilities.
+      Sigmoids saturate at 0 or 1. Every one of these creates a numerical landmine.
+    </p>
+    <div class="float-info">
+      <strong>Float64 limits:</strong> max ≈ 1.8 × 10<sup>308</sup>, min positive normal ≈ 2.2 × 10<sup>-308</sup><br>
+      <strong>Float32 limits:</strong> max ≈ 3.4 × 10<sup>38</sup>, min positive normal ≈ 1.2 × 10<sup>-38</sup>
+    </div>
+    <p>
+      The good news: every common pitfall has a well-known fix. By the end of
+      this page you will have watched the four most important ones break and be
+      rescued, on the same logits.
+    </p>
+  </section>
+
+  <!-- ─── Step 1 ─── -->
+  <section class="step-section" id="step-1">
+    <div class="step-badge">Trick 1</div>
+    <h2>Log-sum-exp: the universal stabilizer</h2>
+    <p>
+      Many quantities in ML reduce to computing $\log\sum_i e^{x_i}$. Sounds
+      harmless. Until any $x_i$ is large&mdash;then $e^{x_i}$ overflows, the sum
+      is $\infty$, and $\log\infty = \infty$.
+    </p>
+    <div class="math-block">
+      $$\mathrm{LSE}(\mathbf{x}) = \log \sum_{i=1}^n e^{x_i}$$
+    </div>
+    <p>
+      The trick is to factor out the maximum:
+    </p>
+    <div class="formula-derive">log Σ exp(xᵢ)
+  = log [exp(m) · Σ exp(xᵢ - m)]      where m = max(xᵢ)
+  = m + log Σ exp(xᵢ - m)</div>
+    <p>
+      Now the largest argument inside the exp is exactly $0$, so $e^0 = 1$ is
+      always representable, and every other term is in $[0, 1]$. Mathematically
+      identical to the naive form, but never overflows.
+    </p>
+
+    <div class="control-row">
+      <div class="control-block" style="grid-column: 1 / -1;">
+        <label>Logit magnitude <span>$x_1$ = <span id="lse-x1">5.0</span></span></label>
+        <input type="range" id="lseX1" min="0" max="800" step="1" value="5">
+      </div>
+    </div>
+
+    <div class="preset-btns">
+      <button class="preset-btn" data-lse="3">$x_1=3$ (safe)</button>
+      <button class="preset-btn" data-lse="20">$x_1=20$ (warm)</button>
+      <button class="preset-btn danger" data-lse="100">$x_1=100$ (overflow!)</button>
+      <button class="preset-btn danger" data-lse="700">$x_1=700$ (boom)</button>
+    </div>
+
+    <p style="font-size: 0.95rem; color: var(--muted)">
+      Vector: $\mathbf{x} = [x_1,\ 1.5,\ 0.2,\ -2.0]$. Compute $\log\sum e^{x_i}$ both ways.
+    </p>
+
+    <div class="compare-grid">
+      <div class="compare-card naive">
+        <div class="label">Naive — direct formula</div>
+        <div class="formula" id="lse-naive-formula"></div>
+        <div class="result" id="lse-naive-result"></div>
+        <div class="step-explanation" id="lse-naive-steps"></div>
+      </div>
+      <div class="compare-card stable">
+        <div class="label">Stable — log-sum-exp trick</div>
+        <div class="formula" id="lse-stable-formula"></div>
+        <div class="result ok" id="lse-stable-result"></div>
+        <div class="step-explanation" id="lse-stable-steps"></div>
+      </div>
+    </div>
+
+    <div class="callout callout--think">
+      <strong>Where you'll see this.</strong>
+      Inside <em>every</em> softmax, log-softmax, and cross-entropy implementation
+      in PyTorch, JAX, and TensorFlow. Inside the partition function of
+      energy-based models. Inside beam search for sequence models. Inside the
+      KL-divergence computation between two categorical distributions. If you
+      remember one numerical trick, this is the one.
+    </div>
+  </section>
+
+  <!-- ─── Step 2 ─── -->
+  <section class="step-section" id="step-2">
+    <div class="step-badge">Trick 2</div>
+    <h2>Log-softmax: not (log ∘ softmax)</h2>
+    <p>
+      Cross-entropy needs $\log p_k$. The naive composition is:
+    </p>
+    <div class="math-block">
+      $$\log p_k = \log\left(\frac{e^{z_k}}{\sum_j e^{z_j}}\right)$$
+    </div>
+    <p>
+      Computed naively (compute softmax, then take log), this fails twice:
+    </p>
+    <ul>
+      <li>The exp-sum can overflow (Trick 1 again).</li>
+      <li>If any $p_k \approx 0$, then $\log p_k \to -\infty$ and gradients explode.</li>
+    </ul>
+    <p>
+      The clean form uses log-sum-exp directly:
+    </p>
+    <div class="formula-derive">log p_k = z_k - log Σⱼ exp(zⱼ)
+        = z_k - LSE(z)
+        = z_k - max(z) - log Σⱼ exp(zⱼ - max(z))</div>
+    <p>
+      No exponential of a small probability is ever computed. PyTorch exposes
+      this as <code>F.log_softmax</code> exactly because composing
+      <code>log(softmax(x))</code> is brittle.
+    </p>
+
+    <div class="control-row">
+      <div class="control-block">
+        <label>Largest logit <span>$z_{\max}$ = <span id="ls-zmax">5.0</span></span></label>
+        <input type="range" id="lsZmax" min="0" max="200" step="1" value="5">
+      </div>
+      <div class="control-block">
+        <label>Smallest logit <span>$z_{\min}$ = <span id="ls-zmin">-5.0</span></span></label>
+        <input type="range" id="lsZmin" min="-200" max="0" step="1" value="-5">
+      </div>
+    </div>
+
+    <p style="font-size: 0.95rem; color: var(--muted)">
+      Vector: $\mathbf{z} = [z_{\max},\ 0,\ z_{\min}]$. Compute $\log p_{\min}$ — the log-probability of the
+      <em>smallest</em> class — which is the dangerous one.
+    </p>
+
+    <div class="compare-grid">
+      <div class="compare-card naive">
+        <div class="label">Naive — log(softmax(z))</div>
+        <div class="formula" id="ls-naive-formula"></div>
+        <div class="result" id="ls-naive-result"></div>
+      </div>
+      <div class="compare-card stable">
+        <div class="label">Stable — log_softmax(z)</div>
+        <div class="formula" id="ls-stable-formula"></div>
+        <div class="result ok" id="ls-stable-result"></div>
+      </div>
+    </div>
+
+    <div class="callout callout--warn">
+      <strong>Try the danger zone.</strong>
+      Push $z_{\max}$ to 200 — naive softmax overflows ($e^{200} = \infty$),
+      then $\log(\infty) = \infty$ for the largest class but $\log(\text{NaN}/\infty)$
+      for the smallest. Push $z_{\min}$ to -200 — naive computes $e^{-200}$,
+      which underflows to 0, then $\log 0 = -\infty$. The stable version handles
+      both: it just returns $z_{\min} - z_{\max}$ minus a small correction.
+    </div>
+  </section>
+
+  <!-- ─── Step 3 ─── -->
+  <section class="step-section" id="step-3">
+    <div class="step-badge">Trick 3</div>
+    <h2>BCE-with-logits: avoid the log-of-sigmoid trap</h2>
+    <p>
+      Binary cross-entropy is:
+    </p>
+    <div class="math-block">
+      $$\mathcal{L} = -y\log\sigma(z) - (1-y)\log(1 - \sigma(z))$$
+    </div>
+    <p>
+      Both $\log\sigma(z)$ and $\log(1 - \sigma(z))$ are time bombs. If $z$ is
+      strongly negative, $\sigma(z) \to 0$, and $\log 0 = -\infty$. If $z$ is
+      strongly positive, $1 - \sigma(z) \to 0$, same problem.
+    </p>
+    <p>
+      The fix uses the identity $\log\sigma(z) = -\log(1 + e^{-z}) = -\mathrm{softplus}(-z)$,
+      and $\log(1 - \sigma(z)) = -z - \log(1 + e^{-z}) = -z - \mathrm{softplus}(-z)$.
+      Substituting:
+    </p>
+    <div class="formula-derive">L = max(z, 0) - z·y + log(1 + exp(-|z|))</div>
+    <p>
+      This <em>never</em> overflows: the only exp is $e^{-|z|}$, which is in $(0, 1]$.
+      PyTorch implements this as <code>F.binary_cross_entropy_with_logits</code>.
+      Composing <code>BCE(sigmoid(z))</code> by hand is the wrong way.
+    </p>
+
+    <div class="control-row">
+      <div class="control-block">
+        <label>Logit <span>$z$ = <span id="bce-z">-30</span></span></label>
+        <input type="range" id="bceZ" min="-200" max="200" step="1" value="-30">
+      </div>
+      <div class="control-block">
+        <label>Label
+          <span>$y$ = <span id="bce-y">1</span></span>
+        </label>
+        <div style="display:flex; gap:0.5rem; margin-top: 0.3rem;">
+          <button class="preset-btn" id="bce-y0">y = 0</button>
+          <button class="preset-btn" id="bce-y1">y = 1</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="compare-grid">
+      <div class="compare-card naive">
+        <div class="label">Naive — log(sigmoid(z))</div>
+        <div class="formula" id="bce-naive-formula"></div>
+        <div class="result" id="bce-naive-result"></div>
+      </div>
+      <div class="compare-card stable">
+        <div class="label">Stable — BCE-with-logits</div>
+        <div class="formula" id="bce-stable-formula"></div>
+        <div class="result ok" id="bce-stable-result"></div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>The pattern.</strong>
+      Whenever you see <em>"apply $\sigma$ then take $\log$"</em> in your code,
+      pause. There is almost always a single fused operation in the framework
+      that does it stably. Same lesson as <code>log_softmax</code>: never compose
+      unstable building blocks when a stable atomic exists.
+    </div>
+  </section>
+
+  <!-- ─── Step 4 ─── -->
+  <section class="step-section" id="step-4">
+    <div class="step-badge">Trick 4</div>
+    <h2>log(1 - exp(-x)) and the catastrophic cancellation cousin</h2>
+    <p>
+      The function $\log(1 - e^{-x})$ shows up in survival analysis, in
+      Beta-distribution log-densities, and in some KL divergences. For small $x$
+      (say $x = 10^{-5}$), $e^{-x} \approx 1 - x$, so $1 - e^{-x} \approx x$, but
+      the subtraction $1 - e^{-x}$ <em>cancels</em> almost all the significant
+      bits of the floating-point representation. You lose precision.
+    </p>
+    <div class="math-block">
+      $$\log(1 - e^{-x}) = \begin{cases}
+        \log(-\mathrm{expm1}(-x)) & x \le \log 2 \\[2pt]
+        \log\!1\!\mathrm{p}(-e^{-x}) & x > \log 2
+      \end{cases}$$
+    </div>
+    <p>
+      Two specialized library functions, <code>expm1</code> ($e^x - 1$) and
+      <code>log1p</code> ($\log(1 + x)$), preserve precision in exactly the
+      regions where the naive formula loses it. They are in the C standard
+      library, NumPy, and PyTorch for this single reason.
+    </p>
+
+    <div class="control-row">
+      <div class="control-block" style="grid-column: 1 / -1;">
+        <label>x <span>= <span id="l1m-x">1e-5</span></span></label>
+        <input type="range" id="l1mX" min="-12" max="3" step="0.1" value="-5">
+        <span style="font-size: 0.78rem; color: var(--muted); font-family: var(--sans);">slider value is $\log_{10}(x)$, so the actual $x$ ranges from $10^{-12}$ to $10^3$</span>
+      </div>
+    </div>
+
+    <div class="compare-grid">
+      <div class="compare-card naive">
+        <div class="label">Naive — log(1 - exp(-x))</div>
+        <div class="formula" id="l1m-naive-formula"></div>
+        <div class="result" id="l1m-naive-result"></div>
+      </div>
+      <div class="compare-card stable">
+        <div class="label">Stable — using expm1 / log1p</div>
+        <div class="formula" id="l1m-stable-formula"></div>
+        <div class="result ok" id="l1m-stable-result"></div>
+      </div>
+    </div>
+
+    <p>
+      Drop $x$ to $10^{-7}$. The naive version returns either $-\infty$ (if
+      $1 - e^{-x}$ rounds to exactly 0) or a value missing 6 digits of precision.
+      The stable version is correct to machine epsilon.
+    </p>
+  </section>
+
+  <!-- ─── Step 5 ─── -->
+  <section class="step-section" id="step-5">
+    <div class="step-badge">Trick 5</div>
+    <h2>The other usual suspects</h2>
+    <p>
+      A reference card of tricks you'll meet repeatedly:
+    </p>
+    <div class="examples-table-wrap">
+      <table class="examples-table">
+        <thead>
+          <tr>
+            <th>Quantity</th>
+            <th>Naive</th>
+            <th>Stable</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>softmax</td>
+            <td>$e^{z_k} / \sum e^{z_j}$</td>
+            <td>$e^{z_k - m} / \sum e^{z_j - m}$, $m = \max z$</td>
+            <td>Avoids $e^{\text{huge}}$</td>
+          </tr>
+          <tr>
+            <td>log_softmax</td>
+            <td>$\log(\text{softmax}(z))$</td>
+            <td>$z_k - \mathrm{LSE}(z)$</td>
+            <td>Skips $\log$ of underflowed probability</td>
+          </tr>
+          <tr>
+            <td>BCE</td>
+            <td>$-y\log\sigma(z) - (1-y)\log(1-\sigma(z))$</td>
+            <td>$\max(z,0) - zy + \log(1 + e^{-|z|})$</td>
+            <td>Single $\log$, single $\exp$, both bounded</td>
+          </tr>
+          <tr>
+            <td>$\log(1+x)$ for tiny $x$</td>
+            <td>$\log(1 + x)$</td>
+            <td>$\mathrm{log1p}(x)$</td>
+            <td>$1 + 10^{-10}$ rounds to $1$, losing all info</td>
+          </tr>
+          <tr>
+            <td>$e^x - 1$ for tiny $x$</td>
+            <td>$\exp(x) - 1$</td>
+            <td>$\mathrm{expm1}(x)$</td>
+            <td>Same cancellation: $1 - 1 = 0$ loses everything</td>
+          </tr>
+          <tr>
+            <td>std of $n$ values</td>
+            <td>$\sqrt{\frac{1}{n}\sum x_i^2 - \bar{x}^2}$</td>
+            <td>Welford's online algorithm</td>
+            <td>Two large numbers minus each other → cancellation</td>
+          </tr>
+          <tr>
+            <td>$\log\Gamma(x)$ for large $x$</td>
+            <td>$\log(\Gamma(x))$</td>
+            <td>$\mathrm{lgamma}(x)$ (Stirling-based)</td>
+            <td>$\Gamma(170) \approx 10^{306}$ is the last representable factorial in float64</td>
+          </tr>
+          <tr>
+            <td>variance from <em>scaled</em> values</td>
+            <td>direct sum of squares</td>
+            <td>BatchNorm uses $\bar{x}^2 + \epsilon$ for $\sigma^2$</td>
+            <td>Tiny variance in some channels would otherwise divide-by-zero</td>
+          </tr>
+          <tr>
+            <td>division by softmax weights</td>
+            <td>$x / p_k$</td>
+            <td>multiply by $\exp(-\log p_k)$ via log_softmax</td>
+            <td>Avoid dividing by underflowed $p$</td>
+          </tr>
+          <tr>
+            <td>L2 norm of huge vector</td>
+            <td>$\sqrt{\sum x_i^2}$</td>
+            <td>$\max|x| \cdot \sqrt{\sum (x_i / \max|x|)^2}$</td>
+            <td>$x_i^2$ overflows for $x_i > \sqrt{\text{max float}}$</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ─── Step 6 ─── -->
+  <section class="step-section" id="step-6">
+    <div class="step-badge">Step 6</div>
+    <h2>Three rules of thumb</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; margin: 1.5rem 0;">
+      <div style="padding: 1.2rem 1.4rem; border: 1.5px solid var(--border); border-radius: 12px; background: var(--paper);">
+        <div style="font-family: var(--sans); font-weight: 700; font-size: 0.78rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.7rem;">Rule 1</div>
+        <p style="font-size: 0.95rem; max-width: none;"><strong>Never compose <code>log</code> with something that can be tiny.</strong>
+          <code>log(softmax(x))</code>, <code>log(sigmoid(x))</code>, and <code>log(1 - sigmoid(x))</code>
+          are all forbidden. Use the fused stable atomic instead.</p>
+      </div>
+      <div style="padding: 1.2rem 1.4rem; border: 1.5px solid var(--border); border-radius: 12px; background: var(--paper);">
+        <div style="font-family: var(--sans); font-weight: 700; font-size: 0.78rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.7rem;">Rule 2</div>
+        <p style="font-size: 0.95rem; max-width: none;"><strong>Never compute <code>exp</code> of an unbounded quantity.</strong>
+          Always shift first: subtract the max, normalize, or factor out the largest term. The
+          mathematical answer is unchanged, the numerical answer is finite.</p>
+      </div>
+      <div style="padding: 1.2rem 1.4rem; border: 1.5px solid var(--border); border-radius: 12px; background: var(--paper);">
+        <div style="font-family: var(--sans); font-weight: 700; font-size: 0.78rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.7rem;">Rule 3</div>
+        <p style="font-size: 0.95rem; max-width: none;"><strong>Trust the framework's <code>*_with_logits</code> functions.</strong>
+          They exist because the naive composition is unstable. <code>cross_entropy(logits, y)</code>,
+          <code>bce_with_logits(z, y)</code>, <code>log_softmax(z)</code>, <code>logsumexp(z)</code> — use them.</p>
+      </div>
+    </div>
+
+    <div class="callout callout--warn" style="margin-top: 2rem;">
+      <strong>Final takeaway.</strong>
+      Numerical stability is invisible when it works and catastrophic when it
+      doesn't. NaN losses, exploding gradients, mysterious training failures
+      &mdash; a huge fraction of these trace back to a naive composition that
+      should have been the fused stable form. The next time your loss goes
+      <code>nan</code>, check your <code>log</code>s and your <code>exp</code>s
+      first. You'll usually find the culprit there.
+    </div>
+  </section>
+</article>
+
+<footer>ES 667: Deep Learning &middot; IIT Gandhinagar &middot; Prof. Nipun Batra</footer>
+
+<script>
+/* ───────────────────── Utilities ───────────────────── */
+function fmt(x) {
+  if (!isFinite(x)) {
+    if (Number.isNaN(x)) return 'NaN';
+    return x > 0 ? '+Infinity' : '-Infinity';
+  }
+  if (Math.abs(x) < 1e-4 && x !== 0) return x.toExponential(4);
+  if (Math.abs(x) >= 1e6) return x.toExponential(4);
+  return x.toFixed(6);
+}
+function colorByHealth(el, val) {
+  el.classList.remove('broken', 'ok');
+  if (!isFinite(val)) { el.classList.add('broken'); }
+  else { el.classList.add('ok'); }
+}
+
+/* ─── Trick 1: Log-sum-exp ─── */
+const lseSlider = document.getElementById('lseX1');
+const lseLabel = document.getElementById('lse-x1');
+function updateLSE() {
+  const x1 = parseFloat(lseSlider.value);
+  lseLabel.textContent = x1.toFixed(0);
+  const x = [x1, 1.5, 0.2, -2.0];
+
+  // Naive
+  const exps = x.map(Math.exp);
+  const sumNaive = exps.reduce((a,b)=>a+b, 0);
+  const naive = Math.log(sumNaive);
+
+  document.getElementById('lse-naive-formula').textContent =
+    'log(exp(' + x1 + ') + exp(1.5) + exp(0.2) + exp(-2))';
+  const naiveResEl = document.getElementById('lse-naive-result');
+  naiveResEl.textContent = fmt(naive);
+  colorByHealth(naiveResEl, naive);
+  document.getElementById('lse-naive-steps').textContent =
+    'exp(' + x1 + ') = ' + fmt(Math.exp(x1)) + '\n' +
+    'sum = ' + fmt(sumNaive) + '\n' +
+    'log(sum) = ' + fmt(naive);
+
+  // Stable
+  const m = Math.max(...x);
+  const shifted = x.map(v => v - m);
+  const expsS = shifted.map(Math.exp);
+  const sumS = expsS.reduce((a,b)=>a+b, 0);
+  const stable = m + Math.log(sumS);
+
+  document.getElementById('lse-stable-formula').textContent =
+    'm = max(x) = ' + m.toFixed(2) + '\n' +
+    'm + log(exp(' + x1 + '−m) + exp(1.5−m) + exp(0.2−m) + exp(−2−m))';
+  document.getElementById('lse-stable-result').textContent = fmt(stable);
+  document.getElementById('lse-stable-steps').textContent =
+    'shifted = [' + shifted.map(v=>v.toFixed(2)).join(', ') + ']\n' +
+    'sum exp shifted = ' + fmt(sumS) + '\n' +
+    'm + log(sum) = ' + fmt(stable);
+}
+lseSlider.addEventListener('input', updateLSE);
+document.querySelectorAll('[data-lse]').forEach(b => {
+  b.addEventListener('click', () => {
+    lseSlider.value = b.dataset.lse;
+    updateLSE();
+  });
+});
+
+/* ─── Trick 2: log-softmax ─── */
+const lsZmaxSlider = document.getElementById('lsZmax');
+const lsZminSlider = document.getElementById('lsZmin');
+const lsZmaxLabel = document.getElementById('ls-zmax');
+const lsZminLabel = document.getElementById('ls-zmin');
+
+function updateLogSoftmax() {
+  const zmax = parseFloat(lsZmaxSlider.value);
+  const zmin = parseFloat(lsZminSlider.value);
+  lsZmaxLabel.textContent = zmax.toFixed(0);
+  lsZminLabel.textContent = zmin.toFixed(0);
+  const z = [zmax, 0, zmin];
+
+  // Naive: compute softmax then log
+  const exps = z.map(Math.exp);
+  const sumE = exps.reduce((a,b)=>a+b, 0);
+  const probs = exps.map(e => e / sumE);
+  const logPNaive = probs.map(Math.log);
+  const targetNaive = logPNaive[2]; // log p_min
+
+  document.getElementById('ls-naive-formula').textContent =
+    'p = softmax([' + zmax + ', 0, ' + zmin + '])\n' +
+    'log p_min = log(' + fmt(probs[2]) + ')';
+  const naiveResEl = document.getElementById('ls-naive-result');
+  naiveResEl.textContent = 'log p_min = ' + fmt(targetNaive);
+  colorByHealth(naiveResEl, targetNaive);
+
+  // Stable: log p_k = z_k - LSE(z)
+  const m = Math.max(...z);
+  const shifted = z.map(v => v - m);
+  const sumExpS = shifted.map(Math.exp).reduce((a,b)=>a+b, 0);
+  const lse = m + Math.log(sumExpS);
+  const targetStable = z[2] - lse;
+
+  document.getElementById('ls-stable-formula').textContent =
+    'log p_k = z_k − LSE(z)\n' +
+    'log p_min = ' + zmin + ' − ' + fmt(lse);
+  document.getElementById('ls-stable-result').textContent = 'log p_min = ' + fmt(targetStable);
+}
+lsZmaxSlider.addEventListener('input', updateLogSoftmax);
+lsZminSlider.addEventListener('input', updateLogSoftmax);
+
+/* ─── Trick 3: BCE with logits ─── */
+const bceZSlider = document.getElementById('bceZ');
+const bceZLabel = document.getElementById('bce-z');
+const bceYLabel = document.getElementById('bce-y');
+let bceY = 1;
+
+function sigmoid(z) { return 1 / (1 + Math.exp(-z)); }
+
+function updateBCE() {
+  const z = parseFloat(bceZSlider.value);
+  bceZLabel.textContent = z.toFixed(0);
+  bceYLabel.textContent = bceY;
+
+  // Naive
+  const p = sigmoid(z);
+  const naive = -bceY * Math.log(p) - (1 - bceY) * Math.log(1 - p);
+
+  document.getElementById('bce-naive-formula').textContent =
+    'p = sigmoid(' + z + ') = ' + fmt(p) + '\n' +
+    '−' + bceY + '·log(p) − ' + (1-bceY) + '·log(1−p)';
+  const naiveResEl = document.getElementById('bce-naive-result');
+  naiveResEl.textContent = 'BCE = ' + fmt(naive);
+  colorByHealth(naiveResEl, naive);
+
+  // Stable: max(z, 0) - z*y + log(1 + exp(-|z|))
+  const stable = Math.max(z, 0) - z * bceY + Math.log(1 + Math.exp(-Math.abs(z)));
+
+  document.getElementById('bce-stable-formula').textContent =
+    'max(' + z + ', 0) − ' + z + '·' + bceY + ' + log(1 + exp(−|' + z + '|))';
+  document.getElementById('bce-stable-result').textContent = 'BCE = ' + fmt(stable);
+}
+bceZSlider.addEventListener('input', updateBCE);
+document.getElementById('bce-y0').addEventListener('click', () => { bceY = 0; updateBCE(); });
+document.getElementById('bce-y1').addEventListener('click', () => { bceY = 1; updateBCE(); });
+
+/* ─── Trick 4: log(1 - exp(-x)) ─── */
+const l1mSlider = document.getElementById('l1mX');
+const l1mLabel = document.getElementById('l1m-x');
+
+function expm1(x) { return Math.expm1(x); }
+function log1p(x) { return Math.log1p(x); }
+
+function updateL1m() {
+  const log10x = parseFloat(l1mSlider.value);
+  const x = Math.pow(10, log10x);
+  l1mLabel.textContent = x.toExponential(2);
+
+  // Naive
+  const naive = Math.log(1 - Math.exp(-x));
+
+  document.getElementById('l1m-naive-formula').textContent =
+    'log(1 − exp(−' + x.toExponential(2) + '))';
+  const naiveResEl = document.getElementById('l1m-naive-result');
+  naiveResEl.textContent = fmt(naive);
+  colorByHealth(naiveResEl, naive);
+
+  // Stable
+  let stable;
+  let formula;
+  if (x <= Math.log(2)) {
+    stable = Math.log(-expm1(-x));
+    formula = 'log(−expm1(−' + x.toExponential(2) + '))';
+  } else {
+    stable = log1p(-Math.exp(-x));
+    formula = 'log1p(−exp(−' + x.toExponential(2) + '))';
+  }
+  document.getElementById('l1m-stable-formula').textContent = formula;
+  document.getElementById('l1m-stable-result').textContent = fmt(stable);
+}
+l1mSlider.addEventListener('input', updateL1m);
+
+/* Init all */
+window.addEventListener('load', () => {
+  updateLSE();
+  updateLogSoftmax();
+  updateBCE();
+  updateL1m();
+});
+</script>
+
+</body>
+</html>

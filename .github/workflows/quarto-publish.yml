@@ -1,0 +1,74 @@
+name: Deploy DL Course to GitHub Pages
+
+on:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Marp CLI
+        run: npm ci
+
+      - name: Build Marp slides (HTML)
+        run: |
+          mkdir -p html
+          for f in slides/*-lecture.md; do
+            filename=$(basename "$f" .md)
+            echo "Building HTML: $f"
+            npx marp "$f" -o "html/${filename}.html" --html --allow-local-files --theme-set slides/anthropic-theme.css
+          done
+          # Copy figures so SVG/PNG references resolve under html/
+          if [ -d "figures" ]; then cp -r figures html/; fi
+          if [ -d "slides/images" ]; then cp -r slides/images html/; fi
+
+      - name: Build Marp slides (PDF)
+        env:
+          PUPPETEER_TIMEOUT: 120000
+        run: |
+          mkdir -p pdf
+          npx playwright install chromium
+          ls slides/*-lecture.md | xargs -P 4 -I {} sh -c '
+            filename=$(basename "{}" .md)
+            echo "Building PDF: {}"
+            npx marp "{}" -o "pdf/${filename}.pdf" --pdf --allow-local-files --theme-set slides/anthropic-theme.css || echo "Warning: PDF build failed for {}"
+          '
+
+      - name: Setup Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+
+      - name: Render Quarto site
+        run: quarto render
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

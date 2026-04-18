@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .axis  { stroke:#1F1F1E; stroke-width:1.1; fill:none; }
+      .grid  { stroke:#C9C4B5; stroke-width:0.4; opacity:0.5; }
+      .nowarm{ stroke:#A8324B; stroke-width:2.4; fill:none; }
+      .warm  { stroke:#7B9E89; stroke-width:2.4; fill:none; }
+      .lr-no { stroke:#A8324B; stroke-width:1.6; fill:none; stroke-dasharray:4 3; }
+      .lr-w  { stroke:#7B9E89; stroke-width:1.6; fill:none; stroke-dasharray:4 3; }
+      .nan   { fill:#A8324B; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Why Transformers need warmup — loss diverges without it</text>
+
+  <!-- LEFT: without warmup -->
+  <g transform="translate(40, 70)">
+    <text x="200" y="-8" text-anchor="middle" class="tag" fill="#A8324B">WITHOUT WARMUP · full LR from step 0</text>
+    <rect x="0" y="0" width="400" height="220" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <g class="grid">
+      <line x1="0" y1="55"  x2="400" y2="55"/>
+      <line x1="0" y1="110" x2="400" y2="110"/>
+      <line x1="0" y1="165" x2="400" y2="165"/>
+      <line x1="100" y1="0" x2="100" y2="220"/>
+      <line x1="200" y1="0" x2="200" y2="220"/>
+      <line x1="300" y1="0" x2="300" y2="220"/>
+    </g>
+    <line x1="0" y1="220" x2="400" y2="220" class="axis"/>
+    <line x1="0" y1="0" x2="0" y2="220" class="axis"/>
+
+    <!-- LR: flat high from step 0 -->
+    <line x1="0" y1="20" x2="395" y2="20" class="lr-no"/>
+    <text x="200" y="15" class="mono" fill="#A8324B" text-anchor="middle">η (full)</text>
+
+    <!-- Loss curve: starts high, spikes up, plateaus at nan -->
+    <path class="nowarm" d="M 5 60 Q 20 40 40 30 Q 50 20 60 15 L 80 5"/>
+
+    <!-- NaN marker -->
+    <text x="110" y="25" class="mono" fill="#A8324B" font-weight="600">NaN</text>
+    <circle cx="85" cy="8" r="4" class="nan"/>
+    <text x="200" y="120" text-anchor="middle" class="mono" fill="#A8324B" font-weight="600">training diverges</text>
+    <text x="200" y="138" text-anchor="middle" class="mut" fill="#A8324B">v̂ is tiny and noisy → huge first step → blow up</text>
+
+    <text x="200" y="248" text-anchor="middle" class="mut">steps →</text>
+  </g>
+
+  <!-- RIGHT: with warmup -->
+  <g transform="translate(500, 70)">
+    <text x="200" y="-8" text-anchor="middle" class="tag" fill="#7B9E89">WITH WARMUP · linear ramp · then cosine</text>
+    <rect x="0" y="0" width="400" height="220" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <g class="grid">
+      <line x1="0" y1="55"  x2="400" y2="55"/>
+      <line x1="0" y1="110" x2="400" y2="110"/>
+      <line x1="0" y1="165" x2="400" y2="165"/>
+      <line x1="100" y1="0" x2="100" y2="220"/>
+      <line x1="200" y1="0" x2="200" y2="220"/>
+      <line x1="300" y1="0" x2="300" y2="220"/>
+    </g>
+    <line x1="0" y1="220" x2="400" y2="220" class="axis"/>
+    <line x1="0" y1="0" x2="0" y2="220" class="axis"/>
+
+    <!-- LR: ramp up for first 50 then cosine down -->
+    <path class="lr-w" d="M 0 120 L 50 20 C 150 25 150 115 395 115"/>
+    <text x="15" y="22" class="mono" fill="#7B9E89">η (ramp)</text>
+    <text x="100" y="22" class="mono" fill="#7B9E89">peak</text>
+    <text x="300" y="108" class="mono" fill="#7B9E89">cosine decay</text>
+
+    <!-- Loss: decreases smoothly -->
+    <path class="warm" d="M 5 60 Q 60 110 150 160 Q 250 190 395 205"/>
+    <text x="200" y="118" text-anchor="middle" class="mono" fill="#7B9E89" font-weight="600">smooth descent</text>
+
+    <text x="200" y="248" text-anchor="middle" class="mut">steps →</text>
+  </g>
+
+  <!-- Footer -->
+  <g transform="translate(40, 330)">
+    <rect x="0" y="0" width="880" height="40" fill="#EEEBDF" stroke="#C9C4B5"/>
+    <text x="440" y="24" text-anchor="middle" class="mut" font-style="italic">
+      Warmup = 1–10% of total steps · linear ramp from 0 to peak LR · then cosine decay to 10% of peak. Default for any Transformer.
+    </text>
+  </g>
+</svg>

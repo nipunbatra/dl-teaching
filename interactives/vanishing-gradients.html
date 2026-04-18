@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vanishing Gradient Playground | ES 667</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #fdfcf9;
+    --paper: #ffffff;
+    --text: #2f2a22;
+    --text-muted: #6b6358;
+    --accent: #2c6fb7;
+    --warm: #d9622b;
+    --border: #e2d8c6;
+    --green: #1e7770;
+    --yellow: #d9622b;
+    --red: #c53030;
+    --font-body: 'Source Serif 4', Georgia, serif;
+    --font-ui: 'Manrope', system-ui, sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    text-align: center;
+    padding: 2.5rem 1.5rem 1.5rem;
+  }
+
+  header h1 {
+    font-family: var(--font-ui);
+    font-weight: 700;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+
+  header p {
+    font-size: clamp(0.95rem, 2vw, 1.15rem);
+    color: var(--text-muted);
+    margin-top: 0.35rem;
+    font-style: italic;
+  }
+
+  main {
+    flex: 1;
+    max-width: 960px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 1.5rem 2rem;
+  }
+
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 1px 3px rgba(47,42,34,0.04);
+  }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: center;
+  }
+
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .control-group label {
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+  }
+
+  .depth-control {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .depth-control input[type="range"] {
+    width: 200px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .depth-value {
+    font-family: var(--font-ui);
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--accent);
+    min-width: 2.5ch;
+    text-align: center;
+  }
+
+  .activation-buttons {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .activation-buttons button {
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0.5rem 1.1rem;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    background: var(--paper);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .activation-buttons button:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .activation-buttons button.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  /* Formula */
+  .formula-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .formula-box {
+    text-align: center;
+    padding: 0.4rem 0;
+  }
+
+  .formula-box .katex { font-size: 1.25rem; }
+
+  /* Readout */
+  .readout {
+    font-family: var(--font-ui);
+    font-size: 1rem;
+    text-align: center;
+  }
+
+  .readout .gradient-val {
+    font-weight: 700;
+    font-size: 1.15rem;
+    font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+  }
+
+  .warning {
+    display: none;
+    margin-top: 0.6rem;
+    padding: 0.6rem 1rem;
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    border-radius: 8px;
+    color: var(--red);
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-align: center;
+    animation: shake 0.4s ease;
+  }
+
+  .warning.visible { display: block; }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-4px); }
+    40% { transform: translateX(4px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(2px); }
+  }
+
+  /* Chart */
+  .chart-container {
+    position: relative;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  canvas#gradientChart {
+    width: 100%;
+    display: block;
+    border-radius: 8px;
+  }
+
+  .chart-labels {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-ui);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    padding: 0.25rem 0.5rem 0;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    justify-content: center;
+    margin-top: 0.5rem;
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .legend-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+  }
+
+  /* Insight box */
+  .insight-box {
+    border-left: 4px solid var(--accent);
+    padding-left: 1rem;
+  }
+
+  .insight-box .insight-label {
+    font-family: var(--font-ui);
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    margin-bottom: 0.3rem;
+  }
+
+  .insight-box .insight-text {
+    font-size: 1.05rem;
+    color: var(--text);
+    transition: opacity 0.3s ease;
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 1.5rem;
+    font-family: var(--font-ui);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .controls { flex-direction: column; align-items: flex-start; }
+    .depth-control input[type="range"] { width: 160px; }
+    main { padding: 0 1rem 2rem; }
+    .card { padding: 1.25rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Vanishing Gradient Playground</h1>
+  <p>Watch gradients decay&mdash;or survive&mdash;through deep networks</p>
+</header>
+
+<main>
+  <!-- Controls -->
+  <div class="card">
+    <div class="controls">
+      <div class="control-group">
+        <label>Network Depth</label>
+        <div class="depth-control">
+          <input type="range" id="depthSlider" min="1" max="50" value="10">
+          <span class="depth-value" id="depthValue">10</span>
+          <span style="font-family:var(--font-ui);font-size:0.85rem;color:var(--text-muted);">layers</span>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>Activation Function</label>
+        <div class="activation-buttons" id="activationButtons">
+          <button data-activation="sigmoid" class="active">Sigmoid</button>
+          <button data-activation="tanh">Tanh</button>
+          <button data-activation="relu">ReLU</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formula + Readout -->
+  <div class="card">
+    <div class="formula-row">
+      <div class="formula-box" id="formulaBox"></div>
+    </div>
+    <div class="readout" style="margin-top:1rem;">
+      Gradient at input layer: <span class="gradient-val" id="gradientReadout"></span>
+    </div>
+    <div class="warning" id="warningBox">
+      Effectively zero &mdash; this layer cannot learn
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="card">
+    <div class="chart-container">
+      <canvas id="gradientChart"></canvas>
+      <div class="chart-labels">
+        <span>Input layer (deepest)</span>
+        <span>Output layer</span>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:#1e7770;"></div>
+        <span>Gradient &gt; 10<sup>&minus;3</sup></span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:#d9622b;"></div>
+        <span>10<sup>&minus;6</sup> &ndash; 10<sup>&minus;3</sup></span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:#c53030;"></div>
+        <span>Gradient &lt; 10<sup>&minus;6</sup></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Insight -->
+  <div class="card insight-box" id="insightCard">
+    <div class="insight-label">Key Insight</div>
+    <div class="insight-text" id="insightText"></div>
+  </div>
+</main>
+
+<footer>
+  ES 667: Deep Learning &middot; IIT Gandhinagar
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  // --- Config ---
+  const ACTIVATIONS = {
+    sigmoid: { factor: 0.25, label: 'Sigmoid' },
+    tanh:    { factor: 0.65, label: 'Tanh' },
+    relu:    { factor: 0.5,  label: 'ReLU' }
+  };
+
+  const INSIGHTS = {
+    sigmoid: 'Max derivative = 0.25 \u2192 gradient halves every 2 layers',
+    tanh:    'Better than sigmoid but still decays exponentially',
+    relu:    'Gradient = 1 for active neurons \u2192 much slower decay'
+  };
+
+  const COLOR_GREEN  = '#1e7770';
+  const COLOR_YELLOW = '#d9622b';
+  const COLOR_RED    = '#c53030';
+
+  // --- State ---
+  let depth = 10;
+  let activation = 'sigmoid';
+  let animatedGradients = [];
+  let targetGradients = [];
+  let animFrame = null;
+
+  // --- DOM ---
+  const depthSlider    = document.getElementById('depthSlider');
+  const depthValue     = document.getElementById('depthValue');
+  const activationBtns = document.querySelectorAll('#activationButtons button');
+  const canvas         = document.getElementById('gradientChart');
+  const ctx            = canvas.getContext('2d');
+  const formulaBox     = document.getElementById('formulaBox');
+  const gradientReadout = document.getElementById('gradientReadout');
+  const warningBox     = document.getElementById('warningBox');
+  const insightText    = document.getElementById('insightText');
+
+  // --- Helpers ---
+  function getBarColor(gradMagnitude) {
+    if (gradMagnitude > 1e-3)  return COLOR_GREEN;
+    if (gradMagnitude >= 1e-6) return COLOR_YELLOW;
+    return COLOR_RED;
+  }
+
+  function computeGradients(depth, activation) {
+    const factor = ACTIVATIONS[activation].factor;
+    const grads = [];
+    for (let l = 0; l < depth; l++) {
+      // l=0 is the output layer, l=depth-1 is the input layer
+      grads.push(Math.pow(factor, l));
+    }
+    return grads;
+  }
+
+  function formatExponential(val) {
+    if (val === 0) return '0.00e+0';
+    const exp = Math.floor(Math.log10(Math.abs(val)));
+    const mantissa = val / Math.pow(10, exp);
+    const sign = exp >= 0 ? '+' : '';
+    return mantissa.toFixed(2) + 'e' + sign + exp;
+  }
+
+  // --- Render KaTeX formula ---
+  function renderFormula() {
+    const latex = String.raw`\frac{\partial \mathcal{L}}{\partial W_1} = \prod_{i} \frac{\partial h_i}{\partial h_{i-1}} \cdot \frac{\partial \mathcal{L}}{\partial \hat{y}}`;
+    if (window.katex) {
+      katex.render(latex, formulaBox, { displayMode: true, throwOnError: false });
+    } else {
+      formulaBox.textContent = 'Loading formula...';
+    }
+  }
+
+  // --- Resize Canvas ---
+  function resizeCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const w = rect.width;
+    const h = Math.max(260, Math.min(400, depth * 12 + 80));
+    canvas.style.height = h + 'px';
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { w, h };
+  }
+
+  // --- Draw Chart ---
+  function drawChart(gradients) {
+    const { w, h } = resizeCanvas();
+    ctx.clearRect(0, 0, w, h);
+
+    const n = gradients.length;
+    if (n === 0) return;
+
+    const padLeft = 56;
+    const padRight = 20;
+    const padTop = 28;
+    const padBottom = 28;
+    const chartW = w - padLeft - padRight;
+    const chartH = h - padTop - padBottom;
+
+    // Log scale range
+    const logMin = -20;
+    const logMax = 0;
+
+    // Draw faint grid lines
+    ctx.strokeStyle = '#e8e2d8';
+    ctx.lineWidth = 0.5;
+    ctx.font = '11px Manrope, system-ui, sans-serif';
+    ctx.fillStyle = '#9a9084';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+
+    for (let p = 0; p >= logMin; p -= 5) {
+      const x = padLeft + ((p - logMin) / (logMax - logMin)) * chartW;
+      ctx.beginPath();
+      ctx.moveTo(x, padTop);
+      ctx.lineTo(x, h - padBottom);
+      ctx.stroke();
+      // Draw "10" then superscript exponent
+      ctx.font = '11px Manrope, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      const baseText = '10';
+      const expText = p.toString();
+      const baseW = ctx.measureText(baseText).width;
+      ctx.fillText(baseText, x - 4, h - padBottom + 15);
+      ctx.font = '8px Manrope, system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(expText, x - 4 + baseW / 2 + 1, h - padBottom + 11);
+      ctx.font = '11px Manrope, system-ui, sans-serif';
+    }
+
+    // Bars — layer 0 at bottom (output), layer n-1 at top (input)
+    const barGap = 2;
+    const barHeight = Math.max(3, Math.min(18, (chartH - barGap * (n - 1)) / n));
+    const totalBarsH = n * barHeight + (n - 1) * barGap;
+    const offsetY = padTop + (chartH - totalBarsH) / 2;
+
+    // Draw bars (reversed so input is at top)
+    for (let i = 0; i < n; i++) {
+      const layerIdx = n - 1 - i; // i=0 -> deepest layer (input)
+      const grad = gradients[layerIdx];
+      const logVal = grad > 0 ? Math.log10(grad) : logMin;
+      const clampedLog = Math.max(logMin, Math.min(logMax, logVal));
+      const barW = ((clampedLog - logMin) / (logMax - logMin)) * chartW;
+
+      const y = offsetY + i * (barHeight + barGap);
+      const color = getBarColor(grad);
+
+      // Bar with rounded right cap
+      const radius = Math.min(barHeight / 2, 4);
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(padLeft, y);
+      ctx.lineTo(padLeft + Math.max(barW - radius, 0), y);
+      ctx.arcTo(padLeft + barW, y, padLeft + barW, y + barHeight, radius);
+      ctx.arcTo(padLeft + barW, y + barHeight, padLeft, y + barHeight, radius);
+      ctx.lineTo(padLeft, y + barHeight);
+      ctx.closePath();
+      ctx.fill();
+
+      // Layer label on left
+      if (n <= 30 || i % Math.ceil(n / 25) === 0 || i === n - 1) {
+        ctx.fillStyle = '#9a9084';
+        ctx.font = '10px Manrope, system-ui, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        const layerNum = n - i; // 1-indexed, n=output, 1=input
+        ctx.fillText('L' + layerNum, padLeft - 6, y + barHeight / 2);
+      }
+    }
+
+    // Axis labels
+    ctx.fillStyle = '#6b6358';
+    ctx.font = '11px Manrope, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('log\u2081\u2080(gradient magnitude)', padLeft + chartW / 2, padTop - 10);
+  }
+
+  // --- Animation ---
+  function animateToTarget() {
+    const speed = 0.15;
+    let done = true;
+
+    // Ensure animatedGradients has the right length
+    while (animatedGradients.length < targetGradients.length) {
+      animatedGradients.push(targetGradients[animatedGradients.length]);
+    }
+    animatedGradients.length = targetGradients.length;
+
+    for (let i = 0; i < targetGradients.length; i++) {
+      const current = Math.log10(Math.max(animatedGradients[i], 1e-300));
+      const target  = Math.log10(Math.max(targetGradients[i], 1e-300));
+      const diff = target - current;
+      if (Math.abs(diff) > 0.01) {
+        done = false;
+        const newLog = current + diff * speed;
+        animatedGradients[i] = Math.pow(10, newLog);
+      } else {
+        animatedGradients[i] = targetGradients[i];
+      }
+    }
+
+    drawChart(animatedGradients);
+
+    if (!done) {
+      animFrame = requestAnimationFrame(animateToTarget);
+    }
+  }
+
+  // --- Update ---
+  function update() {
+    targetGradients = computeGradients(depth, activation);
+
+    // Initialize animated if needed
+    if (animatedGradients.length === 0) {
+      animatedGradients = targetGradients.slice();
+      drawChart(animatedGradients);
+    } else {
+      if (animFrame) cancelAnimationFrame(animFrame);
+      animFrame = requestAnimationFrame(animateToTarget);
+    }
+
+    // Readout
+    const inputGrad = targetGradients[targetGradients.length - 1];
+    gradientReadout.textContent = formatExponential(inputGrad);
+    gradientReadout.style.color = getBarColor(inputGrad);
+
+    // Warning
+    if (inputGrad < 1e-10) {
+      warningBox.classList.add('visible');
+    } else {
+      warningBox.classList.remove('visible');
+    }
+
+    // Insight
+    insightText.style.opacity = 0;
+    setTimeout(function() {
+      insightText.textContent = INSIGHTS[activation];
+      insightText.style.opacity = 1;
+    }, 150);
+
+    // Depth display
+    depthValue.textContent = depth;
+  }
+
+  // --- Events ---
+  depthSlider.addEventListener('input', function () {
+    depth = parseInt(this.value);
+    update();
+  });
+
+  activationBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      activationBtns.forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      activation = btn.dataset.activation;
+      update();
+    });
+  });
+
+  window.addEventListener('resize', function () {
+    drawChart(animatedGradients.length ? animatedGradients : targetGradients);
+  });
+
+  // --- Init ---
+  // Wait for KaTeX to load
+  function initKaTeX() {
+    if (window.katex) {
+      renderFormula();
+    } else {
+      setTimeout(initKaTeX, 100);
+    }
+  }
+  initKaTeX();
+  update();
+});
+</script>
+</body>
+</html>

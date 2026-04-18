@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .con   { stroke:#6B6A65; stroke-width:1; fill:none; opacity:0.6; }
+      .path  { stroke:#A8324B; stroke-width:1.8; fill:none; }
+      .star  { fill:#7B9E89; stroke:#1F1F1E; stroke-width:1; }
+      .dot   { fill:#1F1F1E; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Condition number κ = λ_max / λ_min · bigger κ = more oscillation</text>
+
+  <!-- Panel 1: κ = 1 (circle) -->
+  <g transform="translate(40, 70)">
+    <text x="140" y="-10" text-anchor="middle" class="tag" fill="#7B9E89">κ = 1  (ISOTROPIC)</text>
+    <rect x="0" y="0" width="280" height="200" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <g class="con">
+      <circle cx="140" cy="100" r="90"/>
+      <circle cx="140" cy="100" r="70"/>
+      <circle cx="140" cy="100" r="50"/>
+      <circle cx="140" cy="100" r="30"/>
+    </g>
+    <circle cx="140" cy="100" r="5" class="star"/>
+
+    <!-- gradient arrow points straight at minimum -->
+    <polyline class="path" points="40,30 80,55 110,80 130,95 140,100"/>
+    <circle cx="40" cy="30" r="4" class="dot"/>
+
+    <text x="140" y="225" text-anchor="middle" class="mut">gradient always points at minimum</text>
+    <text x="140" y="242" text-anchor="middle" class="mono" fill="#7B9E89">SGD converges in O(log 1/ε) steps</text>
+  </g>
+
+  <!-- Panel 2: κ = 10 -->
+  <g transform="translate(340, 70)">
+    <text x="140" y="-10" text-anchor="middle" class="tag" fill="#C9A961">κ = 10  (MILD)</text>
+    <rect x="0" y="0" width="280" height="200" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <g class="con">
+      <ellipse cx="140" cy="100" rx="120" ry="40"/>
+      <ellipse cx="140" cy="100" rx="95"  ry="32"/>
+      <ellipse cx="140" cy="100" rx="70"  ry="22"/>
+      <ellipse cx="140" cy="100" rx="45"  ry="14"/>
+      <ellipse cx="140" cy="100" rx="20"  ry="7"/>
+    </g>
+    <circle cx="140" cy="100" r="5" class="star"/>
+
+    <!-- gradient does a couple zig-zags -->
+    <polyline class="path" points="30,70 70,115 110,85 140,107 140,100"/>
+    <circle cx="30" cy="70" r="4" class="dot"/>
+
+    <text x="140" y="225" text-anchor="middle" class="mut">a few zig-zags · still reasonable</text>
+    <text x="140" y="242" text-anchor="middle" class="mono" fill="#C9A961">steps ~ √κ ≈ 3</text>
+  </g>
+
+  <!-- Panel 3: κ = 100 (very elongated) -->
+  <g transform="translate(640, 70)">
+    <text x="140" y="-10" text-anchor="middle" class="tag" fill="#A8324B">κ = 100  (DEEP-NET TYPICAL)</text>
+    <rect x="0" y="0" width="280" height="200" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <g class="con">
+      <ellipse cx="140" cy="100" rx="130" ry="12"/>
+      <ellipse cx="140" cy="100" rx="100" ry="9"/>
+      <ellipse cx="140" cy="100" rx="70"  ry="6"/>
+      <ellipse cx="140" cy="100" rx="40"  ry="3"/>
+    </g>
+    <circle cx="140" cy="100" r="5" class="star"/>
+
+    <!-- heavy zig-zags -->
+    <polyline class="path" points="25,75 55,125 85,80 110,122 130,82 140,120 145,88 148,115 140,100"/>
+    <circle cx="25" cy="75" r="4" class="dot"/>
+
+    <text x="140" y="225" text-anchor="middle" class="mut">SGD oscillates heavily across the narrow axis</text>
+    <text x="140" y="242" text-anchor="middle" class="mono" fill="#A8324B">steps ~ √κ ≈ 10 → momentum helps!</text>
+  </g>
+
+  <!-- Bottom -->
+  <g transform="translate(40, 325)">
+    <text x="440" y="0" text-anchor="middle" class="mut" font-style="italic">
+      In deep nets κ can exceed 10⁶. This is why <tspan fill="#D97757" font-weight="600">vanilla SGD is almost never used</tspan> — momentum is essential.
+    </text>
+  </g>
+</svg>

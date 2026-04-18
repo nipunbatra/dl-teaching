@@ -329,3 +329,107 @@ mjx-container[display="true"] { margin: 10px 0 !important; }
   margin: 10px 0;
   border-radius: 2px;
 }
+
+/* ----- columns ------------------------------------------------------- */
+.columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  margin: 10px 0;
+}
+.columns3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 18px;
+  margin: 10px 0;
+}
+.columns > div, .columns3 > div {
+  min-width: 0;
+}
+
+/* ----- tagged callouts ---------------------------------------------- */
+.keypoint, .math-box, .insight, .warning, .paper, .notebook,
+.popquiz, .realworld {
+  margin: 10px 0;
+  padding: 10px 14px;
+  border-radius: 3px;
+  background: var(--paper-alt);
+  border-left: 3px solid var(--accent);
+  position: relative;
+}
+.keypoint::before, .math-box::before, .insight::before,
+.warning::before, .paper::before, .notebook::before,
+.popquiz::before, .realworld::before {
+  display: block;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+.keypoint::before   { content: 'Key idea'; }
+.math-box::before   { content: 'Derivation'; color: var(--slate); }
+.insight::before    { content: 'Intuition'; color: var(--sage); }
+.warning::before    { content: 'Watch out'; color: var(--wine); }
+.paper::before      { content: 'Reference'; color: var(--muted); }
+.notebook::before   { content: 'Notebook'; color: var(--slate); }
+.popquiz::before    { content: 'Pop quiz'; color: var(--wine); }
+.realworld::before  { content: 'In practice'; color: var(--sage); }
+
+.math-box   { border-left-color: var(--slate); }
+.insight    { border-left-color: var(--sage); }
+.warning    { border-left-color: var(--wine); }
+.paper      { border-left-color: var(--muted); background: transparent; }
+.notebook   { border-left-color: var(--slate); }
+.popquiz    { border-left-color: var(--wine); background: var(--accent-soft); }
+.realworld  { border-left-color: var(--sage); }
+
+.keypoint p:last-child, .math-box p:last-child, .insight p:last-child,
+.warning p:last-child, .paper p:last-child, .notebook p:last-child,
+.popquiz p:last-child, .realworld p:last-child {
+  margin-bottom: 0;
+}
+
+/* inline "build it" style hint for Karpathy-esque code callouts */
+.build-it {
+  border-left: 3px solid var(--ochre);
+  background: #F6F0DF;
+  padding: 10px 14px;
+  margin: 10px 0;
+  border-radius: 3px;
+}
+.build-it::before {
+  content: 'Let\'s build it';
+  display: block;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ochre);
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+/* 2-column that prefers narrow-left, wide-right (code + notes) */
+.code-note {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 20px;
+  margin: 10px 0;
+}
+
+/* Tiny chip labels for inline tags (e.g., "Ng", "Karpathy") */
+.tag {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--rule);
+  padding: 1px 8px;
+  border-radius: 999px;
+  margin-right: 4px;
+  vertical-align: middle;
+}

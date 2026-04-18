@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .axis  { stroke:#1F1F1E; stroke-width:1.1; fill:none; }
+      .con   { stroke:#6B6A65; stroke-width:0.9; fill:none; opacity:0.5; }
+      .sgd   { stroke:#A8324B; stroke-width:2.2; fill:none; }
+      .mom   { stroke:#4A6670; stroke-width:2.2; fill:none; }
+      .nov   { stroke:#D97757; stroke-width:2.2; fill:none; }
+      .dot   { fill:#1F1F1E; stroke:#1F1F1E; stroke-width:1; }
+      .star  { fill:#7B9E89; stroke:#1F1F1E; stroke-width:1; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">The SGD family — three trajectories on the same landscape</text>
+
+  <!-- Unified contour -->
+  <g transform="translate(180, 60)">
+    <rect x="0" y="0" width="600" height="260" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <g class="con">
+      <ellipse cx="480" cy="130" rx="200" ry="50"/>
+      <ellipse cx="480" cy="130" rx="160" ry="40"/>
+      <ellipse cx="480" cy="130" rx="120" ry="30"/>
+      <ellipse cx="480" cy="130" rx="80"  ry="20"/>
+      <ellipse cx="480" cy="130" rx="40"  ry="10"/>
+    </g>
+
+    <circle cx="480" cy="130" r="5" class="star"/>
+    <text x="490" y="128" class="mut" fill="#7B9E89">min</text>
+
+    <!-- start -->
+    <circle cx="40" cy="70" r="5" class="dot"/>
+    <text x="30" y="60" class="mut">start</text>
+
+    <!-- SGD: heavy zig-zag -->
+    <polyline class="sgd" points="40,70 75,180 110,75 145,185 180,80 215,185 250,85 285,180 320,95 355,175 385,110 415,160 440,120 460,145 475,130 480,130"/>
+
+    <!-- Momentum: smoother -->
+    <polyline class="mom" points="40,70 100,150 170,115 240,130 310,124 380,128 440,129 480,130"/>
+
+    <!-- Nesterov: a bit tighter -->
+    <polyline class="nov" points="40,70 110,140 190,117 270,127 350,128 420,129 470,130 480,130"/>
+
+    <!-- legend -->
+    <g transform="translate(20, 200)">
+      <line x1="0" y1="0" x2="30" y2="0" class="sgd"/>
+      <text x="36" y="4" class="mono" fill="#A8324B">SGD</text>
+      <line x1="80" y1="0" x2="110" y2="0" class="mom"/>
+      <text x="116" y="4" class="mono" fill="#4A6670">Momentum</text>
+      <line x1="200" y1="0" x2="230" y2="0" class="nov"/>
+      <text x="236" y="4" class="mono" fill="#D97757">Nesterov</text>
+    </g>
+  </g>
+
+  <text x="480" y="355" text-anchor="middle" class="mut" font-style="italic">
+    Same landscape, same LR. SGD crawls; momentum accelerates; Nesterov turns faster near the bowl.
+  </text>
+</svg>

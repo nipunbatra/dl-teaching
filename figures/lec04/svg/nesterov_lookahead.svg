@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 340" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .axis  { stroke:#1F1F1E; stroke-width:1; fill:none; }
+      .con   { stroke:#6B6A65; stroke-width:1; fill:none; opacity:0.5; }
+      .v     { stroke:#4A6670; stroke-width:2; fill:none; }
+      .g-cl  { stroke:#A8324B; stroke-width:2.2; fill:none; }
+      .g-nov { stroke:#D97757; stroke-width:2.2; fill:none; }
+      .upd-cl{ stroke:#A8324B; stroke-width:2.4; fill:none; stroke-dasharray:4 3; }
+      .upd-nov{ stroke:#D97757; stroke-width:2.4; fill:none; stroke-dasharray:4 3; }
+      .dot   { fill:#1F1F1E; }
+      .ghost { fill:#6B6A65; opacity:0.4; }
+      .lbl   { fill:#1F1F1E; font-size:12px; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+    </style>
+    <marker id="ar-v" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4A6670"/></marker>
+    <marker id="ar-cl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#A8324B"/></marker>
+    <marker id="ar-nov" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#D97757"/></marker>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Nesterov vs classical momentum — evaluate the gradient one step ahead</text>
+
+  <!-- LEFT: classical momentum -->
+  <g transform="translate(60, 70)">
+    <text x="180" y="-10" text-anchor="middle" class="tag" fill="#A8324B">CLASSICAL MOMENTUM</text>
+    <rect x="0" y="0" width="360" height="220" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <g class="con">
+      <ellipse cx="260" cy="110" rx="150" ry="70"/>
+      <ellipse cx="260" cy="110" rx="110" ry="52"/>
+      <ellipse cx="260" cy="110" rx="70"  ry="32"/>
+      <ellipse cx="260" cy="110" rx="30"  ry="14"/>
+    </g>
+    <circle cx="260" cy="110" r="4" fill="#7B9E89" stroke="#1F1F1E"/>
+
+    <!-- θ current -->
+    <circle cx="80" cy="150" r="5" class="dot"/>
+    <text x="80" y="172" text-anchor="middle" class="mono">θ_{t−1}</text>
+
+    <!-- velocity arrow -->
+    <line x1="80" y1="150" x2="170" y2="120" class="v" marker-end="url(#ar-v)"/>
+    <text x="130" y="128" class="mut" fill="#4A6670">momentum v</text>
+
+    <!-- gradient AT CURRENT θ -->
+    <line x1="80" y1="150" x2="125" y2="110" class="g-cl" marker-end="url(#ar-cl)"/>
+    <text x="100" y="95" class="mut" fill="#A8324B">∇ at θ_{t−1}</text>
+
+    <!-- update = v + g_current -->
+    <line x1="80" y1="150" x2="190" y2="100" class="upd-cl" marker-end="url(#ar-cl)"/>
+    <text x="190" y="90" class="mono" fill="#A8324B">θ_t</text>
+
+    <text x="180" y="205" text-anchor="middle" class="mut" font-style="italic">update = velocity + gradient at current position</text>
+  </g>
+
+  <!-- RIGHT: Nesterov -->
+  <g transform="translate(540, 70)">
+    <text x="180" y="-10" text-anchor="middle" class="tag" fill="#D97757">NESTEROV — LOOKAHEAD</text>
+    <rect x="0" y="0" width="360" height="220" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <g class="con">
+      <ellipse cx="260" cy="110" rx="150" ry="70"/>
+      <ellipse cx="260" cy="110" rx="110" ry="52"/>
+      <ellipse cx="260" cy="110" rx="70"  ry="32"/>
+      <ellipse cx="260" cy="110" rx="30"  ry="14"/>
+    </g>
+    <circle cx="260" cy="110" r="4" fill="#7B9E89" stroke="#1F1F1E"/>
+
+    <!-- θ current -->
+    <circle cx="80" cy="150" r="5" class="dot"/>
+    <text x="80" y="172" text-anchor="middle" class="mono">θ_{t−1}</text>
+
+    <!-- velocity arrow (same) -->
+    <line x1="80" y1="150" x2="170" y2="120" class="v" marker-end="url(#ar-v)"/>
+    <!-- ghost lookahead point -->
+    <circle cx="170" cy="120" r="4" class="ghost"/>
+    <text x="170" y="112" text-anchor="middle" class="mut" font-size="10" fill="#6B6A65">lookahead</text>
+
+    <!-- gradient AT LOOKAHEAD -->
+    <line x1="170" y1="120" x2="220" y2="105" class="g-nov" marker-end="url(#ar-nov)"/>
+    <text x="225" y="95" class="mut" fill="#D97757">∇ at lookahead</text>
+
+    <!-- update = v + g_lookahead -->
+    <line x1="80" y1="150" x2="220" y2="105" class="upd-nov" marker-end="url(#ar-nov)"/>
+    <text x="220" y="95" class="mono" fill="#D97757" text-anchor="end">θ_t (better)</text>
+
+    <text x="180" y="205" text-anchor="middle" class="mut" font-style="italic">evaluate gradient where you're about to be — not where you are</text>
+  </g>
+
+  <text x="480" y="325" text-anchor="middle" class="mut">
+    <tspan class="mono">Classical · θ_t = θ_{t−1} − ηv_t − η∇f(θ_{t−1})</tspan>
+    &nbsp;&nbsp;vs&nbsp;&nbsp;
+    <tspan class="mono" fill="#D97757">Nesterov · θ_t = θ_{t−1} − ηv_t − η∇f(θ_{t−1} − ηβv_{t−1})</tspan>
+  </text>
+</svg>

@@ -1,6 +1,6 @@
 ---
 marp: true
-theme: dl-theme
+theme: anthropic
 paginate: true
 math: mathjax
 ---
@@ -18,272 +18,173 @@ math: mathjax
 
 <!-- _class: section-divider -->
 
-# Part 1: The Big Picture
+### READING · Prince UDL · Ch 1 · Ch 3
 
-What is deep learning, and why now?
+# Lecture 1
 
----
-
-# A Question
-
-You have built classifiers in your ML course — SVMs, decision trees, logistic regression.
-
-They work well on tabular data with hand-crafted features.
-
-**Q.** What happens when you try to classify raw images (say 224×224 pixels)?
-
----
-
-# A Question
-
-**Q.** What happens when you try to classify raw images?
-
-- Input dimension: $224 \times 224 \times 3 = 150{,}528$ features
-- SVM / Logistic Regression on raw pixels?
-
-**Very poor performance.** Why?
-
----
-
-# A Question
-
-**Q.** Why do raw pixels fail for traditional ML?
-
-- Pixels are not meaningful features
-- A 1-pixel shift changes *every* feature value
-- No notion of locality, edges, or shapes
-- The **representation** is wrong
-
----
-
-# The Core Idea of Deep Learning
-
-<div class="keypoint">
-
-**Deep Learning** = Representation Learning
-
-Instead of hand-crafting features, learn them from data.
-
-</div>
-
----
-
-# Machine Learning vs Deep Learning
-
-<div class="columns">
-<div>
-
-### ML (what you know)
-
-- **You** design features
-- Shallow models (SVM, trees)
-- Structured / tabular data
-- Representation is fixed
-
-</div>
-<div>
-
-### DL (what we'll learn)
-
-- **Model** learns features
-- Deep models (many layers)
-- Images, text, audio, video
-- Representation is learned
-
-</div>
-</div>
-
----
-
-# The Deep Learning Revolution
-
-![w:900px](figures/lec01/dl_timeline.png)
-
----
-
-# ImageNet: The Turning Point (2012)
-
-| Year | Winner | Top-5 Error | Method |
-|------|--------|-------------|--------|
-| 2010 | NEC-UIUC | 28.2% | Hand-crafted (SIFT + Fisher) |
-| 2011 | XRCE | 25.8% | Hand-crafted (Fisher) |
-| **2012** | **AlexNet** | **16.4%** | **CNN (deep learning!)** |
-| 2013 | ZFNet | 11.7% | CNN |
-| 2014 | GoogLeNet | 6.7% | CNN (22 layers) |
-| 2015 | ResNet | **3.6%** | CNN (**152 layers**) |
-
-**Human performance**: ~5.1%
-
-AlexNet cut the error rate by **10 percentage points** in one year. Everything changed.
-
----
-
-# Why Now? Three Ingredients
-
-<div class="columns3">
-<div>
-
-### Data
-
-- ImageNet (14M images)
-- Common Crawl (PBs of text)
-- YouTube, Wikipedia
-- Synthetic data
-
-</div>
-<div>
-
-### Compute
-
-- GPUs (NVIDIA, 2007+)
-- TPUs (Google, 2016+)
-- Cloud computing
-- Training: days → hours
-
-</div>
-<div>
-
-### Algorithms
-
-- Better activations (ReLU)
-- Better optimizers (Adam)
-- Better architectures (ResNet, Transformer)
-- Better regularization
-
-</div>
-</div>
-
----
-
-# What Can DL Do Today?
-
-<div class="columns">
-<div>
-
-### Vision
-- Image classification
-- Object detection (self-driving)
-- Medical image segmentation
-- Image generation (Stable Diffusion)
-
-### Language
-- Translation (Google Translate)
-- Chatbots (ChatGPT, Claude)
-- Code generation (Copilot)
-
-</div>
-<div>
-
-### Multimodal
-- Visual question answering
-- Text-to-image (DALL-E)
-- Text-to-video (Sora)
-
-### Science
-- Protein folding (AlphaFold)
-- Weather forecasting (GenCast)
-- Drug discovery
-- Climate modeling
-
-</div>
-</div>
-
----
-
-# Course Roadmap
-
-<div class="realworld">
-
-**Our 24-lecture journey:**
-
-Foundations → Optimization → Regularization → **CNNs → Object Detection** → Sequences → **Attention → Transformers → LLMs → VLMs** → VAEs → GANs → Diffusion → Frontiers
-
-</div>
-
-- **Framework**: PyTorch (exclusively)
-- **Style**: Math + code + intuition
-- **Assessment**: 4 quizzes (48%), 4-5 assignments (40%), attendance (6%), bonus (6%)
+This lecture mirrors UDL **Ch 1** (introduction) and **Ch 3** (shallow networks). Read both — slides go brisk on the parts the book covers well, deep on what it doesn't.
 
 ---
 
 <!-- _class: section-divider -->
 
-# Part 2: MLP Recap
+### PART 1
 
-Building blocks you already know
+# The big picture
 
----
-
-# Recall: The Single Neuron
-
-A single neuron computes:
-
-$$y = \sigma\left(\sum_{i=1}^{d} w_i x_i + b\right)$$
-
-**Q.** Write this in vector notation.
+What is deep learning, and why now?
 
 ---
 
-# Recall: The Single Neuron
+# A question to open the semester
 
-$$y = \sigma(\mathbf{w}^\top \mathbf{x} + b)$$
+You already built classifiers in ES 654 — logistic regression, SVMs, decision trees.
 
-- **Inputs**: $\mathbf{x} \in \mathbb{R}^d$
-- **Weights**: $\mathbf{w} \in \mathbb{R}^d$
-- **Bias**: $b \in \mathbb{R}$
-- **Activation**: $\sigma(\cdot)$
+**Q.** Point any of them at a raw $224 \times 224$ colour photo.
 
-**Q.** What does $\sigma$ do? Why do we need it?
+<div class="popquiz">
 
----
+Input dimension: $224 \times 224 \times 3 = 150{,}528$ features.
 
-# Recall: The Single Neuron
+Think before the next slide: *why* would that fail?
 
-**Q.** Why do we need the activation function $\sigma$?
-
-Without it: $y = \mathbf{w}^\top \mathbf{x} + b$ — just linear regression!
-
-Stacking linear layers gives: $\mathbf{W}_2(\mathbf{W}_1 \mathbf{x}) = (\mathbf{W}_2 \mathbf{W}_1)\mathbf{x} = \mathbf{W}' \mathbf{x}$
-
-**Still linear.** Non-linearity is essential.
+</div>
 
 ---
 
-# Activation Functions
+# Why raw pixels break a linear classifier
 
-![w:950px](figures/lec01/activation_functions.png)
-
----
-
-# From Neuron to MLP
-
-**Multi-Layer Perceptron**: Stack layers with non-linearities between them.
-
-$$\mathbf{h}_1 = \sigma(\mathbf{W}_1 \mathbf{x} + \mathbf{b}_1)$$
-$$\mathbf{h}_2 = \sigma(\mathbf{W}_2 \mathbf{h}_1 + \mathbf{b}_2)$$
-$$\hat{y} = \mathbf{W}_3 \mathbf{h}_2 + \mathbf{b}_3$$
-
-**Q.** How many learnable parameters does this have, if $\mathbf{x} \in \mathbb{R}^{784}$, $\mathbf{h}_1, \mathbf{h}_2 \in \mathbb{R}^{256}$, $\hat{y} \in \mathbb{R}^{10}$?
+![w:900px](figures/lec01/svg/pixel_shift_fail.svg)
 
 ---
 
-# Parameter Count
+# Classical ML vs deep learning
 
-$$\mathbf{W}_1 \in \mathbb{R}^{256 \times 784}, \quad \mathbf{b}_1 \in \mathbb{R}^{256}$$
-$$\mathbf{W}_2 \in \mathbb{R}^{256 \times 256}, \quad \mathbf{b}_2 \in \mathbb{R}^{256}$$
-$$\mathbf{W}_3 \in \mathbb{R}^{10 \times 256}, \quad \mathbf{b}_3 \in \mathbb{R}^{10}$$
-
-Total: $256 \times 784 + 256 + 256 \times 256 + 256 + 10 \times 256 + 10$
-
-$= 200{,}704 + 65{,}536 + 2{,}560 + 522 = \mathbf{269{,}322}$ parameters
-
-Even a small MLP has **~270K parameters**. Modern LLMs have **billions**.
+![w:920px](figures/lec01/svg/ml_vs_dl_pipeline.svg)
 
 ---
 
-# MLP Architecture
+# Deep learning, in one sentence
 
-![w:800px](figures/lec01/mlp_architecture.png)
+<div class="insight">
+
+**Deep learning = representation learning** with differentiable, composable modules, trained end-to-end by gradient descent.
+
+</div>
+
+Every word matters. We will unpack all of them this semester.
+
+---
+
+# Three eras of deep learning
+
+![w:900px](figures/lec01/svg/dl_timeline.svg)
+
+---
+
+# ImageNet · the turning point (2012)
+
+| Year | Winner | Top-5 error | Method |
+|------|--------|-------------|--------|
+| 2010 | NEC-UIUC | 28.2% | SIFT + Fisher |
+| 2011 | XRCE | 25.8% | Hand-crafted |
+| **2012** | **AlexNet** | **16.4%** | **8-layer CNN** |
+| 2015 | ResNet | **3.6%** | 152-layer CNN |
+
+Human top-5 error: ~5.1%. **AlexNet cut error by ~10 points in one year.**
+
+---
+
+# Why now? Three ingredients compounded
+
+![w:900px](figures/lec01/svg/three_ingredients.svg)
+
+---
+
+# Course roadmap
+
+<div class="realworld">
+
+**24-lecture arc**
+
+Foundations → optimization → regularization → **CNNs → detection** → sequences → **attention → Transformers → LLMs → vision-language** → VAEs → GANs → diffusion → efficient inference.
+
+</div>
+
+- **Framework:** PyTorch, exclusively.
+- **Primary textbook:** Prince, *Understanding Deep Learning* (2023) — free PDF.
+- **Style:** math + code + intuition + examples.
+- **Assessment:** 4 quizzes · 4 assignments · attendance · bonus.
+
+---
+
+<!-- _class: section-divider -->
+
+### PART 2
+
+# MLP recap
+
+The building block you already know — tightened up
+
+---
+
+# Our running example
+
+![w:880px](figures/lec01/svg/mnist_samples.svg)
+
+---
+
+# The single neuron — anatomy
+
+![w:900px](figures/lec01/svg/neuron_anatomy.svg)
+
+---
+
+# In vector form
+
+$$y = \sigma\big(\underbrace{\mathbf{w}^\top \mathbf{x} + b}_{\text{pre-activation }z}\big)$$
+
+- $\mathbf{x} \in \mathbb{R}^d$ — inputs
+- $\mathbf{w} \in \mathbb{R}^d$ — learned weights (how much each input matters)
+- $b \in \mathbb{R}$ — learned bias (threshold shift)
+- $\sigma(\cdot)$ — non-linearity (squash)
+
+**Q.** Why the non-linearity? What breaks without it?
+
+---
+
+# Without σ · depth gives nothing
+
+![w:920px](figures/lec01/svg/stacked_linear_collapses.svg)
+
+---
+
+# Activation functions at a glance
+
+![w:900px](figures/lec01/activation_functions.png)
+
+| Name | Formula | Where you see it |
+|------|---------|------------------|
+| Sigmoid | $1/(1+e^{-z})$ | gates |
+| Tanh | $\tanh(z)$ | RNNs |
+| ReLU | $\max(0, z)$ | most CNNs |
+| GELU / SiLU | $z\,\Phi(z)$ / $z\,\sigma(z)$ | Transformers, LLMs |
+
+---
+
+# Stacking neurons → MLP
+
+![w:820px](figures/lec01/svg/mlp_architecture.svg)
+
+---
+
+# Parameter count — do this in your head
+
+For MNIST with hidden sizes 256, 256:
+
+$$\underbrace{256 \times 784}_{W_1} + \underbrace{256}_{b_1} + \underbrace{256 \times 256}_{W_2} + \underbrace{256}_{b_2} + \underbrace{10 \times 256}_{W_3} + \underbrace{10}_{b_3} = \boxed{269{,}322}$$
+
+A tiny MNIST model has ~270k parameters. GPT-3 has 175 billion — $6 \times 10^5 \times$ more.
 
 ---
 
@@ -293,44 +194,33 @@ Even a small MLP has **~270K parameters**. Modern LLMs have **billions**.
 import torch.nn as nn
 
 class MLP(nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim):
+    def __init__(self, d_in=784, d_h=256, d_out=10):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, output_dim),
+            nn.Linear(d_in, d_h), nn.ReLU(),
+            nn.Linear(d_h,  d_h), nn.ReLU(),
+            nn.Linear(d_h,  d_out),     # raw logits — no softmax here
         )
 
     def forward(self, x):
         return self.net(x)
 ```
 
-**Q.** How many `nn.Linear` layers does this have? How many activation functions?
+**Q.** Why no activation after the last `Linear`?
 
 ---
 
-# MLP in PyTorch
+# The last layer is bare · the #1 beginner bug
 
-**Q.** How many `nn.Linear` layers? **3**. How many activations? **2**.
-
-Note: No activation after the last layer.
-
-**Q.** Why no activation after the final layer?
-
----
-
-# MLP in PyTorch
-
-**Q.** Why no activation after the final layer?
-
-- For **classification**: we output raw logits; `CrossEntropyLoss` applies softmax internally
-- For **regression**: we want unbounded output $\hat{y} \in (-\infty, \infty)$
+For classification:
+- Output should be $K$ raw scores (logits).
+- `nn.CrossEntropyLoss` internally applies `log_softmax`.
+- Adding your own softmax → **double softmax** → frozen loss near $\log K$.
 
 <div class="warning">
 
-Common mistake: applying softmax *and* using `CrossEntropyLoss` — this double-applies softmax!
+Symptom to memorize: training loss stuck at ~2.30 (= $\log 10$) and refusing to move.
+Fix: remove the extra softmax.
 
 </div>
 
@@ -338,518 +228,254 @@ Common mistake: applying softmax *and* using `CrossEntropyLoss` — this double-
 
 <!-- _class: section-divider -->
 
-# Part 3: Why Go Deep?
+### PART 3
 
-Depth as a computational resource
+# Losses and backprop
 
----
-
-# The Central Question
-
-We know shallow networks (1 hidden layer) work.
-
-**Q.** Why would we ever want *more* layers?
-
-Let us think about this carefully.
+The math that makes learning possible
 
 ---
 
-# Can a Single Layer Learn Anything?
+# Softmax · three acts
 
-<div class="popquiz">
-
-**Pop Quiz**: Can a single hidden layer MLP approximate *any* continuous function?
-
-</div>
+![w:920px](figures/lec01/svg/softmax_visual.svg)
 
 ---
 
-# Universal Approximation Theorem
+# Why exponentiate?
 
-**Yes.** (Cybenko 1989, Hornik 1991)
+1. Logits can be **negative**; raw ratios misbehave. $e^{z_k}$ is always positive.
+2. Softmax **amplifies** differences — biggest logit dominates smoothly.
+3. It falls out of **maximum likelihood** for categorical outputs (next).
+
+---
+
+# Cross-entropy from MLE
+
+One example $(\mathbf{x}, y)$, true class $c$. Maximize data likelihood → minimize negative log-likelihood:
+
+$$\mathcal{L}(\theta) = -\log P(y = c \mid \mathbf{x}; \theta) = -\log \hat{y}_c$$
+
+With one-hot $\mathbf{y}$:
+
+$$\mathcal{L} = -\sum_{k=1}^{K} y_k \log \hat{y}_k$$
 
 <div class="math-box">
 
-**Theorem (informal)**: A feedforward network with a single hidden layer containing a finite number of neurons can approximate any continuous function on a compact subset of $\mathbb{R}^n$, to arbitrary accuracy.
-
-</div>
-
-So... problem solved? Just use 1 hidden layer?
-
----
-
-# The Catch
-
-The UAT guarantees **existence**, not **efficiency**.
-
-A single hidden layer *can* approximate any function, but it may require **exponentially many neurons**.
-
-**Q.** Can you think of a function that is easy to represent with depth, but hard with width?
-
----
-
-# The Catch: An Example
-
-Consider the function: $f(x_1, \ldots, x_n) = x_1 \oplus x_2 \oplus \cdots \oplus x_n$ (parity / XOR over $n$ bits)
-
-- **Shallow network**: Needs $O(2^n)$ hidden neurons
-- **Deep network**: Needs $O(n)$ neurons in $O(\log n)$ layers
-
-Depth gives **exponential** savings for some function families.
-
-<div class="paper">
-
-Telgarsky, *"Benefits of Depth in Neural Networks"*, COLT 2016 — Proves formal depth separation results.
+This **is** cross-entropy. MLE hands it to us for free — we did not invent it.
 
 </div>
 
 ---
 
-# Depth Enables Hierarchical Features
+# The elegant softmax + CE gradient
 
-![w:950px](figures/lec01/feature_hierarchy.png)
+$$\boxed{\dfrac{\partial \mathcal{L}}{\partial z_k} = \hat{y}_k - y_k}$$
 
-Deep networks learn a **hierarchy** of representations:
-
-Pixels → Edges → Textures → Parts → Objects
+**Prediction minus target.** Same form as logistic regression — no accident.
 
 ---
 
-# Aside: How the Visual Cortex Works
+# What that gradient actually looks like
 
-The brain processes visual information hierarchically too:
+![w:920px](figures/lec01/svg/ce_gradient_visual.svg)
 
-| Brain Region | Roughly Corresponds To | Detects |
-|-------------|----------------------|---------|
-| V1 | Layer 1 | Oriented edges, bars |
-| V2 | Layer 2 | Textures, simple shapes |
-| V4 | Layer 3 | Complex shapes, parts |
-| IT | Layer 4+ | Objects, faces |
+---
 
-<div class="insight">
+# Backpropagation · the computational view
 
-Hubel & Wiesel (Nobel Prize, 1981) showed this hierarchical processing in cat visual cortex — inspiring neural network architectures decades later.
+Every network is a DAG of differentiable ops. Forward computes values; backward computes gradients in reverse order.
+
+![w:900px](figures/lec01/svg/computational_graph.svg)
+
+---
+
+# The local-gradient rule · three lines
+
+For $\mathbf{z} = \mathbf{W}\mathbf{x} + \mathbf{b}$ with upstream $\boldsymbol{\delta} = \partial \mathcal{L} / \partial \mathbf{z}$:
+
+$$\frac{\partial \mathcal{L}}{\partial \mathbf{W}} = \boldsymbol{\delta}\, \mathbf{x}^\top, \quad
+\frac{\partial \mathcal{L}}{\partial \mathbf{b}} = \boldsymbol{\delta}, \quad
+\frac{\partial \mathcal{L}}{\partial \mathbf{x}} = \mathbf{W}^\top \boldsymbol{\delta}$$
+
+<div class="keypoint">
+
+These three lines are the **entire** backward pass of a linear layer. Everything else is repeating this rule through activations and stacking.
 
 </div>
-
----
-
-# Computational Graphs
-
-![w:900px](figures/lec01/computational_graph.png)
-
----
-
-# The Chain Rule: Backbone of DL
-
-**Forward pass**: compute output from input (left → right)
-
-**Backward pass**: compute gradients (right → left) via the chain rule
-
-$$\frac{\partial \mathcal{L}}{\partial \mathbf{W}_1} = \frac{\partial \mathcal{L}}{\partial \hat{y}} \cdot \frac{\partial \hat{y}}{\partial \mathbf{h}_2} \cdot \frac{\partial \mathbf{h}_2}{\partial \mathbf{h}_1} \cdot \frac{\partial \mathbf{h}_1}{\partial \mathbf{W}_1}$$
-
-**Q.** This is a product of $L$ terms for an $L$-layer network. What can go wrong?
-
----
-
-# The Chain Rule: What Can Go Wrong?
-
-$$\frac{\partial \mathcal{L}}{\partial \mathbf{W}_1} = \prod_{l=1}^{L} \frac{\partial \mathbf{h}_{l}}{\partial \mathbf{h}_{l-1}} \cdot \frac{\partial \mathcal{L}}{\partial \hat{y}}$$
-
-If each factor is slightly $< 1$ → the product $\to 0$ (**vanishing gradients**)
-
-If each factor is slightly $> 1$ → the product $\to \infty$ (**exploding gradients**)
-
----
-
-# Vanishing Gradients: The Sigmoid Problem
-
-**Q.** What is the maximum value of $\sigma'(z)$ for the sigmoid function?
-
----
-
-# Vanishing Gradients: The Sigmoid Problem
-
-$$\sigma'(z) = \sigma(z)(1 - \sigma(z))$$
-
-Maximum at $z = 0$: $\sigma'(0) = 0.25$
-
-![w:900px](figures/lec01/activation_gradients.png)
-
----
-
-# Vanishing Gradients: The Sigmoid Problem
-
-With sigmoid, each layer multiplies the gradient by *at most* 0.25.
-
-After 10 layers: $0.25^{10} = 9.5 \times 10^{-7}$
-
-After 20 layers: $0.25^{20} \approx 10^{-12}$
-
-**The gradient essentially disappears.** Early layers cannot learn.
-
----
-
-# Vanishing Gradients: Visualized
-
-![w:900px](figures/lec01/vanishing_gradient.png)
-
----
-
-# Solution 1: ReLU
-
-$$\text{ReLU}(z) = \max(0, z)$$
-
-**Q.** What is the gradient of ReLU for $z > 0$?
-
----
-
-# Solution 1: ReLU
-
-$$\text{ReLU}'(z) = \begin{cases} 1 & \text{if } z > 0 \\ 0 & \text{if } z < 0 \end{cases}$$
-
-Gradient is exactly **1** for active neurons — no vanishing!
-
-**Why ReLU dominates:**
-- Gradient doesn't shrink with depth (for active neurons)
-- Computationally cheap — just a threshold
-- Induces sparsity — many neurons output 0
-- Empirically works much better than sigmoid/tanh for deep networks
-
----
-
-# ReLU Variants
-
-| Name | Formula | Used in |
-|------|---------|---------|
-| ReLU | $\max(0, z)$ | Most CNNs |
-| Leaky ReLU | $\max(0.01z, z)$ | GANs |
-| GELU | $z \cdot \Phi(z)$ | **Transformers** (BERT, GPT) |
-| SiLU / Swish | $z \cdot \sigma(z)$ | **Modern LLMs** (Llama) |
-
-**Q.** What problem does Leaky ReLU solve that standard ReLU doesn't?
-
----
-
-# ReLU Variants
-
-**Q.** What does Leaky ReLU fix?
-
-**Dead neurons.** If a ReLU neuron's input is always negative, its gradient is always 0 — it can never recover. Leaky ReLU ensures a small gradient even for negative inputs.
-
----
-
-# Solution 2: Weight Initialization
-
-<div class="warning">
-
-**Q.** What happens if we initialize all weights to zero?
-
-</div>
-
----
-
-# Solution 2: Weight Initialization
-
-**Q.** What happens if all weights are zero?
-
-All neurons compute the same output → same gradient → same update.
-
-**Symmetry is never broken.** The network effectively has 1 neuron per layer.
-
----
-
-# Weight Initialization: The Goal
-
-We want activations to maintain roughly **constant variance** across layers.
-
-If variance grows per layer → exploding activations
-If variance shrinks per layer → vanishing activations
-
-![w:950px](figures/lec01/weight_init_activations.png)
-
----
-
-# Xavier and He Initialization
-
-| Method | Formula | When to use |
-|--------|---------|-------------|
-| **Xavier / Glorot** | $W \sim \mathcal{N}\left(0, \frac{2}{n_{in} + n_{out}}\right)$ | Sigmoid, Tanh |
-| **He / Kaiming** | $W \sim \mathcal{N}\left(0, \frac{2}{n_{in}}\right)$ | ReLU, Leaky ReLU |
-
-<div class="math-box">
-
-**Intuition (He init):** ReLU kills ~50% of activations (those $< 0$). So we need $\text{Var}(W) = \frac{2}{n_{in}}$ instead of $\frac{1}{n_{in}}$ to compensate.
-
-</div>
-
-In PyTorch: `nn.Linear` uses Kaiming uniform by default — sensible out of the box.
 
 ---
 
 <!-- _class: section-divider -->
 
-# Part 4: The Training Loop
+### PART 4
 
-The 5 lines you'll write every day this semester
+# Why go deep?
 
----
-
-# The Loss Surface
-
-<div class="columns">
-<div>
-
-![w:480px](figures/lec01/loss_surface_3d.png)
-
-</div>
-<div>
-
-Neural network optimization is **non-convex**:
-
-- Multiple local minima
-- Saddle points (common in high-D)
-- Plateaus and ravines
-
-**But**: most local minima are *good enough* in practice.
-
-</div>
-</div>
+A teaser for Lecture 2
 
 ---
 
-# The Loss Surface: Contour View
+# One layer is enough, in principle
 
-![w:700px](figures/lec01/loss_surface_contour.png)
+A single hidden layer can approximate any continuous function (UAT — next lecture).
 
-<div class="paper">
+**Q.** So why do we ever use more than one?
 
-Li et al., *"Visualizing the Loss Landscape of Neural Nets"*, NeurIPS 2018
-
-</div>
+Give an honest answer before turning the page.
 
 ---
 
-# The PyTorch Training Loop
+# Depth ⇒ hierarchical features
 
-<!-- _class: code-heavy -->
+![w:900px](figures/lec01/svg/feature_hierarchy.svg)
+
+---
+
+# Biology does the same thing
+
+Hubel & Wiesel (Nobel 1981) — the cat visual cortex is hierarchical.
+
+| Brain region | Roughly analogous layer | Detects |
+|--------------|------------------------|---------|
+| V1 | early layer | oriented edges |
+| V2 | next layer | textures, junctions |
+| V4 | mid layer | shapes, parts |
+| IT | late layer | objects, faces |
+
+Biology inspired the architecture; the optimizer and data are engineered.
+
+---
+
+# Depth has a cost · vanishing gradients
+
+$$\frac{\partial \mathcal{L}}{\partial \mathbf{W}_1} = \prod_{l=1}^{L} \frac{\partial \mathbf{h}_l}{\partial \mathbf{h}_{l-1}} \cdot \frac{\partial \mathcal{L}}{\partial \hat{y}}$$
+
+Each sigmoid factor ≤ 0.25:
+
+| Depth $L$ | upper bound on gradient magnitude |
+|----|----|
+| 5  | $10^{-3}$ |
+| 10 | $10^{-6}$ |
+| 20 | $10^{-12}$ |
+
+Early layers effectively stop learning. **This blocked depth for 20 years.**
+
+---
+
+# The fix · ReLU
+
+$$\text{ReLU}(z) = \max(0, z), \quad \text{ReLU}'(z) \in \{0, 1\}$$
+
+For active neurons the gradient is exactly 1 — no shrinkage.
+
+We'll come back to ResNets (the *real* fix for very deep nets) in Lecture 2.
+
+---
+
+<!-- _class: section-divider -->
+
+### PART 5
+
+# The training loop
+
+The five lines you'll type every day this semester
+
+---
+
+# The training cycle
+
+![w:880px](figures/lec01/svg/training_cycle.svg)
+
+---
+
+# The PyTorch training loop · code
 
 ```python
-import torch.nn as nn
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
-
-# 1. Data
-transform = transforms.Compose([transforms.ToTensor(),
-                                 transforms.Normalize((0.1307,), (0.3081,))])
-train_data = datasets.MNIST('./data', train=True, download=True, transform=transform)
-train_loader = DataLoader(train_data, batch_size=64, shuffle=True)
-
-# 2. Model + Loss + Optimizer
-model = MLP(784, 256, 10)
+model     = MLP(784, 256, 10).to('cuda')
 criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+optim     = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 
-# 3. Training loop
 for epoch in range(10):
-    for batch_x, batch_y in train_loader:
-        batch_x = batch_x.view(-1, 784)    # Flatten
-        logits = model(batch_x)             # Forward
-        loss = criterion(logits, batch_y)   # Loss
-        optimizer.zero_grad()               # Zero gradients
-        loss.backward()                     # Backward
-        optimizer.step()                    # Update
+    for x, y in loader:
+        x, y = x.view(-1, 784).to('cuda'), y.to('cuda')
+        logits = model(x)                   # 1. forward
+        loss   = criterion(logits, y)       # 2. loss
+        optim.zero_grad()                   # 3. zero grads
+        loss.backward()                     # 4. backward
+        optim.step()                        # 5. update
 ```
 
----
-
-# Anatomy of the Training Loop
-
-| Step | Code | What happens |
-|------|------|-------------|
-| **Forward** | `model(x)` | Input flows through layers |
-| **Loss** | `criterion(logits, y)` | Scalar measuring error |
-| **Zero grad** | `optimizer.zero_grad()` | Clear old gradients |
-| **Backward** | `loss.backward()` | Compute $\frac{\partial \mathcal{L}}{\partial \theta}$ via chain rule |
-| **Step** | `optimizer.step()` | $\theta \leftarrow \theta - \eta \nabla_\theta \mathcal{L}$ |
-
-**Q.** What happens if you forget `optimizer.zero_grad()`?
+Every real training script is a variation on this.
 
 ---
 
-# A Common Bug
+# One common bug · `zero_grad`
 
-**Q.** What happens if you forget `optimizer.zero_grad()`?
-
-PyTorch **accumulates** gradients by default.
-
-Without zeroing, each `.backward()` *adds* to existing gradients.
-
-After $k$ batches: effective gradient $= \sum_{i=1}^{k} \nabla_\theta \mathcal{L}_i$
-
-Your updates become huge and wrong.
+**Q.** What if you forget `optimizer.zero_grad()`?
 
 <div class="warning">
 
-This is the single most common PyTorch bug for beginners. Always zero gradients before each backward pass.
+PyTorch **accumulates** gradients by default. Without zeroing, each backward adds to the previous `.grad`. After $k$ batches you are stepping $k\times$ the real gradient — updates explode silently.
+
+The single most common PyTorch bug.
 
 </div>
 
 ---
 
-# Train / Validation / Test
+# Train / val / test
 
-![w:900px](figures/lec01/train_val_test_split.png)
-
----
-
-# Train / Validation / Test
-
-**Q.** Training loss is decreasing every epoch. Is the model getting better?
+![w:900px](figures/lec01/svg/train_val_test_split.svg)
 
 ---
 
-# Train / Validation / Test
+# Training loss ↓ ≠ model better
 
-**Q.** Training loss decreasing = better model?
-
-**Not necessarily.** Training loss *always* decreases (given enough capacity).
-
-What matters is **validation loss**:
-
-![w:900px](figures/lec01/training_curves.png)
+![w:920px](figures/lec01/svg/loss_curves_annotated.svg)
 
 ---
 
-# Overfitting: The Gap
+# Overfitting · the rule
 
-<div class="columns">
-<div>
-
-- Training loss ↓ always
-- Validation loss ↓ then ↑
-- The gap = **overfitting**
-
-**Use validation to decide:**
-- When to stop (early stopping)
-- Which hyperparameters are best
-- Whether model is too complex
-
-</div>
-<div>
+- Training loss monotonically drops.
+- Validation loss drops, then rises.
+- The gap **is** overfitting.
 
 <div class="warning">
 
-**Never** tune hyperparameters on the test set.
+**Never tune on the test set.**
 
-Test set = final exam you take **once**.
+Test = final exam you take once.
+Validation = practice exams, take many times.
+Training = studying.
 
-Validation set = practice exams you can take many times.
-
-</div>
-
-</div>
-</div>
-
----
-
-# Evaluation in PyTorch
-
-```python
-model.eval()                          # Switch to eval mode (disables dropout, etc.)
-with torch.no_grad():                 # No gradient computation needed
-    correct = 0
-    total = 0
-    for batch_x, batch_y in val_loader:
-        batch_x = batch_x.view(-1, 784)
-        logits = model(batch_x)
-        preds = logits.argmax(dim=1)  # Predicted class
-        correct += (preds == batch_y).sum().item()
-        total += batch_y.size(0)
-
-print(f"Validation accuracy: {correct/total:.4f}")
-model.train()                         # Switch back to train mode
-```
-
-**Q.** Why do we use `torch.no_grad()`? Why not just skip `loss.backward()`?
-
----
-
-# Evaluation in PyTorch
-
-**Q.** Why `torch.no_grad()`?
-
-Even without calling `.backward()`, PyTorch still **builds the computation graph** during the forward pass (allocating memory for potential gradients).
-
-`torch.no_grad()` skips graph construction entirely → faster + less memory.
-
----
-
-<!-- _class: section-divider -->
-
-# Part 5: Looking Ahead
-
-What this course will cover
-
----
-
-# The Landscape of Deep Learning
-
-| Architecture | Input | Lecture |
-|-------------|-------|---------|
-| MLP | Tabular, vectors | 1-3 |
-| CNN | Images, grids | 8-10 |
-| RNN / LSTM | Sequences | 11-12 |
-| Transformer | Anything (!) | 13-15 |
-| LLM | Text | 16-17 |
-| VLM | Image + Text | 18 |
-| VAE / GAN / Diffusion | Generation | 19-22 |
-
-Each architecture is designed for a specific **inductive bias** — an assumption about the structure of the data.
-
----
-
-# Textbooks
-
-<div class="columns">
-<div>
-
-### Primary
-1. Bishop & Bishop, *Deep Learning: Foundations and Concepts* (2024)
-2. Prince, *Understanding Deep Learning* (2023)
-3. Goodfellow et al., *Deep Learning* (2016)
-
-</div>
-<div>
-
-### Online
-4. Zhang et al., *Dive into Deep Learning* (d2l.ai)
-5. Karpathy, *Neural Networks: Zero to Hero* (YouTube)
-6. Andrew Ng, *Deep Learning Specialization* (Coursera)
-
-</div>
 </div>
 
 ---
 
 <!-- _class: summary-slide -->
 
-# Lecture 1: Summary
+# Lecture 1 — summary
 
-- **Deep Learning** = learn representations, not hand-craft them
-- **Why now**: data (ImageNet) + compute (GPUs) + algorithms (ReLU, Adam, ResNet)
-- **MLP recap**: layers, activations, parameter counting
-- **Why depth**: hierarchical features, but watch out for vanishing gradients
-- **ReLU** prevents vanishing gradients; **He init** maintains variance across layers
-- **Training loop**: forward → loss → zero_grad → backward → step
-- **Validation** detects overfitting; test set used **once**
+- **Deep learning = representation learning.** Features learned, not designed.
+- **Why now:** data + compute + algorithms compounded 2009–2017.
+- **Neuron = sum + squash.** Stack them and non-linearity keeps depth meaningful.
+- **Softmax + CE from MLE:** $\partial \mathcal{L} / \partial \mathbf{z} = \hat{\mathbf{y}} - \mathbf{y}$.
+- **Backprop** = three lines per layer, repeated.
+- **Training loop:** forward → loss → zero_grad → backward → step.
+
+### Read before Lecture 2
+
+**Prince · Understanding Deep Learning** — Ch 1, Ch 3. Free PDF at [udlbook.github.io](https://udlbook.github.io/udlbook/).
 
 ### Next lecture
 
-**Lecture 2**: Universal Approximation Theorem in depth, depth vs width tradeoffs, residual connections, and why ResNets changed everything.
+Why depth, ResNets, Xavier / He initialization derived from first principles.
 
 <div class="notebook">
 
-**Notebook**: [01-mlp-mnist.ipynb](https://colab.research.google.com/) — Build an MLP, train on MNIST, visualize loss curves and learned representations
+**1a** · `01a-micrograd.ipynb` — scalar autograd engine from scratch (Karpathy-style).
+**1b** · `01b-mlp-mnist.ipynb` — train this MLP on MNIST end-to-end.
 
 </div>

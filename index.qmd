@@ -4,75 +4,107 @@ subtitle: "IIT Gandhinagar · Aug 2026 · Prof. Nipun Batra"
 ---
 
 [Course website](https://nipunbatra.github.io/dl-2026/){.btn .btn-primary .btn-sm}
+[Syllabus &amp; reading map](syllabus.qmd){.btn .btn-outline-primary .btn-sm}
 [GitHub repo](https://github.com/nipunbatra/dl-teaching){.btn .btn-outline-secondary .btn-sm}
 
 ---
 
-## Module 1: Foundations & Deep Networks (Lectures 1–3)
+## Textbook backbone
 
-| Lec | Topic | Slides | Notebook |
-|:---:|-------|:------:|:--------:|
-| 1 | Why Deep Learning + MLP Recap | [HTML](html/lec01-why-dl-lecture.html) · [PDF](pdf/lec01-why-dl-lecture.pdf) | |
-| 2 | Universal Approximation & Going Deep | | |
-| 3 | Training Deep Networks in Practice | | |
+The course follows **Prince · *Understanding Deep Learning*** (2023, free PDF).
+Each lecture maps to one or more UDL chapters — see the tables below and the full [syllabus](syllabus.qmd).
 
-## Module 2: Optimization (Lectures 4–5)
+| Role | Resource |
+|------|----------|
+| **Primary** — assigned reading | [Prince, *Understanding Deep Learning* (2023)](https://udlbook.github.io/udlbook/) — free PDF, CC-BY figures |
+| **Supplement** — rigour &amp; curious reader | Bishop &amp; Bishop, *Deep Learning: Foundations and Concepts* (2024) |
+| **Labs** — hands-on PyTorch | Zhang et al., [*Dive into Deep Learning*](https://d2l.ai) |
+| **Video** — Transformer / LLM | Karpathy, *Neural Networks: Zero to Hero* |
+| **Classic** — bibliography | Goodfellow, Bengio, Courville (2016) |
 
-| Lec | Topic | Slides | Notebook |
-|:---:|-------|:------:|:--------:|
-| 4 | SGD Variants | | |
-| 5 | Adam & Learning Rate Schedules | | |
+---
 
-## Module 3: Regularization (Lectures 6–7)
+## Module 1 · Foundations &amp; Deep Networks (L1–L3)
 
-| Lec | Topic | Slides | Notebook |
-|:---:|-------|:------:|:--------:|
-| 6 | Classical Regularization | | |
-| 7 | Modern Regularization | | |
+| # | Topic | UDL | Slides | Notebook |
+|:---:|------|:---:|:------:|:--------:|
+| 1 | Why Deep Learning + MLP Recap | Ch 1, 3 | [HTML](html/lec01-why-dl-lecture.html) · [PDF](pdf/lec01-why-dl-lecture.pdf) | |
+| 2 | Universal Approximation &amp; Going Deep | Ch 4, 7, 11 | [HTML](html/lec02-uat-going-deep-lecture.html) · [PDF](pdf/lec02-uat-going-deep-lecture.pdf) | |
+| 3 | Training Deep Networks in Practice | Ch 6, 8 | [HTML](html/lec03-training-in-practice-lecture.html) · [PDF](pdf/lec03-training-in-practice-lecture.pdf) | |
 
-## Module 4: CNNs & Visual Recognition (Lectures 8–10)
+## Module 2 · Optimization (L4–L5)
 
-| Lec | Topic | Slides | Notebook |
-|:---:|-------|:------:|:--------:|
-| 8 | CNN Deep Dive + Classic Architectures | | |
-| 9 | Modern Architectures & Transfer Learning | | |
-| 10 | Object Detection, Localization & Segmentation | | |
+| # | Topic | UDL | Slides | Notebook |
+|:---:|------|:---:|:------:|:--------:|
+| 4 | SGD, Momentum, Nesterov | Ch 6 | [HTML](html/lec04-sgd-momentum-lecture.html) · [PDF](pdf/lec04-sgd-momentum-lecture.pdf) | |
+| 5 | Adam, AdamW, LR Schedules | Ch 6, 7 | [HTML](html/lec05-adam-schedules-lecture.html) · [PDF](pdf/lec05-adam-schedules-lecture.pdf) | |
 
-## Module 5: Sequence Models (Lectures 11–12)
+## Module 3 · Regularization (L6–L7)
 
-| Lec | Topic | Slides | Notebook |
-|:---:|-------|:------:|:--------:|
-| 11 | RNNs, LSTMs, GRUs | | |
-| 12 | Seq2Seq & Applications | | |
+| # | Topic | UDL | Slides | Notebook |
+|:---:|------|:---:|:------:|:--------:|
+| 6 | Classical Regularization &amp; Data Augmentation | Ch 9 | [HTML](html/lec06-regularization-classical-lecture.html) · [PDF](pdf/lec06-regularization-classical-lecture.pdf) | |
+| 7 | Dropout &amp; Normalization | Ch 9, 11 | [HTML](html/lec07-dropout-normalization-lecture.html) · [PDF](pdf/lec07-dropout-normalization-lecture.pdf) | |
 
-## Module 6: Attention & Transformers (Lectures 13–15)
+## Module 4 · CNNs &amp; Visual Recognition (L8–L10)
 
-| Lec | Topic | Slides | Notebook |
-|:---:|-------|:------:|:--------:|
-| 13 | Attention Mechanism | | |
-| 14 | The Transformer | | |
-| 15 | Tokenization & Pretraining | | |
+| # | Topic | UDL | Slides | Notebook |
+|:---:|------|:---:|:------:|:--------:|
+| 8 | CNN Deep Dive + Classic Architectures | Ch 10 | | |
+| 9 | Modern Architectures &amp; Transfer Learning | Ch 10, 11 | | |
+| 10 | Object Detection, Localization &amp; Segmentation | Bishop Ch 10 | | |
 
-## Module 7: LLMs & Vision-Language Models (Lectures 16–18)
+## Module 5 · Sequence Models (L11–L12)
 
-| Lec | Topic | Slides | Notebook |
-|:---:|-------|:------:|:--------:|
-| 16 | Large Language Models | | |
-| 17 | Alignment & Finetuning | | |
-| 18 | Vision-Language Models | | |
+| # | Topic | Reading | Slides | Notebook |
+|:---:|------|:-------:|:------:|:--------:|
+| 11 | RNNs, LSTMs, GRUs | Bishop Ch 12 | | |
+| 12 | Seq2Seq &amp; Motivation for Attention | Bishop Ch 12 | | |
 
-## Module 8: Generative Models (Lectures 19–22)
+## Module 6 · Attention &amp; Transformers (L13–L15)
 
-| Lec | Topic | Slides | Notebook |
-|:---:|-------|:------:|:--------:|
-| 19 | Autoencoders & VAEs | | |
-| 20 | GANs | | |
-| 21 | Diffusion Models: Theory | | |
-| 22 | Diffusion Models: Practice | | |
+| # | Topic | UDL | Slides | Notebook |
+|:---:|------|:---:|:------:|:--------:|
+| 13 | Attention Mechanism | Ch 12 | | |
+| 14 | The Transformer — Built Live | Ch 12 | | |
+| 15 | Tokenization &amp; Pretraining Paradigms | Ch 12 | | |
 
-## Module 9: Frontiers & Wrap-up (Lectures 23–24)
+## Module 7 · LLMs (L16–L17)
 
-| Lec | Topic | Slides | Notebook |
-|:---:|-------|:------:|:--------:|
-| 23 | Self-Supervised & Contrastive Learning | | |
-| 24 | Efficient DL & Open Problems | | |
+| # | Topic | Reading | Slides | Notebook |
+|:---:|------|:-------:|:------:|:--------:|
+| 16 | Large Language Models | Chinchilla + HF course | | |
+| 17 | Alignment &amp; Fine-tuning | HF PEFT + DPO | | |
+
+## Module 8 · Self-Supervised &amp; Vision-Language (L18–L19)
+
+| # | Topic | UDL | Slides | Notebook |
+|:---:|------|:---:|:------:|:--------:|
+| 18 | Self-Supervised &amp; Contrastive Learning | Ch 14 | | |
+| 19 | Vision-Language Models | Ch 12 + CLIP | | |
+
+## Module 9 · Generative Models (L20–L23)
+
+| # | Topic | UDL | Slides | Notebook |
+|:---:|------|:---:|:------:|:--------:|
+| 20 | Autoencoders &amp; VAEs | Ch 17 | | |
+| 21 | GANs | Ch 15 | | |
+| 22 | Diffusion Models — Theory | Ch 18 | | |
+| 23 | Diffusion Models — Practice | Ch 18 + `diffusers` | | |
+
+## Module 10 · Wrap-up (L24)
+
+| # | Topic | Reading | Slides | Notebook |
+|:---:|------|:-------:|:------:|:--------:|
+| 24 | Efficient Inference, Agents, Open Problems | Chip Huyen + HF inference | | |
+
+---
+
+## Code threads
+
+- **Language** · micrograd (L3) → MLP (L3) → Transformer (L13–14) → nanoGPT (L14–15) → LoRA fine-tune (L17)
+- **Vision** · MLP-MNIST (L1) → CNN-CIFAR (L8) → transfer-ResNet (L9) → ViT-CLIP (L19) → diffusion (L22–23)
+
+## Canonical examples
+
+Cat / not-cat · MNIST · CIFAR-10 · Tiny Shakespeare · CelebA

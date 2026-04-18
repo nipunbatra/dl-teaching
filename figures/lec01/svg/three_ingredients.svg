@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .box   { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.4; rx:8; ry:8; }
+      .box-a { fill:#EAD3C5; stroke:#D97757; stroke-width:1.5; rx:8; ry:8; }
+      .box-s { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.5; rx:8; ry:8; }
+      .box-b { fill:#DCE3E6; stroke:#4A6670; stroke-width:1.5; rx:8; ry:8; }
+      .lbl   { fill:#1F1F1E; font-size:15px; font-weight:600; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut   { fill:#6B6A65; font-size:12px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:16px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+  </defs>
+
+  <text x="480" y="30" text-anchor="middle" class="ttl">Three ingredients compounded 2009–2017 · remove any one and the timeline stalls</text>
+
+  <!-- Data column -->
+  <g transform="translate(60, 90)">
+    <rect class="box-b" x="0" y="0" width="260" height="230"/>
+    <!-- stylized stack-of-sheets icon for data -->
+    <g transform="translate(130, 50)">
+      <rect x="-40" y="-15" width="80" height="55" fill="#F0EEE5" stroke="#4A6670" stroke-width="1.2" rx="3"/>
+      <rect x="-40" y="-25" width="80" height="55" fill="#F0EEE5" stroke="#4A6670" stroke-width="1.2" rx="3"/>
+      <rect x="-40" y="-35" width="80" height="55" fill="#F0EEE5" stroke="#4A6670" stroke-width="1.2" rx="3"/>
+      <line x1="-30" y1="-20" x2="30" y2="-20" stroke="#4A6670" stroke-width="1"/>
+      <line x1="-30" y1="-10" x2="30" y2="-10" stroke="#4A6670" stroke-width="1"/>
+      <line x1="-30" y1="0"   x2="30" y2="0"   stroke="#4A6670" stroke-width="1"/>
+    </g>
+    <text x="130" y="120" text-anchor="middle" class="lbl" fill="#4A6670">DATA</text>
+    <text x="130" y="145" text-anchor="middle" class="mono">ImageNet · 14M images</text>
+    <text x="130" y="163" text-anchor="middle" class="mono">Common Crawl · PB of web</text>
+    <text x="130" y="181" text-anchor="middle" class="mono">YouTube · Wikipedia · GitHub</text>
+    <text x="130" y="208" text-anchor="middle" class="mut" font-style="italic">labels at scale</text>
+  </g>
+
+  <!-- Compute column -->
+  <g transform="translate(350, 90)">
+    <rect class="box-a" x="0" y="0" width="260" height="230"/>
+    <!-- chip icon -->
+    <g transform="translate(130, 50)">
+      <rect x="-35" y="-25" width="70" height="55" fill="#F0EEE5" stroke="#D97757" stroke-width="1.5" rx="4"/>
+      <rect x="-22" y="-12" width="44" height="30" fill="#D97757" opacity="0.3"/>
+      <line x1="-35" y1="-15" x2="-45" y2="-15" stroke="#D97757"/>
+      <line x1="-35" y1="-5"  x2="-45" y2="-5"  stroke="#D97757"/>
+      <line x1="-35" y1="5"   x2="-45" y2="5"   stroke="#D97757"/>
+      <line x1="-35" y1="15"  x2="-45" y2="15"  stroke="#D97757"/>
+      <line x1="35"  y1="-15" x2="45"  y2="-15" stroke="#D97757"/>
+      <line x1="35"  y1="-5"  x2="45"  y2="-5"  stroke="#D97757"/>
+      <line x1="35"  y1="5"   x2="45"  y2="5"   stroke="#D97757"/>
+      <line x1="35"  y1="15"  x2="45"  y2="15"  stroke="#D97757"/>
+      <text x="0" y="7" text-anchor="middle" class="mono" fill="#D97757" font-weight="600" font-size="12">GPU</text>
+    </g>
+    <text x="130" y="120" text-anchor="middle" class="lbl" fill="#D97757">COMPUTE</text>
+    <text x="130" y="145" text-anchor="middle" class="mono">NVIDIA GPU · 2007+</text>
+    <text x="130" y="163" text-anchor="middle" class="mono">TPU · 2016+</text>
+    <text x="130" y="181" text-anchor="middle" class="mono">cloud clusters · 10k+ GPUs</text>
+    <text x="130" y="208" text-anchor="middle" class="mut" font-style="italic">training: weeks → hours</text>
+  </g>
+
+  <!-- Algorithms column -->
+  <g transform="translate(640, 90)">
+    <rect class="box-s" x="0" y="0" width="260" height="230"/>
+    <!-- algorithm icon: chain of boxes -->
+    <g transform="translate(130, 50)">
+      <rect x="-45" y="-15" width="25" height="25" fill="#F0EEE5" stroke="#7B9E89" stroke-width="1.2"/>
+      <rect x="-15" y="-15" width="25" height="25" fill="#F0EEE5" stroke="#7B9E89" stroke-width="1.2"/>
+      <rect x="15"  y="-15" width="25" height="25" fill="#F0EEE5" stroke="#7B9E89" stroke-width="1.2"/>
+      <line x1="-20" y1="-2" x2="-15" y2="-2" stroke="#7B9E89"/>
+      <line x1="10"  y1="-2" x2="15"  y2="-2" stroke="#7B9E89"/>
+      <!-- skip arc -->
+      <path d="M -35 -15 Q 0 -35 30 -15" stroke="#7B9E89" fill="none" stroke-width="1.2" stroke-dasharray="3 2"/>
+    </g>
+    <text x="130" y="120" text-anchor="middle" class="lbl" fill="#7B9E89">ALGORITHMS</text>
+    <text x="130" y="145" text-anchor="middle" class="mono">ReLU · unblocks depth</text>
+    <text x="130" y="163" text-anchor="middle" class="mono">Adam · robust optimization</text>
+    <text x="130" y="181" text-anchor="middle" class="mono">skip connections · ResNets</text>
+    <text x="130" y="199" text-anchor="middle" class="mono">attention · Transformers</text>
+    <text x="130" y="220" text-anchor="middle" class="mut" font-style="italic">design breakthroughs</text>
+  </g>
+
+  <!-- Intersection at top -->
+  <text x="480" y="70" text-anchor="middle" class="tag">DATA × COMPUTE × ALGORITHMS</text>
+</svg>

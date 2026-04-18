@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 340" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .box   { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.2; rx:4; ry:4; }
+      .box-a { fill:#EAD3C5; stroke:#D97757; stroke-width:1.2; rx:4; ry:4; }
+      .box-r { fill:#F6D4CC; stroke:#A8324B; stroke-width:1.2; rx:4; ry:4; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:12px; fill:#1F1F1E; }
+      .lbl   { fill:#1F1F1E; font-size:13px; font-weight:600; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Adam vs AdamW — why L2 regularization is "broken" inside Adam</text>
+
+  <!-- LEFT: Adam + L2 (broken) -->
+  <g transform="translate(40, 70)">
+    <text x="210" y="-6" text-anchor="middle" class="tag" fill="#A8324B">ADAM + L2  (the broken one)</text>
+    <rect class="box-r" x="0" y="0" width="420" height="200"/>
+
+    <text x="15" y="28" class="lbl">① Fold L2 into the gradient</text>
+    <text x="15" y="52" class="mono">g_t  ←  ∇L(θ) + λθ</text>
+
+    <text x="15" y="90" class="lbl">② Compute moments AND normalize by √v</text>
+    <text x="15" y="114" class="mono">m̂_t = m_t / (1 − β₁^t)</text>
+    <text x="15" y="134" class="mono">v̂_t = v_t / (1 − β₂^t)</text>
+
+    <text x="15" y="170" class="lbl">③ Update</text>
+    <text x="15" y="190" class="mono">θ ← θ − η · m̂_t / (√v̂_t + ε)</text>
+
+    <text x="210" y="230" text-anchor="middle" class="mut" fill="#A8324B" font-style="italic">
+      the λθ term gets <tspan font-weight="600">scaled down</tspan> by √v̂_t —
+    </text>
+    <text x="210" y="246" text-anchor="middle" class="mut" fill="#A8324B" font-style="italic">
+      large-gradient params escape regularization
+    </text>
+  </g>
+
+  <!-- RIGHT: AdamW (decoupled) -->
+  <g transform="translate(500, 70)">
+    <text x="210" y="-6" text-anchor="middle" class="tag" fill="#D97757">ADAMW  (Loshchilov & Hutter 2017)</text>
+    <rect class="box-a" x="0" y="0" width="420" height="200"/>
+
+    <text x="15" y="28" class="lbl">① Gradient — no L2 added</text>
+    <text x="15" y="52" class="mono">g_t  ←  ∇L(θ)</text>
+
+    <text x="15" y="90" class="lbl">② Normal Adam moments</text>
+    <text x="15" y="114" class="mono">m̂_t = m_t / (1 − β₁^t)</text>
+    <text x="15" y="134" class="mono">v̂_t = v_t / (1 − β₂^t)</text>
+
+    <text x="15" y="170" class="lbl">③ Decoupled weight decay</text>
+    <text x="15" y="190" class="mono" fill="#D97757">θ ← θ − η·(m̂_t / (√v̂_t + ε)  +  λθ)</text>
+
+    <text x="210" y="230" text-anchor="middle" class="mut" fill="#D97757" font-style="italic">
+      the λθ term is applied <tspan font-weight="600">directly</tspan> — not inside the adaptive scaling
+    </text>
+    <text x="210" y="246" text-anchor="middle" class="mut" fill="#D97757" font-style="italic">
+      every parameter gets the same decay
+    </text>
+  </g>
+
+  <text x="480" y="320" text-anchor="middle" class="mut">
+    Rule · use <tspan font-family="'JetBrains Mono'" fill="#D97757" font-weight="600">AdamW</tspan> for everything. It is what modern LLMs use (Llama, Claude, GPT).
+  </text>
+</svg>

@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .axis  { stroke:#1F1F1E; stroke-width:1; fill:none; }
+      .sig   { stroke:#4A6670; stroke-width:2; fill:none; }
+      .sigd  { stroke:#D97757; stroke-width:2; fill:none; }
+      .bar   { fill:#A8324B; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .big   { fill:#A8324B; font-size:28px; font-family:Fraunces; font-weight:600; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Why sigmoids vanish — the gradient ceiling is 0.25, then you multiply them</text>
+
+  <!-- LEFT: sigmoid and its derivative -->
+  <g transform="translate(40, 70)">
+    <text x="150" y="-8" text-anchor="middle" class="tag">SIGMOID &amp; ITS DERIVATIVE</text>
+    <rect x="0" y="0" width="300" height="200" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <!-- axes -->
+    <line x1="0" y1="100" x2="300" y2="100" class="axis"/>
+    <line x1="150" y1="0" x2="150" y2="200" class="axis"/>
+    <text x="295" y="95" class="mut" text-anchor="end">1</text>
+    <text x="145" y="12" class="mut" text-anchor="end">1</text>
+
+    <!-- sigmoid S-curve -->
+    <path class="sig" d="M 0 190 C 100 188 135 110 150 100 C 165 90 200 12 300 10"/>
+    <text x="40" y="40" class="mono" fill="#4A6670">σ(z)</text>
+
+    <!-- derivative bell -->
+    <path class="sigd" d="M 0 190 C 60 188 120 105 150 105 C 180 105 240 188 300 190"/>
+    <!-- peak at z=0: σ'(0) = 0.25, so 25% of the way up -->
+    <circle cx="150" cy="155" r="4" fill="#D97757"/>
+    <line x1="150" y1="155" x2="25" y2="155" stroke="#D97757" stroke-dasharray="3 2" stroke-width="0.8"/>
+    <text x="18" y="158" text-anchor="end" class="mono" fill="#D97757">0.25</text>
+    <text x="45" y="180" class="mono" fill="#D97757">σ'(z)</text>
+
+    <text x="150" y="222" text-anchor="middle" class="mut">z</text>
+  </g>
+
+  <!-- MIDDLE: multiplication cascade -->
+  <g transform="translate(380, 90)">
+    <text x="140" y="-15" text-anchor="middle" class="tag">CHAIN-RULE PRODUCT</text>
+    <rect x="0" y="0" width="280" height="180" fill="#F6D4CC" stroke="#A8324B"/>
+
+    <text x="140" y="30" text-anchor="middle" class="mono" font-size="13">∂L/∂W₁  ≈  ∏  σ'(·)</text>
+    <text x="140" y="52" text-anchor="middle" class="mut">each factor ≤ 0.25</text>
+
+    <g transform="translate(20, 75)">
+      <text x="0" y="0" class="mono" fill="#1F1F1E">0.25</text>
+      <text x="42" y="0" class="mono" fill="#6B6A65">×</text>
+      <text x="56" y="0" class="mono" fill="#1F1F1E">0.25</text>
+      <text x="98" y="0" class="mono" fill="#6B6A65">×</text>
+      <text x="112" y="0" class="mono" fill="#1F1F1E">0.25</text>
+      <text x="154" y="0" class="mono" fill="#6B6A65">× ...</text>
+      <text x="198" y="0" class="mono" fill="#1F1F1E">×</text>
+      <text x="212" y="0" class="mono" fill="#A8324B" font-weight="600">0.25</text>
+    </g>
+
+    <text x="140" y="125" text-anchor="middle" class="mono" fill="#A8324B" font-weight="600" font-size="14">= 0.25^L</text>
+
+    <text x="140" y="155" text-anchor="middle" class="mut" font-style="italic">shrinks exponentially in depth</text>
+  </g>
+
+  <!-- RIGHT: bar chart of gradient at each depth -->
+  <g transform="translate(700, 70)">
+    <text x="105" y="-8" text-anchor="middle" class="tag">GRADIENT MAGNITUDE</text>
+    <rect x="0" y="0" width="220" height="200" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <line x1="0" y1="195" x2="220" y2="195" class="axis"/>
+
+    <!-- L=1 full height, L=5 tiny, etc. log scale conceptual -->
+    <rect class="bar" x="14"  y="15"  width="28" height="180"/>
+    <rect class="bar" x="54"  y="68"  width="28" height="127"/>
+    <rect class="bar" x="94"  y="120" width="28" height="75"/>
+    <rect class="bar" x="134" y="160" width="28" height="35"/>
+    <rect class="bar" x="174" y="188" width="28" height="7"/>
+
+    <text x="28"  y="210" text-anchor="middle" class="mono">L=1</text>
+    <text x="68"  y="210" text-anchor="middle" class="mono">L=5</text>
+    <text x="108" y="210" text-anchor="middle" class="mono">L=10</text>
+    <text x="148" y="210" text-anchor="middle" class="mono">L=20</text>
+    <text x="188" y="210" text-anchor="middle" class="mono">L=50</text>
+
+    <text x="110" y="232" text-anchor="middle" class="mut" font-style="italic">log-scale — early layers get ≈ 0 signal</text>
+  </g>
+
+  <text x="480" y="360" text-anchor="middle" class="mut" font-style="italic" font-size="13">
+    For 20 layers · 0.25²⁰ ≈ 10⁻¹² · the gradient is literally lost in floating-point noise.
+    This is <tspan fill="#A8324B" font-weight="600">why depth was blocked for 20 years</tspan>.
+  </text>
+</svg>

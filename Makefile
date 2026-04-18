@@ -7,8 +7,8 @@ HTML_DIR := html
 DIAGRAMS_DIR := diagrams
 FIGURES_DIR := figures
 
-# Theme
-THEME := $(SLIDES_DIR)/dl-theme.css
+# Theme (anthropic — the official theme going forward)
+THEME := $(SLIDES_DIR)/anthropic-theme.css
 
 # Find all lecture .md files in slides/
 SLIDES_MD := $(wildcard $(SLIDES_DIR)/*.md)
@@ -21,8 +21,36 @@ PDF_TARGETS := $(patsubst $(SLIDES_DIR)/%.md, $(PDF_DIR)/%.pdf, $(SLIDES_MD))
 HTML_TARGETS := $(patsubst $(SLIDES_DIR)/%.md, $(HTML_DIR)/%.html, $(SLIDES_MD))
 
 # Default target
-all: dirs $(PDF_TARGETS) $(HTML_TARGETS)
+all: diagrams dirs $(PDF_TARGETS) $(HTML_TARGETS)
 	@echo "Done: all slides built"
+
+# Convenience: build HTML for the first 5 lectures
+first5: dirs
+	@echo "Building HTML for L1-L5..."
+	@for n in 01 02 03 04 05; do \
+		for f in $(SLIDES_DIR)/lec$$n-*.md; do \
+			if [ -f "$$f" ]; then \
+				name=$$(basename "$$f" .md); \
+				echo "  $$f -> $(HTML_DIR)/$$name.html"; \
+				npx marp "$$f" -o "$(HTML_DIR)/$$name.html" --html --allow-local-files --theme-set $(THEME); \
+			fi \
+		done \
+	done
+	@echo "Done: L1-L5 HTML"
+
+# Convenience: build HTML for the first 7 lectures (adds L6, L7)
+first7: dirs
+	@echo "Building HTML for L1-L7..."
+	@for n in 01 02 03 04 05 06 07; do \
+		for f in $(SLIDES_DIR)/lec$$n-*.md; do \
+			if [ -f "$$f" ]; then \
+				name=$$(basename "$$f" .md); \
+				echo "  $$f -> $(HTML_DIR)/$$name.html"; \
+				npx marp "$$f" -o "$(HTML_DIR)/$$name.html" --html --allow-local-files --theme-set $(THEME); \
+			fi \
+		done \
+	done
+	@echo "Done: L1-L7 HTML"
 
 # Create output directories and copy images
 dirs:
@@ -38,16 +66,12 @@ dirs:
 # Generate diagrams
 diagrams:
 	@echo "Generating diagrams..."
-	@if [ -f "$(DIAGRAMS_DIR)/generate_all.py" ]; then \
-		python $(DIAGRAMS_DIR)/generate_all.py; \
-	else \
-		echo "  No generate_all.py found, skipping"; \
-	fi
+	@python $(DIAGRAMS_DIR)/generate_all.py
 
 # Pattern rule for PDF
 $(PDF_DIR)/%.pdf: $(SLIDES_DIR)/%.md $(THEME) | dirs
 	@echo "Building PDF: $< -> $@"
-	@npx marp $< -o $@ --pdf --allow-local-files --theme-set $(THEME) --html 2>/dev/null || echo "  (PDF skipped - needs Chrome)"
+	@npx marp $< -o $@ --pdf --allow-local-files --theme-set $(THEME) --html || echo "  (PDF skipped - needs Chrome)"
 
 # Pattern rule for HTML
 $(HTML_DIR)/%.html: $(SLIDES_DIR)/%.md $(THEME) | dirs

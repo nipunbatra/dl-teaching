@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .con   { stroke:#6B6A65; stroke-width:1; fill:none; opacity:0.6; }
+      .star  { fill:#7B9E89; stroke:#1F1F1E; stroke-width:1; }
+      .bad   { fill:#A8324B; stroke:#1F1F1E; stroke-width:1; }
+      .sad   { fill:#C9A961; stroke:#1F1F1E; stroke-width:1; }
+      .arrow { stroke:#1F1F1E; stroke-width:1; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Three kinds of critical points — the landscape is mostly saddles in high dimension</text>
+
+  <!-- Panel 1: local minimum (bowl) -->
+  <g transform="translate(40, 70)">
+    <text x="140" y="-10" text-anchor="middle" class="tag" fill="#7B9E89">LOCAL MINIMUM</text>
+    <rect x="0" y="0" width="280" height="260" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <!-- Concentric closed contours -->
+    <g class="con">
+      <ellipse cx="140" cy="140" rx="120" ry="90"/>
+      <ellipse cx="140" cy="140" rx="90"  ry="70"/>
+      <ellipse cx="140" cy="140" rx="60"  ry="48"/>
+      <ellipse cx="140" cy="140" rx="30"  ry="24"/>
+    </g>
+    <circle cx="140" cy="140" r="6" class="star"/>
+
+    <!-- Gradient arrows pointing inward -->
+    <g class="arrow" stroke="#D97757">
+      <line x1="40"  y1="60"  x2="70"  y2="90"/>
+      <line x1="240" y1="60"  x2="210" y2="90"/>
+      <line x1="40"  y1="220" x2="70"  y2="190"/>
+      <line x1="240" y1="220" x2="210" y2="190"/>
+    </g>
+
+    <text x="140" y="250" text-anchor="middle" class="mut">all directions ↑ · ∇ = 0 · Hessian ≻ 0</text>
+  </g>
+
+  <!-- Panel 2: saddle -->
+  <g transform="translate(340, 70)">
+    <text x="140" y="-10" text-anchor="middle" class="tag" fill="#C9A961">SADDLE POINT</text>
+    <rect x="0" y="0" width="280" height="260" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <!-- Hyperbolic contours -->
+    <g class="con">
+      <path d="M 10 30  Q 140 140 10 250"/>
+      <path d="M 40 40  Q 140 140 40 240"/>
+      <path d="M 80 55  Q 140 140 80 225"/>
+      <path d="M 270 30  Q 140 140 270 250"/>
+      <path d="M 240 40  Q 140 140 240 240"/>
+      <path d="M 200 55  Q 140 140 200 225"/>
+
+      <path d="M 30 10  Q 140 140 250 10"/>
+      <path d="M 50 50  Q 140 140 230 50"/>
+      <path d="M 30 270 Q 140 140 250 270"/>
+      <path d="M 50 230 Q 140 140 230 230"/>
+    </g>
+    <circle cx="140" cy="140" r="6" class="sad"/>
+
+    <!-- arrows showing one direction up, other down -->
+    <g class="arrow" stroke="#A8324B">
+      <line x1="140" y1="60"  x2="140" y2="90"/>
+      <line x1="140" y1="220" x2="140" y2="190"/>
+    </g>
+    <g class="arrow" stroke="#7B9E89">
+      <line x1="70"  y1="140" x2="100" y2="140"/>
+      <line x1="210" y1="140" x2="180" y2="140"/>
+    </g>
+
+    <text x="140" y="250" text-anchor="middle" class="mut">some ↑, some ↓ · ∇ = 0 · Hessian indefinite</text>
+  </g>
+
+  <!-- Panel 3: plateau -->
+  <g transform="translate(640, 70)">
+    <text x="140" y="-10" text-anchor="middle" class="tag" fill="#A8324B">PLATEAU</text>
+    <rect x="0" y="0" width="280" height="260" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <!-- A wide flat region with contours far apart -->
+    <g class="con">
+      <path d="M 20 140 Q 140 130 260 140" fill="none"/>
+      <path d="M 20 120 Q 140 110 260 120" fill="none"/>
+      <path d="M 20 160 Q 140 150 260 160" fill="none"/>
+      <ellipse cx="140" cy="140" rx="100" ry="15" fill="#EAD3C5" opacity="0.4"/>
+    </g>
+    <!-- flat region label -->
+    <rect x="60" y="120" width="160" height="40" fill="#EAD3C5" opacity="0.3" stroke="#D97757" stroke-dasharray="3 2"/>
+    <text x="140" y="145" text-anchor="middle" class="mono" fill="#D97757">~0 gradient</text>
+
+    <g class="arrow" stroke="#D97757">
+      <line x1="40"  y1="60"  x2="70"  y2="100"/>
+      <line x1="240" y1="60"  x2="210" y2="100"/>
+      <line x1="40"  y1="220" x2="70"  y2="180"/>
+      <line x1="240" y1="220" x2="210" y2="180"/>
+    </g>
+
+    <text x="140" y="250" text-anchor="middle" class="mut">long flat region · gradient tiny everywhere</text>
+  </g>
+
+  <!-- Key insight bar -->
+  <g transform="translate(40, 345)">
+    <rect x="0" y="0" width="880" height="50" fill="#EEEBDF" stroke="#C9C4B5"/>
+    <text x="14" y="22" class="tag">IN HIGH DIMENSION</text>
+    <text x="14" y="40" class="mut">
+      Bengio et al. 2014 · <tspan fill="#C9A961" font-weight="600">saddles outnumber minima exponentially</tspan>.
+      Momentum + noise help escape them. Most of SGD's time is spent crossing saddles, not getting stuck in minima.
+    </text>
+  </g>
+</svg>

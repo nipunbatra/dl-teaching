@@ -1,0 +1,111 @@
+---
+title: "Syllabus · UDL mapping"
+subtitle: "Lecture-by-lecture reading map for Prince · *Understanding Deep Learning* (2023)"
+---
+
+> Primary textbook · Simon J. D. Prince, *Understanding Deep Learning* (MIT Press, 2023).
+> Free PDF at [udlbook.github.io](https://udlbook.github.io/udlbook/).
+>
+> The course follows the UDL chapter order closely. Read the cited chapter(s) **before** each lecture.
+
+## Module 1 · Foundations & Going Deep  { .module-1 }
+
+| # | Lecture | UDL chapter | Supplementary |
+|:-:|---------|-------------|---------------|
+| 1 | Why DL + MLP Recap | **Ch 1** *Introduction* · **Ch 3** *Shallow networks* | Bishop Ch 6 |
+| 2 | UAT + ResNets + Initialization | **Ch 4** *Deep networks* · **Ch 7** *Gradients &amp; init* · **Ch 11** *Residual networks* | He et al. 2015 (ResNet) |
+| 3 | Training Deep Networks in Practice | **Ch 6** *Fitting models* (early) · **Ch 8** *Measuring performance* | Karpathy *makemore-1* |
+
+## Module 2 · Optimization  { .module-2 }
+
+| # | Lecture | UDL chapter | Supplementary |
+|:-:|---------|-------------|---------------|
+| 4 | SGD, Momentum, Nesterov | **Ch 6** (SGD + momentum) | Sutskever et al. 2013 |
+| 5 | Adam, AdamW, Schedules | **Ch 6** (Adam) · **Ch 7** (initialization revisited) | Kingma &amp; Ba 2015; Loshchilov &amp; Hutter 2017 |
+
+## Module 3 · Regularization  { .module-3 }
+
+| # | Lecture | UDL chapter | Supplementary |
+|:-:|---------|-------------|---------------|
+| 6 | Classical Regularization &amp; Data Augmentation | **Ch 9** *Regularization* (early) | Belkin et al. 2019 (double descent) |
+| 7 | Dropout &amp; Normalization | **Ch 9** (dropout) · **Ch 11** (BatchNorm, residual + norm) | Santurkar et al. 2018; Ba et al. 2016 |
+
+## Module 4 · CNNs &amp; Visual Recognition  { .module-4 }
+
+| # | Lecture | UDL chapter | Supplementary |
+|:-:|---------|-------------|---------------|
+| 8 | CNN Deep Dive + Classic Architectures | **Ch 10** *Convolutional networks* (early) | LeCun 1998; Krizhevsky 2012 |
+| 9 | Modern CNNs &amp; Transfer Learning | **Ch 10** (advanced) · **Ch 11** (skip connections in CNNs) | Szegedy 2014; Howard 2017 |
+| 10 | Detection &amp; Segmentation | Not in Prince — use Bishop Ch 10 + CS231n notes | Ren 2015 (Faster R-CNN); Redmon 2015 (YOLO); Ronneberger 2015 (U-Net); SAM |
+
+## Module 5 · Sequence Models  { .module-5 }
+
+| # | Lecture | Reading | Supplementary |
+|:-:|---------|---------|---------------|
+| 11 | RNNs, LSTMs, GRUs | Bishop Ch 12 · d2l §9–10 | Hochreiter &amp; Schmidhuber 1997 |
+| 12 | Seq2Seq &amp; Motivation for Attention | Bishop Ch 12 · d2l §10.6–10.8 | Sutskever et al. 2014 |
+
+## Module 6 · Attention &amp; Transformers  { .module-6 }
+
+| # | Lecture | UDL chapter | Supplementary |
+|:-:|---------|-------------|---------------|
+| 13 | Attention Mechanism | **Ch 12** *Transformers* (early) | Bahdanau 2014; Luong 2015 |
+| 14 | The Transformer — Built Live | **Ch 12** (mid) | Vaswani 2017; Karpathy *nanoGPT* |
+| 15 | Tokenization &amp; Pretraining Paradigms | **Ch 12** (pretraining) | Sennrich 2015 (BPE); Devlin 2018 (BERT); Radford 2018 (GPT-1); Karpathy *tokenization* |
+
+## Module 7 · LLMs  { .module-7 }
+
+| # | Lecture | Reading | Supplementary |
+|:-:|---------|---------|---------------|
+| 16 | Large Language Models | Hoffmann 2022 (Chinchilla); HuggingFace course Ch 1 | Karpathy *State of GPT*; Touvron 2023 (Llama 2); Su 2021 (RoPE) |
+| 17 | Alignment &amp; Fine-tuning | HF PEFT docs; Ouyang 2022 (InstructGPT); Rafailov 2023 (DPO) | Hu 2021 (LoRA); Dettmers 2023 (QLoRA); Anthropic *Constitutional AI* |
+
+## Module 8 · Self-Supervision &amp; Vision-Language  { .module-8 }
+
+| # | Lecture | UDL chapter | Supplementary |
+|:-:|---------|-------------|---------------|
+| 18 | Self-Supervised &amp; Contrastive Learning | **Ch 14** *Unsupervised learning* (contrastive) | Chen 2020 (SimCLR); Grill 2020 (BYOL); He 2021 (MAE); Oquab 2023 (DINOv2) |
+| 19 | Vision-Language Models | **Ch 12** (ViT) + papers | Dosovitskiy 2020 (ViT); Radford 2021 (CLIP); Liu 2023 (LLaVA); Alayrac 2022 (Flamingo) |
+
+## Module 9 · Generative Models  { .module-9 }
+
+| # | Lecture | UDL chapter | Supplementary |
+|:-:|---------|-------------|---------------|
+| 20 | Autoencoders &amp; VAEs | **Ch 17** *Variational autoencoders* | Kingma &amp; Welling 2013 |
+| 21 | GANs | **Ch 15** *GANs* | Goodfellow 2014; Radford 2015 (DCGAN); Arjovsky 2017 (WGAN) |
+| 22 | Diffusion Models — Theory | **Ch 18** *Diffusion models* (early) | Ho et al. 2020 (DDPM); Song 2020 (Score-SDE) |
+| 23 | Diffusion Models — Practice | **Ch 18** (later) + HF `diffusers` docs | Rombach 2022 (Stable Diffusion); Ho &amp; Salimans 2022 (CFG); Peebles &amp; Xie 2023 (DiT) |
+
+## Module 10 · Wrap-up  { .module-10 }
+
+| # | Lecture | Reading |
+|:-:|---------|---------|
+| 24 | Efficient Inference, Agents &amp; Open Problems | Chip Huyen blog; HF inference docs; Dao 2022 (FlashAttention); Hinton 2015 (distillation); Anthropic interpretability blog |
+
+---
+
+## Where UDL doesn't cover · four lectures
+
+Four lectures lean on blog posts + papers because they post-date or sit outside UDL's scope:
+
+- **L10 · Detection & Segmentation** — UDL does not cover OD/segmentation. Use Bishop Ch 10 + CS231n notes.
+- **L16 · LLMs at scale** — scaling laws, RoPE, GQA, distributed training. Use the Chinchilla paper + HuggingFace course.
+- **L17 · Alignment & Fine-tuning** — LoRA, RLHF, DPO. Use HF PEFT docs + the DPO paper.
+- **L24 · Efficient Inference + frontier** — KV-cache, quantization, agents, interpretability. Use Chip Huyen blog + HF inference docs + Anthropic interp posts.
+
+For these, the lecture slides provide a curated reading list on their final slide.
+
+---
+
+## Reading pattern (suggested)
+
+1. **Before the lecture** · read the UDL chapter listed in this table. Skim if pressed for time; read carefully if you want the full derivation.
+2. **During the lecture** · slides mirror the UDL order but add live Q-before-A pedagogy and running code examples.
+3. **After the lecture** · attempt the notebook. For derivation-heavy topics, revisit the UDL chapter.
+
+## Other references
+
+- **Bishop &amp; Bishop**, *Deep Learning: Foundations and Concepts* (2024) — rigorous second opinion for curious students.
+- **Zhang et al.**, *Dive into Deep Learning* (d2l.ai) — hands-on PyTorch notebooks.
+- **Karpathy**, *Neural Networks: Zero to Hero* (YouTube) — build-from-scratch video series; official backup for L13–L15.
+- **Goodfellow, Bengio, Courville**, *Deep Learning* (2016) — classical reference (no Transformer, no diffusion).

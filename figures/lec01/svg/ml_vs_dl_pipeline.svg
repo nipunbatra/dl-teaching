@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .box   { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.3; rx:4; ry:4; }
+      .box-a { fill:#EAD3C5; stroke:#D97757; stroke-width:1.3; rx:4; ry:4; }
+      .box-s { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.3; rx:4; ry:4; }
+      .box-h { fill:#F6F0DF; stroke:#C9A961; stroke-width:1.3; rx:4; ry:4; }
+      .leaf  { fill:#EAE7DC; stroke:#6B6A65; stroke-width:1; }
+      .ink   { stroke:#1F1F1E; fill:none; stroke-width:1.3; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .lbl   { fill:#1F1F1E; font-size:13px; font-weight:600; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .hand  { fill:#C9A961; font-style:italic; font-size:12px; font-family:Inter, sans-serif; }
+    </style>
+    <marker id="mv-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/>
+    </marker>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Classical ML vs deep learning — same input, different pipelines</text>
+
+  <!-- TOP ROW: Classical ML -->
+  <g transform="translate(30, 80)">
+    <text x="0" y="-6" class="tag">CLASSICAL ML  ·  humans design features</text>
+
+    <!-- Input image -->
+    <rect class="leaf" x="0" y="10" width="80" height="80"/>
+    <g transform="translate(40,50)">
+      <!-- tiny cat silhouette -->
+      <path d="M -20 10 L -15 -10 L -5 -20 L 0 -15 L 5 -20 L 15 -10 L 20 10 L 15 18 L -15 18 Z" fill="#D97757" opacity="0.8"/>
+      <circle cx="-8" cy="-2" r="1.5" fill="#1F1F1E"/>
+      <circle cx="8"  cy="-2" r="1.5" fill="#1F1F1E"/>
+    </g>
+    <text x="40" y="105" text-anchor="middle" class="mut">image</text>
+
+    <!-- arrow -->
+    <line x1="85" y1="50" x2="120" y2="50" class="ink" marker-end="url(#mv-a)"/>
+
+    <!-- SIFT / HOG box (hand-crafted) -->
+    <rect class="box-h" x="130" y="20" width="160" height="60"/>
+    <text x="210" y="40" text-anchor="middle" class="hand">HAND-CRAFTED</text>
+    <text x="210" y="58" text-anchor="middle" class="mono">SIFT · HOG · edges</text>
+    <text x="210" y="74" text-anchor="middle" class="hand" font-size="10">(humans design this)</text>
+
+    <line x1="295" y1="50" x2="330" y2="50" class="ink" marker-end="url(#mv-a)"/>
+
+    <!-- Feature vector -->
+    <rect class="leaf" x="340" y="30" width="120" height="40"/>
+    <text x="400" y="55" text-anchor="middle" class="mono">φ(x) ∈ ℝ^128</text>
+    <text x="400" y="85" text-anchor="middle" class="mut">features</text>
+
+    <line x1="465" y1="50" x2="500" y2="50" class="ink" marker-end="url(#mv-a)"/>
+
+    <!-- Classifier box -->
+    <rect class="box" x="510" y="20" width="160" height="60"/>
+    <text x="590" y="40" text-anchor="middle" class="tag">CLASSIFIER</text>
+    <text x="590" y="60" text-anchor="middle" class="mono">SVM · tree · logistic</text>
+    <text x="590" y="76" text-anchor="middle" class="mut" font-size="10">(learned)</text>
+
+    <line x1="675" y1="50" x2="710" y2="50" class="ink" marker-end="url(#mv-a)"/>
+
+    <!-- Output -->
+    <rect class="box-s" x="720" y="30" width="120" height="40"/>
+    <text x="780" y="55" text-anchor="middle" class="lbl" fill="#7B9E89">"cat"</text>
+  </g>
+
+  <!-- Divider -->
+  <line x1="60" y1="200" x2="900" y2="200" stroke="#C9C4B5" stroke-dasharray="3 3"/>
+
+  <!-- BOTTOM ROW: Deep Learning -->
+  <g transform="translate(30, 240)">
+    <text x="0" y="-6" class="tag" fill="#D97757">DEEP LEARNING  ·  model learns features end-to-end</text>
+
+    <!-- Input image -->
+    <rect class="leaf" x="0" y="10" width="80" height="80"/>
+    <g transform="translate(40,50)">
+      <path d="M -20 10 L -15 -10 L -5 -20 L 0 -15 L 5 -20 L 15 -10 L 20 10 L 15 18 L -15 18 Z" fill="#D97757" opacity="0.8"/>
+      <circle cx="-8" cy="-2" r="1.5" fill="#1F1F1E"/>
+      <circle cx="8"  cy="-2" r="1.5" fill="#1F1F1E"/>
+    </g>
+    <text x="40" y="105" text-anchor="middle" class="mut">image</text>
+
+    <!-- Single big arrow into big box -->
+    <line x1="85" y1="50" x2="120" y2="50" class="ink" marker-end="url(#mv-a)"/>
+
+    <!-- Big deep network box -->
+    <rect class="box-a" x="130" y="0" width="540" height="100"/>
+    <text x="400" y="18" text-anchor="middle" class="tag" fill="#D97757">DEEP NEURAL NETWORK  ·  all stages jointly trained</text>
+
+    <!-- Stylized layers inside -->
+    <g transform="translate(155, 30)">
+      <!-- Layer stacks (vertical circle columns) -->
+      <g>
+        <circle cx="10" cy="10" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+        <circle cx="10" cy="30" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+        <circle cx="10" cy="50" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+      </g>
+      <g>
+        <circle cx="70" cy="10" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+        <circle cx="70" cy="30" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+        <circle cx="70" cy="50" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+      </g>
+      <g>
+        <circle cx="130" cy="10" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+        <circle cx="130" cy="30" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+        <circle cx="130" cy="50" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+      </g>
+      <g>
+        <circle cx="190" cy="10" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+        <circle cx="190" cy="30" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+        <circle cx="190" cy="50" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+      </g>
+      <g>
+        <circle cx="250" cy="10" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+        <circle cx="250" cy="30" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+        <circle cx="250" cy="50" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+      </g>
+      <g>
+        <circle cx="310" cy="10" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+        <circle cx="310" cy="30" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+        <circle cx="310" cy="50" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+      </g>
+      <g>
+        <circle cx="370" cy="10" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+        <circle cx="370" cy="30" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+        <circle cx="370" cy="50" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+      </g>
+      <g>
+        <circle cx="430" cy="10" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+        <circle cx="430" cy="30" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+        <circle cx="430" cy="50" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+      </g>
+      <g>
+        <circle cx="490" cy="10" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+        <circle cx="490" cy="30" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+        <circle cx="490" cy="50" r="6" fill="#F0EEE5" stroke="#1F1F1E"/>
+      </g>
+      <!-- sparse edges -->
+      <g stroke="#6B6A65" stroke-width="0.5" opacity="0.4">
+        <line x1="10" y1="10"  x2="70"  y2="30"/>
+        <line x1="10" y1="30"  x2="70"  y2="10"/>
+        <line x1="10" y1="50"  x2="70"  y2="50"/>
+        <line x1="70" y1="10"  x2="130" y2="30"/>
+        <line x1="70" y1="30"  x2="130" y2="50"/>
+        <line x1="130" y1="30" x2="190" y2="10"/>
+        <line x1="130" y1="10" x2="190" y2="30"/>
+        <line x1="190" y1="30" x2="250" y2="30"/>
+        <line x1="250" y1="10" x2="310" y2="30"/>
+        <line x1="310" y1="30" x2="370" y2="10"/>
+        <line x1="370" y1="30" x2="430" y2="50"/>
+        <line x1="430" y1="30" x2="490" y2="30"/>
+      </g>
+    </g>
+
+    <text x="400" y="96" text-anchor="middle" class="mut" fill="#D97757" font-style="italic">edges → textures → parts → objects (all learned)</text>
+
+    <line x1="675" y1="50" x2="710" y2="50" class="ink" marker-end="url(#mv-a)"/>
+
+    <rect class="box-s" x="720" y="30" width="120" height="40"/>
+    <text x="780" y="55" text-anchor="middle" class="lbl" fill="#7B9E89">"cat"</text>
+  </g>
+
+  <text x="480" y="385" text-anchor="middle" class="mut" font-style="italic">
+    The <tspan fill="#D97757" font-weight="600">entire stack</tspan> — feature extractor and classifier — is trained together with one loss and one optimizer.
+  </text>
+</svg>

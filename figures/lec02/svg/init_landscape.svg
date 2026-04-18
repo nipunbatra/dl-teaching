@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 340" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .axis  { stroke:#1F1F1E; stroke-width:1; }
+      .grid  { stroke:#C9C4B5; stroke-width:0.5; opacity:0.6; }
+      .hist  { stroke:none; opacity:0.85; }
+      .lbl   { fill:#1F1F1E; font-size:12px; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#4A6670; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Initialization controls whether activations live or die</text>
+
+  <!-- Panel 1: too small -->
+  <g transform="translate(40, 70)">
+    <text x="140" y="-4" text-anchor="middle" class="tag" fill="#A8324B">W ~ N(0, 0.01²) · too small</text>
+    <rect x="0" y="0" width="260" height="160" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <line x1="0" y1="135" x2="260" y2="135" class="axis"/>
+    <!-- shrinking histograms over layers (narrowing around 0) -->
+    <g fill="#A8324B" class="hist">
+      <rect x="120" y="40"  width="20" height="95"/>
+      <rect x="115" y="60"  width="30" height="75" opacity="0.65"/>
+      <rect x="110" y="80"  width="40" height="55" opacity="0.45"/>
+      <rect x="105" y="100" width="50" height="35" opacity="0.3"/>
+      <rect x="100" y="120" width="60" height="15" opacity="0.2"/>
+    </g>
+    <text x="130" y="165" text-anchor="middle" class="mono">layer 1 → layer 5</text>
+    <text x="130" y="195" text-anchor="middle" class="mut">variance collapses to 0</text>
+    <text x="130" y="211" text-anchor="middle" class="mut" fill="#A8324B" font-weight="600">all activations vanish</text>
+  </g>
+
+  <!-- Panel 2: just right -->
+  <g transform="translate(340, 70)">
+    <text x="140" y="-4" text-anchor="middle" class="tag" fill="#7B9E89">W ~ N(0, 2/n_in) · He · just right</text>
+    <rect x="0" y="0" width="260" height="160" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <line x1="0" y1="135" x2="260" y2="135" class="axis"/>
+    <!-- stable gaussians stacked -->
+    <g fill="#7B9E89" class="hist">
+      <path d="M 40 135 Q 130 30 220 135 Z" opacity="0.25"/>
+      <path d="M 40 135 Q 130 45 220 135 Z" opacity="0.3"/>
+      <path d="M 40 135 Q 130 40 220 135 Z" opacity="0.3"/>
+      <path d="M 40 135 Q 130 38 220 135 Z" opacity="0.3"/>
+      <path d="M 40 135 Q 130 42 220 135 Z" opacity="0.3"/>
+    </g>
+    <text x="130" y="165" text-anchor="middle" class="mono">layer 1 → layer 5</text>
+    <text x="130" y="195" text-anchor="middle" class="mut">variance preserved across depth</text>
+    <text x="130" y="211" text-anchor="middle" class="mut" fill="#7B9E89" font-weight="600">gradients flow freely</text>
+  </g>
+
+  <!-- Panel 3: too large -->
+  <g transform="translate(640, 70)">
+    <text x="140" y="-4" text-anchor="middle" class="tag" fill="#D97757">W ~ N(0, 1) · too large</text>
+    <rect x="0" y="0" width="260" height="160" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <line x1="0" y1="135" x2="260" y2="135" class="axis"/>
+    <!-- widening + bimodal (saturating tanh, blowing up ReLU) -->
+    <g fill="#D97757" class="hist" opacity="0.6">
+      <rect x="20"  y="70"  width="40" height="65"/>
+      <rect x="200" y="70"  width="40" height="65"/>
+      <rect x="10"  y="50"  width="40" height="85" opacity="0.5"/>
+      <rect x="210" y="50"  width="40" height="85" opacity="0.5"/>
+      <rect x="0"   y="30"  width="30" height="105" opacity="0.3"/>
+      <rect x="230" y="30"  width="30" height="105" opacity="0.3"/>
+    </g>
+    <text x="130" y="165" text-anchor="middle" class="mono">layer 1 → layer 5</text>
+    <text x="130" y="195" text-anchor="middle" class="mut">activations saturate at ±∞</text>
+    <text x="130" y="211" text-anchor="middle" class="mut" fill="#D97757" font-weight="600">gradients explode or die</text>
+  </g>
+
+  <!-- footer: the scaling rule -->
+  <g transform="translate(40, 280)">
+    <rect x="0" y="0" width="880" height="44" fill="#EAE7DC" stroke="#C9C4B5"/>
+    <text x="14" y="22" class="mono" fill="#1F1F1E">
+      Rule · Var(W) = 2/n_in  →  ReLU (He).  Var(W) = 2/(n_in+n_out)  →  Sigmoid/Tanh (Xavier).
+    </text>
+    <text x="14" y="38" class="mut">Derivation: layer variance = n_in · Var(W) · Var(x). ReLU kills half, so multiply numerator by 2.</text>
+  </g>
+</svg>

@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .axis  { stroke:#1F1F1E; stroke-width:1.2; fill:none; }
+      .grid  { stroke:#C9C4B5; stroke-width:0.5; opacity:0.5; }
+      .train { stroke:#4A6670; stroke-width:2.4; fill:none; }
+      .test-c{ stroke:#A8324B; stroke-width:2.6; fill:none; }
+      .band  { fill:#F6D4CC; opacity:0.35; }
+      .marker{ stroke:#C9A961; stroke-width:1.4; stroke-dasharray:5 3; fill:none; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Double descent — classical U, then a second descent past the interpolation threshold</text>
+
+  <g transform="translate(80, 70)">
+    <rect x="0" y="0" width="800" height="240" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <g class="grid">
+      <line x1="0" y1="60"  x2="800" y2="60"/>
+      <line x1="0" y1="120" x2="800" y2="120"/>
+      <line x1="0" y1="180" x2="800" y2="180"/>
+      <line x1="100" y1="0" x2="100" y2="240"/>
+      <line x1="200" y1="0" x2="200" y2="240"/>
+      <line x1="300" y1="0" x2="300" y2="240"/>
+      <line x1="400" y1="0" x2="400" y2="240"/>
+      <line x1="500" y1="0" x2="500" y2="240"/>
+      <line x1="600" y1="0" x2="600" y2="240"/>
+      <line x1="700" y1="0" x2="700" y2="240"/>
+    </g>
+
+    <line x1="0" y1="240" x2="800" y2="240" class="axis"/>
+    <line x1="0" y1="0"   x2="0"   y2="240" class="axis"/>
+
+    <!-- interpolation threshold -->
+    <line x1="340" y1="0" x2="340" y2="240" class="marker"/>
+    <text x="340" y="12" class="mono" fill="#C9A961" text-anchor="middle">interpolation threshold</text>
+    <text x="340" y="26" class="mut" fill="#C9A961" text-anchor="middle">params ≈ data</text>
+
+    <!-- spike region shaded -->
+    <rect class="band" x="310" y="0" width="60" height="240"/>
+
+    <!-- Train loss — drops, then stays near 0 -->
+    <path class="train" d="M 5 80 Q 80 120 160 160 Q 240 200 320 230 L 345 238 L 360 239 L 400 239 L 500 239 L 600 239 L 700 239 L 795 239"/>
+    <text x="510" y="234" class="mono" fill="#4A6670">train loss → 0</text>
+
+    <!-- Test loss — U shape, spike at threshold, then descent -->
+    <path class="test-c" d="M 5 40 Q 80 90 160 130 L 230 165 L 290 170 L 320 90 L 340 20 L 360 80 L 420 140 Q 500 170 600 180 Q 700 190 795 195"/>
+    <text x="160" y="110" class="mono" fill="#A8324B">classical U</text>
+    <text x="340" y="50" class="mono" fill="#A8324B" text-anchor="middle" font-weight="600">spike!</text>
+    <text x="580" y="160" class="mono" fill="#A8324B">modern descent</text>
+
+    <!-- Region labels along the x axis -->
+    <rect x="5"   y="218" width="300" height="18" fill="#DCE3E6" opacity="0.6"/>
+    <text x="155" y="232" text-anchor="middle" class="mono" fill="#4A6670">CLASSICAL REGIME · underparameterized</text>
+    <rect x="380" y="218" width="420" height="18" fill="#EAD3C5" opacity="0.6"/>
+    <text x="590" y="232" text-anchor="middle" class="mono" fill="#D97757">OVERPARAMETERIZED · modern regime</text>
+
+    <text x="400" y="264" text-anchor="middle" class="mut">model capacity  (# params, width, depth)  →</text>
+    <text x="-10" y="120" transform="rotate(-90 -10 120)" text-anchor="middle" class="mut">loss  →</text>
+  </g>
+
+  <text x="480" y="365" text-anchor="middle" class="mut" font-style="italic">
+    <tspan fill="#A8324B" font-weight="600">Belkin et al. 2019.</tspan>
+    More params past the threshold does not hurt — it helps. This is why 10⁹-param models generalize.
+  </text>
+</svg>

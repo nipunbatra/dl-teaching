@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .axis  { stroke:#1F1F1E; stroke-width:1; fill:none; }
+      .grid  { stroke:#C9C4B5; stroke-width:0.4; opacity:0.5; }
+      .bar-g { fill:#A8324B; opacity:0.6; }
+      .bar-g2{ fill:#4A6670; opacity:0.6; }
+      .ema   { stroke:#D97757; stroke-width:2.4; fill:none; }
+      .true  { stroke:#7B9E89; stroke-width:1.6; fill:none; stroke-dasharray:4 3; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
+      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">Momentum = exponential moving average of gradients — averaging out noise</text>
+
+  <g transform="translate(80, 70)">
+    <rect x="0" y="0" width="800" height="240" fill="#F0EEE5" stroke="#C9C4B5"/>
+
+    <g class="grid">
+      <line x1="0" y1="60"  x2="800" y2="60"/>
+      <line x1="0" y1="120" x2="800" y2="120"/>
+      <line x1="0" y1="180" x2="800" y2="180"/>
+      <line x1="100" y1="0" x2="100" y2="240"/>
+      <line x1="200" y1="0" x2="200" y2="240"/>
+      <line x1="300" y1="0" x2="300" y2="240"/>
+      <line x1="400" y1="0" x2="400" y2="240"/>
+      <line x1="500" y1="0" x2="500" y2="240"/>
+      <line x1="600" y1="0" x2="600" y2="240"/>
+      <line x1="700" y1="0" x2="700" y2="240"/>
+    </g>
+    <line x1="0" y1="120" x2="800" y2="120" class="axis"/>
+    <text x="5" y="117" class="mono" fill="#6B6A65" font-size="10">0</text>
+
+    <!-- true gradient as dashed horizontal -->
+    <line x1="0" y1="85" x2="800" y2="85" class="true"/>
+    <text x="790" y="82" text-anchor="end" class="mut" fill="#7B9E89">true gradient</text>
+
+    <!-- Noisy per-batch gradients as bars (alternating direction) -->
+    <g>
+      <rect class="bar-g" x="20" y="50" width="18" height="70"/>
+      <rect class="bar-g2" x="50" y="120" width="18" height="50"/>
+      <rect class="bar-g" x="80" y="60" width="18" height="60"/>
+      <rect class="bar-g2" x="110" y="120" width="18" height="35"/>
+      <rect class="bar-g" x="140" y="45" width="18" height="75"/>
+      <rect class="bar-g2" x="170" y="120" width="18" height="60"/>
+      <rect class="bar-g" x="200" y="70" width="18" height="50"/>
+      <rect class="bar-g2" x="230" y="120" width="18" height="30"/>
+      <rect class="bar-g" x="260" y="55" width="18" height="65"/>
+      <rect class="bar-g" x="290" y="75" width="18" height="45"/>
+      <rect class="bar-g2" x="320" y="120" width="18" height="40"/>
+      <rect class="bar-g" x="350" y="62" width="18" height="58"/>
+      <rect class="bar-g" x="380" y="80" width="18" height="40"/>
+      <rect class="bar-g" x="410" y="68" width="18" height="52"/>
+      <rect class="bar-g2" x="440" y="120" width="18" height="25"/>
+      <rect class="bar-g" x="470" y="72" width="18" height="48"/>
+      <rect class="bar-g" x="500" y="85" width="18" height="35"/>
+      <rect class="bar-g" x="530" y="78" width="18" height="42"/>
+      <rect class="bar-g" x="560" y="80" width="18" height="40"/>
+      <rect class="bar-g2" x="590" y="120" width="18" height="22"/>
+      <rect class="bar-g" x="620" y="78" width="18" height="42"/>
+      <rect class="bar-g" x="650" y="82" width="18" height="38"/>
+      <rect class="bar-g" x="680" y="80" width="18" height="40"/>
+      <rect class="bar-g" x="710" y="84" width="18" height="36"/>
+      <rect class="bar-g" x="740" y="82" width="18" height="38"/>
+      <rect class="bar-g" x="770" y="85" width="18" height="35"/>
+    </g>
+
+    <!-- EMA curve: starts near 0, converges to true gradient ≈ y=85 -->
+    <path class="ema" d="
+      M 20 120
+      L 50 115
+      L 80 108
+      L 110 110
+      L 140 101
+      L 170 105
+      L 200 99
+      L 230 102
+      L 260 96
+      L 290 95
+      L 320 97
+      L 350 93
+      L 380 92
+      L 410 90
+      L 440 92
+      L 470 90
+      L 500 89
+      L 530 88
+      L 560 87
+      L 590 88
+      L 620 87
+      L 650 87
+      L 680 86
+      L 710 86
+      L 740 86
+      L 770 85
+      L 795 85
+    "/>
+
+    <!-- Labels -->
+    <text x="790" y="95" text-anchor="end" class="mono" fill="#D97757" font-weight="600">m_t (EMA) — smooth</text>
+
+    <text x="100" y="230" class="mono" fill="#A8324B">raw per-batch gradient</text>
+    <line x1="270" y1="225" x2="290" y2="225" class="bar-g" stroke-width="6"/>
+
+    <text x="400" y="258" text-anchor="middle" class="mut">mini-batch step →</text>
+  </g>
+
+  <!-- Bottom formula -->
+  <g transform="translate(80, 340)">
+    <text x="400" y="0" text-anchor="middle" class="mono" font-size="13">
+      m<tspan baseline-shift="sub" font-size="9">t</tspan>  =  β · m<tspan baseline-shift="sub" font-size="9">t−1</tspan>  +  (1−β) · g<tspan baseline-shift="sub" font-size="9">t</tspan>           β = 0.9 · effective memory ≈ 10 steps
+    </text>
+  </g>
+</svg>

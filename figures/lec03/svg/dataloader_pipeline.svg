@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" font-family="Fraunces, Georgia, serif">
+  <defs>
+    <style>
+      .box    { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.3; rx:4; ry:4; }
+      .box-a  { fill:#EAD3C5; stroke:#D97757; stroke-width:1.3; rx:4; ry:4; }
+      .box-s  { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.3; rx:4; ry:4; }
+      .box-b  { fill:#DCE3E6; stroke:#4A6670; stroke-width:1.3; rx:4; ry:4; }
+      .ink    { stroke:#1F1F1E; fill:none; stroke-width:1.3; }
+      .mut-l  { stroke:#6B6A65; fill:none; stroke-width:1; stroke-dasharray:4 3; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:12px; fill:#1F1F1E; }
+      .lbl    { fill:#1F1F1E; font-size:13px; }
+      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+    <marker id="arrP" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/>
+    </marker>
+  </defs>
+
+  <text x="480" y="28" text-anchor="middle" class="ttl">The PyTorch data pipeline — CPU prep while the GPU computes</text>
+
+  <!-- Flow boxes -->
+  <g transform="translate(30, 90)">
+    <!-- Dataset -->
+    <rect class="box" x="0" y="0" width="150" height="90"/>
+    <text x="75" y="24" text-anchor="middle" class="tag">1. DATASET</text>
+    <text x="75" y="50" text-anchor="middle" class="mono">__getitem__(i)</text>
+    <text x="75" y="70" text-anchor="middle" class="mut">one sample · disk → tensor</text>
+
+    <!-- transforms -->
+    <rect class="box-s" x="200" y="0" width="150" height="90"/>
+    <text x="275" y="24" text-anchor="middle" class="tag" fill="#7B9E89">2. TRANSFORMS</text>
+    <text x="275" y="50" text-anchor="middle" class="mono">ToTensor · Normalize</text>
+    <text x="275" y="70" text-anchor="middle" class="mut">crop · flip · augment</text>
+
+    <!-- DataLoader -->
+    <rect class="box-a" x="400" y="0" width="180" height="90"/>
+    <text x="490" y="24" text-anchor="middle" class="tag" fill="#D97757">3. DATALOADER</text>
+    <text x="490" y="50" text-anchor="middle" class="mono">batch_size · shuffle</text>
+    <text x="490" y="70" text-anchor="middle" class="mut">num_workers · pin_memory</text>
+
+    <!-- Device -->
+    <rect class="box-b" x="630" y="0" width="150" height="90"/>
+    <text x="705" y="24" text-anchor="middle" class="tag" fill="#4A6670">4. DEVICE</text>
+    <text x="705" y="50" text-anchor="middle" class="mono">.to('cuda')</text>
+    <text x="705" y="70" text-anchor="middle" class="mut">non-blocking=True</text>
+
+    <!-- Model -->
+    <rect class="box" x="800" y="0" width="130" height="90"/>
+    <text x="865" y="24" text-anchor="middle" class="tag">5. MODEL(x)</text>
+    <text x="865" y="50" text-anchor="middle" class="mono">forward pass</text>
+    <text x="865" y="70" text-anchor="middle" class="mut">on GPU</text>
+
+    <!-- arrows -->
+    <g class="ink" marker-end="url(#arrP)">
+      <line x1="150" y1="45" x2="200" y2="45"/>
+      <line x1="350" y1="45" x2="400" y2="45"/>
+      <line x1="580" y1="45" x2="630" y2="45"/>
+      <line x1="780" y1="45" x2="800" y2="45"/>
+    </g>
+  </g>
+
+  <!-- Workers parallelism visualization -->
+  <g transform="translate(70, 220)">
+    <text x="0" y="0" class="tag">WHAT num_workers DOES</text>
+    <g>
+      <!-- serial (workers=0) -->
+      <text x="0" y="28" class="mono" fill="#A8324B">num_workers=0 (main thread):</text>
+      <rect x="220" y="16" width="100" height="16" fill="#A8324B" opacity="0.6"/>
+      <rect x="330" y="16" width="40" height="16" fill="#1F1F1E" opacity="0.8"/>
+      <rect x="380" y="16" width="100" height="16" fill="#A8324B" opacity="0.6"/>
+      <rect x="490" y="16" width="40" height="16" fill="#1F1F1E" opacity="0.8"/>
+      <text x="270" y="28" class="mono" fill="#F0EEE5" font-weight="600">load</text>
+      <text x="350" y="28" class="mono" fill="#F0EEE5">GPU</text>
+      <text x="430" y="28" class="mono" fill="#F0EEE5" font-weight="600">load</text>
+      <text x="510" y="28" class="mono" fill="#F0EEE5">GPU</text>
+      <text x="540" y="28" class="mut" fill="#A8324B">← GPU idle while CPU loads</text>
+
+      <!-- parallel (workers=4) -->
+      <text x="0" y="58" class="mono" fill="#7B9E89">num_workers=4 (prefetch):</text>
+      <rect x="220" y="46" width="80"  height="16" fill="#7B9E89" opacity="0.6"/>
+      <rect x="220" y="46" width="80"  height="16" fill="#7B9E89" opacity="0.6"/>
+      <rect x="302" y="46" width="80"  height="16" fill="#7B9E89" opacity="0.6"/>
+      <rect x="384" y="46" width="80"  height="16" fill="#7B9E89" opacity="0.6"/>
+      <rect x="466" y="46" width="80"  height="16" fill="#7B9E89" opacity="0.6"/>
+      <text x="260" y="58" class="mono" fill="#F0EEE5">load</text>
+      <text x="342" y="58" class="mono" fill="#F0EEE5">load</text>
+      <text x="424" y="58" class="mono" fill="#F0EEE5">load</text>
+      <text x="506" y="58" class="mono" fill="#F0EEE5">load</text>
+
+      <rect x="220" y="66" width="400" height="16" fill="#1F1F1E" opacity="0.8"/>
+      <text x="420" y="78" class="mono" fill="#F0EEE5" font-weight="600">GPU busy continuously</text>
+      <text x="630" y="78" class="mut" fill="#7B9E89">← CPU pre-loads next batch</text>
+    </g>
+  </g>
+
+  <!-- tip -->
+  <g transform="translate(70, 330)">
+    <text x="0" y="0" class="mut" font-style="italic" font-size="12">
+      Rule of thumb · <tspan font-family="'JetBrains Mono'" fill="#1F1F1E">num_workers ≈ 4 × num_GPUs</tspan> ·  pin_memory=True with GPU · persistent_workers=True for long epochs.
+    </text>
+  </g>
+</svg>
