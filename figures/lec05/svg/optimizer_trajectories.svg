@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .axis { stroke: #1F1F1E; stroke-width: 1; fill: none; }
+    .contour { fill: none; stroke: #CFCBBE; stroke-width: 0.8; }
+    .sgd { stroke: #4A6670; fill: none; stroke-width: 2; }
+    .mom { stroke: #7B9E89; fill: none; stroke-width: 2; }
+    .adam { stroke: #D97757; fill: none; stroke-width: 2.2; }
+  </style>
+  <rect class="bg" width="960" height="400"/>
+  <text x="480" y="30" class="title" text-anchor="middle">Optimizer trajectories on an ill-conditioned quadratic (κ=10)</text>
+
+  <!-- Panel 1: SGD -->
+  <g transform="translate(40, 60)">
+    <text x="140" y="0" class="head" text-anchor="middle">Vanilla SGD</text>
+    <text x="140" y="18" class="caption" text-anchor="middle">zig-zags across ravine · 180 steps</text>
+    <rect fill="white" stroke="#4A6670" stroke-width="1" x="0" y="30" width="280" height="220"/>
+    <!-- contours -->
+    <g class="contour">
+      <ellipse cx="140" cy="140" rx="120" ry="30"/>
+      <ellipse cx="140" cy="140" rx="90" ry="22"/>
+      <ellipse cx="140" cy="140" rx="60" ry="14"/>
+      <ellipse cx="140" cy="140" rx="30" ry="7"/>
+    </g>
+    <!-- SGD zigzag -->
+    <path class="sgd" d="M 30 60 L 60 230 L 75 50 L 95 220 L 110 60 L 125 215 L 137 65 L 143 215 L 145 140"/>
+    <circle cx="30" cy="60" r="4" fill="#4A6670"/>
+    <circle cx="145" cy="140" r="5" fill="#D97757"/>
+  </g>
+
+  <!-- Panel 2: Momentum -->
+  <g transform="translate(340, 60)">
+    <text x="140" y="0" class="head" text-anchor="middle">SGD + Momentum</text>
+    <text x="140" y="18" class="caption" text-anchor="middle">damped zig-zag · 60 steps</text>
+    <rect fill="white" stroke="#4A6670" stroke-width="1" x="0" y="30" width="280" height="220"/>
+    <g class="contour">
+      <ellipse cx="140" cy="140" rx="120" ry="30"/>
+      <ellipse cx="140" cy="140" rx="90" ry="22"/>
+      <ellipse cx="140" cy="140" rx="60" ry="14"/>
+      <ellipse cx="140" cy="140" rx="30" ry="7"/>
+    </g>
+    <path class="mom" d="M 30 60 Q 60 150 100 110 T 140 140"/>
+    <circle cx="30" cy="60" r="4" fill="#7B9E89"/>
+    <circle cx="140" cy="140" r="5" fill="#D97757"/>
+  </g>
+
+  <!-- Panel 3: Adam -->
+  <g transform="translate(640, 60)">
+    <text x="140" y="0" class="head" text-anchor="middle">Adam / AdamW</text>
+    <text x="140" y="18" class="caption" text-anchor="middle">near-direct · 30 steps</text>
+    <rect fill="white" stroke="#4A6670" stroke-width="1" x="0" y="30" width="280" height="220"/>
+    <g class="contour">
+      <ellipse cx="140" cy="140" rx="120" ry="30"/>
+      <ellipse cx="140" cy="140" rx="90" ry="22"/>
+      <ellipse cx="140" cy="140" rx="60" ry="14"/>
+      <ellipse cx="140" cy="140" rx="30" ry="7"/>
+    </g>
+    <path class="adam" d="M 30 60 Q 80 110 140 140"/>
+    <circle cx="30" cy="60" r="4" fill="#D97757"/>
+    <circle cx="140" cy="140" r="5" fill="#1F1F1E"/>
+  </g>
+
+  <!-- Legend -->
+  <g transform="translate(40, 300)">
+    <rect fill="white" stroke="#4A6670" stroke-width="0.8" x="0" y="0" width="880" height="75" rx="6"/>
+    <text x="20" y="24" class="head">How to read</text>
+    <text x="20" y="44" class="body">Each panel · same ill-conditioned quadratic f(x,y) = 10 x² + y² · Hessian eigenvalues 10, 1 · κ=10.</text>
+    <text x="20" y="60" class="body">Same LR for all three. SGD oscillates, momentum smooths, Adam rescales per-parameter → ~6× fewer steps.</text>
+  </g>
+</svg>

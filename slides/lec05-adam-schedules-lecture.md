@@ -101,6 +101,12 @@ $$G_t = G_{t-1} + g_t^2, \qquad \theta_t = \theta_{t-1} - \frac{\eta}{\sqrt{G_t 
 
 ---
 
+# Trajectories · SGD vs momentum vs Adam
+
+![w:920px](figures/lec05/svg/optimizer_trajectories.svg)
+
+---
+
 # Adam · the full update
 
 <div class="math-box">

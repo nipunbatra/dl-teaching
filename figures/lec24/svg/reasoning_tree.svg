@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 11px; fill: #1F1F1E; }
+    .caption { font-size: 10px; fill: #6B6B69; }
+    .node { fill: white; stroke: #4A6670; stroke-width: 1; rx: 4; }
+    .correct { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.4; rx: 4; }
+    .wrong { fill: #F4D6DB; stroke: #A8324B; stroke-width: 1.2; rx: 4; }
+    .best { fill: #FFF3EE; stroke: #D97757; stroke-width: 2; rx: 4; }
+    .edge { stroke: #6B6B69; stroke-width: 0.8; fill: none; }
+    .best-edge { stroke: #D97757; stroke-width: 1.8; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="420"/>
+  <text x="480" y="28" class="title" text-anchor="middle">Test-time compute · explore multiple reasoning paths, pick the best</text>
+
+  <!-- Root prompt -->
+  <rect fill="#F7EED6" stroke="#C9A961" stroke-width="1.4" x="350" y="55" width="260" height="40" rx="4"/>
+  <text x="480" y="80" class="body" text-anchor="middle">Problem · find ∫ x² sin(x) dx</text>
+
+  <!-- Level 1 · 3 branches -->
+  <g>
+    <path class="edge" d="M420 95 L180 155"/>
+    <path class="edge" d="M480 95 L480 155"/>
+    <path class="best-edge" d="M540 95 L780 155"/>
+
+    <rect class="wrong" x="80" y="155" width="200" height="40"/>
+    <text x="180" y="180" class="body" text-anchor="middle">approach 1 · u-sub u = sin(x)</text>
+
+    <rect class="node" x="380" y="155" width="200" height="40"/>
+    <text x="480" y="180" class="body" text-anchor="middle">approach 2 · tabular integration</text>
+
+    <rect class="best" x="680" y="155" width="200" height="40"/>
+    <text x="780" y="180" class="body" text-anchor="middle">approach 3 · IBP twice</text>
+  </g>
+
+  <!-- Level 2 branches -->
+  <g>
+    <!-- from wrong (approach 1) -->
+    <path class="edge" d="M180 195 L180 235"/>
+    <rect class="wrong" x="80" y="235" width="200" height="40"/>
+    <text x="180" y="260" class="body" text-anchor="middle">stuck · du = cos(x) dx</text>
+
+    <!-- from middle (approach 2) -->
+    <path class="edge" d="M480 195 L480 235"/>
+    <rect class="correct" x="380" y="235" width="200" height="40"/>
+    <text x="480" y="260" class="body" text-anchor="middle">sets up D-I table · ok</text>
+
+    <!-- from best (approach 3) -->
+    <path class="best-edge" d="M780 195 L780 235"/>
+    <rect class="best" x="680" y="235" width="200" height="40"/>
+    <text x="780" y="260" class="body" text-anchor="middle">IBP: u=x², dv=sin(x)dx</text>
+  </g>
+
+  <!-- Level 3 · converge -->
+  <g>
+    <path class="edge" d="M180 275 L180 315"/>
+    <rect class="wrong" x="80" y="315" width="200" height="40"/>
+    <text x="180" y="333" class="body" text-anchor="middle">abandon path</text>
+    <text x="180" y="348" class="caption" text-anchor="middle">× wrong method</text>
+
+    <path class="edge" d="M480 275 L480 315"/>
+    <rect class="correct" x="380" y="315" width="200" height="40"/>
+    <text x="480" y="333" class="body" text-anchor="middle">arrives at answer · 12 steps</text>
+    <text x="480" y="348" class="caption" text-anchor="middle">✓ but slow</text>
+
+    <path class="best-edge" d="M780 275 L780 315"/>
+    <rect class="best" x="680" y="315" width="200" height="40"/>
+    <text x="780" y="333" class="body" text-anchor="middle">answer · 6 steps · sin(x)(x²-2) + 2x cos(x) + C</text>
+    <text x="780" y="348" class="caption" text-anchor="middle">✓ fastest</text>
+  </g>
+
+  <!-- Footer note -->
+  <rect x="40" y="375" width="880" height="40" fill="#FFF3EE" stroke="#D97757" stroke-width="1" rx="6"/>
+  <text x="480" y="395" class="body" text-anchor="middle"><tspan font-weight="600">Reasoning models</tspan> (o1, Claude thinking) explore multiple branches internally, keep the one with highest self-scored confidence.</text>
+  <text x="480" y="409" class="caption" text-anchor="middle">Effectively a search tree at inference time · more compute = deeper search = higher accuracy on hard problems.</text>
+</svg>

@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .mono { font-family: "IBM Plex Mono", monospace; font-size: 12px; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .gt { fill: none; stroke: #7B9E89; stroke-width: 2.5; }
+    .pred { fill: none; stroke: #D97757; stroke-width: 2.5; stroke-dasharray: 5 3; }
+    .inter { fill: #A8324B; opacity: 0.15; stroke: #A8324B; stroke-width: 1; }
+    .box { fill: white; stroke: #4A6670; stroke-width: 1; rx: 4; }
+    .imgbg { fill: #E8EDEF; }
+  </style>
+  <rect class="bg" width="960" height="400"/>
+  <text x="480" y="30" class="title" text-anchor="middle">IoU · same metric, four different overlaps</text>
+
+  <!-- 4 mini-examples -->
+  <g transform="translate(40, 60)">
+    <!-- Example 1: perfect -->
+    <g transform="translate(0, 0)">
+      <rect class="imgbg" x="0" y="0" width="200" height="180"/>
+      <rect class="gt"   x="50" y="40" width="100" height="100"/>
+      <rect class="pred" x="50" y="40" width="100" height="100"/>
+      <rect class="inter" x="50" y="40" width="100" height="100"/>
+      <text x="100" y="205" class="head" text-anchor="middle">IoU = 1.00</text>
+      <text x="100" y="223" class="caption" text-anchor="middle">perfect match</text>
+    </g>
+    <!-- Example 2: good overlap -->
+    <g transform="translate(230, 0)">
+      <rect class="imgbg" x="0" y="0" width="200" height="180"/>
+      <rect class="gt"   x="50" y="40" width="100" height="100"/>
+      <rect class="pred" x="65" y="55" width="95" height="95"/>
+      <rect class="inter" x="65" y="55" width="85" height="85"/>
+      <text x="100" y="205" class="head" text-anchor="middle">IoU ≈ 0.74</text>
+      <text x="100" y="223" class="caption" text-anchor="middle">good · clearly "same object"</text>
+    </g>
+    <!-- Example 3: threshold -->
+    <g transform="translate(460, 0)">
+      <rect class="imgbg" x="0" y="0" width="200" height="180"/>
+      <rect class="gt"   x="50" y="40" width="100" height="100"/>
+      <rect class="pred" x="85" y="75" width="95" height="95"/>
+      <rect class="inter" x="85" y="75" width="65" height="65"/>
+      <text x="100" y="205" class="head" text-anchor="middle">IoU ≈ 0.50</text>
+      <text x="100" y="223" class="caption" text-anchor="middle">threshold · "borderline hit"</text>
+    </g>
+    <!-- Example 4: miss -->
+    <g transform="translate(690, 0)">
+      <rect class="imgbg" x="0" y="0" width="200" height="180"/>
+      <rect class="gt"   x="30" y="40" width="80" height="80"/>
+      <rect class="pred" x="120" y="40" width="70" height="70"/>
+      <text x="100" y="205" class="head" text-anchor="middle">IoU = 0.00</text>
+      <text x="100" y="223" class="caption" text-anchor="middle">no overlap → miss</text>
+    </g>
+  </g>
+
+  <!-- Legend -->
+  <g transform="translate(40, 280)">
+    <rect fill="none" stroke="#7B9E89" stroke-width="2.5" x="0" y="0" width="30" height="16"/>
+    <text x="40" y="12" class="caption">ground truth</text>
+    <rect fill="none" stroke="#D97757" stroke-width="2.5" stroke-dasharray="4 3" x="130" y="0" width="30" height="16"/>
+    <text x="170" y="12" class="caption">prediction</text>
+    <rect class="inter" x="260" y="0" width="30" height="16"/>
+    <text x="300" y="12" class="caption">overlap</text>
+  </g>
+
+  <!-- Formula + calc -->
+  <rect x="40" y="315" width="880" height="70" fill="#FFF3EE" stroke="#D97757" stroke-width="1" rx="6"/>
+  <text x="60" y="338" class="head">IoU = |A ∩ B| / |A ∪ B|</text>
+  <text x="60" y="358" class="mono">GT = (30, 30, 100, 100), Pred = (50, 50, 120, 120)</text>
+  <text x="60" y="375" class="mono">Intersection 50·50 = 2500 · Union 4900 + 4900 − 2500 = 7300 · IoU = 2500 / 7300 = 0.342</text>
+</svg>

@@ -112,6 +112,12 @@ Two primitives every detector needs
 
 ---
 
+# IoU · visual examples
+
+![w:920px](figures/lec09/svg/iou_visual_examples.svg)
+
+---
+
 # IoU · a quick worked example
 
 Predicted box · $(x_1, y_1, x_2, y_2) = (50, 50, 150, 150)$ · area = 100 × 100 = 10,000.

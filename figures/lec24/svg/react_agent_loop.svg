@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .mono { font-family: "IBM Plex Mono", monospace; font-size: 11px; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .llm { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.4; rx: 8; }
+    .tool { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.3; rx: 6; }
+    .msg { fill: white; stroke: #4A6670; stroke-width: 0.9; rx: 4; }
+    .arrow { stroke: #1F1F1E; stroke-width: 1.3; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="400"/>
+  <text x="480" y="30" class="title" text-anchor="middle">ReAct agent · perceive → think → act → observe → repeat</text>
+
+  <!-- User question -->
+  <g transform="translate(40, 70)">
+    <rect class="msg" x="0" y="0" width="200" height="60" fill="#F7EED6"/>
+    <text x="100" y="22" class="head" text-anchor="middle">User</text>
+    <text x="100" y="44" class="caption" text-anchor="middle">"Flight from BLR to DEL on Fri?"</text>
+  </g>
+
+  <path class="arrow" d="M245 100 L315 100" marker-end="url(#arr)"/>
+
+  <!-- LLM centre -->
+  <g transform="translate(320, 60)">
+    <rect class="llm" x="0" y="0" width="280" height="280"/>
+    <text x="140" y="28" class="head" text-anchor="middle">LLM · the thinking layer</text>
+    <!-- Thought 1 -->
+    <rect class="msg" x="20" y="50" width="240" height="50"/>
+    <text x="30" y="68" class="body" font-weight="600">Thought</text>
+    <text x="30" y="84" class="caption">"I need to search flights"</text>
+    <!-- Action 1 -->
+    <rect class="msg" x="20" y="108" width="240" height="50" fill="#F0F5EF"/>
+    <text x="30" y="126" class="body" font-weight="600">Action</text>
+    <text x="30" y="142" class="mono">search_flights("BLR", "DEL", "2026-04-25")</text>
+    <!-- Observation -->
+    <rect class="msg" x="20" y="166" width="240" height="60" fill="#E8EDEF"/>
+    <text x="30" y="184" class="body" font-weight="600">Observation</text>
+    <text x="30" y="200" class="caption">"IndiGo 6E123 · 18:30 · ₹4500"</text>
+    <text x="30" y="216" class="caption">"Vistara UK985 · 20:00 · ₹5200"</text>
+    <!-- Thought 2 / Answer -->
+    <rect class="msg" x="20" y="232" width="240" height="38" fill="#FDF2F6"/>
+    <text x="30" y="250" class="body" font-weight="600">Answer</text>
+    <text x="30" y="266" class="caption">"Two options · cheapest ₹4500"</text>
+  </g>
+
+  <!-- Tool calls on the right -->
+  <g transform="translate(640, 70)">
+    <text x="140" y="0" class="head" text-anchor="middle">Tool registry</text>
+    <rect class="tool" x="0" y="20" width="280" height="40"/>
+    <text x="140" y="44" class="body" text-anchor="middle">search_flights(from, to, date)</text>
+    <rect class="tool" x="0" y="70" width="280" height="40"/>
+    <text x="140" y="94" class="body" text-anchor="middle">get_weather(city, date)</text>
+    <rect class="tool" x="0" y="120" width="280" height="40"/>
+    <text x="140" y="144" class="body" text-anchor="middle">send_email(to, subject, body)</text>
+    <rect class="tool" x="0" y="170" width="280" height="40"/>
+    <text x="140" y="194" class="body" text-anchor="middle">run_python(code)</text>
+    <rect class="tool" x="0" y="220" width="280" height="40"/>
+    <text x="140" y="244" class="body" text-anchor="middle">browser.click(selector)</text>
+    <text x="140" y="282" class="caption" text-anchor="middle">each tool has a JSON schema</text>
+    <text x="140" y="296" class="caption" text-anchor="middle">LLM decides which to call and with what args</text>
+  </g>
+
+  <!-- Loop arrows between LLM and tools -->
+  <path class="arrow" d="M605 135 L640 95" marker-end="url(#arr)"/>
+  <path class="arrow" d="M640 150 L605 185" marker-end="url(#arr)"/>
+
+  <!-- Loop arrow at bottom -->
+  <text x="460" y="378" class="caption" text-anchor="middle">repeat until LLM outputs final answer (or hits max iterations)</text>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+    </marker>
+  </defs>
+</svg>

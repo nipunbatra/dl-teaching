@@ -62,6 +62,12 @@ The difference: **closing the perceive-think-act loop** with external tools. The
 
 ---
 
+# ReAct · annotated with tools
+
+![w:920px](figures/lec24/svg/react_agent_loop.svg)
+
+---
+
 # Function calling · how agents work
 
 Modern APIs (Claude, OpenAI, Gemini) support **structured tool calling**:
@@ -168,6 +174,12 @@ Until 2024, the only scaling axis was **training compute**. In 2024+ we added **
 Both pay off. OpenAI reported that o1's performance on math benchmarks scales smoothly with inference-time compute budget.
 
 </div>
+
+---
+
+# Reasoning · tree search at inference
+
+![w:900px](figures/lec24/svg/reasoning_tree.svg)
 
 ---
 

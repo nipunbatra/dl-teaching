@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 12px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 11px; fill: #1F1F1E; }
+    .caption { font-size: 10px; fill: #6B6B69; }
+    .layer { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.2; rx: 4; }
+    .dlayer { fill: #E8EDEF; stroke: #4A6670; stroke-width: 1.2; rx: 4; }
+    .z { fill: #F7EED6; stroke: #C9A961; stroke-width: 1.3; rx: 4; }
+    .out { fill: #FDF2F6; stroke: #A8324B; stroke-width: 1.3; rx: 4; }
+    .arrow { stroke: #1F1F1E; stroke-width: 1.2; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="400"/>
+  <text x="480" y="28" class="title" text-anchor="middle">DCGAN · generator upsamples noise · discriminator downsamples image</text>
+
+  <!-- Generator row -->
+  <g transform="translate(20, 60)">
+    <text x="140" y="0" class="head" text-anchor="middle">Generator G (upsampling via transposed conv)</text>
+    <!-- z vector -->
+    <rect class="z" x="0" y="20" width="55" height="40"/>
+    <text x="27" y="44" class="body" text-anchor="middle">z</text>
+    <text x="27" y="76" class="caption" text-anchor="middle">100</text>
+    <text x="27" y="90" class="caption" text-anchor="middle">1×1</text>
+    <path class="arrow" d="M60 40 L75 40" marker-end="url(#arr)"/>
+    <rect class="layer" x="80" y="15" width="70" height="50"/>
+    <text x="115" y="35" class="body" text-anchor="middle">CT 4×4</text>
+    <text x="115" y="50" class="caption" text-anchor="middle">BN·ReLU</text>
+    <text x="115" y="80" class="caption" text-anchor="middle">512</text>
+    <text x="115" y="93" class="caption" text-anchor="middle">4×4</text>
+    <path class="arrow" d="M155 40 L175 40" marker-end="url(#arr)"/>
+    <rect class="layer" x="180" y="10" width="80" height="60"/>
+    <text x="220" y="35" class="body" text-anchor="middle">CT 4×4 s=2</text>
+    <text x="220" y="50" class="caption" text-anchor="middle">BN·ReLU</text>
+    <text x="220" y="80" class="caption" text-anchor="middle">256</text>
+    <text x="220" y="93" class="caption" text-anchor="middle">8×8</text>
+    <path class="arrow" d="M265 40 L285 40" marker-end="url(#arr)"/>
+    <rect class="layer" x="290" y="5" width="90" height="70"/>
+    <text x="335" y="35" class="body" text-anchor="middle">CT 4×4 s=2</text>
+    <text x="335" y="50" class="caption" text-anchor="middle">BN·ReLU</text>
+    <text x="335" y="85" class="caption" text-anchor="middle">128</text>
+    <text x="335" y="98" class="caption" text-anchor="middle">16×16</text>
+    <path class="arrow" d="M385 40 L405 40" marker-end="url(#arr)"/>
+    <rect class="layer" x="410" y="-5" width="110" height="90"/>
+    <text x="465" y="30" class="body" text-anchor="middle">CT 4×4 s=2</text>
+    <text x="465" y="45" class="caption" text-anchor="middle">BN·ReLU</text>
+    <text x="465" y="65" class="caption" text-anchor="middle">64 · 32×32</text>
+    <text x="465" y="95" class="caption" text-anchor="middle">32×32</text>
+    <path class="arrow" d="M525 40 L545 40" marker-end="url(#arr)"/>
+    <rect class="out" x="550" y="-15" width="130" height="110"/>
+    <text x="615" y="20" class="body" text-anchor="middle">CT 4×4 s=2</text>
+    <text x="615" y="35" class="body" text-anchor="middle">Tanh</text>
+    <text x="615" y="65" class="body" text-anchor="middle">3 · 64×64</text>
+    <text x="615" y="110" class="caption" text-anchor="middle">RGB image [-1,1]</text>
+
+    <text x="350" y="130" class="caption" text-anchor="middle">output channels × spatial size grows each block</text>
+  </g>
+
+  <!-- Discriminator row -->
+  <g transform="translate(20, 220)">
+    <text x="140" y="0" class="head" text-anchor="middle">Discriminator D (downsampling via strided conv)</text>
+    <rect class="out" x="0" y="-15" width="130" height="110"/>
+    <text x="65" y="20" class="body" text-anchor="middle">input</text>
+    <text x="65" y="65" class="body" text-anchor="middle">3 · 64×64</text>
+    <path class="arrow" d="M130 40 L150 40" marker-end="url(#arr)"/>
+    <rect class="dlayer" x="155" y="-5" width="100" height="90"/>
+    <text x="205" y="20" class="body" text-anchor="middle">Conv 4×4 s=2</text>
+    <text x="205" y="35" class="body" text-anchor="middle">LReLU</text>
+    <text x="205" y="65" class="caption" text-anchor="middle">64 · 32×32</text>
+    <path class="arrow" d="M260 40 L280 40" marker-end="url(#arr)"/>
+    <rect class="dlayer" x="285" y="5" width="90" height="70"/>
+    <text x="330" y="25" class="body" text-anchor="middle">Conv s=2</text>
+    <text x="330" y="40" class="body" text-anchor="middle">BN·LReLU</text>
+    <text x="330" y="65" class="caption" text-anchor="middle">128 · 16×16</text>
+    <path class="arrow" d="M380 40 L400 40" marker-end="url(#arr)"/>
+    <rect class="dlayer" x="405" y="10" width="85" height="60"/>
+    <text x="447" y="30" class="body" text-anchor="middle">Conv s=2</text>
+    <text x="447" y="45" class="body" text-anchor="middle">BN·LReLU</text>
+    <text x="447" y="65" class="caption" text-anchor="middle">256 · 8×8</text>
+    <path class="arrow" d="M495 40 L515 40" marker-end="url(#arr)"/>
+    <rect class="dlayer" x="520" y="15" width="80" height="50"/>
+    <text x="560" y="33" class="body" text-anchor="middle">Conv s=2</text>
+    <text x="560" y="48" class="body" text-anchor="middle">BN·LReLU</text>
+    <text x="560" y="62" class="caption" text-anchor="middle">512 · 4×4</text>
+    <path class="arrow" d="M605 40 L625 40" marker-end="url(#arr)"/>
+    <rect class="out" x="630" y="20" width="80" height="40"/>
+    <text x="670" y="40" class="body" text-anchor="middle">Conv 4×4</text>
+    <text x="670" y="55" class="body" text-anchor="middle">Sigmoid</text>
+    <text x="670" y="80" class="caption" text-anchor="middle">P(real)</text>
+  </g>
+
+  <!-- footer -->
+  <rect x="40" y="340" width="880" height="42" fill="#FFF3EE" stroke="#D97757" stroke-width="1" rx="6"/>
+  <text x="480" y="360" class="body" text-anchor="middle"><tspan font-weight="600">DCGAN cookbook</tspan> · strided / transposed convs · BN everywhere (not on G-out or D-in) · ReLU in G · LeakyReLU(0.2) in D · Tanh on G output.</text>
+  <text x="480" y="376" class="caption" text-anchor="middle">Adam β₁=0.5 · lr=2e-4 · batch 64-128 · noise dim 100.</text>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+    </marker>
+  </defs>
+</svg>

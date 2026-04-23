@@ -236,6 +236,12 @@ How to generate at inference
 
 ---
 
+# Decoding · the search tree
+
+![w:900px](figures/lec11/svg/decoding_tree.svg)
+
+---
+
 # Greedy · pick top-1 every step
 
 Simplest: at each step, pick $\arg\max_y P(y \mid \text{history})$.

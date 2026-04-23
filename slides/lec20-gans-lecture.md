@@ -335,6 +335,12 @@ Radford, Metz, Chintala 2015 · *"Unsupervised Representation Learning with Deep
 
 ---
 
+# DCGAN · architecture at a glance
+
+![w:920px](figures/lec20/svg/dcgan_architecture.svg)
+
+---
+
 # DCGAN · five architectural guidelines
 
 1. Replace pooling with **strided convolutions** (both D and G).

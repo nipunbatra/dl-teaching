@@ -68,6 +68,12 @@ GPT-3 (175B params, 300B tokens · D/N ≈ 1.7) was hugely **undertrained** by t
 
 ---
 
+# Chinchilla · D/N across models
+
+![w:920px](figures/lec15/svg/chinchilla_sweet_spot.svg)
+
+---
+
 # Chinchilla · in one chart
 
 ![w:900px](figures/lec15/svg/chinchilla_scaling.svg)

@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 430" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .axis { stroke: #1F1F1E; stroke-width: 1.2; fill: none; }
+    .grid { stroke: #CFCBBE; stroke-width: 0.5; fill: none; }
+    .gpt3 { fill: #A8324B; stroke: #A8324B; }
+    .chin { fill: #7B9E89; stroke: #7B9E89; }
+    .llama2 { fill: #D97757; stroke: #D97757; }
+    .llama3 { fill: #C9A961; stroke: #C9A961; }
+  </style>
+  <rect class="bg" width="960" height="430"/>
+  <text x="480" y="30" class="title" text-anchor="middle">Chinchilla scaling · D/N tokens-per-parameter ratio</text>
+
+  <!-- Plot area -->
+  <g transform="translate(80, 70)">
+    <!-- grid -->
+    <g class="grid">
+      <line x1="0" y1="60" x2="700" y2="60"/>
+      <line x1="0" y1="120" x2="700" y2="120"/>
+      <line x1="0" y1="180" x2="700" y2="180"/>
+      <line x1="0" y1="240" x2="700" y2="240"/>
+    </g>
+    <!-- axes -->
+    <path class="axis" d="M 0 0 L 0 280 L 700 280"/>
+    <!-- y-axis label -->
+    <text x="-40" y="140" class="body" transform="rotate(-90, -40, 140)" text-anchor="middle">D/N (tokens per parameter)</text>
+    <!-- y ticks (log scale) -->
+    <text x="-6" y="284" class="caption" text-anchor="end">1</text>
+    <text x="-6" y="224" class="caption" text-anchor="end">5</text>
+    <text x="-6" y="184" class="caption" text-anchor="end">20</text>
+    <text x="-6" y="124" class="caption" text-anchor="end">200</text>
+    <text x="-6" y="64" class="caption" text-anchor="end">2000</text>
+    <!-- x-axis label -->
+    <text x="350" y="310" class="body" text-anchor="middle">Model (year)</text>
+    <!-- Data points (log-ish y) with labels -->
+    <!-- GPT-3 · D/N = 300B/175B = 1.7 → near 1 (bottom) -->
+    <g transform="translate(60, 270)">
+      <circle class="gpt3" cx="0" cy="0" r="8"/>
+      <text x="0" y="22" class="caption" text-anchor="middle">GPT-3 (2020)</text>
+      <text x="0" y="35" class="caption" text-anchor="middle">175B·300B · 1.7</text>
+    </g>
+    <!-- Chinchilla · 70B · 1.4T → 20 -->
+    <g transform="translate(200, 180)">
+      <circle class="chin" cx="0" cy="0" r="10"/>
+      <text x="0" y="24" class="caption" text-anchor="middle">Chinchilla (2022)</text>
+      <text x="0" y="37" class="caption" text-anchor="middle">70B·1.4T · 20 · optimal</text>
+    </g>
+    <!-- Llama 2 70B · 2T → 29 -->
+    <g transform="translate(340, 170)">
+      <circle class="llama2" cx="0" cy="0" r="8"/>
+      <text x="0" y="24" class="caption" text-anchor="middle">Llama 2 70B (2023)</text>
+      <text x="0" y="37" class="caption" text-anchor="middle">70B·2T · 29</text>
+    </g>
+    <!-- Llama 3 70B · 15T → 214 -->
+    <g transform="translate(480, 125)">
+      <circle class="llama3" cx="0" cy="0" r="8"/>
+      <text x="0" y="24" class="caption" text-anchor="middle">Llama 3 70B (2024)</text>
+      <text x="0" y="37" class="caption" text-anchor="middle">70B·15T · 214</text>
+    </g>
+    <!-- Llama 3 8B · 15T → 1875 -->
+    <g transform="translate(620, 75)">
+      <circle class="llama3" cx="0" cy="0" r="8"/>
+      <text x="0" y="24" class="caption" text-anchor="middle">Llama 3 8B (2024)</text>
+      <text x="0" y="37" class="caption" text-anchor="middle">8B·15T · 1875</text>
+    </g>
+
+    <!-- Chinchilla optimal line -->
+    <line x1="0" y1="180" x2="700" y2="180" stroke="#7B9E89" stroke-width="1.3" stroke-dasharray="5 3"/>
+    <text x="700" y="176" class="caption" fill="#7B9E89" text-anchor="end">Chinchilla-optimal D/N ≈ 20</text>
+  </g>
+
+  <!-- Footer explanation -->
+  <rect x="40" y="360" width="880" height="60" fill="#FFF3EE" stroke="#D97757" stroke-width="1" rx="6"/>
+  <text x="55" y="380" class="head">Why "overtrain" past Chinchilla?</text>
+  <text x="55" y="400" class="body">Chinchilla is train-compute optimal · but models are used for *inference* for years. Smaller-but-over-trained</text>
+  <text x="55" y="416" class="body">models serve more queries per GPU-second. Llama 3 8B trades more training for cheaper inference.</text>
+</svg>

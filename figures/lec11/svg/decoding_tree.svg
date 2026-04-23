@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .node { fill: white; stroke: #4A6670; stroke-width: 1; rx: 3; }
+    .greedy { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.8; rx: 3; }
+    .beam { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.5; rx: 3; }
+    .pruned { fill: white; stroke: #C9C4B5; stroke-width: 0.8; rx: 3; opacity: 0.5; }
+    .edge { stroke: #6B6B69; stroke-width: 1; fill: none; }
+    .greedy-edge { stroke: #D97757; stroke-width: 2; fill: none; }
+    .beam-edge { stroke: #7B9E89; stroke-width: 1.6; fill: none; }
+    .mono { font-family: "IBM Plex Mono", monospace; font-size: 11px; }
+  </style>
+  <rect class="bg" width="960" height="420"/>
+  <text x="480" y="28" class="title" text-anchor="middle">Greedy vs beam search · same tree, different paths kept</text>
+
+  <!-- Root -->
+  <rect class="node" x="420" y="55" width="120" height="30"/>
+  <text x="480" y="74" class="body" text-anchor="middle">&lt;start&gt;</text>
+
+  <!-- Level 1 -->
+  <g>
+    <path class="greedy-edge" d="M450 85 L220 145"/>
+    <path class="beam-edge" d="M480 85 L480 145"/>
+    <path class="edge" d="M510 85 L740 145"/>
+
+    <rect class="greedy" x="160" y="145" width="120" height="30"/>
+    <text x="220" y="164" class="body" text-anchor="middle">A</text>
+    <text x="220" y="190" class="mono" text-anchor="middle">log p = -0.2</text>
+
+    <rect class="beam" x="420" y="145" width="120" height="30"/>
+    <text x="480" y="164" class="body" text-anchor="middle">The</text>
+    <text x="480" y="190" class="mono" text-anchor="middle">log p = -0.5</text>
+
+    <rect class="pruned" x="680" y="145" width="120" height="30"/>
+    <text x="740" y="164" class="body" text-anchor="middle">It</text>
+    <text x="740" y="190" class="mono" text-anchor="middle">log p = -1.8</text>
+  </g>
+
+  <!-- Level 2 -->
+  <g>
+    <!-- from A (greedy keeps expanding) -->
+    <path class="greedy-edge" d="M220 175 L220 230"/>
+    <rect class="greedy" x="160" y="230" width="120" height="30"/>
+    <text x="220" y="249" class="body" text-anchor="middle">feline</text>
+    <text x="220" y="275" class="mono" text-anchor="middle">log p = -0.9</text>
+
+    <!-- from The (beam expands 2) -->
+    <path class="beam-edge" d="M460 175 L380 230"/>
+    <path class="beam-edge" d="M500 175 L580 230"/>
+    <rect class="beam" x="320" y="230" width="120" height="30"/>
+    <text x="380" y="249" class="body" text-anchor="middle">cat</text>
+    <text x="380" y="275" class="mono" text-anchor="middle">log p = -0.6</text>
+    <rect class="pruned" x="520" y="230" width="120" height="30"/>
+    <text x="580" y="249" class="body" text-anchor="middle">dog</text>
+    <text x="580" y="275" class="mono" text-anchor="middle">log p = -1.3</text>
+  </g>
+
+  <!-- Level 3 -->
+  <g>
+    <!-- from feline -->
+    <path class="greedy-edge" d="M220 260 L220 315"/>
+    <rect class="greedy" x="160" y="315" width="120" height="30"/>
+    <text x="220" y="334" class="body" text-anchor="middle">rests</text>
+    <text x="220" y="360" class="mono" text-anchor="middle">total = -1.8</text>
+
+    <!-- from cat -->
+    <path class="beam-edge" d="M380 260 L380 315"/>
+    <rect class="beam" x="320" y="315" width="120" height="30"/>
+    <text x="380" y="334" class="body" text-anchor="middle">sat</text>
+    <text x="380" y="360" class="mono" text-anchor="middle">total = -1.3</text>
+  </g>
+
+  <!-- Winner callout -->
+  <g transform="translate(660, 310)">
+    <rect fill="#FDF2F6" stroke="#A8324B" stroke-width="1.4" x="0" y="0" width="250" height="90" rx="6"/>
+    <text x="125" y="22" class="head" text-anchor="middle">Winner · "The cat sat"</text>
+    <text x="125" y="42" class="body" text-anchor="middle" fill="#7B9E89">beam search score: -1.3</text>
+    <text x="125" y="60" class="body" text-anchor="middle" fill="#D97757">greedy score: -1.8</text>
+    <text x="125" y="80" class="caption" text-anchor="middle">greedy missed the better path · beam found it</text>
+  </g>
+
+  <!-- Legend -->
+  <g transform="translate(40, 380)">
+    <line x1="0" y1="0" x2="20" y2="0" stroke="#D97757" stroke-width="2"/>
+    <text x="28" y="4" class="caption">greedy path</text>
+    <line x1="120" y1="0" x2="140" y2="0" stroke="#7B9E89" stroke-width="1.6"/>
+    <text x="148" y="4" class="caption">beam-2 paths</text>
+    <rect class="pruned" x="250" y="-8" width="16" height="16"/>
+    <text x="272" y="4" class="caption">pruned</text>
+    <text x="560" y="4" class="caption">beam=2 keeps top-2 prefixes at every step · more diverse search · finds a higher joint log-prob.</text>
+  </g>
+</svg>
