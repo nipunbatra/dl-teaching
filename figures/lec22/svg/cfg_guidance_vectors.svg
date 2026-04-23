@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .box { fill: white; stroke: #4A6670; stroke-width: 1; rx: 4; }
+    .uncond { stroke: #4A6670; stroke-width: 2.2; fill: none; }
+    .cond { stroke: #7B9E89; stroke-width: 2.2; fill: none; }
+    .diff { stroke: #A8324B; stroke-width: 2.2; fill: none; stroke-dasharray: 4 3; }
+    .cfg { stroke: #D97757; stroke-width: 2.5; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="400"/>
+  <text x="480" y="28" class="title" text-anchor="middle">Classifier-free guidance · extrapolate beyond the conditional prediction</text>
+
+  <!-- 3 panels showing different w values -->
+  <g transform="translate(40, 70)">
+    <text x="140" y="0" class="head" text-anchor="middle">w = 1 · pure conditional</text>
+    <rect class="box" x="0" y="14" width="280" height="260"/>
+    <!-- current noise point -->
+    <circle cx="140" cy="230" r="5" fill="#1F1F1E"/>
+    <text x="140" y="250" class="caption" text-anchor="middle">x_t</text>
+    <!-- uncond arrow -->
+    <path class="uncond" d="M140 230 L100 130" marker-end="url(#slate)"/>
+    <text x="80" y="130" class="caption" fill="#4A6670">ε(x, ∅)</text>
+    <!-- cond arrow -->
+    <path class="cond" d="M140 230 L180 100" marker-end="url(#sage)"/>
+    <text x="195" y="100" class="caption" fill="#7B9E89">ε(x, c)</text>
+    <!-- cfg = cond (w=1) overlay -->
+    <path class="cfg" d="M140 230 L180 100" marker-end="url(#rust)"/>
+  </g>
+
+  <g transform="translate(340, 70)">
+    <text x="140" y="0" class="head" text-anchor="middle">w = 3 · mild guidance</text>
+    <rect class="box" x="0" y="14" width="280" height="260"/>
+    <circle cx="140" cy="230" r="5" fill="#1F1F1E"/>
+    <text x="140" y="250" class="caption" text-anchor="middle">x_t</text>
+    <!-- uncond -->
+    <path class="uncond" d="M140 230 L100 130" marker-end="url(#slate)"/>
+    <!-- cond -->
+    <path class="cond" d="M140 230 L180 100" marker-end="url(#sage)"/>
+    <!-- diff vector -->
+    <path class="diff" d="M100 130 L180 100" marker-end="url(#wine)"/>
+    <text x="110" y="110" class="caption" fill="#A8324B">Δ</text>
+    <!-- cfg = uncond + w*diff -->
+    <path class="cfg" d="M140 230 L230 70" marker-end="url(#rust)"/>
+    <text x="245" y="75" class="caption" fill="#D97757">ε_cfg</text>
+  </g>
+
+  <g transform="translate(640, 70)">
+    <text x="140" y="0" class="head" text-anchor="middle">w = 7 · default SD</text>
+    <rect class="box" x="0" y="14" width="280" height="260"/>
+    <circle cx="140" cy="230" r="5" fill="#1F1F1E"/>
+    <text x="140" y="250" class="caption" text-anchor="middle">x_t</text>
+    <path class="uncond" d="M140 230 L100 130" marker-end="url(#slate)"/>
+    <path class="cond" d="M140 230 L180 100" marker-end="url(#sage)"/>
+    <path class="diff" d="M100 130 L180 100" marker-end="url(#wine)"/>
+    <path class="cfg" d="M140 230 L260 20" marker-end="url(#rust)"/>
+    <text x="270" y="30" class="caption" fill="#D97757">ε_cfg</text>
+    <!-- legend -->
+    <g transform="translate(10, 175)">
+      <line x1="0" y1="0" x2="18" y2="0" stroke="#4A6670" stroke-width="2"/>
+      <text x="24" y="4" class="caption">uncond</text>
+      <line x1="0" y1="16" x2="18" y2="16" stroke="#7B9E89" stroke-width="2"/>
+      <text x="24" y="20" class="caption">cond</text>
+      <line x1="0" y1="32" x2="18" y2="32" stroke="#A8324B" stroke-width="2" stroke-dasharray="3 2"/>
+      <text x="24" y="36" class="caption">diff · Δ</text>
+      <line x1="0" y1="48" x2="18" y2="48" stroke="#D97757" stroke-width="2.5"/>
+      <text x="24" y="52" class="caption">CFG output</text>
+    </g>
+  </g>
+
+  <!-- Footer formula -->
+  <rect x="40" y="320" width="880" height="60" fill="#FFF3EE" stroke="#D97757" stroke-width="1" rx="6"/>
+  <text x="480" y="345" class="body" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13">ε_cfg = ε(x_t, ∅) + w · [ε(x_t, c) − ε(x_t, ∅)]</text>
+  <text x="480" y="370" class="caption" text-anchor="middle">Run the model twice at inference · take the difference · walk w× in that direction. 2× compute, unlimited adherence dial.</text>
+
+  <defs>
+    <marker id="slate" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#4A6670"/>
+    </marker>
+    <marker id="sage" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#7B9E89"/>
+    </marker>
+    <marker id="wine" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#A8324B"/>
+    </marker>
+    <marker id="rust" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#D97757"/>
+    </marker>
+  </defs>
+</svg>

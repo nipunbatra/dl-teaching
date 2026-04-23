@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 14px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .box { fill: white; stroke: #4A6670; stroke-width: 1.2; rx: 6; }
+    .rust { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.3; rx: 4; }
+    .sage { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.3; rx: 4; }
+    .slate { fill: #E8EDEF; stroke: #4A6670; stroke-width: 1.3; rx: 4; }
+    .arrow { stroke: #1F1F1E; stroke-width: 1.4; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="420"/>
+  <text x="480" y="30" class="title" text-anchor="middle">PPO vs DPO · two roads from preference data to aligned model</text>
+
+  <!-- PPO column -->
+  <g transform="translate(30,60)">
+    <rect class="box" x="0" y="0" width="430" height="340"/>
+    <text x="215" y="26" class="head" text-anchor="middle">PPO pipeline (OpenAI 2022)</text>
+    <text x="215" y="46" class="caption" text-anchor="middle">Three-stage · SFT → Reward Model → RL</text>
+
+    <!-- Step 1 -->
+    <rect class="rust" x="20" y="70" width="390" height="58"/>
+    <text x="215" y="93" class="body" text-anchor="middle" font-weight="600">1. SFT</text>
+    <text x="215" y="113" class="caption" text-anchor="middle">pretrained LLM + demonstrations · cross-entropy</text>
+
+    <!-- arrow -->
+    <path class="arrow" d="M215 128 L215 145" marker-end="url(#arr)"/>
+
+    <!-- Step 2 -->
+    <rect class="slate" x="20" y="148" width="390" height="58"/>
+    <text x="215" y="171" class="body" text-anchor="middle" font-weight="600">2. Reward model R(prompt, answer)</text>
+    <text x="215" y="191" class="caption" text-anchor="middle">train on ranked preference pairs · Bradley-Terry loss</text>
+
+    <!-- arrow -->
+    <path class="arrow" d="M215 206 L215 223" marker-end="url(#arr)"/>
+
+    <!-- Step 3 -->
+    <rect class="sage" x="20" y="226" width="390" height="58"/>
+    <text x="215" y="249" class="body" text-anchor="middle" font-weight="600">3. PPO · optimize π against R</text>
+    <text x="215" y="269" class="caption" text-anchor="middle">RL loop · sample from π · R scores · gradient up · KL penalty to SFT</text>
+
+    <!-- Pros/Cons -->
+    <g transform="translate(20, 296)">
+      <text x="0" y="0" class="caption" fill="#1F1F1E">✓ principled (theoretical RL framework)</text>
+      <text x="0" y="16" class="caption" fill="#A8324B">✗ unstable training · 4 networks in memory · slow</text>
+    </g>
+  </g>
+
+  <!-- DPO column -->
+  <g transform="translate(500,60)">
+    <rect class="box" x="0" y="0" width="430" height="340"/>
+    <text x="215" y="26" class="head" text-anchor="middle">DPO pipeline (Stanford 2023)</text>
+    <text x="215" y="46" class="caption" text-anchor="middle">Two-stage · SFT → single classification loss</text>
+
+    <!-- Step 1 -->
+    <rect class="rust" x="20" y="70" width="390" height="58"/>
+    <text x="215" y="93" class="body" text-anchor="middle" font-weight="600">1. SFT</text>
+    <text x="215" y="113" class="caption" text-anchor="middle">pretrained LLM + demonstrations · cross-entropy</text>
+
+    <!-- arrow -->
+    <path class="arrow" d="M215 128 L215 145" marker-end="url(#arr)"/>
+
+    <!-- Step 2 -->
+    <rect class="sage" x="20" y="148" width="390" height="136"/>
+    <text x="215" y="170" class="body" text-anchor="middle" font-weight="600">2. Direct Preference Optimization</text>
+    <text x="215" y="188" class="caption" text-anchor="middle">on each (prompt, chosen, rejected) triple:</text>
+    <text x="215" y="215" class="body" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12">L = -log σ( β[log π(c|p)/π_ref(c|p)</text>
+    <text x="215" y="233" class="body" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12">     - log π(r|p)/π_ref(r|p)] )</text>
+    <text x="215" y="260" class="caption" text-anchor="middle">one forward pass · classification-style loss · no RL</text>
+
+    <!-- Pros/Cons -->
+    <g transform="translate(20, 296)">
+      <text x="0" y="0" class="caption" fill="#1F1F1E">✓ stable · simple · 2 networks in memory</text>
+      <text x="0" y="16" class="caption" fill="#A8324B">✗ no explicit reward model · harder to iterate</text>
+    </g>
+  </g>
+
+  <!-- footer -->
+  <rect x="40" y="378" width="880" height="32" fill="#FFF3EE" stroke="#D97757" stroke-width="1" rx="6"/>
+  <text x="480" y="400" class="body" text-anchor="middle"><tspan font-weight="600">2026 default</tspan> · DPO for new models · PPO still used when you already have a strong RM.</text>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+    </marker>
+  </defs>
+</svg>

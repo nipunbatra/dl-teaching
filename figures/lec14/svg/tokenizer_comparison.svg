@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .mono { font-family: "IBM Plex Mono", monospace; font-size: 12px; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .tok { fill: white; stroke: #4A6670; stroke-width: 0.9; rx: 3; }
+    .rust { fill: #D97757; }
+    .sage { fill: #7B9E89; }
+    .slate { fill: #4A6670; }
+    .wine { fill: #A8324B; }
+  </style>
+  <rect class="bg" width="960" height="420"/>
+  <text x="480" y="30" class="title" text-anchor="middle">Same text · four tokenizers · very different counts</text>
+
+  <!-- input sentence -->
+  <rect x="40" y="52" width="880" height="38" fill="white" stroke="#4A6670" stroke-width="1.2" rx="4"/>
+  <text x="55" y="77" class="mono">Input · "The unbelievable complexity of modern tokenizers!"</text>
+
+  <!-- char-level row -->
+  <g transform="translate(0, 110)">
+    <text x="40" y="20" class="head">Char-level</text>
+    <text x="40" y="38" class="caption">52 tokens · one per character</text>
+    <g transform="translate(40, 48)">
+      <g id="chars"></g>
+    </g>
+  </g>
+  <!-- word-level row -->
+  <g transform="translate(0, 180)">
+    <text x="40" y="20" class="head">Word-level</text>
+    <text x="40" y="38" class="caption">7 tokens · one per whitespace-separated word · huge vocab · OOV risk</text>
+    <g transform="translate(40, 48)">
+      <rect class="tok" x="0" y="0" width="50" height="22" fill="#FFF3EE"/>
+      <text x="25" y="16" class="body" text-anchor="middle">The</text>
+      <rect class="tok" x="54" y="0" width="115" height="22" fill="#FFF3EE"/>
+      <text x="111" y="16" class="body" text-anchor="middle">unbelievable</text>
+      <rect class="tok" x="173" y="0" width="95" height="22" fill="#FFF3EE"/>
+      <text x="220" y="16" class="body" text-anchor="middle">complexity</text>
+      <rect class="tok" x="272" y="0" width="32" height="22" fill="#FFF3EE"/>
+      <text x="288" y="16" class="body" text-anchor="middle">of</text>
+      <rect class="tok" x="308" y="0" width="65" height="22" fill="#FFF3EE"/>
+      <text x="340" y="16" class="body" text-anchor="middle">modern</text>
+      <rect class="tok" x="377" y="0" width="95" height="22" fill="#FFF3EE"/>
+      <text x="424" y="16" class="body" text-anchor="middle">tokenizers</text>
+      <rect class="tok" x="476" y="0" width="20" height="22" fill="#FFF3EE"/>
+      <text x="486" y="16" class="body" text-anchor="middle">!</text>
+    </g>
+  </g>
+  <!-- BPE row -->
+  <g transform="translate(0, 250)">
+    <text x="40" y="20" class="head">BPE (GPT-4 tokenizer)</text>
+    <text x="40" y="38" class="caption">11 tokens · subword splitting; rare words decomposed</text>
+    <g transform="translate(40, 48)">
+      <rect class="tok" x="0" y="0" width="40" height="22" fill="#F0F5EF"/>
+      <text x="20" y="16" class="body" text-anchor="middle">The</text>
+      <rect class="tok" x="44" y="0" width="28" height="22" fill="#F0F5EF"/>
+      <text x="58" y="16" class="body" text-anchor="middle">un</text>
+      <rect class="tok" x="76" y="0" width="46" height="22" fill="#F0F5EF"/>
+      <text x="99" y="16" class="body" text-anchor="middle">believ</text>
+      <rect class="tok" x="126" y="0" width="35" height="22" fill="#F0F5EF"/>
+      <text x="143" y="16" class="body" text-anchor="middle">able</text>
+      <rect class="tok" x="165" y="0" width="95" height="22" fill="#F0F5EF"/>
+      <text x="212" y="16" class="body" text-anchor="middle">complexity</text>
+      <rect class="tok" x="264" y="0" width="30" height="22" fill="#F0F5EF"/>
+      <text x="279" y="16" class="body" text-anchor="middle">of</text>
+      <rect class="tok" x="298" y="0" width="65" height="22" fill="#F0F5EF"/>
+      <text x="330" y="16" class="body" text-anchor="middle">modern</text>
+      <rect class="tok" x="367" y="0" width="45" height="22" fill="#F0F5EF"/>
+      <text x="389" y="16" class="body" text-anchor="middle">token</text>
+      <rect class="tok" x="416" y="0" width="40" height="22" fill="#F0F5EF"/>
+      <text x="436" y="16" class="body" text-anchor="middle">izer</text>
+      <rect class="tok" x="460" y="0" width="20" height="22" fill="#F0F5EF"/>
+      <text x="470" y="16" class="body" text-anchor="middle">s</text>
+      <rect class="tok" x="484" y="0" width="16" height="22" fill="#F0F5EF"/>
+      <text x="492" y="16" class="body" text-anchor="middle">!</text>
+    </g>
+  </g>
+  <!-- byte-level row -->
+  <g transform="translate(0, 330)">
+    <text x="40" y="20" class="head">Byte-level BPE (Llama 3)</text>
+    <text x="40" y="38" class="caption">9 tokens · similar to BPE but bytes as base · handles any language / emoji / binary</text>
+  </g>
+
+  <!-- draw chars for first row programmatically -->
+  <script type="text/javascript"><![CDATA[]]></script>
+
+  <!-- insert characters explicitly -->
+  <g transform="translate(40, 158)">
+    <g>
+      <!-- Render each character as a tiny tok box -->
+    </g>
+  </g>
+</svg>

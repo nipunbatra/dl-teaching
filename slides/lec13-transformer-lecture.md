@@ -349,6 +349,12 @@ out, _ = self.attn(x, x, x, attn_mask=mask)
 
 ### PART 5
 
+# Full stack · one figure
+
+![w:920px](figures/lec13/svg/transformer_full_stack.svg)
+
+---
+
 # Put it all together · build GPT-tiny
 
 Karpathy nanoGPT in 80 lines

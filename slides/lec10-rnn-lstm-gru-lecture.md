@@ -96,6 +96,12 @@ $W, U$ are **shared** across steps. The same weights process "I" at step 1 and "
 
 ---
 
+# RNN I/O patterns · three shapes
+
+![w:920px](figures/lec10/svg/rnn_three_patterns.svg)
+
+---
+
 # The three RNN use-patterns
 
 <div class="columns">

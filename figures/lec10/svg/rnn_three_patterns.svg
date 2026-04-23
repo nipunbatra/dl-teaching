@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .cell { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.3; rx: 6; }
+    .input { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.1; rx: 3; }
+    .output { fill: #E8EDEF; stroke: #4A6670; stroke-width: 1.1; rx: 3; }
+    .arrow { stroke: #1F1F1E; stroke-width: 1.3; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="380"/>
+  <text x="480" y="32" class="title" text-anchor="middle">Three RNN I/O patterns · one cell, different connections</text>
+
+  <!-- many-to-one -->
+  <g transform="translate(40,80)">
+    <text x="135" y="0" class="head" text-anchor="middle">Many-to-one</text>
+    <text x="135" y="18" class="caption" text-anchor="middle">sentiment classification</text>
+    <!-- cells in a row -->
+    <g>
+      <rect class="cell" x="0" y="50" width="54" height="44"/>
+      <text x="27" y="77" class="body" text-anchor="middle">h₁</text>
+      <rect class="cell" x="68" y="50" width="54" height="44"/>
+      <text x="95" y="77" class="body" text-anchor="middle">h₂</text>
+      <rect class="cell" x="136" y="50" width="54" height="44"/>
+      <text x="163" y="77" class="body" text-anchor="middle">h₃</text>
+      <rect class="cell" x="204" y="50" width="54" height="44"/>
+      <text x="231" y="77" class="body" text-anchor="middle">h₄</text>
+      <!-- arrows between cells -->
+      <path class="arrow" d="M54 72 L68 72" marker-end="url(#arr)"/>
+      <path class="arrow" d="M122 72 L136 72" marker-end="url(#arr)"/>
+      <path class="arrow" d="M190 72 L204 72" marker-end="url(#arr)"/>
+      <!-- inputs below -->
+      <rect class="input" x="6" y="110" width="42" height="22"/>
+      <text x="27" y="126" class="body" text-anchor="middle">x₁</text>
+      <rect class="input" x="74" y="110" width="42" height="22"/>
+      <text x="95" y="126" class="body" text-anchor="middle">x₂</text>
+      <rect class="input" x="142" y="110" width="42" height="22"/>
+      <text x="163" y="126" class="body" text-anchor="middle">x₃</text>
+      <rect class="input" x="210" y="110" width="42" height="22"/>
+      <text x="231" y="126" class="body" text-anchor="middle">x₄</text>
+      <path class="arrow" d="M27 110 L27 94" marker-end="url(#arr)"/>
+      <path class="arrow" d="M95 110 L95 94" marker-end="url(#arr)"/>
+      <path class="arrow" d="M163 110 L163 94" marker-end="url(#arr)"/>
+      <path class="arrow" d="M231 110 L231 94" marker-end="url(#arr)"/>
+      <!-- output -->
+      <rect class="output" x="210" y="14" width="42" height="22"/>
+      <text x="231" y="30" class="body" text-anchor="middle">y</text>
+      <path class="arrow" d="M231 50 L231 36" marker-end="url(#arr)"/>
+    </g>
+  </g>
+
+  <!-- one-to-many -->
+  <g transform="translate(355,80)">
+    <text x="135" y="0" class="head" text-anchor="middle">One-to-many</text>
+    <text x="135" y="18" class="caption" text-anchor="middle">image captioning</text>
+    <g>
+      <rect class="cell" x="0" y="50" width="54" height="44"/>
+      <text x="27" y="77" class="body" text-anchor="middle">h₁</text>
+      <rect class="cell" x="68" y="50" width="54" height="44"/>
+      <text x="95" y="77" class="body" text-anchor="middle">h₂</text>
+      <rect class="cell" x="136" y="50" width="54" height="44"/>
+      <text x="163" y="77" class="body" text-anchor="middle">h₃</text>
+      <rect class="cell" x="204" y="50" width="54" height="44"/>
+      <text x="231" y="77" class="body" text-anchor="middle">h₄</text>
+      <path class="arrow" d="M54 72 L68 72" marker-end="url(#arr)"/>
+      <path class="arrow" d="M122 72 L136 72" marker-end="url(#arr)"/>
+      <path class="arrow" d="M190 72 L204 72" marker-end="url(#arr)"/>
+      <!-- single input -->
+      <rect class="input" x="6" y="110" width="42" height="22"/>
+      <text x="27" y="126" class="body" text-anchor="middle">x</text>
+      <path class="arrow" d="M27 110 L27 94" marker-end="url(#arr)"/>
+      <!-- outputs above every cell -->
+      <rect class="output" x="6"   y="14" width="42" height="22"/>
+      <text x="27" y="30" class="body" text-anchor="middle">y₁</text>
+      <rect class="output" x="74"  y="14" width="42" height="22"/>
+      <text x="95" y="30" class="body" text-anchor="middle">y₂</text>
+      <rect class="output" x="142" y="14" width="42" height="22"/>
+      <text x="163" y="30" class="body" text-anchor="middle">y₃</text>
+      <rect class="output" x="210" y="14" width="42" height="22"/>
+      <text x="231" y="30" class="body" text-anchor="middle">y₄</text>
+      <path class="arrow" d="M27 50 L27 36" marker-end="url(#arr)"/>
+      <path class="arrow" d="M95 50 L95 36" marker-end="url(#arr)"/>
+      <path class="arrow" d="M163 50 L163 36" marker-end="url(#arr)"/>
+      <path class="arrow" d="M231 50 L231 36" marker-end="url(#arr)"/>
+    </g>
+  </g>
+
+  <!-- many-to-many (sync) -->
+  <g transform="translate(670,80)">
+    <text x="135" y="0" class="head" text-anchor="middle">Many-to-many (sync)</text>
+    <text x="135" y="18" class="caption" text-anchor="middle">POS tagging · one label per token</text>
+    <g>
+      <rect class="cell" x="0" y="50" width="54" height="44"/>
+      <text x="27" y="77" class="body" text-anchor="middle">h₁</text>
+      <rect class="cell" x="68" y="50" width="54" height="44"/>
+      <text x="95" y="77" class="body" text-anchor="middle">h₂</text>
+      <rect class="cell" x="136" y="50" width="54" height="44"/>
+      <text x="163" y="77" class="body" text-anchor="middle">h₃</text>
+      <rect class="cell" x="204" y="50" width="54" height="44"/>
+      <text x="231" y="77" class="body" text-anchor="middle">h₄</text>
+      <path class="arrow" d="M54 72 L68 72" marker-end="url(#arr)"/>
+      <path class="arrow" d="M122 72 L136 72" marker-end="url(#arr)"/>
+      <path class="arrow" d="M190 72 L204 72" marker-end="url(#arr)"/>
+      <!-- inputs & outputs aligned -->
+      <rect class="input" x="6" y="110" width="42" height="22"/><text x="27" y="126" class="body" text-anchor="middle">x₁</text>
+      <rect class="input" x="74" y="110" width="42" height="22"/><text x="95" y="126" class="body" text-anchor="middle">x₂</text>
+      <rect class="input" x="142" y="110" width="42" height="22"/><text x="163" y="126" class="body" text-anchor="middle">x₃</text>
+      <rect class="input" x="210" y="110" width="42" height="22"/><text x="231" y="126" class="body" text-anchor="middle">x₄</text>
+      <path class="arrow" d="M27 110 L27 94" marker-end="url(#arr)"/>
+      <path class="arrow" d="M95 110 L95 94" marker-end="url(#arr)"/>
+      <path class="arrow" d="M163 110 L163 94" marker-end="url(#arr)"/>
+      <path class="arrow" d="M231 110 L231 94" marker-end="url(#arr)"/>
+      <rect class="output" x="6"   y="14" width="42" height="22"/><text x="27" y="30" class="body" text-anchor="middle">y₁</text>
+      <rect class="output" x="74"  y="14" width="42" height="22"/><text x="95" y="30" class="body" text-anchor="middle">y₂</text>
+      <rect class="output" x="142" y="14" width="42" height="22"/><text x="163" y="30" class="body" text-anchor="middle">y₃</text>
+      <rect class="output" x="210" y="14" width="42" height="22"/><text x="231" y="30" class="body" text-anchor="middle">y₄</text>
+      <path class="arrow" d="M27 50 L27 36" marker-end="url(#arr)"/>
+      <path class="arrow" d="M95 50 L95 36" marker-end="url(#arr)"/>
+      <path class="arrow" d="M163 50 L163 36" marker-end="url(#arr)"/>
+      <path class="arrow" d="M231 50 L231 36" marker-end="url(#arr)"/>
+    </g>
+  </g>
+
+  <!-- Footer note -->
+  <rect x="40" y="270" width="880" height="70" fill="#FFF3EE" stroke="#D97757" stroke-width="1" rx="6"/>
+  <text x="55" y="292" class="head">Encoder-decoder (many-to-many, different lengths)</text>
+  <text x="55" y="313" class="body">Read whole input first → one "context" vector → unroll decoder to produce output sequence.</text>
+  <text x="55" y="330" class="caption">This is the Seq2Seq pattern (L11). Input + output lengths can differ · translation, summarization.</text>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+    </marker>
+  </defs>
+</svg>

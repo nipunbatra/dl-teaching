@@ -142,6 +142,12 @@ At inference, apply the same merge rules in order → tokenize any new string.
 
 ---
 
+# Worked BPE · merge trace
+
+![w:920px](figures/lec14/svg/bpe_merge_trace.svg)
+
+---
+
 # Worked BPE · "low lower newest widest"
 
 Start at the character level:

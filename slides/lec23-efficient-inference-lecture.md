@@ -247,6 +247,12 @@ Generate multiple tokens per forward pass
 
 ---
 
+# Speculative decoding · picture
+
+![w:920px](figures/lec23/svg/speculative_decoding.svg)
+
+---
+
 # The decode speedup trick
 
 Autoregressive generation is **one token per forward pass**. For a 70B model this caps your throughput.

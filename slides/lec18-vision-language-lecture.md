@@ -80,6 +80,12 @@ The patchify linear layer is conceptually a strided convolution with kernel size
 
 ---
 
+# From image to sequence · picture
+
+![w:920px](figures/lec18/svg/vit_patches_tokens.svg)
+
+---
+
 # How ViT works
 
 ![w:920px](figures/lec18/svg/vit_patches.svg)
@@ -258,6 +264,12 @@ The model's "understanding" of a class is mediated by the caption distribution i
 # LLaVA · give an LLM eyes
 
 Project image features into token space
+
+---
+
+# LLaVA · full stack
+
+![w:920px](figures/lec18/svg/llava_stack.svg)
 
 ---
 

@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .frozen { fill: #E8EDEF; stroke: #4A6670; stroke-width: 1.2; rx: 6; }
+    .train { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.4; rx: 6; }
+    .text { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.1; rx: 4; }
+    .img { fill: #F7EED6; stroke: #C9A961; stroke-width: 1.1; rx: 4; }
+    .arrow { stroke: #1F1F1E; stroke-width: 1.4; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="420"/>
+  <text x="480" y="28" class="title" text-anchor="middle">LLaVA · give an LLM eyes with one linear layer</text>
+
+  <!-- Image input -->
+  <g transform="translate(40, 75)">
+    <rect fill="#F7EED6" stroke="#C9A961" stroke-width="1.2" x="0" y="0" width="110" height="110" rx="6"/>
+    <text x="55" y="60" class="body" text-anchor="middle">[image]</text>
+    <text x="55" y="130" class="caption" text-anchor="middle">224×224 RGB</text>
+  </g>
+
+  <path class="arrow" d="M155 130 L195 130" marker-end="url(#arr)"/>
+
+  <!-- CLIP ViT (frozen) -->
+  <g transform="translate(200, 75)">
+    <rect class="frozen" x="0" y="0" width="170" height="110"/>
+    <text x="85" y="32" class="body" text-anchor="middle" font-weight="600">CLIP ViT-L/14</text>
+    <text x="85" y="54" class="caption" text-anchor="middle">(frozen)</text>
+    <text x="85" y="80" class="caption" text-anchor="middle">image →</text>
+    <text x="85" y="96" class="caption" text-anchor="middle">256 image features</text>
+    <text x="85" y="130" class="caption" text-anchor="middle">d = 1024 each</text>
+  </g>
+
+  <path class="arrow" d="M375 130 L415 130" marker-end="url(#arr)"/>
+
+  <!-- Linear projection (trainable) -->
+  <g transform="translate(420, 75)">
+    <rect class="train" x="0" y="0" width="130" height="110"/>
+    <text x="65" y="32" class="body" text-anchor="middle" font-weight="600">Linear</text>
+    <text x="65" y="52" class="caption" text-anchor="middle">(trainable)</text>
+    <text x="65" y="82" class="caption" text-anchor="middle">1024 → d_llm</text>
+    <text x="65" y="100" class="caption" text-anchor="middle">~10M params</text>
+  </g>
+
+  <path class="arrow" d="M555 130 L620 130" marker-end="url(#arr)"/>
+
+  <!-- "image tokens" -->
+  <g transform="translate(625, 105)">
+    <rect class="text" x="0" y="0" width="36" height="30"/>
+    <text x="18" y="20" class="body" text-anchor="middle">i₁</text>
+    <rect class="text" x="40" y="0" width="36" height="30"/>
+    <text x="58" y="20" class="body" text-anchor="middle">i₂</text>
+    <text x="98" y="20" class="body" text-anchor="middle">...</text>
+    <rect class="text" x="115" y="0" width="48" height="30"/>
+    <text x="139" y="20" class="body" text-anchor="middle">i₂₅₆</text>
+    <text x="85" y="55" class="caption" text-anchor="middle">256 "image tokens" in LLM space</text>
+  </g>
+
+  <!-- Text prompt row -->
+  <g transform="translate(40, 230)">
+    <text x="80" y="0" class="head">Text prompt</text>
+    <rect class="text" x="0" y="10" width="160" height="30"/>
+    <text x="80" y="30" class="body" text-anchor="middle">"Describe the image."</text>
+  </g>
+
+  <path class="arrow" d="M205 255 L245 255" marker-end="url(#arr)"/>
+
+  <g transform="translate(250, 240)">
+    <text x="100" y="0" class="head" text-anchor="middle">Tokenize + embed</text>
+    <rect class="text" x="20" y="10" width="30" height="30"/>
+    <text x="35" y="30" class="body" text-anchor="middle">t₁</text>
+    <rect class="text" x="55" y="10" width="30" height="30"/>
+    <text x="70" y="30" class="body" text-anchor="middle">t₂</text>
+    <text x="100" y="30" class="body" text-anchor="middle">...</text>
+    <rect class="text" x="115" y="10" width="38" height="30"/>
+    <text x="134" y="30" class="body" text-anchor="middle">t_k</text>
+    <text x="86" y="60" class="caption" text-anchor="middle">k text tokens</text>
+  </g>
+
+  <!-- merge arrow to LLM -->
+  <path class="arrow" d="M420 250 Q 500 180 625 155"/>
+  <path class="arrow" d="M710 150 L710 180" marker-end="url(#arr)"/>
+
+  <!-- LLM (frozen or lightly fine-tuned) -->
+  <g transform="translate(580, 190)">
+    <rect class="train" x="0" y="0" width="280" height="120"/>
+    <text x="140" y="30" class="head" text-anchor="middle">Llama / Vicuna LLM</text>
+    <text x="140" y="52" class="caption" text-anchor="middle">(fine-tuned on instruction data)</text>
+    <text x="140" y="82" class="caption" text-anchor="middle">concat [i₁...i₂₅₆, t₁...t_k]</text>
+    <text x="140" y="100" class="caption" text-anchor="middle">autoregressive decode</text>
+  </g>
+
+  <!-- Output -->
+  <path class="arrow" d="M720 310 L720 335" marker-end="url(#arr)"/>
+  <g transform="translate(540, 340)">
+    <rect fill="white" stroke="#A8324B" stroke-width="1.2" x="0" y="0" width="360" height="40" rx="4"/>
+    <text x="180" y="24" class="body" text-anchor="middle">"A cat sitting on a mat near a window ..."</text>
+  </g>
+
+  <!-- Footer -->
+  <rect x="40" y="340" width="475" height="40" fill="#FFF3EE" stroke="#D97757" stroke-width="1" rx="6"/>
+  <text x="277" y="362" class="body" text-anchor="middle">Only ~10M new params (the projection) for a 7B multimodal model</text>
+  <text x="277" y="378" class="caption" text-anchor="middle">&lt;0.15% extra weights to make a text LLM see images</text>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+    </marker>
+  </defs>
+</svg>

@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .ink { fill: #1F1F1E; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-family: "IBM Plex Mono", monospace; font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 12px; fill: #6B6B69; }
+    .merged { fill: #D97757; font-weight: 600; }
+    .box { fill: white; stroke: #4A6670; stroke-width: 1; rx: 4; }
+    .rustbox { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.4; rx: 4; }
+    .arrow { stroke: #1F1F1E; stroke-width: 1.4; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="460"/>
+  <text x="480" y="32" class="title" text-anchor="middle">BPE merge trace · "low lower newest widest"</text>
+
+  <!-- Column headers -->
+  <text x="110" y="74" class="head" text-anchor="middle">step</text>
+  <text x="280" y="74" class="head" text-anchor="middle">tokens</text>
+  <text x="690" y="74" class="head" text-anchor="middle">merge rule · freq</text>
+
+  <!-- Rows -->
+  <g>
+    <!-- step 0 -->
+    <rect class="box" x="40" y="86" width="880" height="38"/>
+    <text x="110" y="111" class="body" text-anchor="middle">0</text>
+    <text x="280" y="111" class="body" text-anchor="middle">l o w · l o w e r · n e w e s t · w i d e s t</text>
+    <text x="690" y="111" class="caption" text-anchor="middle">initial char-level split</text>
+
+    <!-- step 1: (e,s) → es -->
+    <rect class="rustbox" x="40" y="128" width="880" height="38"/>
+    <text x="110" y="153" class="body" text-anchor="middle">1</text>
+    <text x="280" y="153" class="body" text-anchor="middle">l o w · l o w e r · n e w <tspan class="merged">es</tspan> t · w i d <tspan class="merged">es</tspan> t</text>
+    <text x="690" y="153" class="body" text-anchor="middle">(e, s) → <tspan class="merged">es</tspan> · freq=2</text>
+
+    <!-- step 2: (es,t) → est -->
+    <rect class="rustbox" x="40" y="170" width="880" height="38"/>
+    <text x="110" y="195" class="body" text-anchor="middle">2</text>
+    <text x="280" y="195" class="body" text-anchor="middle">l o w · l o w e r · n e w <tspan class="merged">est</tspan> · w i d <tspan class="merged">est</tspan></text>
+    <text x="690" y="195" class="body" text-anchor="middle">(es, t) → <tspan class="merged">est</tspan> · freq=2</text>
+
+    <!-- step 3: (l,o) → lo -->
+    <rect class="rustbox" x="40" y="212" width="880" height="38"/>
+    <text x="110" y="237" class="body" text-anchor="middle">3</text>
+    <text x="280" y="237" class="body" text-anchor="middle"><tspan class="merged">lo</tspan> w · <tspan class="merged">lo</tspan> w e r · n e w est · w i d est</text>
+    <text x="690" y="237" class="body" text-anchor="middle">(l, o) → <tspan class="merged">lo</tspan> · freq=2</text>
+
+    <!-- step 4: (lo,w) → low -->
+    <rect class="rustbox" x="40" y="254" width="880" height="38"/>
+    <text x="110" y="279" class="body" text-anchor="middle">4</text>
+    <text x="280" y="279" class="body" text-anchor="middle"><tspan class="merged">low</tspan> · <tspan class="merged">low</tspan> e r · n e w est · w i d est</text>
+    <text x="690" y="279" class="body" text-anchor="middle">(lo, w) → <tspan class="merged">low</tspan> · freq=2</text>
+
+    <!-- step 5: (w,e) → we -->
+    <rect class="rustbox" x="40" y="296" width="880" height="38"/>
+    <text x="110" y="321" class="body" text-anchor="middle">5</text>
+    <text x="280" y="321" class="body" text-anchor="middle">low · low e r · n <tspan class="merged">we</tspan> est · w i d est</text>
+    <text x="690" y="321" class="body" text-anchor="middle">(w, e) → <tspan class="merged">we</tspan> · freq=1</text>
+  </g>
+
+  <!-- Final vocabulary -->
+  <rect x="40" y="360" width="880" height="70" fill="#FFF3EE" stroke="#D97757" stroke-width="1.5" rx="6"/>
+  <text x="55" y="382" class="head">Learned vocabulary (5 merges applied)</text>
+  <text x="55" y="404" class="body">l · o · w · e · r · n · s · t · i · d · es · est · lo · low · we</text>
+  <text x="55" y="422" class="caption">Common words like "low" are now single tokens. Rare words still split into subwords. No &lt;unk&gt; needed.</text>
+
+  <text x="480" y="450" class="caption" text-anchor="middle">At inference · apply merges 1→5 in order to any new word.</text>
+</svg>

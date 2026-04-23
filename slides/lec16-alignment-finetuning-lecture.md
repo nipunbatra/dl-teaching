@@ -311,6 +311,12 @@ Pure supervised loss. No RL loop. No reward model. Implementation is ~50 lines v
 
 ---
 
+# PPO vs DPO · the two pipelines
+
+![w:900px](figures/lec16/svg/dpo_vs_ppo.svg)
+
+---
+
 # DPO vs RLHF · which to use
 
 | | DPO | RLHF |

@@ -234,6 +234,12 @@ Attention as database retrieval
 
 ---
 
+# Soft retrieval · picture
+
+![w:920px](figures/lec12/svg/attention_soft_retrieval.svg)
+
+---
+
 # The retrieval metaphor
 
 Imagine a Python dictionary lookup:

@@ -98,6 +98,12 @@ The trick that makes generation feel "on-prompt"
 
 ---
 
+# CFG · the geometry
+
+![w:920px](figures/lec22/svg/cfg_guidance_vectors.svg)
+
+---
+
 # CFG · the extrapolation trick
 
 **Intuition** · at each denoising step, the unconditional prediction is "what *any* image wants to do right now." The conditional prediction is "what a *prompt-matching* image wants to do." The **difference vector** points *toward* the prompt.
