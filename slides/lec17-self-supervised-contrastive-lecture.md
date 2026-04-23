@@ -125,6 +125,12 @@ Augmentations as implicit labels
 
 ---
 
+# SimCLR · batch as an 8×8 matrix
+
+![w:920px](figures/lec17/svg/simclr_batch_matrix.svg)
+
+---
+
 # How SimCLR works, step-by-step
 
 1. Sample a minibatch of $N$ images.

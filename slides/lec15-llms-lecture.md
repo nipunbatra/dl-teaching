@@ -214,7 +214,7 @@ How you fit a 70B model on real hardware
 
 # Distributed training · three parallelisms
 
-![w:920px](figures/lec15/svg/distributed_training.svg)
+![w:920px](figures/lec15/svg/distributed_3d.svg)
 
 ---
 

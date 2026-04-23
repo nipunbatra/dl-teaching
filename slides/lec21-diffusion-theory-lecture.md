@@ -135,6 +135,12 @@ A GAN asks a network to hit a moving target (the discriminator's decision bounda
 
 ![w:920px](figures/lec21/svg/forward_reverse.svg)
 
+---
+
+# Forward + reverse · sequence view
+
+![w:920px](figures/lec21/svg/diffusion_timeline.svg)
+
 <div class="realworld">
 
 ▶ Interactive: slide t, see a 2D spiral dissolve into noise; press "Reverse animate" to watch it reassemble — [diffusion-denoise](https://nipunbatra.github.io/interactive-articles/diffusion-denoise/).

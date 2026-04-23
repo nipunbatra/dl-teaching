@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .w16 { fill: #F4D6DB; stroke: #A8324B; stroke-width: 1.2; rx: 3; }
+    .w4  { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.2; rx: 3; }
+    .opt { fill: #E8EDEF; stroke: #4A6670; stroke-width: 1.2; rx: 3; }
+    .grad{ fill: #F7EED6; stroke: #C9A961; stroke-width: 1.2; rx: 3; }
+    .lora{ fill: #FFF3EE; stroke: #D97757; stroke-width: 1.2; rx: 3; }
+    .label { font-size: 11px; fill: #1F1F1E; text-anchor: middle; }
+  </style>
+  <rect class="bg" width="960" height="400"/>
+  <text x="480" y="30" class="title" text-anchor="middle">QLoRA · memory breakdown for 70B-param Llama fine-tuning</text>
+
+  <!-- Full fine-tune column -->
+  <g transform="translate(40, 70)">
+    <text x="140" y="0" class="head" text-anchor="middle">Full fine-tune · FP16</text>
+    <rect class="w16" x="0" y="20" width="280" height="80"/>
+    <text x="140" y="58" class="body" text-anchor="middle">Weights FP16</text>
+    <text x="140" y="78" class="body" text-anchor="middle">140 GB</text>
+
+    <rect class="grad" x="0" y="105" width="280" height="80"/>
+    <text x="140" y="143" class="body" text-anchor="middle">Gradients FP16</text>
+    <text x="140" y="163" class="body" text-anchor="middle">140 GB</text>
+
+    <rect class="opt" x="0" y="190" width="280" height="100"/>
+    <text x="140" y="228" class="body" text-anchor="middle">Optimizer state (Adam)</text>
+    <text x="140" y="248" class="body" text-anchor="middle">280 GB (m + v in fp32)</text>
+
+    <rect x="0" y="300" width="280" height="30" fill="#FDF2F6" stroke="#A8324B" stroke-width="1.5" rx="4"/>
+    <text x="140" y="320" class="head" text-anchor="middle">Total ~560 GB · needs 7+ A100s</text>
+  </g>
+
+  <!-- LoRA column -->
+  <g transform="translate(340, 70)">
+    <text x="140" y="0" class="head" text-anchor="middle">LoRA · FP16 base</text>
+    <rect class="w16" x="0" y="20" width="280" height="80"/>
+    <text x="140" y="58" class="body" text-anchor="middle">Weights FP16 (frozen)</text>
+    <text x="140" y="78" class="body" text-anchor="middle">140 GB</text>
+
+    <rect class="grad" x="0" y="105" width="280" height="16"/>
+    <text x="140" y="116" class="label">grad · 80 MB</text>
+    <rect class="opt" x="0" y="125" width="280" height="30"/>
+    <text x="140" y="145" class="label">Adam state · 160 MB</text>
+    <rect class="lora" x="0" y="160" width="280" height="16"/>
+    <text x="140" y="172" class="label">LoRA A,B · 80 MB</text>
+
+    <rect x="0" y="300" width="280" height="30" fill="#FFF3EE" stroke="#D97757" stroke-width="1.5" rx="4"/>
+    <text x="140" y="320" class="head" text-anchor="middle">Total ~141 GB · 2 A100s</text>
+  </g>
+
+  <!-- QLoRA column -->
+  <g transform="translate(640, 70)">
+    <text x="140" y="0" class="head" text-anchor="middle">QLoRA · 4-bit base</text>
+    <rect class="w4" x="0" y="20" width="280" height="80"/>
+    <text x="140" y="58" class="body" text-anchor="middle">Weights NF4 (frozen)</text>
+    <text x="140" y="78" class="body" text-anchor="middle">35 GB (4× smaller)</text>
+
+    <rect class="grad" x="0" y="105" width="280" height="16"/>
+    <text x="140" y="116" class="label">grad · 80 MB</text>
+    <rect class="opt" x="0" y="125" width="280" height="30"/>
+    <text x="140" y="145" class="label">paged Adam · 160 MB</text>
+    <rect class="lora" x="0" y="160" width="280" height="16"/>
+    <text x="140" y="172" class="label">LoRA A,B · 80 MB</text>
+
+    <rect x="0" y="300" width="280" height="30" fill="#F0F5EF" stroke="#7B9E89" stroke-width="1.5" rx="4"/>
+    <text x="140" y="320" class="head" text-anchor="middle">Total ~36 GB · 1 consumer GPU</text>
+  </g>
+
+  <!-- Footer -->
+  <rect x="40" y="355" width="880" height="40" fill="#FFF3EE" stroke="#D97757" stroke-width="1" rx="6"/>
+  <text x="480" y="375" class="body" text-anchor="middle"><tspan font-weight="600">QLoRA unlock</tspan> · fine-tune 70B on a single 48 GB consumer card (RTX 6000 Ada).</text>
+  <text x="480" y="391" class="caption" text-anchor="middle">Frozen weights in 4-bit (NF4) · LoRA adapters in bf16 on top · paged optimizer state · identical quality to FP16 LoRA.</text>
+</svg>

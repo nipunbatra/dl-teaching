@@ -124,6 +124,12 @@ Total: **~760 GB**. Needs an H100 cluster. Most people don't have that.
 
 ![w:920px](figures/lec16/svg/lora_adapter.svg)
 
+---
+
+# LoRA · detailed view
+
+![w:920px](figures/lec16/svg/lora_adapter_detail.svg)
+
 <div class="realworld">
 
 ▶ Interactive: slide the rank, see parameter counts drop 100×–1000× — [lora-adapter](https://nipunbatra.github.io/interactive-articles/lora-adapter/).
@@ -190,6 +196,12 @@ model.print_trainable_parameters()
 ```
 
 Training loop is identical to normal SFT — only 0.06% of parameters have gradients, everything else is frozen.
+
+---
+
+# QLoRA · memory breakdown
+
+![w:920px](figures/lec16/svg/qlora_memory.svg)
 
 ---
 

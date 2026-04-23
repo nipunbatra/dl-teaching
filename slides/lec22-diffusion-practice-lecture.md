@@ -289,6 +289,12 @@ We want to make it faster without retraining. Two approaches:
 
 ---
 
+# DDIM · skip 95% of steps
+
+![w:920px](figures/lec22/svg/ddim_vs_ddpm.svg)
+
+---
+
 # DDIM · deterministic sampling in 20–50 steps
 
 <div class="paper">

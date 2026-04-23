@@ -188,6 +188,12 @@ Llama, GPT-*, Mistral, Claude all use byte-level BPE with minor tweaks. Sentence
 
 ---
 
+# Tokenizer comparison · same sentence, different counts
+
+![w:920px](figures/lec14/svg/tokenizer_comparison.svg)
+
+---
+
 # Three BPE variants you will meet
 
 | Variant | How | Used in |

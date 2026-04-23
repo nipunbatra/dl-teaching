@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .mono { font-family: "IBM Plex Mono", monospace; font-size: 11px; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .frozen { fill: #E8EDEF; stroke: #4A6670; stroke-width: 1.4; rx: 6; }
+    .train { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.6; rx: 4; }
+    .arrow { stroke: #1F1F1E; stroke-width: 1.3; fill: none; }
+    .add { fill: white; stroke: #A8324B; stroke-width: 1.4; }
+  </style>
+  <rect class="bg" width="960" height="420"/>
+  <text x="480" y="28" class="title" text-anchor="middle">LoRA · low-rank adapter · 99.9% fewer trainable params</text>
+
+  <!-- Full fine-tuning (left) -->
+  <g transform="translate(40, 70)">
+    <text x="175" y="0" class="head" text-anchor="middle">Full fine-tuning</text>
+    <text x="175" y="18" class="caption" text-anchor="middle">retrain all weights</text>
+    <!-- input -->
+    <rect class="frozen" x="120" y="35" width="110" height="30"/>
+    <text x="175" y="54" class="body" text-anchor="middle">input h</text>
+    <path class="arrow" d="M175 65 L175 85" marker-end="url(#arr)"/>
+    <!-- W -->
+    <rect class="train" x="100" y="85" width="150" height="80"/>
+    <text x="175" y="115" class="body" text-anchor="middle" font-weight="600">W ∈ ℝ^(d×d)</text>
+    <text x="175" y="135" class="body" text-anchor="middle">d = 4096</text>
+    <text x="175" y="155" class="caption" text-anchor="middle">~17M trainable params</text>
+    <path class="arrow" d="M175 165 L175 185" marker-end="url(#arr)"/>
+    <rect class="frozen" x="120" y="185" width="110" height="30"/>
+    <text x="175" y="204" class="body" text-anchor="middle">output</text>
+    <!-- total params -->
+    <rect x="50" y="240" width="250" height="75" fill="#F4D6DB" stroke="#A8324B" stroke-width="1" rx="4"/>
+    <text x="175" y="262" class="head" text-anchor="middle">Trainable params for 70B LLM</text>
+    <text x="175" y="290" class="body" text-anchor="middle" font-family="IBM Plex Mono, monospace">~70,000,000,000</text>
+    <text x="175" y="308" class="caption" text-anchor="middle">~280 GB optimizer state</text>
+  </g>
+
+  <!-- LoRA (right) -->
+  <g transform="translate(500, 70)">
+    <text x="210" y="0" class="head" text-anchor="middle">LoRA · Low-Rank Adaptation</text>
+    <text x="210" y="18" class="caption" text-anchor="middle">freeze W · add trainable B·A parallel path</text>
+    <!-- input -->
+    <rect class="frozen" x="160" y="35" width="100" height="30"/>
+    <text x="210" y="54" class="body" text-anchor="middle">input h</text>
+    <path class="arrow" d="M210 65 L210 85" marker-end="url(#arr)"/>
+
+    <!-- Two paths: W frozen and BA trainable -->
+    <!-- W path -->
+    <rect class="frozen" x="50" y="95" width="150" height="60"/>
+    <text x="125" y="120" class="body" text-anchor="middle" font-weight="600">W (frozen)</text>
+    <text x="125" y="138" class="caption" text-anchor="middle">ℝ^(d×d) · d=4096</text>
+    <text x="125" y="148" class="caption" text-anchor="middle">17M params · 0 trainable</text>
+    <!-- branch split -->
+    <path class="arrow" d="M210 85 L125 95"/>
+    <path class="arrow" d="M210 85 L300 95"/>
+    <!-- A, B path -->
+    <rect class="train" x="250" y="95" width="100" height="28"/>
+    <text x="300" y="114" class="body" text-anchor="middle">A ∈ ℝ^(d×r)</text>
+    <path class="arrow" d="M300 123 L300 130" marker-end="url(#arr)"/>
+    <rect class="train" x="250" y="130" width="100" height="28"/>
+    <text x="300" y="149" class="body" text-anchor="middle">B ∈ ℝ^(r×d)</text>
+    <text x="360" y="130" class="caption">r = 8</text>
+
+    <!-- Combine: W·h + B·A·h -->
+    <path class="arrow" d="M125 155 L180 185"/>
+    <path class="arrow" d="M300 158 L240 185"/>
+    <circle class="add" cx="210" cy="195" r="12"/>
+    <text x="210" y="199" class="body" text-anchor="middle">+</text>
+    <path class="arrow" d="M210 207 L210 225" marker-end="url(#arr)"/>
+    <rect class="frozen" x="160" y="225" width="100" height="30"/>
+    <text x="210" y="244" class="body" text-anchor="middle">output</text>
+
+    <!-- LoRA params -->
+    <rect x="80" y="275" width="260" height="75" fill="#F0F5EF" stroke="#7B9E89" stroke-width="1" rx="4"/>
+    <text x="210" y="297" class="head" text-anchor="middle">Trainable params</text>
+    <text x="210" y="320" class="body" text-anchor="middle" font-family="IBM Plex Mono, monospace">2 · d · r = 2 · 4096 · 8 = 65,536</text>
+    <text x="210" y="340" class="caption" text-anchor="middle">0.0001% of W · ~10-100 MB checkpoint</text>
+  </g>
+
+  <!-- bottom note -->
+  <rect x="40" y="370" width="880" height="40" fill="#FFF3EE" stroke="#D97757" stroke-width="1" rx="6"/>
+  <text x="480" y="392" class="body" text-anchor="middle"><tspan font-weight="600">Key insight</tspan> · fine-tuning updates are intrinsically low-rank · B·A (rank 8) captures 95%+ of benefit.</text>
+  <text x="480" y="405" class="caption" text-anchor="middle">Train on consumer GPU · ship per-task adapters as tiny deltas · swap in/out at runtime.</text>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+    </marker>
+  </defs>
+</svg>

@@ -396,6 +396,12 @@ If the decoder is too powerful, the KL term will drive $q(z|x) \to p(z) = \mathc
 
 ---
 
+# Reparameterization · gradient flow
+
+![w:920px](figures/lec19/svg/reparam_gradient_flow.svg)
+
+---
+
 # The reparameterization trick
 
 How to backprop through a sample

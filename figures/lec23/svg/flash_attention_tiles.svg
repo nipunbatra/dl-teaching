@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .mono { font-family: "IBM Plex Mono", monospace; font-size: 11px; }
+    .full { fill: #F4D6DB; stroke: #A8324B; stroke-width: 1.2; rx: 2; }
+    .tile { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.2; rx: 2; }
+    .sram { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.3; rx: 4; }
+    .hbm { fill: #E8EDEF; stroke: #4A6670; stroke-width: 1.2; rx: 4; }
+  </style>
+  <rect class="bg" width="960" height="400"/>
+  <text x="480" y="28" class="title" text-anchor="middle">FlashAttention · recompute in tiles, never materialize the N×N matrix</text>
+
+  <!-- Left: naive attention -->
+  <g transform="translate(40, 70)">
+    <text x="140" y="0" class="head" text-anchor="middle">Naive · full N×N materialized</text>
+    <text x="140" y="18" class="caption" text-anchor="middle">4096 × 4096 = 16M entries per head, per layer</text>
+    <!-- big QKᵀ grid -->
+    <rect class="full" x="20" y="35" width="240" height="240"/>
+    <text x="140" y="165" class="body" text-anchor="middle" fill="white" font-weight="600">QKᵀ ∈ ℝ^(N×N)</text>
+    <text x="140" y="305" class="caption" text-anchor="middle">O(N²) HBM memory</text>
+    <text x="140" y="320" class="caption" text-anchor="middle">HBM bandwidth-bound</text>
+  </g>
+
+  <!-- Right: flash attention tiles -->
+  <g transform="translate(390, 70)">
+    <text x="140" y="0" class="head" text-anchor="middle">FlashAttention · 8×8 tiling</text>
+    <text x="140" y="18" class="caption" text-anchor="middle">each tile fits in SRAM · stream through them</text>
+    <!-- grid of tiles (8x8) -->
+    <g transform="translate(20, 35)">
+      <!-- Draw 8x8 grid of 30x30 tiles -->
+      <!-- Row 0 -->
+      <rect class="tile" x="0" y="0" width="30" height="30"/>
+      <rect class="tile" x="30" y="0" width="30" height="30"/>
+      <rect class="tile" x="60" y="0" width="30" height="30"/>
+      <rect class="tile" x="90" y="0" width="30" height="30"/>
+      <rect class="tile" x="120" y="0" width="30" height="30"/>
+      <rect class="tile" x="150" y="0" width="30" height="30"/>
+      <rect class="tile" x="180" y="0" width="30" height="30"/>
+      <rect class="tile" x="210" y="0" width="30" height="30"/>
+      <!-- Row 1 -->
+      <rect class="tile" x="0" y="30" width="30" height="30"/>
+      <rect class="tile" x="30" y="30" width="30" height="30"/>
+      <rect class="tile" x="60" y="30" width="30" height="30"/>
+      <rect class="tile" x="90" y="30" width="30" height="30"/>
+      <rect class="tile" x="120" y="30" width="30" height="30"/>
+      <rect class="tile" x="150" y="30" width="30" height="30"/>
+      <rect class="tile" x="180" y="30" width="30" height="30"/>
+      <rect class="tile" x="210" y="30" width="30" height="30"/>
+      <!-- Row 2 -->
+      <rect class="tile" x="0" y="60" width="30" height="30"/>
+      <rect class="tile" x="30" y="60" width="30" height="30"/>
+      <rect class="tile" x="60" y="60" width="30" height="30" fill="#D97757" stroke="#1F1F1E" stroke-width="1.5"/>
+      <rect class="tile" x="90" y="60" width="30" height="30"/>
+      <rect class="tile" x="120" y="60" width="30" height="30"/>
+      <rect class="tile" x="150" y="60" width="30" height="30"/>
+      <rect class="tile" x="180" y="60" width="30" height="30"/>
+      <rect class="tile" x="210" y="60" width="30" height="30"/>
+      <!-- Rows 3-7 -->
+      <g>
+        <rect class="tile" x="0" y="90" width="30" height="30"/><rect class="tile" x="30" y="90" width="30" height="30"/><rect class="tile" x="60" y="90" width="30" height="30"/><rect class="tile" x="90" y="90" width="30" height="30"/><rect class="tile" x="120" y="90" width="30" height="30"/><rect class="tile" x="150" y="90" width="30" height="30"/><rect class="tile" x="180" y="90" width="30" height="30"/><rect class="tile" x="210" y="90" width="30" height="30"/>
+        <rect class="tile" x="0" y="120" width="30" height="30"/><rect class="tile" x="30" y="120" width="30" height="30"/><rect class="tile" x="60" y="120" width="30" height="30"/><rect class="tile" x="90" y="120" width="30" height="30"/><rect class="tile" x="120" y="120" width="30" height="30"/><rect class="tile" x="150" y="120" width="30" height="30"/><rect class="tile" x="180" y="120" width="30" height="30"/><rect class="tile" x="210" y="120" width="30" height="30"/>
+        <rect class="tile" x="0" y="150" width="30" height="30"/><rect class="tile" x="30" y="150" width="30" height="30"/><rect class="tile" x="60" y="150" width="30" height="30"/><rect class="tile" x="90" y="150" width="30" height="30"/><rect class="tile" x="120" y="150" width="30" height="30"/><rect class="tile" x="150" y="150" width="30" height="30"/><rect class="tile" x="180" y="150" width="30" height="30"/><rect class="tile" x="210" y="150" width="30" height="30"/>
+        <rect class="tile" x="0" y="180" width="30" height="30"/><rect class="tile" x="30" y="180" width="30" height="30"/><rect class="tile" x="60" y="180" width="30" height="30"/><rect class="tile" x="90" y="180" width="30" height="30"/><rect class="tile" x="120" y="180" width="30" height="30"/><rect class="tile" x="150" y="180" width="30" height="30"/><rect class="tile" x="180" y="180" width="30" height="30"/><rect class="tile" x="210" y="180" width="30" height="30"/>
+        <rect class="tile" x="0" y="210" width="30" height="30"/><rect class="tile" x="30" y="210" width="30" height="30"/><rect class="tile" x="60" y="210" width="30" height="30"/><rect class="tile" x="90" y="210" width="30" height="30"/><rect class="tile" x="120" y="210" width="30" height="30"/><rect class="tile" x="150" y="210" width="30" height="30"/><rect class="tile" x="180" y="210" width="30" height="30"/><rect class="tile" x="210" y="210" width="30" height="30"/>
+      </g>
+    </g>
+    <text x="140" y="297" class="caption" text-anchor="middle">highlighted tile = currently in SRAM</text>
+    <text x="140" y="313" class="caption" text-anchor="middle">O(N) HBM memory · compute-bound</text>
+  </g>
+
+  <!-- Right: GPU memory hierarchy -->
+  <g transform="translate(720, 70)">
+    <text x="110" y="0" class="head" text-anchor="middle">GPU memory</text>
+    <rect class="sram" x="0" y="35" width="220" height="70"/>
+    <text x="110" y="60" class="body" text-anchor="middle" font-weight="600">SRAM · 20 MB</text>
+    <text x="110" y="80" class="caption" text-anchor="middle">19 TB/s · on-chip</text>
+    <text x="110" y="95" class="caption" text-anchor="middle">fits one tile comfortably</text>
+    <rect class="hbm" x="0" y="115" width="220" height="130"/>
+    <text x="110" y="140" class="body" text-anchor="middle" font-weight="600">HBM · 80 GB</text>
+    <text x="110" y="160" class="caption" text-anchor="middle">3 TB/s · off-chip</text>
+    <text x="110" y="180" class="caption" text-anchor="middle">6× slower than SRAM</text>
+    <text x="110" y="205" class="caption" text-anchor="middle" fill="#A8324B">Naive attention stays here</text>
+    <text x="110" y="224" class="caption" text-anchor="middle" fill="#A8324B">→ bandwidth-bound</text>
+  </g>
+
+  <!-- Footer -->
+  <rect x="40" y="335" width="880" height="55" fill="#FFF3EE" stroke="#D97757" stroke-width="1" rx="6"/>
+  <text x="480" y="358" class="body" text-anchor="middle"><tspan font-weight="600">Key idea</tspan> · compute softmax(QKᵀ)V block-by-block · keep running max/sum for numerical stability · never write N×N matrix.</text>
+  <text x="480" y="378" class="caption" text-anchor="middle">FlashAttention-2 (Dao 2023) · 2× faster than standard attention · 8× longer contexts · default in every modern Transformer library.</text>
+</svg>

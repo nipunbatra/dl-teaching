@@ -1,0 +1,184 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .mono { font-family: "IBM Plex Mono", monospace; font-size: 12px; }
+    .imgA { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.3; rx: 4; }
+    .imgB { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.3; rx: 4; }
+    .pos { fill: #7B9E89; opacity: 0.55; stroke: #7B9E89; stroke-width: 1.5; }
+    .neg { fill: #A8324B; opacity: 0.15; stroke: none; }
+    .diag { fill: #4A6670; opacity: 0.15; stroke: none; }
+    .cell { stroke: #CFCBBE; stroke-width: 0.5; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="460"/>
+  <text x="480" y="28" class="title" text-anchor="middle">SimCLR · 4-image batch becomes 8 views · 56 negatives vs 2 positives</text>
+
+  <!-- Top: four source images with two augmentations each -->
+  <g transform="translate(40, 60)">
+    <text x="440" y="0" class="head" text-anchor="middle">N=4 images × 2 augmentations = 8 views · z₁…z₈</text>
+
+    <!-- image 1 -->
+    <g transform="translate(0, 20)">
+      <text x="0" y="14" class="caption">img 1</text>
+      <rect class="imgA" x="40" y="0" width="50" height="40"/>
+      <text x="65" y="26" class="body" text-anchor="middle">z₁</text>
+      <rect class="imgB" x="95" y="0" width="50" height="40"/>
+      <text x="120" y="26" class="body" text-anchor="middle">z₂</text>
+    </g>
+    <g transform="translate(200, 20)">
+      <text x="0" y="14" class="caption">img 2</text>
+      <rect class="imgA" x="40" y="0" width="50" height="40"/>
+      <text x="65" y="26" class="body" text-anchor="middle">z₃</text>
+      <rect class="imgB" x="95" y="0" width="50" height="40"/>
+      <text x="120" y="26" class="body" text-anchor="middle">z₄</text>
+    </g>
+    <g transform="translate(400, 20)">
+      <text x="0" y="14" class="caption">img 3</text>
+      <rect class="imgA" x="40" y="0" width="50" height="40"/>
+      <text x="65" y="26" class="body" text-anchor="middle">z₅</text>
+      <rect class="imgB" x="95" y="0" width="50" height="40"/>
+      <text x="120" y="26" class="body" text-anchor="middle">z₆</text>
+    </g>
+    <g transform="translate(600, 20)">
+      <text x="0" y="14" class="caption">img 4</text>
+      <rect class="imgA" x="40" y="0" width="50" height="40"/>
+      <text x="65" y="26" class="body" text-anchor="middle">z₇</text>
+      <rect class="imgB" x="95" y="0" width="50" height="40"/>
+      <text x="120" y="26" class="body" text-anchor="middle">z₈</text>
+    </g>
+  </g>
+
+  <!-- 8×8 similarity matrix -->
+  <g transform="translate(270, 155)">
+    <text x="160" y="-6" class="head" text-anchor="middle">Similarity matrix · z_i · z_j</text>
+    <!-- Grid cells -->
+    <g>
+      <!-- diagonal = self (ignored) -->
+      <!-- positives: (1,2),(2,1),(3,4),(4,3),(5,6),(6,5),(7,8),(8,7) -->
+      <!-- draw 8x8 with appropriate fills -->
+    </g>
+    <!-- Draw cells manually 8x8 = 64 cells, each 38×38 -->
+    <g>
+      <!-- Row labels -->
+      <text x="-30" y="23" class="caption">z₁</text>
+      <text x="-30" y="61" class="caption">z₂</text>
+      <text x="-30" y="99" class="caption">z₃</text>
+      <text x="-30" y="137" class="caption">z₄</text>
+      <text x="-30" y="175" class="caption">z₅</text>
+      <text x="-30" y="213" class="caption">z₆</text>
+      <text x="-30" y="251" class="caption">z₇</text>
+      <text x="-30" y="289" class="caption">z₈</text>
+      <!-- Col labels -->
+      <text x="20"  y="-14" class="caption" text-anchor="middle">z₁</text>
+      <text x="58"  y="-14" class="caption" text-anchor="middle">z₂</text>
+      <text x="96"  y="-14" class="caption" text-anchor="middle">z₃</text>
+      <text x="134" y="-14" class="caption" text-anchor="middle">z₄</text>
+      <text x="172" y="-14" class="caption" text-anchor="middle">z₅</text>
+      <text x="210" y="-14" class="caption" text-anchor="middle">z₆</text>
+      <text x="248" y="-14" class="caption" text-anchor="middle">z₇</text>
+      <text x="286" y="-14" class="caption" text-anchor="middle">z₈</text>
+    </g>
+
+    <!-- All 64 cells: diagonal = self, positives = off-diag pairs, rest = negatives -->
+    <g>
+      <!-- Row 1 (z1): diag (1,1), pos (1,2), neg rest -->
+      <rect class="diag" x="0" y="0" width="38" height="38"/>
+      <rect class="pos" x="38" y="0" width="38" height="38"/>
+      <rect class="neg" x="76" y="0" width="38" height="38"/>
+      <rect class="neg" x="114" y="0" width="38" height="38"/>
+      <rect class="neg" x="152" y="0" width="38" height="38"/>
+      <rect class="neg" x="190" y="0" width="38" height="38"/>
+      <rect class="neg" x="228" y="0" width="38" height="38"/>
+      <rect class="neg" x="266" y="0" width="38" height="38"/>
+      <!-- Row 2 (z2) -->
+      <rect class="pos" x="0" y="38" width="38" height="38"/>
+      <rect class="diag" x="38" y="38" width="38" height="38"/>
+      <rect class="neg" x="76" y="38" width="38" height="38"/>
+      <rect class="neg" x="114" y="38" width="38" height="38"/>
+      <rect class="neg" x="152" y="38" width="38" height="38"/>
+      <rect class="neg" x="190" y="38" width="38" height="38"/>
+      <rect class="neg" x="228" y="38" width="38" height="38"/>
+      <rect class="neg" x="266" y="38" width="38" height="38"/>
+      <!-- Row 3 (z3) -->
+      <rect class="neg" x="0" y="76" width="38" height="38"/>
+      <rect class="neg" x="38" y="76" width="38" height="38"/>
+      <rect class="diag" x="76" y="76" width="38" height="38"/>
+      <rect class="pos" x="114" y="76" width="38" height="38"/>
+      <rect class="neg" x="152" y="76" width="38" height="38"/>
+      <rect class="neg" x="190" y="76" width="38" height="38"/>
+      <rect class="neg" x="228" y="76" width="38" height="38"/>
+      <rect class="neg" x="266" y="76" width="38" height="38"/>
+      <!-- Row 4 -->
+      <rect class="neg" x="0" y="114" width="38" height="38"/>
+      <rect class="neg" x="38" y="114" width="38" height="38"/>
+      <rect class="pos" x="76" y="114" width="38" height="38"/>
+      <rect class="diag" x="114" y="114" width="38" height="38"/>
+      <rect class="neg" x="152" y="114" width="38" height="38"/>
+      <rect class="neg" x="190" y="114" width="38" height="38"/>
+      <rect class="neg" x="228" y="114" width="38" height="38"/>
+      <rect class="neg" x="266" y="114" width="38" height="38"/>
+      <!-- Row 5 -->
+      <rect class="neg" x="0" y="152" width="38" height="38"/>
+      <rect class="neg" x="38" y="152" width="38" height="38"/>
+      <rect class="neg" x="76" y="152" width="38" height="38"/>
+      <rect class="neg" x="114" y="152" width="38" height="38"/>
+      <rect class="diag" x="152" y="152" width="38" height="38"/>
+      <rect class="pos" x="190" y="152" width="38" height="38"/>
+      <rect class="neg" x="228" y="152" width="38" height="38"/>
+      <rect class="neg" x="266" y="152" width="38" height="38"/>
+      <!-- Row 6 -->
+      <rect class="neg" x="0" y="190" width="38" height="38"/>
+      <rect class="neg" x="38" y="190" width="38" height="38"/>
+      <rect class="neg" x="76" y="190" width="38" height="38"/>
+      <rect class="neg" x="114" y="190" width="38" height="38"/>
+      <rect class="pos" x="152" y="190" width="38" height="38"/>
+      <rect class="diag" x="190" y="190" width="38" height="38"/>
+      <rect class="neg" x="228" y="190" width="38" height="38"/>
+      <rect class="neg" x="266" y="190" width="38" height="38"/>
+      <!-- Row 7 -->
+      <rect class="neg" x="0" y="228" width="38" height="38"/>
+      <rect class="neg" x="38" y="228" width="38" height="38"/>
+      <rect class="neg" x="76" y="228" width="38" height="38"/>
+      <rect class="neg" x="114" y="228" width="38" height="38"/>
+      <rect class="neg" x="152" y="228" width="38" height="38"/>
+      <rect class="neg" x="190" y="228" width="38" height="38"/>
+      <rect class="diag" x="228" y="228" width="38" height="38"/>
+      <rect class="pos" x="266" y="228" width="38" height="38"/>
+      <!-- Row 8 -->
+      <rect class="neg" x="0" y="266" width="38" height="38"/>
+      <rect class="neg" x="38" y="266" width="38" height="38"/>
+      <rect class="neg" x="76" y="266" width="38" height="38"/>
+      <rect class="neg" x="114" y="266" width="38" height="38"/>
+      <rect class="neg" x="152" y="266" width="38" height="38"/>
+      <rect class="neg" x="190" y="266" width="38" height="38"/>
+      <rect class="pos" x="228" y="266" width="38" height="38"/>
+      <rect class="diag" x="266" y="266" width="38" height="38"/>
+      <!-- grid lines -->
+      <path d="M0 0 L304 0 L304 304 L0 304 Z" class="cell"/>
+    </g>
+  </g>
+
+  <!-- Legend / caption -->
+  <g transform="translate(660, 155)">
+    <rect x="0" y="0" width="260" height="260" fill="white" stroke="#4A6670" stroke-width="1" rx="6"/>
+    <text x="15" y="22" class="head">Per-row loss</text>
+    <text x="15" y="46" class="body">Row i · "which column is my positive?"</text>
+    <g transform="translate(15, 60)">
+      <rect class="pos" x="0" y="0" width="14" height="14"/>
+      <text x="22" y="12" class="caption">1 positive (green)</text>
+      <rect class="neg" x="0" y="22" width="14" height="14"/>
+      <text x="22" y="34" class="caption">6 negatives (red)</text>
+      <rect class="diag" x="0" y="44" width="14" height="14"/>
+      <text x="22" y="56" class="caption">1 self (ignored)</text>
+    </g>
+    <text x="15" y="140" class="body">Softmax across row → cross-entropy</text>
+    <text x="15" y="158" class="mono" style="font-size:11px">L = −log [exp(sim_pos)/Σ exp(sim)]</text>
+    <text x="15" y="190" class="body">Scale to N=1024:</text>
+    <text x="15" y="208" class="caption">1 positive vs <tspan font-weight="600">2046 negatives</tspan></text>
+    <text x="15" y="226" class="caption">more negatives = sharper contrast</text>
+    <text x="15" y="244" class="caption">SimCLR used batch 8192 on TPU pod</text>
+  </g>
+</svg>

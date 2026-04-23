@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .t0 { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.5; rx: 4; }
+    .t1 { fill: #F3F0E5; stroke: #C9A961; stroke-width: 1.5; rx: 4; }
+    .t2 { fill: #F0EBE2; stroke: #C9A961; stroke-width: 1.3; rx: 4; }
+    .t3 { fill: #EDE5DD; stroke: #6B6B69; stroke-width: 1.2; rx: 4; }
+    .t4 { fill: #E8E2DA; stroke: #6B6B69; stroke-width: 1.2; rx: 4; }
+    .t5 { fill: #E4DDD4; stroke: #6B6B69; stroke-width: 1.2; rx: 4; }
+    .arrow-fwd { stroke: #D97757; stroke-width: 1.6; fill: none; }
+    .arrow-rev { stroke: #7B9E89; stroke-width: 1.6; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="380"/>
+  <text x="480" y="28" class="title" text-anchor="middle">Forward · destroy · Reverse · learn to rebuild</text>
+
+  <!-- Six image panels showing progression -->
+  <g transform="translate(30, 80)">
+    <!-- t=0 clean data (spiral) -->
+    <g>
+      <rect class="t0" x="0" y="0" width="140" height="100"/>
+      <g transform="translate(70, 50)">
+        <!-- swiss roll / spiral -->
+        <path d="M 0 0 m -30 0 a 30 20 0 1 0 60 0 a 30 20 0 1 0 -60 0" fill="none" stroke="#7B9E89" stroke-width="2"/>
+        <path d="M 0 0 m -20 0 a 20 12 0 1 0 40 0 a 20 12 0 1 0 -40 0" fill="none" stroke="#7B9E89" stroke-width="2"/>
+        <circle cx="25" cy="-5" r="2" fill="#7B9E89"/>
+        <circle cx="-25" cy="3" r="2" fill="#7B9E89"/>
+        <circle cx="15" cy="10" r="2" fill="#7B9E89"/>
+      </g>
+      <text x="70" y="120" class="head" text-anchor="middle">t = 0</text>
+      <text x="70" y="135" class="caption" text-anchor="middle">x₀ · clean data</text>
+    </g>
+
+    <!-- t=250 -->
+    <g transform="translate(155, 0)">
+      <rect class="t1" x="0" y="0" width="140" height="100"/>
+      <g transform="translate(70, 50)">
+        <circle cx="0" cy="0" r="20" fill="none" stroke="#7B9E89" stroke-width="1.8" opacity="0.5"/>
+        <g fill="#C9A961" opacity="0.55">
+          <circle cx="18" cy="-3" r="2"/>
+          <circle cx="-15" cy="5" r="2"/>
+          <circle cx="8" cy="14" r="2"/>
+          <circle cx="-22" cy="-8" r="2"/>
+          <circle cx="25" cy="12" r="2"/>
+          <circle cx="-5" cy="-18" r="2"/>
+        </g>
+      </g>
+      <text x="70" y="120" class="head" text-anchor="middle">t = 250</text>
+      <text x="70" y="135" class="caption" text-anchor="middle">α̅ = 0.82 (cosine)</text>
+    </g>
+
+    <!-- t=500 -->
+    <g transform="translate(310, 0)">
+      <rect class="t2" x="0" y="0" width="140" height="100"/>
+      <g transform="translate(70, 50)" opacity="0.5">
+        <g fill="#6B6B69">
+          <circle cx="28" cy="-18" r="1.8"/>
+          <circle cx="-15" cy="14" r="1.8"/>
+          <circle cx="10" cy="-8" r="1.8"/>
+          <circle cx="-28" cy="-5" r="1.8"/>
+          <circle cx="22" cy="16" r="1.8"/>
+          <circle cx="-8" cy="22" r="1.8"/>
+          <circle cx="0" cy="-22" r="1.8"/>
+          <circle cx="18" cy="4" r="1.8"/>
+        </g>
+      </g>
+      <text x="70" y="120" class="head" text-anchor="middle">t = 500</text>
+      <text x="70" y="135" class="caption" text-anchor="middle">α̅ = 0.50</text>
+    </g>
+
+    <!-- t=750 -->
+    <g transform="translate(465, 0)">
+      <rect class="t3" x="0" y="0" width="140" height="100"/>
+      <g transform="translate(70, 50)" opacity="0.5">
+        <g fill="#6B6B69">
+          <circle cx="30" cy="-22" r="1.5"/>
+          <circle cx="-28" cy="18" r="1.5"/>
+          <circle cx="15" cy="-12" r="1.5"/>
+          <circle cx="-18" cy="-25" r="1.5"/>
+          <circle cx="25" cy="22" r="1.5"/>
+          <circle cx="-8" cy="28" r="1.5"/>
+          <circle cx="-34" cy="0" r="1.5"/>
+          <circle cx="32" cy="8" r="1.5"/>
+          <circle cx="10" cy="32" r="1.5"/>
+          <circle cx="-22" cy="-8" r="1.5"/>
+        </g>
+      </g>
+      <text x="70" y="120" class="head" text-anchor="middle">t = 750</text>
+      <text x="70" y="135" class="caption" text-anchor="middle">α̅ = 0.18</text>
+    </g>
+
+    <!-- t=1000 pure noise -->
+    <g transform="translate(620, 0)">
+      <rect class="t4" x="0" y="0" width="140" height="100"/>
+      <g transform="translate(70, 50)">
+        <g fill="#6B6B69" opacity="0.6">
+          <circle cx="35" cy="-30" r="1.2"/>
+          <circle cx="-35" cy="25" r="1.2"/>
+          <circle cx="18" cy="-18" r="1.2"/>
+          <circle cx="-25" cy="-30" r="1.2"/>
+          <circle cx="30" cy="28" r="1.2"/>
+          <circle cx="-15" cy="35" r="1.2"/>
+          <circle cx="-40" cy="-5" r="1.2"/>
+          <circle cx="38" cy="15" r="1.2"/>
+          <circle cx="12" cy="38" r="1.2"/>
+          <circle cx="-30" cy="-12" r="1.2"/>
+          <circle cx="-10" cy="-38" r="1.2"/>
+          <circle cx="22" cy="5" r="1.2"/>
+          <circle cx="-2" cy="0" r="1.2"/>
+        </g>
+      </g>
+      <text x="70" y="120" class="head" text-anchor="middle">t = 1000</text>
+      <text x="70" y="135" class="caption" text-anchor="middle">x_T · N(0, I)</text>
+    </g>
+
+    <!-- Forward arrow -->
+    <g transform="translate(0, 165)">
+      <line x1="50" y1="0" x2="750" y2="0" stroke="#D97757" stroke-width="1.8" marker-end="url(#rust)"/>
+      <text x="395" y="-6" class="body" text-anchor="middle" fill="#D97757" font-weight="600">Forward · add noise · FIXED (closed form)</text>
+    </g>
+    <!-- Reverse arrow -->
+    <g transform="translate(0, 195)">
+      <line x1="750" y1="0" x2="50" y2="0" stroke="#7B9E89" stroke-width="1.8" marker-end="url(#sage)"/>
+      <text x="395" y="22" class="body" text-anchor="middle" fill="#7B9E89" font-weight="600">Reverse · predict noise · LEARNED (U-Net ε_θ)</text>
+    </g>
+  </g>
+
+  <!-- Closed form formula -->
+  <rect x="40" y="310" width="880" height="55" fill="#FFF3EE" stroke="#D97757" stroke-width="1" rx="6"/>
+  <text x="480" y="332" class="body" text-anchor="middle" font-family="IBM Plex Mono, monospace">x_t = √(α̅_t) · x₀ + √(1 − α̅_t) · ε</text>
+  <text x="480" y="355" class="caption" text-anchor="middle">jump to any t in one step · no need to iterate 500 forward passes during training.</text>
+
+  <defs>
+    <marker id="rust" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <polygon points="0 0, 10 5, 0 10" fill="#D97757"/>
+    </marker>
+    <marker id="sage" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <polygon points="0 0, 10 5, 0 10" fill="#7B9E89"/>
+    </marker>
+  </defs>
+</svg>

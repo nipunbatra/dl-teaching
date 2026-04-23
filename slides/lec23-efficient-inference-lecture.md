@@ -205,6 +205,12 @@ For $N = 8192$, a single layer needs ~8 GB just for the softmax matrix. GPU HBM 
 
 ---
 
+# FlashAttention · tiles in SRAM
+
+![w:920px](figures/lec23/svg/flash_attention_tiles.svg)
+
+---
+
 # FlashAttention · tile and stream
 
 <div class="paper">

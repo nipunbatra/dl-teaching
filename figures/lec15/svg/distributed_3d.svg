@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .gpu { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.2; rx: 4; }
+    .slice { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1; rx: 3; }
+    .layer { fill: #E8EDEF; stroke: #4A6670; stroke-width: 1; rx: 3; }
+    .comm { stroke: #A8324B; stroke-width: 1.2; fill: none; stroke-dasharray: 3 2; }
+  </style>
+  <rect class="bg" width="960" height="440"/>
+  <text x="480" y="28" class="title" text-anchor="middle">Three parallelism strategies · combine for "3D parallelism"</text>
+
+  <!-- Data Parallel -->
+  <g transform="translate(30, 60)">
+    <text x="140" y="0" class="head" text-anchor="middle">Data Parallel (DP)</text>
+    <text x="140" y="18" class="caption" text-anchor="middle">each GPU has full model · different batch</text>
+    <!-- 4 GPUs with full model -->
+    <g>
+      <rect class="gpu" x="0" y="35" width="60" height="110"/>
+      <text x="30" y="55" class="body" text-anchor="middle">GPU 1</text>
+      <rect class="layer" x="10" y="65" width="40" height="18"/>
+      <rect class="layer" x="10" y="86" width="40" height="18"/>
+      <rect class="layer" x="10" y="107" width="40" height="18"/>
+      <rect class="layer" x="10" y="128" width="40" height="14"/>
+
+      <rect class="gpu" x="68" y="35" width="60" height="110"/>
+      <text x="98" y="55" class="body" text-anchor="middle">GPU 2</text>
+      <rect class="layer" x="78" y="65" width="40" height="18"/>
+      <rect class="layer" x="78" y="86" width="40" height="18"/>
+      <rect class="layer" x="78" y="107" width="40" height="18"/>
+      <rect class="layer" x="78" y="128" width="40" height="14"/>
+
+      <rect class="gpu" x="136" y="35" width="60" height="110"/>
+      <text x="166" y="55" class="body" text-anchor="middle">GPU 3</text>
+      <rect class="layer" x="146" y="65" width="40" height="18"/>
+      <rect class="layer" x="146" y="86" width="40" height="18"/>
+      <rect class="layer" x="146" y="107" width="40" height="18"/>
+      <rect class="layer" x="146" y="128" width="40" height="14"/>
+
+      <rect class="gpu" x="204" y="35" width="60" height="110"/>
+      <text x="234" y="55" class="body" text-anchor="middle">GPU 4</text>
+      <rect class="layer" x="214" y="65" width="40" height="18"/>
+      <rect class="layer" x="214" y="86" width="40" height="18"/>
+      <rect class="layer" x="214" y="107" width="40" height="18"/>
+      <rect class="layer" x="214" y="128" width="40" height="14"/>
+    </g>
+    <!-- batches -->
+    <text x="30" y="160" class="caption" text-anchor="middle">batch₁</text>
+    <text x="98" y="160" class="caption" text-anchor="middle">batch₂</text>
+    <text x="166" y="160" class="caption" text-anchor="middle">batch₃</text>
+    <text x="234" y="160" class="caption" text-anchor="middle">batch₄</text>
+    <!-- allreduce arrow -->
+    <path class="comm" d="M30 148 L234 148"/>
+    <text x="140" y="180" class="caption" text-anchor="middle" fill="#A8324B">all-reduce gradients</text>
+    <text x="140" y="195" class="caption" text-anchor="middle">breaks when model &gt; 1 GPU RAM</text>
+  </g>
+
+  <!-- Tensor Parallel -->
+  <g transform="translate(350, 60)">
+    <text x="140" y="0" class="head" text-anchor="middle">Tensor Parallel (TP)</text>
+    <text x="140" y="18" class="caption" text-anchor="middle">split each matrix across GPUs</text>
+    <!-- One layer, split across 4 GPUs -->
+    <g>
+      <rect class="gpu" x="0" y="35" width="60" height="110"/>
+      <text x="30" y="55" class="body" text-anchor="middle">GPU 1</text>
+      <rect class="slice" x="10" y="65" width="40" height="70"/>
+      <text x="30" y="105" class="caption" text-anchor="middle">W[:, 0-16k]</text>
+
+      <rect class="gpu" x="68" y="35" width="60" height="110"/>
+      <text x="98" y="55" class="body" text-anchor="middle">GPU 2</text>
+      <rect class="slice" x="78" y="65" width="40" height="70"/>
+      <text x="98" y="105" class="caption" text-anchor="middle">W[:, 16-32k]</text>
+
+      <rect class="gpu" x="136" y="35" width="60" height="110"/>
+      <text x="166" y="55" class="body" text-anchor="middle">GPU 3</text>
+      <rect class="slice" x="146" y="65" width="40" height="70"/>
+      <text x="166" y="105" class="caption" text-anchor="middle">W[:, 32-48k]</text>
+
+      <rect class="gpu" x="204" y="35" width="60" height="110"/>
+      <text x="234" y="55" class="body" text-anchor="middle">GPU 4</text>
+      <rect class="slice" x="214" y="65" width="40" height="70"/>
+      <text x="234" y="105" class="caption" text-anchor="middle">W[:, 48-64k]</text>
+    </g>
+    <path class="comm" d="M30 148 L234 148"/>
+    <text x="140" y="168" class="caption" text-anchor="middle" fill="#A8324B">all-gather activations</text>
+    <text x="140" y="184" class="caption" text-anchor="middle">needed for models &gt; 10B</text>
+    <text x="140" y="198" class="caption" text-anchor="middle">heavy NVLink bandwidth</text>
+  </g>
+
+  <!-- Pipeline Parallel -->
+  <g transform="translate(670, 60)">
+    <text x="140" y="0" class="head" text-anchor="middle">Pipeline Parallel (PP)</text>
+    <text x="140" y="18" class="caption" text-anchor="middle">split layers across GPUs</text>
+    <g>
+      <rect class="gpu" x="0" y="35" width="60" height="110"/>
+      <text x="30" y="55" class="body" text-anchor="middle">GPU 1</text>
+      <rect class="layer" x="10" y="65" width="40" height="60"/>
+      <text x="30" y="90" class="caption" text-anchor="middle">L 1-8</text>
+
+      <rect class="gpu" x="68" y="35" width="60" height="110"/>
+      <text x="98" y="55" class="body" text-anchor="middle">GPU 2</text>
+      <rect class="layer" x="78" y="65" width="40" height="60"/>
+      <text x="98" y="90" class="caption" text-anchor="middle">L 9-16</text>
+
+      <rect class="gpu" x="136" y="35" width="60" height="110"/>
+      <text x="166" y="55" class="body" text-anchor="middle">GPU 3</text>
+      <rect class="layer" x="146" y="65" width="40" height="60"/>
+      <text x="166" y="90" class="caption" text-anchor="middle">L 17-24</text>
+
+      <rect class="gpu" x="204" y="35" width="60" height="110"/>
+      <text x="234" y="55" class="body" text-anchor="middle">GPU 4</text>
+      <rect class="layer" x="214" y="65" width="40" height="60"/>
+      <text x="234" y="90" class="caption" text-anchor="middle">L 25-32</text>
+    </g>
+    <path class="comm" d="M60 95 L68 95"/>
+    <path class="comm" d="M128 95 L136 95"/>
+    <path class="comm" d="M196 95 L204 95"/>
+    <text x="140" y="168" class="caption" text-anchor="middle" fill="#A8324B">activations forward · grads back</text>
+    <text x="140" y="184" class="caption" text-anchor="middle">bubble idle time unless micro-batch</text>
+    <text x="140" y="198" class="caption" text-anchor="middle">memory-efficient, throughput penalty</text>
+  </g>
+
+  <!-- Combined 3D -->
+  <rect x="40" y="265" width="880" height="140" fill="#FFF3EE" stroke="#D97757" stroke-width="1.2" rx="8"/>
+  <text x="480" y="288" class="head" text-anchor="middle">3D parallelism · combine all three (standard for frontier training)</text>
+  <text x="480" y="310" class="body" text-anchor="middle">Llama-3 70B training · 16 nodes × 8 GPUs = 128 GPUs</text>
+  <text x="480" y="328" class="caption" text-anchor="middle">→ DP across 8 nodes · TP within nodes · PP across layer groups</text>
+
+  <g transform="translate(150, 340)">
+    <rect fill="#F0F5EF" stroke="#7B9E89" stroke-width="1" x="0" y="0" width="180" height="55" rx="4"/>
+    <text x="90" y="22" class="body" text-anchor="middle" font-weight="600">+ ZeRO stages 1/2/3</text>
+    <text x="90" y="42" class="caption" text-anchor="middle">shard optimizer, gradients, weights</text>
+  </g>
+  <g transform="translate(380, 340)">
+    <rect fill="#FDF2F6" stroke="#A8324B" stroke-width="1" x="0" y="0" width="180" height="55" rx="4"/>
+    <text x="90" y="22" class="body" text-anchor="middle" font-weight="600">+ Activation checkpointing</text>
+    <text x="90" y="42" class="caption" text-anchor="middle">recompute activations to save memory</text>
+  </g>
+  <g transform="translate(610, 340)">
+    <rect fill="#F7EED6" stroke="#C9A961" stroke-width="1" x="0" y="0" width="180" height="55" rx="4"/>
+    <text x="90" y="22" class="body" text-anchor="middle" font-weight="600">+ bf16 / fp8 training</text>
+    <text x="90" y="42" class="caption" text-anchor="middle">2× compute, 2× memory savings</text>
+  </g>
+</svg>

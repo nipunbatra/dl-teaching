@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .param { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.3; rx: 4; }
+    .sample { fill: #FDF2F6; stroke: #A8324B; stroke-width: 1.3; rx: 4; }
+    .eps { fill: #F7EED6; stroke: #C9A961; stroke-width: 1.3; rx: 4; }
+    .out { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.3; rx: 4; }
+    .fwd { stroke: #1F1F1E; stroke-width: 1.4; fill: none; }
+    .bwd { stroke: #D97757; stroke-width: 1.8; fill: none; stroke-dasharray: 4 3; }
+    .no-grad { stroke: #A8324B; stroke-width: 1.8; fill: none; stroke-dasharray: 2 4; opacity: 0.6; }
+  </style>
+  <rect class="bg" width="960" height="400"/>
+  <text x="480" y="30" class="title" text-anchor="middle">Reparameterization trick · move randomness out of the gradient path</text>
+
+  <!-- Naive (left) -->
+  <g transform="translate(40, 60)">
+    <text x="200" y="0" class="head" text-anchor="middle">Naive · broken gradient</text>
+
+    <rect class="param" x="0" y="30" width="100" height="40"/>
+    <text x="50" y="54" class="body" text-anchor="middle">μ_φ(x)</text>
+
+    <rect class="param" x="0" y="100" width="100" height="40"/>
+    <text x="50" y="124" class="body" text-anchor="middle">σ_φ(x)</text>
+
+    <!-- sampling node -->
+    <rect class="sample" x="150" y="65" width="100" height="40"/>
+    <text x="200" y="83" class="body" text-anchor="middle">z ~ N(μ, σ²)</text>
+    <text x="200" y="98" class="caption" text-anchor="middle">stochastic</text>
+
+    <path class="fwd" d="M100 50 L150 75" marker-end="url(#arr)"/>
+    <path class="fwd" d="M100 120 L150 95" marker-end="url(#arr)"/>
+
+    <rect class="out" x="300" y="65" width="100" height="40"/>
+    <text x="350" y="89" class="body" text-anchor="middle">decoder(z)</text>
+
+    <path class="fwd" d="M250 85 L300 85" marker-end="url(#arr)"/>
+
+    <!-- Backward path attempt -->
+    <path class="no-grad" d="M300 70 Q 260 55 240 68"/>
+    <path class="no-grad" d="M150 80 Q 125 70 110 65"/>
+    <text x="200" y="170" class="caption" text-anchor="middle" fill="#A8324B">✗ gradient can't flow through a random sample</text>
+  </g>
+
+  <!-- Reparameterized (right) -->
+  <g transform="translate(520, 60)">
+    <text x="200" y="0" class="head" text-anchor="middle">Reparameterized · gradient flows</text>
+
+    <rect class="param" x="0" y="30" width="100" height="40"/>
+    <text x="50" y="54" class="body" text-anchor="middle">μ_φ(x)</text>
+
+    <rect class="param" x="0" y="100" width="100" height="40"/>
+    <text x="50" y="124" class="body" text-anchor="middle">σ_φ(x)</text>
+
+    <rect class="eps" x="0" y="170" width="100" height="40"/>
+    <text x="50" y="188" class="body" text-anchor="middle">ε ~ N(0, I)</text>
+    <text x="50" y="203" class="caption" text-anchor="middle">no params</text>
+
+    <!-- deterministic combine -->
+    <circle cx="200" cy="120" r="16" fill="white" stroke="#1F1F1E" stroke-width="1.4"/>
+    <text x="200" y="124" class="body" text-anchor="middle">+</text>
+
+    <path class="fwd" d="M100 50 Q 150 80 186 110" marker-end="url(#arr)"/>
+    <path class="fwd" d="M100 120 Q 150 120 184 120" marker-end="url(#arr)"/>
+    <path class="fwd" d="M100 190 Q 150 160 186 132" marker-end="url(#arr)"/>
+
+    <rect class="sample" x="260" y="100" width="100" height="40"/>
+    <text x="310" y="124" class="body" text-anchor="middle">z = μ + σ·ε</text>
+    <path class="fwd" d="M216 120 L260 120" marker-end="url(#arr)"/>
+
+    <rect class="out" x="370" y="100" width="80" height="40"/>
+    <text x="410" y="124" class="body" text-anchor="middle">decoder</text>
+    <path class="fwd" d="M360 120 L370 120" marker-end="url(#arr)"/>
+
+    <!-- gradient backward -->
+    <path class="bwd" d="M370 105 Q 240 80 100 55" marker-end="url(#rust)"/>
+    <path class="bwd" d="M370 135 Q 240 170 100 130" marker-end="url(#rust)"/>
+    <text x="200" y="240" class="caption" text-anchor="middle" fill="#D97757">✓ gradient flows through μ, σ (deterministic path)</text>
+    <text x="200" y="256" class="caption" text-anchor="middle" fill="#C9A961">ε carries the randomness but has no parameters</text>
+  </g>
+
+  <!-- Formula footer -->
+  <rect x="40" y="340" width="880" height="45" fill="#FFF3EE" stroke="#D97757" stroke-width="1" rx="6"/>
+  <text x="480" y="362" class="body" text-anchor="middle" font-family="IBM Plex Mono, monospace"><tspan font-weight="600">z = μ_φ(x) + σ_φ(x) · ε</tspan>   where   ε ~ N(0, I)</text>
+  <text x="480" y="380" class="caption" text-anchor="middle">Kingma &amp; Welling 2013 · one line · the trick that makes VAE training work at all.</text>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+    </marker>
+    <marker id="rust" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#D97757"/>
+    </marker>
+  </defs>
+</svg>
