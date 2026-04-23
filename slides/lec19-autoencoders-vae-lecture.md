@@ -16,6 +16,20 @@ math: mathjax
 
 ---
 
+# Learning outcomes
+
+By the end of this lecture you will be able to:
+
+1. State what a **plain autoencoder** is and why it isn't generative.
+2. Motivate the need for a **prior distribution** on latent space.
+3. Write the **ELBO** from scratch using Jensen's inequality.
+4. Derive the **KL term** for Gaussian posterior vs standard normal.
+5. Explain and implement the **reparameterization trick**.
+6. Train a **β-VAE** and discuss disentanglement.
+7. Place VAEs in context · pre-compressor for Stable Diffusion in 2026.
+
+---
+
 # Where we are
 
 Module 9 opens · **generative models**. Until now every model *classified* or *predicted* — labels, tokens, pixels-given-labels. Today we switch to: **given a dataset, can I sample new examples that look like it?**
@@ -32,6 +46,54 @@ Four questions:
 2. What does **VAE** add, and why does it work?
 3. What is the **reparameterization trick**?
 4. Where do VAEs fit in the 2026 generative landscape?
+
+---
+
+# Generative modeling · the task
+
+<div class="keypoint">
+
+Given $N$ i.i.d. samples $\{x_1, \ldots, x_N\}$ from an unknown distribution $p_\text{data}$, learn a model from which we can **sample** new $x \sim p_\text{model}$ such that $p_\text{model} \approx p_\text{data}$.
+
+</div>
+
+Two sub-tasks, often pursued together:
+
+1. **Density estimation** · assign a probability $p_\text{model}(x)$ to any candidate sample.
+2. **Generation** · draw novel samples from $p_\text{model}$.
+
+Images live in $\mathbb{R}^{100{,}000+}$ on a low-dimensional manifold. Writing down $p_\text{data}$ analytically is hopeless; learning it from samples is the whole game.
+
+---
+
+# Three generative strategies
+
+<div class="columns">
+<div>
+
+### Density-based
+
+Write $p_\theta(x)$ explicitly; maximize $\sum_i \log p_\theta(x_i)$.
+
+- Pixel-RNN, PixelCNN, Normalizing flows.
+- Clean likelihoods.
+- Autoregressive or invertible only.
+
+</div>
+<div>
+
+### Latent-based
+
+Hidden variable $z$ generates $x$: $x \sim p(x|z), z \sim p(z)$.
+
+- **VAE**, GAN (implicit).
+- Compact latent, rich samples.
+- Likelihood tractable only via ELBO.
+
+</div>
+</div>
+
+Diffusion (L21) is a *layered* latent model with $T$ levels. The recipe of "add structure in latent space" starts here with the VAE.
 
 ---
 
@@ -117,6 +179,28 @@ Modern variants add noise (denoising AE) or masking (MAE, L17) *instead of* a sm
 
 ---
 
+# A concrete AE · MNIST dimensionality
+
+<div class="math-box">
+
+Input · `28 × 28 = 784` pixels. Encode to latent `z` of size 16. Decode back to 784.
+
+| Layer | Shape | Params |
+|:-:|:-:|:-:|
+| Input | 784 | — |
+| Linear → ReLU | 256 | 200,960 |
+| Linear → ReLU | 64 | 16,448 |
+| Linear (μ only) | 16 | **bottleneck** · 1,040 |
+| Linear → ReLU | 64 | 1,088 |
+| Linear → ReLU | 256 | 16,640 |
+| Linear → sigmoid | 784 | 201,488 |
+
+</div>
+
+Total · ~440k params. Reconstruction MSE on MNIST test · ~0.003 after 10 epochs. Compare PCA with 16 components · ~0.015. **5× better with nonlinearities.**
+
+---
+
 # But autoencoders aren't generative
 
 Suppose you train an AE on MNIST. To *generate* a new digit, you'd:
@@ -153,6 +237,39 @@ A prior and a KL penalty
 <div class="realworld">
 
 ▶ Interactive: slide the KL weight β, watch the latent space go from clumpy to Gaussian — [vae-latent-explorer](https://nipunbatra.github.io/interactive-articles/vae-latent-explorer/).
+
+</div>
+
+---
+
+# Why a prior? · two jobs it does
+
+The prior $p(z) = \mathcal{N}(0, I)$ does two things for us:
+
+<div class="columns">
+<div>
+
+### 1. Defines the sampling distribution
+
+At generation time we draw $z \sim p(z)$ and decode. The prior is the *rule book* for producing valid z's.
+
+Without a prior, you wouldn't know how to initialize z for generation.
+
+</div>
+<div>
+
+### 2. Regularizes the posterior
+
+The KL term pulls $q(z|x)$ toward $p(z)$ for every training example. Every encoded posterior overlaps in the same region → smooth latent.
+
+Without this, training points occupy disjoint clusters.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+A VAE is a plain AE **with a regularizer that makes the latent space match a known distribution**. Everything else follows from making that regularizer principled (the ELBO).
 
 </div>
 
@@ -231,6 +348,41 @@ $$D_\text{KL}(\mathcal{N}(\mu, \sigma^2) \| \mathcal{N}(0, 1)) = \frac{1}{2} \su
 One expression, closed form, no sampling needed. Just plug in the encoder's $\mu$ and $\log \sigma^2$ outputs.
 
 The KL is what **structures** the latent space · it pulls every encoded distribution toward the same standard normal, so random samples from N(0, I) land somewhere the decoder has seen.
+
+---
+
+# KL · worked numeric example
+
+Suppose $q(z|x) = \mathcal{N}(\mu = 1.2, \sigma^2 = 0.25)$ for a particular image $x$. Standard normal prior $p(z) = \mathcal{N}(0, 1)$.
+
+<div class="math-box">
+
+$$\text{KL} = \frac{1}{2}(\sigma^2 + \mu^2 - 1 - \log \sigma^2)$$
+$$= \frac{1}{2}(0.25 + 1.44 - 1 - \log 0.25) = \frac{1}{2}(0.69 + 1.386) = 1.038$$
+
+</div>
+
+Plugging in: $\sigma^2 = 0.25$ means **narrow** posterior (confident encoding); $\mu = 1.2$ means **off-centre** from the prior. The KL penalty of ~1.0 will pull $\mu$ back toward 0 during training, unless the reconstruction term needs a wide-apart $\mu$ to distinguish this image from others.
+
+This is the trade-off the VAE balances at every sample.
+
+---
+
+# Posterior collapse · what to watch for
+
+If the decoder is too powerful, the KL term will drive $q(z|x) \to p(z) = \mathcal{N}(0, I)$ · every image encodes to the same latent, $z$ carries no information about $x$.
+
+<div class="warning">
+
+**Posterior collapse** · the VAE becomes an autoencoder where z is just noise. Reconstructions are fine (the decoder ignores z), but samples are junk (there's no latent structure to exploit).
+
+</div>
+
+**Fixes**:
+- Reduce decoder capacity (smaller FFN).
+- Use β-VAE with $\beta < 1$ (less KL weight).
+- KL annealing · start with $\beta = 0$, ramp up over training.
+- Free bits · allow some KL "for free" before penalizing.
 
 ---
 
@@ -317,6 +469,52 @@ Tuning `BETA`:
 
 ---
 
+# Disentanglement · what β-VAE buys you
+
+With $\beta = 4$ on a faces dataset (Higgins 2017), each latent dimension starts to control ONE semantic factor:
+
+<div class="math-box">
+
+- $z_1$ · azimuth (face angle)
+- $z_2$ · lighting direction
+- $z_3$ · smile / frown
+- $z_4$ · hairstyle length
+- ...
+
+</div>
+
+<div class="insight">
+
+No supervision — the structure emerges from the KL regularization plus the reconstruction pressure. Disentanglement lets you do **editable generation** · "same face with different smile" by perturbing one z coordinate.
+
+</div>
+
+The trade-off · stronger KL forces shared structure, but loses reconstruction detail. β = 1 is the theoretical sweet spot; higher β sacrifices quality for interpretability.
+
+---
+
+# Conditional VAE · putting labels into the game
+
+If you have class labels $y$, a **Conditional VAE** extends the game:
+
+<div class="math-box">
+
+- Encoder: $q_\phi(z \mid x, y)$
+- Decoder: $p_\theta(x \mid z, y)$
+- Prior: $p(z) = \mathcal{N}(0, I)$ unchanged.
+
+</div>
+
+At inference · sample $z \sim \mathcal{N}(0, I)$, fix $y$ to the desired class, decode. Generate class-specific samples without retraining.
+
+<div class="realworld">
+
+CVAE was used for controllable generation before diffusion + CFG took over. Still shipped in some specialized systems (molecule generation, time-series imputation).
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 5
@@ -351,6 +549,20 @@ The interpolation is the magic · it produces *valid* intermediate images becaus
 
 ---
 
+# Sampling gotchas
+
+<div class="warning">
+
+**Truncated sampling.** Sampling $z \sim \mathcal{N}(0, I)$ occasionally gives large-$\|z\|$ points where training coverage was sparse. Truncate · sample $z$ from $\mathcal{N}(0, I)$ and **reject** if $\|z\| > \tau$ (e.g., $\tau = 2.5$). Samples look cleaner.
+
+**Decoder stochasticity.** If decoder outputs a Gaussian $p(x|z) = \mathcal{N}(g(z), \sigma_x^2 I)$, add $\sigma_x \cdot \epsilon_x$ to the mean for a single sample. If you only decode means you get the "mode"; adding variance makes samples diverse.
+
+**VAE blur.** The KL pulls posteriors toward a simple prior · posteriors overlap significantly. The decoder averages over possible $z$ given $x$ → samples are blurry means. This is the fundamental VAE limitation diffusion (L21) fixes.
+
+</div>
+
+---
+
 # VAE vs GAN vs Diffusion · quality ranking
 
 | | Sample quality | Training stability | Likelihood | Sampling speed |
@@ -364,6 +576,19 @@ The interpolation is the magic · it produces *valid* intermediate images becaus
 VAEs remain useful for **latent-space exploration** and **pre-compression** — Stable Diffusion uses a VAE to compress images into a 4× smaller latent space *before* running diffusion there.
 
 </div>
+
+---
+
+# Common questions · FAQ
+
+**Q. Why is VAE blurrier than GAN?**
+A. VAE's loss is MSE on pixels, which is the mean of possible reconstructions. When multiple outputs are possible (e.g., any detailed face), the mean is a smoothed average of those — blurry. GANs don't average; they commit.
+
+**Q. Can I use a perceptual loss (feature-space MSE) instead of pixel MSE?**
+A. Yes — produces sharper reconstructions. VQ-VAE (Van den Oord 2017) combines VAE-like structure with discrete latents and perceptual losses. Stable Diffusion's VAE uses this trick.
+
+**Q. Is the posterior truly Gaussian?**
+A. No — the *true* posterior is arbitrary. The Gaussian parameterization is an **approximation** (the "amortized variational" part). Normalizing flow encoders and hierarchical VAEs address this; vanilla VAE trades approximation quality for simplicity.
 
 ---
 
