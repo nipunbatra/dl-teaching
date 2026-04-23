@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .mono { font-family: "IBM Plex Mono", monospace; font-size: 11px; }
+    .block { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.3; rx: 6; }
+    .bn { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.2; rx: 3; }
+    .conv { fill: #E8EDEF; stroke: #4A6670; stroke-width: 1.2; rx: 3; }
+    .relu { fill: #F7EED6; stroke: #C9A961; stroke-width: 1.1; rx: 3; }
+    .arrow { stroke: #1F1F1E; stroke-width: 1.3; fill: none; }
+    .skip { stroke: #A8324B; stroke-width: 2; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="380"/>
+  <text x="480" y="28" class="title" text-anchor="middle">ResNet basic vs bottleneck block · skip connection highlighted</text>
+
+  <!-- Basic block (left) -->
+  <g transform="translate(40, 70)">
+    <text x="160" y="0" class="head" text-anchor="middle">Basic block · ResNet-18/34</text>
+    <!-- input -->
+    <rect class="block" x="110" y="20" width="100" height="30"/>
+    <text x="160" y="40" class="body" text-anchor="middle">x ∈ ℝ^(C×H×W)</text>
+    <!-- conv 1 -->
+    <rect class="conv" x="110" y="70" width="100" height="28"/>
+    <text x="160" y="89" class="body" text-anchor="middle">Conv 3×3 · C</text>
+    <rect class="bn" x="110" y="100" width="100" height="20"/>
+    <text x="160" y="115" class="body" text-anchor="middle">BatchNorm</text>
+    <rect class="relu" x="110" y="122" width="100" height="20"/>
+    <text x="160" y="137" class="body" text-anchor="middle">ReLU</text>
+    <!-- conv 2 -->
+    <rect class="conv" x="110" y="152" width="100" height="28"/>
+    <text x="160" y="171" class="body" text-anchor="middle">Conv 3×3 · C</text>
+    <rect class="bn" x="110" y="182" width="100" height="20"/>
+    <text x="160" y="197" class="body" text-anchor="middle">BatchNorm</text>
+    <!-- + -->
+    <circle cx="160" cy="225" r="14" fill="white" stroke="#A8324B" stroke-width="1.5"/>
+    <text x="160" y="229" class="body" text-anchor="middle">+</text>
+    <!-- relu + output -->
+    <rect class="relu" x="110" y="250" width="100" height="20"/>
+    <text x="160" y="265" class="body" text-anchor="middle">ReLU</text>
+    <rect class="block" x="110" y="275" width="100" height="30"/>
+    <text x="160" y="295" class="body" text-anchor="middle">output</text>
+    <!-- main arrows -->
+    <path class="arrow" d="M160 50 L160 70" marker-end="url(#arr)"/>
+    <path class="arrow" d="M160 142 L160 152" marker-end="url(#arr)"/>
+    <path class="arrow" d="M160 202 L160 211" marker-end="url(#arr)"/>
+    <path class="arrow" d="M160 239 L160 250" marker-end="url(#arr)"/>
+    <path class="arrow" d="M160 270 L160 275" marker-end="url(#arr)"/>
+    <!-- skip -->
+    <path class="skip" d="M110 35 L80 35 L80 225 L146 225" marker-end="url(#wine)"/>
+    <text x="60" y="130" class="caption" fill="#A8324B" text-anchor="middle" transform="rotate(-90, 60, 130)">identity skip</text>
+
+    <text x="160" y="335" class="caption" text-anchor="middle">2 convs · 2·C²·9 params</text>
+  </g>
+
+  <!-- Bottleneck block (right) -->
+  <g transform="translate(510, 70)">
+    <text x="175" y="0" class="head" text-anchor="middle">Bottleneck · ResNet-50/101/152</text>
+    <!-- input -->
+    <rect class="block" x="120" y="20" width="110" height="30"/>
+    <text x="175" y="40" class="body" text-anchor="middle">x ∈ ℝ^(4C×H×W)</text>
+    <!-- conv 1×1 reduce -->
+    <rect class="conv" x="120" y="70" width="110" height="28"/>
+    <text x="175" y="89" class="body" text-anchor="middle">Conv 1×1 · C (reduce)</text>
+    <rect class="bn" x="120" y="100" width="110" height="20"/>
+    <text x="175" y="115" class="body" text-anchor="middle">BN + ReLU</text>
+    <!-- conv 3×3 -->
+    <rect class="conv" x="120" y="130" width="110" height="28"/>
+    <text x="175" y="149" class="body" text-anchor="middle">Conv 3×3 · C</text>
+    <rect class="bn" x="120" y="160" width="110" height="20"/>
+    <text x="175" y="175" class="body" text-anchor="middle">BN + ReLU</text>
+    <!-- conv 1×1 expand -->
+    <rect class="conv" x="120" y="190" width="110" height="28"/>
+    <text x="175" y="209" class="body" text-anchor="middle">Conv 1×1 · 4C (expand)</text>
+    <rect class="bn" x="120" y="220" width="110" height="20"/>
+    <text x="175" y="235" class="body" text-anchor="middle">BN</text>
+    <!-- + -->
+    <circle cx="175" cy="262" r="14" fill="white" stroke="#A8324B" stroke-width="1.5"/>
+    <text x="175" y="266" class="body" text-anchor="middle">+</text>
+    <rect class="relu" x="120" y="285" width="110" height="20"/>
+    <text x="175" y="300" class="body" text-anchor="middle">ReLU</text>
+    <!-- main arrows -->
+    <path class="arrow" d="M175 50 L175 70" marker-end="url(#arr)"/>
+    <path class="arrow" d="M175 120 L175 130" marker-end="url(#arr)"/>
+    <path class="arrow" d="M175 180 L175 190" marker-end="url(#arr)"/>
+    <path class="arrow" d="M175 240 L175 248" marker-end="url(#arr)"/>
+    <path class="arrow" d="M175 276 L175 285" marker-end="url(#arr)"/>
+    <!-- skip -->
+    <path class="skip" d="M120 35 L90 35 L90 262 L161 262" marker-end="url(#wine)"/>
+
+    <text x="175" y="335" class="caption" text-anchor="middle">3 convs · ~(2C² + 9C²)/4 params · 4× cheaper</text>
+  </g>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+    </marker>
+    <marker id="wine" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#A8324B"/>
+    </marker>
+  </defs>
+</svg>

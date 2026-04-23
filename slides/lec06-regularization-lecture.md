@@ -440,6 +440,12 @@ Dropout forces every unit to be useful *on its own* → more distributed represe
 
 ---
 
+# Dropout · different masks per pass
+
+![w:920px](figures/lec06/svg/dropout_masks.svg)
+
+---
+
 # Inverted dropout — why divide by $p$
 
 <div class="math-box">

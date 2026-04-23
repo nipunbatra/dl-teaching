@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .mono { font-family: "IBM Plex Mono", monospace; font-size: 12px; }
+    .Q { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.3; rx: 3; }
+    .K { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.3; rx: 3; }
+    .V { fill: #E8EDEF; stroke: #4A6670; stroke-width: 1.3; rx: 3; }
+    .score { fill: #FDF2F6; stroke: #A8324B; stroke-width: 1.1; rx: 3; }
+    .arrow { stroke: #1F1F1E; stroke-width: 1.3; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="420"/>
+  <text x="480" y="30" class="title" text-anchor="middle">Scaled dot-product attention · five boxes, one formula</text>
+
+  <!-- Step 1: Q and K -->
+  <g transform="translate(30, 65)">
+    <text x="90" y="0" class="head" text-anchor="middle">1. Project to Q, K, V</text>
+    <text x="90" y="20" class="mono" text-anchor="middle" fill="#D97757">Q = X·W_Q</text>
+    <text x="90" y="37" class="mono" text-anchor="middle" fill="#7B9E89">K = X·W_K</text>
+    <text x="90" y="54" class="mono" text-anchor="middle" fill="#4A6670">V = X·W_V</text>
+    <rect class="Q" x="0" y="70" width="180" height="28"/>
+    <text x="90" y="89" class="body" text-anchor="middle">Q ∈ ℝ^(N × d_k)</text>
+    <rect class="K" x="0" y="105" width="180" height="28"/>
+    <text x="90" y="124" class="body" text-anchor="middle">K ∈ ℝ^(N × d_k)</text>
+    <rect class="V" x="0" y="140" width="180" height="28"/>
+    <text x="90" y="159" class="body" text-anchor="middle">V ∈ ℝ^(N × d_v)</text>
+  </g>
+  <path class="arrow" d="M215 140 L255 140" marker-end="url(#arr)"/>
+
+  <!-- Step 2: QK^T -->
+  <g transform="translate(260, 65)">
+    <text x="80" y="0" class="head" text-anchor="middle">2. Score QKᵀ</text>
+    <text x="80" y="20" class="mono" text-anchor="middle">shape (N × N)</text>
+    <rect class="score" x="0" y="35" width="160" height="160"/>
+    <!-- mini grid -->
+    <g stroke="#CFCBBE" stroke-width="0.4">
+      <line x1="0" y1="75" x2="160" y2="75"/>
+      <line x1="0" y1="115" x2="160" y2="115"/>
+      <line x1="0" y1="155" x2="160" y2="155"/>
+      <line x1="40" y1="35" x2="40" y2="195"/>
+      <line x1="80" y1="35" x2="80" y2="195"/>
+      <line x1="120" y1="35" x2="120" y2="195"/>
+    </g>
+    <text x="80" y="210" class="caption" text-anchor="middle">similarity matrix</text>
+  </g>
+  <path class="arrow" d="M425 140 L465 140" marker-end="url(#arr)"/>
+
+  <!-- Step 3: divide by sqrt(dk) -->
+  <g transform="translate(470, 100)">
+    <text x="60" y="0" class="head" text-anchor="middle">3. ÷ √d_k</text>
+    <text x="60" y="20" class="caption" text-anchor="middle">keeps variance=1</text>
+    <rect class="score" x="0" y="30" width="120" height="60"/>
+    <text x="60" y="55" class="mono" text-anchor="middle">QKᵀ / √d_k</text>
+    <text x="60" y="78" class="caption" text-anchor="middle">temperature-correct</text>
+  </g>
+  <path class="arrow" d="M595 140 L635 140" marker-end="url(#arr)"/>
+
+  <!-- Step 4: softmax -->
+  <g transform="translate(640, 100)">
+    <text x="60" y="0" class="head" text-anchor="middle">4. softmax (per row)</text>
+    <text x="60" y="20" class="caption" text-anchor="middle">rows sum to 1</text>
+    <rect class="score" x="0" y="30" width="120" height="60" fill="#D97757" fill-opacity="0.2"/>
+    <text x="60" y="60" class="mono" text-anchor="middle" font-weight="600">attention</text>
+    <text x="60" y="80" class="mono" text-anchor="middle" font-weight="600">weights</text>
+  </g>
+  <path class="arrow" d="M765 140 L805 140" marker-end="url(#arr)"/>
+
+  <!-- Step 5: multiply V -->
+  <g transform="translate(810, 100)">
+    <text x="60" y="0" class="head" text-anchor="middle">5. × V</text>
+    <text x="60" y="20" class="caption" text-anchor="middle">weighted sum</text>
+    <rect class="V" x="0" y="30" width="120" height="60"/>
+    <text x="60" y="55" class="mono" text-anchor="middle">output</text>
+    <text x="60" y="75" class="mono" text-anchor="middle">(N × d_v)</text>
+  </g>
+
+  <!-- Formula box at bottom -->
+  <rect x="40" y="310" width="880" height="80" fill="#FFF3EE" stroke="#D97757" stroke-width="1.2" rx="6"/>
+  <text x="480" y="340" class="head" text-anchor="middle">Attention(Q, K, V) = softmax(Q Kᵀ / √d_k) · V</text>
+  <text x="480" y="365" class="caption" text-anchor="middle">Each row of the output is a weighted blend of the value rows · weights = similarity of that query to every key.</text>
+  <text x="480" y="383" class="caption" text-anchor="middle">Query asks · Keys answer · Values are the content that gets blended.</text>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+    </marker>
+  </defs>
+</svg>

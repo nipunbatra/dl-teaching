@@ -157,6 +157,12 @@ But at **training**, if the decoder's first prediction is wrong, the error compo
 
 ---
 
+# Teacher forcing · detailed flow
+
+![w:920px](figures/lec11/svg/teacher_forcing_detail.svg)
+
+---
+
 # The two training regimes side-by-side
 
 During training, **feed the ground-truth previous token** as the decoder's input, not its own previous prediction.

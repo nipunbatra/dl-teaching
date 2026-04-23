@@ -115,6 +115,12 @@ Same idea shows up as LSTM's cell state (L10) and Transformer's residual stream 
 
 ---
 
+# Basic vs bottleneck · annotated
+
+![w:920px](figures/lec08/svg/resnet_skip_closeup.svg)
+
+---
+
 # Projection shortcuts · when dimensions change
 
 When you need to change the number of channels or downsample (stride 2), identity can't match shapes directly.

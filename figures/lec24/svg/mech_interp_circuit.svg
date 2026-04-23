@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .mono { font-family: "IBM Plex Mono", monospace; font-size: 11px; }
+    .tok { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.2; rx: 4; }
+    .head-box { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.4; rx: 4; }
+    .mlp { fill: #E8EDEF; stroke: #4A6670; stroke-width: 1.2; rx: 4; }
+    .stream { fill: #F7EED6; stroke: #C9A961; stroke-width: 1.4; rx: 4; }
+    .arrow { stroke: #1F1F1E; stroke-width: 1.2; fill: none; }
+    .accent { stroke: #A8324B; stroke-width: 1.8; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="420"/>
+  <text x="480" y="28" class="title" text-anchor="middle">Induction head · a two-head circuit that implements "copy the token after X"</text>
+
+  <!-- Residual stream bar at bottom -->
+  <g transform="translate(20, 360)">
+    <rect class="stream" x="0" y="0" width="920" height="36"/>
+    <text x="10" y="22" class="head" font-size="12">residual stream</text>
+    <text x="130" y="22" class="caption">· every layer reads from and writes to this bus</text>
+  </g>
+
+  <!-- Input tokens -->
+  <g transform="translate(60, 60)">
+    <text x="0" y="-8" class="head">input sequence</text>
+    <rect class="tok" x="0" y="0" width="55" height="30"/>
+    <text x="27" y="20" class="body" text-anchor="middle">A</text>
+    <rect class="tok" x="60" y="0" width="55" height="30"/>
+    <text x="87" y="20" class="body" text-anchor="middle">B</text>
+    <rect class="tok" x="120" y="0" width="55" height="30"/>
+    <text x="147" y="20" class="body" text-anchor="middle">C</text>
+    <rect class="tok" x="180" y="0" width="55" height="30"/>
+    <text x="207" y="20" class="body" text-anchor="middle">A</text>
+    <rect class="tok" x="240" y="0" width="55" height="30" stroke-width="2.5"/>
+    <text x="267" y="20" class="body" text-anchor="middle">?</text>
+    <text x="400" y="20" class="caption">task · predict next token after "A A B C A"</text>
+  </g>
+
+  <!-- Layer 1: previous-token head -->
+  <g transform="translate(60, 130)">
+    <rect class="head-box" x="0" y="0" width="300" height="70"/>
+    <text x="150" y="22" class="head" text-anchor="middle">Head L0.H1 · previous-token head</text>
+    <text x="150" y="42" class="caption" text-anchor="middle">at each position i, attend to position i−1</text>
+    <text x="150" y="58" class="caption" text-anchor="middle">copies the previous token's embedding into current stream</text>
+  </g>
+  <!-- attention pattern visualization -->
+  <g transform="translate(400, 135)">
+    <text x="80" y="-6" class="caption" text-anchor="middle">attention pattern</text>
+    <g transform="translate(20, 0)">
+      <rect class="tok" x="0" y="0" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
+      <rect class="tok" x="22" y="0" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
+      <rect class="tok" x="44" y="0" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
+      <rect class="tok" x="66" y="0" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
+      <rect class="tok" x="88" y="0" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
+
+      <rect class="tok" x="0" y="22" width="18" height="18" fill="#7B9E89" fill-opacity="0.95"/>
+      <rect class="tok" x="22" y="22" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
+      <rect class="tok" x="44" y="22" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
+      <rect class="tok" x="66" y="22" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
+      <rect class="tok" x="88" y="22" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
+
+      <rect class="tok" x="0" y="44" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
+      <rect class="tok" x="22" y="44" width="18" height="18" fill="#7B9E89" fill-opacity="0.95"/>
+      <rect class="tok" x="44" y="44" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
+      <rect class="tok" x="66" y="44" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
+      <rect class="tok" x="88" y="44" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
+    </g>
+    <text x="160" y="35" class="caption">strong diagonal-below (i attends i−1)</text>
+  </g>
+
+  <!-- Layer 2: induction head -->
+  <g transform="translate(60, 230)">
+    <rect class="head-box" x="0" y="0" width="300" height="90" fill="#FDF2F6" stroke="#A8324B" stroke-width="1.6"/>
+    <text x="150" y="22" class="head" text-anchor="middle">Head L1.H4 · induction head</text>
+    <text x="150" y="42" class="caption" text-anchor="middle">for current token X, find earlier X,</text>
+    <text x="150" y="58" class="caption" text-anchor="middle">attend to position *after* that earlier X</text>
+    <text x="150" y="76" class="caption" text-anchor="middle" fill="#A8324B">copies "what follows X" into current stream</text>
+  </g>
+  <!-- attention pattern for induction head -->
+  <g transform="translate(400, 245)">
+    <text x="80" y="-6" class="caption" text-anchor="middle">induction pattern</text>
+    <g transform="translate(20, 0)">
+      <!-- For each query position, attend to the token after the previous copy of the current token -->
+      <!-- Simplified: show highlight on correct answer column -->
+      <rect class="tok" x="0" y="0" width="18" height="18" fill="#A8324B" fill-opacity="0.15"/>
+      <rect class="tok" x="22" y="0" width="18" height="18" fill="#A8324B" fill-opacity="0.15"/>
+      <rect class="tok" x="44" y="0" width="18" height="18" fill="#A8324B" fill-opacity="0.15"/>
+      <rect class="tok" x="66" y="0" width="18" height="18" fill="#A8324B" fill-opacity="0.15"/>
+      <rect class="tok" x="88" y="0" width="18" height="18" fill="#A8324B" fill-opacity="0.95"/>
+    </g>
+    <text x="40" y="48" class="caption">query "A" at pos 4 attends to pos 1 (next after previous A) · predicts "B"</text>
+  </g>
+
+  <!-- Output arrow to residual -->
+  <path class="accent" d="M200 320 L200 356" marker-end="url(#wine)"/>
+  <text x="220" y="345" class="caption" fill="#A8324B">writes "B-like" vector</text>
+
+  <defs>
+    <marker id="wine" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <polygon points="0 0, 10 5, 0 10" fill="#A8324B"/>
+    </marker>
+  </defs>
+</svg>

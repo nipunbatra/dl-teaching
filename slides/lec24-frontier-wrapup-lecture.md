@@ -225,6 +225,12 @@ Anthropic's interpretability team · Olah et al. circuits research 2020+, sparse
 
 ---
 
+# Induction head · a discovered circuit
+
+![w:920px](figures/lec24/svg/mech_interp_circuit.svg)
+
+---
+
 # The residual stream view
 
 Elhage et al. (Anthropic) · reframe a Transformer as a **residual stream** that every block reads from and writes to:

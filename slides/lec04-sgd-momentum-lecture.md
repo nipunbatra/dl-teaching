@@ -75,6 +75,12 @@ What makes neural-net optimization hard
 
 ---
 
+# Ravine · zig-zag vs glide
+
+![w:920px](figures/lec04/svg/ravine_zigzag.svg)
+
+---
+
 # The condition number · in numbers
 
 Consider the quadratic $\mathcal{L}(\theta) = \frac{1}{2}(10 \theta_1^2 + \theta_2^2)$. Hessian eigenvalues $\lambda_1 = 10$, $\lambda_2 = 1$. **Condition number** $\kappa = 10$.

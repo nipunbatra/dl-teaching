@@ -306,6 +306,12 @@ Attention is **differentiable dictionary lookup**. The network's parameters shap
 
 ---
 
+# Scaled dot-product · step by step
+
+![w:920px](figures/lec12/svg/attention_scaled_dotproduct.svg)
+
+---
+
 <!-- _class: code-heavy -->
 
 # QKV · projections from the same input
