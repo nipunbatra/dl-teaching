@@ -16,6 +16,20 @@ math: mathjax
 
 ---
 
+# Learning outcomes
+
+By the end of this lecture you will be able to:
+
+1. State the **labeling bottleneck** and why self-supervision matters.
+2. Describe **pretext tasks** and give 3 examples (rotation, jigsaw, colorization).
+3. Write the **SimCLR pipeline** end-to-end · augmentations, projection head, InfoNCE.
+4. Explain **InfoNCE** as a soft classification problem.
+5. Contrast **SimCLR vs BYOL** and articulate why BYOL doesn't collapse.
+6. Describe **MAE** (masked autoencoding) and when it beats contrastive.
+7. Pick an SSL method for a given dataset scale and downstream task.
+
+---
+
 # Where we are
 
 Everything we've seen used labels — classification, MT, LLM pretraining on curated corpora. But labels are **expensive, finite, biased.**
@@ -33,6 +47,25 @@ Four questions:
 2. How does **SimCLR** use augmentations as supervision?
 3. Why does **BYOL** work **without negatives**?
 4. How does **MAE** (masked autoencoding) compare to contrastive?
+
+---
+
+# The labeling bottleneck · in numbers
+
+<div class="math-box">
+
+| Task | Typical labeling cost | Typical dataset size |
+|:-:|:-:|:-:|
+| ImageNet class | 0.5 USD per image (crowdsource) | 14M images |
+| Detection bbox | 5-20 USD per image | 200k images (COCO) |
+| Segmentation mask | 30-100 USD per image | 10k images |
+| Medical annotation | 50-500 USD per image | ~1-10k images |
+
+</div>
+
+At 14M × $0.5, ImageNet cost ~$7M to label. Segmentation at that scale would be ~$500M. **Labels don't scale.**
+
+Meanwhile · Common Crawl has 10⁹+ web pages, Flickr has billions of photos, YouTube has zetabytes of video. All unlabeled.
 
 ---
 
