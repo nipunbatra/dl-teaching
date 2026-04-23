@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .mono { font-family: "IBM Plex Mono", monospace; font-size: 11px; }
+    .enc { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.2; rx: 4; }
+    .dec { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.2; rx: 4; }
+    .bridge { fill: #FDF2F6; stroke: #A8324B; stroke-width: 1.3; rx: 4; }
+    .skip { stroke: #A8324B; stroke-width: 1.8; fill: none; stroke-dasharray: 5 3; }
+    .arrow { stroke: #1F1F1E; stroke-width: 1.2; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="420"/>
+  <text x="480" y="28" class="title" text-anchor="middle">U-Net · encoder-decoder with skip connections at every resolution</text>
+
+  <!-- Encoder (left, going down) -->
+  <g transform="translate(60, 60)">
+    <rect class="enc" x="0" y="0" width="130" height="50"/>
+    <text x="65" y="22" class="body" text-anchor="middle">enc₁ · 64 ch</text>
+    <text x="65" y="40" class="mono" text-anchor="middle">256 × 256</text>
+
+    <rect class="enc" x="20" y="80" width="110" height="50"/>
+    <text x="75" y="102" class="body" text-anchor="middle">enc₂ · 128 ch</text>
+    <text x="75" y="120" class="mono" text-anchor="middle">128 × 128</text>
+
+    <rect class="enc" x="40" y="160" width="90" height="50"/>
+    <text x="85" y="182" class="body" text-anchor="middle">enc₃ · 256 ch</text>
+    <text x="85" y="200" class="mono" text-anchor="middle">64 × 64</text>
+
+    <rect class="enc" x="55" y="240" width="75" height="50"/>
+    <text x="92" y="262" class="body" text-anchor="middle">enc₄ · 512</text>
+    <text x="92" y="280" class="mono" text-anchor="middle">32 × 32</text>
+
+    <!-- down arrows -->
+    <path class="arrow" d="M65 50 L65 80" marker-end="url(#arr)"/>
+    <path class="arrow" d="M75 130 L85 160" marker-end="url(#arr)"/>
+    <path class="arrow" d="M85 210 L92 240" marker-end="url(#arr)"/>
+  </g>
+
+  <!-- Bridge (bottom) -->
+  <g transform="translate(380, 310)">
+    <rect class="bridge" x="0" y="0" width="200" height="60"/>
+    <text x="100" y="26" class="body" text-anchor="middle" font-weight="600">bridge · 1024 ch</text>
+    <text x="100" y="46" class="mono" text-anchor="middle">16 × 16 (deepest)</text>
+  </g>
+
+  <!-- Decoder (right, going up) -->
+  <g transform="translate(820, 60)">
+    <rect class="dec" x="-130" y="0" width="130" height="50"/>
+    <text x="-65" y="22" class="body" text-anchor="middle">dec₁ · 64 ch</text>
+    <text x="-65" y="40" class="mono" text-anchor="middle">256 × 256</text>
+
+    <rect class="dec" x="-110" y="80" width="110" height="50"/>
+    <text x="-55" y="102" class="body" text-anchor="middle">dec₂ · 128</text>
+    <text x="-55" y="120" class="mono" text-anchor="middle">128 × 128</text>
+
+    <rect class="dec" x="-90" y="160" width="90" height="50"/>
+    <text x="-45" y="182" class="body" text-anchor="middle">dec₃ · 256</text>
+    <text x="-45" y="200" class="mono" text-anchor="middle">64 × 64</text>
+
+    <rect class="dec" x="-75" y="240" width="75" height="50"/>
+    <text x="-37" y="262" class="body" text-anchor="middle">dec₄</text>
+    <text x="-37" y="280" class="mono" text-anchor="middle">32 × 32</text>
+
+    <!-- up arrows -->
+    <path class="arrow" d="M-65 80 L-65 50" marker-end="url(#arr)"/>
+    <path class="arrow" d="M-55 160 L-65 130" marker-end="url(#arr)"/>
+    <path class="arrow" d="M-45 240 L-55 210" marker-end="url(#arr)"/>
+  </g>
+
+  <!-- Bridge arrows -->
+  <path class="arrow" d="M152 290 L380 335" marker-end="url(#arr)"/>
+  <path class="arrow" d="M580 335 L745 290" marker-end="url(#arr)"/>
+
+  <!-- Skip connections -->
+  <path class="skip" d="M125 85 C 300 85, 600 85, 695 85" marker-end="url(#wine)"/>
+  <path class="skip" d="M135 165 C 320 165, 580 165, 715 165" marker-end="url(#wine)"/>
+  <path class="skip" d="M145 245 C 340 245, 560 245, 735 245" marker-end="url(#wine)"/>
+
+  <text x="480" y="80" class="caption" text-anchor="middle" fill="#A8324B">skip · concat encoder features at same resolution</text>
+
+  <!-- Input / Output -->
+  <g transform="translate(-5, 60)">
+    <rect fill="#F7EED6" stroke="#C9A961" stroke-width="1" x="10" y="-5" width="55" height="30" rx="3"/>
+    <text x="37" y="14" class="caption" text-anchor="middle">input</text>
+  </g>
+  <path class="arrow" d="M55 75 L60 80" marker-end="url(#arr)"/>
+  <g transform="translate(900, 60)">
+    <rect fill="#F7EED6" stroke="#C9A961" stroke-width="1" x="0" y="-5" width="60" height="30" rx="3"/>
+    <text x="30" y="14" class="caption" text-anchor="middle">mask</text>
+  </g>
+
+  <!-- Footer -->
+  <rect x="40" y="390" width="880" height="25" fill="#FFF3EE" stroke="#D97757" stroke-width="0.8" rx="4"/>
+  <text x="480" y="407" class="caption" text-anchor="middle"><tspan font-weight="600">Why skips matter</tspan> · encoder discards spatial precision for semantics · skips return it to the decoder · crucial for pixel-level tasks.</text>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+    </marker>
+    <marker id="wine" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#A8324B"/>
+    </marker>
+  </defs>
+</svg>

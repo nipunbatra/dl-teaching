@@ -151,6 +151,12 @@ Why one head is never enough
 
 ---
 
+# Multi-head · the pipeline in detail
+
+![w:920px](figures/lec13/svg/multi_head_detail.svg)
+
+---
+
 # Why split into heads?
 
 A single attention head has to choose *one* distribution over positions per query. But real language has **multiple relations** to track at once:

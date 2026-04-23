@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .grid { stroke: #CFCBBE; stroke-width: 0.5; fill: none; }
+    .axis { stroke: #1F1F1E; stroke-width: 1.2; fill: none; }
+    .train { stroke: #4A6670; stroke-width: 2.2; fill: none; }
+    .val { stroke: #D97757; stroke-width: 2.2; fill: none; }
+    .diag { fill: #FFF3EE; stroke: #D97757; stroke-width: 1; rx: 4; opacity: 0.85; }
+  </style>
+  <rect class="bg" width="960" height="420"/>
+  <text x="480" y="28" class="title" text-anchor="middle">Training curves · what to look for · common diagnoses</text>
+
+  <!-- Plot area -->
+  <g transform="translate(60, 60)">
+    <!-- grid -->
+    <g class="grid">
+      <line x1="0" y1="60"  x2="700" y2="60"/>
+      <line x1="0" y1="120" x2="700" y2="120"/>
+      <line x1="0" y1="180" x2="700" y2="180"/>
+      <line x1="0" y1="240" x2="700" y2="240"/>
+    </g>
+    <path class="axis" d="M 0 0 L 0 280 L 700 280"/>
+    <!-- x / y labels -->
+    <text x="-45" y="140" class="body" text-anchor="middle" transform="rotate(-90, -45, 140)">loss</text>
+    <text x="350" y="310" class="body" text-anchor="middle">epochs</text>
+
+    <!-- TRAINING curve: monotonically decreasing -->
+    <path class="train" d="M 5 30 Q 80 80 200 140 T 400 210 Q 550 235 700 250"/>
+    <!-- VALIDATION curve: decreasing then increasing (overfit) -->
+    <path class="val" d="M 5 30 Q 80 75 200 135 Q 300 165 380 175 Q 450 168 520 185 Q 600 215 700 245"/>
+
+    <!-- Region 1: underfit -->
+    <rect x="0" y="0" width="80" height="280" fill="#F4D6DB" opacity="0.2"/>
+    <text x="40" y="16" class="caption" text-anchor="middle" fill="#A8324B">underfit</text>
+    <text x="40" y="268" class="caption" text-anchor="middle">both high</text>
+
+    <!-- Region 2: optimal (val min) -->
+    <rect x="280" y="0" width="140" height="280" fill="#F0F5EF" opacity="0.3"/>
+    <text x="350" y="16" class="caption" text-anchor="middle" fill="#7B9E89">sweet spot</text>
+    <text x="350" y="268" class="caption" text-anchor="middle">val at minimum</text>
+    <circle cx="385" cy="175" r="6" fill="#7B9E89"/>
+    <text x="400" y="172" class="caption">best-val checkpoint</text>
+
+    <!-- Region 3: overfitting -->
+    <rect x="500" y="0" width="200" height="280" fill="#F4D6DB" opacity="0.2"/>
+    <text x="600" y="16" class="caption" text-anchor="middle" fill="#A8324B">overfit</text>
+    <text x="600" y="268" class="caption" text-anchor="middle">val ↑ while train ↓</text>
+
+    <!-- Early stop line -->
+    <line x1="385" y1="0" x2="385" y2="280" stroke="#7B9E89" stroke-width="1.2" stroke-dasharray="3 2"/>
+
+    <!-- Legend -->
+    <g transform="translate(540, 40)">
+      <line x1="0" y1="0" x2="20" y2="0" stroke="#4A6670" stroke-width="2.2"/>
+      <text x="28" y="4" class="caption">training loss</text>
+      <line x1="0" y1="18" x2="20" y2="18" stroke="#D97757" stroke-width="2.2"/>
+      <text x="28" y="22" class="caption">validation loss</text>
+    </g>
+  </g>
+
+  <!-- Diagnostic box -->
+  <rect x="40" y="350" width="880" height="60" fill="white" stroke="#4A6670" stroke-width="1" rx="6"/>
+  <text x="55" y="373" class="head">Diagnostics · read the shape</text>
+  <text x="55" y="392" class="caption">• both high &amp; flat → <tspan font-weight="600">underfit</tspan> (more model / lower LR / more epochs)</text>
+  <text x="350" y="392" class="caption">• train ≪ val → <tspan font-weight="600">overfit</tspan> (more reg / data aug / early stop)</text>
+  <text x="640" y="392" class="caption">• val curve spiky → <tspan font-weight="600">LR too high</tspan> or batch small</text>
+  <text x="55" y="407" class="caption">• both drop then train spikes → <tspan font-weight="600">LR explodes</tspan> (clip gradients or lower LR)</text>
+</svg>

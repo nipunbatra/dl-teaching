@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .frozen { fill: #E8EDEF; stroke: #4A6670; stroke-width: 1.4; rx: 6; }
+    .train { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.6; rx: 6; }
+    .img { fill: #F7EED6; stroke: #C9A961; stroke-width: 1.3; rx: 4; }
+    .txt { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.3; rx: 4; }
+    .latent { fill: #FDF2F6; stroke: #A8324B; stroke-width: 1.3; rx: 4; }
+    .arrow { stroke: #1F1F1E; stroke-width: 1.3; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="420"/>
+  <text x="480" y="28" class="title" text-anchor="middle">Stable Diffusion · three frozen encoders + one trainable U-Net</text>
+
+  <!-- Text prompt → CLIP -->
+  <g transform="translate(40, 70)">
+    <rect class="txt" x="0" y="0" width="170" height="40"/>
+    <text x="85" y="25" class="body" text-anchor="middle">"a cat astronaut"</text>
+    <text x="85" y="60" class="caption" text-anchor="middle">user prompt</text>
+  </g>
+  <path class="arrow" d="M215 90 L255 90" marker-end="url(#arr)"/>
+  <g transform="translate(260, 70)">
+    <rect class="frozen" x="0" y="0" width="170" height="80"/>
+    <text x="85" y="28" class="body" text-anchor="middle" font-weight="600">CLIP text encoder</text>
+    <text x="85" y="48" class="caption" text-anchor="middle">77 × 768 tensor</text>
+    <text x="85" y="64" class="caption" text-anchor="middle">(frozen)</text>
+  </g>
+
+  <!-- Noise source -->
+  <g transform="translate(40, 195)">
+    <rect class="latent" x="0" y="0" width="170" height="60"/>
+    <text x="85" y="28" class="body" text-anchor="middle">noise z_T</text>
+    <text x="85" y="48" class="caption" text-anchor="middle">64×64×4 · N(0, I)</text>
+  </g>
+  <path class="arrow" d="M215 225 L255 225" marker-end="url(#arr)"/>
+
+  <!-- U-Net diffuser -->
+  <g transform="translate(260, 175)">
+    <rect class="train" x="0" y="0" width="280" height="150"/>
+    <text x="140" y="28" class="head" text-anchor="middle">Trainable U-Net ε_θ</text>
+    <text x="140" y="48" class="caption" text-anchor="middle">~1B parameters (SD v1.5)</text>
+    <text x="140" y="80" class="caption" text-anchor="middle">operates in 64×64×4 latent space</text>
+    <text x="140" y="100" class="caption" text-anchor="middle">cross-attention from text at every scale</text>
+    <text x="140" y="120" class="caption" text-anchor="middle">50 DDIM steps at inference</text>
+    <text x="140" y="140" class="caption" text-anchor="middle" font-style="italic">this is the only trained component</text>
+  </g>
+
+  <!-- Text → U-Net conditioning arrow (downward) -->
+  <path class="arrow" d="M345 155 L345 175" marker-end="url(#arr)"/>
+  <text x="360" y="170" class="caption" fill="#7B9E89">cross-attn conditioning</text>
+
+  <!-- Denoised latent -->
+  <path class="arrow" d="M545 250 L585 250" marker-end="url(#arr)"/>
+  <g transform="translate(590, 220)">
+    <rect class="latent" x="0" y="0" width="170" height="60"/>
+    <text x="85" y="28" class="body" text-anchor="middle">clean latent z_0</text>
+    <text x="85" y="48" class="caption" text-anchor="middle">64×64×4</text>
+  </g>
+
+  <!-- VAE decoder -->
+  <path class="arrow" d="M680 280 L680 305" marker-end="url(#arr)"/>
+  <g transform="translate(590, 310)">
+    <rect class="frozen" x="0" y="0" width="170" height="60"/>
+    <text x="85" y="28" class="body" text-anchor="middle" font-weight="600">VAE decoder</text>
+    <text x="85" y="48" class="caption" text-anchor="middle">64×64 → 512×512 (frozen)</text>
+  </g>
+
+  <!-- Output image -->
+  <path class="arrow" d="M780 340 L815 340" marker-end="url(#arr)"/>
+  <g transform="translate(820, 295)">
+    <rect class="img" x="0" y="0" width="120" height="90"/>
+    <text x="60" y="50" class="body" text-anchor="middle">512×512</text>
+    <text x="60" y="70" class="caption" text-anchor="middle">RGB image</text>
+  </g>
+
+  <!-- Memory footprint -->
+  <rect x="40" y="385" width="880" height="30" fill="#FFF3EE" stroke="#D97757" stroke-width="1" rx="6"/>
+  <text x="480" y="405" class="caption" text-anchor="middle"><tspan font-weight="600">Memory saving</tspan> · 512² × 3 = 786K dims (pixel) vs 64² × 4 = 16K dims (latent) · <tspan font-weight="600">~48× fewer</tspan> · ~10× faster sampling.</text>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+    </marker>
+  </defs>
+</svg>

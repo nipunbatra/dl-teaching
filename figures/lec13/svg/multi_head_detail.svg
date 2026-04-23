@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .mono { font-family: "IBM Plex Mono", monospace; font-size: 11px; }
+    .input { fill: #F7EED6; stroke: #C9A961; stroke-width: 1.3; rx: 4; }
+    .h1 { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.3; rx: 3; }
+    .h2 { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.3; rx: 3; }
+    .h3 { fill: #FDF2F6; stroke: #A8324B; stroke-width: 1.3; rx: 3; }
+    .h4 { fill: #E8EDEF; stroke: #4A6670; stroke-width: 1.3; rx: 3; }
+    .concat { fill: white; stroke: #1F1F1E; stroke-width: 1.4; rx: 4; }
+    .arrow { stroke: #1F1F1E; stroke-width: 1.2; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="420"/>
+  <text x="480" y="28" class="title" text-anchor="middle">Multi-head attention · 8 parallel subspace attentions · concat · output project</text>
+
+  <!-- Input X -->
+  <g transform="translate(400, 55)">
+    <rect class="input" x="0" y="0" width="160" height="36"/>
+    <text x="80" y="23" class="body" text-anchor="middle">x ∈ ℝ^(N × d_model)</text>
+  </g>
+  <path class="arrow" d="M480 91 L480 110" marker-end="url(#arr)"/>
+
+  <!-- Split → 8 heads -->
+  <g transform="translate(60, 120)">
+    <!-- Heads 1-4 -->
+    <g transform="translate(0, 0)">
+      <rect class="h1" x="0" y="0" width="180" height="90"/>
+      <text x="90" y="20" class="head" text-anchor="middle">Head 1 · subspace 1</text>
+      <text x="90" y="38" class="mono" text-anchor="middle">Q₁ = x · W_Q₁</text>
+      <text x="90" y="54" class="mono" text-anchor="middle">K₁ = x · W_K₁</text>
+      <text x="90" y="70" class="mono" text-anchor="middle">V₁ = x · W_V₁</text>
+      <text x="90" y="86" class="caption" text-anchor="middle">d_k = d_model / 8</text>
+    </g>
+    <g transform="translate(200, 0)">
+      <rect class="h2" x="0" y="0" width="180" height="90"/>
+      <text x="90" y="20" class="head" text-anchor="middle">Head 2 · subspace 2</text>
+      <text x="90" y="38" class="mono" text-anchor="middle">Q₂ K₂ V₂</text>
+      <text x="90" y="60" class="caption" text-anchor="middle" font-style="italic">maybe picks up</text>
+      <text x="90" y="76" class="caption" text-anchor="middle" font-style="italic">positional relations</text>
+    </g>
+    <g transform="translate(400, 0)">
+      <rect class="h3" x="0" y="0" width="180" height="90"/>
+      <text x="90" y="20" class="head" text-anchor="middle">Head 3 · subspace 3</text>
+      <text x="90" y="38" class="mono" text-anchor="middle">Q₃ K₃ V₃</text>
+      <text x="90" y="60" class="caption" text-anchor="middle" font-style="italic">maybe picks up</text>
+      <text x="90" y="76" class="caption" text-anchor="middle" font-style="italic">syntactic roles</text>
+    </g>
+    <g transform="translate(600, 0)">
+      <rect class="h4" x="0" y="0" width="180" height="90"/>
+      <text x="90" y="20" class="head" text-anchor="middle">Head 4-8 · ...</text>
+      <text x="90" y="40" class="caption" text-anchor="middle">(same recipe, 4 more)</text>
+      <text x="90" y="60" class="caption" text-anchor="middle" font-style="italic">different learned</text>
+      <text x="90" y="76" class="caption" text-anchor="middle" font-style="italic">attention patterns</text>
+    </g>
+  </g>
+
+  <!-- Attention outputs -->
+  <g transform="translate(60, 230)">
+    <rect class="h1" x="0" y="0" width="180" height="40"/>
+    <text x="90" y="25" class="body" text-anchor="middle">head₁ out · ℝ^(N × d_k)</text>
+    <rect class="h2" x="200" y="0" width="180" height="40"/>
+    <text x="290" y="25" class="body" text-anchor="middle">head₂ out</text>
+    <rect class="h3" x="400" y="0" width="180" height="40"/>
+    <text x="490" y="25" class="body" text-anchor="middle">head₃ out</text>
+    <rect class="h4" x="600" y="0" width="180" height="40"/>
+    <text x="690" y="25" class="body" text-anchor="middle">head₄-₈ out</text>
+  </g>
+
+  <!-- arrows down -->
+  <path class="arrow" d="M150 210 L150 230" marker-end="url(#arr)"/>
+  <path class="arrow" d="M350 210 L350 230" marker-end="url(#arr)"/>
+  <path class="arrow" d="M550 210 L550 230" marker-end="url(#arr)"/>
+  <path class="arrow" d="M750 210 L750 230" marker-end="url(#arr)"/>
+
+  <!-- Concat -->
+  <g transform="translate(180, 295)">
+    <rect class="concat" x="0" y="0" width="600" height="36"/>
+    <text x="300" y="23" class="body" text-anchor="middle">Concatenate 8 heads · ℝ^(N × d_model)</text>
+  </g>
+  <path class="arrow" d="M150 270 L400 295" marker-end="url(#arr)"/>
+  <path class="arrow" d="M350 270 L450 295" marker-end="url(#arr)"/>
+  <path class="arrow" d="M550 270 L510 295" marker-end="url(#arr)"/>
+  <path class="arrow" d="M750 270 L560 295" marker-end="url(#arr)"/>
+
+  <!-- W_O -->
+  <g transform="translate(280, 355)">
+    <rect class="input" x="0" y="0" width="400" height="36"/>
+    <text x="200" y="23" class="body" text-anchor="middle">Output projection W_O · final output ℝ^(N × d_model)</text>
+  </g>
+  <path class="arrow" d="M480 331 L480 355" marker-end="url(#arr)"/>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+    </marker>
+  </defs>
+</svg>

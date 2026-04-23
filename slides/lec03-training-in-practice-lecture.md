@@ -223,6 +223,12 @@ From zero to a trained model
 
 ---
 
+# Training curves · the diagnostic language
+
+![w:920px](figures/lec03/svg/training_curves_annotated.svg)
+
+---
+
 # The recipe · one function
 
 ```python

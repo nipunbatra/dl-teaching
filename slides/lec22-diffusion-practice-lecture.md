@@ -222,6 +222,12 @@ Diffuse in latent space; decode once at the end.
 
 ---
 
+# Stable Diffusion · annotated full stack
+
+![w:920px](figures/lec22/svg/latent_diffusion_stack.svg)
+
+---
+
 # Latent diffusion · three components
 
 <div class="columns">

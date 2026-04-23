@@ -329,6 +329,12 @@ Key architectural change: we need to go *back up* in spatial resolution — the 
 
 ![w:920px](figures/lec09/svg/unet_architecture.svg)
 
+---
+
+# U-Net · with channels and sizes
+
+![w:920px](figures/lec09/svg/unet_annotated.svg)
+
 <div class="realworld">
 
 ▶ Interactive: click an image region, see segmentation fill in — [image-segmentation](https://nipunbatra.github.io/interactive-articles/image-segmentation/).
