@@ -296,7 +296,21 @@ Both $\mu$ and $\sigma$ are network outputs. During training:
 
 ---
 
-# Deriving the ELBO · one line at a time
+# The punchline · you can skip the derivation
+
+<div class="keypoint">
+
+The VAE loss is just **reconstruction + KL-to-prior**. Train to minimize it. That's all you need to use a VAE.
+
+$$\mathcal{L} = \underbrace{\|x - \text{decode}(z)\|^2}_\text{reconstruction} + \underbrace{\text{KL}(q(z|x)\,\|\,\mathcal{N}(0,I))}_\text{regularizer}$$
+
+</div>
+
+The next two slides *derive* this from first principles (Jensen's inequality). **If you trust me, you can skip them** · come back to the math later.
+
+---
+
+# ⚠️ optional · Deriving the ELBO · one line at a time
 
 <div class="math-box">
 
