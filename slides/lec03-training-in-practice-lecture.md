@@ -16,6 +16,19 @@ math: mathjax
 
 ---
 
+# Learning outcomes
+
+By the end of this lecture you will be able to:
+
+1. Write a **PyTorch training loop** by hand.
+2. Apply the **seven-rung debug ladder** · data → overfit → scale up.
+3. Use **LR finder** to pick a learning rate in 100 steps.
+4. Set up **mixed-precision** training with autocast.
+5. Diagnose **training curves** · underfit, sweet spot, overfit.
+6. Save and load **checkpoints** correctly (state_dict, not pickle).
+
+---
+
 # Recap · what we have so far
 
 - **Depth works** with ResNets + He init + ReLU (L2).
@@ -173,6 +186,46 @@ Rule of thumb · `num_workers ≈ 4 × num_GPUs`. `pin_memory=True` when using C
 # Mixed precision · BF16 is the 2026 default
 
 ![w:920px](figures/lec03/svg/mixed_precision.svg)
+
+---
+
+# Mixed precision · why BF16 > FP16
+
+<div class="columns">
+<div>
+
+### FP16
+
+- Range · ±65,504
+- Precision · 3-4 decimal digits
+- Easy to **overflow** during loss computation
+- Needs **loss scaling** to keep gradients in range
+
+</div>
+<div>
+
+### BF16
+
+- Range · ±10³⁸ (same as FP32)
+- Precision · 2-3 decimal digits
+- Never overflows
+- **No loss scaling needed**
+
+</div>
+</div>
+
+<div class="keypoint">
+
+BF16 · trades precision for range. Same memory as FP16. Available on NVIDIA A100+, AMD MI200+, TPU v3+. Default on any modern LLM training.
+
+</div>
+
+```python
+with torch.autocast(device_type='cuda', dtype=torch.bfloat16):
+    output = model(input)   # most ops in BF16
+    loss = criterion(output, target)
+loss.backward()            # grads in BF16 too
+```
 
 ---
 

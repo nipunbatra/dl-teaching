@@ -16,6 +16,19 @@ math: mathjax
 
 ---
 
+# Learning outcomes
+
+By the end of this lecture you will be able to:
+
+1. State the **output-size formula** and compute it.
+2. Explain **receptive field** and its growth with depth.
+3. Apply the **VGG insight** · 3 stacked 3×3 ≈ one 7×7.
+4. Describe **1×1 conv** as channel mixing / bottleneck.
+5. Name the **three inductive biases** of conv and when they fail.
+6. Place classic architectures · LeNet → AlexNet → VGG → GoogLeNet.
+
+---
+
 # Recap · where we are
 
 - **Training stack**: PyTorch recipe, debug ladder, error analysis (L3).
@@ -324,6 +337,39 @@ Why convolution beats MLP on images
 # Three biases baked into convolution
 
 ![w:920px](figures/lec07/svg/inductive_bias.svg)
+
+---
+
+# In words · what each bias does
+
+<div class="columns">
+<div>
+
+### 1. Locality
+
+Each output sees only a small window. Forces the network to first extract local features (edges, textures) before combining them.
+
+**Why correct for images** · nearby pixels are semantically related (same edge, same object).
+
+</div>
+<div>
+
+### 2. Translation equivariance
+
+Shift input → shift output. The same feature detector runs at every position.
+
+**Why correct for images** · a cat is a cat whether it's in the corner or centre.
+
+</div>
+</div>
+
+### 3. Hierarchy of scales
+
+Stacking convs builds larger receptive fields. Deep networks *compose* features at each scale.
+
+**Why correct for images** · visual world is hierarchical (edge → texture → part → object).
+
+---
 
 ---
 

@@ -16,6 +16,19 @@ math: mathjax
 
 ---
 
+# Learning outcomes
+
+By the end of this lecture you will be able to:
+
+1. Explain why **per-parameter** LR is helpful (sparse vs dense gradients).
+2. Derive **Adam** as momentum + RMSProp + bias correction.
+3. Compute **bias-correction** at small $t$ and show why it matters.
+4. Distinguish **Adam vs AdamW** and pick AdamW for regularized training.
+5. Pick a **schedule** (constant / step / cosine / warmup+cosine) per use-case.
+6. Explain **why warmup** is essential for Transformers.
+
+---
+
 # Recap · where we left off
 
 Lecture 4 · **momentum** = EMA of past gradients. Damps ravine oscillation and speeds training.
@@ -317,6 +330,31 @@ Combined: huge, unstable first steps → divergence.
 ### PART 5
 
 # What to actually use
+
+---
+
+# Warmup · typical schedule
+
+<div class="math-box">
+
+Typical Transformer schedule:
+
+- **Warmup** · linearly ramp lr 0 → target over first 2000 steps (or 1-10% of total).
+- **Plateau** · hold at target lr briefly.
+- **Cosine decay** · smooth drop from target to ~1/10 of target over the rest.
+- **Final** · ~10% of training at minimum lr to squeeze last gains.
+
+</div>
+
+```python
+def lr_lambda(step, total, warmup):
+    if step < warmup:
+        return step / warmup       # linear warmup 0 → 1
+    progress = (step - warmup) / (total - warmup)
+    return 0.5 * (1 + math.cos(math.pi * progress))  # cosine
+```
+
+5 lines. Ubiquitous.
 
 ---
 
