@@ -421,6 +421,43 @@ Three lines in; a paragraph of reasoning out. The API abstracts away all the CLI
 
 ---
 
+# VLM benchmarks · what we measure
+
+<div class="math-box">
+
+| Benchmark | Tests | Example task |
+|:-:|:-:|:-:|
+| VQAv2 | general visual QA | "what color is the car?" |
+| GQA | compositional reasoning | "is the animal to the left of the tree brown?" |
+| MMMU | multi-discipline expert | college-level chemistry diagram |
+| DocVQA | document understanding | read text from scanned form |
+| ChartQA | chart reading | "what was Q3 revenue?" |
+| AI2D | diagram reasoning | "which step comes after X?" |
+
+</div>
+
+Claude / GPT-4o / Gemini all push 85%+ on VQAv2 now. MMMU remains hard (50-60%) · genuine multi-modal reasoning is the frontier.
+
+---
+
+# Why VLMs hallucinate
+
+Vision-language models sometimes describe things that *aren't in the image*:
+
+> Image · a cat on a mat.
+> Prompt · "describe the room in detail."
+> Output · "... next to a blue vase on the wooden table ..."
+
+<div class="warning">
+
+**Cause** · the language model has a strong prior from text pretraining ("rooms have vases") that overrides weak visual signal. Fixes · stronger vision encoder, more VQA training data, CFG-style text-image alignment.
+
+</div>
+
+GPT-4o and Claude 3.5+ dramatically reduced hallucination via more curated training and RLHF specifically on vision tasks. Still not solved.
+
+---
+
 # Emerging applications
 
 <div class="columns">

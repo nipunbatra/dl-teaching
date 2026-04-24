@@ -286,6 +286,47 @@ By 2023 the community mostly converged on masked autoencoding (MAE) and self-dis
 
 ---
 
+# Linear probe vs fine-tune · evaluation
+
+SSL models are judged by how well they transfer to downstream tasks.
+
+<div class="math-box">
+
+| Method | What's measured | What's frozen |
+|:-:|:-:|:-:|
+| **Linear probe** | quality of features | encoder frozen, only 1-layer classifier trained |
+| **Fine-tune** | ceiling of representation | everything trainable |
+| **k-NN** | local structure | encoder frozen, no classifier |
+| **Few-shot** | sample-efficiency | encoder frozen, tiny labeled set |
+
+</div>
+
+<div class="insight">
+
+Linear probe is the cleanest measure of representation quality · it isolates the encoder's feature space. Fine-tune tests the ceiling but can hide a weak encoder (the classifier re-learns whatever it needs).
+
+</div>
+
+---
+
+# 2026 SSL benchmarks · who wins what
+
+<div class="math-box">
+
+| Backbone | Linear probe ImageNet | Fine-tune detection |
+|:-:|:-:|:-:|
+| Supervised ResNet-50 | 76.1 | 38 mAP |
+| SimCLR ResNet-50 | 69 | 36 |
+| MoCo-v3 ViT-B | 76 | 39 |
+| MAE ViT-H | 76 | **54 mAP** |
+| DINOv2 ViT-L | **86** | 52 |
+
+</div>
+
+Observation · DINOv2 (self-distillation at scale, 142M images) dominates linear probe. MAE wins detection. Supervised is no longer SOTA for any frozen-feature evaluation.
+
+---
+
 # The pattern across all these methods
 
 Zoom out. Every SSL method is a variation on **"create a task the model can only solve if it learns features."**

@@ -16,6 +16,19 @@ math: mathjax
 
 ---
 
+# Learning outcomes
+
+By the end of this lecture you will be able to:
+
+1. State the three **scaling laws** (compute, data, params) as power-law exponents.
+2. Derive the **Chinchilla** D/N ≈ 20 optimum and explain why over-training is OK.
+3. Describe **RoPE** (rotary position embedding) geometrically.
+4. Explain **GQA** · fewer KV heads, same speed, same quality.
+5. Contrast **DP / TP / PP** and know when to combine them.
+6. Articulate **emergent abilities** · what they are and why they're contested.
+
+---
+
 # Where we are
 
 - **Transformer block** (L13) · stack of attention + FFN.
@@ -37,6 +50,36 @@ Today maps to the **Chinchilla paper** (Hoffmann 2022), HuggingFace course Ch 1,
 2. What changed in positional encoding — and what is **RoPE**?
 3. How do 100B+ models fit on GPUs — **GQA, distributed training**?
 4. What are **emergent abilities** and why are they surprising?
+
+---
+
+# What changed · 2018 to 2026
+
+<div class="columns">
+<div>
+
+### Architecture
+
+**Unchanged.** Still a decoder-only Transformer. A student from 2018 who squinted at GPT-1 would recognize Llama-3.
+
+</div>
+<div>
+
+### Scale & engineering
+
+Params · 117M → 1T+ (10,000×)
+Data · 1B → 15T tokens (15,000×)
+Compute · 10²⁰ → 10²⁵ FLOPs (100,000×)
+Context · 512 → 1M tokens
+
+</div>
+</div>
+
+<div class="keypoint">
+
+"Bitter lesson" (Sutton) · general methods that leverage computation dominate specialized ones. LLMs are Exhibit A.
+
+</div>
 
 ---
 
@@ -101,6 +144,46 @@ Chinchilla optimizes *training compute*. But **inference** is where models earn 
 
 ---
 
+# Compute budget · a worked example
+
+<div class="math-box">
+
+Suppose you have **10²⁴ FLOPs** of training compute to spend. Chinchilla says:
+
+- $N^* = G \cdot C^{0.5}$ · approx optimal params
+- $D^* = 20 N^*$
+
+For $C = 10^{24}$: $N^* \approx 70\text{B}$ params, $D^* \approx 1.4\text{T}$ tokens.
+
+</div>
+
+Change $C$ by 10× · both $N^*$ and $D^*$ grow by ~√10 ≈ 3.16×. Scale up ≠ just bigger model; bigger model + more data together.
+
+<div class="keypoint">
+
+This predicts · 10× more compute → ~3× bigger model trained on ~3× more tokens. Not 10× bigger. This is why GPT-4 (~1.8T) isn't 10× bigger than GPT-3 (175B).
+
+</div>
+
+---
+
+# Sub-optimal training · a table
+
+| Scenario | Params | Tokens | Status |
+|:-:|:-:|:-:|:-:|
+| GPT-3 (2020) · undertrained | 175B | 300B | too big, too few tokens |
+| Chinchilla (2022) · optimal | 70B | 1.4T | train-compute sweet spot |
+| Llama-3 8B (2024) · overtrained | 8B | 15T | inference-optimal for serving |
+| A large startup's "bigger = better" model | 500B | 200B | wastes compute |
+
+<div class="warning">
+
+**The undertrained regime is more wasteful than the overtrained.** GPT-3 used 10× Chinchilla's compute for similar final loss. Modern LLMs carefully size $N, D$ together.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 2
@@ -126,6 +209,45 @@ Problems:
 # RoPE · rotation in pictures
 
 ![w:920px](figures/lec15/svg/rope_rotation.svg)
+
+---
+
+# RoPE · three key properties
+
+<div class="math-box">
+
+1. **Relative positions encoded naturally** · inner product after rotation depends only on $m - n$ (query-minus-key position), not absolute positions.
+
+2. **Extrapolates beyond training length** · rotation frequencies are fixed; a model trained at 4k context can extend to 32k without re-training (with minor fixes).
+
+3. **Zero added parameters** · rotation matrices are deterministic given position; no `nn.Embedding(max_len, d_model)` allocation.
+
+</div>
+
+<div class="keypoint">
+
+Llama, Mistral, Qwen, GPT-NeoX all use RoPE in 2026. A 2021 paper (Su et al.) that took ~2 years to catch on is now the default.
+
+</div>
+
+---
+
+# Context length · the scaling wall
+
+| Year | Frontier model | Context |
+|:-:|:-:|:-:|
+| 2018 | BERT | 512 tokens |
+| 2020 | GPT-3 | 2,048 |
+| 2023 | GPT-4 | 32k |
+| 2023 | Claude 2 | 100k |
+| 2024 | Gemini 1.5 | **1,000,000** |
+| 2026 | frontier | 2-10M |
+
+<div class="insight">
+
+What unlocked 1M? · **RoPE extrapolation**, **FlashAttention** (O(N) memory), **GQA** (smaller KV cache), and training on long documents from the start. No single trick; the stack compounds.
+
+</div>
 
 ---
 
@@ -296,6 +418,58 @@ An ability is **emergent** if it:
 2. Rapidly improves to competent at large scale (> 50B).
 
 No one trained specifically for it. It just appears.
+
+---
+
+# Emergence · the controversy
+
+<div class="columns">
+<div>
+
+### Emergentists say
+
+- Discontinuous jumps in capability with scale.
+- New qualitative behaviors (reasoning, tool use).
+- Smaller models CAN'T do these at all.
+
+</div>
+<div>
+
+### Skeptics (Schaeffer 2023) say
+
+- Many "emergent" curves are metric artifacts.
+- Use a smoother metric (per-token log-prob vs exact match) and the curve becomes smooth.
+- Still a real capability gap, but gradual.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+Resolution · both sides are partially right. Capability improves continuously in log-probability, but certain *thresholded* tasks (match or fail) look discontinuous. The user experience is still of qualitative leaps.
+
+</div>
+
+---
+
+# Chain-of-thought · prompting unlocks reasoning
+
+<div class="math-box">
+
+Standard prompt · "Q: 23 × 47 = ?"   →   A: "1081" (often wrong)
+
+CoT prompt · "Q: 23 × 47 = ? Let's think step by step."   →
+  A: "23 × 47 = 23 × (50 − 3) = 1150 − 69 = 1081"
+
+</div>
+
+CoT unlocks **multi-digit arithmetic, commonsense, logic** at 60B+. Below that, CoT adds nothing (the model can't reason in steps either).
+
+<div class="insight">
+
+The prompt itself is a learnable control · "let's think step by step" (Kojima 2022) can add 15 points on GSM8K. No fine-tuning. This thread becomes reasoning models (o1, Claude thinking) in 2024.
+
+</div>
 
 | Ability | Roughly where it emerges |
 |---------|--------------------------|
