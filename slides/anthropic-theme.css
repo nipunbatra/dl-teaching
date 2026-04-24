@@ -13,22 +13,22 @@
  */
 
 @import 'default';
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  --paper:       #F0EEE5;
-  --paper-alt:   #EAE7DC;
-  --ink:         #1F1F1E;
-  --muted:       #6B6A65;
-  --rule:        #C9C4B5;
-  --accent:      #D97757;     /* Claude rust — primary */
-  --accent-soft: #EAD3C5;
-  --sage:        #7B9E89;
-  --slate:       #4A6670;
-  --wine:        #A8324B;
-  --ochre:       #C9A961;
-  --code-bg:     #EEEBDF;
-  --code-ink:    #2D2B26;
+  --paper:       #F7F3E9;     /* slightly whiter, warmer parchment */
+  --paper-alt:   #EFEADA;
+  --ink:         #161513;     /* darker ink — prints sharper */
+  --muted:       #5F5C54;     /* slightly cooler muted */
+  --rule:        #B5AE9B;     /* firmer rule */
+  --accent:      #B85A3E;     /* deeper academic rust (less orange) */
+  --accent-soft: #E5D2C6;
+  --sage:        #5F8573;     /* slightly deeper forest green */
+  --slate:       #37535F;     /* deeper navy-slate */
+  --wine:        #8E2A3B;     /* sober burgundy */
+  --ochre:       #B5945A;
+  --code-bg:     #EDE8D8;
+  --code-ink:    #1F1C17;
 }
 
 /* ----- base ---------------------------------------------------------- */
@@ -47,13 +47,15 @@ section {
 
 /* top-right attribution on every slide (except title/section) */
 section::before {
-  content: 'Nipun Batra · ES 667 Deep Learning · IIT Gandhinagar';
+  content: 'ES 667 · Deep Learning · Nipun Batra · IIT Gandhinagar';
   position: absolute;
   top: 14px;
-  right: 24px;
-  font-size: 11px;
+  right: 28px;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: 12px;
   color: var(--muted);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
 }
 section.title-slide::before, section.section-divider::before { content: ''; }
 
@@ -67,28 +69,30 @@ section::after {
 
 /* ----- typography ---------------------------------------------------- */
 h1, h2, h3, h4 {
-  font-family: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  font-family: 'EB Garamond', 'Iowan Old Style', Georgia, serif;
   font-weight: 600;
   color: var(--ink);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.005em;
   line-height: 1.18;
 }
 section h1 {
-  font-size: 34px;
+  font-size: 36px;
   margin: 0 0 4px 0;
-  padding: 0;
+  padding: 0 0 8px 0;
   background: none;
   color: var(--ink);
   text-shadow: none;
+  border-bottom: 1px solid var(--rule);
 }
 section h1::after {
   content: '';
   display: block;
-  width: 64px;
-  height: 3px;
+  width: 72px;
+  height: 2px;
   background: var(--accent);
-  margin-top: 10px;
-  border-radius: 2px;
+  margin-top: -1.5px;
+  margin-bottom: -1px;
+  border-radius: 0;
 }
 section h2 {
   font-size: 22px;
@@ -207,16 +211,20 @@ section.title-slide {
   justify-content: center;
 }
 section.title-slide h1 {
-  font-size: 56px;
+  font-size: 58px;
   color: var(--ink);
   line-height: 1.05;
   margin: 0;
-  padding: 0;
+  padding: 0 0 14px 0;
+  border-bottom: 1.5px solid var(--ink);
+  letter-spacing: -0.01em;
 }
 section.title-slide h1::after {
-  width: 100px;
-  height: 4px;
-  margin-top: 22px;
+  width: 120px;
+  height: 3px;
+  margin-top: -2px;
+  margin-bottom: -1.5px;
+  background: var(--accent);
 }
 section.title-slide h2 {
   font-size: 26px;
@@ -231,10 +239,10 @@ section.title-slide p {
   margin: 10px 0 0;
 }
 section.title-slide strong {
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: 'EB Garamond', Georgia, serif;
   color: var(--ink);
   font-weight: 600;
-  font-size: 22px;
+  font-size: 24px;
 }
 section.title-slide em { color: var(--accent); font-style: normal; font-weight: 500; }
 
@@ -361,7 +369,7 @@ mjx-container[display="true"] { margin: 10px 0 !important; }
 .warning::before, .paper::before, .notebook::before,
 .popquiz::before, .realworld::before {
   display: block;
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: 'EB Garamond', Georgia, serif;
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -403,7 +411,7 @@ mjx-container[display="true"] { margin: 10px 0 !important; }
 .build-it::before {
   content: 'Let\'s build it';
   display: block;
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: 'EB Garamond', Georgia, serif;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
