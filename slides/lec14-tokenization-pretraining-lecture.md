@@ -254,6 +254,12 @@ Same Transformer · different objectives
 
 ---
 
+# BERT vs GPT · side-by-side
+
+![w:920px](figures/lec14/svg/mlm_vs_causal_detail.svg)
+
+---
+
 # BERT · encoder-only · masked LM
 
 Objective: predict masked tokens from **both left and right context**.

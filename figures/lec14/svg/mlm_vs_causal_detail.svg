@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .mono { font-family: "IBM Plex Mono", monospace; font-size: 12px; }
+    .tok { fill: #FFF3EE; stroke: #D97757; stroke-width: 1; rx: 3; }
+    .mask { fill: #4A6670; fill-opacity: 0.7; stroke: #4A6670; stroke-width: 1; rx: 3; }
+    .pred { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.3; rx: 3; }
+    .target { fill: #FDF2F6; stroke: #A8324B; stroke-width: 1.3; rx: 3; }
+    .arrow { stroke: #1F1F1E; stroke-width: 1.2; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="400"/>
+  <text x="480" y="28" class="title" text-anchor="middle">MLM (BERT) vs Causal LM (GPT) · same architecture, different training task</text>
+
+  <!-- BERT / MLM -->
+  <g transform="translate(30, 70)">
+    <text x="200" y="0" class="head" text-anchor="middle">BERT · Masked Language Modeling</text>
+    <text x="200" y="18" class="caption" text-anchor="middle">mask 15% · predict masked given both sides</text>
+
+    <!-- Input: The cat [MASK] on the mat -->
+    <g transform="translate(0, 40)">
+      <rect class="tok" x="0" y="0" width="60" height="30"/>
+      <text x="30" y="20" class="mono" text-anchor="middle">The</text>
+      <rect class="tok" x="65" y="0" width="60" height="30"/>
+      <text x="95" y="20" class="mono" text-anchor="middle">cat</text>
+      <rect class="mask" x="130" y="0" width="70" height="30"/>
+      <text x="165" y="20" class="mono" text-anchor="middle" fill="white">[MASK]</text>
+      <rect class="tok" x="205" y="0" width="50" height="30"/>
+      <text x="230" y="20" class="mono" text-anchor="middle">on</text>
+      <rect class="tok" x="260" y="0" width="60" height="30"/>
+      <text x="290" y="20" class="mono" text-anchor="middle">the</text>
+      <rect class="tok" x="325" y="0" width="60" height="30"/>
+      <text x="355" y="20" class="mono" text-anchor="middle">mat</text>
+    </g>
+
+    <!-- Transformer encoder -->
+    <rect fill="#F0F5EF" stroke="#7B9E89" stroke-width="1.4" x="50" y="95" width="300" height="40" rx="6"/>
+    <text x="200" y="120" class="body" text-anchor="middle">Transformer encoder (bidirectional)</text>
+
+    <path class="arrow" d="M200 70 L200 95" marker-end="url(#arr)"/>
+    <path class="arrow" d="M200 135 L200 150" marker-end="url(#arr)"/>
+
+    <!-- Output: predict only the masked -->
+    <rect class="target" x="130" y="160" width="70" height="30"/>
+    <text x="165" y="180" class="mono" text-anchor="middle">sat</text>
+    <text x="200" y="210" class="caption" text-anchor="middle">predict "sat" given "The cat __ on the mat"</text>
+    <text x="200" y="227" class="caption" text-anchor="middle">loss · CE only at masked position</text>
+
+    <!-- Features -->
+    <g transform="translate(0, 250)">
+      <text x="0" y="0" class="body">Properties</text>
+      <text x="0" y="18" class="caption">✓ bidirectional context (cheating ok)</text>
+      <text x="0" y="34" class="caption">✓ great for classification / retrieval</text>
+      <text x="0" y="50" class="caption">✗ can't generate autoregressively</text>
+      <text x="0" y="66" class="caption">✗ only 15% of tokens give gradient</text>
+    </g>
+  </g>
+
+  <!-- GPT / Causal LM -->
+  <g transform="translate(520, 70)">
+    <text x="200" y="0" class="head" text-anchor="middle">GPT · Causal Language Modeling</text>
+    <text x="200" y="18" class="caption" text-anchor="middle">predict every next token given past only</text>
+
+    <g transform="translate(0, 40)">
+      <rect class="tok" x="0" y="0" width="60" height="30"/>
+      <text x="30" y="20" class="mono" text-anchor="middle">The</text>
+      <rect class="tok" x="65" y="0" width="60" height="30"/>
+      <text x="95" y="20" class="mono" text-anchor="middle">cat</text>
+      <rect class="tok" x="130" y="0" width="50" height="30"/>
+      <text x="155" y="20" class="mono" text-anchor="middle">sat</text>
+      <rect class="tok" x="185" y="0" width="50" height="30"/>
+      <text x="210" y="20" class="mono" text-anchor="middle">on</text>
+      <rect class="tok" x="240" y="0" width="60" height="30"/>
+      <text x="270" y="20" class="mono" text-anchor="middle">the</text>
+      <rect class="tok" x="305" y="0" width="60" height="30"/>
+      <text x="335" y="20" class="mono" text-anchor="middle">mat</text>
+    </g>
+
+    <rect fill="#FFF3EE" stroke="#D97757" stroke-width="1.4" x="30" y="95" width="340" height="40" rx="6"/>
+    <text x="200" y="120" class="body" text-anchor="middle">Transformer decoder (causal mask)</text>
+    <path class="arrow" d="M200 70 L200 95" marker-end="url(#arr)"/>
+    <path class="arrow" d="M200 135 L200 150" marker-end="url(#arr)"/>
+
+    <!-- Output: predict every next token -->
+    <g transform="translate(0, 160)">
+      <rect class="target" x="0" y="0" width="60" height="30"/>
+      <text x="30" y="20" class="mono" text-anchor="middle">cat</text>
+      <rect class="target" x="65" y="0" width="60" height="30"/>
+      <text x="95" y="20" class="mono" text-anchor="middle">sat</text>
+      <rect class="target" x="130" y="0" width="50" height="30"/>
+      <text x="155" y="20" class="mono" text-anchor="middle">on</text>
+      <rect class="target" x="185" y="0" width="50" height="30"/>
+      <text x="210" y="20" class="mono" text-anchor="middle">the</text>
+      <rect class="target" x="240" y="0" width="60" height="30"/>
+      <text x="270" y="20" class="mono" text-anchor="middle">mat</text>
+      <rect class="target" x="305" y="0" width="60" height="30"/>
+      <text x="335" y="20" class="mono" text-anchor="middle">.</text>
+    </g>
+    <text x="200" y="217" class="caption" text-anchor="middle">loss · CE at every position · 100% tokens teach</text>
+
+    <g transform="translate(0, 250)">
+      <text x="0" y="0" class="body">Properties</text>
+      <text x="0" y="18" class="caption">✓ natural autoregressive generation</text>
+      <text x="0" y="34" class="caption">✓ ALL tokens give gradient signal</text>
+      <text x="0" y="50" class="caption">✓ scales beautifully (GPT-3, Llama, Claude)</text>
+      <text x="0" y="66" class="caption">✗ can't peek ahead (can't cheat)</text>
+    </g>
+  </g>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+    </marker>
+  </defs>
+</svg>

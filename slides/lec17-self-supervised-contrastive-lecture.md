@@ -354,6 +354,12 @@ Masked autoencoding for images
 
 ---
 
+# MAE · full pipeline
+
+![w:920px](figures/lec17/svg/mae_pipeline.svg)
+
+---
+
 # MAE · mask 75%, reconstruct the rest
 
 ![w:920px](figures/lec17/svg/mae_masking.svg)

@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .patch { fill: #FFF3EE; stroke: #D97757; stroke-width: 0.6; }
+    .masked { fill: #4A6670; stroke: #1F1F1E; stroke-width: 0.6; }
+    .enc { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.4; rx: 6; }
+    .dec { fill: #FDF2F6; stroke: #A8324B; stroke-width: 1.4; rx: 6; }
+    .arrow { stroke: #1F1F1E; stroke-width: 1.3; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="420"/>
+  <text x="480" y="28" class="title" text-anchor="middle">MAE · mask 75% · heavy encoder on visible 25% · lightweight decoder reconstructs</text>
+
+  <!-- Step 1: image + mask -->
+  <g transform="translate(30, 70)">
+    <text x="80" y="0" class="head" text-anchor="middle">1. Patchify + mask</text>
+    <!-- 6x6 grid of 20px squares -->
+    <g>
+      <!-- Row 1 -->
+      <rect class="patch" x="0" y="15" width="24" height="24"/>
+      <rect class="masked" x="26" y="15" width="24" height="24"/>
+      <rect class="masked" x="52" y="15" width="24" height="24"/>
+      <rect class="patch" x="78" y="15" width="24" height="24"/>
+      <rect class="masked" x="104" y="15" width="24" height="24"/>
+      <rect class="masked" x="130" y="15" width="24" height="24"/>
+      <!-- Row 2 -->
+      <rect class="masked" x="0" y="41" width="24" height="24"/>
+      <rect class="patch" x="26" y="41" width="24" height="24"/>
+      <rect class="masked" x="52" y="41" width="24" height="24"/>
+      <rect class="masked" x="78" y="41" width="24" height="24"/>
+      <rect class="masked" x="104" y="41" width="24" height="24"/>
+      <rect class="patch" x="130" y="41" width="24" height="24"/>
+      <!-- Row 3 -->
+      <rect class="masked" x="0" y="67" width="24" height="24"/>
+      <rect class="masked" x="26" y="67" width="24" height="24"/>
+      <rect class="masked" x="52" y="67" width="24" height="24"/>
+      <rect class="patch" x="78" y="67" width="24" height="24"/>
+      <rect class="masked" x="104" y="67" width="24" height="24"/>
+      <rect class="masked" x="130" y="67" width="24" height="24"/>
+      <!-- Row 4 -->
+      <rect class="patch" x="0" y="93" width="24" height="24"/>
+      <rect class="masked" x="26" y="93" width="24" height="24"/>
+      <rect class="masked" x="52" y="93" width="24" height="24"/>
+      <rect class="masked" x="78" y="93" width="24" height="24"/>
+      <rect class="patch" x="104" y="93" width="24" height="24"/>
+      <rect class="masked" x="130" y="93" width="24" height="24"/>
+      <!-- Row 5 -->
+      <rect class="masked" x="0" y="119" width="24" height="24"/>
+      <rect class="masked" x="26" y="119" width="24" height="24"/>
+      <rect class="patch" x="52" y="119" width="24" height="24"/>
+      <rect class="masked" x="78" y="119" width="24" height="24"/>
+      <rect class="masked" x="104" y="119" width="24" height="24"/>
+      <rect class="masked" x="130" y="119" width="24" height="24"/>
+      <!-- Row 6 -->
+      <rect class="masked" x="0" y="145" width="24" height="24"/>
+      <rect class="patch" x="26" y="145" width="24" height="24"/>
+      <rect class="masked" x="52" y="145" width="24" height="24"/>
+      <rect class="patch" x="78" y="145" width="24" height="24"/>
+      <rect class="masked" x="104" y="145" width="24" height="24"/>
+      <rect class="masked" x="130" y="145" width="24" height="24"/>
+    </g>
+    <text x="80" y="195" class="caption" text-anchor="middle">75% masked · 25% visible</text>
+    <text x="80" y="210" class="caption" text-anchor="middle">orange = visible · dark = masked</text>
+  </g>
+
+  <path class="arrow" d="M195 160 L245 160" marker-end="url(#arr)"/>
+
+  <!-- Step 2: visible only to encoder -->
+  <g transform="translate(250, 80)">
+    <text x="120" y="0" class="head" text-anchor="middle">2. Heavy encoder · only visible tokens</text>
+    <rect class="enc" x="0" y="20" width="240" height="140"/>
+    <text x="120" y="50" class="body" text-anchor="middle" font-weight="600">ViT encoder</text>
+    <text x="120" y="76" class="caption" text-anchor="middle">processes only 25% of patches</text>
+    <text x="120" y="100" class="caption" text-anchor="middle">(huge speedup)</text>
+    <text x="120" y="130" class="caption" text-anchor="middle" font-style="italic">attention O((N/4)²) · 16× cheaper</text>
+  </g>
+
+  <path class="arrow" d="M500 155 L545 155" marker-end="url(#arr)"/>
+
+  <!-- Step 3: decoder with mask tokens -->
+  <g transform="translate(550, 80)">
+    <text x="120" y="0" class="head" text-anchor="middle">3. Lightweight decoder · + mask tokens</text>
+    <rect class="dec" x="0" y="20" width="240" height="140"/>
+    <text x="120" y="50" class="body" text-anchor="middle" font-weight="600">small decoder</text>
+    <text x="120" y="76" class="caption" text-anchor="middle">8 blocks vs encoder's 24</text>
+    <text x="120" y="100" class="caption" text-anchor="middle">reconstructs masked patches</text>
+    <text x="120" y="130" class="caption" text-anchor="middle" font-style="italic">MSE loss on pixels</text>
+  </g>
+
+  <!-- Step 4: thrown away at inference -->
+  <g transform="translate(300, 255)">
+    <rect fill="#FFF3EE" stroke="#D97757" stroke-width="1.2" x="0" y="0" width="360" height="80" rx="6"/>
+    <text x="180" y="24" class="head" text-anchor="middle">4. At inference · keep encoder only</text>
+    <text x="180" y="46" class="caption" text-anchor="middle">discard decoder · encoder features used for downstream tasks</text>
+    <text x="180" y="62" class="caption" text-anchor="middle">linear-probe ImageNet · 76% (ViT-H · no finetune needed)</text>
+  </g>
+
+  <!-- Footer -->
+  <rect x="40" y="360" width="880" height="50" fill="#F0F5EF" stroke="#7B9E89" stroke-width="1" rx="6"/>
+  <text x="480" y="380" class="body" text-anchor="middle"><tspan font-weight="600">Why 75% works</tspan> · images are highly redundant · 25% of patches is enough to reconstruct</text>
+  <text x="480" y="398" class="caption" text-anchor="middle">He et al. 2021 · asymmetric encoder-decoder · SimCLR used 50% · MAE pushed it to 75% with better features</text>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+    </marker>
+  </defs>
+</svg>
