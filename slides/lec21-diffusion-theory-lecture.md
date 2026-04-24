@@ -270,7 +270,7 @@ This closed-form is the single biggest practical advantage over continuous-time 
 
 ---
 
-# Closed-form · the derivation in 3 lines
+# ⚠️ optional · Closed-form · the derivation in 3 lines
 
 <div class="math-box">
 

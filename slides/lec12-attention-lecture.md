@@ -420,7 +420,7 @@ Scores stay in a healthy range → softmax stays soft → gradients keep flowing
 
 ---
 
-# The $\sqrt{d_k}$ derivation in three lines
+# ⚠️ optional · The $\sqrt{d_k}$ derivation in three lines
 
 Assume $Q, K$ entries are i.i.d. with zero mean and unit variance.
 

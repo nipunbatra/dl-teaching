@@ -164,7 +164,7 @@ The EMA is **10× smaller** than the true gradient — because it started from z
 
 ---
 
-# The fix, derived
+# ⚠️ optional · The fix, derived
 
 $E[g_t]$ is (roughly) stationary $\mu$. Then:
 

@@ -218,7 +218,7 @@ In practice, they never cleanly converge.
 
 ---
 
-# Why this objective · one derivation
+# ⚠️ optional · Why this objective · one derivation
 
 Fix G. The inner max over D has a closed form:
 
