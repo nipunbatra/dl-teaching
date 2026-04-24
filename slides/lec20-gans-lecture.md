@@ -661,6 +661,12 @@ Result · 1024×1024 face generation indistinguishable from photographs.
 
 ---
 
+# StyleGAN · hierarchical style injection
+
+![w:920px](figures/lec20/svg/stylegan_w_hierarchy.svg)
+
+---
+
 # StyleGAN · the latent hierarchy
 
 Each resolution block receives a separate injection from $w$. This creates a **semantic hierarchy**:

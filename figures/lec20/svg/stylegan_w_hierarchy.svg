@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .z { fill: #F7EED6; stroke: #C9A961; stroke-width: 1.3; rx: 4; }
+    .mapping { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.3; rx: 4; }
+    .w { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.3; rx: 4; }
+    .block { fill: #E8EDEF; stroke: #4A6670; stroke-width: 1.2; rx: 4; }
+    .arrow { stroke: #1F1F1E; stroke-width: 1.3; fill: none; }
+    .style-arrow { stroke: #D97757; stroke-width: 1.8; fill: none; stroke-dasharray: 4 2; }
+  </style>
+  <rect class="bg" width="960" height="420"/>
+  <text x="480" y="28" class="title" text-anchor="middle">StyleGAN · hierarchical style injection at every resolution</text>
+
+  <!-- Left: z → mapping → w -->
+  <g transform="translate(30, 70)">
+    <rect class="z" x="0" y="20" width="100" height="30"/>
+    <text x="50" y="40" class="body" text-anchor="middle">z ~ N(0, I)</text>
+    <path class="arrow" d="M105 35 L120 35" marker-end="url(#arr)"/>
+    <rect class="mapping" x="125" y="15" width="110" height="40"/>
+    <text x="180" y="32" class="body" text-anchor="middle">Mapping</text>
+    <text x="180" y="48" class="caption" text-anchor="middle">8-layer MLP</text>
+    <path class="arrow" d="M240 35 L255 35" marker-end="url(#arr)"/>
+    <rect class="w" x="260" y="20" width="100" height="30"/>
+    <text x="310" y="40" class="body" text-anchor="middle">w · "style"</text>
+
+    <text x="180" y="90" class="caption" text-anchor="middle">z lives in N(0,I) · constrained</text>
+    <text x="180" y="106" class="caption" text-anchor="middle">w lives in a learned disentangled manifold</text>
+  </g>
+
+  <!-- Right: synthesis network stack -->
+  <g transform="translate(420, 70)">
+    <text x="200" y="0" class="head" text-anchor="middle">Synthesis network · 4×4 → 1024×1024</text>
+
+    <rect class="block" x="50" y="20" width="300" height="26"/>
+    <text x="200" y="37" class="body" text-anchor="middle">4×4 block · coarse styles</text>
+    <text x="370" y="37" class="caption">pose, identity, gender</text>
+
+    <rect class="block" x="50" y="52" width="300" height="26"/>
+    <text x="200" y="69" class="body" text-anchor="middle">8×8 block</text>
+    <text x="370" y="69" class="caption">face shape</text>
+
+    <rect class="block" x="50" y="84" width="300" height="26"/>
+    <text x="200" y="101" class="body" text-anchor="middle">16×16 block</text>
+    <text x="370" y="101" class="caption">hairstyle, facial features</text>
+
+    <rect class="block" x="50" y="116" width="300" height="26"/>
+    <text x="200" y="133" class="body" text-anchor="middle">32×32 block · middle styles</text>
+    <text x="370" y="133" class="caption">expression</text>
+
+    <rect class="block" x="50" y="148" width="300" height="26"/>
+    <text x="200" y="165" class="body" text-anchor="middle">64×64 block</text>
+    <text x="370" y="165" class="caption">eye detail</text>
+
+    <rect class="block" x="50" y="180" width="300" height="26"/>
+    <text x="200" y="197" class="body" text-anchor="middle">128×128 block</text>
+    <text x="370" y="197" class="caption">skin micro-texture</text>
+
+    <rect class="block" x="50" y="212" width="300" height="26"/>
+    <text x="200" y="229" class="body" text-anchor="middle">256×256 block · fine styles</text>
+    <text x="370" y="229" class="caption">lighting, micro-detail</text>
+
+    <rect class="block" x="50" y="244" width="300" height="26"/>
+    <text x="200" y="261" class="body" text-anchor="middle">1024×1024 output</text>
+
+    <!-- w injected via AdaIN to each block -->
+    <path class="style-arrow" d="M40 280 L40 33 L50 33"/>
+    <path class="style-arrow" d="M40 65 L50 65"/>
+    <path class="style-arrow" d="M40 97 L50 97"/>
+    <path class="style-arrow" d="M40 129 L50 129"/>
+    <path class="style-arrow" d="M40 161 L50 161"/>
+    <path class="style-arrow" d="M40 193 L50 193"/>
+    <path class="style-arrow" d="M40 225 L50 225"/>
+    <text x="5" y="290" class="caption" fill="#D97757">w injected at every resolution via AdaIN-like modulation</text>
+  </g>
+
+  <!-- Bottom · connecting w to synth -->
+  <path class="arrow" d="M370 85 Q 420 300 460 350" marker-end="url(#arr)"/>
+  <text x="430" y="280" class="caption">w</text>
+
+  <!-- Footer -->
+  <rect x="40" y="370" width="880" height="40" fill="#FFF3EE" stroke="#D97757" stroke-width="1" rx="6"/>
+  <text x="480" y="390" class="body" text-anchor="middle"><tspan font-weight="600">Style mixing</tspan> · take coarse-w from person A, fine-w from person B → A-identity with B-texture.</text>
+  <text x="480" y="405" class="caption" text-anchor="middle">Made StyleGAN the 2019-2021 king of face generation. Hierarchy makes latent space editable.</text>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+    </marker>
+  </defs>
+</svg>

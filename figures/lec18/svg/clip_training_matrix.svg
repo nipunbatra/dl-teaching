@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .img-enc { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.4; rx: 6; }
+    .txt-enc { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.4; rx: 6; }
+    .diag { fill: #7B9E89; opacity: 0.7; stroke: #7B9E89; stroke-width: 1.4; }
+    .neg { fill: #A8324B; opacity: 0.15; }
+    .cell { stroke: #CFCBBE; stroke-width: 0.4; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="420"/>
+  <text x="480" y="28" class="title" text-anchor="middle">CLIP · batch of N image-text pairs · N positives on the diagonal, N² − N negatives</text>
+
+  <!-- Left: image encoder -->
+  <g transform="translate(40, 80)">
+    <rect class="img-enc" x="0" y="0" width="150" height="100"/>
+    <text x="75" y="28" class="body" text-anchor="middle" font-weight="600">Image encoder</text>
+    <text x="75" y="50" class="caption" text-anchor="middle">ViT-L/14</text>
+    <text x="75" y="80" class="caption" text-anchor="middle">imgs → I₁..I_N</text>
+  </g>
+
+  <!-- Text encoder -->
+  <g transform="translate(40, 220)">
+    <rect class="txt-enc" x="0" y="0" width="150" height="100"/>
+    <text x="75" y="28" class="body" text-anchor="middle" font-weight="600">Text encoder</text>
+    <text x="75" y="50" class="caption" text-anchor="middle">12-layer Transformer</text>
+    <text x="75" y="80" class="caption" text-anchor="middle">captions → T₁..T_N</text>
+  </g>
+
+  <!-- Matrix in middle -->
+  <g transform="translate(270, 80)">
+    <text x="170" y="-8" class="head" text-anchor="middle">Similarity matrix I·Tᵀ (8×8 example · scale is N=32k)</text>
+    <!-- 8x8 grid -->
+    <g>
+      <!-- Row headers -->
+      <text x="-10" y="25" class="caption" text-anchor="end">I₁</text>
+      <text x="-10" y="65" class="caption" text-anchor="end">I₂</text>
+      <text x="-10" y="105" class="caption" text-anchor="end">I₃</text>
+      <text x="-10" y="145" class="caption" text-anchor="end">I₄</text>
+      <text x="-10" y="185" class="caption" text-anchor="end">I₅</text>
+      <text x="-10" y="225" class="caption" text-anchor="end">I₆</text>
+      <text x="-10" y="265" class="caption" text-anchor="end">I₇</text>
+      <text x="-10" y="305" class="caption" text-anchor="end">I₈</text>
+      <!-- Col headers -->
+      <text x="20"  y="-10" class="caption" text-anchor="middle">T₁</text>
+      <text x="60"  y="-10" class="caption" text-anchor="middle">T₂</text>
+      <text x="100" y="-10" class="caption" text-anchor="middle">T₃</text>
+      <text x="140" y="-10" class="caption" text-anchor="middle">T₄</text>
+      <text x="180" y="-10" class="caption" text-anchor="middle">T₅</text>
+      <text x="220" y="-10" class="caption" text-anchor="middle">T₆</text>
+      <text x="260" y="-10" class="caption" text-anchor="middle">T₇</text>
+      <text x="300" y="-10" class="caption" text-anchor="middle">T₈</text>
+    </g>
+
+    <!-- Rows with diagonal highlighted -->
+    <g>
+      <!-- Row 1 -->
+      <rect class="diag" x="0" y="0" width="40" height="40"/>
+      <rect class="neg" x="40" y="0" width="40" height="40"/>
+      <rect class="neg" x="80" y="0" width="40" height="40"/>
+      <rect class="neg" x="120" y="0" width="40" height="40"/>
+      <rect class="neg" x="160" y="0" width="40" height="40"/>
+      <rect class="neg" x="200" y="0" width="40" height="40"/>
+      <rect class="neg" x="240" y="0" width="40" height="40"/>
+      <rect class="neg" x="280" y="0" width="40" height="40"/>
+      <!-- Row 2 -->
+      <rect class="neg" x="0" y="40" width="40" height="40"/>
+      <rect class="diag" x="40" y="40" width="40" height="40"/>
+      <rect class="neg" x="80" y="40" width="40" height="40"/>
+      <rect class="neg" x="120" y="40" width="40" height="40"/>
+      <rect class="neg" x="160" y="40" width="40" height="40"/>
+      <rect class="neg" x="200" y="40" width="40" height="40"/>
+      <rect class="neg" x="240" y="40" width="40" height="40"/>
+      <rect class="neg" x="280" y="40" width="40" height="40"/>
+      <!-- Rows 3-8 -->
+      <rect class="neg" x="0" y="80" width="40" height="40"/><rect class="neg" x="40" y="80" width="40" height="40"/><rect class="diag" x="80" y="80" width="40" height="40"/><rect class="neg" x="120" y="80" width="40" height="40"/><rect class="neg" x="160" y="80" width="40" height="40"/><rect class="neg" x="200" y="80" width="40" height="40"/><rect class="neg" x="240" y="80" width="40" height="40"/><rect class="neg" x="280" y="80" width="40" height="40"/>
+      <rect class="neg" x="0" y="120" width="40" height="40"/><rect class="neg" x="40" y="120" width="40" height="40"/><rect class="neg" x="80" y="120" width="40" height="40"/><rect class="diag" x="120" y="120" width="40" height="40"/><rect class="neg" x="160" y="120" width="40" height="40"/><rect class="neg" x="200" y="120" width="40" height="40"/><rect class="neg" x="240" y="120" width="40" height="40"/><rect class="neg" x="280" y="120" width="40" height="40"/>
+      <rect class="neg" x="0" y="160" width="40" height="40"/><rect class="neg" x="40" y="160" width="40" height="40"/><rect class="neg" x="80" y="160" width="40" height="40"/><rect class="neg" x="120" y="160" width="40" height="40"/><rect class="diag" x="160" y="160" width="40" height="40"/><rect class="neg" x="200" y="160" width="40" height="40"/><rect class="neg" x="240" y="160" width="40" height="40"/><rect class="neg" x="280" y="160" width="40" height="40"/>
+      <rect class="neg" x="0" y="200" width="40" height="40"/><rect class="neg" x="40" y="200" width="40" height="40"/><rect class="neg" x="80" y="200" width="40" height="40"/><rect class="neg" x="120" y="200" width="40" height="40"/><rect class="neg" x="160" y="200" width="40" height="40"/><rect class="diag" x="200" y="200" width="40" height="40"/><rect class="neg" x="240" y="200" width="40" height="40"/><rect class="neg" x="280" y="200" width="40" height="40"/>
+      <rect class="neg" x="0" y="240" width="40" height="40"/><rect class="neg" x="40" y="240" width="40" height="40"/><rect class="neg" x="80" y="240" width="40" height="40"/><rect class="neg" x="120" y="240" width="40" height="40"/><rect class="neg" x="160" y="240" width="40" height="40"/><rect class="neg" x="200" y="240" width="40" height="40"/><rect class="diag" x="240" y="240" width="40" height="40"/><rect class="neg" x="280" y="240" width="40" height="40"/>
+      <rect class="neg" x="0" y="280" width="40" height="40"/><rect class="neg" x="40" y="280" width="40" height="40"/><rect class="neg" x="80" y="280" width="40" height="40"/><rect class="neg" x="120" y="280" width="40" height="40"/><rect class="neg" x="160" y="280" width="40" height="40"/><rect class="neg" x="200" y="280" width="40" height="40"/><rect class="neg" x="240" y="280" width="40" height="40"/><rect class="diag" x="280" y="280" width="40" height="40"/>
+
+      <!-- Grid lines -->
+      <path class="cell" d="M0 0 L320 0 L320 320 L0 320 Z"/>
+    </g>
+  </g>
+
+  <!-- Right side legend -->
+  <g transform="translate(640, 100)">
+    <rect fill="white" stroke="#4A6670" stroke-width="1" x="0" y="0" width="280" height="220" rx="6"/>
+    <text x="15" y="22" class="head">Loss</text>
+    <text x="15" y="42" class="body">Symmetric cross-entropy</text>
+    <text x="15" y="62" class="caption">per-row softmax pulls diagonal up,</text>
+    <text x="15" y="78" class="caption">pushes row-negatives down.</text>
+    <text x="15" y="108" class="head">Scale (2021)</text>
+    <text x="15" y="128" class="caption">400M image-text pairs</text>
+    <text x="15" y="144" class="caption">Batch size · 32,768</text>
+    <text x="15" y="164" class="caption">256 A100 GPUs · 12 days</text>
+    <text x="15" y="184" class="caption" fill="#A8324B">→ 1 positive vs 32,767 negatives</text>
+    <text x="15" y="200" class="caption" fill="#A8324B">→ extremely rich training signal</text>
+  </g>
+
+  <!-- Arrows from encoders -->
+  <path d="M195 130 L260 130" stroke="#1F1F1E" stroke-width="1.3" fill="none" marker-end="url(#arr)"/>
+  <path d="M195 270 L260 270" stroke="#1F1F1E" stroke-width="1.3" fill="none" marker-end="url(#arr)"/>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+    </marker>
+  </defs>
+</svg>

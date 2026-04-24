@@ -159,6 +159,12 @@ The paper that launched zero-shot vision
 
 ---
 
+# CLIP · training as contrast matrix
+
+![w:920px](figures/lec18/svg/clip_training_matrix.svg)
+
+---
+
 # CLIP · dual encoder
 
 ![w:920px](figures/lec18/svg/clip_dual_encoder.svg)
