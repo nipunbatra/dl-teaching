@@ -301,6 +301,46 @@ What the next decade of DL research looks like
 
 ---
 
+# Safety · why alignment matters
+
+As models become more capable, the cost of misalignment grows:
+
+<div class="math-box">
+
+| 2018 | 2024 | 2030 (?) |
+|:-:|:-:|:-:|
+| Misclassify image | Give wrong factual answer | Autonomously execute bad plan |
+| Cost: annoy user | Cost: spread misinformation | Cost: catastrophic |
+
+</div>
+
+<div class="keypoint">
+
+**Claude, GPT, Gemini all ship with elaborate safety stacks** · constitutional AI, RL from safety feedback, red-teaming, classifier filters, refusal training. Safety is not a layer; it's the product.
+
+</div>
+
+---
+
+# What you've learned · a final recap
+
+<div class="math-box">
+
+| Module | Covered |
+|:-:|:-:|
+| **Foundations** (L1-L2) | why DL, UAT, depth vs width, residuals |
+| **Training craft** (L3-L6) | recipe, SGD / Adam, schedules, regularization |
+| **Vision** (L7-L9) | CNN mechanics, ResNet family, detection, SAM |
+| **Sequences → Transformers** (L10-L14) | RNN/LSTM/GRU, Seq2Seq, attention, Transformer, tokenization |
+| **LLMs** (L15-L16) | scaling laws, RoPE, GQA, LoRA, RLHF, DPO |
+| **Self-supervision + VLMs** (L17-L18) | SimCLR, MAE, CLIP, LLaVA |
+| **Generative** (L19-L22) | VAE, GAN, DDPM, CFG, latent diffusion |
+| **Systems + frontier** (L23-L24) | KV-cache, quantization, agents, reasoning, interp |
+
+</div>
+
+---
+
 # Open problems · the short list
 
 1. **Reasoning reliability** · even o3 still hallucinates; trust calibration is unsolved.

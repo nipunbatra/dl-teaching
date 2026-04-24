@@ -405,6 +405,50 @@ Diffusion is one of the two big generative paradigms now (the other: autoregress
 
 ---
 
+# DiT · Transformer backbone
+
+Peebles &amp; Xie 2022 · replace U-Net entirely with a Transformer.
+
+<div class="math-box">
+
+- **Patchify** the noisy latent (like ViT).
+- **Transformer blocks** with attention + FFN.
+- **Time + class conditioning** via adaLN (adaptive LayerNorm).
+- Scales cleanly · more params → better (U-Net plateaus).
+
+</div>
+
+<div class="realworld">
+
+Stable Diffusion 3 and Sora both use DiT-based architectures. DiT inherits Transformer's scaling laws · more data + compute = better samples, indefinitely.
+
+</div>
+
+---
+
+# Diffusion · by modality in 2026
+
+<div class="math-box">
+
+| Modality | Model | Pixels / sec to generate |
+|:-:|:-:|:-:|
+| Images 1024² | SD3 · Flux | ~0.5 images/s (20 steps) |
+| Video 720p · 16s | Sora · VEO | minutes per clip |
+| Audio music | AudioGen · MusicLM | real-time (8 DDIM steps) |
+| 3D meshes | Diffusion-SDF · ShapE | ~30s per mesh |
+| Molecules | RFdiffusion | 10s per protein structure |
+| Robot policies | Diffusion Policy | 50 Hz control loop |
+
+</div>
+
+<div class="insight">
+
+The diffusion paradigm scaled to every signal that can be noised. 2026 is the golden age · expect more modalities (brain signals, weather, materials) by 2028.
+
+</div>
+
+---
+
 # Consistency models · one-step diffusion
 
 Song et al. 2023 · train a network $f_\theta(x_t, t) \to x_0$ such that the prediction is **consistent** along any trajectory from noise to data.
