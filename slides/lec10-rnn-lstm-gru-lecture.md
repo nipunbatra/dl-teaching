@@ -261,6 +261,12 @@ Three sigmoid gates protect a cell state
 
 ---
 
+# LSTM cell · annotated
+
+![w:920px](figures/lec10/svg/lstm_annotated.svg)
+
+---
+
 # LSTM cell architecture
 
 ![w:920px](figures/lec10/svg/lstm_cell.svg)

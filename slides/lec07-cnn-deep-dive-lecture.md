@@ -167,6 +167,12 @@ How deep features "see" far-away pixels
 
 ---
 
+# Receptive field grows with depth · picture
+
+![w:920px](figures/lec07/svg/conv_receptive_field_grow.svg)
+
+---
+
 # The VGG insight · stack 3×3, not 7×7
 
 **Claim.** Three stacked $3 \times 3$ convs have the same receptive field as one $7 \times 7$ conv — but with fewer parameters and *more non-linearities*.

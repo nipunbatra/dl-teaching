@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .axis { stroke: #1F1F1E; stroke-width: 1; fill: none; }
+    .grid { stroke: #CFCBBE; stroke-width: 0.4; fill: none; }
+    .line { fill: none; stroke-width: 2.2; }
+    .const { stroke: #4A6670; }
+    .step { stroke: #7B9E89; }
+    .cos  { stroke: #D97757; }
+    .warm { stroke: #A8324B; }
+  </style>
+  <rect class="bg" width="960" height="420"/>
+  <text x="480" y="28" class="title" text-anchor="middle">Four learning-rate schedules · shape matters more than magnitude</text>
+
+  <!-- Grid of 4 plots -->
+  <g transform="translate(40, 65)">
+    <!-- Plot 1: Constant -->
+    <text x="210" y="0" class="head" text-anchor="middle">Constant</text>
+    <rect fill="white" stroke="#4A6670" stroke-width="0.8" x="0" y="20" width="420" height="120"/>
+    <path class="line const" d="M 10 40 L 410 40"/>
+    <text x="10" y="30" class="caption">lr</text>
+    <text x="400" y="158" class="caption" text-anchor="end">steps →</text>
+    <text x="10" y="160" class="caption">→ fast prototype · rarely final.</text>
+  </g>
+
+  <g transform="translate(500, 65)">
+    <text x="210" y="0" class="head" text-anchor="middle">Step decay · milestones</text>
+    <rect fill="white" stroke="#4A6670" stroke-width="0.8" x="0" y="20" width="420" height="120"/>
+    <path class="line step" d="M 10 40 L 140 40 L 140 75 L 280 75 L 280 105 L 410 105"/>
+    <text x="10" y="160" class="caption">→ classic CV recipe · multiply LR by 0.1 at fixed epochs.</text>
+  </g>
+
+  <g transform="translate(40, 235)">
+    <text x="210" y="0" class="head" text-anchor="middle">Cosine annealing</text>
+    <rect fill="white" stroke="#4A6670" stroke-width="0.8" x="0" y="20" width="420" height="120"/>
+    <!-- cosine curve -->
+    <path class="line cos" d="M 10 40 Q 105 45 205 85 T 410 130"/>
+    <text x="10" y="160" class="caption">→ smooth · default for Transformer pretraining.</text>
+  </g>
+
+  <g transform="translate(500, 235)">
+    <text x="210" y="0" class="head" text-anchor="middle">Warmup + cosine</text>
+    <rect fill="white" stroke="#4A6670" stroke-width="0.8" x="0" y="20" width="420" height="120"/>
+    <path class="line warm" d="M 10 130 L 60 40 Q 150 45 250 85 T 410 130"/>
+    <text x="72" y="35" class="caption">↑ warmup (1-10%)</text>
+    <text x="10" y="160" class="caption">→ LLM default · warmup prevents early divergence.</text>
+  </g>
+
+  <!-- Footer -->
+  <rect x="40" y="385" width="880" height="25" fill="#FFF3EE" stroke="#D97757" stroke-width="0.8" rx="4"/>
+  <text x="480" y="402" class="caption" text-anchor="middle"><tspan font-weight="600">2026 default</tspan> · warmup+cosine for Transformers · cosine for CNN fine-tune · step-decay for CNN from scratch.</text>
+</svg>

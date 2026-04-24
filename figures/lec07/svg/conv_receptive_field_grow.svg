@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Work Sans, system-ui, sans-serif">
+  <style>
+    .bg { fill: #F0EEE5; }
+    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
+    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
+    .body { font-size: 12px; fill: #1F1F1E; }
+    .caption { font-size: 11px; fill: #6B6B69; }
+    .pix { fill: #FFF3EE; stroke: #D97757; stroke-width: 0.5; }
+    .rf1 { fill: #D97757; opacity: 0.15; stroke: #D97757; stroke-width: 1.2; }
+    .rf2 { fill: #D97757; opacity: 0.25; stroke: #D97757; stroke-width: 1.2; }
+    .rf3 { fill: #D97757; opacity: 0.45; stroke: #D97757; stroke-width: 1.5; }
+    .rf5 { fill: #D97757; opacity: 0.7; stroke: #D97757; stroke-width: 1.8; }
+    .focus { fill: #A8324B; stroke: #A8324B; stroke-width: 1.8; }
+  </style>
+  <rect class="bg" width="960" height="400"/>
+  <text x="480" y="28" class="title" text-anchor="middle">Receptive field grows with depth · 3×3 kernels at each layer</text>
+
+  <!-- 3 panels, each showing a 15x15 grid with RF highlighted for depth 1, 3, 5 -->
+  <g transform="translate(40, 70)">
+    <text x="140" y="0" class="head" text-anchor="middle">Layer 1 · RF = 3</text>
+    <!-- 15×15 grid -->
+    <g>
+      <!-- Draw grid of 15x15 tiny squares -->
+      <g id="grid1"></g>
+    </g>
+    <!-- Drawing programmatic not possible · draw explicit 15x15 -->
+    <g>
+      <rect class="pix" x="0" y="15" width="280" height="280"/>
+      <!-- highlight 3x3 center -->
+      <rect class="rf1" x="122" y="137" width="56" height="56"/>
+      <!-- focus pixel -->
+      <rect class="focus" x="140" y="155" width="20" height="20"/>
+      <!-- grid overlay -->
+      <g stroke="#CFCBBE" stroke-width="0.3" fill="none">
+        <!-- vertical lines every 20px -->
+        <path d="M20 15 v280 M40 15 v280 M60 15 v280 M80 15 v280 M100 15 v280 M120 15 v280 M140 15 v280 M160 15 v280 M180 15 v280 M200 15 v280 M220 15 v280 M240 15 v280 M260 15 v280"/>
+        <path d="M0 35 h280 M0 55 h280 M0 75 h280 M0 95 h280 M0 115 h280 M0 135 h280 M0 155 h280 M0 175 h280 M0 195 h280 M0 215 h280 M0 235 h280 M0 255 h280 M0 275 h280"/>
+      </g>
+    </g>
+    <text x="140" y="315" class="caption" text-anchor="middle">a pixel in layer 1 sees a 3×3 window</text>
+  </g>
+
+  <g transform="translate(340, 70)">
+    <text x="140" y="0" class="head" text-anchor="middle">Layer 3 · RF = 7</text>
+    <rect class="pix" x="0" y="15" width="280" height="280"/>
+    <rect class="rf3" x="80" y="95" width="140" height="140"/>
+    <rect class="focus" x="140" y="155" width="20" height="20"/>
+    <g stroke="#CFCBBE" stroke-width="0.3" fill="none">
+      <path d="M20 15 v280 M40 15 v280 M60 15 v280 M80 15 v280 M100 15 v280 M120 15 v280 M140 15 v280 M160 15 v280 M180 15 v280 M200 15 v280 M220 15 v280 M240 15 v280 M260 15 v280"/>
+      <path d="M0 35 h280 M0 55 h280 M0 75 h280 M0 95 h280 M0 115 h280 M0 135 h280 M0 155 h280 M0 175 h280 M0 195 h280 M0 215 h280 M0 235 h280 M0 255 h280 M0 275 h280"/>
+    </g>
+    <text x="140" y="315" class="caption" text-anchor="middle">after 3 convs · 7×7 window</text>
+  </g>
+
+  <g transform="translate(640, 70)">
+    <text x="140" y="0" class="head" text-anchor="middle">Layer 5 · RF = 11</text>
+    <rect class="pix" x="0" y="15" width="280" height="280"/>
+    <rect class="rf5" x="40" y="55" width="220" height="220"/>
+    <rect class="focus" x="140" y="155" width="20" height="20"/>
+    <g stroke="#CFCBBE" stroke-width="0.3" fill="none">
+      <path d="M20 15 v280 M40 15 v280 M60 15 v280 M80 15 v280 M100 15 v280 M120 15 v280 M140 15 v280 M160 15 v280 M180 15 v280 M200 15 v280 M220 15 v280 M240 15 v280 M260 15 v280"/>
+      <path d="M0 35 h280 M0 55 h280 M0 75 h280 M0 95 h280 M0 115 h280 M0 135 h280 M0 155 h280 M0 175 h280 M0 195 h280 M0 215 h280 M0 235 h280 M0 255 h280 M0 275 h280"/>
+    </g>
+    <text x="140" y="315" class="caption" text-anchor="middle">after 5 convs · 11×11 window</text>
+  </g>
+
+  <!-- Footer formula -->
+  <rect x="40" y="340" width="880" height="50" fill="#FFF3EE" stroke="#D97757" stroke-width="1" rx="6"/>
+  <text x="480" y="362" class="body" text-anchor="middle" font-family="IBM Plex Mono, monospace">RF_L = 1 + L · (K − 1) · S_cum  →  for 3×3 stride-1, each layer adds 2 to RF</text>
+  <text x="480" y="380" class="caption" text-anchor="middle">Add a stride-2 conv anywhere and downstream RF doubles. ResNet-50 final block RF ≈ 500 · sees full image.</text>
+</svg>

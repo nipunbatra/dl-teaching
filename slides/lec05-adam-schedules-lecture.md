@@ -252,6 +252,12 @@ Why one learning rate isn't enough over a full run
 
 ---
 
+# LR schedules · four common shapes
+
+![w:920px](figures/lec05/svg/lr_schedule_shapes.svg)
+
+---
+
 # Four common schedules
 
 ![w:920px](figures/lec05/svg/lr_schedules.svg)
