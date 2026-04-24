@@ -16,6 +16,19 @@ math: mathjax
 
 ---
 
+# Learning outcomes
+
+By the end of this lecture you will be able to:
+
+1. Explain attention as **differentiable dictionary lookup**.
+2. Derive **scaled dot-product** and justify the √d_k.
+3. Distinguish **Bahdanau (additive)** from **Luong (multiplicative)**.
+4. Implement **QKV self-attention** in PyTorch.
+5. Apply **causal masking** to get a GPT-style decoder.
+6. State the **O(n²) complexity** wall and its consequences.
+
+---
+
 # Recap · where we are
 
 Module 6 opens. The previous lecture ended on a cliff-hanger:

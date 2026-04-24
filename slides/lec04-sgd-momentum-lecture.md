@@ -16,6 +16,19 @@ math: mathjax
 
 ---
 
+# Learning outcomes
+
+By the end of this lecture you will be able to:
+
+1. Identify **ravines** and **saddles** in high-dimensional loss.
+2. Show why **vanilla SGD** oscillates across ravines.
+3. Derive **momentum** as EMA of gradients.
+4. Explain **Nesterov's lookahead** and its convergence rate payoff.
+5. Pick **β** appropriately (0.9 default; when to adjust).
+6. Diagnose an optimizer failure from training curves.
+
+---
+
 # Recap · where we are
 
 - **Deep networks** are trainable with ResNets + He init + ReLU.

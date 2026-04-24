@@ -16,6 +16,19 @@ math: mathjax
 
 ---
 
+# Learning outcomes
+
+By the end of this lecture you will be able to:
+
+1. State the **Universal Approximation Theorem** and cite its caveats.
+2. Explain why **depth beats width** in practice despite theoretical equivalence.
+3. Diagnose **vanishing / exploding gradients** in deep nets.
+4. Apply **residual connections** to train 100+ layer networks.
+5. Pick **weight init** (Xavier / He) based on activation.
+6. Articulate three **practical limits** UAT does not address.
+
+---
+
 # Recap · where we left off
 
 - **MLPs** are stacks of affine + non-linearity.

@@ -16,6 +16,19 @@ math: mathjax
 
 ---
 
+# Learning outcomes
+
+By the end of this lecture you will be able to:
+
+1. Turn an image into tokens (**ViT** patch embedding).
+2. Explain **CLIP** contrastive training over image-text pairs.
+3. Use CLIP for **zero-shot classification**.
+4. Describe **LLaVA's** linear-projection bridge to an LLM.
+5. Contrast **native vs bolt-on multimodal** architectures.
+6. Diagnose **VLM hallucination** (language-prior override).
+
+---
+
 # Where we are
 
 - **CNNs** (L7–L9) · vision-specific inductive bias.

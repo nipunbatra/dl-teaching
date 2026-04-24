@@ -16,6 +16,19 @@ math: mathjax
 
 ---
 
+# Learning outcomes
+
+By the end of this lecture you will be able to:
+
+1. Describe **encoder-decoder** RNN architecture for variable-length tasks.
+2. Implement **teacher forcing** and explain exposure bias.
+3. Contrast **greedy / beam / top-k / nucleus** decoding.
+4. Apply **length normalization** in beam search.
+5. Diagnose the **fixed-length bottleneck** that killed pre-attention Seq2Seq.
+6. Motivate **attention** (L12) as the fix for the bottleneck.
+
+---
+
 # Recap · where we are
 
 Last lecture: **LSTMs** solve the vanishing-gradient problem in RNNs via gated cell states.

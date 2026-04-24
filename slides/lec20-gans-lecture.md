@@ -16,6 +16,19 @@ math: mathjax
 
 ---
 
+# Learning outcomes
+
+By the end of this lecture you will be able to:
+
+1. Describe the **GAN minimax game** and the Nash equilibrium.
+2. Explain the **non-saturating G loss** and why it matters.
+3. Apply the **DCGAN cookbook** architectural guidelines.
+4. Diagnose **mode collapse** and apply fixes.
+5. Derive why **Wasserstein distance** stabilizes training (JS vs EMD).
+6. Place GANs vs VAE vs Diffusion in the 2026 generative landscape.
+
+---
+
 # Where we are
 
 - **VAE** (L19) · probabilistic encoder, latent-space structure, blurry samples.

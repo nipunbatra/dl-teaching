@@ -18,6 +18,19 @@ math: mathjax
 
 ---
 
+# Learning outcomes
+
+By the end of this lecture you will be able to:
+
+1. Explain **double descent** and when it happens.
+2. Pick among **L2 / early stopping / augmentation** by regime.
+3. Apply **Mixup / CutMix / label smoothing** correctly.
+4. Implement **dropout** (including inverted scaling) from scratch.
+5. Choose among **BN / LN / GN / RMSNorm** by architecture.
+6. Explain **pre-norm vs post-norm** trade-offs for depth.
+
+---
+
 # Recap · where we are
 
 - **Architecture** — ResNets, He init, ReLU (L2).

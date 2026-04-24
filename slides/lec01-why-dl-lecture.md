@@ -101,6 +101,19 @@ Human top-5 error: ~5.1%. **AlexNet cut error by ~10 points in one year.**
 
 ---
 
+# Learning outcomes · for this lecture
+
+By the end of this lecture you will be able to:
+
+1. Articulate **why DL works now but didn't earlier** (compute + data + algorithms).
+2. Describe the **representation learning** vs hand-crafted feature contrast.
+3. Reason about the **ImageNet 2012 moment** and its consequences.
+4. Place the course in context · what you'll learn by L24.
+5. Set up the **compute and environment** for assignments.
+6. State **three real risks** of modern DL (energy, alignment, misinformation).
+
+---
+
 # Course roadmap
 
 <div class="realworld">

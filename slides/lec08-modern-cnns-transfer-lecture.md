@@ -16,6 +16,19 @@ math: mathjax
 
 ---
 
+# Learning outcomes
+
+By the end of this lecture you will be able to:
+
+1. Explain the **Inception** multi-branch idea and 1×1 bottlenecks.
+2. Describe **ResNet basic / bottleneck** blocks with skip connections.
+3. Apply **depthwise separable convolutions** (MobileNet) for efficiency.
+4. Use **EfficientNet's compound scaling** rule.
+5. Execute the **three transfer-learning recipes** correctly.
+6. Pick a backbone from `timm` for a given dataset size.
+
+---
+
 # Recap · where we are
 
 - **Classic CNN era** (L7): LeNet, AlexNet, VGG — stacked 3×3 convs work.

@@ -16,6 +16,19 @@ math: mathjax
 
 ---
 
+# Learning outcomes
+
+By the end of this lecture you will be able to:
+
+1. Describe **agents** as the perceive-think-act loop with external tools.
+2. Understand **test-time compute** scaling in reasoning models (o1, Claude).
+3. Read the **residual stream view** of a Transformer.
+4. Recognize **induction heads** and sparse-autoencoder features.
+5. Articulate the **open problems** of DL (continual learning, data efficiency, grounding).
+6. Identify **2026-2030 research directions** worth pursuing.
+
+---
+
 # The final lecture
 
 23 lectures of theory + practice. Today — three threads that define the 2024–2026 frontier, plus a course recap.

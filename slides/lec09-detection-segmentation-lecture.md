@@ -16,6 +16,19 @@ math: mathjax
 
 ---
 
+# Learning outcomes
+
+By the end of this lecture you will be able to:
+
+1. Extend a classifier to **localization + detection** with multiple heads.
+2. Compute **IoU** and explain **NMS**.
+3. Contrast **R-CNN family vs YOLO vs DETR**.
+4. Pick **anchor boxes** and explain delta parameterization.
+5. Use a **U-Net** for per-pixel segmentation; choose appropriate loss.
+6. Prompt **SAM** for zero-shot segmentation.
+
+---
+
 # Recap · where we are
 
 Module 4 so far:
