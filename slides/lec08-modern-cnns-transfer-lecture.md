@@ -339,6 +339,45 @@ ImageNet pretraining gives you a **generic vision stack**:
 
 ---
 
+# Transfer learning · by data size
+
+<div class="math-box">
+
+| Your data | Recommended recipe | What to freeze |
+|:-:|:-:|:-:|
+| < 100 labels | Linear probe | everything except head |
+| 100 - 1k | Fine-tune top layers | freeze conv1-3 |
+| 1k - 10k | Fine-tune whole backbone | nothing (with discriminative LR) |
+| 10k - 100k | Fine-tune + LR scheduling | nothing, bigger LR |
+| > 100k | Probably train from scratch | — |
+
+</div>
+
+<div class="insight">
+
+Smaller data → more frozen. Larger data → more trainable. If you have 1M labels in your domain, you likely don't need transfer at all (but it rarely hurts as a warm start).
+
+</div>
+
+---
+
+# The bitter truth · negative transfer
+
+<div class="warning">
+
+Sometimes transfer learning **hurts**. Medical MRI → ImageNet-pretrained ResNet. Natural photos teach features that don't transfer to grayscale medical modalities.
+
+</div>
+
+Symptoms:
+- Val loss starts higher with pretraining than from scratch
+- Fine-tuned performance plateaus
+- Early layers still detect ImageNet-like edges; later layers never adapt
+
+Fix · try from-scratch, or use **domain-specific pretraining** (RadImageNet for medical, SatCLIP for satellite). Generic features aren't universal.
+
+---
+
 # Discriminative (layer-wise) learning rates
 
 When you do unfreeze early layers, they should learn more *slowly* than late layers — early layers are already good.

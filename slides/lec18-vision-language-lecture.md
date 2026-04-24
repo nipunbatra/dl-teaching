@@ -402,6 +402,26 @@ The 2026 frontier leans **native**. Bolt-on stays dominant for open-source, wher
 
 ---
 
+# Cross-attention · Flamingo's design
+
+Instead of converting the image into LLM-space tokens, Flamingo keeps vision features *separate* and injects them via **cross-attention layers inserted between LLM blocks**.
+
+<div class="math-box">
+
+- Visible to LLM · text tokens (normal self-attention).
+- Every few LLM blocks · an added cross-attention layer that queries image features.
+- Image features condensed via a **Perceiver Resampler** · learned query tokens distill arbitrary-resolution images into a fixed set.
+
+</div>
+
+<div class="insight">
+
+Benefit · LLM never "sees" pixels as tokens; it *asks* for image info when it needs it. Drawback · more complex architecture, more params to train. LLaVA's simpler "concat tokens" won on ease; Flamingo-style persists in frontier labs.
+
+</div>
+
+---
+
 # 2026 multimodal state
 
 | Model | What it sees | What it does |

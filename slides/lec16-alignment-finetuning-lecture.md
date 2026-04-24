@@ -403,6 +403,30 @@ Scaling laws in training compute produced pretrained capability. A new axis — 
 
 ---
 
+# Process rewards · what "reasoning training" looks like
+
+Traditional RL reward · "was the final answer correct?" · sparse, late signal.
+
+<div class="keypoint">
+
+**Process reward model (PRM)** · grades individual reasoning steps · dense signal, catches bad intermediate logic.
+
+</div>
+
+<div class="math-box">
+
+| Stage | Input | Output |
+|:-:|:-:|:-:|
+| PRM training | 100k human-labeled step-by-step proofs | reward-per-step model |
+| RL with PRM | sampled chains-of-thought | step-reward gradient up |
+| Result | chains improve *step-by-step*, not just final | better generalization |
+
+</div>
+
+OpenAI's "math-shepherd" (2024) · PRM-trained models beat outcome-reward-only models by 20+ points on AIME. Process > outcome rewards for multi-step reasoning.
+
+---
+
 # Reasoning models · benchmark jump
 
 <div class="math-box">

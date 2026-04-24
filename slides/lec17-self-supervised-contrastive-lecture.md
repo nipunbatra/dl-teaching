@@ -401,6 +401,42 @@ He et al. 2021 · ViT-Huge MAE pretraining → state-of-the-art for many downstr
 
 ---
 
+# When should you use SSL?
+
+<div class="math-box">
+
+| Scenario | Use SSL? |
+|:-:|:-:|
+| Plenty of labeled data, single task | No · just supervised |
+| Large unlabeled pool, small labeled | **Yes · SSL pretrain + fine-tune** |
+| Need generic features for many tasks | **Yes · start from DINOv2** |
+| Need fast deployment on consumer GPU | Probably not · use CLIP/DINOv2 frozen |
+| Novel domain (medical, satellite) | **Yes · in-domain SSL** then fine-tune |
+
+</div>
+
+<div class="insight">
+
+Rule of thumb (2026) · if labels cost more than compute, use SSL. In most real-world contexts, labels ARE the bottleneck. SSL tilts the equation.
+
+</div>
+
+---
+
+# SSL in text · the original success
+
+GPT is self-supervised · next-token prediction on a trillion-token corpus. BERT is self-supervised · masked-LM.
+
+<div class="keypoint">
+
+**All LLMs are self-supervised models**, pretrained without a single human label (before RLHF tuning). The text modality has had SSL baked in since word2vec (2013). Vision caught up only around 2020 (SimCLR, MAE).
+
+</div>
+
+Contrast · NLP went straight to SSL because text is abundant and labels are expensive. Vision started supervised because ImageNet was cheap at 1M labels. The convergence · both modalities now use SSL as the foundation.
+
+---
+
 # DINO and DINOv2 · self-distillation at scale
 
 **DINO (Caron et al. 2021)** combined MAE-style patches with BYOL-style self-distillation for ViTs. Emergent properties:
