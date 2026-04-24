@@ -472,6 +472,22 @@ L7 covered the "classic CNN" era — the 1998–2014 progression that ended with
 
 ---
 
+# Common questions · FAQ
+
+**Q. What's a typical kernel size in 2026?**
+A. 3 everywhere, except stem layer uses 7×7 (more RF for first layer). Very occasionally 5×5 for specific blocks.
+
+**Q. When do I need big-kernel convs (ConvNeXt 7×7)?**
+A. When replicating Transformer-style long-range mixing in CNNs. ConvNeXt showed 7×7 depthwise conv can match attention on some tasks.
+
+**Q. How do I choose number of channels?**
+A. Double channels every time you halve spatial (32→64→128→256→512). Keeps params-per-layer roughly constant. VGG, ResNet, EfficientNet all follow this.
+
+**Q. Padding · 'same' vs 'valid'?**
+A. `padding='same'` (PyTorch) keeps output size = input size. Default for most blocks. `'valid'` (no padding) shrinks · used when downsampling is the point.
+
+---
+
 <!-- _class: summary-slide -->
 
 # Lecture 7 — summary
