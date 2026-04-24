@@ -16,6 +16,19 @@ math: mathjax
 
 ---
 
+# Learning outcomes
+
+By the end of this lecture you will be able to:
+
+1. Explain why pretrained LLMs are **not chat assistants** out of the box.
+2. Write the **instruction-tuning** recipe (SFT on demo data).
+3. Implement **LoRA** adapter in ~20 lines of PyTorch.
+4. Compute **LoRA parameter count** and memory savings for a 70B model.
+5. Derive the **DPO loss** from the RLHF optimal-policy closed-form.
+6. Pick **SFT / LoRA / QLoRA / RLHF / DPO** for a given alignment task.
+
+---
+
 # Where we are
 
 - **Pretrained LLMs** (L15) · Chinchilla-optimal, RoPE, GQA — raw capability.
@@ -385,6 +398,51 @@ Result: dramatically better on math, code, logic benchmarks.
 <div class="insight">
 
 Scaling laws in training compute produced pretrained capability. A new axis — **scaling test-time compute** — now unlocks reasoning. Both will likely continue.
+
+</div>
+
+---
+
+# Reasoning models · benchmark jump
+
+<div class="math-box">
+
+| Model | AIME 2024 (math) | Codeforces Elo | GPQA (science) |
+|:-:|:-:|:-:|:-:|
+| GPT-4 | 12% | ~800 | 39% |
+| o1-preview | 44% | ~1500 | 73% |
+| o1 | 74% | ~1900 | 78% |
+| o3 | **97%** | **~2700** (grandmaster) | **88%** |
+
+</div>
+
+<div class="insight">
+
+o3 at 97% on AIME · humans gold-medal at ~85%. **One year** of inference-compute scaling delivered this jump. Same base model class; the training regime changed.
+
+</div>
+
+---
+
+# Picking an alignment method
+
+<div class="math-box">
+
+| Scenario | Recommended |
+|:-:|:-:|
+| Small task-specific dataset (< 10k) | SFT on full model |
+| Large instruction dataset (100k+) | SFT + LoRA |
+| Consumer GPU (≤ 48GB) on 70B model | QLoRA (NF4 + LoRA) |
+| Need preference alignment, small team | DPO |
+| Need precise control of behaviors | RLHF + custom RM |
+| Need safety + low-cost labels | Constitutional AI / RLAIF |
+| Need reasoning / math / code | SFT + RL-with-process-rewards (o1 style) |
+
+</div>
+
+<div class="realworld">
+
+In 2026 open source · QLoRA + DPO is the dominant recipe for instruction tuning. Frontier labs mix all of the above.
 
 </div>
 

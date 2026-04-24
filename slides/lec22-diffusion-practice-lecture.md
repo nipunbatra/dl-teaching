@@ -16,6 +16,19 @@ math: mathjax
 
 ---
 
+# Learning outcomes
+
+By the end of this lecture you will be able to:
+
+1. Condition a diffusion model on **text** via cross-attention.
+2. Derive the **classifier-free guidance** update rule and pick $w$.
+3. Explain why **latent diffusion** made Stable Diffusion shippable.
+4. Describe **DDIM** sampling and skip 95% of steps with no retraining.
+5. Recognize **DiT** (diffusion Transformer) as U-Net's replacement.
+6. Place **flow matching** and **consistency models** as the 2026 frontier.
+
+---
+
 # Where we are
 
 Last lecture · **DDPM** — forward noise, learn reverse, predict ε. Works on MNIST, toy 2D. But how do we get from there to **Stable Diffusion** and **Sora**?
@@ -367,6 +380,48 @@ All diffusion-based. All descendants of the 2020 DDPM paper.
 - **Robotics** · Diffusion Policy (Chi 2023) — action generation via diffusion.
 
 Diffusion is one of the two big generative paradigms now (the other: autoregressive LLMs).
+
+---
+
+# 2026 · the sampler menu
+
+<div class="math-box">
+
+| Sampler | Steps | Quality | Notes |
+|:-:|:-:|:-:|:-:|
+| DDPM (original) | 1000 | baseline | slowest, stochastic |
+| DDIM (deterministic) | 50-100 | = | same model; drop-in |
+| DPM-Solver++ | 20-30 | = | ODE solver · default in HF diffusers |
+| Flow matching ODE | 8-20 | = | straighter trajectories |
+| Consistency models | **1-4** | slight drop | distilled; near-real-time |
+
+</div>
+
+<div class="insight">
+
+5-year trajectory · 1000 steps (2020) → 50 steps (DDIM) → 4 steps (consistency) → 1 step (Rectified Flow v3 distilled). Each generation reduced inference cost by ~10×.
+
+</div>
+
+---
+
+# Consistency models · one-step diffusion
+
+Song et al. 2023 · train a network $f_\theta(x_t, t) \to x_0$ such that the prediction is **consistent** along any trajectory from noise to data.
+
+<div class="math-box">
+
+Consistency property · $f_\theta(x_{t_1}, t_1) = f_\theta(x_{t_2}, t_2)$ for any $t_1, t_2$ on the same trajectory.
+
+At inference · one forward pass from $x_T \to x_0$. No iteration.
+
+</div>
+
+<div class="realworld">
+
+SDXL-Turbo (2023) · 1-step generation matching 50-step DDIM quality at real-time speeds. Latent Consistency Model (LCM) adapters · drop-in for Stable Diffusion. GAN-speed with diffusion-quality, finally.
+
+</div>
 
 ---
 

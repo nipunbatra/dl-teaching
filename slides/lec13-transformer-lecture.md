@@ -16,6 +16,19 @@ math: mathjax
 
 ---
 
+# Learning outcomes
+
+By the end of this lecture you will be able to:
+
+1. List the **five ingredients** of a Transformer block and their roles.
+2. Distinguish **pre-norm** from **post-norm** and know when each wins.
+3. Compute **parameter count** for a block (attention + FFN).
+4. Write **multi-head attention** in ~20 lines of PyTorch.
+5. Choose a **positional encoding** scheme (sinusoidal / learned / RoPE / ALiBi).
+6. Pick **encoder-only / decoder-only / enc-dec** for a given task.
+
+---
+
 # Recap · where we are
 
 Last lecture: **attention** fixed Seq2Seq's bottleneck. Q, K, V scaled dot product, softmax, weighted values.
@@ -412,6 +425,47 @@ Cross-attention is the Bahdanau-attention mechanism from L12, with learned Q/K/V
 </div>
 
 GPT and Llama drop the encoder and cross-attention entirely — decoder-only. T5 keeps them for translation. Stable Diffusion uses cross-attention to inject text conditioning into images (L22).
+
+---
+
+# Common variations you will meet
+
+<div class="math-box">
+
+| Variation | Change | Seen in |
+|:-:|:-:|:-:|
+| **Pre-norm** (vs post-norm) | normalize before sublayer | GPT-2+, Llama, Claude |
+| **SwiGLU FFN** (vs ReLU) | SiLU + gating | Llama 2+ |
+| **RoPE** (vs sinusoidal PE) | rotate Q, K per position | Llama, Mistral, PaLM |
+| **GQA** (vs MHA) | fewer KV heads than Q heads | Llama 2 70B+ |
+| **RMSNorm** (vs LayerNorm) | drop mean centering | Llama, Mistral |
+| **Parallel attention + FFN** | attn and FFN run in parallel, not sequentially | GPT-J, PaLM |
+
+</div>
+
+<div class="insight">
+
+Each tweak is small (0.1-1% win). Stacked, they define a "2026 default Transformer" that looks quite different from Vaswani 2017 in details, identical in structure.
+
+</div>
+
+---
+
+# Debug · "my Transformer doesn't train"
+
+Top 5 issues to check:
+
+1. **Learning rate too high** · with pre-norm no warmup is often fine; with post-norm, warmup of ≥100 steps is mandatory. Default lr = 3e-4 with AdamW β₂=0.95.
+2. **Wrong attention mask** · forgot causal mask on a decoder? Model cheats during training, fails at inference.
+3. **Embedding / output weight tied** · `self.head.weight = self.tok_emb.weight` reduces params by ~25%, usually helps.
+4. **Float precision** · softmax overflows in fp16. Use bf16 or fp32 for the softmax.
+5. **Positional encoding bug** · forgot to add PE? Or added twice? Position blind = garbage.
+
+<div class="warning">
+
+Karpathy's "most common deep-learning bug" list puts attention-mask bugs at the top. Every implementation has one that costs a week of debugging.
+
+</div>
 
 ---
 

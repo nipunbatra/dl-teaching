@@ -16,6 +16,19 @@ math: mathjax
 
 ---
 
+# Learning outcomes
+
+By the end of this lecture you will be able to:
+
+1. Explain why an **MLP** fails on variable-length sequences.
+2. Write a **vanilla RNN** cell in 4 lines of PyTorch.
+3. Diagnose the **vanishing/exploding** gradient in **BPTT**.
+4. Explain how **LSTM gates** sidestep vanishing gradients.
+5. Contrast **LSTM vs GRU** and know when each is appropriate.
+6. Name 2026 niches where RNNs (or Mamba/RWKV) still win.
+
+---
+
 # Where we are
 
 Module 5 opens. Until now everything was **feed-forward** — MLP, CNN. One input goes in, one output comes out, no memory.
@@ -350,6 +363,18 @@ $$\mathbf{h}_t = (1 - \mathbf{z}_t) \odot \mathbf{h}_{t-1} + \mathbf{z}_t \odot 
 
 ---
 
+# LSTM vs GRU · a history sentence
+
+In the late 2010s, ML papers often included an ablation · "we tried LSTM and GRU and picked whichever worked." By 2019, most groups defaulted to whichever they had better library support for.
+
+<div class="insight">
+
+That casualness told the story · **the gating trick matters; which gates you pick doesn't much.** Any additive-gated recurrence works; the architectural variants are micro-optimizations on the core idea.
+
+</div>
+
+---
+
 # LSTM vs GRU · when to pick which
 
 | | LSTM | GRU |
@@ -417,6 +442,26 @@ But RNNs are still the right choice for:
 - LSTM cell: ~1k params
 
 </div>
+</div>
+
+---
+
+# RWKV and Mamba · the RNN comeback
+
+Starting in 2023, a new class of models has re-emerged · **state-space models** and **linear RNNs** that match Transformer quality with **O(1) inference per token**.
+
+<div class="math-box">
+
+- **RWKV** (Peng 2023) · linear attention reformulated as RNN · trained in parallel, runs as recurrent at inference.
+- **Mamba** (Gu 2023) · selective state-space model · same asymptotic scaling, competitive on language.
+- **Mamba-2** (2024) · faster, matches Transformer-7B quality.
+
+</div>
+
+<div class="insight">
+
+The story isn't "RNNs are dead" — it's "vanilla RNNs with sequential gradients couldn't scale." Modern parallelizable RNNs are a quiet comeback. Watch this space.
+
 </div>
 
 ---

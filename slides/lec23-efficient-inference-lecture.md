@@ -16,6 +16,19 @@ math: mathjax
 
 ---
 
+# Learning outcomes
+
+By the end of this lecture you will be able to:
+
+1. Explain why LLM inference is **memory-bound** (not compute-bound).
+2. Compute the **KV-cache size** for Llama 70B at 32k context.
+3. Describe **paged attention** and why vLLM needed it.
+4. Pick a **quantization level** (FP16 / INT8 / INT4 / INT2) for a deployment.
+5. Explain **FlashAttention** tiling in 2 sentences.
+6. Describe **speculative decoding** and its accept-rate dependency.
+
+---
+
 # Where we are
 
 Training a 70B LLM costs ~$100M. But that's done *once*. **Inference** runs every request, every user, every day — and it's where models earn their keep.
@@ -363,6 +376,53 @@ Put together · ~10–50× faster and cheaper than naive implementations.
 | **ExLlamaV2** | community | consumer GPU (RTX 4090) |
 
 Choose by hardware + quality needs. For teaching, **vLLM** or **llama.cpp** are easiest to install.
+
+---
+
+# End-to-end · optimization stack compounded
+
+<div class="math-box">
+
+| Stage | Speedup vs naive |
+|:-:|:-:|
+| Baseline (naive fp32) | 1× |
+| + bf16 | 2× |
+| + KV-cache | 10× |
+| + FlashAttention-2 | 3× |
+| + INT8 quantization | 1.5× |
+| + speculative decoding | 2.5× |
+| + batching + paged attention | 4× |
+| **Total (compounded)** | **~900×** |
+
+</div>
+
+<div class="keypoint">
+
+Real production serving · ~30-100× over naive PyTorch. The rest is latency engineering (batching, KV-cache reuse across requests, model sharding).
+
+</div>
+
+---
+
+# Cost economics · 2026
+
+<div class="math-box">
+
+| Model | Cost per 1M input tokens | Cost per 1M output tokens |
+|:-:|:-:|:-:|
+| Claude 3.5 Haiku | $1 | $5 |
+| GPT-4o-mini | $0.15 | $0.60 |
+| Llama-3 70B (self-hosted) | ~$0.30 | ~$0.60 |
+| Claude 3.5 Sonnet | $3 | $15 |
+| o1 | $15 | $60 |
+
+</div>
+
+<div class="realworld">
+
+Reasoning models cost 5-10× more (inference-time compute). Same token count, much more compute per token. "Think longer" is pay-per-second.
+
+</div>
 
 ---
 
