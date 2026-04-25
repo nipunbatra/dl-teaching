@@ -64,6 +64,24 @@ A brisk recap with new diagrams
 
 ---
 
+# Convolution · the feature-detector view
+
+<div class="keypoint">
+
+A convolution kernel is a **learned feature detector**.
+
+- Kernel A · responds to vertical edges
+- Kernel B · responds to horizontal edges
+- Kernel C · responds to red-green color transitions
+
+Slide each detector across the entire image · the output map "lights up" wherever its specific feature appears.
+
+</div>
+
+In a CNN we don't hand-design these kernels · the network *learns* the most useful detectors during training. Early layers learn edges and textures; deeper layers compose those into parts and objects.
+
+---
+
 # Convolution — sliding window, shared weights
 
 ![w:920px](figures/lec07/svg/convolution_mechanics.svg)
@@ -120,6 +138,30 @@ For every conv layer, think in this order:
 99% of production CNNs only use (1, 2). Segmentation (L9) uses (4). Advanced audio / video sometimes uses (4). For images, reach for `kernel_size=3, padding=1, stride=1 or 2` — nearly every other choice is a specific research idea.
 
 </div>
+
+---
+
+# Max-pool · worked numeric example
+
+<div class="math-box">
+
+Input · 4 × 4 matrix
+$$\begin{bmatrix} 1 & 2 & 8 & 3 \\ 4 & 6 & 5 & 1 \\ 9 & 7 & 2 & 3 \\ 5 & 3 & 1 & 0 \end{bmatrix}$$
+
+2×2 max-pool, stride 2 · slide a 2×2 window non-overlapping.
+
+| window | values | max |
+|:-:|:-:|:-:|
+| top-left | 1, 2, 4, 6 | **6** |
+| top-right | 8, 3, 5, 1 | **8** |
+| bottom-left | 9, 7, 5, 3 | **9** |
+| bottom-right | 2, 3, 1, 0 | **3** |
+
+Output · $\begin{bmatrix} 6 & 8 \\ 9 & 3 \end{bmatrix}$
+
+</div>
+
+Halved spatial size · kept the strongest activation per region · gained translation invariance.
 
 ---
 
@@ -272,6 +314,22 @@ LeNet → AlexNet → VGG → Inception → ResNet → MobileNet → EfficientNe
 | 2015 | **ResNet** | skip connections → 152 layers trainable |
 | 2017 | **MobileNet** | depthwise separable convs (edge devices) |
 | 2019 | **EfficientNet** | compound scaling (depth × width × resolution) |
+
+---
+
+# 1×1 conv · the recipe-mixer
+
+<div class="keypoint">
+
+A 1×1 convolution sounds useless · it only sees one pixel! But the power is in the **depth dimension**.
+
+At each pixel · you have 256 channel values (your "ingredients"). The 1×1 conv learns the best **recipes** to mix them down into 64 new "flavors" (output channels).
+
+</div>
+
+It's an extremely cheap way to · reduce channels (bottleneck) · expand them after a 3×3 · or remix a feature map without spatial mixing.
+
+Used everywhere in modern CNNs and Transformers (the "output projection" of attention is a 1×1 conv applied to the channel axis).
 
 ---
 
