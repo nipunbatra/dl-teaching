@@ -153,6 +153,20 @@ The single most important change to SGD
 
 ---
 
+# Momentum · the heavy-ball analogy
+
+<div class="keypoint">
+
+Vanilla SGD is a **short-sighted hiker** · only looks at the slope under their feet. In a narrow canyon they zig-zag wildly.
+
+Momentum turns the hiker into a **heavy ball rolling down the hill**. The ball's inertia smooths out the zig-zags and carries it through small bumps and flat spots.
+
+</div>
+
+Algorithmically · keep an exponentially-weighted average of past gradients · use that as the update direction. The next slide turns this analogy into one line of math.
+
+---
+
 # Momentum = EMA of gradients
 
 ![w:920px](figures/lec04/svg/momentum_ema.svg)
@@ -275,6 +289,20 @@ Never use vanilla SGD without momentum for a deep network. It is a Lego brick, n
 # Nesterov accelerated gradient
 
 Evaluate the gradient one step ahead
+
+---
+
+# Nesterov · driving with a longer-range view
+
+<div class="keypoint">
+
+Standard momentum is like driving by looking at the road right in front of your bumper · you steer based on what's directly under you.
+
+**Nesterov** is like looking *down the road*. You first imagine where momentum is taking you, look at the slope **at that future point**, and steer based on that.
+
+</div>
+
+The result · less overshoot near valley walls · cleaner approach to the minimum · provably better convergence rate (in the convex case).
 
 ---
 

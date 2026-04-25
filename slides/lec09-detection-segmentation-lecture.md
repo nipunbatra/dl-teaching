@@ -149,6 +149,20 @@ An IoU below 0.5 is almost always considered a miss. Detectors report mAP at mul
 
 ---
 
+# NMS · the "shouting answers" analogy
+
+<div class="keypoint">
+
+After predictions you get a **pile of overlapping boxes** on the same object · like several people shouting the same answer.
+
+NMS · keep the most confident shout · silence the others.
+
+</div>
+
+Concretely · sort by confidence, keep the best, discard any later box that overlaps it (IoU above threshold). Repeat until none left. Standard since R-CNN; survives in YOLO and most detectors.
+
+---
+
 # NMS · by pseudocode
 
 ```python
@@ -353,6 +367,20 @@ Key architectural change: we need to go *back up* in spatial resolution — the 
 ▶ Interactive: click an image region, see segmentation fill in — [image-segmentation](https://nipunbatra.github.io/interactive-articles/image-segmentation/).
 
 </div>
+
+---
+
+# U-Net skips · the cheat sheet analogy
+
+<div class="keypoint">
+
+Think of the encoder as creating a **rich but blurry summary** of the image · "I see a kidney here, a vessel there" · but exact edges have been smudged by pooling.
+
+The skip connections give the decoder a **cheat sheet** from the matching-resolution encoder layer · the original crisp pixel detail.
+
+</div>
+
+Result · the decoder uses high-level summary for *what* and the cheat sheet for *exactly where the boundary is*. Net effect · sharp accurate masks.
 
 ---
 

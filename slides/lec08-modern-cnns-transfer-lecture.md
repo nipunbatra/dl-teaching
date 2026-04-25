@@ -57,6 +57,22 @@ Let SGD pick the right receptive field
 
 ---
 
+# Inception · the buffet idea
+
+<div class="keypoint">
+
+VGG taught us · stacking 3×3 convs is powerful. But every layer has the **same fixed view** of the world.
+
+What if some features are tiny (need 1×1) and others are large (need 5×5)?
+
+Inception's answer · **don't pick** · offer a buffet of kernel sizes (1×1, 3×3, 5×5, pool) at every layer · let SGD pick the right ratio.
+
+</div>
+
+The buffet is concatenated along the channel axis · the next layer sees all kernel sizes' outputs simultaneously.
+
+---
+
 # The Inception module (Szegedy 2014)
 
 ![w:920px](figures/lec08/svg/inception_module.svg)
@@ -250,6 +266,20 @@ Real-time on-device tasks (camera AR, live caption, wake-word) need ≤30 ms bud
 # EfficientNet · compound scaling
 
 Scale depth, width, and resolution together
+
+---
+
+# Compound scaling · tuning a car engine
+
+<div class="keypoint">
+
+You can scale up an engine by · making it **bigger** (depth) · using **wider** pistons (width) · running on **higher-octane** fuel (resolution).
+
+Any one alone helps a bit. Doing all three together · in balance · gives the best engine.
+
+</div>
+
+EfficientNet's insight · the same is true of neural networks. Depth, width, and input resolution should grow *together* for a given compute budget · not one at a time.
 
 ---
 

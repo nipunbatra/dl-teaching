@@ -87,6 +87,20 @@ SGD → AdaGrad → RMSProp → Adam
 
 ---
 
+# Per-parameter LR · the two-knobs analogy
+
+<div class="keypoint">
+
+Imagine tuning two knobs · one is sensitive (you've already moved it a lot) · the other you've barely touched.
+
+Which deserves a bigger turn? Obviously **the untouched one**.
+
+</div>
+
+AdaGrad does this for every parameter · if a parameter has accumulated lots of gradient (big knob movement so far), shrink its effective LR. If it's been quiet, leave its LR large. This is the core idea behind every adaptive optimizer (RMSProp, Adam, AdamW).
+
+---
+
 # AdaGrad — the first per-parameter LR (2011)
 
 <div class="math-box">
