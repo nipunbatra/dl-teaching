@@ -250,6 +250,21 @@ Effective batch = `micro × K`.
 </div>
 <div>
 
+### Worked example
+
+Goal · effective batch 256
+GPU fits · 64 only
+
+Set `micro = 64`, `K = 4`.
+Loop calls `.backward()` 4 times → grads sum.
+After the 4th, `step()` once → uses gradient of all 256.
+
+</div>
+</div>
+
+<div class="columns">
+<div>
+
 ### Gradient clipping
 
 ```python

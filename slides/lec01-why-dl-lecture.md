@@ -147,6 +147,40 @@ The building block you already know — tightened up
 
 ---
 
+# From linear models to neurons
+
+You already know **linear regression / classification** from ES 654:
+
+$$\hat y = \mathbf{w}^\top \mathbf{x} + b$$
+
+A neuron is just this · plus a non-linear "squashing" function:
+
+$$\hat y = \sigma(\mathbf{w}^\top \mathbf{x} + b)$$
+
+<div class="keypoint">
+
+That's the only new ingredient. Everything in this course builds on top · stack many of these neurons, learn the weights, you get a deep network.
+
+</div>
+
+---
+
+# Worked example · one neuron forward pass
+
+<div class="math-box">
+
+Input · $x = [0.5, -1.0]$ · Weights · $w = [0.8, 0.2]$ · Bias · $b = 0.1$
+
+**Pre-activation** · $z = (0.8)(0.5) + (0.2)(-1.0) + 0.1 = 0.4 - 0.2 + 0.1 = 0.3$
+
+**Activation (sigmoid)** · $\sigma(0.3) = 1 / (1 + e^{-0.3}) \approx 0.574$
+
+</div>
+
+This 1-neuron, 2-input setup is exactly what we just had in linear regression · plus the sigmoid making it 0–1 instead of any real number. Stack 500 of these and you have an MLP layer.
+
+---
+
 # The single neuron — anatomy
 
 ![w:900px](figures/lec01/svg/neuron_anatomy.svg)
@@ -249,6 +283,40 @@ The math that makes learning possible
 
 ---
 
+# From scores to probabilities · the goal
+
+The network outputs raw "scores" (logits) for each class · arbitrary real numbers like $[2.0, 1.0, 0.1]$.
+
+For classification, we need a **valid probability distribution** · all values $\ge 0$, summing to 1.
+
+<div class="keypoint">
+
+Two problems to solve:
+1. **Make values positive** · `exp(·)` does this for any real input.
+2. **Make them sum to 1** · divide by the total.
+
+Together · the **softmax** function.
+
+</div>
+
+---
+
+# Softmax · worked numeric example
+
+<div class="math-box">
+
+Logits · $z = [2.0, 1.0, 0.1]$.
+
+**Step 1 · exponentiate** · $e^z = [e^{2.0}, e^{1.0}, e^{0.1}] = [7.39, 2.72, 1.11]$
+**Step 2 · sum** · $7.39 + 2.72 + 1.11 = 11.22$
+**Step 3 · normalize** · $\hat y = [7.39/11.22, 2.72/11.22, 1.11/11.22] = [0.66, 0.24, 0.10]$
+
+</div>
+
+Note · the relative ranking is preserved (the largest logit becomes the largest probability) · but the values are now interpretable as probabilities. The softmax is the standard last layer for classification.
+
+---
+
 # Softmax · three acts
 
 ![w:920px](figures/lec01/svg/softmax_visual.svg)
@@ -298,6 +366,22 @@ $$\boxed{\dfrac{\partial \mathcal{L}}{\partial z_k} = \hat{y}_k - y_k}$$
 # What that gradient actually looks like
 
 ![w:920px](figures/lec01/svg/ce_gradient_visual.svg)
+
+---
+
+# Backprop · the blame game
+
+The forward pass computes the loss. **Backprop figures out who to blame.**
+
+<div class="keypoint">
+
+For each weight, ask · *how much did this weight contribute to the final error?*
+
+Walk backwards from the loss through the network · at each layer, distribute "blame" proportionally to how much each weight affected the layer's output. Adjust weights to reduce that blame.
+
+</div>
+
+That's the entire idea. The math (chain rule) is mechanical · the *concept* is "trace responsibility backwards."
 
 ---
 

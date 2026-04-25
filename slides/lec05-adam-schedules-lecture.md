@@ -255,6 +255,28 @@ For SGD these are the same. **Not so for Adam.**
 
 ---
 
+# Adam vs AdamW · one-step worked numeric
+
+Setup · $\theta = 1.0$, $g = 0.5$, $\lambda = 0.1$ (weight decay), $\eta = 10^{-3}$, $\hat v = 4.0$ (from RMSProp).
+
+<div class="math-box">
+
+**Adam (L2 in gradient)**
+- Effective gradient · $g + \lambda \theta = 0.5 + 0.1 = 0.6$
+- Update · $-\eta \cdot 0.6 / \sqrt{4} = -0.0003$
+- Note · the "regularization" $\lambda \theta$ got divided by $\sqrt{\hat v}$ · weakened on high-gradient params!
+
+**AdamW (decoupled)**
+- Adaptive update · $-\eta \cdot 0.5 / \sqrt{4} = -0.00025$
+- Plus uniform decay · $- \eta \lambda \theta = -0.0001$
+- Total · $-0.00035$
+
+</div>
+
+In AdamW, weight decay is **uniform** for every parameter. In Adam, parameters with large past gradients are decayed less. AdamW's behavior matches the regularization theory · use it.
+
+---
+
 # AdamW in PyTorch · one line
 
 ```python
