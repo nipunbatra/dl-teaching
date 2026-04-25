@@ -200,6 +200,22 @@ $$y = \sigma\big(\underbrace{\mathbf{w}^\top \mathbf{x} + b}_{\text{pre-activati
 
 ---
 
+# Why we need a non-linearity · the magnifying-glass analogy
+
+<div class="keypoint">
+
+Stack two magnifying glasses · you get a bigger image. Still just a *bigger linear* version of the original.
+
+Stack two linear layers · same story. The composition of linear maps is just another linear map. No new patterns become learnable.
+
+A non-linearity is like adding a **prism** · it bends the input in a way no linear stack can replicate. Each layer can learn a new *kind* of feature.
+
+</div>
+
+This is why every deep network has activation functions between linear layers. Without them, depth is wasted.
+
+---
+
 # Without σ · depth gives nothing
 
 ![w:920px](figures/lec01/svg/stacked_linear_collapses.svg)
@@ -447,6 +463,20 @@ Hubel & Wiesel (Nobel 1981) — the cat visual cortex is hierarchical.
 | IT | late layer | objects, faces |
 
 Biology inspired the architecture; the optimizer and data are engineered.
+
+---
+
+# Backprop as broken telephone
+
+<div class="keypoint">
+
+Think of backprop as a "telephone game" played backwards from the loss.
+
+Each layer has to pass the **error signal** to the layer before it. If each layer multiplies the message by something less than 1 (e.g., 0.25 for sigmoid), then by the time the signal reaches the early layers it's a faint mumble.
+
+</div>
+
+Those early layers stop learning. This is the **vanishing gradient** problem · the topic of the next slide and a recurring theme through the course (RNN, deep MLPs, deep Transformers).
 
 ---
 
