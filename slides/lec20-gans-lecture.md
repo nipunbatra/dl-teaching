@@ -589,6 +589,12 @@ Early in training, fake samples are far from real ones — they barely overlap. 
 
 ---
 
+# Wasserstein distance · the picture
+
+![w:920px](figures/lec20/svg/wasserstein_intuition.svg)
+
+---
+
 # Earth-mover distance · intuition
 
 Imagine two piles of sand (two distributions). **How much work** to reshape one pile into the other — moving each grain the minimum distance?

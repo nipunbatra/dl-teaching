@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
+  <style>
+    .bg { fill: #F7F3E9; }
+    .title { font-size: 17px; font-weight: 600; fill: #161513; }
+    .head { font-size: 13px; font-weight: 600; fill: #161513; }
+    .body { font-size: 12px; fill: #161513; }
+    .caption { font-size: 11px; fill: #5F5C54; font-style: italic; }
+    .pile-real { fill: #5F8573; opacity: 0.55; stroke: #5F8573; stroke-width: 1.5; }
+    .pile-fake { fill: #B85A3E; opacity: 0.55; stroke: #B85A3E; stroke-width: 1.5; }
+    .axis { stroke: #161513; stroke-width: 1; fill: none; }
+    .move { stroke: #8E2A3B; stroke-width: 1.4; fill: none; stroke-dasharray: 4 3; }
+  </style>
+  <rect class="bg" width="960" height="380"/>
+  <text x="480" y="28" class="title" text-anchor="middle">Wasserstein-1 distance · the minimum work to move sand pile A onto pile B</text>
+
+  <!-- Two panels side by side -->
+  <g transform="translate(40, 70)">
+    <text x="200" y="0" class="head" text-anchor="middle">Two distributions, far apart</text>
+    <line x1="0" y1="200" x2="400" y2="200" class="axis"/>
+    <text x="200" y="225" class="caption" text-anchor="middle">x</text>
+    <!-- pile real (sage) on left, around x=80 -->
+    <g class="pile-real">
+      <rect x="50" y="120" width="14" height="80"/>
+      <rect x="65" y="100" width="14" height="100"/>
+      <rect x="80" y="90" width="14" height="110"/>
+      <rect x="95" y="100" width="14" height="100"/>
+      <rect x="110" y="120" width="14" height="80"/>
+    </g>
+    <text x="87" y="245" class="caption" text-anchor="middle">p_real (where sand IS)</text>
+    <!-- pile fake (rust) on right, around x=320 -->
+    <g class="pile-fake">
+      <rect x="290" y="130" width="14" height="70"/>
+      <rect x="305" y="115" width="14" height="85"/>
+      <rect x="320" y="105" width="14" height="95"/>
+      <rect x="335" y="115" width="14" height="85"/>
+      <rect x="350" y="130" width="14" height="70"/>
+    </g>
+    <text x="327" y="245" class="caption" text-anchor="middle">p_fake (where it should go)</text>
+    <!-- W indicator -->
+    <line x1="87" y1="80" x2="327" y2="80" stroke="#8E2A3B" stroke-width="1.6" marker-end="url(#m-wine)" marker-start="url(#m-wine-rev)"/>
+    <text x="207" y="74" class="head" text-anchor="middle" fill="#8E2A3B">W ≈ 240</text>
+    <text x="207" y="270" class="caption" text-anchor="middle">work to move pile · "earth-mover" distance is the minimum · here ~big.</text>
+  </g>
+
+  <g transform="translate(490, 70)">
+    <text x="200" y="0" class="head" text-anchor="middle">Distributions overlap</text>
+    <line x1="0" y1="200" x2="400" y2="200" class="axis"/>
+    <text x="200" y="225" class="caption" text-anchor="middle">x</text>
+    <g class="pile-real">
+      <rect x="150" y="120" width="14" height="80"/>
+      <rect x="165" y="100" width="14" height="100"/>
+      <rect x="180" y="90" width="14" height="110"/>
+      <rect x="195" y="100" width="14" height="100"/>
+      <rect x="210" y="120" width="14" height="80"/>
+    </g>
+    <g class="pile-fake">
+      <rect x="190" y="130" width="14" height="70"/>
+      <rect x="205" y="115" width="14" height="85"/>
+      <rect x="220" y="105" width="14" height="95"/>
+      <rect x="235" y="115" width="14" height="85"/>
+      <rect x="250" y="130" width="14" height="70"/>
+    </g>
+    <line x1="187" y1="80" x2="227" y2="80" stroke="#8E2A3B" stroke-width="1.6" marker-end="url(#m-wine)" marker-start="url(#m-wine-rev)"/>
+    <text x="207" y="74" class="head" text-anchor="middle" fill="#8E2A3B">W ≈ 40</text>
+    <text x="207" y="270" class="caption" text-anchor="middle">small move · small distance. As p_fake → p_real, W → 0 smoothly.</text>
+  </g>
+
+  <!-- Footer · contrast with JS -->
+  <rect x="40" y="320" width="880" height="40" fill="#FFF1EA" stroke="#B85A3E" stroke-width="1" rx="6"/>
+  <text x="480" y="338" class="body" text-anchor="middle"><tspan font-weight="600">JS divergence</tspan> · saturates at log 2 when distributions don't overlap · gradient = 0 → G learns nothing.</text>
+  <text x="480" y="356" class="body" text-anchor="middle"><tspan font-weight="600">Wasserstein</tspan> · linear in distance · gradient always points toward p_real · G keeps improving.</text>
+
+  <defs>
+    <marker id="m-wine" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><polygon points="0 0, 10 5, 0 10" fill="#8E2A3B"/></marker>
+    <marker id="m-wine-rev" markerWidth="10" markerHeight="10" refX="1" refY="5" orient="auto"><polygon points="10 0, 0 5, 10 10" fill="#8E2A3B"/></marker>
+  </defs>
+</svg>
