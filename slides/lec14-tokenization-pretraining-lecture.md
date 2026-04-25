@@ -94,6 +94,22 @@ Subwords compromise: keep common sequences as one unit (saving sequence length),
 
 ---
 
+# Smart-dictionary analogy
+
+<div class="keypoint">
+
+A tokenizer builds a **dictionary** for the language.
+
+- Character dictionary · just the alphabet · too basic.
+- Word dictionary · huge · breaks on "un-un-believable".
+- **Subword dictionary** · common words plus reusable prefixes (`un-`) and suffixes (`-able`) · can compose any new word.
+
+</div>
+
+That's the sweet spot we'll build with BPE on the next slides.
+
+---
+
 # The sweet spot · subwords
 
 Ideal subword tokenizer:
@@ -257,6 +273,20 @@ Same Transformer · different objectives
 # BERT vs GPT · side-by-side
 
 ![w:920px](figures/lec14/svg/mlm_vs_causal_detail.svg)
+
+---
+
+# BERT · the cloze-test analogy
+
+<div class="keypoint">
+
+BERT plays a **fill-in-the-blanks** game · like a cloze test in school.
+
+We hide ~15% of the words; BERT must guess them. Because it can see text **on both sides** of the blank, it gets very good at *understanding* context.
+
+</div>
+
+This makes BERT a strong **encoder** · ideal for tasks where you need a representation of the whole sentence (classification, retrieval, NER). It's bad at *generating* text · because it never practices producing tokens one-by-one.
 
 ---
 

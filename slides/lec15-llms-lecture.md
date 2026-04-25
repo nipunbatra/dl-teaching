@@ -93,6 +93,22 @@ The empirical backbone of the LLM era
 
 ---
 
+# Scaling laws · the cake-baking analogy
+
+<div class="keypoint">
+
+You're baking a cake (the model's performance) with a fixed budget for ingredients (compute).
+
+Should you spend on fancy flour (more **parameters**), or on sugar/eggs (more **data**)?
+
+Scaling laws are the **recipe** · they tell you the optimal flour-to-sugar ratio for your specific budget.
+
+</div>
+
+The Chinchilla paper figured out that recipe. It's: roughly **20 tokens per parameter**. Spend more on flour than that, you're "overparameterized." Spend less, "undertrained." The sweet spot maximizes the cake.
+
+---
+
 # The Chinchilla result
 
 <div class="keypoint">
@@ -337,6 +353,22 @@ How you fit a 70B model on real hardware
 # Distributed training · three parallelisms
 
 ![w:920px](figures/lec15/svg/distributed_3d.svg)
+
+---
+
+# Distributed training · the LEGO-team analogy
+
+<div class="keypoint">
+
+You need to build a massive LEGO model (the LLM) that won't fit on one person's table (one GPU). Hire a team:
+
+- **Data Parallel** · each person builds a full copy of the model, on different parts of the data.
+- **Tensor Parallel** · the whole team works on **one** giant component together (split a matrix multiply).
+- **Pipeline Parallel** · set up an assembly line · person 1 does layers 1-10, person 2 does 11-20, etc.
+
+</div>
+
+Frontier training combines **all three** · 3D parallelism. Each axis trades off memory, compute, and communication.
 
 ---
 

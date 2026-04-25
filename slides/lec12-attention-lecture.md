@@ -253,6 +253,24 @@ Attention as database retrieval
 
 ---
 
+# Why Q, K, V are three different things · the library analogy
+
+<div class="keypoint">
+
+You walk into a library with a question.
+
+- **Query** · "I need info on the 2008 financial crisis."
+- **Key** · the title on each book's spine ("The 2008 Meltdown", "The Great Depression"...).
+- **Value** · the actual *content* inside each book.
+
+You use the query to **match against keys**. The match score decides how much of each book's **value** (content) you blend into your final answer.
+
+</div>
+
+That's it · attention is a soft library lookup. The next slides formalize the math; the analogy is the whole intuition.
+
+---
+
 # The retrieval metaphor
 
 Imagine a Python dictionary lookup:
@@ -454,6 +472,22 @@ In a Seq2Seq + attention model:
 - Keys and values come from the **encoder** (all source positions).
 
 This is what the first attention heatmap showed — one distribution per target step over source positions.
+
+---
+
+# Self-attention · the "bank" disambiguation
+
+<div class="keypoint">
+
+How do you know "bank" means a financial institution in "the **bank** approved the **loan**"?
+
+You look at the other words. "Loan" tells you which bank.
+
+</div>
+
+In "he sat on the river **bank**" · the word "river" tells you the *other* meaning.
+
+Self-attention is exactly this · every word looks at every *other* word in the sentence to figure out its **context-specific meaning**. The famous "the animal didn't cross the street because **it** was too tired" example needs this · attention disambiguates "it" by attending to "animal."
 
 ---
 

@@ -112,6 +112,20 @@ Modern multilingual models (mT5, NLLB, Whisper) share vocab via SentencePiece 鈥
 
 ---
 
+# The translator analogy
+
+<div class="keypoint">
+
+A human translator faced with a long German sentence does not translate word-by-word. They **read the whole sentence**, pause to grasp the meaning, **form a mental summary**, then start composing the English translation by unpacking that summary.
+
+Seq2Seq does exactly this 路 the encoder reads, builds a context vector (the "mental summary"), and the decoder unpacks it into the target language.
+
+</div>
+
+The problem 路 for *long* sentences, even a great human's mental summary fails. So does Seq2Seq 路 this is why we'll add attention in L12.
+
+---
+
 # The architecture
 
 ![w:920px](figures/lec11/svg/seq2seq_bottleneck.svg)
@@ -295,6 +309,20 @@ Greedy picks "A" because it's locally higher. But the full-sequence score is low
 # Beam search 路 the tree
 
 ![w:880px](figures/lec11/svg/beam_search_tree.svg)
+
+---
+
+# Beam search 路 the team-of-hikers analogy
+
+<div class="keypoint">
+
+Greedy decoding is **one hiker** taking the steepest step at every fork. They miss bigger peaks that require a less steep early path.
+
+Beam search sends out **$k$ hikers** (the "beam"). At every fork, they explore in parallel. We rank all paths globally and keep the $k$ most-promising survivors. Repeat.
+
+</div>
+
+The team's collective best end-of-path score is far closer to the global maximum than greedy's. Cost 路 $k\times$ compute. Quality 路 2-5 BLEU points typically.
 
 ---
 

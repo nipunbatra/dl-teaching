@@ -279,6 +279,22 @@ Three sigmoid gates protect a cell state
 
 ---
 
+# LSTM · gatekeeper, janitor, press secretary
+
+<div class="keypoint">
+
+A vanilla RNN treats every input the same. The LSTM has three "specialists":
+
+- **Gatekeeper** (input gate) · is this new word important enough to write to memory?
+- **Janitor** (forget gate) · cleans out old memories that don't matter anymore.
+- **Press secretary** (output gate) · decides which parts of internal memory to expose to downstream layers.
+
+</div>
+
+The next slide gives the math · keep these roles in mind as you read the equations.
+
+---
+
 # LSTM · the six equations
 
 <div class="math-box">

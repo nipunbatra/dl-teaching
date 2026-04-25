@@ -62,6 +62,22 @@ Two sublayers, two residuals, two norms
 
 ---
 
+# The block · "communication then thinking"
+
+<div class="keypoint">
+
+A Transformer block is a **two-phase meeting** for your tokens.
+
+**Phase 1 · communication** (attention) · every token looks at every other token to gather context.
+
+**Phase 2 · thinking** (FFN) · each token individually processes what it heard, with no further mixing.
+
+</div>
+
+The block then repeats N times. By the end, each token has thought about every other token N times, with personal processing in between.
+
+---
+
 # The Transformer block (pre-norm)
 
 ![w:720px](figures/lec13/svg/transformer_block.svg)
@@ -167,6 +183,20 @@ Why one head is never enough
 # Multi-head · the pipeline in detail
 
 ![w:920px](figures/lec13/svg/multi_head_detail.svg)
+
+---
+
+# Multi-head · the team-of-specialists analogy
+
+<div class="keypoint">
+
+A single attention head must average over **all kinds of relationships** at once · subject-verb, pronoun-antecedent, adjective-noun, syntax, semantics.
+
+Multi-head attention is a **team of specialists** running in parallel · one head specializes in syntax, another in coreference, another in long-range dependencies.
+
+</div>
+
+After each head computes its own answer, the outputs are concatenated and projected · the network learns the right division of labor among heads.
 
 ---
 
