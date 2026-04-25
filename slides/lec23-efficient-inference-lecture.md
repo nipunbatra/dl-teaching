@@ -177,6 +177,22 @@ PyTorch builtin: `torch.quantization.quantize_dynamic` or `bitsandbytes` library
 
 ---
 
+# Worked example · quantize a single weight row
+
+<div class="math-box">
+
+Channel · 5 weights · `w = [0.42, -0.81, 0.05, 0.37, -0.12]`
+
+**Step 1.** $s = \max(|w|) / 127 = 0.81 / 127 \approx 0.00638$
+**Step 2.** $w_\text{int} = \text{round}(w / s) = [66, -127, 8, 58, -19]$
+**Step 3.** Stored · the 5 INT8 values (5 bytes) plus one float scale $s$ (4 bytes) · 9 bytes total instead of 20 bytes for FP32.
+
+</div>
+
+**Reconstruction** at inference · $\hat w = w_\text{int} \cdot s$ → $[0.421, -0.810, 0.051, 0.370, -0.121]$. Max error $\sim 0.001$. Roundoff is small; quality drop on benchmarks barely measurable.
+
+---
+
 # INT4 and below · GPTQ / AWQ
 
 At 4 bits per weight, naive quantization breaks. Two successful tricks:

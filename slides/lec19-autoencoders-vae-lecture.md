@@ -543,6 +543,33 @@ CVAE was used for controllable generation before diffusion + CFG took over. Stil
 
 ---
 
+# Worked example · one VAE forward pass
+
+Suppose · $d_x = 4$ (4-pixel input), $d_z = 2$ (2D latent). Input · $x = [1.0, 0.5, 0.2, 0.8]$.
+
+<div class="math-box">
+
+**Step 1 · encoder.** Suppose it outputs $\mu = [0.4, -0.3]$, $\log \sigma^2 = [-1.4, -2.0]$ → $\sigma = [0.5, 0.37]$.
+
+**Step 2 · sample $\epsilon = [0.6, -0.2]$** (one draw from $\mathcal{N}(0, I)$).
+$z = \mu + \sigma \odot \epsilon = [0.4 + 0.5 \cdot 0.6, -0.3 + 0.37 \cdot (-0.2)] = [0.70, -0.37]$
+
+**Step 3 · decode.** Suppose decoder outputs $\hat x = [0.92, 0.45, 0.25, 0.81]$.
+
+**Step 4 · loss.**
+- Reconstruction MSE · $\|\hat x - x\|^2 = 0.008^2 + 0.05^2 + 0.05^2 + 0.01^2 \approx 0.005$
+- KL · $\frac{1}{2} \sum (\sigma^2 + \mu^2 - 1 - \log \sigma^2)$
+  - $z_1$: $0.25 + 0.16 - 1 + 1.4 = 0.81$
+  - $z_2$: $0.137 + 0.09 - 1 + 2.0 = 1.23$
+  - sum / 2 = **1.02**
+- Total loss = 0.005 + 1.02 = **1.025**
+
+</div>
+
+Backprop through this. Update params. Repeat.
+
+---
+
 # Latent-space interpolation · in pictures
 
 ![w:920px](figures/lec19/svg/vae_interpolation.svg)

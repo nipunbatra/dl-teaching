@@ -314,6 +314,38 @@ Typical $k = 4$ to $10$. More = better quality, slower. Still deterministic give
 
 ---
 
+# Beam search · worked example with $k=2$
+
+Vocab · {The, A, cat, dog, sat, ran}. Decoding "The cat sat".
+
+<div class="math-box">
+
+**Step 1.** Beams · `[<s>]`. Top-2 next-token log-probs:
+| token | logP |
+|:-:|:-:|
+| The | -0.5 |
+| A | -0.7 |
+
+Keep both. Beams · `[<s>, The]` (-0.5), `[<s>, A]` (-0.7).
+
+**Step 2.** Expand each. For brevity, top extensions:
+| sequence | logP |
+|:-:|:-:|
+| `<s> The cat` | -0.5 + -0.6 = **-1.1** |
+| `<s> The dog` | -0.5 + -1.3 = -1.8 |
+| `<s> A feline` | -0.7 + -0.9 = -1.6 |
+| `<s> A dog` | -0.7 + -1.0 = -1.7 |
+
+Keep the top 2 · `<s> The cat` (-1.1) and `<s> A feline` (-1.6).
+
+**Step 3.** Continue. Final score divides by $T^{0.6}$ to compare different lengths.
+
+</div>
+
+A beam of $k=2$ already finds "The cat sat" (logP -1.7) where greedy might have committed early to "A" and ended at "A dog ran" (logP -2.5).
+
+---
+
 # Top-$k$ and nucleus (top-$p$) sampling
 
 For open-ended generation (story writing, chat) beam search is *too* deterministic — everything sounds the same.

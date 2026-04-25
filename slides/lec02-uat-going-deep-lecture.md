@@ -90,6 +90,43 @@ One hidden layer suffices. The catch hides in one word: **exist.**
 
 ---
 
+# Worked example · approximate `f(x) = x²` with 4 ReLUs
+
+<div class="math-box">
+
+Pick 4 ReLU bumps at $x = 0.0, 0.25, 0.5, 0.75$ on $[0, 1]$. Each is `relu(w·(x − b))` for slope $w = 1$.
+
+| ReLU $i$ | $b_i$ | $\alpha_i$ | turns on at $x =$ |
+|:-:|:-:|:-:|:-:|
+| 1 | 0.0  | 0.25 | 0.0 |
+| 2 | 0.25 | 0.50 | 0.25 |
+| 3 | 0.50 | 0.75 | 0.50 |
+| 4 | 0.75 | 1.00 | 0.75 |
+
+</div>
+
+The output is a piecewise-linear staircase that hugs $x²$. With more ReLUs, the staircase gets finer · the error $\epsilon \to 0$.
+
+**That's UAT in numbers.** A weighted sum of ReLU bumps approximates any 1D continuous function.
+
+---
+
+# Two-ReLU bumps · the real building block
+
+A single ReLU is a half-plane. Subtract two ReLUs · you get a **bump** of any width and height.
+
+<div class="math-box">
+
+$$\text{bump}(x; a, b) = \text{relu}(x - a) - \text{relu}(x - b), \quad a < b$$
+
+This is 0 outside $[a, b]$ and rises linearly in between. Place enough bumps and you can build any continuous function · just place a bump where each fine slice is.
+
+</div>
+
+UAT's existence proof essentially tiles the function space with bumps. A network finds these bumps automatically through gradient descent. <em>Existence</em> is given by the construction; <em>training</em> is the open problem.
+
+---
+
 # The price of width — curse of dimensionality
 
 Piecewise-linear approximation of $f$ to error $\epsilon$:

@@ -475,6 +475,27 @@ Without the $1/p$ rescale, training-time and eval-time activations would differ.
 
 ---
 
+# Dropout · worked numeric example
+
+Suppose hidden activations · `h = [2.0, 1.5, 0.5, 3.0]` and we use `p = 0.5` keep-prob.
+
+<div class="math-box">
+
+**Train pass.** Sample mask `m = [1, 0, 1, 0]` (Bernoulli p=0.5).
+$\mathbf{h}_\text{drop} = (h \odot m) / p = [2.0, 0, 0.5, 0] / 0.5 = [\mathbf{4.0}, 0, \mathbf{1.0}, 0]$
+(the kept units are *amplified* to compensate)
+
+**Expected value** · $E[\mathbf{h}_\text{drop}] = p \cdot (h/p) + (1-p) \cdot 0 = h = [2.0, 1.5, 0.5, 3.0]$
+↑ same as the no-dropout output.
+
+**Eval pass.** $\mathbf{h}_\text{eval} = h = [2.0, 1.5, 0.5, 3.0]$. No mask, no scaling.
+
+</div>
+
+The training-time scaling-up by $1/p$ is what lets us drop the mask at eval time without changing the network's expected output.
+
+---
+
 # Dropout in PyTorch
 
 ```python

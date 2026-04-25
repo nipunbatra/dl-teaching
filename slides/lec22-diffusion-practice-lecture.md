@@ -171,6 +171,30 @@ Same network learns both modes. At inference, you run it twice and extrapolate. 
 
 ---
 
+# Worked example · CFG arithmetic at one step
+
+<div class="math-box">
+
+At denoising step $t$, the U-Net runs twice on the noisy latent $x_t$:
+
+- $\epsilon_\emptyset = \epsilon_\theta(x_t, \text{null prompt}) = [+0.10, -0.30]$ (toy 2D)
+- $\epsilon_c = \epsilon_\theta(x_t, \text{"cat"}) = [+0.40, -0.10]$
+
+Difference vector · $\Delta = \epsilon_c - \epsilon_\emptyset = [+0.30, +0.20]$.
+
+| $w$ | $\epsilon_\text{cfg} = \epsilon_\emptyset + w \Delta$ | meaning |
+|:-:|:-:|:-:|
+| 0 | $[+0.10, -0.30]$ | unconditional |
+| 1 | $[+0.40, -0.10]$ | pure conditional |
+| 3 | $[+1.00, +0.30]$ | overshoot 2× |
+| 7 | $[+2.20, +1.10]$ | strong overshoot |
+
+</div>
+
+Larger $w$ pushes the noise prediction further along the "more cat-like" direction. Subtract that bigger noise → step lands further toward a strongly cat-shaped image.
+
+---
+
 # Picking a CFG scale · practical guide
 
 | $w$ | What you get |

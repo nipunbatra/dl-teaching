@@ -244,6 +244,26 @@ sims = (img_emb @ txt_embs.T).softmax(dim=-1)
 
 ---
 
+# Worked example · zero-shot a single image
+
+Image · a photo of a tabby cat. CLIP image encoder produces a 768-dim vector (after L2-normalize · unit length).
+
+<div class="math-box">
+
+Build text prompts · `"a photo of a {cat / dog / car}"`. Run through CLIP text encoder.
+
+| class | text emb | cos · img emb | softmax |
+|:-:|:-:|:-:|:-:|
+| cat | `t_cat` | 0.32 | **0.89** |
+| dog | `t_dog` | 0.19 | 0.08 |
+| car | `t_car` | 0.04 | 0.03 |
+
+</div>
+
+Pick `argmax` · "cat" wins with 89% confidence. **Total inference cost · 1 image-encoder call + 3 text-encoder calls.** No fine-tuning. Add 100 classes · still 100 text-encoder calls (a few seconds, total) and you're done.
+
+---
+
 # Why CLIP mattered
 
 1. **Universal image representation** — one encoder works on any domain.
