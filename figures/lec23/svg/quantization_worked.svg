@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" font-family="EB Garamond, Georgia, serif">
+  <style>
+    .bg { fill: #F7F3E9; }
+    .title { font-size: 17px; font-weight: 600; fill: #161513; }
+    .head { font-size: 13px; font-weight: 600; fill: #161513; }
+    .body { font-size: 12px; fill: #161513; }
+    .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; fill: #161513; }
+    .caption { font-size: 11px; fill: #5F5C54; font-style: italic; }
+    .float { fill: #FFF1EA; stroke: #B85A3E; stroke-width: 1.4; rx: 4; }
+    .int { fill: #EAF0EC; stroke: #5F8573; stroke-width: 1.4; rx: 4; }
+    .scale { fill: #F7EFD9; stroke: #B5945A; stroke-width: 1.4; rx: 4; }
+    .arrow { stroke: #161513; stroke-width: 1.3; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="360"/>
+  <text x="480" y="28" class="title" text-anchor="middle">INT8 quantization · per-channel scaling worked out</text>
+
+  <!-- FP32 weights -->
+  <g transform="translate(40, 75)">
+    <text x="180" y="0" class="head" text-anchor="middle">FP32 weights · 5 floats · 20 bytes</text>
+    <rect class="float" x="0" y="20" width="70" height="40"/>
+    <text x="35" y="45" class="mono" text-anchor="middle">0.42</text>
+    <rect class="float" x="74" y="20" width="70" height="40"/>
+    <text x="109" y="45" class="mono" text-anchor="middle">−0.81</text>
+    <rect class="float" x="148" y="20" width="70" height="40"/>
+    <text x="183" y="45" class="mono" text-anchor="middle">0.05</text>
+    <rect class="float" x="222" y="20" width="70" height="40"/>
+    <text x="257" y="45" class="mono" text-anchor="middle">0.37</text>
+    <rect class="float" x="296" y="20" width="70" height="40"/>
+    <text x="331" y="45" class="mono" text-anchor="middle">−0.12</text>
+  </g>
+
+  <!-- Compute scale -->
+  <g transform="translate(440, 80)">
+    <text x="0" y="0" class="head">scale s = max(|w|) / 127</text>
+    <text x="0" y="20" class="mono">s = 0.81 / 127 = 0.00638</text>
+  </g>
+
+  <!-- Arrow -->
+  <path class="arrow" d="M 220 145 L 220 175" marker-end="url(#arr)"/>
+  <text x="240" y="165" class="caption">w_int = round(w / s)</text>
+
+  <!-- INT8 weights -->
+  <g transform="translate(40, 175)">
+    <text x="180" y="0" class="head" text-anchor="middle">INT8 weights · 5 bytes</text>
+    <rect class="int" x="0" y="20" width="70" height="40"/>
+    <text x="35" y="45" class="mono" text-anchor="middle">66</text>
+    <rect class="int" x="74" y="20" width="70" height="40"/>
+    <text x="109" y="45" class="mono" text-anchor="middle">−127</text>
+    <rect class="int" x="148" y="20" width="70" height="40"/>
+    <text x="183" y="45" class="mono" text-anchor="middle">8</text>
+    <rect class="int" x="222" y="20" width="70" height="40"/>
+    <text x="257" y="45" class="mono" text-anchor="middle">58</text>
+    <rect class="int" x="296" y="20" width="70" height="40"/>
+    <text x="331" y="45" class="mono" text-anchor="middle">−19</text>
+    <text x="180" y="78" class="caption" text-anchor="middle">+ one shared scale s (4 bytes)</text>
+  </g>
+
+  <!-- Storage comparison -->
+  <g transform="translate(440, 175)">
+    <rect class="scale" x="0" y="0" width="280" height="80"/>
+    <text x="140" y="22" class="head" text-anchor="middle">Storage</text>
+    <text x="140" y="42" class="body" text-anchor="middle">FP32 · 20 bytes</text>
+    <text x="140" y="60" class="body" text-anchor="middle">INT8 + scale · 9 bytes</text>
+    <text x="140" y="76" class="caption" text-anchor="middle">≈ 2.2× compression</text>
+  </g>
+
+  <!-- Reconstruction · ŵ = w_int · s -->
+  <g transform="translate(40, 285)">
+    <rect fill="#FFF1EA" stroke="#B85A3E" stroke-width="1" x="0" y="0" width="880" height="55" rx="6"/>
+    <text x="20" y="22" class="head">Reconstruction at inference · ŵ = w_int · s</text>
+    <text x="20" y="44" class="mono">[66·0.00638, −127·0.00638, 8·0.00638, 58·0.00638, −19·0.00638] = [0.421, −0.810, 0.051, 0.370, −0.121]</text>
+  </g>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#161513"/>
+    </marker>
+  </defs>
+</svg>

@@ -177,6 +177,12 @@ PyTorch builtin: `torch.quantization.quantize_dynamic` or `bitsandbytes` library
 
 ---
 
+# Quantization · arithmetic in pictures
+
+![w:920px](figures/lec23/svg/quantization_worked.svg)
+
+---
+
 # Worked example · quantize a single weight row
 
 <div class="math-box">

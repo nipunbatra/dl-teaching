@@ -92,6 +92,12 @@ One hidden layer suffices. The catch hides in one word: **exist.**
 
 # Worked example · approximate `f(x) = x²` with 4 ReLUs
 
+![w:920px](figures/lec02/svg/uat_relu_bumps.svg)
+
+---
+
+# Worked example · approximate `f(x) = x²` with 4 ReLUs · numbers
+
 <div class="math-box">
 
 Pick 4 ReLU bumps at $x = 0.0, 0.25, 0.5, 0.75$ on $[0, 1]$. Each is `relu(w·(x − b))` for slope $w = 1$.

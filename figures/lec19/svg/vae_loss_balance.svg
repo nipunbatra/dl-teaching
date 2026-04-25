@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
+  <style>
+    .bg { fill: #F7F3E9; }
+    .title { font-size: 17px; font-weight: 600; fill: #161513; }
+    .head { font-size: 13px; font-weight: 600; fill: #161513; }
+    .body { font-size: 12px; fill: #161513; }
+    .caption { font-size: 11px; fill: #5F5C54; font-style: italic; }
+    .recon { fill: #B85A3E; opacity: 0.75; }
+    .kl { fill: #5F8573; opacity: 0.75; }
+    .total { stroke: #161513; stroke-width: 2.4; fill: none; }
+    .axis { stroke: #161513; stroke-width: 1; fill: none; }
+    .grid { stroke: #B5AE9B; stroke-width: 0.4; opacity: 0.5; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="380"/>
+  <text x="480" y="28" class="title" text-anchor="middle">VAE loss · two terms in tension · β knob trades them off</text>
+
+  <!-- Three β regimes side by side -->
+  <g transform="translate(50, 80)">
+    <text x="120" y="0" class="head" text-anchor="middle">β = 0 (plain AE)</text>
+    <text x="120" y="20" class="caption" text-anchor="middle">no KL · latent unconstrained</text>
+    <rect class="recon" x="40" y="50" width="160" height="20"/>
+    <rect class="kl" x="40" y="74" width="0" height="20"/>
+    <text x="40" y="105" class="caption">recon · 0.5 (low)</text>
+    <text x="40" y="120" class="caption">KL · n/a</text>
+    <text x="40" y="145" class="caption">→ great reconstruction</text>
+    <text x="40" y="160" class="caption">→ <tspan fill="#8E2A3B">samples = garbage</tspan></text>
+  </g>
+
+  <g transform="translate(340, 80)">
+    <text x="120" y="0" class="head" text-anchor="middle">β = 1 (standard VAE)</text>
+    <text x="120" y="20" class="caption" text-anchor="middle">balance · ELBO derivation</text>
+    <rect class="recon" x="40" y="50" width="120" height="20"/>
+    <rect class="kl" x="40" y="74" width="80" height="20"/>
+    <text x="40" y="105" class="caption">recon · 0.7 (slightly worse)</text>
+    <text x="40" y="120" class="caption">KL · 1.0 (latent constrained)</text>
+    <text x="40" y="145" class="caption">→ decent reconstruction</text>
+    <text x="40" y="160" class="caption">→ samples plausible</text>
+  </g>
+
+  <g transform="translate(630, 80)">
+    <text x="120" y="0" class="head" text-anchor="middle">β = 4 (β-VAE)</text>
+    <text x="120" y="20" class="caption" text-anchor="middle">over-regularize · disentangled</text>
+    <rect class="recon" x="40" y="50" width="80" height="20"/>
+    <rect class="kl" x="40" y="74" width="160" height="20"/>
+    <text x="40" y="105" class="caption">recon · 1.2 (blurrier)</text>
+    <text x="40" y="120" class="caption">KL · 0.4 (very tight to prior)</text>
+    <text x="40" y="145" class="caption">→ blurry reconstruction</text>
+    <text x="40" y="160" class="caption">→ <tspan fill="#5F8573">disentangled latent dims</tspan></text>
+  </g>
+
+  <!-- Footer · the seesaw -->
+  <g transform="translate(60, 270)">
+    <rect fill="white" stroke="#37535F" stroke-width="1.2" x="0" y="0" width="840" height="80" rx="6"/>
+    <text x="420" y="22" class="head" text-anchor="middle">The seesaw</text>
+    <line x1="100" y1="55" x2="740" y2="55" stroke="#161513" stroke-width="1.5"/>
+    <line x1="420" y1="50" x2="420" y2="70" stroke="#161513" stroke-width="2"/>
+    <text x="100" y="48" class="body" text-anchor="middle">recon ↑</text>
+    <text x="740" y="48" class="body" text-anchor="middle">KL ↑</text>
+    <text x="100" y="73" class="caption" text-anchor="middle">copy machine</text>
+    <text x="740" y="73" class="caption" text-anchor="middle">collapsed posterior</text>
+    <text x="280" y="73" class="caption" text-anchor="middle">β &lt; 1</text>
+    <text x="420" y="73" class="caption" text-anchor="middle">β = 1</text>
+    <text x="560" y="73" class="caption" text-anchor="middle">β &gt; 1</text>
+  </g>
+</svg>

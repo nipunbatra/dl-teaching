@@ -171,6 +171,12 @@ Same network learns both modes. At inference, you run it twice and extrapolate. 
 
 ---
 
+# CFG · vectors in 2D
+
+![w:920px](figures/lec22/svg/cfg_arithmetic.svg)
+
+---
+
 # Worked example · CFG arithmetic at one step
 
 <div class="math-box">

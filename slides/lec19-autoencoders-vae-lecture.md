@@ -489,6 +489,12 @@ Tuning `BETA`:
 
 ---
 
+# β · the seesaw between recon and KL
+
+![w:920px](figures/lec19/svg/vae_loss_balance.svg)
+
+---
+
 # Disentanglement · what β-VAE buys you
 
 With $\beta = 4$ on a faces dataset (Higgins 2017), each latent dimension starts to control ONE semantic factor:

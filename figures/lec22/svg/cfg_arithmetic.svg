@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
+  <style>
+    .bg { fill: #F7F3E9; }
+    .title { font-size: 17px; font-weight: 600; fill: #161513; }
+    .head { font-size: 13px; font-weight: 600; fill: #161513; }
+    .body { font-size: 12px; fill: #161513; }
+    .caption { font-size: 11px; fill: #5F5C54; font-style: italic; }
+    .axis { stroke: #161513; stroke-width: 1; fill: none; }
+    .vec-uncond { stroke: #37535F; stroke-width: 2.4; fill: none; }
+    .vec-cond { stroke: #5F8573; stroke-width: 2.4; fill: none; }
+    .vec-diff { stroke: #8E2A3B; stroke-width: 2; stroke-dasharray: 5 3; fill: none; }
+    .vec-cfg-1 { stroke: #B85A3E; stroke-width: 2.4; fill: none; opacity: 0.4; }
+    .vec-cfg-3 { stroke: #B85A3E; stroke-width: 2.4; fill: none; opacity: 0.65; }
+    .vec-cfg-7 { stroke: #B85A3E; stroke-width: 2.8; fill: none; opacity: 1.0; }
+  </style>
+  <rect class="bg" width="960" height="380"/>
+  <text x="480" y="28" class="title" text-anchor="middle">CFG · same prompt, three guidance strengths · vectors in 2D</text>
+
+  <!-- Coord system · 2D plane · origin at bottom-left of plot -->
+  <g transform="translate(120, 60)">
+    <!-- grid -->
+    <g stroke="#B5AE9B" stroke-width="0.4" opacity="0.5">
+      <line x1="0" y1="0" x2="0" y2="280"/>
+      <line x1="60" y1="0" x2="60" y2="280"/>
+      <line x1="120" y1="0" x2="120" y2="280"/>
+      <line x1="180" y1="0" x2="180" y2="280"/>
+      <line x1="240" y1="0" x2="240" y2="280"/>
+      <line x1="300" y1="0" x2="300" y2="280"/>
+      <line x1="360" y1="0" x2="360" y2="280"/>
+      <line x1="420" y1="0" x2="420" y2="280"/>
+      <line x1="480" y1="0" x2="480" y2="280"/>
+      <line x1="540" y1="0" x2="540" y2="280"/>
+      <line x1="0" y1="0" x2="540" y2="0"/>
+      <line x1="0" y1="40" x2="540" y2="40"/>
+      <line x1="0" y1="80" x2="540" y2="80"/>
+      <line x1="0" y1="120" x2="540" y2="120"/>
+      <line x1="0" y1="160" x2="540" y2="160"/>
+      <line x1="0" y1="200" x2="540" y2="200"/>
+      <line x1="0" y1="240" x2="540" y2="240"/>
+      <line x1="0" y1="280" x2="540" y2="280"/>
+    </g>
+
+    <!-- origin (0,0) at center · 270, 140 -->
+    <!-- We place origin at (60, 200) [pixel] · scale 60 px per unit on each axis -->
+    <!-- y-axis flipped (y_data positive = up = y_pixel decreases) -->
+
+    <!-- axes -->
+    <line x1="0" y1="200" x2="540" y2="200" stroke="#161513" stroke-width="1.2"/>
+    <line x1="60" y1="0" x2="60" y2="280" stroke="#161513" stroke-width="1.2"/>
+
+    <!-- origin label -->
+    <text x="48" y="215" class="caption" text-anchor="end">origin x_t</text>
+
+    <!-- Vectors all from origin (60, 200):
+         eps_uncond = [+0.10, -0.30] → endpoint (60+6, 200+18) = (66, 218)  too short, scale 30
+         scale 1 unit = 60 px
+         uncond [0.10, -0.30] → (60+6, 200+18) = (66, 218)
+         cond   [0.40, -0.10] → (60+24, 200+6) = (84, 206)
+         cfg w=1 same as cond
+         cfg w=3 [1.00, 0.30] → (60+60, 200-18) = (120, 182)
+         cfg w=7 [2.20, 1.10] → (60+132, 200-66) = (192, 134)
+         actually we should have larger scale to make differences visible
+         scale = 90 px / unit:
+         uncond → (60+9, 200+27) = (69, 227)
+         cond → (60+36, 200+9) = (96, 209)
+         w=3 → (60+90, 200-27) = (150, 173)
+         w=7 → (60+198, 200-99) = (258, 101)
+    -->
+
+    <!-- uncond -->
+    <path class="vec-uncond" d="M 60 200 L 69 227" marker-end="url(#m-slate)"/>
+    <text x="60" y="265" class="caption" fill="#37535F">ε_∅ = [+0.10, −0.30]</text>
+
+    <!-- cond -->
+    <path class="vec-cond" d="M 60 200 L 96 209" marker-end="url(#m-sage)"/>
+    <text x="115" y="225" class="caption" fill="#5F8573">ε_c = [+0.40, −0.10]</text>
+
+    <!-- diff (from uncond endpoint to cond endpoint) -->
+    <path class="vec-diff" d="M 69 227 L 96 209" marker-end="url(#m-wine)"/>
+    <text x="56" y="244" class="caption" fill="#8E2A3B">Δ = [+0.30, +0.20]</text>
+
+    <!-- w=1 -->
+    <path class="vec-cfg-1" d="M 60 200 L 96 209" marker-end="url(#m-rust)"/>
+    <text x="105" y="200" class="caption" fill="#B85A3E">w=1</text>
+
+    <!-- w=3 → [1.00, 0.30] -->
+    <path class="vec-cfg-3" d="M 60 200 L 150 173" marker-end="url(#m-rust)"/>
+    <text x="160" y="170" class="caption" fill="#B85A3E">w=3</text>
+
+    <!-- w=7 → [2.20, 1.10] -->
+    <path class="vec-cfg-7" d="M 60 200 L 258 101" marker-end="url(#m-rust)"/>
+    <text x="270" y="98" class="caption" fill="#B85A3E" font-weight="600">w=7 (default)</text>
+  </g>
+
+  <!-- footer -->
+  <g transform="translate(40, 320)">
+    <rect fill="white" stroke="#37535F" stroke-width="1" x="0" y="0" width="880" height="50" rx="6"/>
+    <text x="440" y="22" class="body" text-anchor="middle"><tspan font-weight="600">ε_cfg = ε_∅ + w · Δ</tspan>   ·   take the difference vector, walk w× along it.</text>
+    <text x="440" y="40" class="caption" text-anchor="middle">Higher w · longer overshoot · stronger prompt adherence · saturated colors / artifacts at w &gt; 12.</text>
+  </g>
+
+  <defs>
+    <marker id="m-slate" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><polygon points="0 0, 10 5, 0 10" fill="#37535F"/></marker>
+    <marker id="m-sage" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><polygon points="0 0, 10 5, 0 10" fill="#5F8573"/></marker>
+    <marker id="m-wine" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><polygon points="0 0, 10 5, 0 10" fill="#8E2A3B"/></marker>
+    <marker id="m-rust" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><polygon points="0 0, 10 5, 0 10" fill="#B85A3E"/></marker>
+  </defs>
+</svg>
