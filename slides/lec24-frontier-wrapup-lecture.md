@@ -57,6 +57,20 @@ Four questions:
 
 ---
 
+# Brain in a jar · why agents matter
+
+<div class="keypoint">
+
+Think of a standard LLM as a **brilliant brain in a jar**. It can talk and write, but it can't *do* anything in the world.
+
+**Agents** are the revolution that gives this brain **hands and eyes** · web browsers, code editors, file systems, calculators, APIs.
+
+</div>
+
+The LLM keeps its strengths (knowledge, language fluency) and gains the missing piece · **action**. With tools, the same model that can describe how to book a flight can now actually book one.
+
+---
+
 # From chatbot to agent
 
 An LLM chatbot gives you text. An LLM **agent** can *act* — call tools, browse the web, write code, click buttons on a screen.
@@ -176,6 +190,22 @@ CoT emerges at scale (~60B params). Below that, adding "think step by step" does
 
 ---
 
+# Test-time compute · the college-exam analogy
+
+<div class="keypoint">
+
+Compare model training to going to college.
+
+**Training compute** is the years spent in college learning general knowledge.
+
+After college, on a hard exam question, you don't just answer instantly. You **pause, sketch on scratch paper, double-check**. That's **test-time compute**.
+
+</div>
+
+Reasoning models (o1, Claude thinking) are exactly this · same base capability as a "college graduate" model · but allowed to use scratch paper before responding. The scratch paper is internal chain-of-thought that the user never sees.
+
+---
+
 # A new scaling axis
 
 Until 2024, the only scaling axis was **training compute**. In 2024+ we added **test-time compute**.
@@ -253,6 +283,20 @@ $$h_{l+1} = h_l + \text{attn}_l(h_l) + \text{ffn}_l(h_l)$$
 The residual stream is a "bus" carrying information across layers. Attention heads read features and write new features back.
 
 This perspective helped find **circuits** — specific computational pathways inside a Transformer that implement identifiable algorithms (induction heads, IOI task, prime-number detection, etc.).
+
+---
+
+# Sparse autoencoders · the dictionary analogy
+
+<div class="keypoint">
+
+Inside a model, a single neuron must represent many ideas at once · "bank" means river bank AND financial bank, plus context-dependent shades. This is **superposition** · confusing for analysis.
+
+A sparse autoencoder forces the model to use a **giant explicit dictionary**. Instead of one ambiguous "bank" neuron, distinct **river_bank** and **financial_institution** features fire.
+
+</div>
+
+The dictionary is much wider than the residual stream (e.g., 100k features for a 12k-dim residual). Most features are 0 for any input · the *active* ones become human-interpretable concepts.
 
 ---
 

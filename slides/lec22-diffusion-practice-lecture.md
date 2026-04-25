@@ -68,6 +68,22 @@ Three common ways to inject $c$:
 
 ---
 
+# Cross-attention · the painter-following-instructions analogy
+
+<div class="keypoint">
+
+How does an image model **listen** to a text prompt?
+
+Imagine a painter following instructions. For every brushstroke they ask, *"Which part of the instruction applies right here?"*
+
+Cross-attention is exactly this · each spatial location in the image listens to the most relevant words in the prompt.
+
+</div>
+
+The result · a dynamic, **spatial** link between text and pixels. The "cat" word strongly influences cat-shaped regions; the "background" word influences corners.
+
+---
+
 # Text conditioning in Stable Diffusion
 
 ```python
@@ -335,6 +351,20 @@ We want to make it faster without retraining. Two approaches:
 
 - **Fewer sampling steps** (DDIM, DPM-Solver)
 - **Better architecture** (DiT, replacing U-Net with Transformer)
+
+---
+
+# DDIM · the foggy-hill analogy
+
+<div class="keypoint">
+
+Original DDPM is like walking down a rocky hill in **fog**. You take 1000 tiny careful steps because you can only see one step ahead.
+
+DDIM realizes · with the right model, **you can see the whole path**. Instead of 1000 wobbly steps, take 50 confident strides directly toward the final image.
+
+</div>
+
+The same trained model gets used · DDIM just chooses which subset of timesteps to evaluate. No retraining. 20× speedup at no cost in sample quality.
 
 ---
 

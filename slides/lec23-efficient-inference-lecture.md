@@ -57,6 +57,22 @@ Two phases · two bottlenecks
 
 ---
 
+# Reading vs writing · the inference analogy
+
+<div class="keypoint">
+
+Think of LLM inference like **reading a chapter** then **writing a summary**.
+
+**Prefill** = reading the chapter all at once · all words processed in parallel.
+
+**Decode** = writing the summary one word at a time · each new word depends on all previous, so it's strictly sequential.
+
+</div>
+
+That's why decode is much slower per token than prefill · we can't parallelize across the future. Almost every inference optimization (KV cache, speculative decode, FlashAttention) targets the decode phase.
+
+---
+
 # The two phases of LLM inference
 
 | Phase | What happens | Bottleneck |
@@ -128,6 +144,20 @@ $$M = 2 \cdot L \cdot H_\text{kv} \cdot d_h \cdot T \cdot B \cdot \text{bytes}$$
 $$M = 2 \cdot 80 \cdot 8 \cdot 128 \cdot 32{,}000 \cdot 1 \cdot 2 \approx 10.5 \text{ GB}$$
 
 With MHA (64 heads, no GQA) that would be 84 GB — **larger than the weights themselves.**
+
+---
+
+# Paged attention · the parking-lot analogy
+
+<div class="keypoint">
+
+Naive memory allocation reserves a **bus-sized parking spot** for every vehicle, even scooters · huge waste.
+
+Paged attention has only **standard car-sized spots** ("pages"). A bus uses several; a scooter uses one. Pack many more vehicles in the same lot.
+
+</div>
+
+For LLMs · "vehicles" = ongoing requests, each needing variable-length KV cache. Pages let us serve many short prompts in the memory that previously held one long-prompt KV cache. ~4× throughput in vLLM.
 
 ---
 

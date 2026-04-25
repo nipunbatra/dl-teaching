@@ -360,6 +360,23 @@ Radford, Metz, Chintala 2015 · *"Unsupervised Representation Learning with Deep
 
 ---
 
+# DCGAN · why these specific tricks?
+
+The DCGAN rules aren't arbitrary · each is a **stabilizer** for the tricky GAN game.
+
+<div class="math-box">
+
+- **LeakyReLU in D** · stops "dead neurons" so gradients keep flowing even on clearly-fake samples.
+- **BN everywhere** · keeps activations from drifting · preserves the delicate G/D balance.
+- **Tanh on G output** · matches the real-image normalization $[-1, 1]$. Without this, G can output anywhere and D learns "real images have bounded pixels" as a useless signal.
+- **Strided convs (no pooling)** · learnable downsampling lets G/D adapt to the data distribution.
+
+</div>
+
+Each rule is a small wedge that prevents a known failure mode. Combined, they made GANs train.
+
+---
+
 # DCGAN · five architectural guidelines
 
 1. Replace pooling with **strided convolutions** (both D and G).

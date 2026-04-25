@@ -385,6 +385,22 @@ Modern models (SDXL, Imagen) often use "v-prediction" — a weighted combination
 
 ---
 
+# Training · the noise-guessing game
+
+<div class="keypoint">
+
+How do we teach the network to "un-blur"?
+
+Take a clean image. Add a **known amount of random noise** $\epsilon$. Show the noisy result to the network. Ask it: *"What noise did I just add?"*
+
+</div>
+
+The better it gets at guessing the noise, the better it is at **denoising** · because subtracting the predicted noise gets us back to a cleaner image.
+
+That's the entire training objective · MSE between predicted noise and the true noise added.
+
+---
+
 # DDPM loss · surprisingly simple
 
 <div class="math-box">
@@ -553,6 +569,22 @@ Same thing, different derivation
 # The score field in one picture
 
 ![w:920px](figures/lec21/svg/score_field.svg)
+
+---
+
+# Score · the "uphill arrows" view
+
+<div class="keypoint">
+
+Pause and look at this from a different angle. Imagine our data points sit at the **bottom of valleys** in a landscape.
+
+The **score** is an arrow at every point in space that points in the steepest **uphill** direction.
+
+</div>
+
+If we can learn this field of "uphill" arrows, we can just **follow them backwards** to always go downhill toward valleys (i.e., toward real data).
+
+That's score-based generation. Mathematically equivalent to DDPM · just a different lens. Picking either lens is fine; many find score-based more intuitive (gradients pointing toward data).
 
 ---
 
