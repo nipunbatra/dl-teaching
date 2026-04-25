@@ -526,6 +526,12 @@ Convolution bakes in "nearby tokens matter"; self-attention lets the network dec
 
 ---
 
+# Causal mask · 5×5 grid
+
+![w:920px](figures/lec12/svg/causal_mask.svg)
+
+---
+
 # Causal self-attention · two lines to make GPT
 
 To make attention *autoregressive* (can't peek at future tokens), mask out the upper triangle before softmax:

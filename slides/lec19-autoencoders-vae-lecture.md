@@ -382,6 +382,12 @@ This is the trade-off the VAE balances at every sample.
 
 ---
 
+# Posterior collapse · the picture
+
+![w:920px](figures/lec19/svg/posterior_collapse.svg)
+
+---
+
 # Posterior collapse · what to watch for
 
 If the decoder is too powerful, the KL term will drive $q(z|x) \to p(z) = \mathcal{N}(0, I)$ · every image encodes to the same latent, $z$ carries no information about $x$.

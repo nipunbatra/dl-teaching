@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
+  <style>
+    .bg { fill: #F7F3E9; }
+    .title { font-size: 17px; font-weight: 600; fill: #161513; }
+    .head { font-size: 13px; font-weight: 600; fill: #161513; }
+    .body { font-size: 12px; fill: #161513; }
+    .caption { font-size: 11px; fill: #5F5C54; font-style: italic; }
+    .axis { stroke: #161513; stroke-width: 1; fill: none; }
+    .prior { fill: none; stroke: #B5AE9B; stroke-width: 1.2; stroke-dasharray: 4 3; }
+    .c0 { fill: #B85A3E; }
+    .c1 { fill: #5F8573; }
+    .c2 { fill: #37535F; }
+    .c3 { fill: #B5945A; }
+    .c4 { fill: #8E2A3B; }
+  </style>
+  <rect class="bg" width="960" height="380"/>
+  <text x="480" y="28" class="title" text-anchor="middle">Posterior collapse · when KL drives every encoder output to the prior</text>
+
+  <!-- Healthy latent space (left) -->
+  <g transform="translate(60, 70)">
+    <text x="180" y="0" class="head" text-anchor="middle">Healthy latent space</text>
+    <text x="180" y="20" class="caption" text-anchor="middle">classes occupy distinct regions</text>
+    <rect fill="white" stroke="#161513" stroke-width="1" x="0" y="35" width="360" height="260"/>
+    <!-- prior · unit circle -->
+    <ellipse class="prior" cx="180" cy="165" rx="100" ry="100"/>
+    <text x="280" y="60" class="caption" fill="#5F5C54">prior N(0,I)</text>
+
+    <!-- Class clusters -->
+    <g class="c0">
+      <circle cx="120" cy="120" r="4"/>
+      <circle cx="130" cy="135" r="4"/>
+      <circle cx="115" cy="145" r="4"/>
+      <circle cx="100" cy="125" r="4"/>
+      <circle cx="135" cy="115" r="4"/>
+    </g>
+    <text x="100" y="100" class="caption" fill="#B85A3E">"0"s</text>
+
+    <g class="c1">
+      <circle cx="240" cy="125" r="4"/>
+      <circle cx="255" cy="140" r="4"/>
+      <circle cx="245" cy="155" r="4"/>
+      <circle cx="230" cy="135" r="4"/>
+      <circle cx="260" cy="125" r="4"/>
+    </g>
+    <text x="265" y="100" class="caption" fill="#5F8573">"1"s</text>
+
+    <g class="c2">
+      <circle cx="180" cy="220" r="4"/>
+      <circle cx="170" cy="210" r="4"/>
+      <circle cx="195" cy="225" r="4"/>
+      <circle cx="160" cy="220" r="4"/>
+      <circle cx="200" cy="215" r="4"/>
+    </g>
+    <text x="185" y="250" class="caption" fill="#37535F">"7"s</text>
+
+    <g class="c3">
+      <circle cx="100" cy="200" r="4"/>
+      <circle cx="115" cy="210" r="4"/>
+      <circle cx="105" cy="190" r="4"/>
+      <circle cx="120" cy="195" r="4"/>
+    </g>
+    <text x="65" y="200" class="caption" fill="#B5945A">"4"s</text>
+
+    <text x="180" y="320" class="body" text-anchor="middle">latent encodes class · sample new digits ✓</text>
+  </g>
+
+  <!-- Collapsed (right) -->
+  <g transform="translate(540, 70)">
+    <text x="180" y="0" class="head" text-anchor="middle">Collapsed posterior</text>
+    <text x="180" y="20" class="caption" text-anchor="middle">all encoded points = N(0, I)</text>
+    <rect fill="white" stroke="#161513" stroke-width="1" x="0" y="35" width="360" height="260"/>
+    <!-- prior · unit circle -->
+    <ellipse class="prior" cx="180" cy="165" rx="100" ry="100"/>
+
+    <!-- All classes · same blob at center -->
+    <g>
+      <circle cx="178" cy="160" r="4" class="c0"/>
+      <circle cx="182" cy="170" r="4" class="c1"/>
+      <circle cx="174" cy="168" r="4" class="c2"/>
+      <circle cx="186" cy="158" r="4" class="c3"/>
+      <circle cx="172" cy="156" r="4" class="c4"/>
+      <circle cx="184" cy="172" r="4" class="c0"/>
+      <circle cx="180" cy="180" r="4" class="c1"/>
+      <circle cx="176" cy="148" r="4" class="c2"/>
+      <circle cx="190" cy="166" r="4" class="c3"/>
+      <circle cx="170" cy="170" r="4" class="c4"/>
+      <circle cx="180" cy="158" r="4" class="c0"/>
+      <circle cx="178" cy="172" r="4" class="c1"/>
+    </g>
+
+    <text x="180" y="320" class="body" text-anchor="middle" fill="#8E2A3B">latent carries no class info</text>
+    <text x="180" y="340" class="caption" text-anchor="middle">decoder ignores z · samples are blurry mush</text>
+  </g>
+
+  <!-- Cause -->
+  <text x="480" y="365" class="caption" text-anchor="middle"><tspan font-style="italic" font-weight="600">Cause</tspan> · decoder is too powerful · KL term wins · q(z|x) → N(0,I) for every x. <tspan font-style="italic" font-weight="600">Fixes</tspan> · β &lt; 1 · KL annealing · free bits.</text>
+</svg>

@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
+  <style>
+    .bg { fill: #F7F3E9; }
+    .title { font-size: 17px; font-weight: 600; fill: #161513; }
+    .head { font-size: 13px; font-weight: 600; fill: #161513; }
+    .body { font-size: 12px; fill: #161513; }
+    .caption { font-size: 11px; fill: #5F5C54; font-style: italic; }
+    .axis { stroke: #161513; stroke-width: 1; fill: none; }
+    .grid { stroke: #B5AE9B; stroke-width: 0.4; opacity: 0.5; fill: none; }
+    .sat { stroke: #8E2A3B; stroke-width: 2.4; fill: none; }
+    .nonsat { stroke: #5F8573; stroke-width: 2.4; fill: none; }
+    .danger { fill: #8E2A3B; opacity: 0.10; }
+  </style>
+  <rect class="bg" width="960" height="380"/>
+  <text x="480" y="28" class="title" text-anchor="middle">G's gradient · saturating vs non-saturating loss</text>
+
+  <!-- Plot area: D(G(z)) on x-axis (0 to 1), gradient magnitude on y -->
+  <g transform="translate(80, 70)">
+    <g class="grid">
+      <line x1="0" y1="60" x2="700" y2="60"/>
+      <line x1="0" y1="120" x2="700" y2="120"/>
+      <line x1="0" y1="180" x2="700" y2="180"/>
+      <line x1="0" y1="240" x2="700" y2="240"/>
+    </g>
+    <path class="axis" d="M 0 0 L 0 280 L 700 280"/>
+
+    <!-- Danger zone: D(G(z)) near 0 = G is bad -->
+    <rect class="danger" x="0" y="0" width="140" height="280"/>
+    <text x="70" y="20" class="caption" text-anchor="middle" fill="#8E2A3B">G is bad · D wins</text>
+
+    <!-- x labels -->
+    <text x="0" y="298" class="caption" text-anchor="middle">D(G(z)) = 0</text>
+    <text x="350" y="298" class="caption" text-anchor="middle">0.5</text>
+    <text x="700" y="298" class="caption" text-anchor="middle">1</text>
+    <text x="350" y="318" class="body" text-anchor="middle">D's confidence that G's sample is real</text>
+
+    <!-- y labels -->
+    <text x="-12" y="284" class="caption" text-anchor="end">0</text>
+    <text x="-12" y="180" class="caption" text-anchor="end">1</text>
+    <text x="-12" y="60" class="caption" text-anchor="end">5</text>
+    <text x="-12" y="0" class="caption" text-anchor="end">10</text>
+    <text x="-30" y="140" class="body" text-anchor="middle" transform="rotate(-90, -30, 140)">|gradient|</text>
+
+    <!-- Saturating: |d/dD log(1-D)| = 1/(1-D) · scaled to gradient passing through D · rising as D approaches 1 from below
+         Actually we plot |d/dD log(1-D)| = 1/(1-D) → 1 at D=0, ∞ at D=1
+         For G's actual gradient |D(1-D) · 1/(1-D)| = D · → 0 at D=0
+         Plot: y = D · 280 (max at D=1, 0 at D=0)
+    -->
+    <path class="sat" d="M 0 280 L 70 277 L 140 273 L 210 263 L 280 246 L 350 220 L 420 184 L 490 138 L 560 78 L 630 30 L 700 0"/>
+    <text x="540" y="30" class="caption" fill="#8E2A3B">saturating · log(1−D)</text>
+    <text x="540" y="46" class="caption" fill="#8E2A3B">flat where it matters most</text>
+
+    <!-- Non-saturating: |d/dD log(D)| = 1/D · gradient with D(1-D) chain ≈ (1-D), so high at D=0, 0 at D=1
+         Plot y = (1-D) · 280
+    -->
+    <path class="nonsat" d="M 0 0 L 70 30 L 140 78 L 210 138 L 280 184 L 350 220 L 420 246 L 490 263 L 560 273 L 630 277 L 700 280"/>
+    <text x="40" y="36" class="caption" fill="#5F8573">non-saturating · log(D)</text>
+    <text x="40" y="52" class="caption" fill="#5F8573">strong gradient when G is bad</text>
+
+    <!-- Annotation arrow -->
+    <line x1="50" y1="270" x2="50" y2="20" stroke="#161513" stroke-width="0.8" stroke-dasharray="3 2"/>
+    <text x="55" y="220" class="caption">at D=0.05</text>
+    <text x="55" y="240" class="caption">sat: ~0.05</text>
+    <text x="55" y="256" class="caption">non-sat: ~9.5</text>
+  </g>
+
+  <text x="480" y="370" class="caption" text-anchor="middle">100× difference in gradient magnitude when G is bad · why we use the non-saturating form.</text>
+</svg>

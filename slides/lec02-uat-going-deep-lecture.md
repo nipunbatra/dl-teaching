@@ -461,6 +461,57 @@ Keep activations — and gradients — at roughly **constant variance** across l
 
 ---
 
+# Why initialization matters · the failure mode
+
+If we initialize weights from $\mathcal{N}(0, 1)$ in a deep ReLU net:
+
+<div class="columns">
+<div>
+
+### Activations
+
+Each layer multiplies by a matrix of N(0,1) values. Activation magnitudes either **grow exponentially** with depth (explode) or **shrink exponentially** (vanish) depending on shape.
+
+</div>
+<div>
+
+### Gradients
+
+Same product, going backwards. A single bad scale → all early layers train at $10^{-30}$ effective rate · they never move.
+
+</div>
+</div>
+
+<div class="warning">
+
+**Symptom · loss is NaN at step 1**, or loss flat with all weights stuck. Always-and-only an init problem if the loop is otherwise correct.
+
+</div>
+
+The variance argument on the next slide gives a one-line fix · scale init by $1/\sqrt{n_\text{in}}$.
+
+---
+
+# Vanishing gradient · numeric example
+
+Suppose · 10-layer sigmoid network. Sigmoid derivative max is $0.25$ (at $x = 0$).
+
+<div class="math-box">
+
+Even at the *best* point, gradient through one layer multiplies by $\le 0.25$.
+
+After 10 layers · $0.25^{10} \approx 10^{-6}$
+
+After 20 layers · $0.25^{20} \approx 10^{-12}$
+
+</div>
+
+The first layer's effective learning rate is **a million times smaller** than the last layer's. It barely updates · network never learns features in early layers.
+
+This is the practical reason ReLU (derivative = 0 or 1) replaced sigmoid in deep nets · it doesn't shrink the gradient by a factor every layer.
+
+---
+
 # Forward-pass variance
 
 Layer: $y = \sum_{i=1}^{n_\text{in}} w_i\, x_i$. Assume $w_i, x_i$ independent, zero-mean.

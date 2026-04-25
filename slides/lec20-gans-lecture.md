@@ -272,6 +272,12 @@ It's a subtle but critical detail. Forgetting it is one of the top-3 bugs in fro
 
 ---
 
+# G's gradient · saturating vs non-saturating
+
+![w:920px](figures/lec20/svg/saturating_loss_curve.svg)
+
+---
+
 # The non-saturating trick
 
 **Intuition** · early in training, $D$ always wins — fakes look nothing like real. So $D(G(z)) \approx 0$, and $\log(1 - D(G(z))) \approx \log 1 = 0$. Flat. **No gradient for G to improve.**

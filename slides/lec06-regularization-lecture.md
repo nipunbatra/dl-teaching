@@ -567,6 +567,25 @@ Two problems that normalization fixes:
 
 ---
 
+# BatchNorm · worked numeric example
+
+<div class="math-box">
+
+Mini-batch of 4 activations · $x = [1, 3, 5, 7]$.
+
+**Step 1** · mean $\mu = (1 + 3 + 5 + 7) / 4 = 4.0$
+**Step 2** · variance $\sigma^2 = \frac{1}{4}((-3)^2 + (-1)^2 + 1^2 + 3^2) = 5.0$ → $\sigma \approx 2.236$
+**Step 3** · normalize · $\hat x = (x - \mu) / \sigma = [-1.34, -0.45, 0.45, 1.34]$
+**Step 4** · scale + shift with learned $\gamma, \beta$ · suppose $\gamma = 2.0, \beta = 0.5$
+
+$$y = \gamma \hat x + \beta = [-2.18, -0.40, 1.40, 3.18]$$
+
+</div>
+
+At eval time · use the running mean/var collected during training, not the batch statistics. This is why `model.eval()` matters · it switches to running stats.
+
+---
+
 # The ICS debate
 
 Ioffe &amp; Szegedy 2015 · BN helps by reducing **internal covariate shift** (ICS) — the changing distribution of layer inputs during training.
