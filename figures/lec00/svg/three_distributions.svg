@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" font-family="EB Garamond, Georgia, serif">
+  <style>
+    .bg { fill: #F7F3E9; }
+    .title { font-size: 17px; font-weight: 600; fill: #161513; }
+    .head { font-size: 13px; font-weight: 600; fill: #161513; }
+    .body { font-size: 12px; fill: #161513; }
+    .mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; fill: #161513; }
+    .caption { font-size: 11px; fill: #5F5C54; font-style: italic; }
+    .axis { stroke: #161513; stroke-width: 1; fill: none; }
+    .bar-rust { fill: #B85A3E; }
+    .bar-sage { fill: #5F8573; }
+    .bar-slate { fill: #37535F; }
+    .pdf { fill: none; stroke: #B85A3E; stroke-width: 2.4; }
+  </style>
+  <rect class="bg" width="960" height="360"/>
+  <text x="480" y="28" class="title" text-anchor="middle">Three distributions for everything in DL</text>
+
+  <!-- Bernoulli -->
+  <g transform="translate(40, 60)">
+    <text x="140" y="0" class="head" text-anchor="middle">Bernoulli (p = 0.7)</text>
+    <text x="140" y="20" class="caption" text-anchor="middle">binary outcomes · spam / not</text>
+    <line x1="20" y1="220" x2="260" y2="220" class="axis"/>
+    <line x1="20" y1="50" x2="20" y2="220" class="axis"/>
+    <text x="14" y="225" class="caption" text-anchor="end">0</text>
+    <text x="14" y="60" class="caption" text-anchor="end">1.0</text>
+    <!-- bar at 0 (height 0.3) -->
+    <rect class="bar-rust" x="60" y="169" width="50" height="51"/>
+    <text x="85" y="240" class="caption" text-anchor="middle">Y=0</text>
+    <text x="85" y="160" class="mono" text-anchor="middle">0.3</text>
+    <!-- bar at 1 (height 0.7) -->
+    <rect class="bar-rust" x="170" y="100" width="50" height="120"/>
+    <text x="195" y="240" class="caption" text-anchor="middle">Y=1</text>
+    <text x="195" y="92" class="mono" text-anchor="middle">0.7</text>
+    <text x="140" y="270" class="caption" text-anchor="middle">→ binary cross-entropy loss</text>
+  </g>
+
+  <!-- Categorical -->
+  <g transform="translate(340, 60)">
+    <text x="140" y="0" class="head" text-anchor="middle">Categorical (3 classes)</text>
+    <text x="140" y="20" class="caption" text-anchor="middle">image class · token in vocab</text>
+    <line x1="20" y1="220" x2="260" y2="220" class="axis"/>
+    <line x1="20" y1="50" x2="20" y2="220" class="axis"/>
+    <text x="14" y="225" class="caption" text-anchor="end">0</text>
+    <text x="14" y="60" class="caption" text-anchor="end">1.0</text>
+    <!-- bars: 0.1, 0.7, 0.2 -->
+    <rect class="bar-sage" x="50" y="203" width="55" height="17"/>
+    <text x="77" y="240" class="caption" text-anchor="middle">cls 1</text>
+    <text x="77" y="195" class="mono" text-anchor="middle">0.1</text>
+    <rect class="bar-sage" x="115" y="100" width="55" height="120"/>
+    <text x="142" y="240" class="caption" text-anchor="middle">cls 2</text>
+    <text x="142" y="92" class="mono" text-anchor="middle">0.7</text>
+    <rect class="bar-sage" x="180" y="186" width="55" height="34"/>
+    <text x="207" y="240" class="caption" text-anchor="middle">cls 3</text>
+    <text x="207" y="178" class="mono" text-anchor="middle">0.2</text>
+    <text x="140" y="270" class="caption" text-anchor="middle">→ categorical cross-entropy loss</text>
+  </g>
+
+  <!-- Normal -->
+  <g transform="translate(640, 60)">
+    <text x="140" y="0" class="head" text-anchor="middle">Normal · N(0, 1)</text>
+    <text x="140" y="20" class="caption" text-anchor="middle">heights · sensor · diffusion noise</text>
+    <line x1="20" y1="220" x2="260" y2="220" class="axis"/>
+    <line x1="140" y1="50" x2="140" y2="220" class="axis"/>
+    <text x="20" y="240" class="caption" text-anchor="middle">−3σ</text>
+    <text x="140" y="240" class="caption" text-anchor="middle">μ=0</text>
+    <text x="260" y="240" class="caption" text-anchor="middle">+3σ</text>
+    <!-- pdf curve · bell -->
+    <path class="pdf" d="M 20 219 Q 50 218 80 213 Q 110 195 130 90 Q 140 60 150 90 Q 170 195 200 213 Q 230 218 260 219"/>
+    <text x="140" y="270" class="caption" text-anchor="middle">→ MSE loss</text>
+  </g>
+
+  <!-- Footer -->
+  <rect x="40" y="305" width="880" height="40" fill="#FFF1EA" stroke="#B85A3E" stroke-width="1" rx="6"/>
+  <text x="480" y="324" class="body" text-anchor="middle"><tspan font-weight="600">The pattern</tspan> · pick the distribution matching your output type · NLL of that distribution = your loss.</text>
+  <text x="480" y="340" class="caption" text-anchor="middle">Bernoulli → BCE · Categorical → CE · Normal → MSE. Every loss in DL follows this recipe.</text>
+</svg>
