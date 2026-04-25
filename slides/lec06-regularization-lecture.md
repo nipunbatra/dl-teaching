@@ -63,6 +63,22 @@ Today maps to **UDL Ch 9** (Regularization) and the BatchNorm parts of **Ch 11**
 
 ---
 
+# Two students · the regularization story
+
+<div class="keypoint">
+
+**Student A · memorizes** the 100 practice problems. Aces the practice test. Fails the real exam (different problems).
+
+**Student B · learns the method.** Doesn't memorize · understands. Does fine on both.
+
+Regularization is how we force our model to be Student B.
+
+</div>
+
+Without it · a deep network has more than enough capacity to memorize the training set perfectly while learning nothing transferable. With it · the model is encouraged to find patterns that hold beyond the training data.
+
+---
+
 # What's new in DL regularization vs classical ML
 
 <div class="columns">
@@ -163,6 +179,23 @@ ResNet-50 has 25M params; modern LLMs have 10¹¹. Both generalize fine *because
 # L2, L1, early stopping
 
 Brisk — you know these from ES 654
+
+---
+
+# L2 worked numeric · single-weight update
+
+<div class="math-box">
+
+A single weight · $w = 2.0$. Loss gradient · $dL/dw = 1.5$. LR · $\eta = 0.1$. Decay · $\lambda = 0.01$.
+
+**Without L2** · $w_\text{new} = 2.0 - 0.1 \cdot 1.5 = 1.85$
+
+**With L2** · the gradient becomes $1.5 + \lambda w = 1.52$
+$w_\text{new} = 2.0 - 0.1 \cdot 1.52 = 1.848$
+
+</div>
+
+The weight ends up slightly smaller · "decayed" toward zero. Repeat over thousands of steps · big weights shrink, the loss only lets them grow if they really earn their keep.
 
 ---
 
@@ -496,6 +529,20 @@ The training-time scaling-up by $1/p$ is what lets us drop the mask at eval time
 
 ---
 
+# Dropout · the basketball-team analogy
+
+<div class="keypoint">
+
+Imagine training a basketball team where, in any given practice drill, some players randomly sit out. No one can rely too much on the star player · she might not be there.
+
+Result · everyone becomes more versatile. The team performs more reliably with any subset on the court.
+
+</div>
+
+That's what dropout does to neurons · it prevents them from **co-adapting** (relying too heavily on a few specific neighbors). Each neuron has to become individually useful.
+
+---
+
 # Dropout in PyTorch
 
 ```python
@@ -513,6 +560,12 @@ def forward(self, x):
 <div class="realworld">
 
 `model.train()` and `model.eval()` toggle it automatically. Forgetting the mode switch is a classic bug.
+
+</div>
+
+<div class="warning">
+
+**Convention mismatch warning** · in lecture math, $p$ often denotes **keep** probability (Bernoulli$(p)$). PyTorch's `nn.Dropout(p)` uses $p$ as the **drop** probability. Keep-prob 0.8 ↔ `nn.Dropout(p=0.2)`. Always double-check.
 
 </div>
 
@@ -543,6 +596,22 @@ Dropout was the biggest regularization breakthrough of 2012. Today it is oversha
 # Normalization
 
 Same family, three flavours, one knob at a time
+
+---
+
+# Hiker in a canyon · why normalization matters
+
+<div class="keypoint">
+
+Imagine a hiker descending a long, narrow, steep-sided canyon. They bounce side-to-side, making slow progress along the canyon's length.
+
+A round bowl is much easier · the hiker walks straight to the bottom.
+
+Normalization **reshapes** the loss landscape from a canyon into a bowl · same minimum, much easier optimizer trajectory.
+
+</div>
+
+Concretely · BN/LN keep activations centered and unit-scale, which means the loss's curvature in different directions is roughly equal. The optimizer takes confident, direct steps.
 
 ---
 
