@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
+  <style>
+    .bg { fill: #F7F3E9; }
+    .title { font-size: 17px; font-weight: 600; fill: #161513; }
+    .head { font-size: 13px; font-weight: 600; fill: #161513; }
+    .body { font-size: 12px; fill: #161513; }
+    .caption { font-size: 11px; fill: #5F5C54; font-style: italic; }
+    .layer { fill: white; stroke: #4A6670; stroke-width: 1.4; rx: 6; }
+    .axis { stroke: #161513; stroke-width: 1; fill: none; }
+    .vanish { stroke: #8E2A3B; stroke-width: 2.4; fill: none; }
+    .stable { stroke: #5F8573; stroke-width: 2.4; fill: none; }
+    .explode { stroke: #B85A3E; stroke-width: 2.4; fill: none; }
+    .grid { stroke: #B5AE9B; stroke-width: 0.4; opacity: 0.5; fill: none; }
+  </style>
+  <rect class="bg" width="960" height="380"/>
+  <text x="480" y="28" class="title" text-anchor="middle">Activation magnitude across layers · three regimes from initialization</text>
+
+  <!-- 3 panels -->
+  <g transform="translate(40, 70)">
+    <text x="140" y="0" class="head" text-anchor="middle">Var(W) too large · explode</text>
+    <rect x="0" y="20" width="280" height="220" fill="white" stroke="#161513" stroke-width="1"/>
+    <g class="grid"><line x1="0" y1="80" x2="280" y2="80"/><line x1="0" y1="140" x2="280" y2="140"/><line x1="0" y1="200" x2="280" y2="200"/></g>
+    <path class="explode" d="M 0 200 L 35 195 L 70 180 L 105 150 L 140 110 L 175 70 L 210 40 L 245 25 L 280 20"/>
+    <text x="14" y="245" class="caption">L1</text>
+    <text x="266" y="245" class="caption" text-anchor="end">L10</text>
+    <text x="140" y="265" class="caption" text-anchor="middle">Var · diverges to ∞</text>
+  </g>
+
+  <g transform="translate(340, 70)">
+    <text x="140" y="0" class="head" text-anchor="middle">Var(W) = 1/n_in · stable</text>
+    <rect x="0" y="20" width="280" height="220" fill="white" stroke="#161513" stroke-width="1"/>
+    <g class="grid"><line x1="0" y1="80" x2="280" y2="80"/><line x1="0" y1="140" x2="280" y2="140"/><line x1="0" y1="200" x2="280" y2="200"/></g>
+    <path class="stable" d="M 0 140 L 35 138 L 70 142 L 105 137 L 140 140 L 175 138 L 210 142 L 245 139 L 280 140"/>
+    <text x="14" y="245" class="caption">L1</text>
+    <text x="266" y="245" class="caption" text-anchor="end">L10</text>
+    <text x="140" y="265" class="caption" text-anchor="middle">Var · stays near 1 (good)</text>
+  </g>
+
+  <g transform="translate(640, 70)">
+    <text x="140" y="0" class="head" text-anchor="middle">Var(W) too small · vanish</text>
+    <rect x="0" y="20" width="280" height="220" fill="white" stroke="#161513" stroke-width="1"/>
+    <g class="grid"><line x1="0" y1="80" x2="280" y2="80"/><line x1="0" y1="140" x2="280" y2="140"/><line x1="0" y1="200" x2="280" y2="200"/></g>
+    <path class="vanish" d="M 0 80 L 35 100 L 70 130 L 105 165 L 140 195 L 175 220 L 210 232 L 245 238 L 280 240"/>
+    <text x="14" y="245" class="caption">L1</text>
+    <text x="266" y="245" class="caption" text-anchor="end">L10</text>
+    <text x="140" y="265" class="caption" text-anchor="middle">Var · collapses to 0</text>
+  </g>
+
+  <!-- Footer -->
+  <rect x="40" y="320" width="880" height="50" fill="#FFF1EA" stroke="#B85A3E" stroke-width="1" rx="6"/>
+  <text x="480" y="340" class="body" text-anchor="middle"><tspan font-weight="600">Goal of init</tspan> · pick Var(W) so each layer preserves the signal's variance.</text>
+  <text x="480" y="358" class="caption" text-anchor="middle">Xavier · Var(W) = 1 / n_in for sigmoid/tanh.   He · 2 / n_in for ReLU (compensates the half that's clipped to 0).</text>
+</svg>

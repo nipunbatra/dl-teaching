@@ -52,6 +52,12 @@ Think before the next slide: *why* would that fail?
 
 ---
 
+# Linear · works for separable data, fails for curved data
+
+![w:920px](figures/lec01/svg/linear_vs_nonlinear_data.svg)
+
+---
+
 # Why raw pixels break a linear classifier
 
 ![w:900px](figures/lec01/svg/pixel_shift_fail.svg)

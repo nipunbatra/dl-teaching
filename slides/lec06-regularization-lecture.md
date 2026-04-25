@@ -199,6 +199,12 @@ The weight ends up slightly smaller · "decayed" toward zero. Repeat over thousa
 
 ---
 
+# L1 vs L2 · the geometry
+
+![w:920px](figures/lec06/svg/l1_l2_geometry.svg)
+
+---
+
 # L2 / weight decay · 30-second recap
 
 Add $\frac{\lambda}{2}\|\theta\|^2$ to the loss → gradient contribution $\lambda \theta$ → weights shrink every step.
@@ -376,6 +382,12 @@ Because "1.0 for the right class" is a lie
 # Hard vs soft targets
 
 ![w:920px](figures/lec06/svg/label_smoothing.svg)
+
+---
+
+# Hard target vs soft target · in bars
+
+![w:920px](figures/lec06/svg/label_smoothing_bars.svg)
 
 ---
 

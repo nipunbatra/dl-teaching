@@ -1,87 +1,84 @@
-Excellent lecture. It's modern, comprehensive, and hits the right topics for 2026. The structure is clear, and the two-session split is smart. The following are concrete suggestions to make it even more accessible for first-time students, following your stated priorities.
+Excellent lecture on a crucial topic. The structure is logical, the analogies are strong, and it correctly prioritizes modern techniques. This punch list aims to make it even more accessible and impactful for first-time students by adding more intuition and concrete numeric examples, per your request.
 
 ### I) INTUITION TO ADD
 
-1.  **Insert BEFORE:** "What's new in DL regularization vs classical ML"
-    **Intuitive Framing:** Let's start with a simple story. Imagine two students studying for an exam. Student A memorizes the exact answers to the 100 practice problems. Student B tries to understand the *method* for solving them. Student A will ace the practice test but fail the real exam if the questions are slightly different. Student B will do well on both. Regularization is how we force our model to be Student B — to learn the general method, not just memorize the training data.
+1.  **Insert BEFORE**: "L2 worked numeric · single-weight update" (S13)
+    **Intuitive Framing**: "Why do we penalize large weights at all? Think of Occam's Razor: simpler explanations are better. A model with smaller weights is, in a sense, 'simpler'. It means no single feature has a wildly outsized influence. L2 regularization is our way of telling the model: 'Find a simple, robust solution, not a complex, brittle one that relies on weirdly large weights.'"
 
-2.  **Insert BEFORE:** "Why augmentation is powerful"
-    **Intuitive Framing:** Our training dataset is a tiny, incomplete snapshot of the real world. A cat can be seen from the side, from the front, in bright light, in shadow. By creating these variations automatically, data augmentation gives our model a "worldlier" education from the same limited set of photos. We're showing it more of the world without leaving the classroom.
+2.  **Insert BEFORE**: "Early stopping as implicit regularization" (S16)
+    **Intuitive Framing**: "Think of training as baking a cake. At first, it's uncooked (underfit). Then it's perfectly golden (good generalization). If you leave it in the oven (training) for too long, the outside burns (it memorizes training set noise) even as the inside might still seem okay. Early stopping is just a fancy term for taking the cake out of the oven when it looks best on the validation set, not when the timer goes off."
 
-3.  **Insert BEFORE:** "The idea (Hinton 2012)" [Dropout]
-    **Intuitive Framing:** Imagine training a basketball team where, for any given practice drill, some players might randomly sit out. No one can afford to rely too much on the star player, because she might not be there. Everyone has to become more versatile and capable on their own. This is what dropout does to neurons: it prevents them from "co-adapting" or relying too heavily on a few specific other neurons.
+3.  **Insert BEFORE**: "Why Mixup and CutMix work" (S24)
+    **Intuitive Framing**: "Imagine teaching a child the difference between a cat and a dog. You wouldn't just show them perfect, distinct pictures. You might say 'This looks like 70% cat and 30% dog.' Mixup does this for the network. By forcing the model to predict smoothly interpolated labels for smoothly interpolated images, we prevent it from creating sharp, overconfident 'cliffs' in its decision-making. It learns to be more measured and that the world between classes is continuous, not discrete."
 
-4.  **Insert BEFORE:** "Why normalize at all?"
-    **Intuitive Framing:** Think of training a network as a hiker trying to find the lowest point in a valley. If the valley is a long, narrow, steep-sided canyon, the hiker will bounce from side to side and make very slow progress down. Normalization reshapes the landscape, making it more like a round bowl, so the hiker can take confident, direct steps toward the bottom. It helps the optimizer by making the loss landscape smoother.
+4.  **Insert BEFORE**: "Hiker in a canyon · why normalization matters" (S42)
+    **Intuitive Framing**: "Deep networks are like a game of telephone. What layer 1 says, layer 2 hears. What layer 2 says, layer 3 hears. If layer 10 starts shouting (outputting huge numbers), layer 11 gets overwhelmed. If it starts whispering (outputting tiny numbers), layer 11 can't hear anything. Normalization layers are like a volume-control knob between every two layers, ensuring the signal always stays in a healthy, easy-to-learn range."
 
 ### II) DIAGRAMS / IMAGES TO CREATE
 
-1.  **Slide Title:** "L1 · the sparsity-inducing sibling"
-    **Description:** Draw a 2D plot. The X and Y axes are two weights, `w1` and `w2`. Draw elliptical contour lines representing the loss function, with the minimum not at the origin.
-    - On the left, overlay a diamond shape (the L1 norm constraint, `|w1|+|w2| <= C`). Show that the ellipse is likely to touch the diamond at a corner, forcing one weight (e.g., `w1`) to be zero. Label this "L1 → Sparse."
-    - On the right, overlay a circle (the L2 norm constraint, `w1^2+w2^2 <= C`). Show the ellipse touching the circle at a point where neither `w1` nor `w2` is zero. Label this "L2 → Small."
-    **Why it helps:** This is the canonical visualization for why L1 induces sparsity and L2 doesn't. It makes the abstract concept of penalty shapes immediately concrete.
+1.  **Insert ON**: "L1 · the sparsity-inducing sibling" (S15)
+    **Description**: Create a 2D plot with weight axes w1 and w2. Draw elliptical contours for the loss function, with the minimum somewhere not at the origin. Overlay two constraint regions centered at the origin: a circle for L2 and a diamond for L1. Show that the loss contour first touches the L2 circle at a point where both w1 and w2 are non-zero, but it first touches the L1 diamond on an axis (e.g., where w1=0).
+    **Why it helps**: This single image provides the entire geometric intuition for why L1 creates sparsity and L2 doesn't, which is far more powerful than words alone.
 
-2.  **Slide Title:** "Early stopping as implicit regularization"
-    **Description:** A simple 2D line chart. X-axis: "Training Epochs". Y-axis: "Loss".
-    - Draw a blue line, "Training Loss," that consistently goes down.
-    - Draw a red line, "Validation Loss," that forms a U-shape: it goes down, hits a minimum, then starts to rise.
-    - Draw a vertical dotted line at the minimum of the red curve. Label it "Best model / Stop here!"
-    **Why it helps:** Visually anchors the entire concept. Students can see the exact moment overfitting begins (when validation loss rises) and understand what "stopping early" means.
+2.  **Insert ON**: "Early stopping as implicit regularization" (S16)
+    **Description**: Re-create the classic training curve plot. X-axis: "Epoch", Y-axis: "Loss". Draw a solid blue line for "Training Loss" that continually decreases. Draw a dashed orange line for "Validation Loss" that decreases and then starts to increase. Add a vertical dotted line labeled "Best model (early stopping point)" where the validation loss is lowest.
+    **Why it helps**: This visual makes the concept instantly understandable and reinforces the key trade-off without needing to refer back to a previous lecture.
 
-3.  **Slide Title:** "Why soften the labels?"
-    **Description:** Two bar charts side-by-side for a 4-class problem, with the true label being Class 2.
-    - **Left chart title:** "Hard Target (One-Hot)". Bars for Class 1, 3, 4 are at height 0. The bar for Class 2 is at height 1.0.
-    - **Right chart title:** "Soft Target (Label Smoothing, α=0.1)". The bar for Class 2 is at height 0.925 (`1 - 0.1 + 0.1/4`). The bars for Classes 1, 3, and 4 are at a tiny, non-zero height of 0.025 (`0.1/4`).
-    **Why it helps:** It provides an instant visual for the math `(1 - α)y + α/K`. Students can see that "smoothing" means taking a bit of probability from the winner and giving it to the losers.
+3.  **Insert ON**: "BatchNorm · train vs eval modes" (S45)
+    **Description**: A two-panel diagram.
+    -   **Left Panel (Training)**: Title "model.train()". Show a box representing a mini-batch of activations (e.g., 4 rows, `C` columns). Show arrows indicating mean/var are calculated *down the columns* (batch axis). An arrow points from this calculation to two boxes outside labeled "running_mean" and "running_var", with a label "update with momentum".
+    -   **Right Panel (Evaluation)**: Title "model.eval()". Show a single input activation (1 row, `C` columns). Show arrows pointing *from* the "running_mean" and "running_var" boxes *to* the normalization step for this single input.
+    **Why it helps**: This makes the crucial difference between train and eval modes concrete, which is a common point of confusion.
 
-4.  **Slide Title:** "Two intuitions for why it helps" [Dropout]
-    **Description:** Create a diagram to visualize "co-adaptation."
-    - **Left panel ("No Dropout"):** Draw 3 input neurons connected to 1 hidden neuron. Show two thick arrows from input 1 and 2 to the hidden neuron, and one very thin arrow from input 3. Label: "Hidden neuron relies heavily on inputs 1 & 2."
-    - **Right panel ("With Dropout"):** Show the same setup, but this time input 2 is crossed out with a red "X" (it was dropped). The arrows from inputs 1 and 3 are now both medium-thick. Label: "Hidden neuron must learn to use inputs 1 & 3. It becomes more robust."
-    **Why it helps:** This diagrammatically explains the co-adaptation argument, which is less intuitive than the ensemble view, making the concept stick better.
+4.  **Insert AFTER**: "Hard vs soft targets" (S27), on a new slide titled "The Effect of Label Smoothing on Logits"
+    **Description**: A two-panel plot. X-axis: "Logit value for correct class", Y-axis: "Loss contribution".
+    -   **Left Panel (Hard Target)**: Show a curve where the loss only approaches zero as the logit approaches positive infinity. The model is incentivized to make its logits infinitely large.
+    -   **Right Panel (Smoothed Target)**: Show a curve where the minimum loss occurs at a *finite, positive* logit value. The model is no longer pushed to be infinitely confident.
+    **Why it helps**: It visualizes *why* smoothing prevents overconfidence by showing its effect on the optimization landscape of the logits.
 
 ### III) WORKED NUMERIC EXAMPLES TO ADD
 
-1.  **Slide Title:** "Mixup in PyTorch · 10 lines"
-    **Setup:** Image A is a 2x2 "cat" `[[1, 0], [1, 0]]` with label `y_A = [1, 0]` (cat, not dog). Image B is a 2x2 "dog" `[[0, 1], [0, 1]]` with label `y_B = [0, 1]`. Let's pick `lambda (lam) = 0.7`.
-    **Step-by-step:**
-    - `x_mix = 0.7 * [[1, 0], [1, 0]] + 0.3 * [[0, 1], [0, 1]] = [[0.7, 0.3], [0.7, 0.3]]`
-    - `y_target = 0.7 * [1, 0] + 0.3 * [0, 1] = [0.7, 0.3]`
-    - Model `f(x_mix)` outputs logits, say `[1.5, 0.2]`.
-    - Loss = `0.7 * CrossEntropy([1.5, 0.2], [1, 0]) + 0.3 * CrossEntropy([1.5, 0.2], [0, 1])`.
-    **Takeaway:** The model is trained on a blended image and must predict a proportionally blended label.
+1.  **Insert ON**: A new slide after "Mixup and CutMix in one picture" (S23) titled "Mixup · a worked numeric example"
+    -   **Setup**: Imagine two 2x2 grayscale images and one-hot labels for 2 classes.
+        -   Image A (cat): `[[1, 1], [1, 1]]`, Label `y_a = [1, 0]`
+        -   Image B (dog): `[[0, 0], [0, 0]]`, Label `y_b = [0, 1]`
+        -   Mixup lambda: `λ = 0.7`
+    -   **Calculation**:
+        -   `x_mix = 0.7 * A + (1 - 0.7) * B = [[0.7, 0.7], [0.7, 0.7]]`
+        -   `y_mix = 0.7 * y_a + 0.3 * y_b = 0.7*[1,0] + 0.3*[0,1] = [0.7, 0.3]`
+    -   **Takeaway**: The model is now trained on a "70% cat" image with a "70% cat" label.
 
-2.  **Slide Title:** "Why soften the labels?"
-    **Setup:** 3-class problem. Model outputs logits `[1.0, 4.0, 0.5]`. True label is class 1, so the hard target is `y_hard = [0, 1, 0]`.
-    **Step-by-step:**
-    - **With hard target:** `loss = CrossEntropy([1.0, 4.0, 0.5], [0, 1, 0])`. The loss only comes from the logit for class 1. The model is incentivized to push `4.0` towards `+infinity`.
-    - **With soft target (α=0.1):** `y_smooth = [0.05, 0.9, 0.05]`.
-    - `loss = CrossEntropy([1.0, 4.0, 0.5], [0.05, 0.9, 0.05])`. Now the loss also penalizes having low logits for the "wrong" classes.
-    **Takeaway:** Label smoothing forces the model to keep the "wrong" class logits from getting too low, preventing overconfidence.
+2.  **Insert ON**: "LayerNorm · fix for sequences" (S50), inside a math box.
+    -   **Setup**: A mini-batch of 2 samples, each with 4 features: `x = [[1, 3, 5, 7], [10, 20, 30, 40]]`.
+    -   **Step-by-step**:
+        -   **Sample 1**: `mean = 4.0`, `var = 5.0`. Normalized: `(x[0] - 4.0) / sqrt(5.0) = [-1.34, -0.45, 0.45, 1.34]`
+        -   **Sample 2**: `mean = 25.0`, `var = 125.0`. Normalized: `(x[1] - 25.0) / sqrt(125.0) = [-1.34, -0.45, 0.45, 1.34]`
+    -   **Takeaway**: LayerNorm normalizes each sample independently across its features; batch size is irrelevant.
 
-3.  **Slide Title:** "L2 / weight decay · 30-second recap"
-    **Setup:** A single weight `w = 2.0`. Loss `L = (y_hat - y)^2`. Suppose the gradient of the loss w.r.t `w` is `dL/dw = 1.5`. Let learning rate `lr = 0.1` and `lambda = 0.01`.
-    **Step-by-step:**
-    - **Update without L2:** `w_new = w - lr * (dL/dw) = 2.0 - 0.1 * 1.5 = 1.85`.
-    - **L2 penalty term:** `R(w) = (lambda/2) * w^2`. Gradient is `dR/dw = lambda * w = 0.01 * 2.0 = 0.02`.
-    - **Update with L2:** `w_new = w - lr * (dL/dw + dR/dw) = 2.0 - 0.1 * (1.5 + 0.02) = 2.0 - 0.152 = 1.848`.
-    **Takeaway:** The final weight is smaller with L2—it was "decayed" towards zero during the update.
+3.  **Insert ON**: "RMSNorm · the cheap modern cousin" (S51), inside a math box.
+    -   **Setup**: Use the first sample from the LayerNorm example: `x = [1, 3, 5, 7]`.
+    -   **Step-by-step**:
+        -   **Step 1 (Root Mean Square)**: `RMS = sqrt(mean(1^2 + 3^2 + 5^2 + 7^2)) = sqrt(84/4) = sqrt(21) ≈ 4.58`
+        -   **Step 2 (Normalize)**: `x / RMS = [1/4.58, 3/4.58, 5/4.58, 7/4.58] = [0.22, 0.66, 1.09, 1.53]`
+    -   **Takeaway**: RMSNorm is simpler than LayerNorm: it just scales the vector, no centering.
 
 ### IV) OVERALL IMPROVEMENTS
 
-1.  **Cut / Mark Optional:**
-    - **Mark Optional:** The "Bayesian view" box on the L2 slide. It's correct but potentially confusing for first-timers. A note like "(Optional: Bayesian interpretation)" is perfect.
-    - **Condense:** The "ICS debate" slide. It's a great piece of trivia for advanced students. For first-timers, you can shorten it to: "The original motivation for BN was 'internal covariate shift,' but a 2018 paper showed the real benefit is that it **smooths the loss landscape**, allowing larger learning rates. This is the modern understanding."
+1.  **Things to Cut / De-emphasize**:
+    -   On "L1 · the sparsity-inducing sibling" (S15), add a note: *"Marked for context. L1 is rarely used in modern DL, but the comparison to L2 is instructive."* This prevents students from thinking they need to use it.
+    -   On "The ICS debate" (S47), frame the Santurkar et al. finding as an optional deep-dive. Keep the main point simple: *"The original reason given was 'ICS', but today we know the key benefit is smoothing the loss landscape, which allows for faster training."*
 
-2.  **Flow / Pacing:**
-    - **Session 1 is dense.** It covers 5-6 distinct ideas. Consider moving "Label smoothing" to the start of Session 2. It fits thematically with "modifying network internals" (logits, activations) alongside Dropout and Normalization. This would give more breathing room to Mixup/CutMix in Session 1.
-    - **Add a "Bridge" Slide:** At the start of Session 2, add a slide titled "From Data to Architecture." Briefly state: "In Session 1, we regularized by changing the *data* (augmentation, Mixup) and the *loss* (L2, label smoothing). Now, we'll build regularization directly into the *network architecture* itself with Dropout and Normalization."
+2.  **Flow and Pacing**:
+    -   Add a new slide right after the "Plan for the two sessions" (S4) called "A map of regularization techniques". Create a simple 2x2 table:
+        | | **Modify the Data** | **Modify the Model** |
+        |---|---|---|
+        | **During Training Loop** | Data Augmentation, Mixup/CutMix | L2, Label Smoothing |
+        | **In the Architecture** | *(N/A)* | Dropout, Normalization |
+    -   This provides a mental framework for students to categorize all the techniques they are about to learn.
 
-3.  **Notebook Ideas:**
-    - The two notebook ideas are excellent and cover the material perfectly.
-    - **Add a mini-notebook `06c-l1-sparsity.ipynb`:** Use scikit-learn's `Lasso` and `Ridge` on a simple regression problem with 10 features, where only 3 are actually useful. Fit both models and print the `model.coef_`. The `Lasso` coefficients will have many exact zeros, while `Ridge` will have all small non-zero values. This provides a dead-simple, tangible demonstration of the L1 sparsity diagram.
+3.  **Missing Notebook Ideas**:
+    -   **Notebook 6c**: `06c-normalization-showdown.ipynb`. Train a simple CNN on CIFAR-10, but in a loop over batch sizes `[4, 16, 64]`. For each batch size, train separate models using `BatchNorm2d`, `LayerNorm`, and `GroupNorm`. Plot the final validation accuracies in a bar chart. The chart will vividly show `BatchNorm`'s performance collapsing at small batch sizes while the others remain stable.
 
-4.  **Clarity on `p` in Dropout:**
-    - The slides use `p` as the **keep probability** ("Bernoulli(p)"). PyTorch's `nn.Dropout(p)` uses `p` as the **drop probability**. This is a classic "off-by-one" confusion point. Explicitly add a warning box on the "Dropout in PyTorch" slide:
-      > **Warning: Convention Mismatch!** Our formulas use `p` as the *keep* probability. PyTorch's `nn.Dropout(p)` uses `p` as the *drop* probability. So, a keep-prob of 0.8 corresponds to `nn.Dropout(p=0.2)`.
+4.  **Optional Notes**:
+    -   On "L2 / weight decay · 30-second recap" (S14), explicitly label the Bayesian view as optional: `(Optional: The Bayesian View)`. This is elegant but not critical for a first pass, and could derail students who haven't seen MAP/MLE.
+    -   On "Dropout in PyTorch" (S39), the `warning` about `p` being keep-prob vs drop-prob is *excellent* and should be emphasized verbally. It's a classic bug.

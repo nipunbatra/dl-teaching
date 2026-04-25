@@ -361,6 +361,20 @@ This is an **optimization** problem, not a capacity problem.
 
 ---
 
+# Why "learning the change" is easier · steering analogy
+
+<div class="keypoint">
+
+Imagine steering a car by giving the wheel an *absolute* angle (e.g., "set wheel to 27 degrees from zero"). Hard to do.
+
+Instead, you say "**turn a little right**" or "**stay straight**." Much easier.
+
+</div>
+
+ResNets do the same · they reframe each layer's job from *"output the right thing"* to *"output a small change to your input."* The default action — change nothing, pass input through — is now trivial. The network only learns *deviations* from identity, which is much easier for SGD.
+
+---
+
 # ResNet · the key insight
 
 <div class="keypoint">
@@ -509,6 +523,12 @@ After 20 layers · $0.25^{20} \approx 10^{-12}$
 The first layer's effective learning rate is **a million times smaller** than the last layer's. It barely updates · network never learns features in early layers.
 
 This is the practical reason ReLU (derivative = 0 or 1) replaced sigmoid in deep nets · it doesn't shrink the gradient by a factor every layer.
+
+---
+
+# Variance · three regimes across layers
+
+![w:920px](figures/lec02/svg/variance_flow.svg)
 
 ---
 

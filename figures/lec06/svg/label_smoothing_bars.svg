@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" font-family="EB Garamond, Georgia, serif">
+  <style>
+    .bg { fill: #F7F3E9; }
+    .title { font-size: 17px; font-weight: 600; fill: #161513; }
+    .head { font-size: 13px; font-weight: 600; fill: #161513; }
+    .body { font-size: 12px; fill: #161513; }
+    .mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+    .caption { font-size: 11px; fill: #5F5C54; font-style: italic; }
+    .axis { stroke: #161513; stroke-width: 1; fill: none; }
+    .bar-hard { fill: #B85A3E; }
+    .bar-soft { fill: #5F8573; }
+  </style>
+  <rect class="bg" width="960" height="360"/>
+  <text x="480" y="28" class="title" text-anchor="middle">Label smoothing · soften the one-hot target so the model can't get overconfident</text>
+
+  <!-- Panel 1: Hard target -->
+  <g transform="translate(60, 70)">
+    <text x="180" y="0" class="head" text-anchor="middle">Hard target · one-hot</text>
+    <rect x="0" y="20" width="360" height="200" fill="white" stroke="#161513" stroke-width="1"/>
+    <line x1="20" y1="200" x2="340" y2="200" class="axis"/>
+    <line x1="20" y1="20" x2="20" y2="200" class="axis"/>
+    <text x="14" y="200" class="caption" text-anchor="end">0</text>
+    <text x="14" y="40" class="caption" text-anchor="end">1.0</text>
+    <!-- 4 bars · class 1, 2, 3, 4 · y = [0, 1, 0, 0] -->
+    <rect class="bar-hard" x="50" y="200" width="60" height="0"/>
+    <rect class="bar-hard" x="130" y="40" width="60" height="160"/>
+    <rect class="bar-hard" x="210" y="200" width="60" height="0"/>
+    <rect class="bar-hard" x="290" y="200" width="60" height="0"/>
+    <text x="80" y="220" class="caption" text-anchor="middle">cls 1</text>
+    <text x="160" y="220" class="caption" text-anchor="middle">cls 2 ✓</text>
+    <text x="240" y="220" class="caption" text-anchor="middle">cls 3</text>
+    <text x="320" y="220" class="caption" text-anchor="middle">cls 4</text>
+    <text x="180" y="250" class="mono" text-anchor="middle">y = [0, 1, 0, 0]</text>
+    <text x="180" y="278" class="caption" text-anchor="middle">model can drive cls 2 logit → ∞</text>
+    <text x="180" y="295" class="caption" text-anchor="middle">overconfident · poor calibration</text>
+  </g>
+
+  <!-- Panel 2: Smoothed -->
+  <g transform="translate(540, 70)">
+    <text x="180" y="0" class="head" text-anchor="middle">Soft target · α = 0.1</text>
+    <rect x="0" y="20" width="360" height="200" fill="white" stroke="#161513" stroke-width="1"/>
+    <line x1="20" y1="200" x2="340" y2="200" class="axis"/>
+    <line x1="20" y1="20" x2="20" y2="200" class="axis"/>
+    <text x="14" y="200" class="caption" text-anchor="end">0</text>
+    <text x="14" y="40" class="caption" text-anchor="end">1.0</text>
+    <!-- y_smooth = [0.025, 0.925, 0.025, 0.025] -->
+    <!-- 0.925 · 160 = 148. 0.025 · 160 = 4. -->
+    <rect class="bar-soft" x="50" y="196" width="60" height="4"/>
+    <rect class="bar-soft" x="130" y="52" width="60" height="148"/>
+    <rect class="bar-soft" x="210" y="196" width="60" height="4"/>
+    <rect class="bar-soft" x="290" y="196" width="60" height="4"/>
+    <text x="80" y="220" class="caption" text-anchor="middle">cls 1</text>
+    <text x="160" y="220" class="caption" text-anchor="middle">cls 2 ✓</text>
+    <text x="240" y="220" class="caption" text-anchor="middle">cls 3</text>
+    <text x="320" y="220" class="caption" text-anchor="middle">cls 4</text>
+    <text x="180" y="250" class="mono" text-anchor="middle">y = [0.025, 0.925, 0.025, 0.025]</text>
+    <text x="180" y="278" class="caption" text-anchor="middle">cls 2 logit can't go to ∞ · target is bounded</text>
+    <text x="180" y="295" class="caption" text-anchor="middle">model stays calibrated · 1-α + α/K = 0.925</text>
+  </g>
+
+  <text x="480" y="345" class="caption" text-anchor="middle">In the loss · soft target penalizes "very low" logits for wrong classes too · prevents model from being too sharp.</text>
+</svg>
