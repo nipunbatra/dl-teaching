@@ -151,6 +151,20 @@ Total: **~760 GB**. Needs an H100 cluster. Most people don't have that.
 
 ---
 
+# LoRA · the oil-painting analogy
+
+<div class="keypoint">
+
+A pretrained model is a **giant oil painting**. Fine-tuning for a new style — say, making the subject smile — doesn't require **repainting the canvas**. A few brushstrokes in the right places do the job.
+
+LoRA finds *those* brushstrokes · two small low-rank matrices that adjust the original weights · the masterpiece beneath stays untouched.
+
+</div>
+
+That's why a 70B-param fine-tune can ship as a 100MB adapter file · the brushstroke layer · while the base painting stays the same.
+
+---
+
 # LoRA · the insight
 
 <div class="keypoint">
@@ -255,6 +269,20 @@ SFT teaches the model *one way* to respond to each prompt. But for open-ended qu
 - Response C · inaccurate, overly technical. ✗
 
 SFT would weight all three equally if all are in the dataset. **RLHF** adds preference learning.
+
+---
+
+# SFT vs RLHF · dog-training analogy
+
+<div class="keypoint">
+
+**SFT** is teaching a dog the command "sit." One correct action; demonstrate, repeat.
+
+**RLHF** is teaching a dog to choose between options · "bark or stay quiet when the doorbell rings" · we **reward** good choices, **penalize** bad ones.
+
+</div>
+
+By showing the model pairs of options (good answer · bad answer) and letting it learn from preference, we shape *general behavior* rather than memorize a single correct response.
 
 ---
 

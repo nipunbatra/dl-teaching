@@ -131,6 +131,20 @@ Augmentations as implicit labels
 
 ---
 
+# SimCLR · the matching-game analogy
+
+<div class="keypoint">
+
+You're given a huge pile of photos. Two of them are **your cat** (cropped differently, lit differently, color-jittered).
+
+The task · find the two that match. Pick yours out of thousands.
+
+</div>
+
+That's contrastive learning. It pulls **same-image augmentations together** in feature space and pushes **everything else apart**. The model learns what makes "your cat" your cat — without anyone telling it the label "cat".
+
+---
+
 # How SimCLR works, step-by-step
 
 1. Sample a minibatch of $N$ images.
@@ -351,6 +365,20 @@ The architecture and loss differ, but the meta-idea is the same · **make the da
 # MAE · BERT for pixels
 
 Masked autoencoding for images
+
+---
+
+# MAE · the jigsaw-puzzle analogy
+
+<div class="keypoint">
+
+Take a photograph · **shred 75%** of it · ask someone to reconstruct the missing pieces.
+
+To do this they can't just look at local pixels · they must *understand* what a face looks like, what a tree branch is shaped like.
+
+</div>
+
+MAE forces the encoder to learn this **deep visual world model** by predicting the missing 75% from the visible 25%. It's BERT-for-pixels · masked-then-reconstruct as a self-supervision recipe.
 
 ---
 

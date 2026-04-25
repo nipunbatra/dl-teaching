@@ -75,6 +75,20 @@ It worked. ViT-Huge pretrained on 300M images beat CNN SOTA on ImageNet by 2021.
 
 ---
 
+# Why throw away CNNs · the bet of 2020
+
+<div class="keypoint">
+
+CNNs have vision **baked in** · they are forced to look at local pixels first, then build up to objects.
+
+The 2020 bet · *what if we hand a generic Transformer the whole image at once and let it figure out what's important?*
+
+</div>
+
+The wager · with enough data, a model that has **fewer prior assumptions** but **more capacity** will outlearn a hand-engineered architecture. By 2021 (ViT-Huge on 300M images) the bet paid off · ViT matched ResNet on ImageNet.
+
+---
+
 # From pixels to tokens · the recipe
 
 An image is a grid of pixels. A Transformer wants a sequence of vectors. Bridge · **patchify**.
@@ -496,6 +510,20 @@ Three lines in; a paragraph of reasoning out. The API abstracts away all the CLI
 </div>
 
 Claude / GPT-4o / Gemini all push 85%+ on VQAv2 now. MMMU remains hard (50-60%) · genuine multi-modal reasoning is the frontier.
+
+---
+
+# Hallucination · priors fighting evidence
+
+<div class="keypoint">
+
+The LLM has seen "a cup of coffee on a desk" **millions of times** in text. The vision encoder gives it a blurry image of a desk.
+
+If the visual signal is weak, the language **prior** can override it · the model adds a coffee cup that isn't there.
+
+</div>
+
+This is a battle between **prior** (text statistics from training) and **evidence** (current visual input). When evidence is strong (clear photo), priors don't matter much. When evidence is weak, they take over and the model "fills in" things confidently.
 
 ---
 

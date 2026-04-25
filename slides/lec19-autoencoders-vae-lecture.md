@@ -130,6 +130,20 @@ The building block
 
 ---
 
+# Autoencoder · the postcard analogy
+
+<div class="keypoint">
+
+A perfect forger writes the **most compact possible description** of a painting on a postcard (the latent code · maybe 16 numbers).
+
+They mail it to their partner. The partner must **recreate the original painting** using only the postcard.
+
+</div>
+
+If the postcard is too small, they're forced to learn what's *truly essential* · the "essence" of the painting · not every brushstroke. That's compression. That's what an autoencoder learns.
+
+---
+
 # The plain autoencoder
 
 <div class="math-box">
@@ -419,6 +433,20 @@ If the decoder is too powerful, the KL term will drive $q(z|x) \to p(z) = \mathc
 # Reparameterization · gradient flow
 
 ![w:920px](figures/lec19/svg/reparam_gradient_flow.svg)
+
+---
+
+# Reparameterization · the conveyor-belt analogy
+
+<div class="keypoint">
+
+Imagine training a robot arm that **randomly picks** a part from a bin. You can't train the picking motion · "your random pick was wrong" gives no gradient.
+
+Now change the system · the robot picks a **specific** part from a conveyor belt. The randomness is in *how the belt is loaded*, not in the robot's motion.
+
+</div>
+
+The belt-loading randomness ≡ the noise $\epsilon$. The robot's picking motion ≡ the deterministic map $z = \mu + \sigma \epsilon$. Now we *can* compute gradients through the picking motion · which is exactly what we needed to train $\mu$ and $\sigma$.
 
 ---
 
