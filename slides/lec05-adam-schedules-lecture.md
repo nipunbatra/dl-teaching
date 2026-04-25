@@ -138,6 +138,24 @@ Defaults · $\beta_1 = 0.9, \beta_2 = 0.999, \epsilon = 10^{-8}, \eta = 10^{-3}$
 
 ---
 
+# Adam · worked example · 3 steps on a single parameter
+
+Suppose · gradients $g_1, g_2, g_3 = 2.0, 1.0, 1.5$. Defaults; $\theta_0 = 0$.
+
+<div class="math-box">
+
+| step | $m_t$ | $\hat m_t$ | $v_t$ | $\hat v_t$ | update |
+|:-:|:-:|:-:|:-:|:-:|:-:|
+| 1 | $0.9 \cdot 0 + 0.1 \cdot 2.0 = 0.20$ | $0.20 / 0.1 = 2.00$ | $0.001 \cdot 4 = 0.004$ | $0.004 / 0.001 = 4.0$ | $-10^{-3} \cdot 2 / 2 = -0.001$ |
+| 2 | $0.9 \cdot 0.20 + 0.1 \cdot 1.0 = 0.28$ | $0.28 / 0.19 = 1.47$ | $0.999 \cdot 0.004 + 0.001 \cdot 1 = 0.005$ | $0.005 / 0.001999 \approx 2.5$ | $-10^{-3} \cdot 1.47 / 1.58 \approx -0.00093$ |
+| 3 | $0.9 \cdot 0.28 + 0.1 \cdot 1.5 = 0.402$ | $0.402 / 0.271 = 1.48$ | $0.999 \cdot 0.005 + 0.001 \cdot 2.25 = 0.0072$ | $\approx 2.4$ | $\approx -0.00095$ |
+
+</div>
+
+Note · the per-parameter update size is **roughly constant ($\sim 10^{-3}$)** even though the gradients change. That's Adam's per-parameter adaptive scaling at work.
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 2
