@@ -79,23 +79,40 @@ The buffet is concatenated along the channel axis · the next layer sees all ker
 
 ---
 
-# Why 1×1 convolutions matter
+# Why 1×1 convolutions matter · derivation
 
-Two jobs:
+Conv-layer cost formula: $(K_h \cdot K_w \cdot C_\text{in}) \cdot C_\text{out}$.
 
-1. **Channel mixing** · $C_\text{in}$ → $C_\text{out}$ at every spatial location.
-2. **Dimensionality reduction** · squeeze before an expensive 3×3 or 5×5.
+**Direct 3×3, 256 → 256.**
+$(3 \cdot 3 \cdot 256) \cdot 256 = 2304 \cdot 256 = \mathbf{589{,}824}$ params.
 
-<div class="math-box">
+**1×1 bottleneck.** Three steps:
 
-Cost of a direct 3×3 with 256 → 256 channels: $3 \cdot 3 \cdot 256 \cdot 256 = 589{,}824$ params.
+1. **Squeeze** (1×1, $256 \to 64$): $(1 \cdot 1 \cdot 256) \cdot 64 = 16{,}384$.
+2. **Spatial mix** (3×3, $64 \to 64$): $(3 \cdot 3 \cdot 64) \cdot 64 = 36{,}864$.
+3. **Expand** (1×1, $64 \to 256$): $(1 \cdot 1 \cdot 64) \cdot 256 = 16{,}384$.
 
-With a 1×1 bottleneck to 64 first:
-$256 \cdot 64 + 3 \cdot 3 \cdot 64 \cdot 64 + 64 \cdot 256 = 69{,}632$ params · **8.5× cheaper**.
+Total: $16{,}384 + 36{,}864 + 16{,}384 = \mathbf{69{,}632}$ params.
 
-</div>
+Ratio: $589{,}824 / 69{,}632 \approx 8.47$ → **~8.5× cheaper.** Same input/output shape, three quarters less computation.
 
-1×1 convs are in every modern architecture — as reduction in GoogLeNet, as bottlenecks in ResNet, as the FFN in Transformers.
+---
+
+# Worked numeric · 1×1 bottleneck on small numbers
+
+Input `(14, 14, 16)` → Output `(14, 14, 32)`, kernel 3×3.
+
+**Without bottleneck.** $(3 \cdot 3 \cdot 16) \cdot 32 = 144 \cdot 32 = \mathbf{4{,}608}$ params.
+
+**With bottleneck (squeeze to 4 channels).**
+
+1. Squeeze (1×1, $16 \to 4$): $(1 \cdot 1 \cdot 16) \cdot 4 = 64$.
+2. 3×3 ($4 \to 4$): $(3 \cdot 3 \cdot 4) \cdot 4 = 144$.
+3. Expand (1×1, $4 \to 32$): $(1 \cdot 1 \cdot 4) \cdot 32 = 128$.
+
+Total: $64 + 144 + 128 = \mathbf{336}$ params. **~13.7× cheaper** for the same external shape.
+
+1×1 convs appear everywhere modern · GoogLeNet reduction · ResNet bottleneck · Transformer FFN projections.
 
 ---
 
@@ -109,18 +126,49 @@ Skip connections · bottleneck blocks
 
 ---
 
-# Why skip connections work · the gradient argument
+# Vanishing gradients · the telephone game
 
-Ordinary layer · $h_{l+1} = F(h_l)$. Gradient must pass through $F$'s Jacobian at every level. 152 layers of that → product of 152 Jacobians → vanishing or exploding.
+<div class="insight">
 
-Residual layer · $h_{l+1} = h_l + F(h_l)$. Gradient:
-$$\frac{\partial \mathcal{L}}{\partial h_l} = \frac{\partial \mathcal{L}}{\partial h_{l+1}} \cdot \left(I + \frac{\partial F}{\partial h_l}\right)$$
+**Analogy.** A game of telephone over 100 people. By the end, the message is gibberish. Gradients are the **correction message** sent backwards: *"Hey person 1, you said 'purple monkey' — should've been 'purple donkey'."*
 
-<div class="keypoint">
+By the time that correction reaches person 1, it's diluted to a meaningless whisper. Person 1 can't learn. **Vanishing gradient.**
 
-The identity path sends the gradient through **unchanged**. Deep gradients stop vanishing at construction time, not through training luck. This is why 152 layers is easy but 34 plain layers was impossible.
+A skip connection is a **gradient superhighway** — a direct, uninterrupted path from the end back to the beginning.
 
 </div>
+
+---
+
+# Skip connections · derive the gradient
+
+**Plain layer.** $h_\text{out} = F(h_\text{in})$. Chain rule:
+$$\frac{\partial \mathcal{L}}{\partial h_\text{in}} = \frac{\partial \mathcal{L}}{\partial h_\text{out}} \cdot F'(h_\text{in})$$
+With 100 layers: 100 of these $F'$ multiplied → if each is $< 1$, the product **collapses to 0**. Vanishing.
+
+**Residual layer.** $h_\text{out} = h_\text{in} + F(h_\text{in})$.
+$$\frac{\partial h_\text{out}}{\partial h_\text{in}} = \underbrace{\frac{\partial h_\text{in}}{\partial h_\text{in}}}_{=1} + F'(h_\text{in}) = 1 + F'(h_\text{in})$$
+
+So:
+$$\frac{\partial \mathcal{L}}{\partial h_\text{in}} = \frac{\partial \mathcal{L}}{\partial h_\text{out}} \cdot \bigl(1 + F'(h_\text{in})\bigr)$$
+
+The **+1** is the highway. Even when $F'$ is near zero, the gradient still flows through.
+
+---
+
+# Worked numeric · gradient flow
+
+Upstream gradient $\partial\mathcal{L}/\partial h_\text{out} = 0.5$. Tiny weights → $F'(h) = 0.01$.
+
+| | Plain | Residual |
+|---|-------|----------|
+| One layer | $0.5 \cdot 0.01 = 0.005$ | $0.5 \cdot (1 + 0.01) = 0.505$ |
+| 10 layers | $0.5 \cdot (0.01)^{10} = 5 \times 10^{-21}$ | $0.5 \cdot (1.01)^{10} \approx 0.55$ |
+
+**Plain → completely vanished after 10 layers. Residual → still strong.**
+
+This is why ResNet trains 152 layers easily, while plain 34 layers couldn't even fit the training data. Identity path stops vanishing **at construction time**, not through training luck. Same vector form:
+$$\frac{\partial \mathcal{L}}{\partial h_l} = \frac{\partial \mathcal{L}}{\partial h_{l+1}} \cdot \left(I + \frac{\partial F}{\partial h_l}\right)$$
 
 ---
 
@@ -150,13 +198,32 @@ Same idea shows up as LSTM's cell state (L10) and Transformer's residual stream 
 
 ---
 
-# Projection shortcuts · when dimensions change
+# When the shortcut shape doesn't match
 
-When you need to change the number of channels or downsample (stride 2), identity can't match shapes directly.
+The simple skip $y = x + F(x)$ only works if $x$ and $F(x)$ have the **same shape**.
 
-$$\mathbf{y} = \mathcal{F}(\mathbf{x}) + \mathbf{W}_s\, \mathbf{x}$$
+What if the main path:
+1. **Downsamples** with stride 2? $F(x)$ is half the spatial size of $x$. Can't add 14×14 to 28×28.
+2. **Changes channel depth?** $F(x)$ has 512 channels, $x$ has 256. Can't add.
 
-$\mathbf{W}_s$ is a learned **1×1 convolution with the same stride** as the main branch. Everything else stays residual.
+<div class="insight">
+
+**Analogy · adapter plug.** Your wall socket ($x$) has one shape; the new appliance plug ($F(x)$) is different. You need an **adapter** ($W_s$). The projection shortcut is a learnable adapter for the skip connection.
+
+</div>
+
+---
+
+# Projection shortcuts · the math
+
+When dimensions don't match:
+$$\mathbf{y} = \mathcal{F}(\mathbf{x}) + \mathbf{W}_s\,\mathbf{x}$$
+
+$\mathbf{W}_s$ is a **1×1 conv with the same stride** as the main branch:
+- Same stride (e.g. 2) → matches spatial size.
+- Same `C_out` → matches channels.
+
+Now we can add. Everything else stays residual.
 
 ```python
 class Bottleneck(nn.Module):
@@ -206,27 +273,55 @@ Depthwise separable convolutions
 
 ---
 
-# Why depthwise separable works
+# Depthwise separable · the smoothie analogy
 
-A standard 3×3 convolution does two things at once:
+A standard convolution does two jobs at once · spatial mixing **and** channel mixing.
 
-1. **Spatial mixing** — combine a $3 \times 3$ neighbourhood.
-2. **Channel mixing** — combine information across input channels.
+<div class="insight">
 
-Depthwise separable splits these:
-
-- **Depthwise (3×3 per channel)** — only spatial mixing.
-- **Pointwise (1×1)** — only channel mixing.
-
-<div class="math-box">
-
-Cost · $D_K^2 \cdot C + C^2$   vs   standard · $D_K^2 \cdot C^2$.
-
-For $C = 128, D_K = 3$: $17{,}024$ params vs $147{,}456$ params. **~9× cheaper.**
+**Analogy · making a smoothie.**
+- **Standard conv** · one giant blender. Throw all fruits (channels) in at once → mixes them spatially and combines flavours simultaneously.
+- **Depthwise separable** · two-step process.
+  1. **Depthwise (spatial):** small blenders, one per fruit. Only blends each fruit *spatially* — never mixes flavours.
+  2. **Pointwise (1×1):** the chef takes one spoonful from each puree and combines flavours into the final smoothie.
 
 </div>
 
-Accuracy drop: ~1%. Speed-up: ~8–10×. Ships in every mobile / edge model since 2017.
+Splitting these two jobs makes the operation **dramatically cheaper**.
+
+---
+
+# Depthwise separable · param math
+
+Standard 3×3 conv with $C_\text{in} = C_\text{out} = C$:
+$$\text{cost} = (D_K \cdot D_K \cdot C) \cdot C = D_K^2\,C^2$$
+
+Depthwise-separable splits into:
+1. **Depthwise** · one $D_K \times D_K \times 1$ filter per input channel:
+$\text{cost}_1 = (D_K \cdot D_K \cdot 1) \cdot C = D_K^2\,C$
+2. **Pointwise** · 1×1 conv mixing the $C$ channels into $C$ new ones:
+$\text{cost}_2 = (1 \cdot 1 \cdot C) \cdot C = C^2$
+
+Total: $D_K^2\,C + C^2$.
+
+**Numeric ($D_K = 3,\ C = 128$):**
+- Standard: $9 \cdot 16{,}384 = 147{,}456$.
+- Depthwise: $9 \cdot 128 = 1{,}152$. Pointwise: $128^2 = 16{,}384$. Total: $\mathbf{17{,}536}$.
+
+**~8.4× cheaper.** Accuracy drop ~1%. Speedup 8–10×. In every mobile model since 2017.
+
+---
+
+# Worked numeric · depthwise separable
+
+Input `(14, 14, 16)` → Output `(14, 14, 32)`, kernel 3×3.
+
+**Standard.** $(3 \cdot 3 \cdot 16) \cdot 32 = \mathbf{4{,}608}$ params.
+
+**Depthwise separable.**
+1. **Depthwise.** One 3×3 filter per channel: $(3 \cdot 3 \cdot 1) \cdot 16 = 144$. Output `(14, 14, 16)`.
+2. **Pointwise.** 1×1 mixing 16 → 32: $(1 \cdot 1 \cdot 16) \cdot 32 = 512$.
+- Total: $144 + 512 = \mathbf{656}$ params. **~7× fewer**, same I/O shape.
 
 ---
 
@@ -283,25 +378,35 @@ EfficientNet's insight · the same is true of neural networks. Depth, width, and
 
 ---
 
-# The compound-scaling principle
+# How do we make a network "bigger"?
 
-Previously, researchers scaled up nets by picking ONE dimension:
+You have a baseline net (a small car engine). Three knobs to make it more powerful:
 
-- VGG-11 → VGG-19 · **depth** only
-- WideResNet · **width** only
-- ProGAN / high-res nets · **resolution** only
+1. **Depth** · add more layers (more cylinders).
+2. **Width** · more channels per layer (wider cylinders).
+3. **Resolution** · feed it bigger images (higher-octane fuel).
 
-**Tan &amp; Le 2019** (EfficientNet) showed you should scale all three *together* under a fixed budget.
+The old way · pick one knob, turn it all the way up (VGG → depth · WideResNet → width · ProGAN → resolution).
+**EfficientNet's idea** · turn **all three** up *in balance*.
 
-<div class="math-box">
+---
 
-$$\text{depth } d = \alpha^\phi \quad \text{width } w = \beta^\phi \quad \text{resolution } r = \gamma^\phi$$
+# Compound scaling · the rule
 
-subject to $\alpha \cdot \beta^2 \cdot \gamma^2 \approx 2$.
+Define a single scaling knob $\phi$. Choose constants $\alpha, \beta, \gamma$ once via grid search.
 
-Choose $\phi$ as your compute budget; $\alpha, \beta, \gamma$ are tuned by grid search once.
+$$\text{depth } d = \alpha^\phi,\quad \text{width } w = \beta^\phi,\quad \text{resolution } r = \gamma^\phi$$
+subject to $\alpha \cdot \beta^2 \cdot \gamma^2 \approx 2$ (so doubling $\phi$ doubles compute).
 
-</div>
+For EfficientNet-B0..B7, the paper found roughly $\alpha = 1.2,\ \beta = 1.1,\ \gamma = 1.15$.
+
+**Worked numeric · scaling B0 → B2 ($\phi = 2$).**
+
+- Depth: $1.2^2 = 1.44$ → ~44% deeper.
+- Width: $1.1^2 = 1.21$ → ~21% more channels.
+- Resolution: $1.15^2 \approx 1.32 \to 224 \cdot 1.32 \approx 296$ (rounded to 300 for B3).
+
+Single $\phi$ gives a principled way to scale the whole architecture instead of guessing.
 
 ---
 
@@ -360,6 +465,24 @@ ImageNet pretraining gives you a **generic vision stack**:
 **Transfer learning rule** — more data in your new domain → unfreeze more layers.
 
 </div>
+
+---
+
+# Transfer learning · the core problem
+
+**Scenario.** A botanist gives you 5,000 photos of flowers and wants a 102-class classifier.
+
+**Option 1 · train from scratch.** Design a ResNet-50, train on 5,000 images.
+**Problem** · 5,000 isn't enough to learn what an *edge*, *texture*, or *petal* even is from random noise. The model overfits badly.
+
+**Option 2 · transfer learning.** Take a ResNet-50 already trained on ImageNet (1.2M images). It already knows edges, textures, fur, eyes. **Adapt** this powerful feature extractor to flowers.
+
+Almost always Option 2 wins when labels are scarce. Now · how to adapt?
+
+**Jargon unpacked**
+- **Backbone** · the conv body of the pretrained net. The "feature extractor."
+- **Head** · the final classifier layers. We discard the original ImageNet head (1000 classes) and add our own (e.g. 102 flower classes).
+- **Freezing** · setting `requires_grad=False`. Optimizer skips that layer; it's a fixed feature extractor.
 
 ---
 
