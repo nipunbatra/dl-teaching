@@ -126,6 +126,20 @@ The problem · for *long* sentences, even a great human's mental summary fails. 
 
 ---
 
+# The big picture · encoder–decoder
+
+<div class="insight">
+
+Forget RNNs for a second. Two black boxes:
+1. **Encoder** · reads the entire English sentence and squishes its meaning into a single **thought vector** $\mathbf{c}$.
+2. **Decoder** · takes $\mathbf{c}$ and unpacks it, word by word, into French.
+
+Like reading a sentence, thinking *"got it"*, and explaining it in another language.
+
+</div>
+
+---
+
 # The architecture
 
 ![w:920px](figures/lec11/svg/seq2seq_bottleneck.svg)
@@ -135,6 +149,19 @@ The problem · for *long* sentences, even a great human's mental summary fails. 
 ▶ Interactive: see BLEU curves fall as source length grows — [seq2seq-bottleneck](https://nipunbatra.github.io/interactive-articles/seq2seq-bottleneck/).
 
 </div>
+
+---
+
+# A quick look inside `nn.LSTM`
+
+An `nn.LSTM` layer is a function with specific I/O:
+
+- **Input** · sequence of embedded tokens (e.g. 10-word sentence → `(10, 256)`).
+- **Output** · returns **two** things:
+  1. `outputs` — hidden state at *every* time step (e.g. `(10, 512)`).
+  2. `(h_n, c_n)` — *final* hidden + cell state (each `(1, 512)`).
+
+For the encoder we want the **final** state — that's our context vector $\mathbf{c}$. We discard `outputs` (using `_` in Python) and keep the tuple `(h, c)`.
 
 ---
 
@@ -190,9 +217,19 @@ But at **training**, if the decoder's first prediction is wrong, the error compo
 
 ---
 
-# The two training regimes side-by-side
+# Teacher forcing · the training-wheels analogy
 
-During training, **feed the ground-truth previous token** as the decoder's input, not its own previous prediction.
+<div class="insight">
+
+Like learning to ride a bike with a parent holding the seat. You still pedal and steer (predict the next word). But when you wobble (make a mistake), the parent keeps you on the right path (feeds you the ground-truth word).
+
+You learn the core motion much faster and more safely. At inference, the training wheels come off.
+
+</div>
+
+---
+
+# Two regimes side-by-side
 
 <div class="columns">
 <div>
@@ -201,6 +238,8 @@ During training, **feed the ground-truth previous token** as the decoder's input
 
 $$y_{t-1}^{\text{pred}} \to \text{decoder} \to y_t^{\text{pred}}$$
 
+The decoder feeds **its own** prediction back in. One error at step 1 → wrong context for *every* later step.
+
 </div>
 <div>
 
@@ -208,10 +247,21 @@ $$y_{t-1}^{\text{pred}} \to \text{decoder} \to y_t^{\text{pred}}$$
 
 $$y_{t-1}^{\text{truth}} \to \text{decoder} \to y_t^{\text{pred}}$$
 
+The decoder sees the **ground-truth** previous token. Every step is a clean, independent prediction problem.
+
 </div>
 </div>
 
-Effect: every target step is trained independently given the correct history. **Massive speedup** and more stable gradients.
+---
+
+# Why teacher forcing? · speed
+
+The biggest reason for teacher forcing isn't safety — it's **parallelism**.
+
+- **Autoregressive** · compute step 1 → step 2 → step 3 → … sequential.
+- **Teacher forcing** · all decoder inputs `<s>, "The", "cat", …` are known up-front → feed them in **all at once** → one big matrix multiply.
+
+A slow sequential loop becomes a fast parallel computation — **10–100× speedup** on training. Empirically tolerated despite the "you train on a distribution you won't see at inference" critique.
 
 ---
 
@@ -237,19 +287,23 @@ The "you're training on a distribution you won't see at inference" critique is r
 
 ---
 
-# Exposure bias · explained
+# Exposure bias · concrete cascade
 
-<div class="warning">
+Source: "Le chien a chassé le chat." Target: "The dog chased the cat."
 
-Teacher forcing means the model is never exposed during training to *its own* mistakes. At inference, one wrong prediction cascades — the model has never seen that recovery path.
+**Training (teacher forcing).**
+1. Input `<s>` → predicts "A" (logP −1.2). Truth is "The". Loss is computed.
+2. Next input is the ground truth `"The"`. **Back on track.**
 
-</div>
+**Inference (autoregressive).**
+1. Input `<s>` → predicts "A".
+2. Next input is **"A"** (its own mistake).
+3. Conditioned on "A", the model now predicts "dog" (probable continuation of "A").
+4. Sequence so far · "A dog…". The model has **never seen** its own mistakes during training, so it has no idea how to recover. Continues "A dog ran away" — completely diverged.
 
-Mitigations:
+The model trained in a perfect world, tested in a messy one.
 
-- **Scheduled sampling** (Bengio et al. 2015) — probabilistically feed the model's own prediction during training.
-- **Data augmentation** with noisy inputs.
-- **2020+** — Transformers basically sidestep this through massive scale + mixing.
+**Mitigations** · scheduled sampling (Bengio 2015), noisy data augmentation, or just sidestep with massive-scale Transformers (2020+).
 
 ---
 
@@ -326,17 +380,46 @@ The team's collective best end-of-path score is far closer to the global maximum
 
 ---
 
+# From probabilities to log-probabilities
+
+We want the sentence with highest $P(y_1, \ldots, y_T)$:
+$P = P(y_1)\,P(y_2|y_1)\,\cdots$
+
+For a 20-word sentence we'd multiply 20 small probabilities → **numerical underflow** (rounded to 0).
+
+**Fix · take logs.** $\log(ab) = \log a + \log b$. Multiplying probabilities becomes **adding log-probabilities** — much more stable.
+
+$$\text{score}(y) = \sum_{t=1}^T \log P(y_t \mid y_{<t})$$
+
+Each $\log P$ is a *negative* number. Higher (less negative) = better.
+
+---
+
+# The length-bias problem
+
+Every $\log P$ is negative → longer sentences accumulate **more** negatives → lower scores → **always preferred shorter**.
+
+| Sentence | logP |
+|---|---|
+| "I am" | $-0.5 + (-0.8) = -1.3$ |
+| "I am a student" | $-0.5 + (-0.8) + (-0.6) + (-0.4) = -2.3$ |
+
+Plain log-prob picks "I am". Wrong.
+
+**Length normalization** · divide by sentence length raised to $\alpha$:
+$$\text{score}(y) = \frac{1}{T^\alpha}\sum_{t=1}^T \log P(y_t \mid y_{<t})$$
+
+- $\alpha = 0$ · no penalty (broken).
+- $\alpha = 1$ · simple average per token.
+- **$\alpha \approx 0.6$–$0.7$** · typical compromise (a soft penalty).
+
+It makes finished, longer hypotheses **comparable** to short ones — the goal is fair comparison, not always preferring long.
+
+---
+
 # Beam search · keep top-$k$ paths
 
-At each step, maintain $k$ candidate prefixes. Expand each by all possible next tokens, keep the top $k$ by joint probability.
-
-<div class="math-box">
-
-**Score** · $\log P(y_1, \ldots, y_T) = \sum_t \log P(y_t \mid y_{<t})$
-
-**Length-normalized** · divide by $T^\alpha$ (typically $\alpha = 0.6$) to avoid preferring short outputs.
-
-</div>
+At each step, maintain $k$ candidate prefixes. Expand each by all next tokens, keep the top $k$ by **length-normalized** log-prob score.
 
 Typical $k = 4$ to $10$. More = better quality, slower. Still deterministic given $k$.
 
@@ -374,16 +457,31 @@ A beam of $k=2$ already finds "The cat sat" (logP -1.7) where greedy might have 
 
 ---
 
-# Top-$k$ and nucleus (top-$p$) sampling
+# Top-$k$ and nucleus · the improv-comedian analogy
 
-For open-ended generation (story writing, chat) beam search is *too* deterministic — everything sounds the same.
+<div class="insight">
 
-- **Top-$k$** — truncate to the $k$ most likely tokens, renormalize, sample.
-- **Top-$p$ (nucleus)** — truncate to the smallest set whose cumulative probability $\geq p$, renormalize, sample.
+- **Greedy / beam** · a predictable comedian who always says the most obvious next line. Safe, but boring and repetitive.
+- **Sampling** · a creative comedian who knows the top 5–10 good responses and sometimes picks the 3rd or 4th — leads to a funnier story.
+
+Top-$k$ and nucleus are two ways to define the **pool of good options** for the comedian to sample from.
+
+</div>
+
+---
+
+# Top-$k$ vs nucleus · how the pool is chosen
+
+For open-ended generation (story writing, chat) beam is *too* deterministic — everything sounds the same.
+
+- **Top-$k$** · pool = the $k$ most-likely tokens. Fixed size. Renormalize, sample.
+- **Top-$p$ (nucleus)** · pool = smallest set with cumulative prob $\geq p$. **Dynamic size** — small when the model is confident, large when uncertain.
+
+When the next-token distribution has one tall bar, nucleus narrows automatically; when it's flat, nucleus widens. Top-$k$ ignores this and uses the same $k$ everywhere.
 
 <div class="realworld">
 
-**2026 LLM default** — nucleus with $p = 0.9$ or $p = 0.95$, plus a **temperature** knob (see the softmax-temperature interactive).
+**2026 LLM default** — nucleus with $p = 0.9$ or $0.95$, plus a temperature knob.
 
 </div>
 
