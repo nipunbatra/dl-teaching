@@ -94,36 +94,90 @@ What makes neural-net optimization hard
 
 ---
 
-# The condition number · in numbers
+# What makes a valley hard to navigate?
 
-Consider the quadratic $\mathcal{L}(\theta) = \frac{1}{2}(10 \theta_1^2 + \theta_2^2)$. Hessian eigenvalues $\lambda_1 = 10$, $\lambda_2 = 1$. **Condition number** $\kappa = 10$.
+<div class="insight">
 
-<div class="math-box">
+**Analogy · hiking.** A round bowl is easy — every direction goes downhill. A steep, narrow **canyon** is tricky. The walls are very steep, but the path forward (along the floor) is almost flat.
 
-For GD to converge, $\eta < 2/\lambda_\max = 0.2$.
-Rate of contraction along $\theta_1$: $|1 - \eta \lambda_1| \le 1 - 0.2 \cdot 10 \cdot ? $...
-Along $\theta_2$: $|1 - \eta| \approx 0.8$ per step.
+- Big step → slam into the canyon wall.
+- Tiny step (avoiding the wall) → crawl along the floor.
 
 </div>
 
-The small direction moves **10× slower** than the large one wants to. Vanilla GD must pick a step small enough for $\lambda_\max$; every other direction then crawls.
-
-**In deep nets $\kappa$ is often 10³–10⁶.** This is why momentum, adaptive LR, and normalization all help — they rescale so that $\kappa$ matters less.
+The "steepness ratio" between the walls and the floor is the **condition number** $\kappa$. Large $\kappa$ → narrow ravine → SGD struggles.
 
 ---
 
-# Why high-dim loss is mostly saddles
+# The condition number · let's compute it
 
-Random-matrix intuition: for a Hessian in $D$ dimensions with i.i.d. eigenvalue signs, probability all positive is $2^{-D}$.
+Loss: $\mathcal{L}(\theta) = \tfrac{1}{2}(10\theta_1^2 + \theta_2^2)$. Hessian eigenvalues $\lambda_1=10,\ \lambda_2=1$ → **condition number $\kappa=10$.**
 
-<div class="keypoint">
+1. **Gradient.** $\nabla\mathcal{L} = [10\theta_1,\ \theta_2]$.
+2. **GD update.** $\theta_t = \theta_{t-1} - \eta\,\nabla\mathcal{L}(\theta_{t-1})$.
+3. **Per-coordinate.**
+   - $\theta_{t,1} = (1 - 10\eta)\,\theta_{t-1,1}$
+   - $\theta_{t,2} = (1 - \eta)\,\theta_{t-1,2}$
+4. **Stability constraint.** $|1-10\eta|<1 \Rightarrow \eta < 0.2$.
 
-At $D = 10^8$ parameters, **true local minima are exponentially rare**. Almost every critical point is a saddle — some directions go down, some up.
+Pick the largest stable LR: $\eta=0.15$.
+- $\theta_1$ shrinks by $|1 - 1.5| = 0.5$ — actually **flips sign** (overshoots).
+- $\theta_2$ shrinks by only $0.85$ — **crawls.**
+
+The high-curvature direction forces a tiny LR; the low-curvature direction then converges painfully slowly.
+
+---
+
+# Worked numeric · SGD in a ravine
+
+Start $\theta_0 = [10, 1]$, $\eta = 0.15$.
+
+| step | $\theta$ | $\nabla\mathcal{L}$ | next $\theta$ |
+|------|----------|---------------------|---------------|
+| 0 → 1 | $[10, 1]$ | $[100, 1]$ | $[10, 1] - 0.15[100, 1] = [-5,\ 0.85]$ |
+| 1 → 2 | $[-5, 0.85]$ | $[-50, 0.85]$ | $[-5, 0.85] - 0.15[-50, 0.85] = [2.5,\ 0.7225]$ |
+| 2 → 3 | $[2.5, 0.7225]$ | $[25, 0.7225]$ | $[2.5, 0.7225] - 0.15[25, 0.7225] = [-1.25,\ 0.6141]$ |
+
+$\theta_1$ **zig-zags wildly**: $10 \to -5 \to 2.5 \to -1.25$.
+$\theta_2$ **crawls**: $1 \to 0.85 \to 0.72 \to 0.61$.
+
+In deep nets, $\kappa$ is often $10^3$–$10^6$. This is why momentum, adaptive LR, and normalization all help — they rescale so $\kappa$ matters less.
+
+---
+
+# What kinds of "flat spots" exist?
+
+A **critical point** is anywhere $\nabla\mathcal{L} = 0$. In 1D: valley bottom (min) or hilltop (max).
+In 2D and higher: a **third option** — the saddle.
+
+<div class="insight">
+
+**Analogy · Pringles chip / horse saddle.** At the centre, the gradient is zero. But it's *not* a minimum. Along the horse's spine, the surface curves **up**. Across its back, the surface curves **down**. Mixed curvature → **saddle point.**
 
 </div>
 
-Good news · you almost never get stuck at a true local minimum.
-Bad news · you *do* get stuck near saddles, where the gradient is small in many directions. This is where momentum's memory saves you — it carries you past the flat region in the direction you were already going.
+To classify a critical point, look at **curvature** in every direction. The **Hessian** $H$ stores all second derivatives; its **eigenvalues** give curvature along the principal directions.
+
+---
+
+# Why saddles dominate in high dimensions
+
+In $D$ dimensions there are $D$ curvature directions:
+
+- **Local min** — all eigenvalues $> 0$ (curvature UP everywhere).
+- **Local max** — all $< 0$ (curvature DOWN everywhere).
+- **Saddle** — mix of $+$ and $-$.
+
+Toy probability: assume each eigenvalue is randomly $+$ or $-$ with prob $1/2$.
+$$\Pr[\text{all } D \text{ positive}] = 0.5^D$$
+
+For $D = 10^6$ parameters: probability of a *true* local minimum is $0.5^{1{,}000{,}000}$ — essentially zero.
+
+<div class="keypoint">
+
+**Almost every critical point in a deep net is a saddle, not a minimum.** The challenge isn't escaping valleys — it's navigating vast, flat saddle regions. Momentum's memory saves you here: it keeps you moving in a consistent direction through the flat plateau.
+
+</div>
 
 ---
 
@@ -221,21 +275,47 @@ Most practitioners set $\beta = 0.9$ once and never touch it again. The knob you
 
 ---
 
-# Momentum · the update
+# From hiker to heavy ball
 
-<div class="math-box">
+Vanilla SGD only cares about the slope **right now**. A heavy ball has **inertia** — its motion today is a mix of *where it was already going* and the *new push from the slope*.
 
-**SGD with momentum (Polyak 1964)**
+<div class="insight">
 
-$$\mathbf{v}_t = \beta\, \mathbf{v}_{t-1} + (1 - \beta)\, \nabla \mathcal{L}(\theta_{t-1})$$
-
-$$\theta_t = \theta_{t-1} - \eta\, \mathbf{v}_t$$
-
-Typical $\beta = 0.9$ · EMA with effective memory $\frac{1}{1-\beta} = 10$ steps.
+**Analogy · pushing a bowling ball.** Push it once → it rolls. Push it again in the same direction → it speeds up. Push it sideways → it changes direction, but it doesn't stop and turn on a dime. This **memory of past motion** is what we add to SGD.
 
 </div>
 
+---
+
+# Momentum · build the update step-by-step
+
+1. **Define velocity $\mathbf{v}$** — a vector that remembers past gradients.
+2. **Velocity update.** Mix old velocity with the new gradient using $\beta \in (0, 1)$:
+$$\mathbf{v}_t = \underbrace{\beta\, \mathbf{v}_{t-1}}_{\text{inertia · keep most of old velocity}} \;+\; \underbrace{(1-\beta)\, \nabla\mathcal{L}(\theta_{t-1})}_{\text{new info · nudge with current gradient}}$$
+3. **Position update.** Step using the smoothed velocity, not the raw gradient:
+$$\theta_t = \theta_{t-1} - \eta\, \mathbf{v}_t$$
+
+This is an **Exponential Moving Average (EMA)**. With $\beta = 0.9$: keep 90% of the old velocity, mix in 10% of the new gradient. Effective memory $\frac{1}{1-\beta} = 10$ steps.
+
 PyTorch's `SGD(..., momentum=0.9)` uses an equivalent form.
+
+---
+
+# Worked numeric · momentum smooths the ravine
+
+Ravine gradients: $g_t = [\pm 1.0,\ 0.1]$ — first component flips sign every step, second is constant. $\beta = 0.9,\ \mathbf{v}_0 = [0, 0]$.
+
+| $t$ | $g_t$ | $\mathbf{v}_t = 0.9\,\mathbf{v}_{t-1} + 0.1\,g_t$ |
+|----|------|----------------------------------------|
+| 1 | $[-1.0, 0.1]$ | $[0,0]\cdot 0.9 + [-1, 0.1]\cdot 0.1 = [-0.100,\ 0.0100]$ |
+| 2 | $[+1.0, 0.1]$ | $[-0.090, 0.009] + [0.1, 0.01] = [+0.010,\ 0.0190]$ |
+| 3 | $[-1.0, 0.1]$ | $[0.009, 0.0171] + [-0.1, 0.01] = [-0.091,\ 0.0271]$ |
+
+**Observation.**
+- $v_{t,1}$ oscillates near zero ($-0.10 \to 0.01 \to -0.09$): zig-zags **cancel out**.
+- $v_{t,2}$ steadily grows ($0.010 \to 0.019 \to 0.027$): consistent push **accumulates**.
+
+Momentum **damps oscillation, amplifies persistence**.
 
 ---
 
@@ -312,21 +392,63 @@ The result · less overshoot near valley walls · cleaner approach to the minimu
 
 ---
 
-# Nesterov · the update
+# A smarter heavy ball
 
-<div class="math-box">
+Standard momentum is a bit reckless. It computes the gradient **at the current spot**, then commits to a big velocity-driven step. It's like a driver looking only at the road **right under the car**.
 
-**Nesterov accelerated gradient (NAG, 1983)**
+<div class="insight">
 
-Evaluate the gradient at the *lookahead* point $\theta_{t-1} - \eta \beta\, \mathbf{v}_{t-1}$:
-
-$$\mathbf{v}_t = \beta\, \mathbf{v}_{t-1} + (1 - \beta)\, \nabla \mathcal{L}\!\left(\theta_{t-1} - \eta \beta\, \mathbf{v}_{t-1}\right)$$
-
-$$\theta_t = \theta_{t-1} - \eta\, \mathbf{v}_t$$
+**Analogy · Nesterov is a smarter driver who looks ahead.**
+1. First, make a "guess" move based only on old velocity → land at a **lookahead point**.
+2. From the lookahead, compute the gradient.
+3. Use **that** gradient (the slope where you're about to be) to make the actual step.
 
 </div>
 
-One change: *where* the gradient is computed.
+If your velocity was about to drive you into a wall, the lookahead gradient already points back — correcting the course **before** you fully commit.
+
+---
+
+# Nesterov · the update in three steps
+
+1. **Project a lookahead point** — where would old velocity take us?
+$$\theta_\text{look} = \theta_{t-1} - \eta\beta\,\mathbf{v}_{t-1}$$
+2. **Compute gradient at the lookahead** (not at $\theta_{t-1}$):
+$$\mathbf{g}_\text{look} = \nabla\mathcal{L}(\theta_\text{look})$$
+3. **Standard momentum update** with the smarter gradient:
+$$\mathbf{v}_t = \beta\,\mathbf{v}_{t-1} + (1-\beta)\,\mathbf{g}_\text{look}\qquad \theta_t = \theta_{t-1} - \eta\,\mathbf{v}_t$$
+
+One change: *where* the gradient is measured.
+
+---
+
+# Worked numeric · Nesterov's correction
+
+1D toy: $\mathcal{L}(\theta) = \theta^2,\ \nabla\mathcal{L} = 2\theta$. Start $\theta_0 = 2,\ v_0 = 2,\ \eta = 0.1,\ \beta = 0.9$.
+
+<div class="columns">
+<div>
+
+### Standard momentum
+
+- $g_0 = 2 \cdot 2 = 4$
+- $v_1 = 0.9 \cdot 2 + 0.1 \cdot 4 = 2.20$
+- $\theta_1 = 2 - 0.1 \cdot 2.20 = \mathbf{1.780}$
+
+</div>
+<div>
+
+### Nesterov
+
+- $\theta_\text{look} = 2 - 0.1 \cdot 0.9 \cdot 2 = 1.82$
+- $g_\text{look} = 2 \cdot 1.82 = 3.64$ (less steep!)
+- $v_1 = 0.9 \cdot 2 + 0.1 \cdot 3.64 = 2.164$
+- $\theta_1 = 2 - 0.1 \cdot 2.164 = \mathbf{1.7836}$
+
+</div>
+</div>
+
+The Nesterov gradient was smaller — it "saw" the valley flattening ahead → slightly more conservative step → less overshoot. Tiny difference per step, but compounds over training.
 
 ---
 
@@ -430,13 +552,54 @@ Higher $\beta$ = longer memory. If curvature changes abruptly (early training), 
 
 ---
 
-# Momentum changes the effective LR
+# Momentum's compounding effect
 
-Momentum changes the *effective* learning rate:
+What happens when the gradient points the same way, step after step?
 
-$$\eta_\text{eff} \approx \frac{\eta}{1 - \beta}$$
+<div class="insight">
 
-If you double $\beta$ from $0.9$ to $0.95$, effective LR doubles — you may need to halve $\eta$.
+**Analogy · pushing a child on a swing.** First push — they get some velocity. Next time they swing by — push again. The new push **adds to the existing velocity**. They go higher and higher. Momentum does the same: each consistent gradient builds the velocity, leading to far bigger steps than the gradient alone.
+
+</div>
+
+Let's derive **how big** that compounding gets.
+
+---
+
+# Deriving the effective learning rate
+
+Assume gradient $\mathbf{g}$ is constant for many steps. Use the simpler form $\mathbf{v}_t = \beta\,\mathbf{v}_{t-1} + \mathbf{g}$ (same steady-state behaviour). Unroll, with $\mathbf{v}_0 = 0$:
+
+- $t=1$: $\mathbf{v}_1 = \mathbf{g}$
+- $t=2$: $\mathbf{v}_2 = \beta\,\mathbf{g} + \mathbf{g}$
+- $t=3$: $\mathbf{v}_3 = \beta^2\,\mathbf{g} + \beta\,\mathbf{g} + \mathbf{g}$
+- $t=\infty$: $\mathbf{v}_\infty = (1 + \beta + \beta^2 + \cdots)\,\mathbf{g}$
+
+A **geometric series** with $\beta < 1$:
+$$\sum_{i=0}^{\infty} \beta^i = \frac{1}{1-\beta} \;\;\Rightarrow\;\; \mathbf{v}_\infty = \frac{1}{1-\beta}\,\mathbf{g}$$
+
+So the parameter update at terminal velocity is:
+$$\theta_t = \theta_{t-1} - \eta\,\mathbf{v}_\infty = \theta_{t-1} - \underbrace{\frac{\eta}{1-\beta}}_{\eta_\text{eff}}\,\mathbf{g}$$
+
+---
+
+# The "effective LR" in numbers
+
+How much does $\beta$ amplify $\eta$?
+
+| $\beta$ | $1/(1-\beta)$ | Effect |
+|--------|----------------|--------|
+| 0.0 | $1\times$ | no momentum |
+| 0.5 | $2\times$ | light |
+| **0.9** | $\mathbf{10\times}$ | **standard default** |
+| 0.95 | $20\times$ | heavy |
+| 0.99 | $100\times$ | very heavy |
+
+<div class="warning">
+
+**Key takeaway.** A small bump from $\beta=0.9$ to $\beta=0.99$ multiplies your effective LR by $10\times$. Your previously-stable run will diverge. **When you raise momentum, lower $\eta$ to compensate.**
+
+</div>
 
 <div class="realworld">
 
