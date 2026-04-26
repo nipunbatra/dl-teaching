@@ -101,24 +101,139 @@ AdaGrad does this for every parameter · if a parameter has accumulated lots of 
 
 ---
 
-# AdaGrad — the first per-parameter LR (2011)
+# How do we give each parameter its own LR?
 
-<div class="math-box">
+<div class="insight">
 
-$$G_t = G_{t-1} + g_t^2, \qquad \theta_t = \theta_{t-1} - \frac{\eta}{\sqrt{G_t + \epsilon}}\, g_t$$
+**Analogy · audio mixing board.** Imagine you're an engineer with a giant board of thousands of knobs (parameters).
+
+- Some knobs are very sensitive — you've already moved them a lot. Make tiny adjustments now.
+- Other knobs you've barely touched. You can afford to turn them aggressively.
 
 </div>
 
-- Parameters that got large gradients → denominator grows → effective LR shrinks.
-- Parameters that got small gradients → effective LR stays large.
+**AdaGrad's idea** · keep a *total movement history* for each knob. The more a knob has moved, the smaller its future turns.
 
-**Q.** What goes wrong with $G_t = G_{t-1} + g_t^2$ over many steps?
+---
+
+# AdaGrad · build the update step-by-step
+
+For a *single* parameter $\theta_i$:
+
+1. **Gradient** at step $t$ for parameter $i$: $g_{t,i}$.
+2. **Running sum of squared gradients** (the "history"):
+$$G_{t,i} = G_{t-1,i} + g_{t,i}^2,\qquad G_{0,i} = 0$$
+3. **Standard SGD** would do $\theta_{t,i} = \theta_{t-1,i} - \eta\,g_{t,i}$.
+4. **AdaGrad** divides $\eta$ by $\sqrt{G_{t,i} + \epsilon}$:
+$$\theta_{t,i} = \theta_{t-1,i} - \frac{\eta}{\sqrt{G_{t,i} + \epsilon}}\,g_{t,i}$$
+$\epsilon = 10^{-8}$ avoids division-by-zero. Vector form (element-wise):
+$$G_t = G_{t-1} + g_t^2, \qquad \theta_t = \theta_{t-1} - \frac{\eta}{\sqrt{G_t + \epsilon}}\, g_t$$
+
+Each parameter gets its **own** effective LR.
+
+---
+
+# Worked numeric · AdaGrad on two parameters
+
+$\theta_1$ (dense, small gradients) and $\theta_2$ (sparse, occasionally huge). $\eta=0.1$.
+
+<div class="columns">
+<div>
+
+### $\theta_1$ · steady $g = 0.2$
+
+- $t=1$: $G = 0.04 \Rightarrow \eta_\text{eff} = 0.1/\sqrt{0.04} = 0.5$
+- $t=2$: $G = 0.08 \Rightarrow \eta_\text{eff} \approx 0.354$
+- $t=10$: $G = 0.40 \Rightarrow \eta_\text{eff} \approx 0.158$
+
+LR shrinks gently as updates accumulate.
+
+</div>
+<div>
+
+### $\theta_2$ · sparse: $g_1 \approx 0$, $g_2 = 5.0$
+
+- $t=1$: $G \approx 0 \Rightarrow$ tiny update (nothing to update toward)
+- $t=2$: $G = 25 \Rightarrow \eta_\text{eff} = 0.1/5 = 0.02$
+
+One big gradient → LR for $\theta_2$ collapses immediately. Past sparsity protected; future moves are careful.
+
+</div>
+</div>
 
 ---
 
 # AdaGrad's problem · LR decays to zero
 
 ![w:920px](figures/lec05/svg/adagrad_decay.svg)
+
+---
+
+# How do we fix AdaGrad's dying LR?
+
+<div class="insight">
+
+**Analogy · perfect vs. fading memory.** AdaGrad has *infinite memory* — every gradient since step 1 is in $G_t$. After a million steps, $G_t$ is huge and the effective LR is essentially zero.
+
+What if we gave it a **fading memory**, like momentum? An **EMA of squared gradients** weights recent gradients more than old ones. That's **RMSProp**.
+
+</div>
+
+---
+
+# RMSProp · AdaGrad with a fading memory (2012)
+
+Replace AdaGrad's accumulator with an EMA $v_t$:
+
+| | AdaGrad | RMSProp |
+|---|---|---|
+| Update | $G_t = G_{t-1} + g_t^2$ (forever) | $v_t = \beta_2\,v_{t-1} + (1-\beta_2)\,g_t^2$ |
+| Behaviour | Grows without bound | Stabilizes |
+
+Update rule:
+$$\theta_t = \theta_{t-1} - \frac{\eta}{\sqrt{v_t} + \epsilon}\,g_t$$
+Typical $\beta_2 = 0.999$ — keep 99.9% of old, mix in 0.1% of new.
+
+---
+
+# Worked numeric · AdaGrad vs. RMSProp
+
+Constant gradient $g = 2.0$, $\eta = 0.1$, $\beta_2 = 0.9$ for clarity.
+
+<div class="columns">
+<div>
+
+### AdaGrad · keeps shrinking
+
+- $t=1$: $G=4 \Rightarrow \eta_\text{eff} = 0.05$
+- $t=2$: $G=8 \Rightarrow \eta_\text{eff} \approx 0.035$
+- $t=10$: $G=40 \Rightarrow \eta_\text{eff} \approx 0.016$
+- $t=100$: $\eta_\text{eff} \to 0$
+
+</div>
+<div>
+
+### RMSProp · stabilizes
+
+- $t=1$: $v=0.4 \Rightarrow \eta_\text{eff} \approx 0.158$
+- $t=2$: $v=0.76 \Rightarrow \eta_\text{eff} \approx 0.115$
+- $t \to \infty$: $v \to g^2 = 4 \Rightarrow \eta_\text{eff} = 0.05$
+
+</div>
+</div>
+
+RMSProp's effective LR **converges to a positive value** rather than decaying to zero.
+
+---
+
+# The big idea · Adam = Momentum + RMSProp
+
+Combine the best of both worlds:
+
+1. **From momentum** — EMA of gradients gives a smoother, less noisy direction. Call it $m_t$ (first moment).
+2. **From RMSProp** — EMA of *squared* gradients gives a per-parameter scale. Call it $v_t$ (second moment).
+
+**Adam does both at once.**
 
 ---
 
@@ -180,13 +295,26 @@ Why we divide by $(1 - \beta^t)$
 
 ---
 
+# The cold-start problem
+
+Our moving averages $m_t$ and $v_t$ are **initialized at zero**.
+
+<div class="insight">
+
+**Analogy · making hot chocolate.** You start with a cup of hot water ($m_0 = 0$) and add one spoonful of cocoa (gradient $g_1$). The first sip is mostly water with a hint of cocoa — *biased toward the starting point*.
+
+After many spoonfuls the mix is right. Bias correction is the math trick to "undilute" the early steps and get the right strength immediately.
+
+</div>
+
+---
+
 # What goes wrong at $t = 1$?
 
-Initialize $m_0 = 0, v_0 = 0$. At step $t = 1$:
-
+Initialize $m_0 = 0$. At step 1:
 $$m_1 = \beta_1 \cdot 0 + (1 - \beta_1)\, g_1 = 0.1\, g_1$$
 
-The EMA is **10× smaller** than the true gradient — because it started from zero.
+The EMA is **10× smaller** than the true gradient — purely because it started from zero.
 
 ---
 
@@ -196,17 +324,24 @@ The EMA is **10× smaller** than the true gradient — because it started from z
 
 ---
 
-# ⚠️ optional · The fix, derived
+# Deriving the bias-correction factor
 
-$E[g_t]$ is (roughly) stationary $\mu$. Then:
+Unroll the EMA from $m_0 = 0$, assuming the gradient is approximately constant $g_k = g$:
 
-$$E[m_t] = (1 - \beta_1)\sum_{k=1}^{t} \beta_1^{t-k}\, E[g_k] = \mu\, (1 - \beta_1^t)$$
+- $m_1 = (1-\beta_1)\,g$
+- $m_2 = \beta_1(1-\beta_1)\,g + (1-\beta_1)\,g$
+- $m_3 = \beta_1^2(1-\beta_1)\,g + \beta_1(1-\beta_1)\,g + (1-\beta_1)\,g$
 
-So the unbiased estimator is:
+In general:
+$$m_t = (1-\beta_1)\,g\,\bigl(\beta_1^{t-1} + \beta_1^{t-2} + \cdots + 1\bigr)$$
 
-$$\hat{m}_t = \frac{m_t}{1 - \beta_1^t}$$
+The bracketed sum is a **geometric series** with $t$ terms:
+$$\sum_{i=0}^{t-1}\beta_1^i = \frac{1 - \beta_1^t}{1 - \beta_1}$$
 
-Same idea for $v_t$ and $\beta_2$.
+So $m_t = g\,(1 - \beta_1^t)$. To recover $g$, divide:
+$$\boxed{\hat{m}_t = \frac{m_t}{1 - \beta_1^t}}$$
+
+Same logic gives $\hat{v}_t = v_t / (1 - \beta_2^t)$.
 
 ---
 
@@ -363,19 +498,38 @@ sched = LambdaLR(opt, lr_lambda)
 
 ---
 
-# Why Transformers need warmup · the explanation
+# Why are early gradients so chaotic?
 
-Adam's $\hat{v}_t$ is tiny and noisy at the start. Dividing by $\sqrt{\hat{v}_t}$ amplifies step sizes wildly.
+A randomly-initialized network knows **nothing**.
 
-Meanwhile, random-init Transformer weights produce **peaky** attention distributions — large early gradients in a few heads.
+- Loss is high → gradients are large.
+- The model makes wildly overconfident-but-wrong predictions (e.g. softmax assigns 99% to the wrong class) → massive corrective gradients.
 
-Combined: huge, unstable first steps → divergence.
+Two things go wrong **simultaneously** at step 1:
 
-<div class="keypoint">
+1. **Chaotic, large gradients** from a random network.
+2. **Adam's $v_t$ is itself noisy** — only one batch has been seen; the EMA estimate is unreliable.
 
-**Warmup** — linearly ramp LR from 0 to its target over ~1–10% of training. Tames early instability; after warmup, use cosine decay.
+Big gradient ÷ tiny, unreliable $\sqrt{v_t}$ → **explosive** first step that throws weights into unrecoverable territory.
 
-</div>
+---
+
+# Why Transformers need warmup
+
+A perfect storm at the start:
+
+1. **Adam's denominator is unstable.** $\hat{v}_t$ is based on a few batches; if those happen to be small, $\sqrt{\hat{v}_t}$ is tiny → updates are **huge**.
+2. **Transformer gradients are spiky.** Random init → attention accidentally focuses everything on one irrelevant token → enormous gradient on that head's weights.
+
+Combine:
+$$\text{Update} \propto \frac{\text{large } g_t}{\text{tiny } \sqrt{\hat{v}_t}} \;\Longrightarrow\; \text{EXPLOSION}$$
+
+**Warmup is a safety valve.** Linearly ramp $\eta$ from 0 over the first 1–10% of training:
+- At step 1, $\eta \approx 0$ → tiny update no matter how crazy the gradient.
+- This gives $m_t, v_t$ time to **stabilize** over many batches.
+- By the time $\eta$ reaches its target, $\hat{v}_t$ is a reliable estimate.
+
+After warmup, use cosine decay.
 
 ---
 
