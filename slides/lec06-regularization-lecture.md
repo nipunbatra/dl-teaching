@@ -182,20 +182,57 @@ Brisk — you know these from ES 654
 
 ---
 
-# L2 worked numeric · single-weight update
+# L2 · the weight-leash analogy
 
-<div class="math-box">
+<div class="insight">
 
-A single weight · $w = 2.0$. Loss gradient · $dL/dw = 1.5$. LR · $\eta = 0.1$. Decay · $\lambda = 0.01$.
+**Analogy.** The data loss is your **dog**, trying to run toward an interesting smell (the optimum on the training data).
 
-**Without L2** · $w_\text{new} = 2.0 - 0.1 \cdot 1.5 = 1.85$
-
-**With L2** · the gradient becomes $1.5 + \lambda w = 1.52$
-$w_\text{new} = 2.0 - 0.1 \cdot 1.52 = 1.848$
+The L2 penalty is a **leash** pulling the dog back toward you (toward zero). The actual update is a **compromise** — the dog moves toward the smell, but the leash keeps it from running too far.
 
 </div>
 
-The weight ends up slightly smaller · "decayed" toward zero. Repeat over thousands of steps · big weights shrink, the loss only lets them grow if they really earn their keep.
+---
+
+# L2 · derive the gradient
+
+Total loss = data loss + L2 penalty:
+$$L_\text{total} = L_\text{data} + \frac{\lambda}{2}\,w^2$$
+
+Differentiate term by term:
+$$\frac{dL_\text{total}}{dw} = \frac{dL_\text{data}}{dw} + \underbrace{\frac{d}{dw}\!\left(\frac{\lambda}{2}w^2\right)}_{= \;\lambda w}$$
+
+Plug into the SGD update rule $w_\text{new} = w - \eta\,(\text{grad})$:
+$$w_\text{new} = w - \eta\left(\frac{dL_\text{data}}{dw} + \lambda w\right)$$
+
+The extra term $-\eta\lambda w$ is the **leash pull** toward zero.
+
+---
+
+# Worked numeric · L2 single-weight update
+
+$w = 2.0$, $dL_\text{data}/dw = 1.5$, $\eta = 0.1$, $\lambda = 0.01$.
+
+<div class="columns">
+<div>
+
+### Without L2
+
+$w_\text{new} = 2.0 - 0.1 \cdot 1.5 = \mathbf{1.85}$
+
+</div>
+<div>
+
+### With L2
+
+- $L_2$ contribution: $\lambda w = 0.01 \cdot 2.0 = 0.02$
+- Full gradient: $1.5 + 0.02 = 1.52$
+- $w_\text{new} = 2.0 - 0.1 \cdot 1.52 = \mathbf{1.848}$
+
+</div>
+</div>
+
+The weight ends up **slightly smaller** — decayed toward zero. Repeat over thousands of steps · big weights shrink unless the data loss really wants them.
 
 ---
 
@@ -205,17 +242,23 @@ The weight ends up slightly smaller · "decayed" toward zero. Repeat over thousa
 
 ---
 
-# L2 / weight decay · 30-second recap
+# L2 = weight decay · regrouping the update
 
-Add $\frac{\lambda}{2}\|\theta\|^2$ to the loss → gradient contribution $\lambda \theta$ → weights shrink every step.
+Take the SGD-with-L2 step:
+$$w_\text{new} = w - \eta\,\frac{dL_\text{data}}{dw} - \eta\lambda w$$
 
-<div class="math-box">
+Group the two $w$ terms:
+$$w_\text{new} = (1 - \eta\lambda)\,w \;-\; \eta\,\frac{dL_\text{data}}{dw}$$
 
-**Bayesian view** · equivalent to a Gaussian prior $\theta \sim \mathcal{N}(0, \sigma^2 I)$ on weights; the optimum becomes MAP instead of MLE.
+The factor $(1 - \eta\lambda)$ is **slightly less than 1**. So at every step, the weight is first **shrunk a little** (decayed), then updated by the data gradient.
+
+That's why "L2 regularization" is the same thing as "**weight decay**".
+
+<div class="realworld">
+
+In PyTorch · `AdamW(..., weight_decay=0.1)` is the one line you need. (For why decoupling matters in adaptive optimizers, see L5.)
 
 </div>
-
-In PyTorch · `AdamW(..., weight_decay=0.1)` — the one line you need.
 
 ---
 
@@ -351,6 +394,43 @@ Empirically: Mixup/CutMix adds ~1–2% CIFAR-10 accuracy. Essentially a free win
 
 ---
 
+# Mixup · the smoothie analogy
+
+<div class="insight">
+
+**Analogy.** Standard augmentation = slightly reshape a "cat" fruit. **Mixup** = put 70% cat + 30% dog into a blender → a smoothie that is *neither fully cat nor fully dog*.
+
+Crucially, **the label is also a smoothie**: "70% cat, 30% dog". This forces the model to learn that predictions can live **between classes** → smoother decision boundary.
+
+</div>
+
+---
+
+# Mixup · the math, step by step
+
+Mix two examples $(x_1, y_1)$ and $(x_2, y_2)$:
+
+1. **Pick a mixing ratio** $\lambda \sim \text{Beta}(\alpha, \alpha)$, $\lambda \in (0,1)$. Say $\lambda = 0.7$.
+2. **Mix inputs.** $x_\text{mix} = \lambda\,x_1 + (1-\lambda)\,x_2 = 0.7\,x_1 + 0.3\,x_2$.
+3. **Mix labels.** $y_\text{mix} = \lambda\,y_1 + (1-\lambda)\,y_2$.
+4. **Mix the loss** equivalently:
+$$\text{loss} = \lambda\,\text{CE}(\text{logits}, y_1) + (1-\lambda)\,\text{CE}(\text{logits}, y_2)$$
+
+---
+
+# Worked numeric · Mixup label
+
+Cats = class 0, dogs = class 1. One-hot:
+- $y_1 = [1, 0]$ (cat)
+- $y_2 = [0, 1]$ (dog)
+- $\lambda = 0.7$
+
+$$y_\text{mix} = 0.7 \cdot [1, 0] + 0.3 \cdot [0, 1] = [0.7, 0.3]$$
+
+The model now sees a faded cat overlaid with 30%-opacity dog, and must produce $[0.7, 0.3]$ to minimize the loss. **Calibrated outputs** for free.
+
+---
+
 # Mixup in PyTorch · 10 lines
 
 ```python
@@ -393,19 +473,41 @@ Because "1.0 for the right class" is a lie
 
 # Why soften the labels?
 
-<div class="math-box">
+<div class="insight">
 
-$$y_\text{smooth} = (1 - \alpha)\, y_\text{hard} + \frac{\alpha}{K}$$
+**Analogy · the humble professor.** A bad professor: *"The answer is A. Memorize it."* → encourages overconfidence.
+A good professor: *"It's very likely A — but reserve some confidence for being wrong."* → calibrated thinking.
 
-For $\alpha = 0.1, K = 10$: correct class gets 0.91, each wrong class gets 0.01.
+Label smoothing is the good professor for your neural network.
 
 </div>
 
-Three reasons this helps:
+---
 
-1. **Prevents overconfidence.** Hard labels push logits to $\pm \infty$ — the model becomes miscalibrated.
+# Label smoothing · derive the formula
+
+Goal · take a tiny fraction $\alpha$ of confidence away from the correct class and spread it evenly across all $K$ classes.
+
+1. **Hard one-hot label** for class 3 ($K = 10$):
+$y_\text{hard} = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0]$
+2. **Uniform label** (complete uncertainty):
+$y_\text{uniform} = [0.1, 0.1, \ldots, 0.1]$ (each $= 1/K$)
+3. **Mix them** with weight $\alpha = 0.1$:
+$y_\text{smooth} = (1-\alpha)\,y_\text{hard} + \alpha\,y_\text{uniform}$
+$\quad\quad\;\; = 0.9\,y_\text{hard} + 0.1\,y_\text{uniform}$
+4. **Compute** entry-by-entry:
+$y_\text{smooth} = [0.01, 0.01, \mathbf{0.91}, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]$
+
+Sum is still 1. The compact form:
+$$y_\text{smooth} = (1-\alpha)\,y_\text{hard} + \frac{\alpha}{K}$$
+
+---
+
+# Why label smoothing helps
+
+1. **Prevents overconfidence.** Hard labels push logits to $\pm\infty$ → miscalibrated model.
 2. **Regularizes the output layer.** Softer target → smaller logit magnitudes.
-3. **Label noise robustness.** Some labels are wrong anyway — smoothing acknowledges uncertainty.
+3. **Label noise robustness.** Some labels are wrong anyway — smoothing acknowledges that.
 
 <div class="realworld">
 
@@ -504,19 +606,36 @@ Dropout forces every unit to be useful *on its own* → more distributed represe
 
 ---
 
-# Inverted dropout — why divide by $p$
+# Inverted dropout · the part-time-team analogy
 
-<div class="math-box">
+<div class="insight">
 
-$$\mathbf{h}_\text{drop} = \frac{\mathbf{h} \odot \mathbf{m}}{p}, \quad \mathbf{m} \sim \text{Bernoulli}(p)$$
+**Analogy.** A 4-person construction crew. Some days, randomly, only 2 show up.
+- **Bad:** they each work normally → only half a wall built. Manager learns the wrong baseline.
+- **Good:** with keep-prob $p = 0.5$, the present workers each work $1/p = 2\times$ harder → wall finished. Manager's expectation stays correct.
 
-During training, $E[\mathbf{h}_\text{drop}] = \mathbf{h}$ — same expectation as the full forward pass.
-
-At eval, set $\mathbf{m} = \mathbf{1}$, no scaling — output matches expectation.
+On the **final project day** (test time), all 4 show up — no scaling needed. Their normal pace = correct expectation.
 
 </div>
 
-Without the $1/p$ rescale, training-time and eval-time activations would differ. This is the "inverted" part — the form PyTorch uses.
+---
+
+# Inverted dropout · why divide by $p$
+
+For a single neuron with activation $h$, keep-prob $p$.
+
+**Test time:** dropout off → output is just $h$. *(target expectation)*
+
+**Training time:** output $h_\text{drop}$ is random:
+- with probability $p$: scaled active output $= h/p$
+- with probability $(1-p)$: dropped, output $= 0$
+
+**Expected output during training:**
+$$E[h_\text{drop}] = p \cdot (h/p) + (1-p) \cdot 0 = h$$
+
+✓ same as test time. The rest of the network sees the **same expected activations** in both modes — training and eval behave consistently. This is **inverted dropout**.
+
+$$\mathbf{h}_\text{drop} = \frac{\mathbf{h}\odot\mathbf{m}}{p},\quad \mathbf{m}\sim\text{Bernoulli}(p)$$
 
 ---
 
@@ -648,22 +767,40 @@ Two problems that normalization fixes:
 
 ---
 
-# BatchNorm · worked numeric example
+# BatchNorm · standardizing exam scores
 
-<div class="math-box">
+<div class="insight">
 
-Mini-batch of 4 activations · $x = [1, 3, 5, 7]$.
+**Analogy.** Student A's homework: $[80, 85, 90]$. Student B's: $[6, 7, 8]$ (1–10 scale). The next layer sees raw scores and is confused by the scale gap.
 
-**Step 1** · mean $\mu = (1 + 3 + 5 + 7) / 4 = 4.0$
-**Step 2** · variance $\sigma^2 = \frac{1}{4}((-3)^2 + (-1)^2 + 1^2 + 3^2) = 5.0$ → $\sigma \approx 2.236$
-**Step 3** · normalize · $\hat x = (x - \mu) / \sigma = [-1.34, -0.45, 0.45, 1.34]$
-**Step 4** · scale + shift with learned $\gamma, \beta$ · suppose $\gamma = 2.0, \beta = 0.5$
-
-$$y = \gamma \hat x + \beta = [-2.18, -0.40, 1.40, 3.18]$$
+BatchNorm is a fair grading TA:
+1. **Centre** — subtract each student's mean. A → $[-5, 0, 5]$, B → $[-1, 0, 1]$.
+2. **Rescale** — divide by std. Now both have unit scale.
+3. **Re-learn the right scale.** Maybe centre 0 / scale 1 *isn't* ideal for the next layer. BN adds learnable $\gamma$ and $\beta$ so the network can pick the best post-norm scale.
 
 </div>
 
-At eval time · use the running mean/var collected during training, not the batch statistics. This is why `model.eval()` matters · it switches to running stats.
+---
+
+# BatchNorm · worked numeric example
+
+Mini-batch of 4 activations from one neuron: $x = [1, 3, 5, 7]$.
+
+**Step 1 · mean.**
+$\mu = (1+3+5+7)/4 = 4.0$
+
+**Step 2 · variance.**
+- Deviations: $x - \mu = [-3, -1, 1, 3]$
+- Squared: $[9, 1, 1, 9]$
+- Mean of squares: $\sigma^2 = 20/4 = 5.0 \Rightarrow \sigma \approx 2.236$
+
+**Step 3 · normalize.** ($\epsilon \approx 10^{-5}$)
+$\hat x = (x - \mu)/\sqrt{\sigma^2 + \epsilon} \approx [-1.34, -0.45, 0.45, 1.34]$
+
+**Step 4 · scale + shift** with learned $\gamma = 2.0,\ \beta = 0.5$:
+$$y = \gamma\hat x + \beta = [-2.18,\ -0.40,\ 1.40,\ 3.18]$$
+
+This vector is what the next layer sees. At **eval** time · use the running mean/var collected during training, not batch stats. (`model.eval()` flips this switch.)
 
 ---
 
@@ -777,11 +914,32 @@ Pre-norm vs post-norm
 
 ---
 
-# Why pre-norm won
+# Why pre-norm won · the highway analogy
 
-Post-norm (original Transformer) puts `LayerNorm` **after** the residual addition. The gradient flowing through the skip is modulated by the norm — gradient can vanish at depth → needs aggressive warmup + careful tuning.
+<div class="insight">
 
-Pre-norm puts `LayerNorm` **before** the sublayer, leaving the skip connection untouched. Gradient has a clean residual highway.
+**Analogy · highway and side road.** The residual connection is a multi-lane **highway** that lets the gradient flow easily from the end of the network to the beginning. Sub-layers (attention, MLP) are winding **side roads**.
+
+- **Post-norm** = put a toll booth (LayerNorm) on the highway *after* the side road merges back in. *All* traffic — highway and side road — must pass through it. Bottleneck.
+- **Pre-norm** = move the toll booth to the *entrance* of the side road. The highway flows freely. Only side-road traffic gets normalized.
+
+</div>
+
+---
+
+# Why pre-norm won · the gradient path
+
+Residual update: $\text{out} = x + \text{Sub}(x)$. The $x$ term is the **gradient highway**.
+
+**Post-norm.** Forward: $\text{out} = \text{LN}(x + \text{Sub}(x))$.
+- Backward to $x$ goes **through** LN.
+- LN's gradient is a complicated, scale-dependent term in the input statistics.
+- Gradient on the skip is modulated → can vanish or explode at depth → needs aggressive warmup.
+
+**Pre-norm.** Forward: $\text{out} = x + \text{Sub}(\text{LN}(x))$.
+- $\partial\,\text{out}/\partial x$ has a **direct $+1$ term** from the skip.
+- LN sits on the side branch; its complicated gradient affects only the sub-layer.
+- Highway is **clean** → trains stable at depth.
 
 <div class="realworld">
 
