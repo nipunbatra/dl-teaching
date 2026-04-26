@@ -92,20 +92,26 @@ An MLP has **no inductive bias for time** — it would need to relearn what each
 
 # RNN · step-by-step on "I love deep learning"
 
-Embed each token to a 4-d vector, $x_1, x_2, x_3, x_4$. Initialize $h_0 = \mathbf{0}$.
+Tiny model · input dim $d_\text{in} = 2$, hidden dim $d_h = 3$. $h_0 = [0, 0, 0]^\top$. Embeddings (toy):
+$x_1 = [1, 0]^\top$ (I), $x_2 = [0, 1]^\top$ (love), $x_3 = [1, 1]^\top$ (deep), $x_4 = [0, 0]^\top$ (learning).
 
-<div class="math-box">
+Weights:
+$$W = \begin{pmatrix} 0.1 & 0.2 \\ 0.3 & 0.4 \\ 0.5 & 0.6 \end{pmatrix},\quad U = \begin{pmatrix} 0.1 & 0.2 & 0.3 \\ 0.4 & 0.5 & 0.6 \\ 0.7 & 0.8 & 0.9 \end{pmatrix}$$
 
-| step | input | hidden update | result |
+**Step 1 · "I".** $h_0 = 0$, so $h_1 = \tanh(Wx_1) = \tanh([0.1, 0.3, 0.5]^\top) \approx [0.099, 0.291, 0.462]^\top$. This vector summarizes the sequence so far.
+
+**Step 2 · "love".** Use the **same** $W, U$ with new input $x_2$ and previous state $h_1$:
+$h_2 = \tanh(Wx_2 + Uh_1)$.
+
+The recurrence:
+| step | input | update | result |
 |:-:|:-:|:-:|:-:|
-| 1 | $x_1$ (I) | $\tanh(W x_1 + U h_0)$ | $h_1$ · encodes "I" |
-| 2 | $x_2$ (love) | $\tanh(W x_2 + U h_1)$ | $h_2$ · encodes "I love" |
-| 3 | $x_3$ (deep) | $\tanh(W x_3 + U h_2)$ | $h_3$ · encodes "I love deep" |
-| 4 | $x_4$ (learning) | $\tanh(W x_4 + U h_3)$ | $h_4$ · full sentence summary |
+| 1 | $x_1$ | $\tanh(Wx_1 + Uh_0)$ | $h_1$ encodes "I" |
+| 2 | $x_2$ | $\tanh(Wx_2 + Uh_1)$ | $h_2$ encodes "I love" |
+| 3 | $x_3$ | $\tanh(Wx_3 + Uh_2)$ | $h_3$ encodes "I love deep" |
+| 4 | $x_4$ | $\tanh(Wx_4 + Uh_3)$ | $h_4$ — full summary |
 
-</div>
-
-$W, U$ are **shared** across steps. The same weights process "I" at step 1 and "learning" at step 4 — unlike an MLP, which would learn a separate `(token, position)` feature at every slot.
+$W, U$ are **shared** across steps — unlike an MLP that would learn a different `(token, position)` feature for every slot.
 
 ---
 
@@ -178,15 +184,34 @@ Same problem as depth, now along the time axis
 
 ---
 
-# Backpropagation Through Time
+# BPTT · the telephone game
 
-Unrolling gives you an $L$-step computation graph. Backprop through it:
+<div class="insight">
 
-$$\frac{\partial \mathcal{L}}{\partial h_1} = \prod_{t=2}^{T} \frac{\partial h_t}{\partial h_{t-1}} \cdot \frac{\partial \mathcal{L}}{\partial h_T}$$
+**Analogy · Chinese whispers.** Tell a secret to person 1. They whisper to person 2, etc. By person 20, the message is garbled (vanished) or wildly distorted (exploded).
 
-Each factor is $W^\top \cdot \text{diag}(\tanh'(\cdot))$.
+The gradient is that secret. It travels backward from the loss to the start of the sequence, and at each step it gets transformed.
 
-**Same problem as deep networks** — product of many Jacobians. If the spectral radius of $W$ is $< 1$, gradient vanishes. If $> 1$, it explodes.
+</div>
+
+---
+
+# BPTT · derive the gradient product
+
+Start with the simplest possible RNN: $h_t = W h_{t-1}$ (no input, no $\tanh$). Unroll 3 steps:
+- $h_1 = W h_0$
+- $h_2 = W^2 h_0$
+- $h_3 = W^3 h_0$
+
+Chain rule:
+$$\frac{\partial h_3}{\partial h_0} = \underbrace{\frac{\partial h_3}{\partial h_2}}_{= W} \cdot \underbrace{\frac{\partial h_2}{\partial h_1}}_{= W} \cdot \underbrace{\frac{\partial h_1}{\partial h_0}}_{= W} = W^3$$
+
+For sequence length $T$, gradient $\propto W^T$.
+
+Add $\tanh$ back: $h_t = \tanh(Wh_{t-1})$. Each Jacobian is $W^\top \cdot \text{diag}(\tanh'(\cdot))$. Since $\tanh' \in (0, 1)$:
+$$\frac{\partial \mathcal{L}}{\partial h_1} = \frac{\partial \mathcal{L}}{\partial h_T} \cdot \prod_{t=2}^T \frac{\partial h_t}{\partial h_{t-1}}$$
+
+A product of $T$ scaled-down matrices · vanishing if $\|W\| < 1$, exploding if $\|W\| > 1$.
 
 ---
 
@@ -295,25 +320,59 @@ The next slide gives the math · keep these roles in mind as you read the equati
 
 ---
 
-# LSTM · the six equations
+# LSTM · the conveyor-belt analogy
 
-<div class="math-box">
+<div class="insight">
 
-$$\mathbf{f}_t = \sigma(W_f [\mathbf{h}_{t-1}, \mathbf{x}_t] + b_f) \quad \text{(forget gate)}$$
+A vanilla RNN crams everything into one memory $h_t$ — like doing complex calculations using only 8 CPU registers; things get overwritten constantly.
 
-$$\mathbf{i}_t = \sigma(W_i [\mathbf{h}_{t-1}, \mathbf{x}_t] + b_i) \quad \text{(input gate)}$$
-
-$$\mathbf{o}_t = \sigma(W_o [\mathbf{h}_{t-1}, \mathbf{x}_t] + b_o) \quad \text{(output gate)}$$
-
-$$\tilde{\mathbf{c}}_t = \tanh(W_c [\mathbf{h}_{t-1}, \mathbf{x}_t] + b_c) \quad \text{(candidate)}$$
-
-$$\mathbf{c}_t = \mathbf{f}_t \odot \mathbf{c}_{t-1} + \mathbf{i}_t \odot \tilde{\mathbf{c}}_t \quad \text{(cell update)}$$
-
-$$\mathbf{h}_t = \mathbf{o}_t \odot \tanh(\mathbf{c}_t) \quad \text{(hidden output)}$$
+LSTM adds a separate **memory conveyor belt** · the **cell state $\mathbf{c}_t$**. Information travels along this belt unchanged unless special **gates** intervene:
+- **Forget gate** · the janitor — removes items from the belt.
+- **Input gate** · the gatekeeper — decides what new items to add.
+- **Output gate** · the press secretary — picks what to show outside.
 
 </div>
 
-Four learnable weight matrices · three gates in $[0, 1]$ · one candidate in $[-1, 1]$.
+A protected long-term memory + learned controllers for write / forget / read. That's the whole idea.
+
+---
+
+# LSTM · build the equations step-by-step
+
+Combine inputs into one **control vector** $[\mathbf{h}_{t-1}, \mathbf{x}_t]$. Use it to drive every gate.
+
+**Step 1 · Forget gate** (sigmoid → $[0, 1]$):
+$$\mathbf{f}_t = \sigma(W_f [\mathbf{h}_{t-1}, \mathbf{x}_t] + b_f)$$
+0 → forget · 1 → keep.
+
+**Step 2 · Input gate** + **candidate**:
+$$\mathbf{i}_t = \sigma(W_i [\mathbf{h}_{t-1}, \mathbf{x}_t] + b_i),\quad \tilde{\mathbf{c}}_t = \tanh(W_c [\mathbf{h}_{t-1}, \mathbf{x}_t] + b_c)$$
+$\mathbf{i}_t$ controls *how much* of the candidate $\tilde{\mathbf{c}}_t$ to write.
+
+**Step 3 · Update the cell state** · throw out old, add new:
+$$\mathbf{c}_t = \underbrace{\mathbf{f}_t \odot \mathbf{c}_{t-1}}_{\text{kept}} + \underbrace{\mathbf{i}_t \odot \tilde{\mathbf{c}}_t}_{\text{added}}$$
+The crucial **+** is what makes gradients flow.
+
+**Step 4 · Output gate** + hidden state:
+$$\mathbf{o}_t = \sigma(W_o [\mathbf{h}_{t-1}, \mathbf{x}_t] + b_o),\quad \mathbf{h}_t = \mathbf{o}_t \odot \tanh(\mathbf{c}_t)$$
+
+---
+
+# Worked numeric · single-neuron LSTM
+
+1D state. Setup:
+- $c_{t-1} = 5.0$ ("the subject is plural")
+- $h_{t-1} = 0.9$, new input $x_t = 0.2$ (the word "was")
+
+Network has learned (for this input):
+- **Forget** $f_t = 0.1$ — sees "was" → forget the plural memory.
+- **Input** $i_t = 0.9$ — write new info aggressively.
+- **Candidate** $\tilde c_t = -2.0$ — encodes "subject is singular".
+
+**Compute new cell state:**
+$$c_t = f_t \cdot c_{t-1} + i_t \cdot \tilde c_t = 0.1 \cdot 5.0 + 0.9 \cdot (-2.0) = 0.5 - 1.8 = \mathbf{-1.3}$$
+
+The memory **flipped** from large positive (plural) to negative (singular) in one step — exactly because the forget gate was small *and* the input gate was large.
 
 ---
 
@@ -341,17 +400,29 @@ The LSTM's "memory" is the cell state $\mathbf{c}_t$; the gates are **learned co
 
 # Why gating fixes vanishing gradients
 
-The cell state update is **additive**:
+**Vanilla RNN.** $h_t = \tanh(Wh_{t-1} + \cdots)$. Backward Jacobian:
+$$\frac{\partial h_t}{\partial h_{t-1}} = W^\top \cdot \text{diag}(\tanh'(\cdot))$$
+A **matrix multiplication** at every step → product of matrices → vanishing/exploding.
 
-$$\mathbf{c}_t = \mathbf{f}_t \odot \mathbf{c}_{t-1} + \mathbf{i}_t \odot \tilde{\mathbf{c}}_t$$
+**LSTM cell state.** $c_t = f_t \odot c_{t-1} + i_t \odot \tilde{c}_t$. Along the cell-state path:
+$$\frac{\partial c_t}{\partial c_{t-1}} = f_t$$
 
-If $\mathbf{f}_t = \mathbf{1}$ and $\mathbf{i}_t = \mathbf{0}$, then $\mathbf{c}_t = \mathbf{c}_{t-1}$ — memory is **preserved perfectly**.
+That's it — **no matrix multiplication**. Just element-wise multiplication by the forget gate.
 
-<div class="keypoint">
+If the network learns $f_t \approx 1$ ("don't forget"), the gradient flows through unchanged. The "gradient highway" works in time the same way ResNet's identity skip works in depth.
 
-Gradient path along the cell state is a **multiply-by-$\mathbf{f}_t$** only. No matrix multiply, no tanh Jacobian. With $\mathbf{f}_t \approx 1$, the gradient flows unchanged across hundreds of steps.
+---
 
-</div>
+# Worked numeric · gradient flow over 100 steps
+
+Suppose memory must be preserved → forget gate trained to $f_t = 0.99$ consistently.
+
+| | After 100 steps |
+|---|----------------|
+| **LSTM** along cell state | $0.99^{100} \approx \mathbf{0.366}$ — small but nonzero |
+| **Vanilla RNN** (optimistic factor 0.5) | $0.5^{100} \approx 7.9 \times 10^{-31}$ — completely vanished |
+
+LSTM signal **survives**. RNN signal is below floating-point precision.
 
 This is the same idea as ResNet skip connections, in the time dimension.
 
@@ -367,21 +438,49 @@ Fewer gates, comparable accuracy
 
 ---
 
-# GRU · two gates instead of three
+# GRU · a simpler, smarter gate
 
-Cho et al. 2014 merged LSTM's forget and input gates into a single **update gate** $\mathbf{z}$, and dropped the separate cell state.
+Two design questions Cho et al. asked in 2014:
+1. Do we really need a *private* cell state $c_t$ and a *public* hidden state $h_t$? Just keep one.
+2. The LSTM's forget and input gates are often opposites. Can we use one gate that picks "old vs new"?
 
-<div class="math-box">
+Result · the **update gate** $\mathbf{z}_t$ is a dial:
+- $\mathbf{z}_t \approx 0$ → keep the old state.
+- $\mathbf{z}_t \approx 1$ → switch to the new candidate.
 
-$$\mathbf{z}_t = \sigma(W_z [\mathbf{h}_{t-1}, \mathbf{x}_t]) \quad \text{(update gate)}$$
+---
 
-$$\mathbf{r}_t = \sigma(W_r [\mathbf{h}_{t-1}, \mathbf{x}_t]) \quad \text{(reset gate)}$$
+# GRU · build the equations step-by-step
 
+**Step 1 · Reset gate.** How much of the past to use when forming the candidate.
+$$\mathbf{r}_t = \sigma(W_r [\mathbf{h}_{t-1}, \mathbf{x}_t])$$
+
+**Step 2 · Candidate.** Reset gate filters the past first.
 $$\tilde{\mathbf{h}}_t = \tanh(W [\mathbf{r}_t \odot \mathbf{h}_{t-1}, \mathbf{x}_t])$$
 
+**Step 3 · Update gate.** How much new vs old to use.
+$$\mathbf{z}_t = \sigma(W_z [\mathbf{h}_{t-1}, \mathbf{x}_t])$$
+
+**Step 4 · Final state · linear interpolation.**
 $$\mathbf{h}_t = (1 - \mathbf{z}_t) \odot \mathbf{h}_{t-1} + \mathbf{z}_t \odot \tilde{\mathbf{h}}_t$$
 
-</div>
+The **additive** structure (like LSTM's cell state) is what keeps gradients flowing.
+
+---
+
+# Worked numeric · scalar GRU
+
+1D state. $h_{t-1} = 0.8$ ("expecting a verb"). Candidate $\tilde h_t = -0.5$ ("new word is a noun").
+
+**Case 1 · $z_t = 0.1$ (keep old).**
+$h_t = 0.9 \cdot 0.8 + 0.1 \cdot (-0.5) = 0.72 - 0.05 = \mathbf{0.67}$
+Close to old state — input mostly ignored.
+
+**Case 2 · $z_t = 0.9$ (use new).**
+$h_t = 0.1 \cdot 0.8 + 0.9 \cdot (-0.5) = 0.08 - 0.45 = \mathbf{-0.37}$
+Close to candidate — state nearly fully replaced.
+
+The single update gate gives the network smooth control between "preserve" and "overwrite."
 
 ---
 
