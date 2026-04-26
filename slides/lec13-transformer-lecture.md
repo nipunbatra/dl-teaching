@@ -102,17 +102,31 @@ The genius was **gluing them together** into one block you can safely stack.
 
 ---
 
-# Pre-norm vs post-norm · a critical detail
+# Pre-norm vs post-norm · the gradient highway
 
-Vaswani 2017's original was **post-norm** · `x = LayerNorm(x + Sublayer(x))`. Everyone uses **pre-norm** now · `x = x + Sublayer(LayerNorm(x))`.
+<div class="insight">
 
-<div class="keypoint">
-
-Why the switch? Pre-norm keeps the residual path *unnormalized* — gradients flow through $x$ directly. Post-norm squashes gradient magnitude at every layer, which destabilizes training past ~12 layers.
+**Analogy.** Gradient = a car driving back from the loss to the start of the network.
+- **Post-norm** · toll booth (`LayerNorm`) on the *main* highway after every block. After 100 blocks, the car has barely any momentum left.
+- **Pre-norm** · toll booth on an *off-ramp* (the sublayer). Main highway is clear · gradient speeds back unobstructed.
 
 </div>
 
-Xiong et al. 2020 showed pre-norm trains without warmup and scales to 100+ layers. Post-norm needs careful warmup and usually breaks past 24. **Pre-norm is a free upgrade** — if you write your own Transformer, use pre-norm.
+---
+
+# Pre-norm vs post-norm · derive the gradient
+
+Block output `x_out = x_in + Sublayer(...)`. Goal · derivative $\partial x_\text{out} / \partial x_\text{in}$.
+
+**Post-norm** · `x_out = LayerNorm(x_in + Sublayer(x_in))`. Gradient must pass *through* LN:
+$$\frac{\partial x_\text{out}}{\partial x_\text{in}} = \underbrace{\frac{\partial \text{LN}}{\partial(\cdot)}}_{\text{complex, < 1 typically}} \cdot \left(1 + \frac{\partial \text{Sub}}{\partial x_\text{in}}\right)$$
+Stack 100 of these → shrinking factors compound → gradient dies.
+
+**Pre-norm** · `x_out = x_in + Sublayer(LayerNorm(x_in))`:
+$$\frac{\partial x_\text{out}}{\partial x_\text{in}} = \mathbf{1} + \frac{\partial \text{Sub}(\text{LN}(x_\text{in}))}{\partial x_\text{in}}$$
+The $\mathbf{1}$ is a clean identity — gradient has a direct path back. **Stable at any depth.**
+
+Xiong et al. 2020 · pre-norm trains without warmup and scales to 100+ layers. Post-norm breaks past ~24. **Use pre-norm.**
 
 ---
 
@@ -186,6 +200,38 @@ Why one head is never enough
 
 ---
 
+# Multi-head · trace the tensor shapes
+
+Setup · 1 sentence, 3 tokens, $d_\text{model} = 4$, $h = 2$ heads, so $d_k = 4/2 = 2$.
+
+1. **Input** · `x.shape = (1, 3, 4)`.
+2. **Project.** $W_Q, W_K, W_V$ are each $(4, 4)$.
+$Q = xW_Q$ → `(1, 3, 4)`. Same for $K, V$.
+3. **Split into heads.** Reshape last dim $4 \to (h=2, d_k=2)$, transpose to group by head:
+$Q$: `(1, 3, 4)` → `(1, 3, 2, 2)` → `(1, 2, 3, 2)`. Same for $K, V$.
+4. **Attention per head** (in parallel). Each head: `(3, 2)` → `(3, 2)`. Stack: `(1, 2, 3, 2)`.
+5. **Concat + project.** Reverse the reshape → `(1, 3, 4)`. Final projection $W_O$ → `(1, 3, 4)`.
+
+Output shape is **identical to input**. The block is composable — stack as many as you want.
+
+---
+
+# Multi-head · numeric example
+
+$d_\text{model} = 4$, $h = 2$, $d_k = 2$. One token's projected $Q$ is $q = [1, 2, 3, 4]$.
+
+**Split into 2 heads.** $q^{(1)} = [1, 2]$, $q^{(2)} = [3, 4]$.
+
+Two other tokens' keys: $k_1 = [5, 6, 7, 8]$, $k_2 = [9, 0, 1, 2]$. Split into heads:
+- $k_1^{(1)} = [5, 6]$, $k_1^{(2)} = [7, 8]$
+- $k_2^{(1)} = [9, 0]$, $k_2^{(2)} = [1, 2]$
+
+**Head 1 raw scores.** $q^{(1)} \cdot k_1^{(1)} = 5 + 12 = 17$, $q^{(1)} \cdot k_2^{(1)} = 9 + 0 = 9$. Head 1 prefers token 1.
+
+**Head 2 raw scores.** $q^{(2)} \cdot k_1^{(2)} = 21 + 32 = 53$, $q^{(2)} \cdot k_2^{(2)} = 3 + 8 = 11$. Head 2 also prefers token 1, but with very different magnitude — they learn **different relationships**.
+
+---
+
 # Multi-head · the team-of-specialists analogy
 
 <div class="keypoint">
@@ -219,22 +265,41 @@ Empirically, 8 or 16 heads is standard. Increasing beyond has diminishing return
 
 ---
 
-# The parameter accounting
+# Parameter accounting · derive the formulas
 
-For a Transformer with $d_\text{model} = 512$, $d_\text{ff} = 2048$, $h = 8$ heads:
+Block params depend on $d_\text{model}$ and $d_\text{ff}$.
 
-<div class="math-box">
+**Attention.** Four matrices, each $(d_\text{model}, d_\text{model})$:
+- $W_Q, W_K, W_V$ project to QKV.
+- $W_O$ mixes head outputs.
+$$\text{Params}_\text{MHA} = 4\,d_\text{model}^2$$
 
-| Component | Params |
-|:-:|:-:|
-| $W_Q, W_K, W_V, W_O$ (attention) | $4 \cdot 512^2 = 1.05M$ |
-| $W_1, W_2$ (FFN) | $2 \cdot 512 \cdot 2048 = 2.10M$ |
-| LayerNorm × 2 | ~2k (negligible) |
-| **Total per block** | **~3.15M** |
+**FFN.** Two layers · $d_\text{model} \to d_\text{ff} \to d_\text{model}$:
+$$\text{Params}_\text{FFN} = d_\text{model} \cdot d_\text{ff} + d_\text{ff} \cdot d_\text{model} = 2\,d_\text{model}\,d_\text{ff}$$
 
-</div>
+**LayerNorm.** Each LN has scale + shift = $2 \cdot d_\text{model}$. Two LNs per block:
+$$\text{Params}_\text{LN} = 4\,d_\text{model}$$
 
-Note · attention params are **independent of sequence length** — the same weights process 10 tokens or 10,000. That's the big scaling advantage over RNNs, whose hidden state grows if you widen memory.
+(Number of heads $h$ doesn't change the total — only how we partition $d_\text{model}$.)
+
+---
+
+# Worked numeric · where parameters live
+
+$d_\text{model} = 512$, $d_\text{ff} = 2048$, $h = 8$:
+
+| Component | Calculation | Params |
+|:-:|:-:|:-:|
+| Attention | $4 \cdot 512^2$ | **1,048,576** (~33%) |
+| FFN | $2 \cdot 512 \cdot 2048$ | **2,097,152** (~66%) |
+| LayerNorm × 2 | $4 \cdot 512$ | 2,048 (<0.1%) |
+| **Total** | | **~3.15M** |
+
+**Conclusion · the FFN ("thinking") uses 2× the parameters of attention ("communication").**
+
+Anthropic interpretability work · FFN layers store *facts and concepts*; attention layers *route information* between them. Different roles, different param budgets.
+
+Attention params are **independent of sequence length** — the same weights process 10 or 10,000 tokens. Big scaling advantage over RNNs.
 
 ---
 
@@ -297,17 +362,42 @@ We need to inject **position information** into the token embeddings. The Transf
 
 ---
 
-# Why sinusoidal · the clever part
+# Sinusoidal PE · the multi-handed clock analogy
 
-$$PE_{(pos, 2i)} = \sin(pos / 10000^{2i/d}), \quad PE_{(pos, 2i+1)} = \cos(pos / 10000^{2i/d})$$
+<div class="insight">
 
-<div class="keypoint">
+Imagine encoding position with a **clock with many hands**.
+- One hand ticks every position.
+- Another every 10 positions.
+- Another every 10,000.
 
-Different frequencies give a **multi-scale clock** · some dimensions wrap every 2 positions, others every 10,000. The model can read position information at whatever scale it needs.
+Reading all hands gives a unique signature for each position. To get the signature for *position + 1*, you just rotate each hand a fixed amount — easy for the model to learn the relative offset.
 
 </div>
 
-Nicer property · $PE_{pos+k}$ is a linear transformation of $PE_{pos}$ (rotation in each 2-dim subspace). The model can learn to attend to *relative* positions ("3 steps to my left") using dot products of these embeddings — no need to memorize absolute positions.
+Sinusoidal encoding is a high-dimensional version of this clock:
+$$PE_{(pos, 2i)} = \sin(\theta_i \cdot pos),\quad PE_{(pos, 2i+1)} = \cos(\theta_i \cdot pos),\quad \theta_i = \frac{1}{10000^{2i/d}}$$
+
+---
+
+# Why sinusoidal · derive the rotation property
+
+For one pair of dimensions $(2i, 2i+1)$, the encoding at position $pos$ is $[\sin(\theta\,pos), \cos(\theta\,pos)]$.
+
+What about $pos + k$? Trig identities:
+- $\sin(a+b) = \sin a \cos b + \cos a \sin b$
+- $\cos(a+b) = \cos a \cos b - \sin a \sin b$
+
+Letting $a = \theta\,pos$, $b = \theta\,k$:
+$$\begin{pmatrix} \sin\theta(pos+k) \\ \cos\theta(pos+k) \end{pmatrix} = \underbrace{\begin{pmatrix} \cos\theta k & \sin\theta k \\ -\sin\theta k & \cos\theta k \end{pmatrix}}_{\text{rotation matrix }R(k)} \begin{pmatrix} \sin\theta\,pos \\ \cos\theta\,pos \end{pmatrix}$$
+
+**A 2D rotation matrix that depends only on $k$, not on $pos$!** The model can learn one linear transformation per relative offset → great at *relative* positions.
+
+**Worked numeric.** $pos = 5$, $k = 2$, $\theta = 0.1$.
+- $PE_5 = [\sin 0.5, \cos 0.5] = [0.479, 0.878]$
+- $PE_7 = [\sin 0.7, \cos 0.7] = [0.644, 0.765]$
+- $R(2) = \begin{pmatrix} 0.980 & 0.199 \\ -0.199 & 0.980 \end{pmatrix}$
+- $R(2) \cdot PE_5 = [0.980 \cdot 0.479 + 0.199 \cdot 0.878,\ -0.199 \cdot 0.479 + 0.980 \cdot 0.878] = [0.645, 0.765]$ ✓ matches $PE_7$.
 
 Learned embeddings work too but don't extrapolate past training length. Sinusoidal does.
 
@@ -358,21 +448,21 @@ In 2026, **decoder-only** dominates LLMs. Encoder-only ships in retrieval pipeli
 
 ---
 
-# Causal (autoregressive) masking
+# Causal masking · no peeking at the answer
 
-For a **decoder** generating text one token at a time, we need to prevent each position from attending to *future* tokens during training.
+Decoder predicting "The quick brown fox ___" (answer: "jumps"). During training the whole sentence is fed; when predicting position 5, the model must **not** see token 5.
 
-<div class="math-box">
+**Causal mask** · add $-\infty$ to all entries above the diagonal *before* softmax:
+$$\text{scores}_{i,j} = \begin{cases} QK^\top_{i,j}/\sqrt{d_k} & j \le i \\ -\infty & j > i \end{cases}$$
+$\exp(-\infty) = 0$, so future positions get **exact zero** weight after softmax.
 
-**Causal mask** — add $-\infty$ to upper triangle of attention scores *before* softmax:
+**Worked numeric.** Token 3's pre-softmax scores: $[1.0, 2.5, 0.5, 3.0]$. Without mask it would attend mostly to token 4 (score 3.0).
 
-$$\text{scores}_{i,j} = \begin{cases} QK^\top_{i,j}/\sqrt{d_k} & \text{if } j \le i \\ -\infty & \text{if } j > i \end{cases}$$
+Apply mask → $[1.0, 2.5, 0.5, -\infty]$. Then:
+$\exp = [2.72, 12.18, 1.65, 0]$, sum $= 16.55$.
+Weights $= [0.16, 0.74, 0.10, \mathbf{0.00}]$.
 
-After softmax, the $-\infty$ positions become 0 — token $i$ ignores everything after it.
-
-</div>
-
-One triangle mask, one line of code. This is what makes GPT autoregressive.
+Token 4 weight is exactly 0 — the cheat is closed off.
 
 ---
 
