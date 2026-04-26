@@ -94,27 +94,47 @@ In a CNN we don't hand-design these kernels · the network *learns* the most use
 
 ---
 
-# The output-size formula
+# The lawnmower analogy
 
-For input size $W$, kernel $K$, padding $P$, stride $S$:
+<div class="insight">
 
-$$O = \left\lfloor \frac{W - K + 2P}{S} \right\rfloor + 1$$
+Your input is a rectangular **lawn**. The kernel is your **lawnmower**.
+- **Input width $W$** — width of the lawn.
+- **Kernel size $K$** — width of the mower blades.
+- **Padding $P$** — paved sidewalk added so the mower can start with its centre on the lawn's edge.
+- **Stride $S$** — step size after each pass. $S=1$ careful, $S=2$ fast (half coverage).
+- **Output size $O$** — how many passes until the lawn is mown.
 
-- **padding** lets output preserve input size (with $P = (K-1)/2$ and $S = 1$)
-- **stride** downsamples — halves spatial resolution at $S = 2$
-- **dilation** spaces kernel elements apart — enlarges RF without more params
-
-`nn.Conv2d(64, 128, kernel_size=3, padding=1)` — the line you'll write a thousand times.
+</div>
 
 ---
 
-# A small numeric check
+# Building the output-size formula step-by-step
 
-Input `(3, 224, 224)` (RGB ImageNet image). Apply `Conv2d(3, 64, kernel_size=7, stride=2, padding=3)`:
+1D toy: $W = 10$ pixels, $K = 3$.
 
-$$O = \lfloor (224 - 7 + 6)/2 \rfloor + 1 = 112$$
+1. **No padding, stride 1.** Kernel centre fits at positions 1…8 → $O = W - K + 1 = 8$.
+2. **Add padding $P = 1$** (one zero on each side). Effective lawn width: $W + 2P = 12$.
+$$O = (W + 2P) - K + 1 = 10$$
+3. **Add stride $S = 2$.** Available distance for the kernel centre to roam: $W + 2P - K$. Number of $S$-sized steps: $\lfloor(W+2P-K)/S\rfloor$. Plus the starting position:
+$$\boxed{O = \left\lfloor \dfrac{W + 2P - K}{S} \right\rfloor + 1}$$
 
-Output shape: `(64, 112, 112)`. Compare to MLP · same layer would be $224^2 \cdot 3 \cdot (64 \cdot 112^2) \approx 10^{11}$ ops. The conv is $7^2 \cdot 3 \cdot 64 \cdot 112^2 \approx 1.2 \cdot 10^8$ ops — nearly 1000× cheaper.
+This is exactly the formula students see in textbooks — but now we know **where each term comes from**.
+
+---
+
+# Output-size · worked numeric
+
+VGG's first layer: $W=224,\ K=3,\ P=1,\ S=1$.
+$$O = \left\lfloor\dfrac{224 - 3 + 2}{1}\right\rfloor + 1 = 223 + 1 = 224$$
+
+Output is **same size** as input — this is **"same" padding** ($P = (K-1)/2$ and $S=1$). Used in nearly every modern CNN block.
+
+ImageNet stem: input `(3, 224, 224)`, apply `Conv2d(3, 64, kernel_size=7, stride=2, padding=3)`:
+$$O = \lfloor(224 - 7 + 6)/2\rfloor + 1 = 112$$
+Output: `(64, 112, 112)`.
+
+**Why convolution is cheap.** MLP doing the same thing: $224^2 \cdot 3 \cdot (64 \cdot 112^2) \approx 10^{11}$ ops. Conv: $7^2 \cdot 3 \cdot 64 \cdot 112^2 \approx 1.2 \cdot 10^8$ ops — **~1000× cheaper.**
 
 <div class="insight">
 
@@ -165,21 +185,30 @@ Halved spatial size · kept the strongest activation per region · gained transl
 
 ---
 
-# Pooling · the other downsample
-
-$$\text{MaxPool}(x) = \max_{i, j \in \text{window}}\, x_{ij}$$
-
-- **Max pooling** keeps the strongest activation → small translation invariance.
-- **Average pooling** smooths — used in the global-average-pooling head for modern architectures.
+# The "where's the cat?" detector
 
 <div class="insight">
 
-Convolution is **translation equivariant** (shift input → shift output).
-Pooling adds **translation invariance** (shift input → same output).
+**Two kinds of cat detector:**
+- **Equivariant robot** · beeps and points a laser at the cat. Move the cat → laser moves with it. Output *changes in step* with the input. **This is convolution.**
+- **Invariant robot** · just yells "CAT!" if a cat is anywhere. Move the cat → still yells "CAT!". Output **doesn't change**. **This is the goal of a classifier — pooling helps us get there.**
 
 </div>
 
-In 2026, stride-2 convolutions often replace pooling entirely (avoid info loss).
+---
+
+# Equivariance vs invariance · concretely
+
+**Convolution is translation equivariant.** "Equivariant" = changes the same way.
+- Shift input by 10 px right → feature map shifts by 10 px right. The same edge detector lights up at every position.
+
+**Pooling adds local translation invariance.** "Invariant" = doesn't change.
+$$\begin{bmatrix} 1 & 2 \\ 4 & 6 \end{bmatrix} \xrightarrow{\;\text{max}\;} 6 \qquad \begin{bmatrix} 6 & 2 \\ 4 & 1 \end{bmatrix} \xrightarrow{\;\text{max}\;} 6$$
+Move the strongest feature within the window → **same output**. Stack many such layers and the local invariance compounds into **global** invariance: the final layer cares *that* a cat is present, not *where*.
+
+$$\text{MaxPool}(x) = \max_{i,j \in \text{window}}\,x_{ij}$$
+
+In 2026, stride-2 convs often replace max-pooling entirely (less info loss).
 
 ---
 
@@ -228,46 +257,96 @@ How deep features "see" far-away pixels
 
 ---
 
-# The VGG insight · stack 3×3, not 7×7
-
-**Claim.** Three stacked $3 \times 3$ convs have the same receptive field as one $7 \times 7$ conv — but with fewer parameters and *more non-linearities*.
-
-<div class="math-box">
-
-| | 1× (7 × 7) | 3× (3 × 3) stacked |
-|--|-----------|--------------------|
-| RF | 7 | 7 |
-| Params (C → C) | $49 C^2$ | $27 C^2$ |
-| Non-linearities | 1 ReLU | 3 ReLUs |
-
-</div>
-
-Fewer params + more non-linearities → richer function class at lower cost.
-
-**VGG (2014)** built its whole architecture around this observation.
-
----
-
-# Worked RF calculation · a 5-layer CNN
-
-Imagine five conv layers, all $3 \times 3$, stride 1. Per layer, RF grows by $(K - 1) = 2$.
-
-| Layer | Receptive field | What it "sees" |
-|:-:|:-:|:-:|
-| Input | 1 | single pixel |
-| Conv1 | 3 | tiny patch |
-| Conv2 | 5 | edge-length corner |
-| Conv3 | 7 | small feature |
-| Conv4 | 9 | object part |
-| Conv5 | 11 | object |
-
-Add stride-2 anywhere and the downstream RF **doubles** per stride. A ResNet-50 has RF ≈ 500 in the final block — it can see the whole image.
+# One expert vs. three locals
 
 <div class="insight">
 
-Next time you read an architecture diagram, compute RF mentally: deeper nets = larger RF = more *context* per pixel. This is the capacity that lets CNNs understand objects, not just textures.
+You need to cross a complex city.
+- **7×7 approach** · ask one expert for the entire 7-turn route. Complex instruction; many parameters; one shot to process.
+- **Stacked 3×3 approach** · ask a local for the next 2 turns, walk there, ask another for the next 2, walk there, ask a third. Each instruction is **simpler** (fewer params per layer); you **re-evaluate** at each stop (a non-linearity!); you cover the same area.
 
 </div>
+
+The 3-layer stack has the same coverage as the 7×7 expert — but more efficient and more "thinking" between hops.
+
+---
+
+# Let's prove it · RF and parameter math
+
+Three stacked 3×3 convs vs. one 7×7 conv (stride=1, $C \to C$ channels).
+
+**Receptive field (RF)** — trace how far back one output pixel "sees":
+
+- After conv 1 (3×3): RF = **3**.
+- After conv 2: RF grows by $K-1 = 2$ → RF = **5**.
+- After conv 3: RF = **7**. ✓ Same as a single 7×7.
+
+**Parameters** (formula: $K \cdot K \cdot C_\text{in} \cdot C_\text{out}$):
+
+- One 7×7 conv: $7 \cdot 7 \cdot C \cdot C = 49\,C^2$.
+- Three 3×3 convs: $3 \cdot (3 \cdot 3 \cdot C \cdot C) = 27\,C^2$. **45% cheaper.**
+- Plus we get **3 ReLUs** instead of 1 → richer function class.
+
+| | 1× (7×7) | 3× (3×3) stacked |
+|---|----------|-------------------|
+| RF | 7 | 7 |
+| Params | $49\,C^2$ | $27\,C^2$ |
+| ReLUs | 1 | 3 |
+
+VGG (2014) built its whole architecture around this trade.
+
+---
+
+# Worked numeric · counting parameters
+
+Mid-network layer with $C = 256$ channels.
+
+- **One 7×7 layer.** $49 \cdot 256^2 = 49 \cdot 65{,}536 = 3{,}211{,}264$ params.
+- **Three stacked 3×3 layers.** $27 \cdot 256^2 = 27 \cdot 65{,}536 = 1{,}769{,}472$ params.
+
+Saving: **~1.5 million parameters per block**, plus 2 extra non-linearities. Repeated across many blocks → enormous total saving. This is the core design principle of VGG.
+
+---
+
+# Receptive field · the chain-reaction view
+
+<div class="insight">
+
+**Analogy · dominoes.** Push the last domino — how many dominoes were involved? Each conv layer is like one push. A 3×3 kernel "pushes" a 3×3 region; the next layer's 3×3 pushes a region already pushed by the first. The effect propagates.
+
+</div>
+
+For a stack with stride 1, the RF formula is:
+$$\text{RF}_\text{new} = \text{RF}_\text{prev} + (K - 1)$$
+
+5-layer CNN, all 3×3, $K - 1 = 2$:
+
+| Layer | Calculation | RF |
+|-------|-------------|----|
+| Input | — | 1 |
+| Conv1 | $1 + 2$ | **3** |
+| Conv2 | $3 + 2$ | **5** |
+| Conv3 | $5 + 2$ | **7** |
+| Conv4 | $7 + 2$ | **9** |
+| Conv5 | $9 + 2$ | **11** |
+
+**Stride.** A layer with stride $S$ multiplies the $(K-1)$ term by all *previous* strides. Stride is a multiplier — that's why ResNet-50 reaches RF ≈ 500.
+
+---
+
+# What can a 11×11 patch "see"?
+
+The RF size tells us the **scale of features** a layer can detect.
+
+| RF | What fits in this window |
+|----|---------------------------|
+| 3×3 | a single corner; a fragment of an edge |
+| 5×5 | a longer edge or a junction |
+| 11×11 | on a 28×28 MNIST digit, the **loop of a "6"** or the cross of a "4" |
+| 49×49 | on a 224×224 ImageNet photo, an entire **eye**, **nose**, or small object |
+| ~500 | the **whole image** (ResNet-50 final block) |
+
+Each layer learns to use this growing context — edges → textures → parts → objects. Deeper nets = larger RF = richer hierarchies.
 
 ---
 
@@ -333,18 +412,24 @@ Used everywhere in modern CNNs and Transformers (the "output projection" of atte
 
 ---
 
-# 1×1 convolutions · the unsung hero
+# 1×1 conv · the math, with a worked example
 
-A $1 \times 1$ convolution looks trivial — but it's **channel mixing**.
+A 1×1 conv = a small linear (FC) layer applied **at every pixel independently**.
 
-Takes $C_\text{in}$ channels at each spatial location, produces $C_\text{out}$ channels:
+At pixel $(i, j)$:
+- Input vector: $x_{i,j} = [x_1, x_2, \ldots, x_{C_\text{in}}]$.
+- Weight matrix $W$ of shape $(C_\text{out},\,C_\text{in})$.
+- Output: $y_{i,j} = W\,x_{i,j}$ — matrix–vector product, repeated $H \cdot W$ times.
 
-$$y_{i,j,c'} = \sum_{c=1}^{C_\text{in}} w_{c,c'}\, x_{i,j,c}$$
+**Worked numeric · 3 channels (RGB) → 2 channels.** Pixel value $x = [255, 100, 50]$.
+- Recipe 1 (grayscale): $w_1 = [0.30, 0.59, 0.11]$
+$y_1 = 0.30 \cdot 255 + 0.59 \cdot 100 + 0.11 \cdot 50 = 76.5 + 59 + 5.5 = \mathbf{141}$
+- Recipe 2 (red − green): $w_2 = [0.5, -0.5, 0.0]$
+$y_2 = 0.5 \cdot 255 - 0.5 \cdot 100 + 0 = \mathbf{77.5}$
 
-**Uses everywhere in modern networks:**
-- Reduce channels before expensive $3 \times 3$ conv (GoogLeNet bottleneck)
-- Expand channels after (ResNet bottleneck: $1 \times 1 \to 3 \times 3 \to 1 \times 1$)
-- As the "attention output projection" in Transformers
+Output at this pixel: $[141, 77.5]$. The network **learns** the best recipes during training.
+
+**Uses everywhere in modern networks** · reduce channels before 3×3 (GoogLeNet bottleneck) · expand after (ResNet $1{\times}1{\to}3{\times}3{\to}1{\times}1$) · "attention output projection" in Transformers.
 
 ---
 
@@ -431,17 +516,35 @@ Stacking convs builds larger receptive fields. Deep networks *compose* features 
 
 ---
 
-# What inductive bias buys you
+# Assumptions are a shortcut
 
-An MLP on a 224×224 image: 150k inputs × 4k hidden units = **600M parameters** for *one layer*.
+<div class="insight">
 
-A CNN with a 3×3 kernel and 64 channels: **576 parameters** for *one layer* (regardless of image size).
+**Analogy · searching for keys.**
+- **MLP** · no idea where they could be. Check **every square inch** of the house — ceiling, inside the toaster, under the rug. Forever.
+- **CNN** · apply assumptions:
+  1. **Locality** · "they're near other things." → check surfaces.
+  2. **Translation invariance** · "the concept *keys-on-a-table* is the same in every room." → use the same search pattern.
 
-<div class="keypoint">
-
-The inductive bias is the prior. With the right prior you need less data and less capacity. With the wrong prior (e.g., MLP on images) you need both in huge quantity.
+The right assumptions shrink the search space *enormously*.
 
 </div>
+
+---
+
+# Parameter math · MLP vs CNN
+
+**Scenario.** One hidden layer. Input: 224×224 RGB image → $224 \cdot 224 \cdot 3 = 150{,}528$ features.
+
+**MLP (fully connected).** Hidden layer = 4096 neurons. Every input connects to every neuron.
+$$\text{params} = 150{,}528 \cdot 4{,}096 \approx \mathbf{616\,\text{million}}$$
+
+**CNN.** 3×3 kernel, $C_\text{in} = 3$, $C_\text{out} = 64$.
+$$\text{params} = (K \cdot K \cdot C_\text{in}) \cdot C_\text{out} = (3 \cdot 3 \cdot 3) \cdot 64 = 27 \cdot 64 = \mathbf{1{,}728}$$
+
+**Difference: 616,000,000 vs. 1,728 — a factor of ~350,000.**
+
+This is what locality (small kernel) and weight sharing (sliding the same kernel) buy. The CNN is *forced* to learn reusable patterns; the MLP must learn every connection from scratch.
 
 <div class="insight">
 
