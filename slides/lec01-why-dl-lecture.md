@@ -222,6 +222,50 @@ This is why every deep network has activation functions between linear layers. W
 
 ---
 
+# Let's prove it · stacking linear layers collapses
+
+A tiny 2-layer network with no nonlinearity:
+
+<div class="math-box">
+
+**Layer 1** · $h = W_1 x + b_1$
+**Layer 2** · $y = W_2 h + b_2$
+
+Substitute h into the second equation:
+$y = W_2 (W_1 x + b_1) + b_2$
+
+Distribute $W_2$:
+$y = (W_2 W_1) x + (W_2 b_1 + b_2)$
+
+Define · $W_\text{eff} = W_2 W_1$ (just another matrix) and $b_\text{eff} = W_2 b_1 + b_2$ (just another vector):
+
+$$y = W_\text{eff} x + b_\text{eff}$$
+
+</div>
+
+**The 2-layer network is exactly one linear layer.** The depth was useless.
+
+---
+
+# Worked numeric example · the collapse
+
+<div class="math-box">
+
+$x = \begin{bmatrix} 2 \\ 3 \end{bmatrix}$ · $W_1 = \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix}$ · $b_1 = \begin{bmatrix} 1 \\ 0 \end{bmatrix}$ · $W_2 = \begin{bmatrix} 2 & 1 \\ 1 & 2 \end{bmatrix}$ · $b_2 = \begin{bmatrix} 0 \\ 1 \end{bmatrix}$
+
+**Forward through the 2 layers:**
+- $h = W_1 x + b_1 = \begin{bmatrix} 2 \\ 3 \end{bmatrix} + \begin{bmatrix} 1 \\ 0 \end{bmatrix} = \begin{bmatrix} 3 \\ 3 \end{bmatrix}$
+- $y = W_2 h + b_2 = \begin{bmatrix} 9 \\ 9 \end{bmatrix} + \begin{bmatrix} 0 \\ 1 \end{bmatrix} = \begin{bmatrix} 9 \\ 10 \end{bmatrix}$
+
+**Equivalent single layer:**
+- $W_\text{eff} = W_2 W_1 = \begin{bmatrix} 2 & 1 \\ 1 & 2 \end{bmatrix}$
+- $b_\text{eff} = W_2 b_1 + b_2 = \begin{bmatrix} 2 \\ 1 \end{bmatrix} + \begin{bmatrix} 0 \\ 1 \end{bmatrix} = \begin{bmatrix} 2 \\ 2 \end{bmatrix}$
+- Check · $W_\text{eff} x + b_\text{eff} = \begin{bmatrix} 7 \\ 8 \end{bmatrix} + \begin{bmatrix} 2 \\ 2 \end{bmatrix} = \begin{bmatrix} 9 \\ 10 \end{bmatrix}$ · **same!**
+
+</div>
+
+---
+
 # Without σ · depth gives nothing
 
 ![w:920px](figures/lec01/svg/stacked_linear_collapses.svg)
@@ -377,6 +421,63 @@ This **is** cross-entropy. MLE hands it to us for free — we did not invent it.
 
 ---
 
+# Push-pull intuition · the gradient
+
+Logits $z = [z_1, ..., z_K]$. Loss $\mathcal{L}$. We need $\partial \mathcal{L} / \partial z_k$ · "how should we change $z_k$ to lower the loss?"
+
+<div class="keypoint">
+
+- If $k$ is the **correct** class · we want its probability to be 1 · gradient should **push $z_k$ up**.
+- If $k$ is a **wrong** class · we want its probability to be 0 · gradient should **push $z_k$ down**.
+
+</div>
+
+The next slide derives the formula. The result · $\partial \mathcal{L}/\partial z_k = \hat y_k - y_k$ · does exactly the push-pull above.
+
+---
+
+# Deriving · softmax + CE gradient · step by step
+
+<div class="math-box">
+
+**Setup** · $\mathcal{L} = -\sum_j y_j \log \hat y_j$ · $\hat y_j = e^{z_j} / \sum_i e^{z_i}$.
+
+Want · $\partial \mathcal{L}/\partial z_k$. Chain rule · $\partial \mathcal{L}/\partial z_k = \sum_j (\partial \mathcal{L}/\partial \hat y_j)(\partial \hat y_j/\partial z_k)$.
+
+**Part 1** · $\partial \mathcal{L}/\partial \hat y_j = -y_j/\hat y_j$.
+
+**Part 2 · case $j = k$** (own logit, quotient rule):
+$\partial \hat y_k/\partial z_k = \hat y_k(1 - \hat y_k)$
+
+**Part 2 · case $j \ne k$**:
+$\partial \hat y_j/\partial z_k = -\hat y_j \hat y_k$
+
+**Combine** · $\partial \mathcal{L}/\partial z_k = -y_k(1-\hat y_k) + \sum_{j \ne k} y_j \hat y_k = -y_k + \hat y_k \sum_j y_j$
+
+Since $\sum_j y_j = 1$ for one-hot · $\boxed{\partial \mathcal{L}/\partial z_k = \hat y_k - y_k}$
+
+</div>
+
+---
+
+# Worked numeric · the gradient
+
+<div class="math-box">
+
+Logits $z = [2.0, 1.0, 0.1]$. Softmax · $\hat y = [0.66, 0.24, 0.10]$. True label · class 0, $y = [1, 0, 0]$.
+
+$$\partial \mathcal{L}/\partial z = \hat y - y = [0.66 - 1, 0.24 - 0, 0.10 - 0] = [-0.34, 0.24, 0.10]$$
+
+**SGD step** · $z \leftarrow z - \eta \cdot (\hat y - y)$
+- $z_0$ has negative gradient · SGD pushes it **up** (good, correct class).
+- $z_1, z_2$ have positive gradient · SGD pushes them **down** (good, wrong classes).
+
+</div>
+
+The gradient is bounded between -1 and 1 per logit · stable. No exploding gradients from the loss itself.
+
+---
+
 # The elegant softmax + CE gradient
 
 $$\boxed{\dfrac{\partial \mathcal{L}}{\partial z_k} = \hat{y}_k - y_k}$$
@@ -412,6 +513,60 @@ That's the entire idea. The math (chain rule) is mechanical · the *concept* is 
 Every network is a DAG of differentiable ops. Forward computes values; backward computes gradients in reverse order.
 
 ![w:900px](figures/lec01/svg/computational_graph.svg)
+
+---
+
+# Backprop · the blame distributor
+
+For a layer $z = Wx + b$, suppose the next layer sends back · "your output's error signal is $\delta = \partial \mathcal{L}/\partial z$."
+
+<div class="keypoint">
+
+We must figure out three things:
+- How much was **W**'s fault? · $\partial \mathcal{L}/\partial W$
+- How much was **b**'s fault? · $\partial \mathcal{L}/\partial b$
+- How much should we blame the **previous layer's** output $x$? · $\partial \mathcal{L}/\partial x$ · this is the message we pass back.
+
+</div>
+
+The next slide does these one at a time, with full chain rule.
+
+---
+
+# Deriving · the linear-layer backward pass
+
+For one element · $z_i = \sum_j W_{ij} x_j + b_i$.
+
+<div class="math-box">
+
+**1. Bias** · $\partial z_i/\partial b_i = 1$ → $\partial \mathcal{L}/\partial b_i = \delta_i$ → $\partial \mathcal{L}/\partial b = \delta$
+
+**2. Weight** · $\partial z_i/\partial W_{ij} = x_j$ → $\partial \mathcal{L}/\partial W_{ij} = \delta_i x_j$ → $\partial \mathcal{L}/\partial W = \delta\, x^\top$ (outer product)
+
+**3. Input** · $x_j$ affects every output through $W_{ij}$ · sum over outputs:
+$\partial \mathcal{L}/\partial x_j = \sum_i \delta_i \cdot W_{ij}$ → $\partial \mathcal{L}/\partial x = W^\top \delta$
+
+</div>
+
+These three lines are the entire backward pass for a `Linear` layer in PyTorch.
+
+---
+
+# Worked numeric · linear-layer backward
+
+<div class="math-box">
+
+$x = \begin{bmatrix} 2 \\ 3 \end{bmatrix}$ · $W = \begin{bmatrix} 0.1 & 0.2 \\ 0.3 & 0.4 \end{bmatrix}$ · upstream gradient $\delta = \begin{bmatrix} 0.5 \\ -0.1 \end{bmatrix}$.
+
+**Weight gradient** · $\delta x^\top = \begin{bmatrix} 0.5 \\ -0.1 \end{bmatrix} \begin{bmatrix} 2 & 3 \end{bmatrix} = \begin{bmatrix} 1.0 & 1.5 \\ -0.2 & -0.3 \end{bmatrix}$
+
+**Bias gradient** · $\delta = \begin{bmatrix} 0.5 \\ -0.1 \end{bmatrix}$
+
+**Input gradient** (passed to previous layer) · $W^\top \delta = \begin{bmatrix} 0.1 & 0.3 \\ 0.2 & 0.4 \end{bmatrix} \begin{bmatrix} 0.5 \\ -0.1 \end{bmatrix} = \begin{bmatrix} 0.02 \\ 0.06 \end{bmatrix}$
+
+</div>
+
+These three numbers are what `loss.backward()` computes for one Linear layer · in pure NumPy you could write it in 3 lines.
 
 ---
 
@@ -483,6 +638,44 @@ Each layer has to pass the **error signal** to the layer before it. If each laye
 </div>
 
 Those early layers stop learning. This is the **vanishing gradient** problem · the topic of the next slide and a recurring theme through the course (RNN, deep MLPs, deep Transformers).
+
+---
+
+# Why σ′ shrinks · let's compute it
+
+For sigmoid · $\sigma(z) = 1/(1 + e^{-z})$.
+
+<div class="math-box">
+
+$\sigma'(z) = \dfrac{e^{-z}}{(1+e^{-z})^2} = \sigma(z) \cdot (1 - \sigma(z))$
+
+Maximum value · at $z = 0$, $\sigma(0) = 0.5$, so $\sigma'(0) = 0.5 \cdot 0.5 = \mathbf{0.25}$.
+
+For $|z| \ge 3$ · $\sigma'(z) \le 0.045$ (saturated regions).
+
+</div>
+
+**Every layer** with sigmoid multiplies the backward-flowing gradient by something $\le 0.25$. After 5 layers, the gradient is shrunk by at least $0.25^5 \approx 0.001$. After 10 layers · $\approx 10^{-6}$. The earliest layers stop learning.
+
+---
+
+# Worked numeric · the gradient vanishes
+
+A 5-layer sigmoid net. Assume all weights = 1 and inputs are in saturating regions so $\sigma'(z) \approx 0.1$. Gradient at output = 1.
+
+<div class="math-box">
+
+| Layer | Local factor $W \cdot \sigma'$ | Gradient signal |
+|:-:|:-:|:-:|
+| Output | — | 1.0 |
+| L4 | $1 \cdot 0.1 = 0.1$ | 0.1 |
+| L3 | $0.1$ | 0.01 |
+| L2 | $0.1$ | 0.001 |
+| L1 | $0.1$ | **0.0001** |
+
+</div>
+
+The first layer gets $10^{-4}$ of the signal · its weights barely move. **Learning stalls in the early layers.** This is exactly why ReLU (derivative 0 or 1) replaced sigmoid in deep nets · and why ResNet's skip connections exist.
 
 ---
 
