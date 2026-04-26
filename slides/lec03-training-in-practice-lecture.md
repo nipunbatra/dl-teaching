@@ -85,9 +85,89 @@ self.register_buffer('running_mean',
 
 ---
 
+# How does PyTorch know the derivatives?
+
+It watches you compute.
+
+<div class="insight">
+
+**Analogy · Baking a Cake and Asking "Why is it so sweet?"**
+A friend watches you bake. They write down every step: *"1 cup flour, 2 cups sugar, 1 egg…"*. When you taste the cake and say *"too sweet,"* your friend looks at the notes (the **tape**) and says: *"The sugar had the biggest impact — use less and the sweetness drops the most."*
+
+</div>
+
+Autograd is that friend. It records every operation in a **computation graph**. When you call `.backward()`, it walks back through the graph to see how much each parameter contributed to the loss.
+
+---
+
+# Autograd · let's build a graph by hand
+
+Trace a simple computation: $\;L = a \cdot x + b$ with $a=2,\ x=3,\ b=1$. Parameters: $a, b$. Input: $x$.
+
+<div class="columns">
+<div>
+
+### Forward pass
+
+- $c = a \cdot x = 2 \cdot 3 = 6$
+- $L = c + b = 6 + 1 = 7$
+
+PyTorch builds the graph **as we compute**.
+
+</div>
+<div>
+
+### Backward pass (chain rule)
+
+- $\partial L / \partial L = 1$
+- $L = c + b \Rightarrow \partial L/\partial c = 1,\ \partial L/\partial b = 1$ ✓
+- $c = a \cdot x \Rightarrow \partial L/\partial a = \partial L/\partial c \cdot x = 1 \cdot 3 = 3$ ✓
+
+</div>
+</div>
+
+`loss.backward()` does this for every parameter, no matter how deep the graph.
+
+---
+
 # Autograd · the dynamic tape
 
 ![w:920px](figures/lec03/svg/autograd_tape.svg)
+
+---
+
+# Worked numeric · a 2-layer backward step
+
+Compute $\partial L / \partial w_1$ for $L = (\mathrm{relu}(w_2 h) - y)^2$ where $h = \mathrm{relu}(w_1 x)$.
+Let $x = 2,\ y = 1,\ w_1 = w_2 = 0.5$.
+
+<div class="columns">
+<div>
+
+### Forward
+
+- $a_1 = w_1 x = 0.5 \cdot 2 = 1.0$
+- $h = \mathrm{relu}(a_1) = 1.0$
+- $a_2 = w_2 h = 0.5$
+- $\hat y = \mathrm{relu}(a_2) = 0.5$
+- $L = (\hat y - y)^2 = 0.25$
+
+</div>
+<div>
+
+### Backward (chain rule)
+
+$\dfrac{\partial L}{\partial w_1} = \dfrac{\partial L}{\partial \hat y}\cdot\dfrac{\partial \hat y}{\partial a_2}\cdot\dfrac{\partial a_2}{\partial h}\cdot\dfrac{\partial h}{\partial a_1}\cdot\dfrac{\partial a_1}{\partial w_1}$
+
+- $\partial L/\partial \hat y = 2(\hat y - y) = -1.0$
+- ReLU' = 1 (both gates open)
+- $\partial a_2/\partial h = w_2 = 0.5$
+- $\partial a_1/\partial w_1 = x = 2$
+
+</div>
+</div>
+
+$\partial L / \partial w_1 = (-1.0)(1)(0.5)(1)(2) = \boxed{-1.0}$
 
 ---
 
@@ -183,6 +263,35 @@ Rule of thumb · `num_workers ≈ 4 × num_GPUs`. `pin_memory=True` when using C
 
 ---
 
+# Why not just use full precision (FP32)?
+
+Modern GPUs are highways for numbers. To go faster: build a bigger highway (new GPU) **or make the cars smaller**.
+
+- **FP32** (single precision) — the standard car. 32 bits per number.
+- **FP16** (half precision) — a motorcycle. 16 bits.
+  - **Pro:** 2× as many fit on the highway → ≈2× faster training, half memory.
+  - **Con:** small range. Big numbers don't fit; gradients **overflow** to infinity → run dies.
+
+We want the speed of 16 bits **without** losing FP32's range.
+
+---
+
+# Precision vs. range · the trade-off
+
+<div class="insight">
+
+**Analogy · measuring with rulers**
+
+- **FP32** → 1-metre stick with millimetre marks. Big range, fine precision. Default.
+- **FP16** → 15 cm ruler with millimetre marks. **Very precise**, but **range is tiny**. Try to measure a person's height — ruler runs out instantly.
+- **BF16** → 1-metre stick with **centimetre** marks. **Same range as FP32**, less precision. Sacrifices a little precision for huge range.
+
+</div>
+
+For deep learning, **range matters far more than ultra-fine precision**. BF16 almost never overflows.
+
+---
+
 # Mixed precision · BF16 is the 2026 default
 
 ![w:920px](figures/lec03/svg/mixed_precision.svg)
@@ -229,55 +338,127 @@ loss.backward()            # grads in BF16 too
 
 ---
 
-# Gradient accumulation + clipping
+# What if the batch doesn't fit in your GPU?
 
-<div class="columns">
-<div>
+Your GPU handles batches of 64, but the model trains better with batch 256.
 
-### Gradient accumulation
+<div class="insight">
+
+**Analogy · polling a small town.** You want the average opinion of 256 people, but only 64 fit in the room.
+1. Bring in 64. Tally — but **do not declare a result**.
+2. Bring in the next 64. Add to the tally.
+3. Repeat for groups 3 and 4.
+4. After all 256 → compute the average → make a decision.
+
+</div>
+
+**Gradient accumulation** does exactly this with batches: it processes several **micro-batches**, sums their gradients, and updates the weights **once** at the end.
+
+---
+
+# Simulating a big batch · gradient accumulation
+
+The key identity: **gradient of a sum = sum of gradients.**
+$$\nabla\!\left(\sum_i L_i\right) = \sum_i \nabla L_i$$
+
+Effective batch 256, GPU fits 64 → $K = 4$ accumulation steps.
 
 ```python
 for i, (x, y) in enumerate(loader):
-    loss = criterion(model(x), y) / K
-    loss.backward()
+    loss = criterion(model(x), y) / K   # divide so we average over K
+    loss.backward()                     # ADDS to existing grads in .grad
     if (i + 1) % K == 0:
-        opt.step()
-        opt.zero_grad()
+        opt.step()                      # update once per K micro-batches
+        opt.zero_grad()                 # then clear for next big batch
 ```
 
-Effective batch = `micro × K`.
+Two crucial details: divide loss by $K$ (so we get the **mean**, matching a real batch of 256), and only call `step()` / `zero_grad()` after $K$ micro-batches.
 
-</div>
-<div>
+---
 
-### Worked example
+# Worked numeric · gradient accumulation
 
-Goal · effective batch 256
-GPU fits · 64 only
-
-Set `micro = 64`, `K = 4`.
-Loop calls `.backward()` 4 times → grads sum.
-After the 4th, `step()` once → uses gradient of all 256.
-
-</div>
-</div>
+Update weight $w$ for $L = (wx - y)^2$. LR $\alpha = 0.1$. Effective batch 2, micro-batch 1, $K=2$, start $w=0$.
 
 <div class="columns">
 <div>
 
-### Gradient clipping
+### Micro-batch 1 · $x=2,\ y=1$
+
+- $L_1 = (0\cdot 2 - 1)^2 / 2 = 0.5$
+- $\nabla L_1 = \dfrac{x}{K} \cdot 2(wx-y) = \dfrac{2}{2}\cdot 2(-1) = -2$
+- `loss.backward()` → `w.grad = -2`
+- *No `step()`, no `zero_grad()`.*
+
+</div>
+<div>
+
+### Micro-batch 2 · $x=3,\ y=2$
+
+- $L_2 = (0\cdot 3 - 2)^2 / 2 = 2.0$
+- $\nabla L_2 = \dfrac{3}{2}\cdot 2(-2) = -6$
+- `loss.backward()` → `w.grad = -2 + (-6) = -8`
+
+</div>
+</div>
+
+**Update step.** $w_{\text{new}} = 0 - 0.1 \cdot (-8) = 0.8$. Then `zero_grad()` resets `w.grad = 0`.
+
+This is the **exact** update we'd get from one big batch of $\{(2,1),(3,2)\}$.
+
+---
+
+# Why we need gradient clipping
+
+Some batches — especially in RNNs and Transformers — produce **ridiculously large** gradients. This is an **exploding gradient**.
+
+<div class="insight">
+
+**Analogy · learning to drive.** Your instructor gives small corrections: *"turn 5°,"* *"forward 10 cm."* Then suddenly screams **"TURN 10,000° LEFT!"**. Following that literally → smashed wall. Weights destroyed, restart training.
+
+</div>
+
+**Gradient clipping** is a safety rule:
+
+> *"No matter what gradient is computed, never let the step be larger than `max_norm`."*
+
+It prevents one bad batch from wrecking the entire run.
+
+---
+
+# How gradient clipping works
+
+A gradient is a vector — direction × magnitude.
+
+1. After `loss.backward()`, gather full gradient vector $g$.
+2. Compute its **L2-norm** $\|g\|$.
+3. Set threshold `max_norm` (e.g. 1.0).
+4. If $\|g\| > \text{max\_norm}$, **rescale**:
+   $$g_{\text{clipped}} = g \cdot \dfrac{\text{max\_norm}}{\|g\|}$$
+5. Otherwise, leave $g$ alone.
+
+**Direction is preserved — only step size is capped.**
 
 ```python
 loss.backward()
-torch.nn.utils.clip_grad_norm_(
-    model.parameters(), 1.0)
+torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 opt.step()
 ```
 
-Insurance against spikes for Transformers / RNNs.
+---
 
-</div>
-</div>
+# Worked numeric · gradient clipping
+
+Two weights $w_1, w_2$. After `.backward()`: $g = [3.0,\ 4.0]$. Set `max_norm = 1.0`.
+
+1. **Compute the norm.**
+   $\|g\| = \sqrt{3^2 + 4^2} = \sqrt{25} = 5.0$
+2. **Compare.** $5.0 > 1.0$ → must clip.
+3. **Scaling factor.** $s = \text{max\_norm} / \|g\| = 1.0 / 5.0 = 0.2$
+4. **Rescale.** $g_{\text{clipped}} = [3.0 \cdot 0.2,\ 4.0 \cdot 0.2] = [0.6,\ 0.8]$
+5. **Verify.** $\|g_{\text{clipped}}\| = \sqrt{0.36 + 0.64} = 1.0$ ✓
+
+The optimizer now uses $[0.6, 0.8]$ — same direction as $[3, 4]$ but a much safer step.
 
 ---
 
@@ -382,27 +563,86 @@ Don't `torch.save(model)` — it pickles the class, which breaks across refactor
 
 ---
 
-# Checklist when overfit-one-batch fails
+# Debug checklist · why won't loss go down? · part 1
 
-- LR too small or too large
-- `softmax` applied AND `CrossEntropyLoss` (double softmax)
-- Forgot `optimizer.zero_grad()`
-- Dead ReLUs — all post-activation values 0
-- Frozen parameters — check `.requires_grad`
-- Wrong label shape / dtype (int vs float)
-- Data not normalized (inputs in $[0, 255]$ instead of scaled)
+If you can't even overfit a single batch, something is fundamentally broken.
+
+- **LR too large** → loss explodes to `NaN`. **Fix:** divide LR by 10.
+- **LR too small** → loss barely moves. **Fix:** multiply LR by 10.
+- **Double softmax** → model ends with `nn.Softmax` AND you use `nn.CrossEntropyLoss`. The loss already includes softmax → applied twice → gradients muffled. **Fix:** remove `nn.Softmax` from the model; output raw **logits**.
+- **Forgot `opt.zero_grad()`** → gradients from previous batches pile up; updates point in nonsense directions. **Fix:** add `opt.zero_grad()` at the start of each step.
+
+---
+
+# Debug checklist · why won't loss go down? · part 2
+
+- **Dead ReLUs** → input to a ReLU is always negative → output 0, gradient 0; the unit can never learn. **Fix:** LeakyReLU, lower LR, or He init.
+- **Frozen parameters** → a layer has `requires_grad=False`. It will never update. **Fix:** assert `param.requires_grad` for each layer you intend to train.
+- **Wrong label shape / dtype** → `CrossEntropyLoss` wants class **indices** (e.g. `[3, 0, 1]`, dtype `torch.long`). One-hot floats break it. **Fix:** check `.shape` and `.dtype` of the label tensor.
+- **Data not normalized** → raw pixels in $[0, 255]$ → unstable training. **Fix:** apply `ToTensor` + `Normalize`.
 
 <div class="realworld">
 
-Karpathy: *"Become one with the data."* Before looking at the model, print shapes, dtypes, ranges, label balance, a few random examples.
+Karpathy: *"Become one with the data."* Before touching the model, print shapes, dtypes, ranges, label balance, and a few random examples.
 
 </div>
+
+---
+
+# How do we find a good starting LR?
+
+The learning rate is **the most important** hyperparameter.
+
+- Too high → training diverges (loss explodes).
+- Too low → training crawls (or gets stuck).
+
+We want the **highest LR that is still stable** — without dozens of trial-and-error runs.
+
+<div class="insight">
+
+**Analogy · pushing a cart up a hill.** Find the hardest you can push without tipping. Start with a tiny push and gradually increase. More force → more speed. At some point the cart wobbles. The best push is **just before** the wobble.
+
+</div>
+
+The LR finder does this with your learning rate.
+
+---
+
+# The LR finder algorithm
+
+A short fake training session (≈100 steps) sweeps over LRs.
+
+1. Start at LR = $10^{-7}$.
+2. Each mini-batch → forward, backward, step.
+3. After each step, **multiply LR by ~1.05**.
+4. Record loss at each step.
+5. Plot loss vs. LR (log-x).
+
+**How to read the plot:**
+
+- Find the region where loss **drops fastest** (the steepest downward slope).
+- Loss eventually shoots back up — that's where training is unstable.
+- **Pick an LR one order of magnitude before the minimum**, in the steep-descent zone.
 
 ---
 
 # Rung 5 · the learning-rate finder
 
 ![w:920px](figures/lec03/svg/lr_finder.svg)
+
+---
+
+# Worked numeric · reading the LR plot
+
+Suppose the LR finder gives:
+
+| LR | $10^{-4}$ | $10^{-3}$ | $10^{-2}$ | $10^{-1}$ | $1.0$ |
+|----|-----------|-----------|-----------|-----------|-------|
+| Loss | 3.2 | 2.5 | **1.1** (steepest drop) | 0.9 (minimum) | 2.8 (diverging) |
+
+**Analysis.** Minimum loss is at LR $= 0.1$ — **don't pick this**, it's already on the edge of diverging. The steepest descent is at LR $\approx 10^{-2}$. Rule of thumb: pick **one order of magnitude before the minimum**.
+
+**Good starting LR · $10^{-2}$.** Use this as `max_lr` for one-cycle training.
 
 ---
 
