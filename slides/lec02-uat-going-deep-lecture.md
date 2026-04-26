@@ -72,6 +72,40 @@ What a single hidden layer can — and can't — do
 
 ---
 
+# The "LEGO brick" idea · UAT in plain English
+
+<div class="keypoint">
+
+Imagine an unlimited supply of LEGO bricks. Can you build a sculpture of *anything*? A car, a house, the Eiffel Tower? **Yes** · if your bricks are small enough, you can approximate any shape.
+
+UAT says · a neural network with one hidden layer can do the same for **mathematical functions**. Its "LEGO bricks" are simple functions built from neurons.
+
+</div>
+
+---
+
+# UAT · unpacking the statement
+
+<div class="math-box">
+
+**"For any continuous function $f(\mathbf{x})$..."**
+The "true" relationship in our data · e.g., `price = f(house_features)`.
+
+**"...and any small error $\epsilon > 0$..."**
+How close we want our approximation. Set $\epsilon = 0.01$ or whatever you need.
+
+**"...there exists a network..."**
+With one hidden layer of $N$ neurons. The theorem guarantees · for any $\epsilon$, some $N$ exists.
+
+**"...whose output is within $\epsilon$ of $f$."**
+$|\,f(\mathbf{x}) - \sum_{i=1}^N \alpha_i\, \sigma(\mathbf{w}_i^\top \mathbf{x} + b_i)| < \epsilon$
+
+</div>
+
+A weighted sum of neuron outputs · each neuron is a "LEGO brick."
+
+---
+
 # UAT · the formal statement
 
 <div class="math-box">
@@ -114,6 +148,28 @@ Pick 4 ReLU bumps at $x = 0.0, 0.25, 0.5, 0.75$ on $[0, 1]$. Each is `relu(w·(x
 The output is a piecewise-linear staircase that hugs $x²$. With more ReLUs, the staircase gets finer · the error $\epsilon \to 0$.
 
 **That's UAT in numbers.** A weighted sum of ReLU bumps approximates any 1D continuous function.
+
+---
+
+# Building a triangle bump · step-by-step
+
+A single ReLU is a ramp going up forever. To make it come back down to zero we need **three** ReLUs.
+
+<div class="math-box">
+
+$f(x) = \text{relu}(x - 1) - 2 \cdot \text{relu}(x - 2) + \text{relu}(x - 3)$
+
+| $x$ | relu($x{-}1$) | $-2\cdot$relu($x{-}2$) | relu($x{-}3$) | sum |
+|:-:|:-:|:-:|:-:|:-:|
+| 0   | 0   | 0  | 0 | **0** |
+| 1.5 | 0.5 | 0  | 0 | **0.5** |
+| 2   | 1   | 0  | 0 | **1.0** (peak) |
+| 2.5 | 1.5 | -1 | 0 | **0.5** |
+| 4   | 3   | -4 | 1 | **0** |
+
+</div>
+
+A perfect triangular bump centered at $x=2$. Place enough such bumps and you can approximate any continuous function. **This is what UAT proves.**
 
 ---
 
@@ -293,6 +349,54 @@ Before we fix depth, let's see it break
 
 ---
 
+# Backprop · term-by-term, no Jacobians
+
+A 4-layer scalar network · `y = w_4 · w_3 · w_2 · w_1 · x` (ignoring activations).
+
+We want gradient of loss $L$ with respect to the **first** weight $w_1$. Chain rule, one link at a time:
+
+<div class="math-box">
+
+$\dfrac{\partial L}{\partial w_1} = \dfrac{\partial L}{\partial y} \cdot \dfrac{\partial y}{\partial w_1}$
+
+Expand $\partial y/\partial w_1$:
+- $\partial y/\partial(\text{layer 3 out}) = w_4$
+- $\partial(\text{layer 3 out})/\partial(\text{layer 2 out}) = w_3$
+- $\partial(\text{layer 2 out})/\partial(\text{layer 1 out}) = w_2$
+- $\partial(\text{layer 1 out})/\partial w_1 = x$
+
+So · $\dfrac{\partial L}{\partial w_1} = \dfrac{\partial L}{\partial y} \cdot (w_4 \cdot w_3 \cdot w_2) \cdot x$
+
+</div>
+
+The key is the **product** $w_4 \cdot w_3 \cdot w_2$. If any of these is small (< 1), the product shrinks fast.
+
+---
+
+# Numeric · vanishing with sigmoids
+
+Sigmoid derivative · $\sigma'(z) = \sigma(z)(1 - \sigma(z))$ · max value **0.25**.
+
+Each backward step multiplies by $w_l \cdot \sigma'$. Assume weights ≈ 1.0:
+
+<div class="math-box">
+
+| Layer (counting back) | Cumulative factor |
+|:-:|:-:|
+| L | 0.25 |
+| L−1 | $0.25^2 = 0.0625$ |
+| L−2 | $0.25^3 = 0.0156$ |
+| L−5 | $0.25^5 \approx 10^{-3}$ |
+| L−10 | $0.25^{10} \approx 10^{-6}$ |
+
+</div>
+
+After 10 sigmoid layers, the gradient signal at the **earliest** weight is shrunk by a million. **The first layer barely updates · learning stalls.**
+
+This is the core problem ResNets and ReLU were invented to solve.
+
+---
+
 # The chain rule is a product
 
 ![w:900px](figures/lec02/svg/chain_rule_product.svg)
@@ -404,6 +508,47 @@ Coordinating non-linear layers to produce *exact* identity is the opposite: a de
 # The residual block
 
 ![w:900px](figures/lec02/svg/resnet_block.svg)
+
+---
+
+# How the skip-connection makes a gradient highway
+
+Forward · $\mathbf{y} = \mathcal{F}(\mathbf{x}) + \mathbf{x}$.
+
+We want the gradient flowing back through the block · $\partial L/\partial \mathbf{x}$.
+
+<div class="math-box">
+
+By the chain rule · $\dfrac{\partial L}{\partial \mathbf{x}} = \dfrac{\partial L}{\partial \mathbf{y}} \cdot \dfrac{\partial \mathbf{y}}{\partial \mathbf{x}}$
+
+Compute the local gradient:
+$\dfrac{\partial \mathbf{y}}{\partial \mathbf{x}} = \dfrac{\partial}{\partial \mathbf{x}}(\mathcal{F}(\mathbf{x}) + \mathbf{x}) = \dfrac{\partial \mathcal{F}}{\partial \mathbf{x}} + \mathbf{I}$
+
+</div>
+
+So · $\dfrac{\partial L}{\partial \mathbf{x}} = \dfrac{\partial L}{\partial \mathbf{y}} \cdot \big( \dfrac{\partial \mathcal{F}}{\partial \mathbf{x}} + \mathbf{I} \big) = \dfrac{\partial L}{\partial \mathbf{y}}\,\dfrac{\partial \mathcal{F}}{\partial \mathbf{x}} \;+\; \underbrace{\dfrac{\partial L}{\partial \mathbf{y}}}_{\text{the highway!}}$
+
+The "+I" gives an **uninterrupted express lane** for the gradient · the second term is the original signal **passing straight through** even if the first term vanishes. The early layers always get a clean signal.
+
+---
+
+# Numeric · gradient flow with vs without skip
+
+Same 5-layer net. Each layer's $\partial \mathcal{F}/\partial \mathbf{x}$ has tiny norm 0.1 (saturated regime).
+
+<div class="math-box">
+
+| Layer | Plain (multiplicative) | ResNet (additive) |
+|:-:|:-:|:-:|
+| L (output) | 1.0 | 1.0 |
+| L−1 | 0.1 | 1.1 |
+| L−2 | 0.01 | 1.21 |
+| L−3 | 0.001 | 1.33 |
+| L−4 | **0.0001** | **1.46** |
+
+</div>
+
+The plain net's signal vanishes · ResNet keeps the full unit signal **plus** a small contribution from each block. **Hundred-layer ResNets train; 100-layer plain nets don't.**
 
 ---
 
