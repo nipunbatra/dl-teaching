@@ -80,9 +80,21 @@ Today we cover the last four.
 
 ---
 
-# Classification + localization · the simplest jump
+# Training for two goals at once
 
-Keep the CNN. Add **two heads** on top:
+<div class="insight">
+
+**Analogy · grading a two-section exam.** Section 1 = multiple-choice (classification). Section 2 = a drawing (localization). Final score = MCQ + drawing.
+
+If the drawing is more important: $\text{score} = \text{MCQ} + 2.0 \cdot \text{drawing}$. Our loss does the same — sum two losses, weight one with $\lambda$.
+
+</div>
+
+---
+
+# Classification + localization · the multi-task loss
+
+Keep the CNN. Add **two heads**:
 
 ```python
 class ClsLocHead(nn.Module):
@@ -90,16 +102,33 @@ class ClsLocHead(nn.Module):
         super().__init__()
         self.cls = nn.Linear(feat_dim, n_classes)   # class scores
         self.box = nn.Linear(feat_dim, 4)           # (x, y, w, h)
-
-    def forward(self, feat):
-        return self.cls(feat), self.box(feat)
 ```
 
-Multi-task loss:
+For one image:
+- True class $y$, model predicts class logits.
+- True box $\mathbf{b} = [x, y, w, h]$, model predicts $\hat{\mathbf{b}}$.
 
-$$\mathcal{L} = \mathcal{L}_\text{class}(\text{logits}, y) + \lambda \cdot \mathcal{L}_\text{box}(\hat{\mathbf{b}}, \mathbf{b})$$
+$$\mathcal{L} = \underbrace{\mathcal{L}_\text{class}(\text{logits}, y)}_{\text{cross-entropy}} + \lambda \cdot \underbrace{\mathcal{L}_\text{box}(\hat{\mathbf{b}}, \mathbf{b})}_{\text{Smooth L1 / MSE}}$$
 
-Typical $\mathcal{L}_\text{box}$: **Smooth L1** — L2 near 0 (smooth), L1 far (robust).
+$\lambda$ is the **balancing knob**: $\lambda > 1$ → box matters more; $\lambda < 1$ → class matters more. Typical $\mathcal{L}_\text{box}$ is **Smooth L1** (L2 near 0, L1 far → robust).
+
+---
+
+# Worked numeric · multi-task loss
+
+One image of a cat. True class index 1. True box $[100, 120, 50, 80]$.
+
+Model predicts:
+- Class logits $[0.1, 2.5]$ → confidently "cat" → say $\mathcal{L}_\text{class} = 0.08$.
+- Box $\hat{\mathbf{b}} = [102, 119, 55, 81]$.
+
+**Box loss (MSE).**
+$\mathcal{L}_\text{box} = (102-100)^2 + (119-120)^2 + (55-50)^2 + (81-80)^2 = 4 + 1 + 25 + 1 = 31$
+
+**Total ($\lambda = 0.1$).**
+$\mathcal{L} = 0.08 + 0.1 \cdot 31 = 0.08 + 3.1 = \mathbf{3.18}$
+
+This `3.18` is what backprop sees → updates *both* the class head and the box head simultaneously.
 
 ---
 
@@ -163,7 +192,33 @@ Concretely · sort by confidence, keep the best, discard any later box that over
 
 ---
 
-# NMS · by pseudocode
+# NMS · step-by-step example
+
+5 predicted boxes for one car. IoU threshold 0.5.
+
+| Box | Score |
+|-----|-------|
+| A | 0.95 |
+| B | 0.90 |
+| C | 0.80 |
+| D | 0.75 |
+| E | 0.70 |
+
+**Step 1 · pick A** (highest score). Add to `keep`.
+Compare IoU(A, others): IoU(A,B)=0.8 → drop B; IoU(A,C)=0.2 → keep; IoU(A,D)=0.7 → drop D; IoU(A,E)=0.1 → keep.
+Pool now `[C, E]`.
+
+**Step 2 · pick C**. Add to `keep`.
+IoU(C, E) = 0.15 → keep E.
+Pool now `[E]`.
+
+**Step 3 · pick E**. Add to `keep`. Pool empty. Stop.
+
+**Final · `keep = [A, C, E]`.** 5 boxes → 3 final detections.
+
+---
+
+# NMS · pseudocode
 
 ```python
 def nms(boxes, scores, iou_threshold=0.5):
@@ -177,32 +232,40 @@ def nms(boxes, scores, iou_threshold=0.5):
     return keep
 ```
 
-<div class="keypoint">
+**Greedy** — highest-confidence box wins in its neighborhood. Every detector uses some form of NMS (Faster R-CNN, YOLO) or its learned replacement (DETR's Hungarian matching).
 
-**Greedy** — the highest-confidence box wins in its neighborhood. Lower-confidence duplicates get suppressed. A fundamental primitive · every detector uses some form of NMS (Faster R-CNN, YOLO) or its learned replacement (DETR's Hungarian matching).
+---
+
+# How do we grade a detector?
+
+<div class="insight">
+
+**Analogy · search engine for "cat".** You return 10 results.
+- **Precision** = fraction that *actually* are cats. (8/10 → 80%.) *Of the answers you gave, how many were right?*
+- **Recall** = fraction of all cat photos on the internet you found. (8 of 100 → 8%.) *Of all right answers, how many did you find?*
+
+Trade-off · 100% recall = return everything; 100% precision = return only one sure answer. **mAP** summarizes the trade-off curve.
 
 </div>
 
 ---
 
-# mAP · mean Average Precision
+# Computing AP · a worked example
 
-The headline metric for detection:
+3 ground-truth cats. 5 predictions, sorted by confidence. IoU > 0.5 → True Positive.
 
-1. For each class, sort predictions by confidence.
-2. Sweep the confidence threshold from high to low.
-3. For each threshold, compute precision and recall.
-4. **Average Precision** = area under the precision-recall curve.
-5. **mAP** = average over classes.
+| Rank | Conf | TP/FP | TP cum | FP cum | Recall (TP/3) | Precision (TP/(TP+FP)) |
+|:----:|:----:|:----:|:----:|:----:|:----:|:----:|
+| 1 | 0.98 | TP | 1 | 0 | 0.33 | 1.00 |
+| 2 | 0.95 | TP | 2 | 0 | 0.67 | 1.00 |
+| 3 | 0.88 | FP | 2 | 1 | 0.67 | 0.67 |
+| 4 | 0.75 | TP | 3 | 1 | 1.00 | 0.75 |
+| 5 | 0.60 | FP | 3 | 2 | 1.00 | 0.60 |
 
-<div class="math-box">
+**AP** = area under the precision–recall curve built from these points.
+**mAP** = average AP over all classes.
 
-**mAP@0.5** — IoU threshold of 0.5 for a hit.
-**mAP@[0.5:0.95]** — average mAP at 10 IoU thresholds from 0.5 to 0.95. The COCO standard.
-
-</div>
-
-Higher is better. Papers usually report both.
+**mAP@0.5** = AP at IoU threshold 0.5. **mAP@[0.5:0.95]** = average over 10 IoU thresholds (COCO standard).
 
 ---
 
@@ -246,35 +309,72 @@ Two-stage detectors still win on accuracy for small objects. They are slower and
 
 ---
 
-# YOLO loss · three terms
+# YOLO · the grid-of-responsibilities idea
 
-<div class="math-box">
+Divide the image into a 7×7 grid. Each cell fills out a **form** with three questions:
 
-$$\mathcal{L} = \lambda_\text{coord} \sum \mathcal{L}_\text{box} + \sum \mathcal{L}_\text{conf} + \sum \mathcal{L}_\text{class}$$
+1. **Is there an object centred here?** (yes/no + confidence) → **objectness loss** ($\mathcal{L}_\text{obj}$)
+2. **If yes, where exactly?** (4 numbers $x, y, w, h$) → **box loss** ($\mathcal{L}_\text{box}$)
+3. **If yes, what class?** (cat / dog / car…) → **class loss** ($\mathcal{L}_\text{class}$)
 
-1. **Box regression** — MSE on $(x, y, \sqrt{w}, \sqrt{h})$ offsets (sqrt so small boxes matter).
-2. **Object confidence** — how likely is there *any* object in this anchor? BCE with logits.
-3. **Classification** — softmax CE (or sigmoid per-class for multi-label).
+YOLO's total loss = sum of all three across every cell:
+$$\mathcal{L} = \lambda_\text{coord}\sum\mathcal{L}_\text{box} + \sum\mathcal{L}_\text{obj} + \sum\mathcal{L}_\text{class}$$
 
-</div>
-
-Anchor boxes are predefined aspect ratios — the model predicts *deltas* from them, not absolute coordinates.
+- **Box** active **only** if a cell contains an object. MSE on $(x, y, \sqrt{w}, \sqrt{h})$ (sqrt so small boxes matter).
+- **Objectness** active **always** — BCE pushes toward 1 if object, 0 if not.
+- **Class** active **only** if cell contains an object — cross-entropy.
 
 ---
 
-# Why predict deltas, not absolute boxes?
+# Worked numeric · YOLO loss for one cell
 
-<div class="keypoint">
+Cell holds a **dog** (class index 2).
 
-A conv layer is **translation equivariant** — the same filter at different spatial positions produces the same feature. If you asked it to predict **absolute** $(x, y)$, every spatial location would have to re-derive its own position. Instead we predict **$\Delta$ from a known anchor** at each location, and the conv output is the offset.
+**Ground truth.** Box $\mathbf{b} = [0.5, 0.5, 0.2, 0.3]$. Objectness 1. Class one-hot $[0, 0, 1, 0, \ldots]$.
+
+**Prediction.** $\hat{\mathbf{b}} = [0.6, 0.4, 0.25, 0.31]$. Objectness 0.85. Probs $[0.1, 0.2, 0.6, 0.1, \ldots]$.
+
+**Components.**
+- $\mathcal{L}_\text{box} = (0.6-0.5)^2 + (0.4-0.5)^2 + (0.25-0.2)^2 + (0.31-0.3)^2 = 0.01 + 0.01 + 0.0025 + 0.0001 \approx 0.023$
+- $\mathcal{L}_\text{obj} = -\log(0.85) \approx 0.16$
+- $\mathcal{L}_\text{class} = -\log(0.6) \approx 0.51$
+
+**Total per cell** (no weighting): $0.023 + 0.16 + 0.51 \approx \mathbf{0.69}$. Sum across all cells = full image loss.
+
+---
+
+# Why predict deltas · relative directions
+
+<div class="insight">
+
+**Analogy · giving directions.**
+- *Absolute*: "Go to GPS coordinates (40.7128, -74.0060)." Hard. Different from every starting point.
+- *Relative (deltas)*: "50 m forward, 10 m right." Easy. Works from any starting corner.
+
+Anchor boxes are starting corners. Conv layers are translation-equivariant — the **same filter** runs at every spatial location, so it should predict the **same correction style** everywhere, not different absolute coordinates.
 
 </div>
 
-- `anchor = (x_a, y_a, w_a, h_a)` · known, per-cell
-- `predict (tx, ty, tw, th)` · 4 scalars from the conv
-- `box = (x_a + tx·w_a, y_a + ty·h_a, w_a · exp(tw), h_a · exp(th))`
+---
 
-That exponential makes width/height positive; the anchor does the heavy lifting so the network only has to learn a small correction.
+# Decoding the box prediction · with example
+
+Anchor $(x_a, y_a, w_a, h_a)$ is known per cell. Network predicts deltas $(t_x, t_y, t_w, t_h)$.
+
+**Centre** — small shift, scaled by anchor size:
+$b_x = x_a + t_x \cdot w_a,\quad b_y = y_a + t_y \cdot h_a$
+
+**Size** — log-space correction; exp keeps width/height positive:
+$b_w = w_a \cdot \exp(t_w),\quad b_h = h_a \cdot \exp(t_h)$
+(If $t_w = 0$, $\exp(0) = 1$ → width unchanged.)
+
+**Worked numeric.** Anchor $(120, 240, 80, 100)$, deltas $(0.1, -0.2, 0.3, -0.1)$.
+- $b_x = 120 + 0.1 \cdot 80 = 128$
+- $b_y = 240 - 0.2 \cdot 100 = 220$
+- $b_w = 80 \cdot e^{0.3} \approx 80 \cdot 1.35 = 108$
+- $b_h = 100 \cdot e^{-0.1} \approx 100 \cdot 0.90 = 90$
+
+**Final box · $(128, 220, 108, 90)$.** Network only had to learn small corrections, anchor did the heavy lifting.
 
 ---
 
@@ -313,22 +413,23 @@ For any real-time detection task in 2026, start with `ultralytics` YOLOv11. `pip
 
 ---
 
-# DETR · detection as set prediction (2020)
+# DETR · ditch the post-processing
 
-End-to-end with a Transformer:
+YOLO and Faster R-CNN are conceptually two-step: predict **densely** (thousands of boxes), then **clean up** with NMS.
 
-1. CNN backbone → feature map.
-2. Transformer encoder/decoder processes it.
-3. Decoder outputs a **set** of $(x, y, w, h, \text{class})$ tuples.
-4. Hungarian matching pairs predictions with ground truth.
+**DETR's question** · can we just directly predict the final, clean set?
 
-**No** anchor boxes. **No** NMS. Just a fixed-size set.
+It outputs a **fixed-size set** of 100 predictions. No grid, no anchors, no NMS.
+
+**Challenge** · the model outputs 100 boxes; the ground truth might have only 3. Prediction order is arbitrary — pred #47 might match ground truth #1.
 
 <div class="insight">
 
-DETR cleans up detection conceptually but is slow and data-hungry. YOLO still wins on speed; DETR wins on elegance.
+**Solution · Hungarian matching.** Imagine 3 tasks (the GT objects) and 100 workers (predictions). Assign one worker per task to minimize total cost. The Hungarian algorithm finds this optimal one-to-one matching. Once matched, compute loss on the matched pairs; the other 97 are matched to "no object."
 
 </div>
+
+DETR cleans up detection conceptually but is slower and data-hungry. YOLO still wins speed; DETR wins elegance.
 
 ---
 
@@ -407,16 +508,46 @@ Every modern segmentation net (DeepLab, SegFormer) uses this pattern.
 
 ---
 
-# Segmentation loss functions
+# Segmentation loss · IoU to Dice
+
+For boxes we used **IoU**. For masks we can do the same:
+$$\text{IoU} = \frac{|P \cap T|}{|P \cup T|}$$
+Good metric — but its gradient is "sharp," tricky for SGD. The **Dice coefficient** is the smoother cousin:
+$$\text{Dice} = \frac{2 \,|P \cap T|}{|P| + |T|}$$
+
+Optimizers minimize, so:
+$$\mathcal{L}_\text{Dice} = 1 - \text{Dice}$$
+Perfect prediction → Dice 1 → loss 0. No overlap → loss 1.
+
+**Why it handles imbalance.** It only counts pixels in $P$ or $T$ — the vast background of true negatives doesn't dominate (unlike plain CE).
+
+---
+
+# Worked numeric · Dice loss on a 2×2 image
+
+Task · segment the top-left pixel.
+
+Ground truth $T = \begin{pmatrix} 1 & 0 \\ 0 & 0 \end{pmatrix}$, prediction (probabilities) $P = \begin{pmatrix} 0.9 & 0.2 \\ 0.1 & 0.3 \end{pmatrix}$.
+
+1. Intersection $|P \cap T| = \sum P \odot T = 0.9 \cdot 1 + 0.2 \cdot 0 + 0.1 \cdot 0 + 0.3 \cdot 0 = \mathbf{0.9}$
+2. $|P| = 0.9 + 0.2 + 0.1 + 0.3 = 1.5$
+3. $|T| = 1.0$
+4. $\text{Dice} = (2 \cdot 0.9) / (1.5 + 1.0) = 1.8 / 2.5 = \mathbf{0.72}$
+5. $\mathcal{L}_\text{Dice} = 1 - 0.72 = \mathbf{0.28}$
+
+The model backprops this 0.28.
+
+---
+
+# Other segmentation losses
 
 - **Pixel-wise cross-entropy** · default. Per-pixel softmax over $C$ classes.
-- **Dice loss** · $1 - \frac{2|P \cap T|}{|P| + |T|}$ — robust to class imbalance (small objects).
-- **Focal loss** · down-weights easy pixels so the model focuses on boundaries.
-- **Boundary loss** · emphasize pixel accuracy near object edges.
+- **Focal loss** · down-weights easy pixels → model focuses on boundaries.
+- **Boundary loss** · explicit pixel accuracy near edges.
 
 <div class="warning">
 
-**Class imbalance** is the #1 problem in segmentation. A medical image with 99% background pixels will optimize to "predict background always" under plain CE. Dice loss (or weighted CE) is what you reach for first.
+**Class imbalance** is the #1 issue. A medical image with 99% background pixels optimizes to "predict background always" under plain CE. Reach for Dice (or weighted CE) first.
 
 </div>
 
@@ -481,20 +612,32 @@ In 2026: for most segmentation tasks, start with SAM-2 and fine-tune only if the
 
 ---
 
-# The open-vocabulary shift
+# The fixed-dictionary problem
 
-Classical detectors and segmenters had a **fixed class list** — if you trained for COCO's 80 classes, you couldn't detect "a purple thermos" without retraining.
+<div class="insight">
 
-<div class="keypoint">
+Traditional detectors are like a translator with a fixed dictionary. Train on "cat / dog / car" → it can only ever detect those 3 things. Ask for "bicycle" → *"sorry, not in my dictionary."*
 
-**Open-vocabulary** models (OWLv2, GroundingDINO, SAM with text prompts) take a *text query* and localize it. Built by combining detector architectures with CLIP text embeddings.
+The open-vocabulary goal · build a **universal translator** that understands concepts, not fixed labels.
 
 </div>
 
-- `"find the red bicycle"` → bounding box
-- `"segment everything that looks like a tree"` → masks
+---
 
-The 2024–2026 frontier is fully prompt-driven vision: you describe what you want, the model localizes and segments it.
+# The open-vocabulary shift · how it works
+
+**Embedding** · a vector that represents data. Image embedding = vector representing an image; text embedding = vector representing text.
+
+**CLIP** · OpenAI 2021. Trained on millions of (image, caption) pairs. Learns a **shared embedding space**: the vector for a dog photo lands close to the vector for "a photo of a dog"; both far from "a photo of a cat."
+
+**How open-vocab detectors use this:**
+1. User provides a text prompt — e.g. "a red bicycle".
+2. Model computes the **text embedding** via CLIP's text encoder.
+3. Model processes the image with a CNN → spatial features.
+4. **Search** the image for regions whose embeddings are close to the text embedding.
+5. Match → draw a box.
+
+Examples · OWLv2, GroundingDINO, SAM-with-text. The 2024–2026 frontier is **fully prompt-driven** vision.
 
 ---
 
