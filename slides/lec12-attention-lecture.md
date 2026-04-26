@@ -191,21 +191,35 @@ The decoder reads a **weighted mixture**, dominated by the relevant word. That's
 
 # Bahdanau (additive) attention · 2014
 
-Compute an alignment score between decoder state $s_{t}$ and encoder state $h_i$ via a **learned network**:
+<div class="insight">
 
-<div class="math-box">
-
-$$e_{t,i} = \mathbf{v}^\top \tanh(W_1 h_i + W_2 s_t)$$
-
-$$\alpha_{t,i} = \text{softmax}_i(e_{t,i})$$
-
-$$c_t = \sum_i \alpha_{t,i}\, h_i$$
+**Analogy · the compatibility test.** Plain dot product compares profiles directly. A *learned* score function projects both into a shared compatibility space ($W_1, W_2$), combines (`tanh`), and an "expert" $\mathbf{v}$ reads out a single 8/10 score. More expressive than raw dot product when vectors aren't aligned.
 
 </div>
 
-- $e_{t,i}$ · how well does encoder state $i$ match decoder state $t$?
-- $\alpha_{t,i}$ · normalized weights (sum to 1 over $i$).
-- $c_t$ · new context — a weighted combo of encoder states, recomputed every decoder step.
+Score between decoder state $s_t$ and encoder state $h_i$:
+$$e_{t,i} = \mathbf{v}^\top \tanh(W_1 h_i + W_2 s_t),\quad \alpha_{t,i} = \text{softmax}_i(e_{t,i}),\quad c_t = \sum_i \alpha_{t,i}\, h_i$$
+
+---
+
+# Bahdanau · worked numeric, term-by-term
+
+Toy 2-d. $h_i = [2, 1]^\top$, $s_t = [1, 3]^\top$.
+
+$$W_1 = \begin{pmatrix} 0.1 & 0.2 \\ 0.3 & 0.4 \end{pmatrix},\quad W_2 = \begin{pmatrix} 0.5 & 0.6 \\ 0.7 & 0.8 \end{pmatrix},\quad \mathbf{v} = \begin{pmatrix} 0.9 \\ 0.1 \end{pmatrix}$$
+
+**Step 1 · project.**
+- $W_1 h_i = [0.2 + 0.2,\ 0.6 + 0.4]^\top = [0.4, 1.0]^\top$
+- $W_2 s_t = [0.5 + 1.8,\ 0.7 + 2.4]^\top = [2.3, 3.1]^\top$
+
+**Step 2 · add + non-linearity.**
+$U = [0.4 + 2.3,\ 1.0 + 3.1]^\top = [2.7, 4.1]^\top$
+$\tanh U \approx [0.99, 1.00]^\top$
+
+**Step 3 · final dot product with $\mathbf{v}$.**
+$e_{t,i} = 0.9 \cdot 0.99 + 0.1 \cdot 1.00 = 0.891 + 0.100 = \mathbf{0.991}$
+
+This single number is the alignment score for **one** $(s_t, h_i)$ pair. Compute for all $i$, then softmax.
 
 ---
 
@@ -343,21 +357,74 @@ Attention is **differentiable dictionary lookup**. The network's parameters shap
 
 ---
 
+# Scaled dot-product · worked numeric (4 steps)
+
+Tiny example · 2 tokens, $d_k = 2$.
+$Q = \begin{pmatrix} 1 & 0 \\ 0 & 1 \end{pmatrix}$, $K = \begin{pmatrix} 1 & 1 \\ 2 & 0 \end{pmatrix}$, $V = \begin{pmatrix} 0.1 & 0.2 \\ 0.3 & 0.4 \end{pmatrix}$, $\sqrt{d_k} = \sqrt{2} \approx 1.414$.
+
+**Step 1 · scores.**
+$QK^\top = \begin{pmatrix} 1 & 2 \\ 1 & 0 \end{pmatrix}$ — token 1's query matches token 2 better (score 2 > 1).
+
+**Step 2 · scale.**
+$QK^\top / \sqrt{2} = \begin{pmatrix} 0.707 & 1.414 \\ 0.707 & 0 \end{pmatrix}$
+
+**Step 3 · row-wise softmax.**
+Row 1: $\text{softmax}([0.707, 1.414]) = \left[\dfrac{2.03}{6.14}, \dfrac{4.11}{6.14}\right] \approx [0.33, 0.67]$
+Row 2: $\text{softmax}([0.707, 0]) \approx [0.67, 0.33]$
+$A = \begin{pmatrix} 0.33 & 0.67 \\ 0.67 & 0.33 \end{pmatrix}$
+
+**Step 4 · weighted sum.**
+$AV = \begin{pmatrix} 0.33 \cdot 0.1 + 0.67 \cdot 0.3 & 0.33 \cdot 0.2 + 0.67 \cdot 0.4 \\ 0.67 \cdot 0.1 + 0.33 \cdot 0.3 & 0.67 \cdot 0.2 + 0.33 \cdot 0.4 \end{pmatrix} = \begin{pmatrix} 0.234 & 0.334 \\ 0.166 & 0.266 \end{pmatrix}$
+
+Output for token 1 is **33% of $v_1$ + 67% of $v_2$**.
+
+---
+
 <!-- _class: code-heavy -->
 
-# QKV · projections from the same input
+# One actor, three roles
 
-Crucially, $Q, K, V$ are all **linear projections of the input**:
+<div class="insight">
 
-<div class="math-box">
+**Analogy.** Eddie Murphy in *The Nutty Professor* — same person ($X$), different costumes and makeup ($W_Q, W_K, W_V$), three characters.
+- **Query** role · "I'm the hero — what do I need?"
+- **Key** role · "Here's what I am."
+- **Value** role · "Here's the info I have to offer."
 
-$$Q = X\, W_Q, \quad K = X\, W_K, \quad V = X\, W_V$$
-
-$W_Q, W_K, W_V$ are learned $d \times d_k$ matrices.
+The network learns the costumes ($W$ matrices) that make attention work.
 
 </div>
 
-The network *learns* what each role should be. The same input plays three parts depending on which projection you apply.
+---
+
+# QKV · projection worked example
+
+Input vector for "cat" · $x = [1, 2, 3, 4]^\top$ ($d = 4$). Project to $d_k = 2$ via three $4 \times 2$ matrices.
+
+$$W_Q = \begin{pmatrix} 1 & 0 \\ 0 & 1 \\ 1 & 1 \\ 0 & 0 \end{pmatrix},\quad W_K = \begin{pmatrix} 0 & 1 \\ 1 & 0 \\ 0 & 0 \\ 1 & 1 \end{pmatrix},\quad W_V = \begin{pmatrix} 1 & 1 \\ 0 & 0 \\ 0 & 1 \\ 1 & 0 \end{pmatrix}$$
+
+- $q = x^\top W_Q = [1\cdot1 + 3\cdot1,\ 2\cdot1 + 3\cdot1] = [4, 5]$
+- $k = x^\top W_K = [2 + 4,\ 1 + 4] = [6, 5]$
+- $v = x^\top W_V = [1 + 4,\ 1 + 3] = [5, 4]$
+
+The single input $[1, 2, 3, 4]$ now plays **three roles**: query $[4, 5]$, key $[6, 5]$, value $[5, 4]$.
+
+The full $Q, K, V$ matrices are this calculation repeated for every token. PyTorch:
+
+```python
+class AttentionHead(nn.Module):
+    def __init__(self, d_in, d_k):
+        super().__init__()
+        self.Wq = nn.Linear(d_in, d_k, bias=False)
+        self.Wk = nn.Linear(d_in, d_k, bias=False)
+        self.Wv = nn.Linear(d_in, d_k, bias=False)
+
+    def forward(self, x):
+        Q, K, V = self.Wq(x), self.Wk(x), self.Wv(x)
+        scores = Q @ K.transpose(-2, -1) / math.sqrt(Q.size(-1))
+        weights = scores.softmax(dim=-1)
+        return weights @ V
+```
 
 ```python
 class AttentionHead(nn.Module):
@@ -386,15 +453,44 @@ The scaling that makes attention work
 
 ---
 
-# The problem with unscaled dot products
+# Why softmax can get "spiky"
 
-For $Q_i, K_j \sim \mathcal{N}(0, 1)$, independent, in $d_k$ dimensions:
+<div class="insight">
 
-$$Q_i^\top K_j = \sum_{k=1}^{d_k} Q_{i,k} K_{j,k}$$
+**Analogy · grading on a curve.**
+- Scores 1–10 · 7 vs 8 are close. Curve is smooth.
+- Scores 1–1000 · 700 vs 800 are worlds apart. The 801 wins; everyone else gets ~0%. Curve is **spiky**.
 
-**Variance of the sum** = $d_k$. So dot products scale as $\sqrt{d_k}$.
+Unscaled dot products behave like the second case as $d_k$ grows. Scaling factor brings us back to the first.
 
-With $d_k = 512$: raw scores are $\sim \pm 22$. Softmax of $[22, -22, 22, \ldots]$ → nearly one-hot.
+</div>
+
+---
+
+# Variance of unscaled dot products
+
+For $Q_i, K_j$ with i.i.d. $\mathcal{N}(0, 1)$ entries:
+$$S = Q_i^\top K_j = \sum_{k=1}^{d_k} q_k k_k$$
+
+Variance of a sum of independent terms = sum of variances:
+$$\text{Var}(S) = \sum_{k=1}^{d_k} \text{Var}(q_k k_k) = d_k$$
+(For two independent zero-mean unit-variance variables, $\text{Var}(qk) = 1$.)
+
+Standard deviation $\sqrt{d_k}$ → typical magnitudes scale **like $\sqrt{d_k}$**.
+
+With $d_k = 512$ raw scores are $\sim \pm 22$. Softmax of $[22, -22, 22, \ldots]$ → nearly one-hot. Scale by $1/\sqrt{d_k}$ → variance back to 1.
+
+---
+
+# Worked numeric · the scaling factor in action
+
+$d_k = 256 \Rightarrow \sqrt{d_k} = 16$. A typical raw-score vector for a query: $[15.5, -16.1, 2.3]$.
+
+**Without scaling.**
+$\exp(15.5) \approx 5.4 \times 10^6$. Softmax $\approx [0.999995,\ 0.000000,\ 0.000005]$ — essentially **one-hot** → gradient ≈ 0 → learning stalls.
+
+**With scaling.** Divide by 16: $[0.97, -1.01, 0.14]$.
+$\exp \approx [2.64, 0.36, 1.15]$, sum $\approx 4.15$. Softmax $\approx [0.64, 0.09, 0.27]$ — soft, gradients flow.
 
 ---
 
@@ -566,9 +662,13 @@ Convolution bakes in "nearby tokens matter"; self-attention lets the network dec
 
 ---
 
-# Causal self-attention · two lines to make GPT
+# Causal self-attention · don't peek at the future
 
-To make attention *autoregressive* (can't peek at future tokens), mask out the upper triangle before softmax:
+<div class="insight">
+
+When writing the next word of "The quick brown fox jumps…", you can only use what you've already written. A **causal mask** is like covering the future with cardboard — for "fox", you see "The quick brown fox" but everything after is hidden.
+
+</div>
 
 ```python
 scores = Q @ K.transpose(-2, -1) / math.sqrt(d_k)     # (n, n)
@@ -577,11 +677,24 @@ scores.masked_fill_(mask, float('-inf'))              # future → -inf
 weights = scores.softmax(dim=-1)                      # rows still sum to 1
 ```
 
-<div class="keypoint">
+That's the only difference between BERT-style (bidirectional) and GPT-style (causal) attention. Same module, different mask.
 
-**That's the only difference between BERT-style (bidirectional) and GPT-style (causal) attention.** Same module, different mask. L13 uses this trick to build a decoder.
+---
 
-</div>
+# Worked numeric · how the −∞ mask works
+
+Raw scores (3 tokens, $d_k = 1$ → no scaling):
+$$S = \begin{pmatrix} 2.1 & 1.5 & 0.4 \\ 0.8 & 3.1 & 1.2 \\ 1.4 & 0.7 & 2.5 \end{pmatrix}$$
+
+**Step 1 · mask the upper triangle.**
+$$S' = \begin{pmatrix} 2.1 & -\infty & -\infty \\ 0.8 & 3.1 & -\infty \\ 1.4 & 0.7 & 2.5 \end{pmatrix}$$
+
+**Step 2 · row-wise softmax.** Since $\exp(-\infty) = 0$:
+- Row 1: $\text{softmax}([2.1, -\infty, -\infty]) = [1.0,\ 0,\ 0]$
+- Row 2: $\text{softmax}([0.8, 3.1, -\infty]) \approx [0.09,\ 0.91,\ 0]$
+- Row 3: $\text{softmax}([1.4, 0.7, 2.5]) \approx [0.21,\ 0.10,\ 0.69]$
+
+The $-\infty$ guarantees future tokens get **exact zero** weight after softmax. Token 1 sees only itself; token 2 sees 1–2; token 3 sees all.
 
 ---
 
