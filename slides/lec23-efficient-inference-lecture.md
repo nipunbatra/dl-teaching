@@ -73,20 +73,36 @@ That's why decode is much slower per token than prefill · we can't parallelize 
 
 ---
 
-# The two phases of LLM inference
+# Prefill vs decode · the kitchen analogy
 
-| Phase | What happens | Bottleneck |
-|-------|--------------|-----------|
-| **Prefill** | process the input prompt in parallel | **compute**-bound |
-| **Decode** | generate tokens one at a time | **memory**-bound |
+<div class="insight">
 
-<div class="keypoint">
+A chef preparing food.
 
-Prefill can use the GPU's full FLOPs — it's a big matmul. Decode is **one token per pass**, loading gigabytes of weights and KV-cache each time — mostly moving data, not computing.
+- **Banquet (prefill)** · entire 10-course order arrives at once. Bottleneck = how fast they can chop, fry, plate **in parallel**. **Compute-bound.**
+- **Single dish (decode)** · need rare ingredients in sequence — run to pantry, chop, run again. Bottleneck = the **pantry runs**, not the cooking. **Memory-bound.**
 
 </div>
 
-Optimizing the two phases is very different. Modern inference servers (vLLM, TGI) handle them separately.
+---
+
+# Decode · why it's memory-bound
+
+For one token of decode on a 70B model the GPU must:
+1. **Fetch all 70B weights** from HBM. At 2 bytes (BF16) = **140 GB**.
+2. **Fetch the KV-cache** for the context (>10 GB at 32k context).
+3. **Do the math** · matrix–vector products. **Tiny** compared to the data movement.
+
+NVIDIA A100 · ~1.5 TB/s HBM bandwidth → moving ~150 GB takes ~0.1 s. The math finishes in a fraction of that. **The GPU spends most of its time waiting for data.**
+
+Prefill is different · the whole prompt is processed together as a big **matrix–matrix** product → the GPU's FLOPs are saturated. Compute-bound.
+
+| Phase | Bottleneck |
+|-------|-----------|
+| Prefill | **compute** |
+| Decode | **memory** |
+
+Modern inference servers (vLLM, TGI) optimize the two phases separately.
 
 ---
 
@@ -193,17 +209,53 @@ Run bigger models on smaller hardware
 
 ---
 
-# INT8 · the easy win
+# INT8 · the map-scale analogy
 
-Converting BF16 weights to INT8 with **per-channel scaling**:
+<div class="insight">
 
-$$w_\text{int8} = \text{round}(w / s), \quad s = \max(|w_\text{channel}|) / 127$$
+You have a satellite image of a city with precise GPS for everything (FP32). To make a tourist map (INT8), you can't keep all that precision.
 
-- Weights halved in memory.
-- Matmul runs on INT8 hardware (much faster on H100, Ada).
-- Quality loss · typically < 0.5% on benchmarks.
+1. **Find the scale** · "1 inch on the map = 1 mile in reality." This scale $s$ is the only key piece of info.
+2. **Convert** · map all real locations onto paper using $s$.
 
-PyTorch builtin: `torch.quantization.quantize_dynamic` or `bitsandbytes` library.
+Quantization · find scale $s$ to map FP32 weights into the small range $[-127, 127]$.
+
+</div>
+
+---
+
+# INT8 · derive the formula step by step
+
+Goal · convert FP32 weights to 8-bit integers in $[-128, 127]$.
+
+**Step 1.** Find max absolute value in the channel: $\max(|w|)$.
+**Step 2.** Map the largest weight to the largest integer (127):
+$\max(|w|) = s \cdot 127 \;\Rightarrow\; s = \max(|w|)/127$
+**Step 3.** Quantize each weight:
+$w_\text{int8} = \text{round}(w / s)$
+**Step 4.** Reconstruct at inference: $\hat w = w_\text{int8} \cdot s$.
+
+Store the int8 array + a single FP32 scale $s$ per channel.
+
+---
+
+# INT8 · worked numeric
+
+Convert $w = [0.5, -0.2, 0.0, -1.0]$ from FP32 to INT8.
+
+1. **Max abs.** $\max(|w|) = 1.0$.
+2. **Scale.** $s = 1.0 / 127 \approx 0.007874$.
+3. **Quantize.**
+- $0.5 / s \approx 63.5 \to \mathbf{64}$
+- $-0.2 / s \approx -25.4 \to \mathbf{-25}$
+- $0.0 / s = 0 \to \mathbf{0}$
+- $-1.0 / s = -127.0 \to \mathbf{-127}$
+
+**Stored** · 4 INT8 (4 bytes) + scale FP32 (4 bytes) = **8 bytes** vs 16 bytes (4× FP32). **50% saving.**
+
+**Reconstruction.** $64 \cdot 0.007874 = 0.5039$ (vs original 0.5). Max error ~0.001 — quality drop barely measurable.
+
+PyTorch · `torch.quantization.quantize_dynamic` or `bitsandbytes`.
 
 ---
 
@@ -276,21 +328,33 @@ For $N = 8192$, a single layer needs ~8 GB just for the softmax matrix. GPU HBM 
 
 ---
 
-# FlashAttention · tile and stream
+# FlashAttention · the giant-mural analogy
 
-<div class="paper">
+<div class="insight">
 
-Dao et al. 2022 · *"FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness"*
+You need to paint a football-field-sized mural (the $N \times N$ attention matrix).
+
+- **Naive** · rent a warehouse, lay out the canvas, paint everything. Huge temporary space (HBM).
+- **FlashAttention** · paint one small square at a time, on a portable easel (SRAM). Special technique to keep edges matching. **Never see the whole mural at once.**
 
 </div>
 
-Key ideas:
+For $N = 32{,}768$, the attention matrix has ~1B elements → **4.3 GB per head per layer in FP32**. Too big to read/write to main memory efficiently.
 
-1. **Tile** · split Q, K, V into blocks that fit in SRAM (fast on-chip memory).
-2. **Fuse** · compute softmax + matmul in one kernel, no intermediate materialization.
-3. **Online softmax** · compute stable softmax incrementally block-by-block.
+---
 
-Result · **exact** attention (not approximate) with **O(N) memory** and 2–4× wall-clock speedup.
+# FlashAttention · how it works
+
+Three ideas (Dao et al. 2022):
+1. **Tile** · break $Q, K, V$ into blocks (e.g. 256×256). Each block fits in **SRAM** (~20× faster than HBM).
+2. **Fuse** · do the entire (matmul + softmax + matmul) for a block in one on-chip kernel — never write the intermediate to HBM.
+3. **Online softmax** · math trick to update softmax incrementally as new blocks come in. Result is **mathematically identical** to naive — not an approximation.
+
+**Memory savings · 8192-context, FP16.**
+- Naive · $8192^2 \cdot 2$ bytes ≈ **134 MB** per head/layer (must hit HBM).
+- Flash · 256×256 tile · $256^2 \cdot 2 \approx \mathbf{131\ \text{KB}}$ in SRAM. The 134 MB is **never created**.
+
+PyTorch 2.0+ ships `F.scaled_dot_product_attention` — just use it.
 
 ---
 
@@ -362,21 +426,50 @@ Train a student to mimic a teacher
 
 ---
 
-# Distillation · the Hinton trick (2015)
+# Distillation · the master-chef analogy
 
-Given a big **teacher** model and a small **student** model:
+<div class="insight">
 
-<div class="math-box">
+How does an apprentice learn from a master?
+- **Hard labels** · master shows finished dish, says "make this." Apprentice knows only the goal.
+- **Soft labels** · master says *"lots of tomato, a little basil, a hint of oregano — and crucially, more basil than oregano."* Apprentice learns relative proportions and "dark knowledge" of *what not to do*.
 
-$$\mathcal{L} = \alpha \cdot \text{CE}(\text{hard labels}, \text{student}) + (1 - \alpha) \cdot T^2 \cdot \text{KL}(\text{teacher}/T, \text{student}/T)$$
-
-- Teacher provides **soft targets** (probabilities, not one-hot).
-- Temperature $T$ softens both distributions — more signal per sample.
-- $T^2$ factor compensates for the softening when taking gradients.
+Distillation = method 2.
 
 </div>
 
-Student learns from teacher's "dark knowledge" (relative probabilities of wrong classes), not just the right answer.
+---
+
+# Distillation · the loss, term by term
+
+Two losses:
+
+**Part 1 · standard CE** against true labels:
+$L_\text{hard} = \text{CE}(\text{labels}, \text{student})$
+
+**Part 2 · imitate the teacher's *distribution*.** Use KL divergence between softened distributions (temperature $T > 1$):
+$L_\text{soft} = \text{KL}\bigl(\text{softmax}(z_t/T)\ \|\ \text{softmax}(z_s/T)\bigr)$
+
+Combine with weight $\alpha$:
+$$\mathcal{L} = \alpha\,L_\text{hard} + (1-\alpha)\,T^2\,L_\text{soft}$$
+
+The $T^2$ corrects for the gradient shrinkage that softening causes (so the two losses are comparable in scale).
+
+---
+
+# Distillation · worked numeric
+
+Image of a cat. Classes [Cat, Dog, Car].
+- Teacher logits $z_t = [10, 2, 1]$.
+- Student logits $z_s = [5, 1.5, 1]$.
+
+**$T = 1$.** softmax($z_t$) = $[0.999, 0.0003, 0.0001]$. **Almost no dark knowledge** — student barely learns relative class structure.
+
+**$T = 4$.** Soften logits: $z_t/4 = [2.5, 0.5, 0.25]$, $z_s/4 = [1.25, 0.375, 0.25]$.
+- Soft teacher · softmax($z_t/4$) ≈ $[0.88, 0.08, 0.04]$
+- Soft student · softmax($z_s/4$) ≈ $[0.68, 0.17, 0.15]$
+
+Now the student learns: increase Cat, decrease Dog and Car, **but keep Dog about 2× Car**. Rich nuanced signal that pure hard-labels would miss.
 
 ---
 
