@@ -201,38 +201,57 @@ The math behind the dance
 
 ---
 
-# The minimax objective
+# Minimax · derived from binary cross-entropy
 
-<div class="math-box">
+D is just a binary classifier. We know how to train those.
 
-$$\min_G \max_D \; \mathbb{E}_{x \sim p_\text{data}}[\log D(x)] \,+\, \mathbb{E}_{z \sim p(z)}[\log(1 - D(G(z)))]$$
+**D's goal.** For real $x$, output near 1. For fake $G(z)$, output near 0. Combined (BCE):
+$\text{maximize}\;\log D(x) + \log(1 - D(G(z)))$
 
-**D** maximizes · get close to 1 on real data, close to 0 on generated data.
-**G** minimizes · the second term — push $D(G(z))$ toward 1.
+Average over the data distribution and noise:
+$$\max_D \;\mathbb{E}_{x \sim p_\text{data}}[\log D(x)] + \mathbb{E}_{z \sim p(z)}[\log(1 - D(G(z)))]$$
 
-</div>
+**G's goal.** Opposite — make $D(G(z))$ near 1. Equivalent to **minimizing** the same expression. So:
+$$\min_G \max_D\; V(D, G)$$
 
-In theory, if both networks converge to Nash equilibrium, $G$ produces the exact data distribution and $D$ gives 0.5 on everything.
-
-In practice, they never cleanly converge.
+A two-player minimax game. Nash equilibrium · $p_G = p_\text{data}$ and $D \equiv 0.5$.
 
 ---
 
-# ⚠️ optional · Why this objective · one derivation
+# Worked numeric · a single step
 
-Fix G. The inner max over D has a closed form:
+One real $x$ and one fake $G(z)$. Initial state · D learning, G bad.
 
+- $D(x) = 0.7$ (D thinks real is somewhat real)
+- $D(G(z)) = 0.2$ (D thinks fake is mostly fake)
+
+**D's objective value.**
+$\log 0.7 + \log(1 - 0.2) = -0.36 + \log 0.8 = -0.36 - 0.22 = \mathbf{-0.58}$
+Maximize → push $D(x) \to 1$ and $D(G(z)) \to 0$.
+
+**G's objective value.** G only sees the second term: $\log(1 - 0.2) = -0.22$.
+Minimize → push $D(G(z)) \to 1$.
+
+Each step both networks adjust → an equilibrium dance.
+
+---
+
+# ⚠️ optional · deriving the optimal D
+
+Fix G. Maximize over $D$ pointwise · for each $x$, maximize $a\log D + b\log(1-D)$ with $a = p_\text{data}(x)$, $b = p_G(x)$.
+
+Take derivative · $a/D - b/(1-D) = 0$ → $a(1-D) = bD$ → $D^* = a/(a+b)$:
 $$D^*(x) = \frac{p_\text{data}(x)}{p_\text{data}(x) + p_G(x)}$$
 
-Plug back in and simplify. The outer minimization over G becomes:
+**Sanity check on $D^*$:**
+- Clearly real ($p_\text{data} = 0.9, p_G = 0.1$): $D^* = 0.9 / 1.0 = 0.9$ ✓
+- Clearly fake ($p_\text{data} = 0.05, p_G = 0.95$): $D^* = 0.05 / 1.0 = 0.05$ ✓
+- **Nash equilibrium ($p_\text{data} = p_G$):** $D^* = 0.5$ everywhere ✓
 
-$$\min_G\; 2 \cdot \text{JSD}(p_\text{data} \| p_G) - \log 4$$
+Plug $D^*$ back into the GAN objective and simplify · the outer min becomes
+$$\min_G\; 2\,\text{JSD}(p_\text{data}\,\|\,p_G) - \log 4$$
 
-<div class="keypoint">
-
-The GAN objective is **equivalent to minimizing Jensen-Shannon divergence** between real and fake distributions. JSD = 0 iff the distributions are identical — hence the Nash equilibrium has $p_G = p_\text{data}$.
-
-</div>
+The GAN objective is **equivalent to minimizing Jensen–Shannon divergence**. JSD = 0 iff $p_G = p_\text{data}$.
 
 ---
 
@@ -298,18 +317,17 @@ Everyone uses the non-saturating version.
 
 ---
 
-# Two objectives side-by-side · numeric example
+# Worked numeric · the gradient gap
 
-If $D(G(z)) = 0.01$ (D very confident it's fake):
+Let D's pre-sigmoid activation be $a$, so $D(G(z)) = \sigma(a)$. Suppose D is confident · $\sigma(a) = 0.01$ (so $a \approx -4.6$). G's update depends on $\partial L / \partial a$.
 
-<div class="math-box">
+**Saturating loss** $L = \log(1 - \sigma(a))$.
+Chain rule · $\partial L / \partial a = -\sigma(a)$. At $\sigma = 0.01$: gradient $= \mathbf{-0.01}$.
 
-- Saturating: $\frac{d}{dD} \log(1 - D) = -\frac{1}{1 - D} \approx -1$. Times $D(1-D)$ chain rule ≈ 0.01. **Tiny gradient.**
-- Non-saturating: $\frac{d}{dD} \log D = \frac{1}{D} = 100$. Times $D(1-D)$ chain ≈ 1. **Unit gradient.**
+**Non-saturating loss** $L = -\log \sigma(a)$.
+Chain rule · $\partial L / \partial a = \sigma(a) - 1$. At $\sigma = 0.01$: gradient $= 0.01 - 1 = \mathbf{-0.99}$.
 
-</div>
-
-Difference is 100×. That gap kept vanilla GANs from training for 2 years until Goodfellow's footnote fix.
+**The non-saturating gradient is ~100× stronger** in this common early-training regime. That gap kept vanilla GANs untrainable for 2 years until Goodfellow's footnote fix.
 
 ---
 
@@ -634,35 +652,50 @@ Unlike JS, $W$ is **smooth** even when supports don't overlap. Move the pile 1 m
 
 ---
 
-# The WGAN objective
+# WGAN · critic with a speed limit
 
-Using the Kantorovich-Rubinstein duality, $W$ can be written as:
+Vanilla GAN's classifier draws an infinitely steep cliff between real/fake. When supports don't overlap, the cliff has zero gradient at its base. **G gets no signal.**
 
-$$W(p_\text{data}, p_G) = \sup_{\|D\|_L \le 1} \mathbb{E}_{p_\text{data}}[D(x)] - \mathbb{E}_{p_G}[D(G(z))]$$
+<div class="insight">
 
-<div class="keypoint">
-
-D is now a **1-Lipschitz function** (its slope is bounded everywhere), *not* a classifier. Call it a "critic" instead.
+**WGAN fix · 1-Lipschitz critic.** A "critic" $D$ scores realness (any real number, not a probability). Its slope is capped at 1 — never steeper than 45°. Now there's *always* a gentle non-zero slope from fakes to reals → G always gets gradient.
 
 </div>
 
-- **D loss** · maximize the difference of scores — high on real, low on fake.
-- **G loss** · minimize D's score on its output.
-- No sigmoid. No log. Just raw scores.
+Using Kantorovich–Rubinstein duality:
+$$W(p_\text{data}, p_G) = \sup_{\|D\|_L \le 1}\,\mathbb{E}_{p_\text{data}}[D(x)] - \mathbb{E}_{p_G}[D(G(z))]$$
+
+D's job · **maximize** the score difference (high on real, low on fake). G's job · **minimize** $\mathbb{E}_{p_G}[D]$. No sigmoid, no log, just raw scores.
+
+**1-Lipschitz check.** $D(x) = 5x$? With $a=2, b=3$: $|D(a)-D(b)| = 5 > 1 = |a-b|$. **Not** 1-Lipschitz.
+$D(x) = 0.5x$? $|D(a)-D(b)| = 0.5 \le 1$. **Yes.**
 
 ---
 
-# WGAN-GP · the practical version
+# WGAN-GP · highway-patrol analogy
 
-Gulrajani et al. 2017 · replaces weight clipping (unstable) with a **gradient penalty**:
+<div class="insight">
 
-<div class="math-box">
-
-$$\mathcal{L}_\text{WGAN-GP} = \mathbb{E}[D(G(z)) - D(x)] + \lambda\, \mathbb{E}_{\hat{x}}[(\|\nabla_{\hat{x}} D(\hat{x})\|_2 - 1)^2]$$
-
-Enforces D to be **1-Lipschitz** — stabilizes training and eliminates mode collapse in practice.
+We want D's slope to be 1 everywhere — but checking *everywhere* is impossible. Highway patrol can't put a camera on every metre, so it places **random** ones. WGAN-GP picks **random points $\hat x$** on the line between real and fake, and penalizes any slope $\ne 1$ there. Surprisingly enough.
 
 </div>
+
+---
+
+# WGAN-GP · the gradient penalty, term by term
+
+$$\mathcal{L}_\text{GP} = \lambda\,\mathbb{E}_{\hat x}\bigl[(\,\underbrace{\|\nabla_{\hat x}D(\hat x)\|_2}_{\text{slope at }\hat x}\,-\,1)^2\bigr]$$
+
+1. **Where do we sample?** $\hat x = \epsilon\,x + (1 - \epsilon)\,G(z)$ for random $\epsilon \in [0, 1]$ — a random point between a real and a fake.
+2. **How do we measure slope?** Compute $\nabla_{\hat x}D(\hat x)$ (gradient of critic w.r.t. its input), take L2 norm.
+3. **Penalty.** $(\text{slope} - 1)^2$:
+- slope = 1 → 0 (no penalty)
+- slope = 1.5 → 0.25
+- slope = 0.2 → 0.64
+
+Critic's full loss · $\mathbb{E}[D(G(z))] - \mathbb{E}[D(x)] + \lambda \cdot \text{GP}$.
+
+Stabilizes training and effectively eliminates mode collapse.
 
 ---
 
