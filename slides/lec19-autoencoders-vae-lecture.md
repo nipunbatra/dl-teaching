@@ -144,23 +144,36 @@ If the postcard is too small, they're forced to learn what's *truly essential* �
 
 ---
 
-# The plain autoencoder
+# Postcard analogy · in math terms
 
-<div class="math-box">
+<div class="insight">
 
-**Encoder** $f: \mathbb{R}^n \to \mathbb{R}^d$ · compresses input to a small latent code $z$.
-**Decoder** $g: \mathbb{R}^d \to \mathbb{R}^n$ · reconstructs from $z$.
-
-**Loss** · $\mathcal{L} = \|x - g(f(x))\|^2$
+- **Forger** writes the postcard → **encoder** $f$.
+- **Postcard** = compact description → **latent code $z$**.
+- **Partner** reconstructs the painting → **decoder** $g$.
+- "Goodness" of reconstruction → **MSE loss** $\|x - g(f(x))\|^2$.
 
 </div>
 
-Train end-to-end. The bottleneck $d < n$ forces the network to learn a useful compression.
+Train encoder + decoder together. The bottleneck $d \ll n$ forces the network to keep only the most informative features.
+
+---
+
+# Worked numeric · 4-pixel autoencoder
+
+Tiny grayscale image $x = [0.9, 0.2, 0.8, 0.1]$. Latent dim $d = 1$.
+
+1. **Encode.** Network outputs $z = 0.7$.
+2. **Decode.** Network maps $z = 0.7 \to \hat x = [0.8, 0.3, 0.7, 0.2]$.
+3. **Loss (MSE).**
+$\mathcal{L} = \tfrac{1}{4}\bigl((0.9-0.8)^2 + (0.2-0.3)^2 + (0.8-0.7)^2 + (0.1-0.2)^2\bigr)$
+$= \tfrac{1}{4}(0.01 + 0.01 + 0.01 + 0.01) = \mathbf{0.01}$
+
+Backprop adjusts encoder + decoder weights to push this lower.
 
 **Uses:**
-- Denoising
-- Dimensionality reduction (beats PCA for non-linear structure)
-- Pretraining / feature learning
+- Denoising · dimensionality reduction · pretraining / feature learning.
+- Beats PCA for non-linear data.
 
 ---
 
@@ -324,25 +337,33 @@ The next two slides *derive* this from first principles (Jensen's inequality). *
 
 ---
 
-# ⚠️ optional · Deriving the ELBO · one line at a time
+# ELBO · the hard problem and the easy trick
 
-<div class="math-box">
+**Hard problem.** We want $p(x) = \int p(x, z)\,dz$. Intractable for high-dim $z$.
 
-Start from the log marginal:
+**Easy trick (variational inference).**
+1. Define a tractable distribution $q(z|x)$ (our encoder).
+2. Derive a **lower bound** on $\log p(x)$ that we *can* compute: the **ELBO**.
+3. Maximizing the ELBO pushes up $\log p(x)$ — like getting good practice-exam grades.
 
-$$\log p(x) = \log \int p(x, z)\, dz$$
+---
 
-Multiply and divide by $q(z|x)$ inside the integral:
+# Deriving the ELBO · step by step
 
-$$= \log \int q(z|x) \cdot \frac{p(x, z)}{q(z|x)}\, dz = \log\, \mathbb{E}_{q}\!\left[\frac{p(x, z)}{q(z|x)}\right]$$
+**Step 1.** Multiply and divide by $q(z|x)$:
+$$\log p(x) = \log \int q(z|x) \cdot \frac{p(x, z)}{q(z|x)}\,dz = \log\,\mathbb{E}_{q}\!\left[\frac{p(x, z)}{q(z|x)}\right]$$
 
-By Jensen's inequality (log is concave):
+**Step 2 · Jensen's inequality.** $\log$ is concave → $\log\mathbb{E}[X] \ge \mathbb{E}[\log X]$. (For two values: $\log\!\frac{a+b}{2} \ge \frac{\log a + \log b}{2}$.) Move log inside expectation:
+$$\log p(x) \ge \mathbb{E}_q\!\left[\log\tfrac{p(x, z)}{q(z|x)}\right] \quad \text{(ELBO)}$$
 
-$$\geq \mathbb{E}_{q}\!\left[\log \frac{p(x, z)}{q(z|x)}\right] = \mathbb{E}_q[\log p(x|z)] - \text{KL}(q(z|x)\,\|\,p(z))$$
+**Step 3 · expand.** Using $p(x, z) = p(x|z)\,p(z)$:
+$$\text{ELBO} = \mathbb{E}_q[\log p(x|z)] + \mathbb{E}_q[\log p(z) - \log q(z|x)]$$
 
-That's the ELBO — a rigorous lower bound, tight when $q \to p(z|x)$.
+The second bracket is exactly $-D_\text{KL}(q(z|x)\,\|\,p(z))$:
+$$\boxed{\log p(x) \ge \mathbb{E}_{q(z|x)}[\log p(x|z)] - D_\text{KL}(q(z|x)\,\|\,p(z))}$$
 
-</div>
+- **First term** · reconstruction (maximize).
+- **Second term** · regularizer (minimize).
 
 ---
 
@@ -363,19 +384,22 @@ Maximize the ELBO = minimize the negative. This is the VAE loss. Every term is t
 
 ---
 
-# The KL term · in one line
+# KL · the "cost of being different"
 
-For Gaussian $q$ and standard-normal prior:
+The KL term is the price for $q(z|x)$ deviating from the standard-normal prior. Two parts:
 
-<div class="math-box">
+1. **Mean cost** $\mu^2$ · zero when $\mu = 0$, grows quadratically.
+2. **Variance cost** $\sigma^2 - \log\sigma^2 - 1$ · zero at $\sigma^2 = 1$, positive everywhere else.
 
-$$D_\text{KL}(\mathcal{N}(\mu, \sigma^2) \| \mathcal{N}(0, 1)) = \frac{1}{2} \sum_{i=1}^{d} \left( \sigma_i^2 + \mu_i^2 - 1 - \log \sigma_i^2 \right)$$
+For Gaussian $q$ vs $\mathcal{N}(0, 1)$:
+$$D_\text{KL} = \tfrac{1}{2}\sum_{i=1}^d \bigl(\mu_i^2 + \sigma_i^2 - 1 - \log\sigma_i^2\bigr)$$
 
-</div>
+Quick check on the variance term:
+- $\sigma^2 = 1 \Rightarrow 1 - 1 - 0 = 0$ ✓
+- $\sigma^2 = 0.5 \Rightarrow 0.5 - 1 - (-0.693) = 0.193$ (penalty)
+- $\sigma^2 = 2 \Rightarrow 2 - 1 - 0.693 = 0.307$ (penalty)
 
-One expression, closed form, no sampling needed. Just plug in the encoder's $\mu$ and $\log \sigma^2$ outputs.
-
-The KL is what **structures** the latent space · it pulls every encoded distribution toward the same standard normal, so random samples from N(0, I) land somewhere the decoder has seen.
+The VAE pushes $\mu \to 0$ and $\sigma^2 \to 1$ unless the reconstruction term needs different values.
 
 ---
 
@@ -456,19 +480,24 @@ How to backprop through a sample
 
 ---
 
-# The problem
+# Reparameterization trick · making randomness differentiable
 
-We need $z \sim \mathcal{N}(\mu, \sigma^2)$ for the decoder. But **sampling is not differentiable** — you can't backprop through a random draw.
+**Problem.** We need $z \sim \mathcal{N}(\mu, \sigma^2)$. But `sample_from_gaussian(μ, σ)` is a black box — no gradient through it.
 
-<div class="keypoint">
+**Trick (Kingma & Welling 2013).** Any sample from $\mathcal{N}(\mu, \sigma^2)$ can be written:
+$$z = \mu + \sigma \cdot \epsilon, \qquad \epsilon \sim \mathcal{N}(0, 1)$$
 
-**Kingma &amp; Welling 2013 trick** — move the randomness out of the path we want gradients through.
+The randomness now sits **outside** $\mu, \sigma$. The path from $z$ back to $\mu, \sigma$ is just deterministic add + multiply → gradients flow.
 
-$$z = \mu + \sigma \odot \epsilon, \quad \epsilon \sim \mathcal{N}(0, I)$$
+**Worked numeric.** Encoder outputs $\mu = 2.0$, $\sigma = 0.5$. Sample $\epsilon = 1.2$.
+$z = 2.0 + 0.5 \cdot 1.2 = 2.6$.
+Suppose $\partial \mathcal{L}/\partial z = 4.0$.
 
-Now $z$ is a *deterministic* function of $\mu$ and $\sigma$ (and the noise $\epsilon$, which has no parameters). Gradients flow through $\mu$ and $\sigma$ fine.
+Then:
+- $\partial z/\partial \mu = 1$ → $\partial \mathcal{L}/\partial \mu = 4.0 \cdot 1 = \mathbf{4.0}$
+- $\partial z/\partial \sigma = \epsilon = 1.2$ → $\partial \mathcal{L}/\partial \sigma = 4.0 \cdot 1.2 = \mathbf{4.8}$
 
-</div>
+Optimizer can now update $\mu, \sigma$ as usual.
 
 ---
 
