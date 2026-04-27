@@ -177,26 +177,51 @@ At inference, apply the same merge rules in order → tokenize any new string.
 
 ---
 
-# Worked BPE · "low lower newest widest"
+# BPE · the data-compression analogy
 
-Start at the character level:
+<div class="insight">
 
-```
-"l o w", "l o w e r", "n e w e s t", "w i d e s t"
-```
-
-Count pairs: `(e, s)` appears 2×, `(s, t)` appears 2×, `(l, o)` appears 2×, `(o, w)` appears 2×...
-
-<div class="math-box">
-
-**Merge 1**: `(e, s) → es` · tokens: `l o w`, `l o w e r`, `n e w es t`, `w i d es t`
-**Merge 2**: `(es, t) → est` · tokens: `l o w`, `l o w e r`, `n e w est`, `w i d est`
-**Merge 3**: `(l, o) → lo` · tokens: `lo w`, `lo w e r`, `n e w est`, `w i d est`
-**Merge 4**: `(lo, w) → low` · tokens: `low`, `low e r`, `n e w est`, `w i d est`
+Like a basic file compressor. If "ABCABCABC" appears a lot, define a new symbol $Z = $ "ABC" and rewrite as "ZZZ". BPE does the same for language · find the most common adjacent pair (like `th`), compress it into a single new token, repeat.
 
 </div>
 
-With four merges we've built `low`, `est` as single tokens — exactly the reusable subwords. At inference, apply merges 1-4 in order to any new word.
+---
+
+# Worked BPE · "low lower newest widest"
+
+**Step 0 · split each word into characters with `</w>` end marker.**
+`l o w </w>`, `l o w e r </w>`, `n e w e s t </w>`, `w i d e s t </w>`
+
+**Step 1 · count adjacent pairs.**
+`(l, o): 2`, `(o, w): 2`, `(e, s): 2`, `(s, t): 2`, `(w, e): 1`, `(e, r): 1`, …
+Tie among `(l,o), (o,w), (e,s), (s,t)`. Pick `(e, s)`.
+
+**Merge 1 · `(e, s) → "es"`.**
+`l o w`, `l o w e r`, `n e w es t`, `w i d es t`
+
+**Step 2 · recount.** Now `(es, t): 2` is a *new* pair tied with `(l,o), (o,w)`. Pick `(es, t)`.
+
+**Merge 2 · `(es, t) → "est"`.**
+`l o w`, `l o w e r`, `n e w est`, `w i d est`
+
+**Merge 3 · `(l, o) → "lo"`.** **Merge 4 · `(lo, w) → "low"`.**
+After 4 merges we have learned `low`, `est` as single tokens. At inference, apply merges 1–4 in order to any new word.
+
+---
+
+# Worked BPE · second example
+
+Corpus · `"hug bug rug"`. Initial: `h u g </w>`, `b u g </w>`, `r u g </w>`.
+
+**Count pairs.** $(u, g): 3$, $(g, \langle/w\rangle): 3$, $(h, u), (b, u), (r, u)$ each $1$.
+
+**Merge 1 · $(u, g) \to$ "ug".** New: `h ug </w>`, `b ug </w>`, `r ug </w>`.
+
+**Recount.** $(ug, \langle/w\rangle): 3$, others 1.
+
+**Merge 2 · $(ug, \langle/w\rangle) \to$ "ug</w>".** Final: `h ug</w>`, `b ug</w>`, `r ug</w>`.
+
+The algorithm has discovered the reusable suffix `ug` and the morphologically meaningful unit `ug</w>`.
 
 ---
 
@@ -290,21 +315,33 @@ This makes BERT a strong **encoder** · ideal for tasks where you need a represe
 
 ---
 
-# BERT · encoder-only · masked LM
+# BERT · the cloze-test math, step by step
 
-Objective: predict masked tokens from **both left and right context**.
+1. **Sentence.** $x = [\text{The},\text{cat},\text{sat},\text{on},\text{the},\text{mat}]$.
+2. **Mask token 4.** $x' = [\text{The},\text{cat},\text{sat},[\text{MASK}],\text{the},\text{mat}]$.
+3. **Goal.** Predict the original token from context. We want to maximize $P(x_4 = \text{"on"} \mid x_{\setminus 4})$.
+4. **Loss.** Standard trick · negative log probability:
+$$\text{loss}_4 = -\log P(x_4 \mid x_{\setminus 4})$$
+5. **Total.** Sum over the ~15% masked positions:
+$$\mathcal{L}_\text{MLM} = \sum_{i \in \text{masked}} -\log P(x_i \mid x_{\setminus i})$$
 
-<div class="math-box">
+The model sees the whole sentence (no causal mask) → rich bidirectional context.
 
-**Masked Language Modeling (MLM)** · Devlin et al. 2018.
+---
 
-Randomly mask 15% of input tokens. Ask the model to predict them:
+# Worked numeric · BERT loss for one mask
 
-$$\mathcal{L}_\text{MLM} = -\sum_{i \in \text{masked}} \log P(x_i \mid x_{\setminus i})$$
+Input · `…sat [MASK] the…`. Correct answer · "on".
 
-The model sees the WHOLE sentence (no causal mask) → rich bidirectional context.
+Transformer outputs logits over vocab at the `[MASK]` position:
+- $\text{logit}(\text{on}) = 3.5$, $\text{logit}(\text{above}) = 2.1$, $\text{logit}(\text{under}) = 1.5$, …
 
-</div>
+Softmax · $\exp(3.5) \approx 33.1$, $\exp(2.1) \approx 8.2$, $\exp(1.5) \approx 4.5$, …
+$P(\text{on}) \approx 33.1 / (33.1 + 8.2 + 4.5 + \ldots) \approx \mathbf{0.75}$.
+
+Loss · $-\log 0.75 \approx \mathbf{0.287}$.
+
+If the model were more confident ($P = 0.99$), loss would be $-\log 0.99 \approx 0.01$ — model rewarded for confidence on the right answer.
 
 Great for: classification, NER, retrieval (embeddings).
 Bad for: generation — can't autoregressively extend.
@@ -329,22 +366,47 @@ This mask-then-reconstruct recipe is the same idea as the denoising autoencoder 
 
 ---
 
-# GPT · decoder-only · causal LM
+# GPT · the smartphone-keyboard analogy
 
-Objective: predict the **next token** given all previous tokens.
+<div class="insight">
 
-<div class="math-box">
+Predictive text on your phone. Type *"I am heading to the…"* — it suggests "gym", "store", "movies". Predicts the **next word** from what you've already typed; never sees the future.
 
-**Causal Language Modeling (CLM)** · Radford et al. 2018.
-
-$$\mathcal{L}_\text{CLM} = -\sum_{t=1}^{T} \log P(x_t \mid x_1, \ldots, x_{t-1})$$
-
-Causal attention mask → model can only look backward.
+GPT does this for every word, learning to be an excellent generator.
 
 </div>
 
+---
+
+# GPT · CLM math, step by step
+
+Sentence · $x = [\text{The}, \text{cat}, \text{sat}]$. Break into prediction problems:
+1. Given `<s>`, predict "The". Loss · $-\log P(\text{The})$.
+2. Given "The", predict "cat". Loss · $-\log P(\text{cat} \mid \text{The})$.
+3. Given "The cat", predict "sat". Loss · $-\log P(\text{sat} \mid \text{The}, \text{cat})$.
+
+Total · sum over all positions:
+$$\mathcal{L}_\text{CLM} = \sum_{t=1}^{T} -\log P(x_t \mid x_{<t})$$
+
+Causal attention mask · model can only look backward.
+
+---
+
+# Worked numeric · GPT loss at one step
+
+Context · "The cat …". Correct next word · "sat".
+
+Logits over vocab · $\text{logit}(\text{sat}) = 4.0$, $\text{logit}(\text{ran}) = 2.5$, $\text{logit}(\text{jumped}) = 2.0$, …
+
+Softmax · $\exp(4.0) \approx 54.6$, $\exp(2.5) \approx 12.2$, $\exp(2.0) \approx 7.4$, …
+$P(\text{sat} \mid \text{The cat}) \approx 54.6 / (54.6 + 12.2 + 7.4 + \ldots) \approx \mathbf{0.78}$.
+
+Loss at $t = 3$ · $-\log 0.78 \approx \mathbf{0.248}$.
+
+Total sentence loss · sum these up across every position. A 2048-token window gives 2048 little training problems for free, every step.
+
 Great for: generation, chat, code, anything where you produce text one token at a time.
-Bad for: bidirectional understanding tasks (but at scale, GPT-3+ closed this gap anyway).
+Bad for: bidirectional understanding (but at scale, GPT-3+ closed this gap).
 
 ---
 
@@ -493,28 +555,37 @@ Phi-3 (2024) · trained on **3T** "textbook-quality" tokens (heavily filtered + 
 
 ---
 
-# Compute economics · ballpark
+# Compute economics · where the 6 comes from
 
-One training run of a 70B model:
+The famous LLM rule of thumb: **training FLOPs $\approx 6 \cdot N \cdot D$** where $N$ = parameters, $D$ = training tokens.
 
-<div class="math-box">
+**Why 6?** Per token:
+1. **Forward pass.** Most compute is the FFN's two big matmuls. ≈ $\mathbf{2N}$ FLOPs per token.
+2. **Backward pass.** Standard rule · ~2× the forward cost. ≈ $\mathbf{4N}$ FLOPs per token.
+3. **Total per token** · $2N + 4N = \mathbf{6N}$.
 
-- Data · 1.4T tokens (Chinchilla optimal)
-- FLOPs · 6 · N · D ≈ 6 · 70B · 1.4T ≈ **5.9 × 10²³**
-- Time · ~25 days on 4k A100 GPUs (at ~150 TFLOPS / GPU utilization)
+Multiply by all $D$ tokens in the dataset:
+$$\text{FLOPs} \approx 6 \cdot N \cdot D$$
+
+---
+
+# Worked numeric · 70B model training cost
+
+One training run of a 70B-parameter model on Chinchilla-optimal $D = 1.4$T tokens:
+- FLOPs $\approx 6 \cdot (7 \cdot 10^{10}) \cdot (1.4 \cdot 10^{12}) \approx 5.9 \times 10^{23}$
+- Time · ~25 days on 4k A100 GPUs (at ~150 TFLOPS / GPU effective utilization)
 - Cost · ~$5M at commercial GPU-hour rates
 
-</div>
+**Smaller check · Llama 2 7B.** $N = 7 \times 10^9$, $D = 2 \times 10^{12}$:
+$\text{FLOPs} \approx 6 \cdot 7 \cdot 10^9 \cdot 2 \cdot 10^{12} = 8.4 \times 10^{22}$.
 
-Llama-3 70B · reportedly ~$80M including experiments and false starts. GPT-4 class · estimated $100M+ per training run.
+Llama 3 70B · reportedly ~$80M including experiments. GPT-4 class · ~$100M+ per training run.
 
 <div class="realworld">
 
-This is why only a handful of labs train frontier models. 10 years ago a deep net cost tens of dollars; today it costs a house.
+10 years ago a deep net cost tens of dollars to train. Today, frontier model training costs a house.
 
 </div>
-
-This is the "foundation" in foundation model.
 
 ---
 
