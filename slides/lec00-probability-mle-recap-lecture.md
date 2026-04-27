@@ -386,21 +386,36 @@ Entropy peaks for uniform distributions (most uncertain) and is 0 for determinis
 
 ---
 
-# KL divergence and cross-entropy
+# KL · the wrong-dictionary analogy
 
-<div class="math-box">
+<div class="insight">
 
-$$\text{KL}(p \| q) = \sum_y p(y) \log \frac{p(y)}{q(y)} = H(p, q) - H(p)$$
+You must send messages in English, but your only Morse codebook is for **French**. French uses 'q' and 'z' more often, so it has short codes for those and longer codes for 'e'. Encoding English with the French book is wasteful.
 
-where $H(p, q) = -\sum p(y) \log q(y)$ is **cross-entropy**.
+- **Entropy $H(p)$** = length using the *correct* (English) codebook.
+- **Cross-entropy $H(p, q)$** = length using the *wrong* (French) codebook.
+- **KL divergence** = the *extra* length — your penalty for the wrong book.
 
 </div>
 
-In words ·
-- **Cross-entropy $H(p, q)$** · expected bits to encode samples from $p$ using a code optimized for $q$.
-- **KL $\text{KL}(p \| q)$** · the *extra* bits you waste because $q \ne p$. Always $\ge 0$, zero iff $p = q$.
+---
 
-The classifier loss · cross-entropy of the one-hot truth $p$ against the model's prediction $q$. Same idea, dressed up.
+# KL · derive from scratch
+
+$\text{KL}(p\,\|\,q) = \sum_y p(y)\log\dfrac{p(y)}{q(y)}$
+
+Use $\log(a/b) = \log a - \log b$:
+$= \sum_y p(y)\log p(y) - \sum_y p(y)\log q(y)$
+$= -H(p) + H(p, q)$
+
+So: $\text{KL}(p \| q) = H(p, q) - H(p)$. KL = "extra bits beyond the optimal."
+
+**Worked numeric.** True distribution $p = [0.1, 0.6, 0.3]$, model $q = [0.2, 0.5, 0.3]$.
+- $H(p, q) = -(0.1\log 0.2 + 0.6\log 0.5 + 0.3\log 0.3) \approx 0.935$.
+- $H(p) = -(0.1\log 0.1 + 0.6\log 0.6 + 0.3\log 0.3) \approx 0.900$.
+- $\text{KL} = 0.935 - 0.900 = \mathbf{0.035}$ — the cost of model inaccuracy.
+
+Minimizing cross-entropy = minimizing KL (since $H(p)$ is constant in our parameters).
 
 ---
 
@@ -466,23 +481,36 @@ Why L2 regularization is also MLE-flavored
 
 ---
 
-# MAP · maximum a posteriori
+# MAP · the humble-scientist analogy
 
-Add a **prior** $p(\theta)$ over parameters · use Bayes' rule:
+<div class="insight">
 
-<div class="math-box">
+**MLE scientist** flips a coin 3 times, gets 3 heads, declares: *"Probability of heads is 100%!"*
 
-$$p(\theta \mid \mathcal{D}) \propto p(\mathcal{D} \mid \theta) \, p(\theta)$$
-
-$\hat\theta_\text{MAP} = \arg\max_\theta \log p(\mathcal{D} \mid \theta) + \log p(\theta)$
+**MAP scientist** is humbler. They have a **prior belief** ("most coins are fair"). 3 heads is evidence for high $p$, but the prior pulls them away from 100% — they say "maybe 80% or 90%". For neural nets, the prior is usually *"weights should be small."*
 
 </div>
 
-The first term is the log-likelihood · the second term is a **regularizer** that pulls $\theta$ toward whatever the prior favors.
+---
 
-**Example** · prior $p(\theta) = \mathcal{N}(0, \sigma_p^2 I)$ · log-prior $= -\|\theta\|^2 / (2 \sigma_p^2) + \text{const}$.
+# MAP · L2 regularization derived
 
-This is exactly **L2 regularization (weight decay)**! L2 = MAP under a Gaussian prior on weights. We'll see this again in L6.
+**Bayes' rule** for parameters:
+$p(\theta \mid \mathcal{D}) \propto p(\mathcal{D} \mid \theta)\,p(\theta)$
+
+Maximize log-posterior:
+$\hat\theta_\text{MAP} = \arg\max_\theta \bigl[\log p(\mathcal{D} \mid \theta) + \log p(\theta)\bigr]$
+
+**Pick prior** $p(\theta) = \mathcal{N}(0, \sigma_p^2 I)$. Take logs:
+$\log p(\theta) = \text{const} - \dfrac{1}{2\sigma_p^2}\|\theta\|^2$
+
+Plug in and minimize negative log-posterior:
+$$\hat\theta_\text{MAP} = \arg\min_\theta \bigl[\underbrace{-\log p(\mathcal{D} \mid \theta)}_{\text{NLL loss}} + \underbrace{\lambda\|\theta\|^2}_{\text{L2 penalty}}\bigr],\quad \lambda = \dfrac{1}{2\sigma_p^2}$$
+
+**This is exactly L2 regularization (weight decay).** L2 = MAP under a Gaussian prior on weights.
+
+**Worked numeric.** NLL = 0.5, $\theta = [3, -4]$, $\|\theta\|^2 = 25$, $\lambda = 0.01$:
+$\text{Total} = 0.5 + 0.01 \cdot 25 = \mathbf{0.75}$. Optimizer balances data fit vs. small weights.
 
 ---
 
@@ -670,23 +698,37 @@ Given a dataset, we want $\mathbf{w}, b$ that **maximize the likelihood** of the
 
 ---
 
-# MSE · pop out from MLE
+# MSE · the archer's score analogy
 
-Take the log-likelihood for one datapoint and simplify:
+<div class="insight">
 
-<div class="math-box">
+An archer shoots at a bullseye. Perfect shot = the model's prediction $\hat y$. Real shots have random error around it (Gaussian noise).
 
-$$\log p(y_i \mid \mathbf{x}_i) = -\frac{1}{2} \log(2\pi \sigma^2) - \frac{(y_i - \mathbf{w}^\top \mathbf{x}_i)^2}{2\sigma^2}$$
+Score the archer's skill (the parameters) · we look at all their shots and ask "are these likely?". Maximizing the probability of all shots = **minimizing the average squared distance from the centre.**
 
-Sum over $N$, drop constants in $\theta$ and $\sigma$:
-
-$$\log \mathcal{L} = - \frac{1}{2\sigma^2} \sum_{i=1}^N (y_i - \mathbf{w}^\top \mathbf{x}_i)^2 + \text{const}$$
+That's why MLE with a Gaussian assumption *is* MSE.
 
 </div>
 
-**Maximizing this = minimizing $\sum (y_i - \hat y_i)^2 = $ MSE.**
+---
 
-So MSE for regression isn't an arbitrary choice · it's MLE under Gaussian noise.
+# MSE · derive step by step
+
+**1. Assumption.** $y_i \sim \mathcal{N}(\hat y_i, \sigma^2)$ with $\hat y_i = \mathbf{w}^\top\mathbf{x}_i$:
+$p(y_i \mid \mathbf{x}_i, \mathbf{w}) = \dfrac{1}{\sqrt{2\pi\sigma^2}}\exp\!\left(-\dfrac{(y_i - \hat y_i)^2}{2\sigma^2}\right)$
+
+**2. Likelihood** of a dataset (IID): $\mathcal{L}(\mathbf{w}) = \prod_i p(y_i \mid \mathbf{x}_i, \mathbf{w})$.
+
+**3. Take logs** to turn product → sum:
+$\log\mathcal{L}(\mathbf{w}) = \sum_i \log p(y_i \mid \mathbf{x}_i, \mathbf{w})$
+
+**4. Simplify** using $\log(AB) = \log A + \log B$ and $\log e^x = x$:
+$\log\mathcal{L}(\mathbf{w}) = N\log\dfrac{1}{\sqrt{2\pi\sigma^2}} - \dfrac{1}{2\sigma^2}\sum_i (y_i - \hat y_i)^2$
+
+**5. Maximize.** First term is constant in $\mathbf{w}$; the rest is $-C \cdot \sum (y_i - \hat y_i)^2$ for $C > 0$.
+$$\arg\max_\mathbf{w} \log\mathcal{L} = \arg\min_\mathbf{w}\,\sum_i (y_i - \hat y_i)^2$$
+
+**MSE for regression isn't an arbitrary choice — it's MLE under Gaussian noise.**
 
 ---
 
@@ -704,23 +746,35 @@ The sigmoid squashes the linear output to $[0, 1]$ · interpretable as a probabi
 
 ---
 
-# Cross-entropy · pop out from MLE
+# Cross-entropy · the biased-coin analogy
 
-Take log:
+<div class="insight">
 
-<div class="math-box">
+Given a coin, find its bias $p$. Flip 10 times → H, T, T, H, … (your data). To find best $p$, write down probability of seeing **that exact sequence**:
+$P = p^{\#H} (1-p)^{\#T}$
 
-$$\log p(y_i \mid \mathbf{x}_i) = y_i \log \hat p_i + (1 - y_i) \log (1 - \hat p_i)$$
+Maximize → $p = \#H / (\#H + \#T)$. **This is MLE.**
 
-where $\hat p_i = \sigma(\mathbf{w}^\top \mathbf{x}_i)$.
-
-Sum over $N$ and **negate** to get NLL:
-
-$$-\log \mathcal{L} = -\sum_{i=1}^N y_i \log \hat p_i + (1 - y_i) \log(1 - \hat p_i)$$
+For classification, our network outputs a different $p$ for every input $x$. Cross-entropy is just the log of this likelihood formula, summed and negated.
 
 </div>
 
-This is **binary cross-entropy** · the standard loss for binary classification. It came directly from "assume Bernoulli, take MLE."
+---
+
+# Cross-entropy · derive step by step
+
+**1. Assumption.** $y_i \in \{0, 1\}$ Bernoulli with $\hat p_i = \sigma(\mathbf{w}^\top\mathbf{x}_i)$. Compact form:
+$p(y_i \mid \mathbf{x}_i) = \hat p_i^{y_i}\,(1 - \hat p_i)^{1 - y_i}$
+- If $y_i = 1$ · $\hat p_i^1 \cdot (1-\hat p_i)^0 = \hat p_i$ ✓
+- If $y_i = 0$ · $\hat p_i^0 \cdot (1-\hat p_i)^1 = 1 - \hat p_i$ ✓
+
+**2. Log** using $\log(A^x) = x\log A$ and $\log(AB) = \log A + \log B$:
+$\log p(y_i \mid \mathbf{x}_i) = y_i \log\hat p_i + (1 - y_i)\log(1 - \hat p_i)$
+
+**3. Sum + negate** to get NLL:
+$$\text{Loss}(\mathbf{w}) = -\sum_i \bigl[y_i \log\hat p_i + (1 - y_i)\log(1 - \hat p_i)\bigr]$$
+
+This is **binary cross-entropy** — directly from "assume Bernoulli, take MLE."
 
 ---
 
