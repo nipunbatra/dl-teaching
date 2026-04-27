@@ -84,22 +84,51 @@ The result · a dynamic, **spatial** link between text and pixels. The "cat" wor
 
 ---
 
-# Text conditioning in Stable Diffusion
+# Cross-attention · how an image listens to text
+
+<div class="insight">
+
+**Analogy · team of painters.** Each painter handles a small patch. Before painting they ask: *"which word in the prompt is most relevant to **my patch**?"* The painter near the top pays attention to "hat"; the furry-patch painter pays attention to "cat".
+
+</div>
+
+The mechanism — for each image region:
+1. **Get word vectors** from a frozen text encoder (CLIP) → keys $K$ and values $V$.
+2. **Get region "questions"** from the U-Net's intermediate features → queries $Q$.
+3. **Score relevance** · $\text{sim}(Q, K)$, then softmax.
+4. **Final instruction** · weighted sum of $V$ → used to denoise that region.
 
 ```python
-# 1. Encode the prompt
 text_emb = clip_text_encoder("a cat astronaut")  # [1, 77, 768]
 
-# 2. Inside the U-Net, every attention block has cross-attention to text_emb
 class CrossAttention(nn.Module):
     def forward(self, spatial_features, text_emb):
-        Q = self.q_proj(spatial_features)        # from image features
-        K = self.k_proj(text_emb)                # from text embedding
+        Q = self.q_proj(spatial_features)
+        K = self.k_proj(text_emb)
         V = self.v_proj(text_emb)
         return softmax(Q @ K.T / sqrt(d)) @ V
 ```
 
-At each diffusion step, every spatial position can **attend to** any text token — the model learns to line up image content with prompt words.
+---
+
+# Cross-attention · worked numeric
+
+Prompt: "a red square". Two word vectors: $V_\text{red} = [1, 0]$, $V_\text{square} = [0, 1]$.
+
+Top-left pixel's current state: $Q_\text{TL} = [0.1, 0.9]$ (more square-like than red-like).
+
+**Step 1 · scores.**
+- $\text{sim}(Q, V_\text{red}) = 0.1 \cdot 1 + 0.9 \cdot 0 = 0.1$
+- $\text{sim}(Q, V_\text{square}) = 0.1 \cdot 0 + 0.9 \cdot 1 = 0.9$
+
+"Square" is much more relevant.
+
+**Step 2 · softmax → weights.** Suppose $w_\text{red} = 0.3$, $w_\text{square} = 0.7$.
+
+**Step 3 · final instruction.**
+$0.3 \cdot [1, 0] + 0.7 \cdot [0, 1] = [\mathbf{0.3, 0.7}]$
+
+Used to update this pixel — **slightly more red, much more square**.
 
 ---
 
@@ -133,21 +162,34 @@ The trick that makes generation feel "on-prompt"
 
 ---
 
-# CFG · the extrapolation trick
+# CFG · the two-compass analogy
 
-**Intuition** · at each denoising step, the unconditional prediction is "what *any* image wants to do right now." The conditional prediction is "what a *prompt-matching* image wants to do." The **difference vector** points *toward* the prompt.
+<div class="insight">
 
-<div class="math-box">
+You're lost in a forest with two compasses.
+1. **Generic compass** · always points to "average image" (unconditional prediction $\epsilon_\emptyset$).
+2. **Special compass** · points toward "cabin in the woods" (prompt-conditional $\epsilon_c$).
 
-$$\epsilon_\text{CFG} = \epsilon_\theta(x_t, \emptyset) + w \cdot \big(\epsilon_\theta(x_t, c) - \epsilon_\theta(x_t, \emptyset)\big)$$
-
-- $\epsilon_\theta(x_t, \emptyset)$ · unconditional noise prediction (null prompt).
-- $\epsilon_\theta(x_t, c)$ · conditional, given prompt $c$.
-- $w$ · the guidance scale. Default ~7.
-
-Take that difference and **walk $w\times$ as far in that direction**. $w = 1$ gives plain conditional; $w > 1$ over-shoots to amplify prompt adherence; $w = 0$ ignores the prompt.
+The **difference vector** $\epsilon_c - \epsilon_\emptyset$ is the **pure influence of the prompt**. CFG · start at the generic point and walk $w$ times that vector → over-shoot the conditional prediction in the prompt direction.
 
 </div>
+
+---
+
+# CFG · derive the formula step by step
+
+1. **Generic direction.** $\epsilon_\text{uncond} = \epsilon_\theta(x_t, \emptyset)$ (null prompt).
+2. **Prompt direction.** $\epsilon_\text{cond} = \epsilon_\theta(x_t, c)$.
+3. **Pure prompt influence.**
+$\Delta = \epsilon_\text{cond} - \epsilon_\text{uncond}$
+4. **Extrapolate** by guidance scale $w$:
+$$\epsilon_\text{CFG} = \epsilon_\text{uncond} + w \cdot \Delta = \epsilon_\theta(x_t, \emptyset) + w\bigl(\epsilon_\theta(x_t, c) - \epsilon_\theta(x_t, \emptyset)\bigr)$$
+
+- $w = 0$ → pure unconditional (ignore prompt).
+- $w = 1$ → exactly the conditional prediction.
+- $w > 1$ → **amplify** prompt adherence by overshooting.
+
+Default $w = 7$ in Stable Diffusion.
 
 ---
 
@@ -259,19 +301,27 @@ Result · 48× fewer dimensions, same perceptual quality, ~10× faster sampling.
 
 ---
 
-# The problem with pixel-space diffusion
+# Latent diffusion · the zip-the-file analogy
 
-512×512×3 = **786,432 dimensions** per image. Running a 1B-param U-Net for 50 steps at that resolution is expensive — even on a single GPU this takes tens of seconds to minutes.
+<div class="insight">
 
-<div class="keypoint">
+A 512×512 photo of blue sky has 262,144 pixels — most are nearly identical shades of blue. Asking a network to predict "this blue pixel is followed by a blue pixel" 1000× is wasteful.
 
-**Rombach et al. 2022 idea** — don't diffuse in pixel space. Use a **VAE** to compress images to a small latent space first, then diffuse there.
+**Like emailing a 100MB doc.** Instead of attaching it raw, you zip to 1MB. The zip captures the important info in less space. Latent diffusion does the same · zip the image with a VAE, run diffusion in the small zipped space, then unzip at the end.
 
 </div>
 
-512×512×3 image → 64×64×4 latent → **48× fewer dimensions.**
+---
 
-Diffuse in latent space; decode once at the end.
+# The dimension math
+
+512×512 RGB = $512 \cdot 512 \cdot 3 = \mathbf{786{,}432}$ dimensions.
+
+Stable Diffusion's VAE compresses to 64×64×4 = $64 \cdot 64 \cdot 4 = \mathbf{16{,}384}$ dimensions.
+
+**Saving · $786{,}432 / 16{,}384 = \mathbf{48\times}$ fewer dimensions** for the expensive U-Net to process.
+
+The diffusion loop runs in latent space; the VAE encoder runs once at the start, decoder once at the end. Single biggest reason Stable Diffusion is shippable on consumer GPUs.
 
 ---
 
@@ -390,21 +440,28 @@ In 2026, DDIM (and its successor DPM-Solver++) is the default sampler in every d
 
 ---
 
-# DiT · replace U-Net with Transformer
+# DiT · the global town-hall analogy
 
-<div class="paper">
+<div class="insight">
 
-Peebles &amp; Xie 2023 · *"Scalable Diffusion Models with Transformers"*
+**Convolution (U-Net):** you only talk to your neighbours. Messages travel via "telephone" through many layers to reach a far-away pixel.
+
+**Attention (Transformer):** every pixel is in a global video call. The cat-ear pixel can directly ask the cat-tail pixel "are you also part of the cat?" Better long-range understanding.
 
 </div>
 
-Same idea as ViT · patchify the latent, process with a pure Transformer. Advantages:
+---
 
-- **Better scaling** — Transformers eat more compute gracefully.
-- **Simpler architecture** — no hand-designed U-Net ladder.
-- **Shared toolchain** — the LLM ecosystem's optimizations (FlashAttention, tensor parallelism) carry over.
+# DiT · how it works
 
-2024+ · DiT is the backbone of **Sora**, **Stable Diffusion 3**, and most new high-quality image/video models.
+Peebles & Xie 2023 · replace the U-Net with a Transformer.
+
+1. **Patchify** the (small, latent) noisy image into a grid of patches (like ViT).
+2. **Treat patches as tokens** · flatten each → vector. Image becomes a *sequence*.
+3. **Transformer blocks** · self-attention lets every patch look at every other.
+4. **Re-assemble** → noise prediction.
+
+**Why** · Transformers scale incredibly well. More data + more compute = better, indefinitely. Inheriting LLM-ecosystem optimizations (FlashAttention, tensor parallelism). Backbone of **Sora**, **Stable Diffusion 3**, and most 2024+ frontier image/video models.
 
 ---
 
@@ -509,23 +566,30 @@ The diffusion paradigm scaled to every signal that can be noised. 2026 is the go
 
 ---
 
-# Consistency models · one-step diffusion
+# Consistency models · winding road vs teleporter
 
-Song et al. 2023 · train a network $f_\theta(x_t, t) \to x_0$ such that the prediction is **consistent** along any trajectory from noise to data.
+<div class="insight">
 
-<div class="math-box">
+Normal DDIM/DDPM · walk down a winding mountain path from foggy peak (noise) to clear valley (image). 50+ steps along the path.
 
-Consistency property · $f_\theta(x_{t_1}, t_1) = f_\theta(x_{t_2}, t_2)$ for any $t_1, t_2$ on the same trajectory.
-
-At inference · one forward pass from $x_T \to x_0$. No iteration.
+**Consistency model** = a teleporter. Stand at any point on the path, press a button, instantly arrive at the valley. The teleporter is *consistent* — no matter where on the path you stand, it always takes you to the same final $x_0$.
 
 </div>
 
-<div class="realworld">
+---
 
-SDXL-Turbo (2023) · 1-step generation matching 50-step DDIM quality at real-time speeds. Latent Consistency Model (LCM) adapters · drop-in for Stable Diffusion. GAN-speed with diffusion-quality, finally.
+# Consistency models · the property
 
-</div>
+Train $f_\theta(x_t, t) \to x_0$ to satisfy:
+$$f_\theta(x_{t_1}, t_1) = f_\theta(x_{t_2}, t_2) \approx x_0$$
+for any two points on the same trajectory.
+
+**Inference:**
+1. Sample $x_T \sim \mathcal{N}(0, I)$.
+2. Run network **once**: $\hat x_0 = f_\theta(x_T, T)$.
+3. Done.
+
+SDXL-Turbo (2023) · 1-step generation at near-50-step DDIM quality. LCM adapters · drop-in for Stable Diffusion. **GAN-speed with diffusion-quality, finally.**
 
 ---
 
