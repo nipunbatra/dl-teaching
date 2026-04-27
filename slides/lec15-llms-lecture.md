@@ -160,26 +160,28 @@ Chinchilla optimizes *training compute*. But **inference** is where models earn 
 
 ---
 
-# Compute budget · a worked example
+# Compute budget · derivation from two rules
 
-<div class="math-box">
+Two rules from Chinchilla:
+1. Budget · $C = 6\,N\,D$.
+2. Recipe · $D = 20\,N$.
 
-Suppose you have **10²⁴ FLOPs** of training compute to spend. Chinchilla says:
+Substitute (2) into (1) to solve for $N$ given a budget $C$:
+$$C = 6\,N \cdot (20\,N) = 120\,N^2 \;\Longrightarrow\; N = \sqrt{\dfrac{C}{120}}$$
 
-- $N^* = G \cdot C^{0.5}$ · approx optimal params
-- $D^* = 20 N^*$
+Then $D = 20\,N$.
 
-For $C = 10^{24}$: $N^* \approx 70\text{B}$ params, $D^* \approx 1.4\text{T}$ tokens.
+---
 
-</div>
+# Worked example · spending $C = 1.2 \times 10^{24}$ FLOPs
 
-Change $C$ by 10× · both $N^*$ and $D^*$ grow by ~√10 ≈ 3.16×. Scale up ≠ just bigger model; bigger model + more data together.
+1. **Solve for N.**
+$N^2 = (1.2 \times 10^{24}) / 120 = 10^{22}$
+$N = 10^{11}$ → **100 billion parameters**.
+2. **Solve for D.**
+$D = 20 \cdot 10^{11} = 2 \times 10^{12}$ → **2 trillion tokens**.
 
-<div class="keypoint">
-
-This predicts · 10× more compute → ~3× bigger model trained on ~3× more tokens. Not 10× bigger. This is why GPT-4 (~1.8T) isn't 10× bigger than GPT-3 (175B).
-
-</div>
+For 10× more compute · $N$ grows by $\sqrt{10} \approx 3.16$, $D$ grows by $\sqrt{10}$ too. **Both scale as $\sqrt{C}$.** This is why GPT-4 (~1.8T) isn't 10× GPT-3 (175B) — Chinchilla's recipe says spread the budget across both axes.
 
 ---
 
@@ -267,26 +269,61 @@ What unlocked 1M? · **RoPE extrapolation**, **FlashAttention** (O(N) memory), *
 
 ---
 
-# RoPE · rotate Q and K by position
+# RoPE · the spinning-pointer intuition
 
-<div class="math-box">
+<div class="insight">
 
-**Rotary Position Embedding** (Su et al. 2021)
+Imagine $Q$ and $K$ as pointers on a clock face. Instead of *adding* a position vector, **rotate** the pointer by an angle that depends on its position.
+- Token at position $m = 1$ → rotate by 10°.
+- Token at position $n = 3$ → rotate by 30°.
 
-Instead of adding a PE, **rotate** the Q and K vectors by an angle proportional to position:
+Attention score = dot product of $Q$ and $K$ → depends on the **angle between them** = $30° - 10° = 20°$, which is the relative offset $n - m = 2$.
 
-$$q_m = R_{\Theta, m}\, W_q\, x_m, \quad k_n = R_{\Theta, n}\, W_k\, x_n$$
-
-$R_{\Theta, m}$ is a block-diagonal rotation matrix. The dot product $q_m^\top k_n$ then depends only on the **relative** position $m - n$.
+The model learns about **relative positions directly**.
 
 </div>
 
-Why this wins:
-- **Relative** positional info baked into attention directly.
-- **Extrapolates** — with NTK-aware scaling, trained on 4k, works at 32k+.
-- **No extra params** — RoPE is entirely deterministic.
+---
 
-Used in Llama 1/2/3, Mistral, Mixtral, PaLM, GPT-NeoX, most 2023+ open LLMs.
+# RoPE · derivation in 2D
+
+For position $m$, define angle $\theta_m = m \cdot \Theta$ for some base $\Theta$. Rotation matrix:
+$$R_\theta = \begin{pmatrix} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta \end{pmatrix}$$
+
+Apply to query (at position $m$) and key (at position $n$):
+$q'_m = R_{\theta_m} q,\quad k'_n = R_{\theta_n} k$
+
+Attention score:
+$(q'_m)^\top k'_n = q^\top R_{\theta_m}^\top R_{\theta_n}\,k$
+
+Two properties:
+- $R_\theta^\top = R_{-\theta}$
+- $R_{-\theta_m} R_{\theta_n} = R_{\theta_n - \theta_m}$
+
+Substitute:
+$(q'_m)^\top k'_n = q^\top R_{(n-m)\Theta}\,k$
+
+**The score depends only on the relative position $n - m$, not on absolutes.** In high-dim, group dimensions into pairs; rotate each pair with a different frequency $\Theta_i$. That's "block-diagonal."
+
+---
+
+# Worked numeric · RoPE in 2D
+
+$\Theta = 1$ rad. $q = [1, 2]$ at $m = 2$, $k = [3, 0]$ at $n = 3$.
+
+**Rotation matrices.** $\theta_m = 2$, $\theta_n = 3$.
+$R_2 \approx \begin{pmatrix} -0.42 & -0.91 \\ 0.91 & -0.42 \end{pmatrix},\quad R_3 \approx \begin{pmatrix} -0.99 & -0.14 \\ 0.14 & -0.99 \end{pmatrix}$
+
+**Rotate.**
+$q'_m = R_2 q \approx [-2.24,\ 0.07]^\top$
+$k'_n = R_3 k \approx [-2.97,\ 0.42]^\top$
+
+**Dot product.** $(-2.24)(-2.97) + (0.07)(0.42) \approx 6.65 + 0.03 = \mathbf{6.68}$.
+
+**Verify** with the relative-position form ($n - m = 1$): $q^\top R_1 k$ where $R_1 \approx \begin{pmatrix} 0.54 & -0.84 \\ 0.84 & 0.54 \end{pmatrix}$:
+$R_1 k = [1.62, 2.52]$, $q \cdot [1.62, 2.52] = 1.62 + 5.04 = \mathbf{6.66}$ ✓ (rounding only).
+
+Used in Llama 1/2/3, Mistral, PaLM, GPT-NeoX. **No extra params**, **extrapolates** beyond training length.
 
 ---
 
@@ -300,19 +337,33 @@ MQA, GQA, and the KV-cache
 
 ---
 
-# The KV-cache problem
+# KV-cache · derivation, piece by piece
 
-During autoregressive decoding, at step $t$ we need to attend to **all previous tokens** $k_{1..t-1}, v_{1..t-1}$.
+During autoregressive decoding we attend to **all previous tokens**. Recomputing $K, V$ each step is wasteful → **cache** them.
 
-We don't recompute them — we **cache** them:
+Build the size, layer by layer:
 
-$$\text{KV-cache memory} = 2 \cdot L \cdot H \cdot d_h \cdot T \cdot B \cdot \text{bytes}$$
+1. **One token, one head, one layer** · store $K$ and $V$ vectors, each of size $d_h$.
+$\text{size} = 2\,d_h$ numbers
+2. **One token, one layer, all heads.** Multiply by $H$:
+$\text{size} = 2\,H\,d_h$
+3. **One token, all layers.** Multiply by $L$:
+$\text{size} = 2\,L\,H\,d_h$
+4. **All $T$ tokens.** Multiply by $T$:
+$\text{size} = 2\,L\,H\,d_h\,T$ numbers
+5. **In bytes.** Multiply by 2 (for fp16):
+$$\text{KV-cache memory} = 2 \cdot L \cdot H \cdot d_h \cdot T \cdot B \cdot 2 \text{ bytes}$$
 
-For a 70B Llama with $L = 80, H = 64, d_h = 128$, batch $B = 1$, context $T = 32k$:
+---
 
-$$= 2 \cdot 80 \cdot 64 \cdot 128 \cdot 32000 \cdot 1 \cdot 2 \approx 84 \text{ GB}$$
+# Worked numeric · KV-cache for Llama 70B
 
-Already more than the weights themselves. This is **the** inference-time memory pressure.
+Setup: $L = 80,\ H = 64,\ d_h = 128,\ T = 32{,}000,\ B = 1$, fp16 (2 bytes).
+
+$$\text{Cache} = 2 \cdot 80 \cdot 64 \cdot 128 \cdot 32{,}000 \cdot 1 \cdot 2$$
+$$= 32{,}000 \cdot 80 \cdot 64 \cdot 128 \cdot 4 \approx 8.4 \times 10^{10} \text{ bytes} = \mathbf{84\ \text{GB}}$$
+
+**Punchline.** The 70B weights (fp16) take $70 \cdot 10^9 \cdot 2 = 140$ GB. The KV-cache for **one** 32k-context sequence adds another **84 GB** — more than half the model size again. This is the biggest bottleneck in long-context LLM serving. Drives GQA (next), FlashAttention (L23), and KV-cache compression.
 
 ---
 
@@ -322,20 +373,39 @@ Already more than the weights themselves. This is **the** inference-time memory 
 
 ---
 
-# Why GQA is the modern default
+# GQA · the shared-notebook analogy
 
-GQA interpolates between MHA (all heads separate) and MQA (all heads share one K/V).
+<div class="insight">
 
-- **Quality loss** from MQA: measurable; from GQA with 8 groups: ~negligible.
-- **KV-cache**: 4–8× smaller than MHA.
-- **Inference speed**: nearly linear in the KV-cache savings.
+The KV-cache is the model's **notebook**.
+- **MHA** · 64 students each keep a private 100-page notebook → 6400 pages.
+- **GQA** · 8 study groups of 8 students share one notebook each → 800 pages. Huge saving, almost no quality drop.
+- **MQA** · all 64 share one notebook → 100 pages. Maximum saving, but students may overwrite each other (quality drop).
+
+</div>
+
+---
+
+# How GQA shrinks the KV-cache
+
+Refine the formula · let $H_q$ = query heads, $H_{kv}$ = key/value heads.
+$$\text{Cache} = T \cdot L \cdot H_{kv} \cdot d_h \cdot 2 \cdot 2$$
+
+Now compare for Llama 2 70B ($T = 32k$, $L = 80$, $d_h = 128$):
+
+| Variant | $H_{kv}$ | Cache size |
+|---------|----------|------------|
+| **MHA** (Llama 1) | 64 | $32k \cdot 80 \cdot 64 \cdot 128 \cdot 4 \approx \mathbf{84\ \text{GB}}$ |
+| **GQA** (Llama 2, 8 groups) | 8 | $32k \cdot 80 \cdot 8 \cdot 128 \cdot 4 \approx \mathbf{10.5\ \text{GB}}$ |
+| **MQA** | 1 | $\approx \mathbf{1.3\ \text{GB}}$ (quality drops) |
+
+**GQA reduces KV-cache by $H_q / H_{kv} = 64/8 = 8\times$** with negligible quality loss — the modern default.
 
 ```python
 # In Llama 2 70B:
-n_heads  = 64     # query heads
-n_kv     = 8      # GQA groups
-d_head   = 128
-# Each K and V head is shared across 8 Q heads.
+n_heads = 64       # query heads
+n_kv    = 8        # GQA groups
+d_head  = 128
 ```
 
 ---
@@ -434,6 +504,20 @@ Almost no one trains from scratch. **Everyone fine-tunes** open-weight models (L
 # Emergent abilities
 
 When more params unlock new behaviors
+
+---
+
+# Why "emergence" is surprising
+
+**Null hypothesis · smooth scaling.** As you make a model bigger, training loss decreases smoothly. A 10B model is a bit better than a 1B; a 100B model is a bit better than a 10B. Intuitive.
+
+The surprise · for some specific complex tasks, this *doesn't* happen — performance is near-random until a threshold, then takes off.
+
+**Why?** A multi-step task is a product of step accuracies:
+- Small model · 50% per step. 3-step accuracy $= 0.5^3 = 12.5\%$ · barely above random.
+- Larger model · 90% per step. 3-step accuracy $= 0.9^3 = 72.9\%$ · competent!
+
+**Smooth improvement in per-step accuracy** translates to **what looks like a discontinuous jump** in end-to-end task performance.
 
 ---
 
