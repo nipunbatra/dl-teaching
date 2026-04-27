@@ -89,21 +89,49 @@ The wager · with enough data, a model that has **fewer prior assumptions** but 
 
 ---
 
-# From pixels to tokens · the recipe
+# How can a Transformer "read" an image?
 
-An image is a grid of pixels. A Transformer wants a sequence of vectors. Bridge · **patchify**.
+<div class="insight">
 
-<div class="math-box">
-
-Take a 224×224 RGB image. Split into 16×16 patches:
-- Number of patches: $(224/16)^2 = 196$
-- Each patch: $16 \times 16 \times 3 = 768$ numbers → flatten → linear-project to $d$-dim.
-
-Add a special `[CLS]` token + learned **positional embeddings**, and feed the 197-token sequence through a standard Transformer.
+**Analogy · describing a photo over the phone.** You don't list every pixel. You break it into chunks: *"top-left, blue sky · below that, a green tree…"* We teach the model to do the same · chop the image into a grid of **patches** ("image words").
 
 </div>
 
-The patchify linear layer is conceptually a strided convolution with kernel size = patch size. Everything else is vanilla Transformer.
+---
+
+# From pixels to tokens · with a tiny example
+
+A 4×4 grayscale image, 2×2 patches. We get $(4/2)^2 = 4$ patches.
+
+$\text{Image} = \begin{pmatrix} 10 & 20 & 150 & 160 \\ 30 & 40 & 170 & 180 \\ 190 & 200 & 5 & 15 \\ 210 & 220 & 25 & 35 \end{pmatrix}$
+
+**Step 1 · patchify.** Patch 1 (top-left) = $\begin{pmatrix} 10 & 20 \\ 30 & 40 \end{pmatrix}$.
+**Step 2 · flatten.** Patch 1 → $[10, 20, 30, 40]$.
+**Step 3 · linear-project.** Multiply by learned $W$ (size $4 \times 3$ for output dim 3) → 3-d embedding.
+**Step 4 · prepend `[CLS]`, add position embeddings.** Sequence: `[CLS, p1, p2, p3, p4]` + `[pe_0, pe_1, …]`.
+
+For real 224×224 RGB with 16×16 patches:
+- Each patch · $16 \cdot 16 \cdot 3 = 768$ numbers.
+- Project to $d = 768$. Patches per image · $(224/16)^2 = 196$.
+- Final sequence · $1 + 196 = 197$ tokens. Standard Transformer from here.
+
+The patchify step is conceptually a strided conv with kernel = stride = patch size.
+
+---
+
+# Worked numeric · patch embedding
+
+Tiny example. Flattened patch · $x = [10, 20, 30, 40]$.
+
+Learned $W$ (size $4 \times 3$):
+$W = \begin{pmatrix} 0.1 & 0 & -0.2 \\ 0 & 0.5 & 0 \\ -0.1 & 0 & 0.3 \\ 0.2 & -0.1 & 0 \end{pmatrix}$
+
+**Compute.** $\text{embedding} = x W$.
+- Component 1 · $10(0.1) + 20(0) + 30(-0.1) + 40(0.2) = 1 - 3 + 8 = 6.0$
+- Component 2 · $10(0) + 20(0.5) + 30(0) + 40(-0.1) = 10 - 4 = 6.0$
+- Component 3 · $10(-0.2) + 20(0) + 30(0.3) + 40(0) = -2 + 9 = 7.0$
+
+$\text{embedding} = \mathbf{[6.0,\ 6.0,\ 7.0]}$ — the first "token" the Transformer sees, representing the top-left of the image.
 
 ---
 
@@ -216,22 +244,44 @@ The training objective is InfoNCE (L17), extended across two modalities instead 
 
 ---
 
-# CLIP · training setup
+# CLIP · the matching-game derivation
 
-<div class="math-box">
+Tiny batch · $N = 3$ image-text pairs $(I_1, T_1), (I_2, T_2), (I_3, T_3)$.
 
-**Contrastive loss** (identical to SimCLR but across modalities):
+1. **Step 1 · embed.** Encode each image and text → unit vectors $i_1, i_2, i_3$ and $t_1, t_2, t_3$.
+2. **Step 2 · similarity matrix.** $S_{ij} = i_i \cdot t_j$.
+$S = \begin{pmatrix} i_1 \cdot t_1 & i_1 \cdot t_2 & i_1 \cdot t_3 \\ i_2 \cdot t_1 & i_2 \cdot t_2 & i_2 \cdot t_3 \\ i_3 \cdot t_1 & i_3 \cdot t_2 & i_3 \cdot t_3 \end{pmatrix}$
+**Diagonal** = correct matches → maximize. Off-diagonal → minimize.
+3. **Step 3 · scale by temperature.** $\text{logits} = S / \tau$.
+4. **Step 4 · row-wise CE.** Each row of logits → softmax → CE against the diagonal label. (Image $I_1$ should match text $T_1$.)
+5. **Step 5 · column-wise CE.** Same for columns (text $T_1$ should match image $I_1$).
+6. **Final loss.** $\mathcal{L} = \tfrac{1}{2}(\text{CE}_\text{rows} + \text{CE}_\text{cols})$.
 
-$$\mathcal{L} = \frac{1}{2}\,[\,\text{CE}_\text{rows}(\text{logits}) + \text{CE}_\text{cols}(\text{logits})\,]$$
+- **Image encoder** · ViT-L/14 (or ResNet-50 for small).
+- **Text encoder** · 12-layer Transformer.
+- **Data** · 400M image-text pairs from the web. **Batch size** 32,768.
 
-where $\text{logits}_{ij} = I_i \cdot T_j / \tau$ and the target for row $i$ is column $i$.
+---
 
-</div>
+# Worked numeric · CLIP loss for one row
 
-- **Image encoder** — ViT-L/14 (or ResNet-50 for small variant).
-- **Text encoder** — a 12-layer Transformer.
-- **Training data** — 400M image-text pairs scraped from the web (OpenAI private).
-- **Batch size** — 32,768 (big!).
+$N = 2$. Normalized embeddings:
+- $i_1 = [0.8, 0.6]$, $t_1 = [0.7, 0.7]$ (good match)
+- $i_2 = [-0.9, 0.44]$, $t_2 = [-0.8, 0.6]$ (good match)
+- $\tau = 0.1$.
+
+**Similarity matrix.**
+- $i_1 \cdot t_1 = 0.56 + 0.42 = 0.98$ ✓
+- $i_1 \cdot t_2 = -0.64 + 0.36 = -0.28$
+$S_\text{row 1} = [0.98,\ -0.28]$
+
+**Logits row 1.** $S_\text{row 1} / 0.1 = [9.8,\ -2.8]$.
+
+**Softmax.** $\exp([9.8, -2.8]) \approx [18034, 0.061]$. Normalize → $[0.99997, 0.00003]$.
+
+**Loss row 1 (correct = index 0).** $-\log 0.99997 \approx \mathbf{3 \times 10^{-5}}$ — very low.
+
+If the off-diagonal were higher, the loss spikes immediately. CLIP just runs this over 32k images simultaneously.
 
 ---
 
@@ -355,20 +405,53 @@ Surprisingly good. The LLM brings reasoning; CLIP brings vision understanding; t
 
 ---
 
-# LLaVA · why just a linear projection works
+# LLaVA · the translator analogy
 
-The LLM's token embeddings sit in a $d$-dim space that *already* represents concepts. CLIP's image features also represent concepts. Both learn from natural data; both capture similar structure.
+<div class="insight">
 
-<div class="keypoint">
+Two experts speak different languages.
+- **CLIP** understands images (vector language $\mathbb{R}^{1024}$).
+- **Llama** understands text (vector language $\mathbb{R}^{4096}$).
 
-A single learned linear map is enough to align them — the hard work was already done during pretraining. The projection only has to rotate and scale.
+We need a **translator** · a linear map $W$ that converts an image vector into something Llama can read. Both spaces already encode similar concepts (puppy near dog, etc.) — the translator only needs to rotate and scale.
 
 </div>
 
-- Stage 1 · freeze both encoders, train **only the projection** on caption data.
-- Stage 2 · unfreeze the LLM, fine-tune on instruction data.
+---
 
-Total new parameters · ~10M in the projection. That's how a 7B LLM becomes multimodal with **under 0.15% extra weights.**
+# LLaVA · the linear projection, with shapes
+
+1. **CLIP output** · 256 patch embeddings, each 1024-d. Tensor `[256, 1024]`.
+2. **LLM expects** · token embeddings of dim 4096.
+3. **Bridge** · linear layer `W` of shape `[1024, 4096]` plus bias `[4096]`.
+
+Per patch: `llm_token = patch @ W + b`. Shape check · `[1, 1024] @ [1024, 4096] → [1, 4096]` ✓.
+
+Do this for all 256 patches → 256 vectors that "look like" tokens to the LLM. Prepend them to the user's text:
+$$[\text{img}_1, \ldots, \text{img}_{256}, \text{text}_1, \text{text}_2, \ldots] \to \text{LLM}$$
+
+**Stage 1** · freeze CLIP and LLM, train only $W$, $b$ on caption data.
+**Stage 2** · unfreeze the LLM, fine-tune on instruction data.
+
+New params · ~10M in the projection. A 7B LLM becomes multimodal with < 0.15% extra weights.
+
+---
+
+# Worked numeric · the projection
+
+CLIP patch · $\text{patch} = [2.0, -1.0, 0.5]$ (3-d for clarity). LLM expects 4-d tokens.
+
+$W = \begin{pmatrix} 1 & 0 & 0.5 & 0.1 \\ 0 & 2 & 0 & -0.2 \\ 0.1 & -1 & 0 & 0 \end{pmatrix},\quad b = [0, 0, 0.1, 0]$
+
+**Compute** $\text{patch} @ W$:
+- $2.0 \cdot 1 + (-1.0) \cdot 0 + 0.5 \cdot 0.1 = 2.05$
+- $2.0 \cdot 0 + (-1.0) \cdot 2 + 0.5 \cdot (-1) = -2.5$
+- $2.0 \cdot 0.5 + (-1.0) \cdot 0 + 0.5 \cdot 0 = 1.0$
+- $2.0 \cdot 0.1 + (-1.0) \cdot (-0.2) + 0.5 \cdot 0 = 0.4$
+
+$\text{llm\_token} = [2.05, -2.5, 1.0, 0.4] + [0, 0, 0.1, 0] = \mathbf{[2.05, -2.5, 1.1, 0.4]}$
+
+The LLM treats this just like the embedding for the word "cat".
 
 ---
 
@@ -400,37 +483,44 @@ The frontier
 
 ---
 
-# Native-multimodal vs bolt-on
+# Native-multimodal vs bolt-on · adopt or raise?
 
-Two philosophies emerged:
+<div class="insight">
+
+You want a dog that understands verbal **and** hand commands.
+- **Bolt-on (LLaVA)** · adopt a brilliant adult dog (LLM) that knows verbal commands. Hire a translator (projection) to whisper hand-signal meanings. Cheap, fast — but the dog's brain never natively saw signals.
+- **Native (Gemini, GPT-4o)** · raise a puppy from birth using both. Brain processes them as fundamental, intertwined inputs. Deeper understanding — but you must pretrain from scratch on multimodal data.
+
+</div>
+
+---
+
+# Native vs bolt-on · trade-offs
 
 <div class="columns">
 <div>
 
 ### Bolt-on (LLaVA, Flamingo)
 
-Start from a pretrained LLM and bolt a vision tower on top. Simpler, cheaper.
-
 - Vision tower stays "foreign" to the LLM.
 - Often weaker on tight text-vision interaction.
+- **Cheap** — only train the bridge.
 
 </div>
 <div>
 
 ### Native (Gemini, GPT-4o)
 
-Train from scratch on interleaved text + image + audio tokens.
-
 - Unified tokenization across modalities.
 - Stronger multi-modal reasoning.
-- More expensive to train from zero.
+- **Expensive** — pretrain from zero on interleaved data.
 
 </div>
 </div>
 
 <div class="insight">
 
-The 2026 frontier leans **native**. Bolt-on stays dominant for open-source, where you can't afford pretraining from scratch.
+2026 frontier leans **native**. Bolt-on dominates open-source · only feasible approach when you can't pretrain a 100B+ model from scratch.
 
 </div>
 
