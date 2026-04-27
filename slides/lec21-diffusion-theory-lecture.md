@@ -159,20 +159,29 @@ Fixed · Markov · Gaussian
 
 ---
 
-# One forward step
+# One forward step · slightly blurring a photo
 
-<div class="math-box">
+<div class="insight">
 
-$$q(x_t \mid x_{t-1}) = \mathcal{N}\!\left(x_t; \sqrt{1 - \beta_t}\, x_{t-1}, \beta_t\, I\right)$$
+**Analogy.** Take a sharp photo and make it one step blurrier:
+1. Fade the original a tiny bit (e.g. to 99.5% opacity).
+2. Add a faint layer of random static (Gaussian noise).
 
-- $\beta_t$ is a small positive scalar (the "noise schedule").
-- Each step · shrink the signal slightly + add a little Gaussian noise.
+That's it. $\beta_t$ controls both the fade amount and the static intensity.
 
 </div>
 
-Over $T$ steps (typically $T = 1000$), the data gradually washes out into pure $\mathcal{N}(0, I)$.
+Formally:
+$$q(x_t \mid x_{t-1}) = \mathcal{N}\!\left(x_t;\ \sqrt{1 - \beta_t}\,x_{t-1},\ \beta_t\,I\right)$$
 
-Forward is **not learned**. It's a fixed dynamical system designed to produce a tractable diffusion.
+i.e. $x_t = \sqrt{1-\beta_t}\,x_{t-1} + \sqrt{\beta_t}\,\epsilon$ with $\epsilon \sim \mathcal{N}(0, 1)$.
+
+**Worked numeric.** $x_{t-1} = 100$, $\beta_t = 0.01$.
+- Fade · $\sqrt{0.99} \approx 0.995$, so mean = $99.5$.
+- Noise · std $= \sqrt{0.01} = 0.1$.
+- Update · $x_t = 0.995 \cdot 100 + 0.1 \cdot \epsilon$.
+
+Over $T = 1000$ steps, the signal washes out into pure $\mathcal{N}(0, I)$. Forward is **not learned** — fixed dynamical system.
 
 ---
 
@@ -219,23 +228,23 @@ After 5 steps the signal is barely disturbed. After 1000 steps with growing β, 
 
 ---
 
-# The closed form · skip to any step
+# The closed form · compounding fades
 
-The magical property of Gaussian-noise addition: you can jump directly from $x_0$ to $x_t$ in one step.
+After 1 step, signal is faded by $\sqrt{\alpha_1}$. After 2 steps · $\sqrt{\alpha_2 \alpha_1}$. After $t$ steps · $\sqrt{\bar\alpha_t} = \sqrt{\prod_{s=1}^t \alpha_s}$.
 
-<div class="math-box">
+All the per-step noise additions also "pool together" into one big Gaussian:
+$$\boxed{x_t = \sqrt{\bar\alpha_t}\,x_0 + \sqrt{1 - \bar\alpha_t}\,\epsilon,\quad \epsilon \sim \mathcal{N}(0, I)}$$
 
-Define $\alpha_t = 1 - \beta_t$ and $\bar{\alpha}_t = \prod_{s=1}^{t} \alpha_s$. Then:
+Variance check · we designed the process so total variance stays 1. If $\bar\alpha_t$ is the fraction left from the signal, $1 - \bar\alpha_t$ is the fraction from noise. **Sums to 1.**
 
-$$q(x_t \mid x_0) = \mathcal{N}\!\left(x_t; \sqrt{\bar{\alpha}_t}\, x_0, (1 - \bar{\alpha}_t)\, I\right)$$
+**Worked numeric · jump from $x_0$ to $x_{500}$.**
+$x_0 = 2.0$, $\bar\alpha_{500} = 0.17$.
+- Signal scale · $\sqrt{0.17} \approx 0.412$.
+- Noise scale · $\sqrt{0.83} \approx 0.911$.
+- Sample $\epsilon = -0.8$.
+- $x_{500} = 0.412 \cdot 2.0 + 0.911 \cdot (-0.8) = 0.824 - 0.729 = \mathbf{0.095}$.
 
-Equivalently:
-
-$$x_t = \sqrt{\bar{\alpha}_t}\, x_0 \,+\, \sqrt{1 - \bar{\alpha}_t}\, \epsilon, \qquad \epsilon \sim \mathcal{N}(0, I)$$
-
-</div>
-
-No iteration needed during training. Sample $t$ uniformly, compute $x_t$ in closed form. Huge speedup.
+After 500 steps the original signal of 2.0 has nearly washed away. **No iteration needed during training.**
 
 ---
 
@@ -473,23 +482,24 @@ The network architecture is a **U-Net** (L9) with time-step conditioning injecte
 
 ---
 
-# Reverse step · what's happening
+# Reverse step · denoise then re-noise a little
 
-Given $x_t$, the reverse step computes:
+To go from $x_t$ to $x_{t-1}$:
+1. **Denoise.** Predict $\epsilon$, subtract a scaled version from $x_t$ → estimate of clean signal.
+2. **Re-noise a little.** Add a small fresh noise so the chain stays stochastic.
 
-<div class="math-box">
+$$x_{t-1} = \underbrace{\frac{1}{\sqrt{\alpha_t}}\!\left(x_t - \frac{1 - \alpha_t}{\sqrt{1 - \bar\alpha_t}}\,\epsilon_\theta(x_t, t)\right)}_{\text{denoised mean}} + \underbrace{\sigma_t\,z}_{\text{small fresh noise}}$$
 
-$$x_{t-1} = \frac{1}{\sqrt{\alpha_t}}\!\left(x_t - \frac{1 - \alpha_t}{\sqrt{1 - \bar\alpha_t}}\, \epsilon_\theta(x_t, t)\right) + \sigma_t\, z$$
+**Worked numeric (1D).** $x_{100} = 1.5$. Schedule · $\alpha_{100} = 0.99$, $\bar\alpha_{100} = 0.8$. Network predicts $\epsilon_\theta = 0.6$.
 
-where $z \sim \mathcal{N}(0, I)$ (added noise) and $\sigma_t$ is the reverse variance.
+- $1/\sqrt{0.99} \approx 1.005$
+- $(1 - 0.99)/\sqrt{1 - 0.8} = 0.01 / \sqrt{0.2} \approx 0.0224$
+- Mean · $1.005 \cdot (1.5 - 0.0224 \cdot 0.6) = 1.005 \cdot 1.4866 \approx \mathbf{1.494}$
 
-</div>
+Add noise · $\sigma_{100} = 0.1$, $z = -0.3$ → noise term = $-0.03$.
+$x_{99} = 1.494 - 0.03 = \mathbf{1.464}$.
 
-Decoded:
-- **First term** · estimate of the clean signal (un-scale the noise prediction, subtract from $x_t$).
-- **Second term** · re-inject fresh noise at scale $\sigma_t$ so the chain stays stochastic.
-
-At $t = 1$, we drop the noise term — deterministic final step.
+We took one small step from noisier (1.5) to slightly cleaner (1.464). At $t = 1$, drop the noise term — final step is deterministic.
 
 ---
 
@@ -588,15 +598,31 @@ That's score-based generation. Mathematically equivalent to DDPM · just a diffe
 
 ---
 
-# The score function
+# Score · the mountain-range analogy
 
-Define the **score** of a distribution as $\nabla_x \log p(x)$ — the direction toward higher density.
+<div class="insight">
 
-If we had the score, we could do **Langevin dynamics** to sample:
+Imagine probability is a landscape. Real data points sit in **deep valleys**; noise sits on **high flat plains**.
 
-$$x_{k+1} = x_k + \eta\, \nabla_x \log p(x_k) + \sqrt{2\eta}\, \xi, \quad \xi \sim \mathcal{N}(0, I)$$
+The **score** is an arrow at every point pointing **uphill** — toward higher density.
 
-This resembles the reverse diffusion process — follow the score, add a little noise.
+If we learn this field of "uphill" arrows, we can generate data · start on a high plain (noise) and walk **toward the arrows** until we land in a valley (real data).
+
+</div>
+
+---
+
+# The score function · math
+
+Define $s(x) = \nabla_x \log p(x)$ — gradient of log density.
+- $p(x)$ · density (high for real data, low elsewhere).
+- $\log$ · just makes math nice (peaks of $p$ = peaks of $\log p$).
+- $\nabla_x$ · vector pointing in the direction of steepest ascent.
+
+If we have $s$, we can sample with **Langevin dynamics**:
+$$x_{k+1} = x_k + \eta\,s(x_k) + \sqrt{2\eta}\,\xi,\quad \xi \sim \mathcal{N}(0, I)$$
+
+A small step *toward* high-density regions, plus a bit of noise to keep exploring. Looks just like the reverse diffusion step · *follow a learned signal + add a little noise*.
 
 ---
 
@@ -635,17 +661,24 @@ Modeling the score sidesteps the normalizer problem — and the score is exactly
 
 ---
 
-# Diffusion ≈ score matching
+# Diffusion ≈ score matching · derivation
 
-Song &amp; Ermon 2020 (NCSN) showed: training $\epsilon_\theta(x_t, t)$ to predict noise **is equivalent** to training $s_\theta(x_t, t)$ to estimate the score $\nabla_x \log q(x_t)$, up to a constant.
+The noisy distribution is Gaussian:
+$x_t \sim \mathcal{N}(\mu = \sqrt{\bar\alpha_t}\,x_0,\ \sigma^2 = 1 - \bar\alpha_t)$
 
-<div class="math-box">
+Log density (up to const):
+$\log q(x_t \mid x_0) = -\dfrac{1}{2\sigma^2}(x_t - \mu)^2 + C$
 
-$$s_\theta(x_t, t) = -\frac{\epsilon_\theta(x_t, t)}{\sqrt{1 - \bar{\alpha}_t}}$$
+Differentiate w.r.t. $x_t$:
+$\nabla_{x_t}\log q = -\dfrac{1}{1 - \bar\alpha_t}(x_t - \sqrt{\bar\alpha_t}\,x_0)$
 
-</div>
+But the forward equation rearranges to $\epsilon = (x_t - \sqrt{\bar\alpha_t}\,x_0)/\sqrt{1 - \bar\alpha_t}$. Substitute:
+$$\nabla_{x_t}\log q(x_t \mid x_0) = -\frac{\epsilon}{\sqrt{1 - \bar\alpha_t}}$$
 
-DDPM (Ho 2020) and score-SDE (Song 2020) are two lenses on the same model. Pick whichever you find more intuitive. In 2026 the DDPM formulation dominates for practical reasons (cleaner training recipe).
+**Punchline.** The true score is just (negative, scaled) noise. Predicting $\epsilon$ with MSE = predicting the score:
+$$s_\theta(x_t, t) = -\frac{\epsilon_\theta(x_t, t)}{\sqrt{1 - \bar\alpha_t}}$$
+
+DDPM (Ho 2020) and score-SDE (Song 2020) are two lenses on the **same** model.
 
 ---
 
