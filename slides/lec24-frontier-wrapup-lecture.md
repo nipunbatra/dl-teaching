@@ -171,16 +171,46 @@ CoT emerges at scale (~60B params). Below that, adding "think step by step" does
 
 ---
 
-# Reasoning models · train for CoT
+# Reasoning models · outcome vs process rewards
 
-2024's big idea · don't just *prompt* for CoT — **train** for it with RL.
+<div class="insight">
 
-**o1** (OpenAI 2024), **Claude extended thinking** (Anthropic 2024), **DeepSeek R1** (2025) all:
+Teaching a student to solve a math problem.
+- **Outcome reward** · *"the final answer is 7"*. Easy to check; no info on **how** to get there.
+- **Process reward** · *"this step is correct, but that step has a mistake."* Much richer signal.
 
-1. Generate candidate chains of thought.
-2. Reward based on whether the final answer is correct (outcome reward) or whether reasoning steps are valid (process reward).
-3. Fine-tune via RL to produce longer, more systematic internal reasoning.
-4. At inference · spend 10×–100× more compute per answer, let the model "think."
+Same idea for LLMs. 2024's big idea · don't just prompt for CoT — **train** for it with RL using both signals.
+
+</div>
+
+---
+
+# Reasoning · the training recipe
+
+**o1** (OpenAI 2024), **Claude extended thinking**, **DeepSeek R1** (2025):
+
+1. **Generate** many candidate chains of thought for a hard question.
+2. **Reward** each chain · outcome (final answer correct?) and process (each step logical?).
+3. **Fine-tune via RL** to make high-reward chains more likely.
+4. **At inference** · spend 10×–100× more compute, let the model "think."
+
+---
+
+# Worked example · rewarding chains of thought
+
+**Question.** A bat and a ball cost \$1.10 total. The bat costs \$1.00 *more than* the ball. How much does the ball cost?
+
+**Candidate 1 (greedy).**
+1. Bat is \$1.00.  2. Ball = $1.10 - 1.00 = \$0.10$. **Answer · 10¢.**
+- Outcome reward · **0** (wrong — common-sense trap).
+- Process reward · low (step 2 based on a wrong assumption in step 1).
+
+**Candidate 2 (algebra).**
+1. $B + L = 1.10$, $B = L + 1$. → $2L + 1 = 1.10$. → $L = 0.05$. **Answer · 5¢.**
+- Outcome reward · **+1**.
+- Process reward · **high** — every step logical.
+
+The model is trained to make traces **like Candidate 2** more likely.
 
 ---
 
@@ -274,15 +304,42 @@ Anthropic's interpretability team · Olah et al. circuits research 2020+, sparse
 
 ---
 
-# The residual stream view
+# Residual stream · the shared-whiteboard analogy
 
-Elhage et al. (Anthropic) · reframe a Transformer as a **residual stream** that every block reads from and writes to:
+<div class="insight">
 
-$$h_{l+1} = h_l + \text{attn}_l(h_l) + \text{ffn}_l(h_l)$$
+A Transformer layer = experts working on a shared **whiteboard**.
 
-The residual stream is a "bus" carrying information across layers. Attention heads read features and write new features back.
+1. Initial document (input) is on the board → the **residual stream**.
+2. Attention expert reads, writes a sticky note ("this word relates to that word"), **adds** it to the board (doesn't erase).
+3. FFN expert reads board + sticky, writes another note, adds it.
+4. Updated board → input to next layer.
 
-This perspective helped find **circuits** — specific computational pathways inside a Transformer that implement identifiable algorithms (induction heads, IOI task, prime-number detection, etc.).
+</div>
+
+The Transformer equation just says: **read from the bus → add a contribution → write back.**
+
+---
+
+# Residual stream · worked numeric
+
+Toy model, $d = 4$. Token enters layer 5 with state:
+$h_5 = [0.2, 0.5, 0.1, -0.9]$
+
+**Step 1 · attention update.** Attention reads $h_5$, looks at other tokens, returns:
+$\text{attn} = [0.0, 0.3, 0.4, 0.0]$
+*(boost features 2 and 3 from related tokens)*
+
+**Step 2 · FFN update.** FFN processes $h_5$ alone, returns:
+$\text{ffn} = [0.1, -0.1, 0.0, 0.2]$
+*(slightly boost feature 1, decrease feature 2, clarify feature 4)*
+
+**Step 3 · sum (the residual update).**
+$h_6 = h_5 + \text{attn} + \text{ffn}$
+$h_6 = [0.2 + 0.0 + 0.1,\ 0.5 + 0.3 - 0.1,\ 0.1 + 0.4 + 0.0,\ -0.9 + 0.0 + 0.2]$
+$h_6 = \mathbf{[0.3,\ 0.7,\ 0.5,\ -0.7]}$
+
+Same equation: $h_{l+1} = h_l + \text{attn}_l(h_l) + \text{ffn}_l(h_l)$. The "bus" perspective makes circuits findable — induction heads, IOI task, etc.
 
 ---
 
@@ -300,23 +357,33 @@ The dictionary is much wider than the residual stream (e.g., 100k features for a
 
 ---
 
-# Sparse autoencoders · feature dictionary
+# Sparse autoencoders · the inverted bottleneck
 
-Circuits interpretability struggled because individual neurons represent **superpositioned** features (many concepts per neuron).
+<div class="insight">
 
-**Sparse autoencoders** (SAE) are trained to expand the residual stream into a much wider, sparse representation:
-
-```
-residual stream (d=12,288) → SAE → sparse features (d=100,000+, mostly zero)
-```
-
-Each feature in the SAE often corresponds to a **human-interpretable concept** · "the Golden Gate Bridge", "code syntax errors", "requests for help."
-
-<div class="realworld">
-
-Anthropic 2024 · trained an SAE on Claude 3 Sonnet and found millions of features. Clamping specific features changes model behavior ("the Golden Gate Claude" demo).
+A normal autoencoder · narrow bottleneck. *"Compress 100 words to 5."*
+A **sparse autoencoder (SAE)** · *inverted* bottleneck. *"Have a 100,000-word dictionary, but only allowed to use 5 of them."* You must pick **extremely precise** words.
 
 </div>
+
+---
+
+# SAE · how it disentangles superposition
+
+**Problem · superposition.** A single neuron in the residual stream might fire for *"Golden Gate Bridge"*, *"the colour red"*, AND *"Python syntax errors"*. Confusing.
+
+**SAE recipe:**
+1. **Input** · residual-stream vector $x$ (e.g. $d = 12{,}288$).
+2. **Encoder** · expand to a much wider sparse vector $f$ ($d_\text{sae} = 100{,}000$). $f = \text{ReLU}(W_\text{enc} x + b)$, with a **sparsity penalty** forcing most entries to 0 (typically only 10–50 non-zero per input).
+3. **Decoder** · reconstruct $x' = W_\text{dec} f + b'$.
+4. **Train** to minimize $\|x - x'\|^2$ + sparsity penalty.
+
+**Worked numeric (toy).** $x = [0.9, 0.8, -0.7, 0.1]$ (meaningless — superposition). Trained encoder maps to:
+$f = [0, 0, 0, 0, 0, \mathbf{0.95}, 0, 0, 0, 0]$
+
+Researchers find **all inputs** that activate feature 6 → all about the **Golden Gate Bridge**. Label: *"Feature 6 = Golden Gate Bridge"*.
+
+Anthropic 2024 · SAE on Claude 3 Sonnet → millions of human-readable features. Clamp features → control behavior ("Golden Gate Claude" demo).
 
 ---
 
