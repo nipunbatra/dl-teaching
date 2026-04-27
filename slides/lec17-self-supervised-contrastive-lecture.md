@@ -155,11 +155,50 @@ That's contrastive learning. It pulls **same-image augmentations together** in f
 6. Compute similarity (cosine) in projection space.
 7. Apply **NT-Xent loss** — pull positive together, push negatives apart.
 
-<div class="math-box">
+---
 
-$$\mathcal{L}_{i,j} = -\log \frac{\exp(\text{sim}(z_i, z_j) / \tau)}{\sum_{k \ne i} \exp(\text{sim}(z_i, z_k) / \tau)}$$
+# InfoNCE · derive the loss step by step
 
-</div>
+For one anchor $z_i$ with positive partner $z_j$ in a batch with negatives $z_k$:
+
+1. **Score function** · cosine similarity. Higher = more similar.
+$\text{sim}(z_i, z_k) = (z_i \cdot z_k) / (\|z_i\| \,\|z_k\|)$
+
+2. **Make it a probability problem.** "Which $z_k$ is the true partner of $z_i$?" Use softmax over scores, with **temperature** $\tau$:
+$P(\text{partner} = k) = \dfrac{\exp(\text{sim}(z_i, z_k)/\tau)}{\sum_{k' \ne i}\exp(\text{sim}(z_i, z_{k'})/\tau)}$
+
+3. **Cross-entropy** with the true partner $j$:
+$\mathcal{L}_{i,j} = -\log P(\text{partner} = j)$
+
+4. **Substitute** to get the full form:
+$$\mathcal{L}_{i,j} = -\log \frac{\exp(\text{sim}(z_i, z_j)/\tau)}{\sum_{k \ne i}\exp(\text{sim}(z_i, z_k)/\tau)}$$
+
+It's standard softmax cross-entropy where the "classes" are batch positions and the label is the positive pair. No human labels needed.
+
+---
+
+# Worked numeric · InfoNCE
+
+Tiny batch of 2 images → 4 views. $z_1, z_2$ from image A; $z_3, z_4$ from image B. $\tau = 0.1$.
+
+Compute loss for $z_1$ (positive · $z_2$, negatives · $z_3, z_4$).
+
+**Step 1 · similarities.**
+- $\text{sim}(z_1, z_2) = 0.9$ (positive)
+- $\text{sim}(z_1, z_3) = 0.2$
+- $\text{sim}(z_1, z_4) = -0.1$
+
+**Step 2 · scaled exps.**
+- $\exp(0.9/0.1) = \exp(9) \approx 8103.1$ (positive — also in denominator)
+- $\exp(0.2/0.1) = \exp(2) \approx 7.4$
+- $\exp(-0.1/0.1) = \exp(-1) \approx 0.4$
+
+Denominator $\approx 8103.1 + 7.4 + 0.4 = 8110.9$.
+
+**Step 3 · loss.**
+$\mathcal{L} = -\log(8103.1 / 8110.9) = -\log(0.999) \approx \mathbf{0.001}$.
+
+Loss is tiny because the positive's similarity dominates. If the model had assigned similarity 0.2 instead of 0.9 to $z_2$, the loss would be ~ $\log 3 \approx 1$ — gradient kicks in.
 
 ---
 
@@ -185,34 +224,66 @@ It's a **softmax classification** problem · "given $z_i$, which of the $2N-1$ c
 
 ---
 
-# Why SimCLR works
+# The crumple-zone projection head
 
-Three ingredients (Chen et al. 2020 ablations):
+InfoNCE forces the final reps to be **identical** for two augmentations of the same image. But what if a downstream task needs the info we just discarded (e.g. color matters for ripeness)?
 
-1. **Strong augmentations** — especially color jitter + random crop. Weaker augs give much worse representations.
-2. **Projection head** — throw it away after pretraining; use encoder features for downstream tasks. The projection exists to absorb augmentation invariances.
-3. **Large batch size** — more negatives → sharper contrast. SimCLR used batch 8192 on a TPU pod.
+<div class="insight">
 
-<div class="realworld">
+**Analogy · car crumple zone.**
+- **Encoder $f$** = passenger cabin. Should produce rich, general features $h$ (color, texture, shape).
+- **Projection head $g$** = crumple zone. Crushes $h$ into $z$ to satisfy the harsh contrastive task.
+- **After pretraining** · throw away the crumple zone. Use $h$ for downstream tasks.
 
-Pretrained SimCLR features, fine-tuned, match or beat supervised ImageNet on many downstream tasks. This was surprising in 2020 — still foundational today.
+This way the encoder doesn't have to delete useful info just to win the contrastive game.
 
 </div>
 
 ---
 
-# Temperature · the forgotten hyperparameter
+# Why SimCLR works
 
-The InfoNCE softmax uses a temperature $\tau$ inside: $\text{sim}(z_i, z_j) / \tau$.
+Three ingredients (Chen et al. 2020 ablations):
 
-- **Small $\tau$ (≈ 0.07)** · sharper softmax → hard negatives dominate gradient. SimCLR's choice.
-- **Large $\tau$ (≥ 1.0)** · all negatives contribute equally → gradient is softer.
+1. **Strong augmentations** — especially color jitter + random crop.
+2. **Projection head** — throw it away after pretraining; the projection absorbs augmentation invariances.
+3. **Large batch size** — more negatives → sharper contrast. SimCLR used batch 8192 on a TPU pod.
 
-<div class="keypoint">
+<div class="realworld">
 
-$\tau$ controls *which negatives the model pays attention to*. Too small and training is noisy / unstable. Too large and training is slow. It's also what CLIP learns as a trainable scalar (L18).
+Pretrained SimCLR features, fine-tuned, match or beat supervised ImageNet on many downstream tasks. Surprising in 2020; foundational today.
 
 </div>
+
+---
+
+# Temperature · the volume-knob analogy
+
+<div class="insight">
+
+Three critics give similarity scores $[0.9, 0.2, -0.1]$.
+- **High $\tau$ (= 1.0)** · calm discussion. All voices heard.
+- **Low $\tau$ (= 0.1)** · shouting match. The loudest voice (0.9) drowns out everyone.
+
+In SSL, "hard negatives" are the most informative. Low $\tau$ makes the model **focus on them**.
+
+</div>
+
+---
+
+# Temperature · numeric demo
+
+Same scores $[0.9, 0.2, -0.1]$, computed with two temperatures.
+
+**$\tau = 1.0$.** Logits = scores.
+- $\exp$: $[2.46, 1.22, 0.90]$. Sum $= 4.58$.
+- Probs: $[0.54,\ 0.27,\ 0.19]$. Negatives still pull weight.
+
+**$\tau = 0.1$ (SimCLR's choice).** Logits = scores × 10.
+- $\exp([9, 2, -1])$: $[8103, 7.4, 0.4]$. Sum $\approx 8111$.
+- Probs: $[0.999,\ 0.001,\ 0.00005]$. The positive **completely dominates** → model is forced to make positive-similarity *much* higher than any negative.
+
+Small $\tau$ ⇒ sharper distribution ⇒ hard negatives dominate the gradient. Used in SimCLR (~0.07) and as a learnable scalar in CLIP (L18).
 
 ---
 
@@ -245,21 +316,33 @@ Two networks chase each other
 
 ---
 
-# The BYOL surprise
+# BYOL · learning without negatives
 
-Every contrastive method needed **negatives**. BYOL (Grill et al. 2020) dropped negatives entirely and *still* learned useful features. How?
+SimCLR needed lots of negatives. What if we only **pull** positives together?
 
-- **Online network** (with predictor head) — takes view 1.
-- **Target network** — slow-moving EMA of the online network; takes view 2.
-- Online network predicts target's output.
-- Target is **stop-gradient** — gradients only flow through online.
+**Danger · collapse.** If the only force is "pull together," the model can output the same constant vector for every image · $f(x) = [0.5, 0.5, \ldots]$ → zero loss, useless features.
 
-<div class="math-box">
+BYOL is a clever recipe to prevent collapse **without negatives**, using two asymmetric networks.
 
-Online updates: $\theta \leftarrow \text{SGD}(\mathcal{L})$
-Target updates: $\xi \leftarrow m\,\xi + (1-m)\,\theta$ with $m \approx 0.996$
+---
 
-</div>
+# BYOL · twin networks (student + teacher)
+
+- **Online network** ("student", $\theta$) · trained with SGD. Has an extra **predictor** head.
+- **Target network** ("teacher", $\xi$) · **not** updated by gradients. Weights are a slow EMA of $\theta$.
+
+Game · online sees view 1, predicts what target outputs for view 2.
+
+**Mechanism 1 · EMA target.**
+$\xi_\text{new} \leftarrow m\,\xi_\text{old} + (1 - m)\,\theta,\quad m \approx 0.99$
+
+Worked numeric · $m = 0.9$, $\theta_0 = [10, 2]$, init $\xi_0 = \theta_0$.
+- Step 1 · $\theta_1 = [12, 3]$ → $\xi_1 = 0.9 \cdot [10, 2] + 0.1 \cdot [12, 3] = [10.2, 2.1]$
+- Step 2 · $\theta_2 = [11, 5]$ → $\xi_2 = 0.9 \cdot [10.2, 2.1] + 0.1 \cdot [11, 5] = [10.28, 2.39]$
+
+The teacher **trails** the student smoothly. The student is chasing a stable, slow-moving version of itself.
+
+**Mechanism 2 · stop-gradient on the target.** Loss = `MSE(online_pred, sg(target))`. Gradients flow back through online only. The teacher can't "cheat" by moving its output to match the student.
 
 The asymmetry (predictor + EMA + stop-grad) prevents collapse without needing negatives.
 
@@ -300,26 +383,25 @@ By 2023 the community mostly converged on masked autoencoding (MAE) and self-dis
 
 ---
 
-# Linear probe vs fine-tune · evaluation
-
-SSL models are judged by how well they transfer to downstream tasks.
-
-<div class="math-box">
-
-| Method | What's measured | What's frozen |
-|:-:|:-:|:-:|
-| **Linear probe** | quality of features | encoder frozen, only 1-layer classifier trained |
-| **Fine-tune** | ceiling of representation | everything trainable |
-| **k-NN** | local structure | encoder frozen, no classifier |
-| **Few-shot** | sample-efficiency | encoder frozen, tiny labeled set |
-
-</div>
+# Linear probe vs fine-tune · the chef-and-knife analogy
 
 <div class="insight">
 
-Linear probe is the cleanest measure of representation quality · it isolates the encoder's feature space. Fine-tune tests the ceiling but can hide a weak encoder (the classifier re-learns whatever it needs).
+We've forged a new chef's knife (the pretrained encoder). How do we test its quality?
+
+- **Linear probe** · give the knife to a beginner and ask them to slice a tomato. Their technique is fixed and weak. If the cut is clean → the knife itself must be sharp. **Tests the inherent feature quality.**
+- **Fine-tune** · give the knife to a master chef. They use all their expertise to get the best slice. **Tests max potential**, but a great chef can hide a mediocre knife.
 
 </div>
+
+| Method | What's measured | What's frozen |
+|:-:|:-:|:-:|
+| **Linear probe** | inherent feature quality | encoder frozen; only 1-layer classifier trained |
+| **Fine-tune** | ceiling of the representation | nothing frozen (often low LR for encoder) |
+| **k-NN** | local feature structure | encoder frozen; no classifier |
+| **Few-shot** | sample efficiency | encoder frozen; tiny labeled set |
+
+Linear probe is the **cleanest** measure — it isolates the encoder. Fine-tune tests the ceiling but can hide a weak encoder.
 
 ---
 
@@ -394,7 +476,22 @@ MAE forces the encoder to learn this **deep visual world model** by predicting t
 
 ---
 
-# Why MAE beat contrastive (for many tasks)
+# MAE · the asymmetric architecture
+
+<div class="insight">
+
+**Analogy · the expert and the intern.**
+- Hire a world-class **expert** (heavy ViT encoder) to analyse a 100-page document.
+- To save money, only show them **25 pages** (the visible patches).
+- Hand the expert's brilliant summary to a cheap **intern** (lightweight decoder) and ask them to write a plausible version of the full 100 pages (reconstruct masked patches).
+
+</div>
+
+**Why this is brilliant.** The encoder — the expensive part — runs on **only 25% of the input** → ~4× faster pretraining than processing the full image. The decoder is small and only handles reconstruction.
+
+---
+
+# MAE vs contrastive · who wins what
 
 <div class="columns">
 <div>
@@ -419,13 +516,7 @@ MAE forces the encoder to learn this **deep visual world model** by predicting t
 </div>
 </div>
 
-<div class="keypoint">
-
-**MAE's asymmetric encoder-decoder is the key.** The heavy encoder only sees visible patches (25%) → 4× cheaper than processing the full image.
-
-</div>
-
-He et al. 2021 · ViT-Huge MAE pretraining → state-of-the-art for many downstream vision tasks.
+He et al. 2021 · ViT-Huge MAE pretraining → SOTA on many downstream vision tasks.
 
 ---
 
