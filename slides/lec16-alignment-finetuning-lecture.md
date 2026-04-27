@@ -165,26 +165,35 @@ That's why a 70B-param fine-tune can ship as a 100MB adapter file · the brushst
 
 ---
 
-# LoRA · the insight
+# LoRA · build the update from a tiny rank-1 example
 
-<div class="keypoint">
+Pretrained $W_0$ is $4 \times 4$ (16 params, frozen). Full update $\Delta W$ would also have 16 params.
 
-**Hypothesis** (Hu et al. 2021) · the useful *change* to a pretrained weight is low-rank. You don't need a $d \times d$ update; you need rank-$r$ where $r \ll d$.
+LoRA's idea · construct $\Delta W$ from two rank-1 matrices.
+- $A \in \mathbb{R}^{4 \times 1}$ · 4 trainable params.
+- $B \in \mathbb{R}^{1 \times 4}$ · 4 trainable params.
+- $\Delta W = B A$ is $4 \times 4$ but generated from only **8** numbers.
 
-</div>
+$$\Delta W = \begin{pmatrix} a_1 \\ a_2 \\ a_3 \\ a_4 \end{pmatrix}\begin{pmatrix} b_1 & b_2 & b_3 & b_4 \end{pmatrix} = \begin{pmatrix} a_1 b_1 & a_1 b_2 & a_1 b_3 & a_1 b_4 \\ a_2 b_1 & a_2 b_2 & a_2 b_3 & a_2 b_4 \\ a_3 b_1 & a_3 b_2 & a_3 b_3 & a_3 b_4 \\ a_4 b_1 & a_4 b_2 & a_4 b_3 & a_4 b_4 \end{pmatrix}$$
 
-<div class="math-box">
+Train only $A, B$; keep $W_0$ frozen:
+$$W = W_0 + \frac{\alpha}{r}\,BA$$
+At $t = 0$, $B = 0 \Rightarrow BA = 0$ → output equals base model.
 
-$$W = W_0 + \frac{\alpha}{r} B A$$
+---
 
-- $W_0 \in \mathbb{R}^{d \times d}$ · frozen pretrained weight
-- $A \in \mathbb{R}^{d \times r}$ · trainable, Gaussian-init
-- $B \in \mathbb{R}^{r \times d}$ · trainable, **zero-init**
-- $r \ll d$ · typically 8–64; $d = 4096$ or larger
+# Worked numeric · LoRA on a Llama-7B layer
 
-At $t = 0$, $B = 0$ so $BA = 0$ — the LoRA term is identity. You get exactly the base model. Training nudges A, B to produce the task-specific update.
+Typical layer · $d = 4096$, weight $4096 \times 4096$.
 
-</div>
+**Full fine-tune.** Trainable = $4096^2 = \mathbf{16{,}777{,}216}$ per layer.
+
+**LoRA at rank $r = 8$.**
+- $A$: $4096 \times 8 = 32{,}768$ params.
+- $B$: $8 \times 4096 = 32{,}768$ params.
+- Total · $32{,}768 + 32{,}768 = \mathbf{65{,}536}$.
+
+**Savings · $16{,}777{,}216 / 65{,}536 = \mathbf{256\times}$ fewer params per layer.** That's why a 70B fine-tune can ship as a 100 MB adapter — only $A$ and $B$ for each adapted layer, not the base.
 
 ---
 
@@ -232,19 +241,39 @@ Training loop is identical to normal SFT — only 0.06% of parameters have gradi
 
 ---
 
-# QLoRA · quantize the base
+# QLoRA · quantization is image-compression
 
-<div class="math-box">
+<div class="insight">
 
-**QLoRA** (Dettmers 2023) · quantize the frozen base to 4-bit NF4; train LoRA adapters in fp16 on top.
+**Analogy.** A photo `.bmp` (millions of colours) → save as `.gif` (256-colour palette). The GIF maps each pixel to its closest palette colour. Looks similar, vastly smaller.
 
-- Weights: 70B × 0.5 bytes = 35 GB (down from 140 GB).
-- Gradients &amp; Adam state: only for LoRA params (~0.1%) — trivial.
-- Fine-tune a 70B model on a single 48 GB GPU.
+QLoRA does this to weights. **bf16** has $2^{16} = 65{,}536$ possible values; **4-bit** has only $2^4 = 16$. Map each weight to its closest 4-bit codebook value → 4× memory shrink.
+
+**NF4** ("NormalFloat 4-bit") · a clever choice of those 16 codebook values, spaced to match the typical bell-shaped distribution of NN weights.
 
 </div>
 
-Used everywhere in the open-source LLM ecosystem for fine-tuning in 2024+.
+---
+
+# QLoRA · worked memory budget for 70B
+
+Per parameter:
+- bf16 → 2 bytes
+- 4-bit → 0.5 bytes
+
+**Standard LoRA (bf16 base).**
+$70 \times 10^9 \cdot 2 = 1.4 \times 10^{11}$ bytes = **140 GB** → needs 2× A100 80 GB.
+
+**QLoRA (4-bit base).**
+$70 \times 10^9 \cdot 0.5 = 3.5 \times 10^{10}$ bytes = **35 GB** → fits on a single A100 40 GB or a consumer 48 GB GPU. LoRA adapters add < 100 MB.
+
+**Mechanism.**
+1. Load base, quantize to 4-bit (4× shrink).
+2. Freeze 4-bit weights.
+3. Attach **bf16** LoRA adapters. Train only these.
+4. During the forward pass, dequantize chunks of $W_0$ to bf16 for each matmul, then discard.
+
+Used everywhere in open-source LLM fine-tuning since 2023.
 
 ---
 
@@ -292,19 +321,50 @@ By showing the model pairs of options (good answer · bad answer) and letting it
 
 ---
 
-# RLHF step-by-step
+# RLHF · the dog-with-two-goals analogy
 
-1. **SFT** · as before — teach the model to follow instructions.
-2. **Reward model (RM)** · collect pairs $(x, y_\text{preferred}, y_\text{rejected})$ from human annotators. Train a classifier $r_\phi(x, y)$ to score responses.
-3. **PPO optimization** · use the RM as a reward signal. Policy $\pi_\theta$ (the SFT model) gets updated to maximize expected reward:
+<div class="insight">
 
-<div class="math-box">
+Train a dog to fetch.
+1. **Get the ball** → treat. The dog maximizes treats. (**Reward $r_\phi$.**)
+2. **Don't go crazy** → if it knocks over furniture chasing the ball, you tug a leash to keep it close to its normal behaviour. (**KL penalty $D_\text{KL}$.**)
 
-$$\max_\theta\, \mathbb{E}_{x \sim D}[\, r_\phi(x, \pi_\theta(x)) \,] \;-\; \beta\, D_\text{KL}(\pi_\theta \Vert \pi_\text{ref})$$
-
-KL term keeps $\pi_\theta$ close to the SFT model — prevents reward hacking.
+RLHF balances both · max reward, but stay near the SFT model.
 
 </div>
+
+---
+
+# RLHF objective · term by term
+
+$$\max_\theta\, \underbrace{\mathbb{E}_{x \sim D}[\, r_\phi(x, \pi_\theta(x)) \,]}_{\text{Part 1: maximize reward}} \;-\; \underbrace{\beta\, D_\text{KL}(\pi_\theta \Vert \pi_\text{ref})}_{\text{Part 2: stay near SFT}}$$
+
+Symbols:
+- $\pi_\theta$ · trainable model ("policy"); takes prompt $x$, generates response $y$.
+- $\pi_\text{ref}$ · frozen SFT model.
+- $r_\phi(x, y)$ · reward model; scores responses (e.g. 0.85).
+- $\mathbb{E}_{x \sim D}[\cdot]$ · average over prompts in dataset $D$.
+- $D_\text{KL}(\pi_\theta \,\|\, \pi_\text{ref})$ · KL divergence; high when $\pi_\theta$ diverges from $\pi_\text{ref}$.
+- $\beta$ · leash strength.
+
+**Part 1** drives the model to produce high-reward answers. **Part 2** keeps the policy close to its SFT initialization → prevents the dog from tearing up the garden.
+
+---
+
+# Worked example · one RLHF step
+
+**Prompt.** "Explain gravity to a 5-year-old."
+
+- $\pi_\text{ref}$ would say *"Gravity is a fundamental interaction…"* — assigns this prob 0.001 (technical, not for kids).
+- $\pi_\theta$ generates *"Imagine the earth is a big magnet and you have tiny magnets in your shoes…"* — assigns prob 0.2.
+
+**Reward.** $r_\phi \approx 0.95$ — friendly, age-appropriate.
+
+**KL penalty.** Contribution from this example $\propto \log(0.2/0.001) = \log 200 \approx 5.3$ — sizeable.
+
+**Total objective.** $0.95 - \beta \cdot 5.3$.
+
+PPO updates $\theta$ to push *toward* this kind of response (high reward) while not pulling too far from $\pi_\text{ref}$ (KL penalty). Without KL, the model would happily reward-hack into nonsense; the leash holds it close.
 
 ---
 
@@ -346,21 +406,51 @@ Rafailov et al. 2023 · *"Direct Preference Optimization: Your Language Model is
 
 ---
 
-# The DPO loss
+# DPO · the simpler taste-test analogy
 
-<div class="math-box">
+<div class="insight">
 
-$$\mathcal{L}_\text{DPO} = -\log \sigma\!\left( \beta \log \frac{\pi_\theta(y_w \mid x)}{\pi_\text{ref}(y_w \mid x)} \,-\, \beta \log \frac{\pi_\theta(y_l \mid x)}{\pi_\text{ref}(y_l \mid x)} \right)$$
+**RLHF** · two sodas → judge scores each 1–10 → use scores to declare a winner. Indirect.
+**DPO** · just ask "A or B?" → direct preference.
 
-For each preference pair $(x, y_w, y_l)$:
-- $y_w$ is the preferred (winning) response.
-- $y_l$ is the rejected (losing) response.
-- $\pi_\text{ref}$ is the SFT model (frozen reference).
-- $\pi_\theta$ is the trainable policy.
+DPO writes a loss that says · *"directly increase prob of the winner $y_w$, decrease prob of the loser $y_l$, relative to the SFT baseline."*
 
 </div>
 
-Pure supervised loss. No RL loop. No reward model. Implementation is ~50 lines vs RLHF's thousands.
+---
+
+# DPO loss · inside-out
+
+$$\mathcal{L}_\text{DPO} = -\log \sigma\!\left( \underbrace{\beta \log \tfrac{\pi_\theta(y_w | x)}{\pi_\text{ref}(y_w | x)}}_{\text{winner score}} - \underbrace{\beta \log \tfrac{\pi_\theta(y_l | x)}{\pi_\text{ref}(y_l | x)}}_{\text{loser score}} \right)$$
+
+Build it from inside:
+1. **Ratio** $\pi_\theta / \pi_\text{ref}$ · how much more likely is the new model to produce $y$ than the SFT model? Want $> 1$ for $y_w$.
+2. **Log ratio** · "improvement score." Positive = improved over SFT.
+3. **Difference** · winner score − loser score. Want **large positive**.
+4. **Sigmoid** · squash to $(0,1)$. Large positive diff → $\sigma \approx 1$.
+5. **$-\log \sigma(\cdot)$** · standard CE loss. $\sigma \to 1 \Rightarrow$ loss $\to 0$. $\sigma \to 0 \Rightarrow$ huge loss → big gradient kicks in.
+
+---
+
+# Worked numeric · DPO step
+
+Prompt · "Suggest a coffee shop name." Winner $y_w$ = "The Daily Grind". Loser $y_l$ = "Coffee Shop". $\beta = 1$.
+
+| | $\pi_\text{ref}$ | $\pi_\theta$ |
+|---|---|---|
+| $y_w$ | 0.05 | 0.06 |
+| $y_l$ | 0.10 | 0.12 |
+
+**Winner score.** $\log(0.06/0.05) = \log 1.2 \approx 0.18$.
+**Loser score.** $\log(0.12/0.10) = \log 1.2 \approx 0.18$.
+
+**Difference** = $0.18 - 0.18 = \mathbf{0}$. Both got the same boost — model hasn't learned the preference yet.
+
+**Loss** = $-\log \sigma(0) = -\log 0.5 \approx \mathbf{0.69}$ — non-zero.
+
+Gradient pushes $\theta$ to increase $\pi_\theta(y_w)$ (e.g. to 0.08) and decrease $\pi_\theta(y_l)$ (e.g. to 0.11). Now the difference is positive → loss drops.
+
+Pure supervised loss. No RL loop. No reward model. ~50 lines vs RLHF's thousands.
 
 ---
 
