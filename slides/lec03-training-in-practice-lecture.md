@@ -26,6 +26,8 @@ By the end of this lecture you will be able to:
 4. Set up **mixed-precision** training with autocast.
 5. Diagnose **training curves** · underfit, sweet spot, overfit.
 6. Save and load **checkpoints** correctly (state_dict, not pickle).
+7. Detect **validation leakage** and train/test distribution shift.
+8. Run disciplined **ablations** instead of changing many knobs at once.
 
 ---
 
@@ -221,6 +223,32 @@ CPU loads while the GPU computes
 
 ---
 
+# The batch contract
+
+Before the model sees a batch, the batch should satisfy a contract.
+
+| Item | Classification expectation | Common bug |
+|------|-----------------------------|------------|
+| `x.shape` | `[B, C, H, W]` for images or `[B, d]` for vectors | missing batch dimension |
+| `x.dtype` | `float32` / `bfloat16` after transforms | raw `uint8` pixels |
+| `x.range` | normalized, often roughly centered | values still in `[0, 255]` |
+| `y.shape` | `[B]` for class indices | one-hot when loss expects indices |
+| `y.dtype` | `torch.long` for `CrossEntropyLoss` | float labels |
+
+```python
+assert x.ndim == 4
+assert x.dtype in (torch.float32, torch.bfloat16)
+assert y.ndim == 1 and y.dtype == torch.long
+```
+
+<div class="keypoint">
+
+Many "model bugs" are actually batch-contract bugs. Verify the batch before touching the architecture.
+
+</div>
+
+---
+
 # Writing a custom `Dataset`
 
 ```python
@@ -258,6 +286,33 @@ loader = DataLoader(dataset,
 <div class="insight">
 
 Rule of thumb · `num_workers ≈ 4 × num_GPUs`. `pin_memory=True` when using CUDA. `persistent_workers=True` when epochs are short.
+
+</div>
+
+---
+
+# Is the GPU waiting?
+
+Data loading is successful when the GPU almost never waits for the CPU.
+
+| Symptom | Likely cause | First fix |
+|---------|--------------|-----------|
+| GPU utilization sawtooths | CPU/disk cannot feed batches | increase `num_workers` |
+| first batch slow every epoch | worker restart overhead | `persistent_workers=True` |
+| transfer to CUDA slow | pageable host memory | `pin_memory=True` |
+| random crop dominates time | heavy CPU transforms | cache, simplify, or move to GPU |
+
+```python
+import time
+t0 = time.perf_counter()
+for i, batch in enumerate(loader):
+    if i == 100: break
+print("batches/sec", 100 / (time.perf_counter() - t0))
+```
+
+<div class="keypoint">
+
+Benchmark the loader alone. If data throughput is low, a bigger model or better optimizer will not fix the bottleneck.
 
 </div>
 
@@ -478,6 +533,25 @@ From zero to a trained model
 
 ---
 
+# Loss and metric are not the same
+
+Training optimizes a **loss**. Reporting uses a **metric**. They answer different questions.
+
+| Setting | Optimized loss | Reported metric | Failure if confused |
+|---------|----------------|-----------------|---------------------|
+| balanced classification | cross-entropy | accuracy | hides calibration |
+| imbalanced classification | weighted CE / focal | F1, AUROC, AUPRC | high accuracy by predicting majority |
+| regression | MSE / MAE / NLL | RMSE, MAE, $R^2$ | loss punishes errors differently |
+| ranking / retrieval | contrastive / pairwise | recall@k, MRR | good loss, poor top-k behavior |
+
+<div class="warning">
+
+Choose the metric before training. Otherwise you will optimize the convenient loss and later discover it does not match the real objective.
+
+</div>
+
+---
+
 # The recipe · one function
 
 ```python
@@ -536,6 +610,45 @@ opt.load_state_dict(ckpt['optim'])
 <div class="warning">
 
 Don't `torch.save(model)` — it pickles the class, which breaks across refactors. Always save `state_dict`.
+
+</div>
+
+---
+
+# Before trusting validation
+
+A validation score is useful only if the split matches the deployment question.
+
+| Problem | What goes wrong | Better split |
+|---------|------------------|--------------|
+| same patient in train and val | memorizes patient-specific artifacts | split by patient |
+| adjacent video frames | train and val nearly duplicates | split by video / scene |
+| time-series random split | future leaks into training | chronological split |
+| user logs | same user behavior in both sets | split by user or time |
+| repeated documents | near-duplicate text leakage | split by document/source |
+
+<div class="warning">
+
+Leakage makes the training recipe look correct while the model has learned the wrong thing. Check the split before celebrating a curve.
+
+</div>
+
+---
+
+# Distribution shift is the next test
+
+Even without leakage, validation may differ from real deployment.
+
+| Shift | Example | Practical response |
+|-------|---------|--------------------|
+| covariate shift | new camera, hospital, device | collect representative val/test |
+| label shift | class priors change | report per-class metrics |
+| concept shift | definition of target changes | refresh labels and monitor drift |
+| temporal shift | user behavior changes over time | time-based test set |
+
+<div class="keypoint">
+
+The question is not "did validation improve?" The question is "does validation measure the future cases we care about?"
 
 </div>
 
@@ -660,6 +773,32 @@ Suppose the LR finder gives:
 
 ---
 
+# Ablation discipline
+
+When improving a model, change one thing at a time.
+
+| Run | Change | Val metric | Interpretation |
+|-----|--------|------------|----------------|
+| A | baseline | 82.0 | reference |
+| B | stronger augmentation | 84.1 | likely useful |
+| C | bigger model | 82.4 | small gain, more cost |
+| D | augmentation + bigger model | 84.0 | bigger model added little |
+
+Rules:
+
+- Keep the data split fixed.
+- Log the config, seed, commit, and metric.
+- Repeat important comparisons with 3 seeds if the gain is small.
+- Compare against the simplest baseline that could work.
+
+<div class="keypoint">
+
+Without ablations, you do not know which change helped. You only know that the final run was different.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 5
@@ -698,6 +837,26 @@ After training — what next?
 # Error analysis · categorize, then prioritize
 
 ![w:900px](figures/lec03/svg/error_analysis_buckets.svg)
+
+---
+
+# From error bucket to intervention
+
+Do not stop at naming the error. Convert the bucket into an action.
+
+| Error bucket | Example diagnosis | Intervention |
+|--------------|-------------------|--------------|
+| blurry images | model fails on motion blur | add blur augmentation / collect blur examples |
+| rare class | few training examples | reweight loss / collect targeted data |
+| label ambiguity | humans disagree | clean labels / merge classes / report uncertainty |
+| background shortcut | model uses spurious context | crop, mask, augment backgrounds |
+| threshold error | probabilities okay, decision bad | tune threshold on validation |
+
+<div class="keypoint">
+
+Error analysis is not a post-mortem. It is the fastest way to decide what experiment to run next.
+
+</div>
 
 ---
 
@@ -743,6 +902,33 @@ Seed set at the start; every experiment records its seed in the config.
 
 ---
 
+# Minimal experiment record
+
+Every serious run should leave enough evidence to reproduce and compare it.
+
+| Record | Why it matters |
+|--------|----------------|
+| git commit | exact code |
+| config file | hyperparameters and paths |
+| data version / split id | same examples in train/val/test |
+| random seed | reproducibility and variance estimate |
+| hardware + precision | speed and numeric behavior |
+| final checkpoint + best checkpoint | resume and deploy |
+| metrics over time | diagnose underfit/overfit |
+
+```python
+run = {
+    "commit": git_sha,
+    "seed": seed,
+    "config": cfg,
+    "best_val": best_val,
+}
+```
+
+If you cannot compare two runs later, the experiment did not really happen.
+
+---
+
 <!-- _class: summary-slide -->
 
 # Lecture 3 — summary
@@ -751,7 +937,10 @@ Seed set at the start; every experiment records its seed in the config.
 - **Autograd** is a dynamic tape built every forward; wrap eval in `torch.no_grad()`.
 - **DataLoader tuning** — `num_workers`, `pin_memory`, `persistent_workers`.
 - **Mixed precision (BF16)** — 2× speed, half memory. Default on Ampere+.
+- **Loss ≠ metric** — pick the metric that matches the real objective.
 - **Debug ladder** — never skip a rung. Overfit one batch first.
+- **Validation discipline** — prevent leakage and check distribution shift.
+- **Ablations** — change one thing at a time and log the comparison.
 - **Error analysis (Ng)** — categorize failures *before* scaling up.
 - **Reproducibility** — code + config + data + seed + env. Weeks saved.
 

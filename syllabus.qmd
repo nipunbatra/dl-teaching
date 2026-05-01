@@ -8,7 +8,13 @@ subtitle: "Lecture-by-lecture reading map for Prince · *Understanding Deep Lear
 >
 > The course follows the UDL chapter order closely. Read the cited chapter(s) **before** each lecture.
 >
-> **24 lectures total.** L6 (Regularization) is comprehensive — spans two class sessions.
+> **Lecture 0 is a probability / MLE primer; 24 main lectures follow.** L6 (Regularization) is comprehensive — spans two class sessions.
+
+## Module 0 · Probability &amp; MLE Primer { .module-0 }
+
+| # | Lecture | Reading | Supplementary |
+|:-:|---------|---------|---------------|
+| 0 | Probability, MLE &amp; NLL | Bishop &amp; Bishop Ch 2–5; Prince Ch 1, Ch 3 | KL, MAP, reparameterization, score-function preview |
 
 ## Module 1 · Foundations &amp; Going Deep { .module-1 }
 

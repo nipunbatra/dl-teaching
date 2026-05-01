@@ -26,6 +26,8 @@ By the end of this lecture you will be able to:
 4. Apply **residual connections** to train 100+ layer networks.
 5. Pick **weight init** (Xavier / He) based on activation.
 6. Articulate three **practical limits** UAT does not address.
+7. Separate **expressivity**, **optimization**, and **generalization** claims.
+8. Explain projection shortcuts and pre-activation residual blocks.
 
 ---
 
@@ -47,6 +49,24 @@ Three questions for today:
 1. What does *"can approximate anything"* actually mean?
 2. If one layer suffices, why are SOTA models 100+ layers deep?
 3. How do we train deep nets without the gradient evaporating?
+
+---
+
+# Three axes we must not mix up
+
+Deep learning progress depends on three different questions.
+
+| Axis | Question | L02 answer |
+|------|----------|------------|
+| **Expressivity** | Can this architecture represent the function? | UAT and depth separation |
+| **Optimization** | Can SGD find useful weights? | ReLU, residuals, initialization |
+| **Generalization** | Will it work on unseen data? | not guaranteed by UAT |
+
+<div class="warning">
+
+A network can be expressive but untrainable. It can be trainable but overfit. It can fit train/val and still fail under distribution shift. Keep these axes separate in every DL paper you read.
+
+</div>
 
 ---
 
@@ -294,6 +314,25 @@ Parameter count is a crude proxy for capacity. What depth gives you, width alone
 
 ---
 
+# When depth helps — and when it doesn't
+
+Depth helps when the target function has reusable substructure.
+
+| Domain | Reusable structure | What deeper layers reuse |
+|--------|--------------------|--------------------------|
+| images | edges → textures → parts → objects | local visual motifs |
+| language | characters → words → phrases → discourse | compositional meaning |
+| audio | samples → phonemes → syllables → words | local temporal patterns |
+| tabular data | often weaker hierarchy | depth may help less |
+
+<div class="keypoint">
+
+Depth is not magic. It is a strong inductive bias for **compositional** problems. If the data do not have reusable structure, a deeper model can simply be harder to optimize.
+
+</div>
+
+---
+
 # Parity — the canonical case
 
 ![w:900px](figures/lec02/svg/parity_tree.svg)
@@ -459,6 +498,24 @@ This is an **optimization** problem, not a capacity problem.
 
 ---
 
+# Degradation is not overfitting
+
+Compare the signatures:
+
+| Failure mode | Training error | Validation / test error | Main diagnosis |
+|--------------|----------------|--------------------------|----------------|
+| Underfitting | high | high | model or training too weak |
+| Overfitting | low | high | generalization failure |
+| Degradation | higher for deeper model | higher for deeper model | optimization failure |
+
+<div class="keypoint">
+
+The ResNet paper mattered because it exposed a surprising fact: simply adding layers can make the **training objective itself** harder, even though the deeper model has more representational capacity.
+
+</div>
+
+---
+
 # The thought experiment
 
 ![w:920px](figures/lec02/svg/identity_thought_exp.svg)
@@ -508,6 +565,27 @@ Coordinating non-linear layers to produce *exact* identity is the opposite: a de
 # The residual block
 
 ![w:900px](figures/lec02/svg/resnet_block.svg)
+
+---
+
+# BatchNorm in the ResNet story
+
+The original ResNet block was not just "add a skip connection." It used a stack like:
+
+$$\text{Conv} \rightarrow \text{BatchNorm} \rightarrow \text{ReLU} \rightarrow \text{Conv} \rightarrow \text{BatchNorm} \rightarrow +x \rightarrow \text{ReLU}$$
+
+| Component | What it helps with |
+|-----------|--------------------|
+| Skip connection | direct signal and gradient path |
+| BatchNorm | stable activation scale across layers |
+| ReLU | nonlinearity with active-side gradient 1 |
+| He initialization | variance scale matched to ReLU |
+
+<div class="keypoint">
+
+Do not learn the wrong lesson: ResNets train because several engineering choices work together. The skip connection is the central idea, but scale control is part of the system.
+
+</div>
 
 ---
 
@@ -586,6 +664,47 @@ class ResidualBlock(nn.Module):
 
 ---
 
+# Projection shortcuts when shapes change
+
+The addition requires matching shapes. If the block changes width, channels, or spatial resolution, the skip path must also transform $x$.
+
+```python
+class ResidualBlock(nn.Module):
+    def __init__(self, d_in, d_out):
+        super().__init__()
+        self.block = nn.Sequential(
+            nn.Linear(d_in, d_out), nn.ReLU(),
+            nn.Linear(d_out, d_out),
+        )
+        self.skip = nn.Identity() if d_in == d_out else nn.Linear(d_in, d_out)
+
+    def forward(self, x):
+        return torch.relu(self.block(x) + self.skip(x))
+```
+
+In CNNs this is often a $1 \times 1$ convolution, sometimes with stride 2, so both branches land on the same shape before addition.
+
+---
+
+# Pre-activation ResNets
+
+Later ResNets moved normalization and activation **before** the weight layers:
+
+| Block style | Formula sketch | Why it matters |
+|-------------|----------------|----------------|
+| Post-activation | $y = \mathrm{ReLU}(x + F(x))$ | original ResNet |
+| Pre-activation | $y = x + F(\mathrm{BN/ReLU}(x))$ | cleaner identity path |
+
+<div class="keypoint">
+
+Pre-activation keeps the skip path as close to a pure identity as possible. This makes very deep residual networks easier to optimize because the gradient highway is less obstructed.
+
+</div>
+
+Transformers use the same idea in another form: residual stream plus normalization around each block.
+
+---
+
 # Empirical impact
 
 | Year | Model | Depth | ImageNet top-5 |
@@ -617,6 +736,33 @@ Keep activations — and gradients — at roughly **constant variance** across l
 - Variance shrinks → vanishing activations.
 
 ![w:900px](figures/lec02/svg/init_landscape.svg)
+
+---
+
+# What to check in a real model
+
+Initialization theory is useful because it gives a concrete diagnostic: **activation statistics by layer**.
+
+For one batch, log:
+
+| Quantity | Healthy early signal | Red flag |
+|----------|----------------------|----------|
+| activation mean | near 0 for normalized layers | large drift |
+| activation std | roughly stable across depth | shrinks to 0 or explodes |
+| gradient norm | nonzero in early layers | first layers near 0 |
+| fraction ReLU active | neither 0% nor 100% | many dead units |
+
+```python
+for name, p in model.named_parameters():
+    if p.grad is not None:
+        print(name, p.grad.norm().item())
+```
+
+<div class="keypoint">
+
+Before changing architecture, check whether the signal survives the forward pass and the gradient survives the backward pass.
+
+</div>
 
 ---
 
@@ -781,7 +927,9 @@ He doubles variance to compensate for ReLU's halving. Tanh doesn't halve — He 
 - **Vanishing gradients** come from products of sub-1 Jacobians; ReLU unlocks depth by giving gradient 1 on the active side.
 - **Degradation problem** — plain deep nets *train* worse.
 - **ResNets** — $\mathbf{y} = \mathcal{F}(\mathbf{x}) + \mathbf{x}$. Identity-in-the-Jacobian gradient highway + smoother landscape.
+- **ResNet practice** — BatchNorm, projection shortcuts, and pre-activation blocks keep the identity path usable.
 - **Xavier / He** — both derived from variance preservation.
+- **Always separate axes:** expressivity, optimization, and generalization are different claims.
 
 ### Read before Lecture 3
 

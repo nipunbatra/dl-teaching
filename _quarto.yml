@@ -23,7 +23,9 @@ website:
       - text: "UDL Book"
         href: https://udlbook.github.io/udlbook/
       - text: "Course Website"
-        href: https://nipunbatra.github.io/dl-2026/
+        href: https://nipunbatra.github.io/dl-teaching/
+      - text: "L00 Primer"
+        href: html/lec00-probability-mle-recap-lecture.html
   page-footer:
     left: "Course materials by Prof. Nipun Batra, IIT Gandhinagar"
     right:

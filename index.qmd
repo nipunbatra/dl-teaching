@@ -3,8 +3,9 @@ title: "ES 667: Deep Learning"
 subtitle: "IIT Gandhinagar · Aug 2026 · Prof. Nipun Batra"
 ---
 
-[Course website](https://nipunbatra.github.io/dl-2026/){.btn .btn-primary .btn-sm}
+[Course website](https://nipunbatra.github.io/dl-teaching/){.btn .btn-primary .btn-sm}
 [Syllabus &amp; reading map](syllabus.qmd){.btn .btn-outline-primary .btn-sm}
+[L00 Primer](html/lec00-probability-mle-recap-lecture.html){.btn .btn-outline-primary .btn-sm}
 [GitHub repo](https://github.com/nipunbatra/dl-teaching){.btn .btn-outline-secondary .btn-sm}
 
 ---
@@ -24,6 +25,12 @@ Each lecture maps to one or more UDL chapters — see the tables below and the f
 
 ---
 
+## Module 0 · Probability &amp; MLE Primer
+
+| # | Topic | Reading | Slides | Notebook |
+|:---:|------|:-------:|:------:|:--------:|
+| 0 | Probability, MLE &amp; NLL | Bishop &amp; Bishop Ch 2–5; Prince Ch 1, 3 | [HTML](html/lec00-probability-mle-recap-lecture.html) · [PDF](pdf/lec00-probability-mle-recap-lecture.pdf) | [Notebook](notebooks/00-probability-mle.ipynb) |
+
 ## Module 1 · Foundations &amp; Deep Networks (L1–L3)
 
 | # | Topic | UDL | Slides | Notebook |
@@ -31,6 +38,8 @@ Each lecture maps to one or more UDL chapters — see the tables below and the f
 | 1 | Why Deep Learning + MLP Recap | Ch 1, 3 | [HTML](html/lec01-why-dl-lecture.html) · [PDF](pdf/lec01-why-dl-lecture.pdf) | |
 | 2 | Universal Approximation &amp; Going Deep | Ch 4, 7, 11 | [HTML](html/lec02-uat-going-deep-lecture.html) · [PDF](pdf/lec02-uat-going-deep-lecture.pdf) | |
 | 3 | Training Deep Networks in Practice | Ch 6, 8 | [HTML](html/lec03-training-in-practice-lecture.html) · [PDF](pdf/lec03-training-in-practice-lecture.pdf) | |
+
+---
 
 ## Module 2 · Optimization (L4–L5)
 

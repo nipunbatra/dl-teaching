@@ -5,3 +5,9 @@ title: "Slides"
 All lecture slides are available in HTML (for browser) and PDF (for download).
 
 See the [Home page](index.qmd) for the full schedule with links.
+
+## Primer
+
+| # | Topic | HTML | PDF |
+|:-:|-------|:----:|:---:|
+| 0 | Probability, MLE &amp; NLL | [HTML](html/lec00-probability-mle-recap-lecture.html) | [PDF](pdf/lec00-probability-mle-recap-lecture.pdf) |

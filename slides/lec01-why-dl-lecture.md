@@ -82,6 +82,24 @@ Every word matters. We will unpack all of them this semester.
 
 ---
 
+# What representation learning buys you
+
+Classical ML:
+
+$$\text{raw data} \rightarrow \text{human-designed features} \rightarrow \text{classifier}$$
+
+Deep learning:
+
+$$\text{raw data} \rightarrow \text{learned layers} \rightarrow \text{representation} \rightarrow \text{prediction}$$
+
+<div class="keypoint">
+
+The key change is not "more parameters". It is that each layer learns a transformation: pixels become edges, edges become parts, parts become object evidence. Good representations keep task-relevant variation and suppress nuisance variation.
+
+</div>
+
+---
+
 # Three eras of deep learning
 
 ![w:900px](figures/lec01/svg/dl_timeline.svg)
@@ -111,12 +129,12 @@ Human top-5 error: ~5.1%. **AlexNet cut error by ~10 points in one year.**
 
 By the end of this lecture you will be able to:
 
-1. Articulate **why DL works now but didn't earlier** (compute + data + algorithms).
-2. Describe the **representation learning** vs hand-crafted feature contrast.
-3. Reason about the **ImageNet 2012 moment** and its consequences.
-4. Place the course in context · what you'll learn by L24.
-5. Set up the **compute and environment** for assignments.
-6. State **three real risks** of modern DL (energy, alignment, misinformation).
+1. Articulate **why DL works now but did not earlier**: compute, data, algorithms.
+2. Describe **representation learning** as learning transformations, not just classifiers.
+3. Explain why stacked **linear** layers collapse and why nonlinear layers do not.
+4. Compute a small MLP's forward pass, parameter count, and tensor shapes.
+5. Derive why softmax + cross-entropy gives gradient $\hat{\mathbf{y}} - \mathbf{y}$.
+6. State the three axes that make deep networks useful: **expressivity, trainability, generalization**.
 
 ---
 
@@ -285,6 +303,23 @@ $x = \begin{bmatrix} 2 \\ 3 \end{bmatrix}$ · $W_1 = \begin{bmatrix} 1 & 0 \\ 0 
 
 ---
 
+# Activation functions · what can go wrong
+
+| Activation | Failure mode | Practical consequence |
+|------------|--------------|-----------------------|
+| Sigmoid | Saturates; derivative $\le 0.25$ | vanishing gradients |
+| Tanh | Saturates for large $|z|$ | early layers learn slowly |
+| ReLU | zero gradient for $z < 0$ | dead units if updates are harsh |
+| GELU / SiLU | smoother but costlier | common in Transformers, less common in tiny CNNs |
+
+<div class="keypoint">
+
+An activation is not decoration. It controls both the representation and the backward gradient flow. Modern defaults are ReLU-family for CNNs and GELU / SwiGLU-family for Transformers.
+
+</div>
+
+---
+
 # Stacking neurons → MLP
 
 ![w:820px](figures/lec01/svg/mlp_architecture.svg)
@@ -298,6 +333,27 @@ For MNIST with hidden sizes 256, 256:
 $$\underbrace{256 \times 784}_{W_1} + \underbrace{256}_{b_1} + \underbrace{256 \times 256}_{W_2} + \underbrace{256}_{b_2} + \underbrace{10 \times 256}_{W_3} + \underbrace{10}_{b_3} = \boxed{269{,}322}$$
 
 A tiny MNIST model has ~270k parameters. GPT-3 has 175 billion — $6 \times 10^5 \times$ more.
+
+---
+
+# Batched matrix form · the shapes that matter
+
+For a mini-batch:
+
+$$X \in \mathbb{R}^{B \times d_\text{in}}, \quad W \in \mathbb{R}^{d_\text{in} \times d_\text{out}}, \quad b \in \mathbb{R}^{d_\text{out}}$$
+
+$$Z = XW + b \quad \Rightarrow \quad Z \in \mathbb{R}^{B \times d_\text{out}}$$
+
+MNIST batch of 64:
+
+| Tensor | Shape |
+|--------|-------|
+| flattened input $X$ | $64 \times 784$ |
+| first weight $W_1$ | $784 \times 256$ |
+| hidden activations $H_1$ | $64 \times 256$ |
+| final logits | $64 \times 10$ |
+
+Most PyTorch bugs in early DL are shape bugs. Check the batch dimension first.
 
 ---
 
@@ -416,6 +472,32 @@ $$\mathcal{L} = -\sum_{k=1}^{K} y_k \log \hat{y}_k$$
 <div class="math-box">
 
 This **is** cross-entropy. MLE hands it to us for free — we did not invent it.
+
+</div>
+
+---
+
+# Why cross-entropy is the right score
+
+Accuracy only asks whether the top class is correct. Cross-entropy asks whether the whole probability distribution is honest.
+
+Suppose the true class is class 0:
+
+| Prediction | CE loss |
+|------------|---------|
+| $[0.70, 0.20, 0.10]$ | $-\log 0.70 = 0.36$ |
+| $[0.99, 0.005, 0.005]$ | $-\log 0.99 = 0.01$ |
+
+But if the label is class 1:
+
+| Prediction | CE loss |
+|------------|---------|
+| $[0.70, 0.20, 0.10]$ | $-\log 0.20 = 1.61$ |
+| $[0.99, 0.005, 0.005]$ | $-\log 0.005 = 5.30$ |
+
+<div class="keypoint">
+
+Cross-entropy rewards calibrated confidence and punishes confident wrong answers. That is why it is a proper scoring rule for classification.
 
 </div>
 
@@ -586,6 +668,28 @@ These three lines are the **entire** backward pass of a linear layer. Everything
 
 ---
 
+# Same rule with batches
+
+For a batch:
+
+$$Z = XW + b$$
+
+$$X \in \mathbb{R}^{B \times d_\text{in}}, \quad W \in \mathbb{R}^{d_\text{in} \times d_\text{out}}, \quad \Delta = \frac{\partial \mathcal{L}}{\partial Z} \in \mathbb{R}^{B \times d_\text{out}}$$
+
+The linear-layer backward pass becomes:
+
+$$\frac{\partial \mathcal{L}}{\partial W} = X^\top \Delta, \quad
+\frac{\partial \mathcal{L}}{\partial b} = \sum_{i=1}^{B} \Delta_i, \quad
+\frac{\partial \mathcal{L}}{\partial X} = \Delta W^\top$$
+
+<div class="keypoint">
+
+Backprop is mostly matrix multiplication. PyTorch is not doing magic here; it is applying these local rules through the computation graph.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 4
@@ -612,7 +716,7 @@ Give an honest answer before turning the page.
 
 ---
 
-# Biology does the same thing
+# Biology inspired the hierarchy
 
 Hubel & Wiesel (Nobel 1981) — the cat visual cortex is hierarchical.
 
@@ -623,7 +727,7 @@ Hubel & Wiesel (Nobel 1981) — the cat visual cortex is hierarchical.
 | V4 | mid layer | shapes, parts |
 | IT | late layer | objects, faces |
 
-Biology inspired the architecture; the optimizer and data are engineered.
+Biology suggested that hierarchical visual processing is useful. Modern neural networks are not literal brain models: the optimizer, data scale, loss function, and hardware are engineered.
 
 ---
 
@@ -701,7 +805,15 @@ $$\text{ReLU}(z) = \max(0, z), \quad \text{ReLU}'(z) \in \{0, 1\}$$
 
 For active neurons the gradient is exactly 1 — no shrinkage.
 
-We'll come back to ResNets (the *real* fix for very deep nets) in Lecture 2.
+But ReLU alone is not enough for very deep networks:
+
+| Problem | Tool |
+|---------|------|
+| activation variance shrinks or explodes | Xavier / He initialization |
+| gradients weaken through many layers | residual connections |
+| optimization is scale-sensitive | normalization layers |
+
+Lecture 2 derives why these tools make depth trainable.
 
 ---
 
@@ -756,9 +868,53 @@ The single most common PyTorch bug.
 
 ---
 
+# Train mode vs eval mode
+
+Some layers behave differently during training and evaluation.
+
+| Mechanism | `model.train()` | `model.eval()` |
+|-----------|------------------|----------------|
+| Dropout | randomly masks activations | uses all activations |
+| BatchNorm | updates running statistics | uses stored statistics |
+| Autograd | tracks gradients if enabled | still tracks unless disabled |
+
+```python
+model.eval()
+with torch.no_grad():
+    logits = model(x_val)
+```
+
+<div class="warning">
+
+For validation and test: use `model.eval()` and `torch.no_grad()`. Otherwise your measured performance may be noisy, slower, or wrong.
+
+</div>
+
+---
+
 # Train / val / test
 
 ![w:900px](figures/lec01/svg/train_val_test_split.svg)
+
+---
+
+# Splits must match the real question
+
+Random splitting is not always honest.
+
+| Data type | Bad split | Better split |
+|-----------|-----------|--------------|
+| medical images | random image split | split by patient |
+| video frames | random frame split | split by video / scene |
+| recommender logs | random row split | split by user or time |
+| documents | random paragraph split | split by document / source |
+| sensors | random window split | split by device / location |
+
+<div class="keypoint">
+
+Validation should answer the question: "Will this model work on new cases we actually care about?"
+
+</div>
 
 ---
 
@@ -790,16 +946,18 @@ Training = studying.
 
 # Lecture 1 — summary
 
-- **Deep learning = representation learning.** Features learned, not designed.
+- **Deep learning = representation learning.** Layers learn transformations that preserve task signal and suppress nuisance variation.
 - **Why now:** data + compute + algorithms compounded 2009–2017.
 - **Neuron = sum + squash.** Stack them and non-linearity keeps depth meaningful.
 - **Softmax + CE from MLE:** $\partial \mathcal{L} / \partial \mathbf{z} = \hat{\mathbf{y}} - \mathbf{y}$.
-- **Backprop** = three lines per layer, repeated.
+- **Backprop** = local gradient rules plus matrix multiplication, repeated layer by layer.
+- **Depth needs engineering:** activation choice, initialization, residual connections, normalization.
 - **Training loop:** forward → loss → zero_grad → backward → step.
+- **Evaluation:** train / validation / test splits must match the deployment question.
 
 ### Read before Lecture 2
 
-**Prince · Understanding Deep Learning** — Ch 1, Ch 3. Free PDF at [udlbook.github.io](https://udlbook.github.io/udlbook/).
+**Prince · Understanding Deep Learning** — Ch 4 (deep networks), Ch 7 (gradients and initialization), Ch 11 (residual networks). Free PDF at [udlbook.github.io](https://udlbook.github.io/udlbook/).
 
 ### Next lecture
 

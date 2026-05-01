@@ -7,7 +7,7 @@ math: mathjax
 
 <!-- _class: title-slide -->
 
-# Probability & MLE · the loss-functions-from-first-principles primer
+# Probability, MLE & NLL · the loss-functions-from-first-principles primer
 
 ## Lecture 0 · ES 667: Deep Learning
 
@@ -18,17 +18,17 @@ math: mathjax
 
 # Why this lecture
 
-The whole course assumes · MSE for regression · cross-entropy for classification · KL for VAEs.
+This is not a generic probability recap. It is the probability **toolkit for deep learning**.
 
-But **why** these losses? Where do they come from?
+The whole course keeps reusing the same objects · likelihoods, negative log-likelihoods, KL terms, Gaussian noise, categorical tokens, and Monte Carlo expectations.
 
 <div class="paper">
 
-This lecture derives every loss we'll ever use from one principle: **maximum likelihood estimation** under a probabilistic model. Once you see the pattern, every loss in the course becomes obvious.
+This lecture derives the core losses from one principle: **maximum likelihood estimation** under a probabilistic model. Once you see the pattern, "loss design" becomes a modeling choice, not a bag of formulas.
 
 </div>
 
-If you took a probability course (ES 654), this is a refresher. If not, this is your first-principles foundation.
+If you took probability in ES 654, treat this as a map from probability to DL. If not, these are the pieces you need before the course accelerates.
 
 ---
 
@@ -40,8 +40,8 @@ By the end of this lecture you will be able to:
 2. Compute **likelihood** and **log-likelihood** of a dataset under a model.
 3. Derive **MSE** as the MLE for regression with Gaussian noise.
 4. Derive **cross-entropy** as the MLE for classification with categorical / Bernoulli output.
-5. Articulate why we always **maximize log-likelihood** rather than likelihood directly.
-6. Connect MLE to **negative-log-loss** — the loss we'll use everywhere.
+5. Connect **cross-entropy, KL divergence, and negative log-likelihood**.
+6. Explain how **MAP**, Monte Carlo expectations, and reparameterization reappear in VAEs, diffusion, and regularization.
 
 ---
 
@@ -147,6 +147,24 @@ Compactly · $P(Y) = \prod_{k=1}^K \pi_k^{[Y = k]}$
 **Examples** · 10 digit classes for MNIST · 1000 ImageNet classes · 50,000 token vocabulary.
 
 The softmax output of any classifier IS a categorical distribution over classes.
+
+---
+
+# The model outputs a conditional distribution
+
+In supervised learning the model does not just output a number. It defines a distribution **conditioned on the input**.
+
+<div class="math-box">
+
+| Task | Neural net output | Probabilistic meaning |
+|:-:|:-:|:-:|
+| Binary classification | $\hat p_\theta(x)$ | $Y \mid x \sim \text{Bernoulli}(\hat p_\theta(x))$ |
+| Multiclass classification | $\hat{\boldsymbol\pi}_\theta(x)$ | $Y \mid x \sim \text{Categorical}(\hat{\boldsymbol\pi}_\theta(x))$ |
+| Regression | $\hat\mu_\theta(x)$ | $Y \mid x \sim \mathcal{N}(\hat\mu_\theta(x), \sigma^2)$ |
+
+</div>
+
+Training asks: *under these conditional distributions, how likely are the observed labels?*
 
 ---
 
@@ -357,6 +375,26 @@ When IID **fails** · time-series (today's stock depends on yesterday's), images
 
 ---
 
+# IID violations that break evaluation
+
+The IID assumption is also what makes a validation score mean anything.
+
+<div class="warning">
+
+If near-duplicate, same-patient, same-video, or future information leaks across train and validation, the model looks good without learning the intended mapping.
+
+</div>
+
+**Examples**
+- Medical images · train has one scan from a patient, validation has another scan from the same patient.
+- Video frames · random frame split makes train and validation almost identical.
+- LLM data · benchmark answers appear in pretraining data.
+- Time-series · random split lets the model train on the future and test on the past.
+
+When IID fails, split by the unit that creates dependence: patient, video, user, time, document source.
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 3
@@ -397,6 +435,26 @@ You must send messages in English, but your only Morse codebook is for **French*
 - **KL divergence** = the *extra* length — your penalty for the wrong book.
 
 </div>
+
+---
+
+# Cross-entropy · the quantity we minimize
+
+Cross-entropy is the expected code length when data comes from $p$ but we encode it using model $q$:
+
+<div class="math-box">
+
+$$H(p, q) = -\sum_y p(y)\log q(y)$$
+
+and
+
+$$H(p, q) = H(p) + \text{KL}(p \| q)$$
+
+</div>
+
+For supervised classification, $p$ is usually a one-hot empirical label. Then $H(p)$ is constant and minimizing cross-entropy is the same as minimizing $\text{KL}(p\|q)$.
+
+This is the bridge between the **MLE view** ("maximize probability of the label") and the **information view** ("use fewer extra bits").
 
 ---
 
@@ -471,6 +529,25 @@ This is why classification training is so well-behaved compared to GANs / RL.
 
 ---
 
+# Score function · the bridge to diffusion
+
+The gradient of a log-density is called the **score**:
+
+<div class="math-box">
+
+$$s_\theta(x) = \nabla_x \log p_\theta(x)$$
+
+</div>
+
+It points in the direction where the model density increases fastest. This object appears later in two ways:
+
+- **MLE / classification** · gradients of log-probability tell parameters how to fit the data.
+- **Diffusion / score matching** · learn a vector field that points noisy samples back toward high-density data.
+
+Do not confuse this with a class score/logit. Same English word, different mathematical object.
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 5
@@ -514,6 +591,25 @@ $\text{Total} = 0.5 + 0.01 \cdot 25 = \mathbf{0.75}$. Optimizer balances data fi
 
 ---
 
+# MAP gives more than L2
+
+The prior determines the regularizer.
+
+<div class="math-box">
+
+| Prior on weight $w$ | Negative log-prior | Regularizer |
+|:-:|:-:|:-:|
+| Gaussian · $p(w)\propto e^{-w^2/(2\sigma^2)}$ | $w^2/(2\sigma^2)$ | L2 / weight decay |
+| Laplace · $p(w)\propto e^{-|w|/b}$ | $|w|/b$ | L1 / sparsity |
+
+</div>
+
+So regularization is not just "add a penalty." It is a prior belief about which parameters are plausible before seeing the data.
+
+This is useful but limited: modern DL regularization also comes from data augmentation, early stopping, normalization, architecture, and optimizer choices. L06 returns to this broader view.
+
+---
+
 # Putting it all together
 
 A neural network's training loop is a *Monte Carlo MLE* algorithm:
@@ -530,6 +626,26 @@ A neural network's training loop is a *Monte Carlo MLE* algorithm:
 </div>
 
 Add weight decay → MAP. Add KL to a prior on latent variables → ELBO (VAE). Add denoising noise → score matching (diffusion). Same skeleton, different probabilistic interpretation.
+
+---
+
+# The probability map for this course
+
+<div class="math-box">
+
+| Probability idea | Where it reappears |
+|:-:|:-:|
+| Categorical NLL | classifiers, token prediction, BERT/GPT |
+| Gaussian NLL | regression, VAEs, diffusion noise |
+| KL divergence | VAEs, distillation, DPO/RLHF-style objectives |
+| Monte Carlo expectation | minibatches, dropout, VAEs, diffusion |
+| Reparameterization | VAEs, Gaussian noise injection, differentiable sampling |
+| Change of variables | normalizing flows, invertible models |
+| Score $\nabla_x\log p(x)$ | score matching, diffusion |
+
+</div>
+
+This is why this lecture exists: it gives names to the objects that keep returning under different architectures.
 
 ---
 
@@ -891,6 +1007,9 @@ A. Pure convention · ML libraries minimize · `loss.backward()` only goes downh
 **Q. What if my output isn't Bernoulli/Categorical/Gaussian?**
 A. Pick whatever distribution matches. Poisson for counts. Beta for probabilities. Mixture-of-Gaussians for multimodal. The recipe (NLL = loss) is universal.
 
+**Q. What if the model's distributional assumption is wrong?**
+A. Then the loss optimizes the wrong statistical model. Example: MSE assumes symmetric Gaussian noise, so it is fragile to outliers. For heavy-tailed noise, Laplace NLL / MAE or a Student-t likelihood may be a better model.
+
 ---
 
 <!-- _class: summary-slide -->
@@ -903,12 +1022,15 @@ A. Pick whatever distribution matches. Poisson for counts. Beta for probabilitie
 - **MLE** · choose params to maximize log-likelihood.
 - **MSE** · MLE under Gaussian noise (regression).
 - **Cross-entropy** · MLE under Bernoulli/Categorical (classification).
+- **Cross-entropy = entropy + KL.** With one-hot labels, minimizing CE minimizes KL to the empirical label distribution.
+- **MAP** · MLE plus a prior; Gaussian prior gives L2, Laplace prior gives L1.
+- **Monte Carlo + reparameterization + score** · the probability tools behind VAEs and diffusion.
 - **Negative log-likelihood = the loss** everywhere in DL.
 
 ### Read before Lecture 1
 
-- Strang's "Linear Algebra" Ch 1 · vectors, matrices, dot products.
-- Bishop's *Pattern Recognition and ML* Ch 1 (free PDF) · prob theory.
+- Bishop & Bishop, *Deep Learning: Foundations and Concepts* · Ch 2-5 for probability, distributions, regression, and classification likelihoods.
+- Prince UDL · Ch 1 and Ch 3 for the first DL model view.
 
 ### Next lecture
 
