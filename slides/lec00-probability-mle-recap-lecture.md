@@ -8,9 +8,9 @@ math: mathjax
 <!-- _class: title-slide -->
 
 # A Probabilistic View of ML
-## From linear regression to MLE, MAP, L1 & L2
+## Distributions · sampling · MLE · MAP · KL
 
-### Lecture 0 · ES 667: Deep Learning
+### Lecture 0 · ES 667: Deep Learning · *spans 2 sessions*
 
 **Prof. Nipun Batra**
 *IIT Gandhinagar · Aug 2026*
@@ -36,15 +36,23 @@ Today's promise · one principle — **maximum likelihood under a probabilistic 
 
 # Learning outcomes
 
-By the end of this lecture you will be able to:
+By the end of these **two sessions** you will be able to:
 
-1. **State** the Bernoulli, Categorical, and Normal distributions and the conditional view of ML.
-2. **Apply Bayes' rule** and identify prior, likelihood, evidence, and posterior.
-3. **Derive MSE** as MLE for linear regression with Gaussian noise.
-4. **Derive cross-entropy** as MLE for logistic regression with Bernoulli output.
-5. **Derive L2 regularization** as MAP with a Gaussian prior on $\theta$.
-6. **Derive L1 regularization** as MAP with a Laplace prior — and explain why L1 gives sparsity.
-7. **Connect** these foundations to VAEs, diffusion, RLHF, and the rest of the course.
+**Session 1 · framework + likelihood**
+
+1. **State** the Bernoulli, Categorical, and Normal distributions, the `~` notation, and IID sampling.
+2. **Read a plate-notation** graphical model and recognize the supervised setup.
+3. Explain three reasons why **the Normal shows up everywhere** (CLT, max entropy, closed-under-linear).
+4. **Sample** from Bernoulli, Categorical, and Normal — and recognize the **reparameterization trick** as an affine map of a base sample.
+5. **Apply Bayes' rule** and identify prior, likelihood, evidence, and posterior.
+6. **Derive MSE / BCE / categorical CE** as NLL under Gaussian / Bernoulli / Categorical outputs.
+
+**Session 2 · MAP + KL + course spine**
+
+7. **Derive L2** as MAP with a Gaussian prior, **L1** as MAP with a Laplace prior, and explain L1's sparsity geometrically.
+8. State and use **KL divergence**, recognize cross-entropy as KL up to a constant, and re-derive MLE/MAP through the KL lens.
+9. Distinguish **forward vs reverse KL** and predict their respective failure modes (mode-covering vs mode-seeking).
+10. **Connect** these foundations to VAEs, diffusion, RLHF, distillation, and the rest of the course.
 
 ---
 
@@ -288,6 +296,79 @@ If $\Sigma = \sigma^2 I$ (isotropic), the components are independent. **This is 
 
 ---
 
+# Why does the Normal show up everywhere?
+
+Three deep reasons — each comes back later in the course.
+
+<div class="math-box">
+
+1. **Central Limit Theorem (CLT)** · the sum of many small independent things is Normal. So measurement noise, sensor jitter, biological variation all *empirically* look Gaussian.
+2. **Maximum entropy** · among all distributions with given mean and variance, Normal has the largest entropy → "the most agnostic choice when all you know is mean & variance."
+3. **Closed under linear operations** · sum, scaling, and conditioning on linear maps of Gaussians stay Gaussian. Bayesian updates with Gaussian prior + Gaussian likelihood give a Gaussian posterior — *conjugacy*.
+
+</div>
+
+These three properties together explain why the Gaussian dominates classical statistics, signal processing, **diffusion models**, Kalman filters, and Bayesian neural nets.
+
+---
+
+# Why Normal · the Central Limit Theorem
+
+**Statement (informal)** · let $X_1, X_2, \ldots, X_N$ be IID with mean $\mu$ and variance $\sigma^2$. Define the standardized sum
+
+$$Z_N = \frac{1}{\sqrt{N}}\sum_{i=1}^N \frac{X_i - \mu}{\sigma}$$
+
+Then as $N \to \infty$, $Z_N \to \mathcal{N}(0, 1)$ regardless of the original distribution of $X_i$.
+
+<div class="math-box">
+
+**Worked** · Sum of 12 IID $\text{Uniform}[0, 1]$ has mean $6$ and variance $1$. The sum is approximately $\mathcal{N}(6, 1)$ — Box-Muller's original observation, used historically to *generate* Gaussian samples before better algorithms existed.
+
+</div>
+
+**Implication** · any quantity arising as the **aggregate of many small effects** tends to look Gaussian. Sensor noise, height of humans, daily temperature deviation — all approximately Normal because the underlying causes are sums of many small contributions.
+
+---
+
+# Why Normal · maximum entropy
+
+**Entropy** quantifies "how spread-out / uncertain" a distribution is. Among all distributions with a *given* mean $\mu$ and variance $\sigma^2$ ·
+
+<div class="math-box">
+
+$$\boxed{\;\arg\max_{p}\; H(p) \;\text{ s.t. }\; \mathbb{E}_p[Y] = \mu,\; \mathbb{E}_p[(Y - \mu)^2] = \sigma^2 \;\;\Longrightarrow\;\; p = \mathcal{N}(\mu, \sigma^2)\;}$$
+
+</div>
+
+**Reading** · "if all you know about a quantity is its first two moments, the *least committal* probability model is Gaussian."
+
+This is **Occam's razor for distributions** · don't bake in assumptions you can't justify. The Gaussian is the answer to *"what's the safest default?"* given mean and variance.
+
+Other max-entropy distributions you'll meet · **Bernoulli** is max-ent on $\{0, 1\}$ given the mean; **Uniform** is max-ent on a bounded interval; **Exponential** is max-ent on $[0, \infty)$ given a fixed mean.
+
+---
+
+# Why Normal · closed under linear ops + conjugacy
+
+**Sum of Gaussians is Gaussian** · if $X \sim \mathcal{N}(\mu_1, \sigma_1^2)$ and $Y \sim \mathcal{N}(\mu_2, \sigma_2^2)$ are independent,
+$$X + Y \sim \mathcal{N}\bigl(\mu_1 + \mu_2,\; \sigma_1^2 + \sigma_2^2\bigr)$$
+
+**Affine transform of a Gaussian is Gaussian** · $aY + b \sim \mathcal{N}(a\mu + b, a^2 \sigma^2)$.
+
+<div class="math-box">
+
+**Conjugacy.** Gaussian prior + Gaussian likelihood ⇒ **Gaussian posterior**, with closed-form mean and variance. No integral, no MCMC.
+
+</div>
+
+These properties matter:
+
+- **Diffusion (L21)** · the forward process adds Gaussian noise at every step, and the closed-form jump $x_t = \sqrt{\bar\alpha_t}\,x_0 + \sqrt{1-\bar\alpha_t}\,\epsilon$ exists *exactly because* sums of Gaussians are Gaussian.
+- **Kalman filter** · linear-Gaussian state-space models have closed-form posterior at every time step.
+- **Reparameterization trick (next!)** · $z = \mu + \sigma \cdot \epsilon$, $\epsilon \sim \mathcal{N}(0, 1)$ — sampling from a non-standard Normal is just an affine transform of a standard one.
+
+---
+
 # A small zoo of distributions you'll meet
 
 | Name | Notation | Type | Used for |
@@ -337,6 +418,134 @@ Every supervised learning setup we'll see in this course shares the same plate d
 </div>
 
 Whether you are doing logistic regression, an MLP, a Transformer, or a diffusion model — the *outermost* graphical model is **always this**. Only the conditional distribution $p(y \mid \mathbf{x}, \theta)$ inside the plate changes.
+
+---
+
+<!-- _class: section-divider -->
+
+### PART 1.5
+
+# Sampling
+
+How we draw from distributions — and why every generative model needs it
+
+---
+
+# Why we sample · two roles
+
+Sampling appears all over deep learning, in two distinct roles ·
+
+<div class="math-box">
+
+| Role | What it means | Examples |
+|:-:|:-:|:-:|
+| **Generation** | Produce new instances from a learned distribution | LLM next-token, VAE images, diffusion, GAN |
+| **Monte Carlo estimation** | Approximate an expectation we can't compute analytically | mini-batch SGD, REINFORCE, dropout averaging, evaluating ELBOs |
+
+</div>
+
+These two uses are technically the same operation — *draw $y \sim p$* — but conceptually different. Today we set up the primitives. The advanced uses (reparameterization in VAEs, ancestral sampling in diffusion, nucleus sampling in LLMs) all reduce to combinations of what's on the next four slides.
+
+---
+
+# The master sampling primitive · inverse CDF
+
+For any 1-D distribution with CDF $F(y) = P(Y \le y)$, the algorithm is ·
+
+<div class="math-box">
+
+1. Draw $u \sim \text{Uniform}[0, 1]$.
+2. Return $y = F^{-1}(u)$.
+
+</div>
+
+**Why it works** · $P(Y \le y) = P(F^{-1}(u) \le y) = P(u \le F(y)) = F(y)$. ✓
+
+**Worked · sampling from $\text{Bernoulli}(p)$** · the CDF jumps from $0$ to $1-p$ at $0$ and from $1-p$ to $1$ at $1$. Inverting ·
+- if $u < 1 - p$ return $0$
+- else return $1$
+
+Equivalently · `return 1 if u < p else 0` (after a relabeling). One uniform draw, one comparison · that's the entire Bernoulli sampler.
+
+---
+
+# Sampling from a Categorical · the LLM token primitive
+
+Categorical with probabilities $\boldsymbol\pi = (\pi_1, \ldots, \pi_K)$. The CDF is the **stick-breaking** cumulative ·
+
+<div class="math-box">
+
+Build $c_k = \sum_{j=1}^k \pi_j$ (so $c_K = 1$). Draw $u \sim \text{Uniform}[0, 1]$. Return the smallest $k$ such that $c_k \ge u$.
+
+</div>
+
+**Worked** · $\boldsymbol\pi = (0.1, 0.4, 0.3, 0.2)$ → cumulative $(0.1, 0.5, 0.8, 1.0)$. Draw $u = 0.55$ · smallest $k$ with $c_k \ge 0.55$ is $k = 3$. Return class 3.
+
+This **is what `torch.multinomial` does**. And — bigger picture — **this is how every LLM samples its next token** · the model produces a vector of $K$ probabilities (where $K \approx$ vocab size, often 50,000+), and we run exactly this algorithm to pick a token.
+
+---
+
+# Sampling from a Normal · and the reparameterization trick
+
+To sample $Y \sim \mathcal{N}(\mu, \sigma^2)$ ·
+
+1. Sample $\epsilon \sim \mathcal{N}(0, 1)$ (e.g. via Box-Muller, or just `torch.randn(...)`).
+2. Return $y = \mu + \sigma \cdot \epsilon$.
+
+This *works* because the affine transform of a Gaussian is a Gaussian (last lecture's "closed under linear ops").
+
+<div class="keypoint">
+
+This is the **reparameterization trick**, and it is one of the most important ideas in modern deep learning ·
+
+$$y = \mu_\theta(\mathbf{x}) + \sigma_\theta(\mathbf{x}) \cdot \epsilon, \qquad \epsilon \sim \mathcal{N}(0, 1)$$
+
+The randomness $\epsilon$ is **outside** the path we want gradients through. $\mu_\theta$ and $\sigma_\theta$ are deterministic functions of the input. So we can backprop through the sample.
+
+</div>
+
+This is what makes **VAEs trainable** (L19) and what powers the entire **diffusion** stack (L21–L22). You'll see it again, and you now know exactly where it comes from.
+
+---
+
+# Monte Carlo expectation · the workhorse
+
+For an integral / sum we can't compute analytically ·
+
+<div class="math-box">
+
+$$\mathbb{E}_{Y \sim p}[f(Y)] = \int f(y)\,p(y)\,dy \;\;\approx\;\; \frac{1}{N}\sum_{i=1}^N f(y_i),\qquad y_i \sim p$$
+
+</div>
+
+**Law of large numbers** · the estimator is unbiased and its variance scales as $1/N$ — quadrupling samples halves the standard error.
+
+**Hidden everywhere in DL** ·
+- **Mini-batch SGD** is a Monte Carlo estimate of the *expected gradient* over the data distribution. Each batch is one MC sample.
+- **VAE ELBO** uses $\mathbb{E}_{q(z\mid x)}[\log p(x\mid z)]$ — estimated from one $z$ sample per training step.
+- **Diffusion** averages over a randomly chosen timestep $t$ and noise $\epsilon$ — both Monte Carlo.
+- **REINFORCE / RLHF** averages over policy rollouts.
+
+Almost every "loss" you'll write is secretly an expectation that's being approximated by a single sample.
+
+---
+
+# LLM token sampling · preview of L14
+
+You now know the primitive (sampling from a Categorical). LLM generation is just Categorical sampling at every step — but with a few tweaks to control diversity ·
+
+<div class="math-box">
+
+| Strategy | What it does | When to use |
+|:-:|:-:|:-:|
+| **Greedy** ($\arg\max$) | Pick the most likely token | Deterministic; safe but boring |
+| **Temperature** $T$ | Sample from $\tilde\pi_k \propto \pi_k^{1/T}$ | $T \to 0$ = greedy; $T = 1$ = unchanged; $T > 1$ = more random |
+| **Top-$k$** | Keep top $k$ logits, renormalize, sample | Caps diversity at the top |
+| **Top-$p$ (nucleus)** | Keep smallest set with cumulative prob $\ge p$ | Adapts to the model's confidence |
+
+</div>
+
+L14 covers the full story. The point today · the underlying operation is *sampling from a Categorical* — exactly the inverse-CDF primitive from two slides ago.
 
 ---
 
@@ -891,6 +1100,24 @@ The loss is small **iff the model assigned high probability to the true class**.
 
 <!-- _class: section-divider -->
 
+# End of Session 1
+
+So far · **probabilistic framework + MLE.** Bernoulli, Categorical, Normal · likelihood and log-likelihood · sampling primitives · Bayes' rule with its four named terms · MLE for the coin, linear regression, logistic regression, and multiclass — all derived as NLL of a chosen distribution.
+
+**Session 2 picks up from here** · MAP and regularization (L2 from Gaussian prior, L1 from Laplace), KL divergence as the unifying lens, and how it all fans out into VAEs, diffusion, RLHF, and the rest of the course.
+
+---
+
+<!-- _class: section-divider -->
+
+# Welcome to Session 2
+
+Recap of session 1 · the model defines a distribution, and MLE = NLL minimization. **Today** · what changes when we add a *prior* — and why KL divergence is the right language for everything that comes next.
+
+---
+
+<!-- _class: section-divider -->
+
 ### PART 5
 
 # MAP and the meaning of regularization
@@ -1131,23 +1358,144 @@ The whole course will keep instantiating the same NLL recipe. Each new model jus
 
 ---
 
-# KL divergence · cross-entropy in disguise
+# KL divergence · definition
 
-For two distributions $p$ (true) and $q$ (model) ·
+KL divergence measures how different one distribution $p$ is from another distribution $q$ over the same support.
 
 <div class="math-box">
 
-$$\text{KL}(p \,\Vert\, q) = \sum_y p(y)\log\frac{p(y)}{q(y)} = \underbrace{-\sum_y p(y)\log q(y)}_{\text{cross-entropy } H(p, q)} - \underbrace{\bigl(-\sum_y p(y)\log p(y)\bigr)}_{\text{entropy } H(p) \text{, constant in }\theta}$$
+$$\text{KL}(p \,\Vert\, q) := \mathbb{E}_{Y \sim p}\!\left[\log \frac{p(Y)}{q(Y)}\right] = \sum_y p(y)\,\log\frac{p(y)}{q(y)}$$
+
+(Replace $\sum$ with $\int$ for continuous distributions.)
 
 </div>
 
-Up to a constant, **KL = cross-entropy**.
+**Read** · *"the average log-ratio when the data really comes from $p$ but you used $q$ to model it."*
 
-- Classification with one-hot truth · CE = NLL of the model on the truth = KL up to a constant.
-- VAE (L19) · loss has an explicit KL term to a prior.
-- DPO (L16) · explicit KL between policy distributions.
+**Three properties** ·
+1. $\text{KL}(p \| q) \ge 0$ for all $p, q$ (Gibbs' inequality).
+2. $\text{KL}(p \| q) = 0$ if and only if $p = q$ everywhere.
+3. **Asymmetric** · $\text{KL}(p \| q) \ne \text{KL}(q \| p)$ in general. This asymmetry will matter — see two slides on.
 
-KL is not a new beast. It is the same NLL story, told in two-distributions form.
+---
+
+# Cross-entropy = entropy + KL
+
+Algebra ·
+$$H(p, q) := -\mathbb{E}_p[\log q(Y)] = -\mathbb{E}_p[\log p(Y)] + \mathbb{E}_p\!\left[\log\tfrac{p(Y)}{q(Y)}\right] = H(p) + \text{KL}(p \| q)$$
+
+<div class="math-box">
+
+$$\boxed{\;H(p, q) \;=\; H(p) \;+\; \text{KL}(p \,\|\, q)\;}$$
+
+</div>
+
+- **Cross-entropy $H(p, q)$** · "expected bits to encode samples from $p$ if we used a code optimized for $q$."
+- **Entropy $H(p)$** · "the irreducible cost of encoding $p$." Independent of $q$.
+- **KL** · the *extra* bits we waste because $q \ne p$.
+
+For classification with a **one-hot true label** $p$, $H(p) = 0$ — so cross-entropy *is* KL. That's why we say "the classifier loss minimizes KL to the true label."
+
+---
+
+# MLE through the KL lens
+
+Define the **empirical data distribution** $\hat p_{\text{data}}(y) = \frac{1}{N}\sum_{i=1}^N \mathbb{1}[Y_i = y]$ — a histogram of the training set, treated as a distribution.
+
+Then ·
+
+<div class="math-box">
+
+$$\frac{1}{N}\,\ell(\theta) = \frac{1}{N}\sum_{i=1}^N \log p_\theta(y_i) = \mathbb{E}_{Y \sim \hat p_{\text{data}}}[\log p_\theta(Y)] = -H(\hat p_{\text{data}}, p_\theta)$$
+
+So MLE ·
+$$\arg\max_\theta \,\ell(\theta) \;=\; \arg\min_\theta \,H(\hat p_{\text{data}}, p_\theta) \;=\; \arg\min_\theta \,\text{KL}(\hat p_{\text{data}} \,\|\, p_\theta)$$
+
+(The last step uses $H(p, q) = H(p) + \text{KL}(p\|q)$ and drops $H(\hat p_{\text{data}})$ as constant in $\theta$.)
+
+</div>
+
+**MLE = make the model distribution as KL-close as possible to the empirical distribution.** Same machinery, two-distribution view.
+
+---
+
+# MAP through the KL lens
+
+Adding the log-prior to the previous slide ·
+
+<div class="math-box">
+
+$$\hat\theta_{\text{MAP}} = \arg\min_\theta\,\Bigl[\,\underbrace{\text{KL}(\hat p_{\text{data}} \,\|\, p_\theta)}_{\text{fit}}\; - \;\underbrace{\tfrac{1}{N}\log p(\theta)}_{\text{prior penalty}}\,\Bigr]$$
+
+</div>
+
+So **L2 regularization** is "minimize KL-to-empirical, plus pay $\lambda \|\theta\|^2$ for straying from a Gaussian prior."
+
+This same KL-plus-regularizer pattern appears throughout DL ·
+- **VAE** (L19) · ELBO has explicit $-\text{KL}(q(z|x) \| p(z))$ pulling the posterior toward a standard-normal prior.
+- **DPO** (L16) · explicit $\beta \cdot \text{KL}(\pi_\theta \| \pi_{\text{ref}})$ keeping the fine-tuned LM close to its starting point.
+- **Distillation** (L23) · student's distribution should be KL-close to teacher's.
+
+Every regularizer in modern DL is some form of "**don't drift too far in KL**."
+
+---
+
+# Forward vs reverse KL · two faces of the same number
+
+KL is asymmetric — and the two directions give very different optimization problems.
+
+<div class="columns">
+<div>
+
+### Forward KL · $\text{KL}(p \,\|\, q_\theta)$
+
+- "Average over $p$, evaluate at $q_\theta$."
+- Penalty whenever $p(y) > 0$ but $q_\theta(y) \approx 0$.
+- ⇒ **mode-covering** · $q_\theta$ must put mass *everywhere* $p$ does.
+- **MLE = forward KL** to empirical $p$.
+
+</div>
+<div>
+
+### Reverse KL · $\text{KL}(q_\theta \,\|\, p)$
+
+- "Average over $q_\theta$, evaluate at $p$."
+- Penalty whenever $q_\theta(y) > 0$ but $p(y) \approx 0$.
+- ⇒ **mode-seeking** · $q_\theta$ concentrates on a *single* high-density region.
+- **VAE encoder, GAN-like methods** approximate this.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+**Picture · bimodal target, single Gaussian fit.**
+
+- Forward KL · the Gaussian *spreads across both modes* — blurry but covers all data. Why VAE samples are blurry.
+- Reverse KL · the Gaussian *picks one mode* — sharp but ignores the other. Why GAN samples are sharp but mode-collapse.
+
+</div>
+
+---
+
+# KL across the rest of the course
+
+Once you see KL as the underlying object, every advanced model becomes a **specific KL minimization** ·
+
+<div class="math-box">
+
+| Model | KL it minimizes | Lecture |
+|:-:|:-:|:-:|
+| Classifier (CE loss) | $\text{KL}(\hat p_{\text{data}} \| p_\theta)$ | L1, every classifier |
+| **VAE** | recon-NLL $+ \text{KL}(q_\phi(z\|x) \,\|\, p(z))$ | L19 |
+| **Diffusion (variational view)** | $\sum_t \text{KL}(q(x_{t-1}\|x_t, x_0) \,\|\, p_\theta(x_{t-1}\|x_t))$ | L21 |
+| **GAN** | (approximately) Jensen-Shannon — symmetrized KL | L20 |
+| **DPO / RLHF KL term** | $\text{KL}(\pi_\theta \,\|\, \pi_{\text{ref}})$ | L16 |
+| **Knowledge distillation** | $\text{KL}(p_{\text{teacher}} \,\|\, p_{\text{student}})$ | L23 |
+
+</div>
+
+You will see KL terms in every generative or alignment loss for the next 24 lectures. Each is an instance of *what we just derived*.
 
 ---
 
