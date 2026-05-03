@@ -34,25 +34,35 @@ Today's promise · one principle — **maximum likelihood under a probabilistic 
 
 ---
 
-# Learning outcomes
+# Learning outcomes · Session 1
 
-By the end of these **two sessions** you will be able to:
+Framework + likelihood. By end of Session 1 you can ·
 
-**Session 1 · framework + likelihood**
+<div class="math-box">
 
-1. **State** the Bernoulli, Categorical, and Normal distributions, the `~` notation, and IID sampling.
+1. **State** the Bernoulli, Categorical, and Normal distributions and the `~` notation.
 2. **Read a plate-notation** graphical model and recognize the supervised setup.
 3. Explain three reasons why **the Normal shows up everywhere** (CLT, max entropy, closed-under-linear).
 4. **Sample** from Bernoulli, Categorical, and Normal — and recognize the **reparameterization trick** as an affine map of a base sample.
 5. **Apply Bayes' rule** and identify prior, likelihood, evidence, and posterior.
 6. **Derive MSE / BCE / categorical CE** as NLL under Gaussian / Bernoulli / Categorical outputs.
 
-**Session 2 · MAP + KL + course spine**
+</div>
+
+---
+
+# Learning outcomes · Session 2
+
+MAP + KL + course spine. By end of Session 2 you can ·
+
+<div class="math-box">
 
 7. **Derive L2** as MAP with a Gaussian prior, **L1** as MAP with a Laplace prior, and explain L1's sparsity geometrically.
 8. State and use **KL divergence**, recognize cross-entropy as KL up to a constant, and re-derive MLE/MAP through the KL lens.
 9. Distinguish **forward vs reverse KL** and predict their respective failure modes (mode-covering vs mode-seeking).
 10. **Connect** these foundations to VAEs, diffusion, RLHF, distillation, and the rest of the course.
+
+</div>
 
 ---
 
@@ -154,8 +164,6 @@ But **why** does L1 hit zero and L2 doesn't? Why is the penalty *squared* in L2 
 
 # Today's question · the four mysteries
 
-Three loose threads from your last ML course ·
-
 <div class="math-box">
 
 | Object | Recipe | Where does it come from? |
@@ -167,7 +175,7 @@ Three loose threads from your last ML course ·
 
 </div>
 
-You've used all four. None of them was *derived* from anything — they were handed to you with the magic words *"this is the loss for regression"* and *"this is how you regularize."*
+You've used all four — but none was ever *derived* from anything. They were handed to you with the magic words *"this is the loss for regression"*.
 
 Today we replace the magic with a single principle.
 
@@ -177,7 +185,7 @@ Today we replace the magic with a single principle.
 
 <div class="keypoint">
 
-By the end of these two sessions, all four mysteries are **derived consequences** of two ideas ·
+All four mysteries are **derived consequences** of two ideas ·
 
 1. **The model defines a probability distribution** over $y$ given $x$ — not a single number.
 2. **Pick parameters that make the data most likely** (MLE), optionally tempered by a prior on $\theta$ (MAP).
@@ -186,7 +194,20 @@ By the end of these two sessions, all four mysteries are **derived consequences*
 
 That's the whole lecture in two bullets. Everything else is unpacking.
 
-**Bonus** · the same machinery gives us **KL divergence**, the natural distance between distributions, which becomes the central object in VAEs (L19), diffusion (L21), and RLHF (L16). One framework, ten lectures of dividends.
+---
+
+# Bonus · the dividend in later lectures
+
+The same machinery gives us **KL divergence** — the natural distance between distributions.
+
+KL becomes the central object in ·
+
+- **VAEs (L19)** · the ELBO is a KL between approximate and true posterior.
+- **Diffusion (L21)** · score matching ≡ KL minimization between noisy data and model.
+- **RLHF / DPO (L16)** · the reward objective is regularized by KL to a reference policy.
+- **Distillation (L23)** · student matches teacher distribution by minimizing KL.
+
+One framework today, ten lectures of dividends.
 
 ---
 
@@ -223,7 +244,7 @@ We'll use both. The notation is mostly the same.
 
 # Distributions usually have parameters
 
-Most distributions have **parameters** — knobs that shape the distribution. We collect all of a distribution's parameters into a single symbol $\theta$.
+Most distributions have **parameters** — knobs that shape the distribution. We collect them into a single symbol $\theta$.
 
 <div class="math-box">
 
@@ -233,15 +254,27 @@ Read · *"$Y$ is distributed as $p$, **given** parameters $\theta$."*
 
 </div>
 
-The vertical bar "$\mid$" means **"given"** (conditional on). It is the same conditional notation as in $P(A \mid B)$ from your probability course — *probability of $A$ given $B$ has happened*.
+The vertical bar "$\mid$" means **"given"** — the same conditional notation as in $P(A \mid B)$ from your probability course.
 
-Examples — the parameter symbol $\theta$ is just a placeholder ·
+---
 
-- Coin · $\theta = p$ (one parameter, the bias). $Y \sim p(\cdot \mid p) = \text{Bernoulli}(p)$.
-- Normal · $\theta = (\mu, \sigma^2)$ (two parameters). $Y \sim p(\cdot \mid \mu, \sigma^2) = \mathcal{N}(\mu, \sigma^2)$.
-- Categorical · $\theta = \boldsymbol\pi$ (a vector of $K$ probabilities).
+# Parameters · three concrete examples
 
-In ML, **$\theta$ ends up being the model's weights** — the things we estimate from data via MLE / MAP later in this lecture. We will treat $\theta$ as known when we discuss distributions, and as something we infer when we discuss MLE.
+The parameter symbol $\theta$ is just a placeholder. For the three distributions we'll meet today ·
+
+<div class="math-box">
+
+- **Coin** · $\theta = p$ (one parameter, the bias).
+$Y \sim p(\cdot \mid p) = \text{Bernoulli}(p)$.
+
+- **Normal** · $\theta = (\mu, \sigma^2)$ (two parameters).
+$Y \sim p(\cdot \mid \mu, \sigma^2) = \mathcal{N}(\mu, \sigma^2)$.
+
+- **Categorical** · $\theta = \boldsymbol\pi$ (a vector of $K$ probabilities summing to 1).
+
+</div>
+
+**In ML, $\theta$ ends up being the model's weights** — the things we estimate from data via MLE / MAP later. For now, treat $\theta$ as known.
 
 ---
 
@@ -306,21 +339,37 @@ This compact form is what makes the per-example log-likelihood $y\log p + (1-y)\
 
 ---
 
-# Bernoulli · moments and a worked example
+# Bernoulli · moments
 
 <div class="math-box">
 
 **Mean** · $\mathbb{E}[Y] = 0 \cdot (1-p) + 1 \cdot p = p$
+
 **Variance** · $\text{Var}[Y] = \mathbb{E}[Y^2] - \mathbb{E}[Y]^2 = p - p^2 = p(1 - p)$
 
 </div>
 
 Variance is largest at $p = 0.5$ (most uncertain) and zero at $p \in \{0, 1\}$ (deterministic).
 
-**Worked · IID flips.** Coin with $p = 0.7$, three flips give $H, T, H$ (i.e. $Y_1, Y_2, Y_3 = 1, 0, 1$). Under the IID assumption ·
-$$P(\mathcal{D} \mid p) = P(Y_1 = 1) \cdot P(Y_2 = 0) \cdot P(Y_3 = 1) = 0.7 \cdot 0.3 \cdot 0.7 = 0.147$$
+This will be reused when we derive **logistic regression's gradient** — it has a $\hat p (1 - \hat p)$ term that is exactly the Bernoulli variance at the predicted probability.
 
-The **product over independent observations** is the heart of likelihood — coming up in Part 2.
+---
+
+# Bernoulli · IID worked example
+
+**Setup** · coin with $p = 0.7$. Three flips give $H, T, H$ (i.e. $Y_1, Y_2, Y_3 = 1, 0, 1$).
+
+<div class="math-box">
+
+Under the IID assumption ·
+
+$$P(\mathcal{D} \mid p) = P(Y_1 = 1) \cdot P(Y_2 = 0) \cdot P(Y_3 = 1)$$
+
+$$= 0.7 \cdot 0.3 \cdot 0.7 = \mathbf{0.147}$$
+
+</div>
+
+The **product over independent observations** is the heart of likelihood — coming up in Part 2 when we ask *"which $p$ makes the observed data most likely?"*
 
 ---
 
@@ -427,9 +476,27 @@ The most important continuous distribution in all of statistics — and the seed
 
 </div>
 
-Property 2 deserves a closer look · doubling the distance $|y - \mu|$ from the mean **quadruples the exponent** and so the density falls by a factor of $e^4 \approx 54$. Quadrupling the distance falls by $e^{16} \approx 9 \times 10^6$.
+Property 2 is what we'll lean on most. Let's unpack it.
 
-This **squared, exponential decay** is what makes Gaussians "tightly concentrated" — almost all the mass sits within a few $\sigma$ of the mean. (68% within $1\sigma$, 95% within $2\sigma$, 99.7% within $3\sigma$ — the classical "empirical rule.")
+---
+
+# Normal · how fast the bell decays
+
+Property 2 says density falls off **exponentially** in $(y - \mu)^2$. How fast?
+
+<div class="math-box">
+
+| Distance from mean | Exponent | Density factor |
+|:-:|:-:|:-:|
+| $1\sigma$ | $1/2$ | $e^{-0.5} \approx 0.61$ |
+| $2\sigma$ | $2$ | $e^{-2} \approx 0.14$ |
+| $4\sigma$ | $8$ | $e^{-8} \approx 3 \times 10^{-4}$ |
+
+</div>
+
+This **squared, exponential decay** is what makes Gaussians "tightly concentrated" — almost all the mass sits within a few $\sigma$ of the mean.
+
+**Empirical rule** · 68% within $1\sigma$, 95% within $2\sigma$, 99.7% within $3\sigma$.
 
 ---
 
@@ -491,19 +558,37 @@ These three properties together explain why the Gaussian dominates classical sta
 
 # Why Normal · the Central Limit Theorem
 
-**Statement (informal)** · let $X_1, X_2, \ldots, X_N$ be IID with mean $\mu$ and variance $\sigma^2$. Define the standardized sum
-
-$$Z_N = \frac{1}{\sqrt{N}}\sum_{i=1}^N \frac{X_i - \mu}{\sigma}$$
-
-Then as $N \to \infty$, $Z_N \to \mathcal{N}(0, 1)$ regardless of the original distribution of $X_i$.
+**Statement (informal)** · let $X_1, X_2, \ldots, X_N$ be IID with mean $\mu$ and variance $\sigma^2$. Define the standardized sum ·
 
 <div class="math-box">
 
-**Worked** · Sum of 12 IID $\text{Uniform}[0, 1]$ has mean $6$ and variance $1$. The sum is approximately $\mathcal{N}(6, 1)$ — Box-Muller's original observation, used historically to *generate* Gaussian samples before better algorithms existed.
+$$Z_N = \frac{1}{\sqrt{N}}\sum_{i=1}^N \frac{X_i - \mu}{\sigma}$$
+
+Then as $N \to \infty$, $Z_N \to \mathcal{N}(0, 1)$ — **regardless of the original distribution** of $X_i$.
 
 </div>
 
-**Implication** · any quantity arising as the **aggregate of many small effects** tends to look Gaussian. Sensor noise, height of humans, daily temperature deviation — all approximately Normal because the underlying causes are sums of many small contributions.
+**Implication** · any quantity arising as the *aggregate of many small effects* looks Gaussian. Sensor noise, human height, daily temperature deviation — all approximately Normal because the underlying causes are sums of many small contributions.
+
+---
+
+# CLT · a worked numeric
+
+A clean way to see CLT in action ·
+
+<div class="math-box">
+
+Sum of 12 IID $\text{Uniform}[0, 1]$ samples ·
+
+$$S = \sum_{i=1}^{12} U_i,\quad U_i \stackrel{\text{iid}}{\sim} \text{Uniform}[0,1]$$
+
+- **Mean** of $S$ · $12 \cdot 0.5 = 6$.
+- **Variance** of $S$ · $12 \cdot 1/12 = 1$.
+- **Distribution** of $S$ · approximately $\mathcal{N}(6, 1)$.
+
+</div>
+
+Historically used to *generate* Gaussian samples before better algorithms (Box-Muller) existed · subtract 6, you get a draw from $\mathcal{N}(0, 1)$.
 
 ---
 
@@ -529,11 +614,26 @@ $$\boxed{\;\arg\max_{p}\; H(p) \;\text{ s.t. }\; \mathbb{E}_p[Y] = \mu,\; \mathb
 
 </div>
 
-**Reading** · "if all you know about a quantity is its first two moments, the *least committal* probability model is Gaussian."
+**Reading** · *"if all you know about a quantity is its first two moments, the least committal probability model is Gaussian."* This is **Occam's razor for distributions** — don't bake in assumptions you can't justify.
 
-This is **Occam's razor for distributions** · don't bake in assumptions you can't justify. The Gaussian is the answer to *"what's the safest default?"* given mean and variance.
+---
 
-Other max-entropy distributions you'll meet · **Bernoulli** is max-ent on $\{0, 1\}$ given the mean; **Uniform** is max-ent on a bounded interval; **Exponential** is max-ent on $[0, \infty)$ given a fixed mean.
+# Other max-entropy distributions
+
+The same max-entropy principle picks out other familiar distributions when you change the constraints ·
+
+<div class="math-box">
+
+| Support | Constraint | Max-entropy distribution |
+|:-:|:-:|:-:|
+| $\{0, 1\}$ | given mean | **Bernoulli** |
+| Bounded interval | none beyond support | **Uniform** |
+| $[0, \infty)$ | given mean | **Exponential** |
+| $\mathbb{R}$ | given mean and variance | **Normal** |
+
+</div>
+
+Each "default" distribution in classical statistics is the *least committal* choice given some basic constraint. This is why these distributions show up so much — they are what you get when you assume nothing extra.
 
 ---
 
@@ -573,23 +673,45 @@ This is why classical Bayesian regression with known noise variance is *trivial*
 
 ---
 
-# Why Normal · where these properties pay off
+# Why Normal · where this pays off (1/2)
 
-Three big consequences in this course ·
+Two consequences you'll see in the next few weeks ·
 
 <div class="math-box">
 
-- **Diffusion (L21)** · the forward process adds Gaussian noise at every step, and the closed-form jump
-$$x_t = \sqrt{\bar\alpha_t}\,x_0 + \sqrt{1-\bar\alpha_t}\,\epsilon$$
-exists **exactly because** sums of independent Gaussians are Gaussian.
+**Diffusion (L21)** · the forward process adds Gaussian noise at every step. The closed-form jump
 
-- **Kalman filter** · linear-Gaussian state-space models have a closed-form posterior at every time step. Used in robotics, control, and signal processing.
+$$x_t = \sqrt{\bar\alpha_t}\,x_0 + \sqrt{1-\bar\alpha_t}\,\epsilon,\quad \epsilon \sim \mathcal{N}(0, I)$$
 
-- **Reparameterization trick (next!)** · $z = \mu + \sigma \cdot \epsilon$, $\epsilon \sim \mathcal{N}(0, 1)$ — sampling from a non-standard Normal is just an affine transform of a standard one.
+exists **exactly because sums of independent Gaussians are Gaussian** — no integral needed.
 
 </div>
 
-You will see all three of these in the next several lectures. Each is a direct consequence of the two properties on the previous slides.
+<div class="math-box">
+
+**Kalman filter** · linear-Gaussian state-space models have a closed-form posterior at every time step. Used in robotics, control, and signal processing — and a stepping-stone to L19's variational inference.
+
+</div>
+
+---
+
+# Why Normal · where this pays off (2/2)
+
+<div class="math-box">
+
+**Reparameterization trick (next!)** · sampling from a non-standard Normal is just an affine transform of a standard one ·
+
+$$z = \mu + \sigma \cdot \epsilon,\quad \epsilon \sim \mathcal{N}(0, 1)$$
+
+</div>
+
+This is the **single most important sampling trick in deep learning** ·
+
+- VAEs (L19) · sample latent codes through it.
+- Diffusion (L21) · every denoising step uses it.
+- Bayesian neural nets · weights are sampled this way.
+
+All three rely on Gaussians being closed under affine maps. Each lecture above is a direct consequence of the two structural properties we just stated.
 
 ---
 
@@ -674,7 +796,7 @@ These two uses are technically the same operation — *draw $y \sim p$* — but 
 
 # The master sampling primitive · inverse CDF
 
-For any 1-D distribution with CDF $F(y) = P(Y \le y)$, the algorithm is ·
+For any 1-D distribution with CDF $F(y) = P(Y \le y)$ ·
 
 <div class="math-box">
 
@@ -687,13 +809,31 @@ For any 1-D distribution with CDF $F(y) = P(Y \le y)$, the algorithm is ·
 
 ![w:560px](figures/lec00/svg/inverse_cdf.svg)
 
-**Worked · sampling from $\text{Bernoulli}(p)$** · the CDF jumps from $0$ to $1-p$ at $0$ and from $1-p$ to $1$ at $1$. Inverting · `return 0 if u < 1-p else 1`. One uniform, one comparison.
+---
+
+# Inverse CDF · worked on a Bernoulli
+
+To sample $Y \sim \text{Bernoulli}(p)$ ·
+
+<div class="math-box">
+
+The CDF jumps from $0$ to $1-p$ at $y = 0$, then from $1-p$ to $1$ at $y = 1$.
+
+Inverting ·
+
+```python
+return 0 if u < 1 - p else 1
+```
+
+</div>
+
+One uniform draw + one comparison · this is what `torch.bernoulli` does internally. **Same algorithm extends to any 1-D distribution** as long as you can compute the CDF.
 
 ---
 
-# Sampling from a Categorical · the LLM token primitive
+# Sampling from a Categorical · the algorithm
 
-Categorical with probabilities $\boldsymbol\pi = (\pi_1, \ldots, \pi_K)$. The CDF is the **stick-breaking** cumulative ·
+Categorical with probabilities $\boldsymbol\pi = (\pi_1, \ldots, \pi_K)$. The CDF is the **stick-breaking cumulative** ·
 
 <div class="math-box">
 
@@ -701,9 +841,30 @@ Build $c_k = \sum_{j=1}^k \pi_j$ (so $c_K = 1$). Draw $u \sim \text{Uniform}[0, 
 
 </div>
 
-**Worked** · $\boldsymbol\pi = (0.1, 0.4, 0.3, 0.2)$ → cumulative $(0.1, 0.5, 0.8, 1.0)$. Draw $u = 0.55$ · smallest $k$ with $c_k \ge 0.55$ is $k = 3$. Return class 3.
+**Worked** · $\boldsymbol\pi = (0.1, 0.4, 0.3, 0.2)$ → cumulative $(0.1, 0.5, 0.8, 1.0)$.
 
-This **is what `torch.multinomial` does**. And — bigger picture — **this is how every LLM samples its next token** · the model produces a vector of $K$ probabilities (where $K \approx$ vocab size, often 50,000+), and we run exactly this algorithm to pick a token.
+Draw $u = 0.55$ · smallest $k$ with $c_k \ge 0.55$ is $k = 3$. Return class **3**.
+
+---
+
+# Categorical sampling · why it matters
+
+This is what `torch.multinomial` does · one uniform + one cumulative scan.
+
+<div class="keypoint">
+
+**Every LLM samples its next token with exactly this algorithm.**
+
+The model produces a vector of $K$ probabilities (where $K \approx$ vocab size, often 50,000+) and we run a single Categorical draw.
+
+</div>
+
+You will see this primitive in ·
+- L13–L15 · LLM token generation
+- L19 · VAE discrete latents
+- L21 · diffusion class-conditional sampling
+
+Knowing it once means knowing it everywhere.
 
 ---
 
@@ -748,17 +909,25 @@ For an integral / sum we can't compute analytically ·
 
 <div class="math-box">
 
-$$\mathbb{E}_{Y \sim p}[f(Y)] = \int f(y)\,p(y)\,dy \;\;\approx\;\; \frac{1}{N}\sum_{i=1}^N f(y_i),\qquad y_i \sim p$$
+$$\mathbb{E}_{Y \sim p}[f(Y)] \;=\; \int f(y)\,p(y)\,dy \;\;\approx\;\; \frac{1}{N}\sum_{i=1}^N f(y_i),\qquad y_i \sim p$$
 
 </div>
 
-**Properties** ·
+The Monte Carlo trick · **trade an integral we can't compute for a sample mean we can.** Always works as long as we can sample from $p$.
+
+---
+
+# Monte Carlo · three properties
+
+<div class="math-box">
 
 - **Unbiased** · $\mathbb{E}\bigl[\tfrac{1}{N}\sum_i f(y_i)\bigr] = \mathbb{E}_p[f(Y)]$ exactly.
 - **Variance scales as $1/N$** (Law of large numbers).
 - **Standard error scales as $1/\sqrt{N}$** · quadrupling samples *halves* the error.
 
-The Monte Carlo trick · **trade an integral we can't compute for a sample mean we can.** Always works as long as we can sample from $p$.
+</div>
+
+The $1/\sqrt{N}$ scaling is why Monte Carlo is **slow** in high dimensions but still beats numerical integration whenever $d \gtrsim 4$. Variance reduction (control variates, importance sampling, antithetic variates) is an entire research area built on accelerating this rate.
 
 ---
 
@@ -863,14 +1032,14 @@ Maximum at $p = 0.6$ — which matches our intuition (6 heads out of 10).
 
 # Two problems with the raw likelihood
 
-For $N$ IID observations · $\mathcal{L}(\theta) = \prod_{i=1}^N P(y_i \mid \theta)$.
-
-The raw likelihood is a *product*. That causes two practical problems ·
+The raw likelihood $\mathcal{L}(\theta) = \prod_{i=1}^N P(y_i \mid \theta)$ is a *product*. Two practical issues follow ·
 
 <div class="warning">
 
 **Problem 1 · numerical underflow.** With $N = 1000$ and each factor $\sim 0.5$ ·
-$\mathcal{L} \approx 0.5^{1000} \approx 10^{-301}$
+
+$$\mathcal{L} \approx 0.5^{1000} \approx 10^{-301}$$
+
 This is *below* the smallest representable double-precision float ($\approx 10^{-308}$). On a computer, $\mathcal{L}$ becomes literally zero.
 
 **Problem 2 · hard to differentiate.** The product rule on $N$ factors produces $N$ terms — algebraically and computationally messy.
@@ -893,10 +1062,25 @@ $$\ell(\theta) := \log \mathcal{L}(\theta) = \log \prod_{i=1}^N P(y_i \mid \thet
 
 Now the dataset's "score" is a **sum of $N$ moderate negative numbers** — numerically stable and easy to differentiate term-by-term.
 
-**Convention** · we minimize the **negative** log-likelihood (NLL) so "loss" is something we drive *down* with gradient descent ·
-$$\hat\theta_{\text{MLE}} = \arg\min_\theta \,\bigl[-\ell(\theta)\bigr] = \arg\min_\theta \,\sum_i \bigl[-\log P(y_i \mid \theta)\bigr]$$
+---
 
-We will *always* work with log-likelihood from this point onward. Every loss in this course is an NLL.
+# NLL · the convention we'll always use
+
+We minimize the **negative** log-likelihood (NLL) so "loss" is something we drive *down* with gradient descent ·
+
+<div class="math-box">
+
+$$\hat\theta_{\text{MLE}} \;=\; \arg\min_\theta \,\bigl[-\ell(\theta)\bigr] \;=\; \arg\min_\theta \,\sum_i \bigl[-\log P(y_i \mid \theta)\bigr]$$
+
+</div>
+
+We will *always* work with log-likelihood from this point onward.
+
+<div class="keypoint">
+
+**Every loss in this course is an NLL.** MSE, BCE, cross-entropy, ELBO, diffusion loss — all are just NLLs of carefully chosen distributions.
+
+</div>
 
 ---
 
@@ -945,22 +1129,40 @@ This **flips the conditional** · if you know $P(B \mid A)$ but want $P(A \mid B
 
 ---
 
-# Bayes worked example · disease test
+# Bayes worked example · disease test (setup)
 
-A disease has prevalence 1%. A test has sensitivity 95% (true positive rate) and specificity 95% (true negative rate). You test positive. How likely are you to have the disease?
+A disease has prevalence 1%. A test has sensitivity 95% and specificity 95%.
+
+**You test positive. How likely are you to have the disease?**
 
 <div class="math-box">
 
 Let $D$ = "have disease", $+$ = "test positive".
-- Prior · $P(D) = 0.01$, $P(\bar D) = 0.99$
-- Likelihood · $P(+ \mid D) = 0.95$, $P(+ \mid \bar D) = 0.05$
-- Total · $P(+) = 0.95 \cdot 0.01 + 0.05 \cdot 0.99 = 0.0095 + 0.0495 = 0.059$
 
-$$P(D \mid +) = \frac{0.95 \cdot 0.01}{0.059} \approx 0.16$$
+- **Prior** · $P(D) = 0.01$, $P(\bar D) = 0.99$
+- **Likelihood** · $P(+ \mid D) = 0.95$, $P(+ \mid \bar D) = 0.05$
 
 </div>
 
-Despite a "95% accurate" test, a positive result gives only **16%** chance of disease. This is the **base-rate fallacy**, and it's the same maths we'll apply to ML.
+*Stop and guess before the next slide.*
+
+---
+
+# Bayes worked example · the answer
+
+<div class="math-box">
+
+**Evidence (total probability of testing positive)** ·
+$$P(+) = 0.95 \cdot 0.01 + 0.05 \cdot 0.99 = 0.0095 + 0.0495 = 0.059$$
+
+**Posterior** ·
+$$P(D \mid +) = \frac{P(+ \mid D)\,P(D)}{P(+)} = \frac{0.95 \cdot 0.01}{0.059} \approx \mathbf{0.16}$$
+
+</div>
+
+Despite a "95% accurate" test, a positive result gives only **16%** chance of disease.
+
+This is the **base-rate fallacy** — and it's the same maths we'll apply to ML when the *prior* on $\theta$ is strong but the *likelihood* of any single data point is weak.
 
 ---
 
