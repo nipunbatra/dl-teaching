@@ -54,6 +54,25 @@ One piece we glossed over: **the optimizer**. Today we open that box.
 
 ---
 
+# Pop quiz · what's killing this run?
+
+A 50-layer ResNet trains fine for 200 steps, then loss starts **oscillating** between 1.4 and 1.9 forever — never diverging, never improving.
+
+<div class="popquiz">
+
+(a) Vanishing gradients.
+(b) Step size too large for a narrow ravine.
+(c) Bad data shuffling.
+(d) Saddle point.
+
+Stop and decide. We'll come back to this once you've seen the ravine geometry — your gut answer will probably change.
+
+</div>
+
+This is **the most common failure mode** of vanilla SGD on real loss surfaces. By the end of today you'll diagnose it from the curves alone.
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 1
@@ -624,6 +643,57 @@ Common symptoms and fixes:
 <div class="insight">
 
 Most "my network doesn't train" bugs are optimizer-level. The debug ladder from L3 + this table catches ~90% of them in practice.
+
+</div>
+
+---
+
+# Putting it all together · the L04 master sentence
+
+<div class="math-box">
+
+**Vanilla SGD is steepest descent · momentum is a low-pass filter on gradients · Nesterov is momentum that peeks ahead.** All three live on the same loss landscape · they differ only in *how they smooth the gradient signal across steps*.
+
+</div>
+
+| Update | Equation | Cures |
+|:-:|:-:|:-:|
+| SGD | $\theta_{t+1} = \theta_t - \eta\, g_t$ | nothing — pure 1st-order |
+| Momentum | $v_{t+1} = \beta v_t + g_t$, $\theta_{t+1} = \theta_t - \eta\, v_{t+1}$ | ravine zig-zag, saddles |
+| Nesterov | $g_t$ evaluated at $\theta_t - \eta\beta v_t$ | overshoot near a minimum |
+
+**Effective LR** under momentum · $\eta_{\text{eff}} = \eta / (1 - \beta)$. Raising $\beta$ from 0.9 to 0.99 multiplies it by 10× — the most common cause of "I bumped momentum and everything diverged."
+
+---
+
+# Pop quiz · revisit
+
+The 50-layer ResNet that oscillated forever? The answer is **(b) ravine + step too large**.
+
+<div class="keypoint">
+
+Vanishing gradients (a) would *flatten* loss, not oscillate. Bad shuffling (c) would show step-to-step jitter, not a stable cycle. Saddles (d) plateau, not oscillate.
+**Fix** · raise $\beta$ to 0.9 (momentum smooths the cycle), or halve $\eta$.
+
+</div>
+
+---
+
+# Practice problems
+
+<div class="math-box">
+
+**P1.** A quadratic $L = \tfrac{1}{2}(\lambda_1 x_1^2 + \lambda_2 x_2^2)$ has $\lambda_1 = 100, \lambda_2 = 1$. Compute the largest stable LR for SGD. Why does this LR make the $x_2$ direction crawl?
+
+**P2.** Show that the momentum recurrence $v_{t+1} = \beta v_t + g_t$ with constant $g$ converges to $v_\infty = g/(1-\beta)$. Use this to derive the effective LR.
+
+**P3.** Explain in one sentence why momentum helps escape **saddles** but does **not** help escape **strict local minima**.
+
+**P4.** Run two trajectories on a Rosenbrock-like ravine · SGD with $\eta=0.01$ vs SGD-momentum with $\eta=0.01, \beta=0.9$. Predict which oscillates more and why.
+
+**P5.** Show that Nesterov's update can be rewritten as classical momentum *plus* a gradient correction term. State the correction.
+
+**P6.** A practitioner raises momentum from 0.9 to 0.99 and the run NaNs. Without changing $\beta$, what one change rescues the run?
 
 </div>
 

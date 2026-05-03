@@ -71,6 +71,25 @@ Today · **per-parameter adaptive learning rates** — AdaGrad → RMSProp → A
 
 ---
 
+# Pop quiz · which optimizer would you bet on?
+
+You are training a 1B-parameter Transformer on text · gradients are sparse for embeddings, dense for attention, and large for a few outlier weights.
+
+<div class="popquiz">
+
+(a) SGD with momentum 0.9.
+(b) AdaGrad.
+(c) AdamW with warmup + cosine.
+(d) Plain Adam, constant LR.
+
+Stop and decide. By the end of today the answer should be obvious — and you'll know **why** each of the others fails.
+
+</div>
+
+The exact same loss-curve shape would be diagnosed differently for each optimizer. That diagnostic is what this lecture trains.
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 1
@@ -601,6 +620,60 @@ def lr_lambda(step, total, warmup):
 **Warmup of 10 steps for a 100k-step run.** Far too short. Warmup = 1–10% of total.
 
 **`lr = 3e-4` for SGD.** That's the Adam default. SGD usually wants `lr = 0.01` to `0.1`.
+
+</div>
+
+---
+
+# Putting it all together · the L05 master sentence
+
+<div class="math-box">
+
+**Adam = momentum on $g$, RMSProp on $g^2$, with a bias-correction at the start.** AdamW peels weight-decay out of the adaptive scaling so it actually regularizes. A **schedule** wraps everything · warmup at the start (gradients are chaotic), cosine at the end (anneal toward a minimum).
+
+</div>
+
+| Symbol | Role | Update at step $t$ |
+|:-:|:-:|:-:|
+| $m_t$ | momentum | $\beta_1 m_{t-1} + (1-\beta_1) g_t$ |
+| $v_t$ | per-param scale | $\beta_2 v_{t-1} + (1-\beta_2) g_t^2$ |
+| $\hat m_t, \hat v_t$ | bias-corrected | $m_t / (1-\beta_1^t)$, $v_t / (1-\beta_2^t)$ |
+| $\theta_{t+1}$ | step | $\theta_t - \eta\,\hat m_t / (\sqrt{\hat v_t} + \epsilon) - \eta\,\lambda\,\theta_t$ (AdamW) |
+
+The final $-\eta\lambda\theta_t$ term — applied **directly to weights, not through $\hat v$** — is the only difference between Adam+L2 and AdamW. That single change is why AdamW is the 2026 default for every Transformer in the world.
+
+---
+
+# Pop quiz · revisit
+
+The 1B-parameter Transformer? The answer is **(c) AdamW with warmup + cosine**.
+
+<div class="keypoint">
+
+(a) SGD · single LR can't cope with sparse vs dense gradients · slow.
+(b) AdaGrad · LR collapses to zero on dense layers within 10k steps.
+(c) ✓ AdamW + warmup absorbs the chaotic early gradients · cosine anneals.
+(d) Plain Adam · L2 silently broken; no warmup → first-step explosions.
+
+</div>
+
+---
+
+# Practice problems
+
+<div class="math-box">
+
+**P1.** Show that AdaGrad's effective LR for parameter $\theta_i$ at step $t$ is $\eta / \sqrt{\sum_{s=1}^{t} g_{s,i}^2}$. Argue why this monotonically decreases.
+
+**P2.** A parameter has constant gradient $g = 1$. Compute Adam's $\hat m_t$ and $\hat v_t$ at $t = 1, 2, 10, 100$. Verify the bias-correction recovers $\hat m_1 = g$ and $\hat v_1 = g^2$.
+
+**P3.** State the **exact** difference between Adam-with-L2 and AdamW. Show that for a fixed gradient and fixed $\hat v_t$ they give different updates.
+
+**P4.** A Transformer is trained for $T = 100\text{k}$ steps. Sketch the cosine schedule with $T_\text{warm} = 2000$ warmup steps and peak LR $= 6\!\times\!10^{-4}$. Give the LR at $t = 0, 2000, 50000, 100000$.
+
+**P5.** Why does Adam with $\beta_2 = 0.999$ need bias correction at $t=1$ but not at $t=10000$? Compute $1 - \beta_2^t$ for both.
+
+**P6.** You ran AdamW with `weight_decay=0` for 50 epochs. Train loss is 0.001, val loss is 0.7. Name two changes from this lecture (not L06's regularization) that would help and why.
 
 </div>
 

@@ -52,6 +52,25 @@ Four questions:
 
 ---
 
+# Pop quiz · "my model isn't learning"
+
+You wrote a model, hit `train()`. Loss stays flat for 100 steps.
+
+<div class="popquiz">
+
+(a) Lower the learning rate by 10×.
+(b) Switch from SGD to AdamW.
+(c) Try to **overfit a single batch of 4 examples**.
+(d) Add a deeper architecture.
+
+Stop and pick *one* before the next slide. Why that one?
+
+</div>
+
+The right answer (revealed in PART 4) is the one that **isolates the bug fastest** — and it's not the one most students reach for first.
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 1
@@ -926,6 +945,60 @@ run = {
 ```
 
 If you cannot compare two runs later, the experiment did not really happen.
+
+---
+
+# Putting it all together · the L03 master sentence
+
+<div class="math-box">
+
+**Training a deep net is 10% picking an architecture and 90% running a disciplined loop.** PyTorch is just an engine; the wins come from the **data pipeline**, the **debugging ladder**, and **error analysis** — none of which require new theory.
+
+</div>
+
+| Stage | The discipline | If you skip it |
+|:-:|:-:|:-:|
+| Build | `nn.Module` + `nn.Parameter` registration | silent missing parameters |
+| Feed | `DataLoader` w/ workers + pin_memory | GPU sits idle |
+| Train | forward · loss · zero_grad · backward · step | rotting gradients |
+| Debug | overfit-1-batch → LR finder → ablation | weeks of red herrings |
+| Analyze | bucket errors before scaling | scale the wrong thing |
+
+The single insight · **the bug almost never lives where students look first.** Hence the *ladder*.
+
+---
+
+# Pop quiz · revisit
+
+The flat-loss puzzle from the start? The right move is **(c) overfit one batch**.
+
+<div class="keypoint">
+
+If a model can't drive loss → 0 on 4 examples, the bug is **not** the LR, the optimizer, or the depth — it's the wiring. Until you climb that rung, every other tweak is guessing.
+
+</div>
+
+This is the single most important habit in this lecture.
+
+---
+
+# Practice problems
+
+<div class="math-box">
+
+**P1.** You change `batch_size` from 32 to 256 but keep the LR fixed. Training diverges. Why? Name the standard rule for scaling LR with batch size.
+
+**P2.** A `DataLoader` with `num_workers=0` and `pin_memory=False` is feeding a GPU running at 30% utilization. Name two changes that should help and the order in which you'd test them.
+
+**P3.** Show that gradient accumulation over $K$ micro-batches with per-step gradient $g_k$ gives the **same** update as one large batch of size $K \cdot B$, *provided* you scale the loss by $1/K$.
+
+**P4.** Your run has training loss 0.02, validation loss 0.6. Diagnose. Name three interventions in order of cost.
+
+**P5.** Why does `model.eval()` differ from `torch.no_grad()`? Give a concrete example where you need both.
+
+**P6.** A grad-clip of `max_norm=1.0` is applied to a 100M-parameter model. Show that this is **not** the same as clipping per-parameter. Which version do you want when sigmoid layers are blowing up only in early layers?
+
+</div>
 
 ---
 
