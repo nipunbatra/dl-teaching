@@ -179,9 +179,9 @@ This is the assumption that lets us write $P(\mathcal{D} \mid \theta) = \prod_i 
 
 ---
 
-# Plate notation · the picture for IID
+# Plate notation · graphical-model conventions
 
-Throughout this course, generative models are drawn as **directed graphical models** with **plate notation**. Two conventions ·
+Throughout this course, generative models are drawn as **directed graphical models** with **plate notation**. Four symbols ·
 
 <div class="math-box">
 
@@ -194,17 +194,23 @@ Throughout this course, generative models are drawn as **directed graphical mode
 
 </div>
 
+These four symbols compose every probabilistic model in the course. **Bayesian networks**, **HMMs**, **VAEs**, **diffusion models** — all drawn with these conventions.
+
+---
+
+# Plate notation · IID Bernoulli example
+
 A single Bernoulli observation · $p \to \bullet\,Y$.
 
 A dataset of $N$ IID Bernoulli observations ·
 
 ![w:380px](figures/lec00/svg/plate_iid_bernoulli.svg)
 
-The plate says *"draw a fresh $Y_i$ for each $i$, all from the same Bernoulli($p$)."*
+The plate says *"draw a fresh $Y_i$ for each $i$, all from the same Bernoulli($p$)."* The single $p$ outside the plate is **shared across all observations** — that is what makes the dataset *identically distributed*.
 
 ---
 
-# Bernoulli · the coin (formal)
+# Bernoulli · the coin (definition)
 
 Outcome $Y \in \{0, 1\}$, parameter $p \in [0, 1]$ = probability of "heads."
 
@@ -212,21 +218,37 @@ $$Y \sim \text{Bernoulli}(p)$$
 
 <div class="math-box">
 
-**Probability mass function (PMF)** ·
+**Probability mass function** ·
 $$P(Y = 1 \mid p) = p,\qquad P(Y = 0 \mid p) = 1 - p$$
 
-**Compact form** · $P(Y = y \mid p) = p^y\,(1 - p)^{1 - y}$
-- $y = 1 \Rightarrow p^1 (1-p)^0 = p$ ✓
-- $y = 0 \Rightarrow p^0 (1-p)^1 = 1 - p$ ✓
-
-**Mean & variance** · $\mathbb{E}[Y] = p,\quad \text{Var}[Y] = p(1 - p)$
+**Compact form** that we'll use repeatedly ·
+$$P(Y = y \mid p) = p^y\,(1 - p)^{1 - y}$$
 
 </div>
 
-**Worked** · Coin with $p = 0.7$, three flips $H, T, H$ (i.e. $Y_1, Y_2, Y_3 = 1, 0, 1$). With IID assumption ·
-$P(\mathcal{D} \mid p) = 0.7 \cdot 0.3 \cdot 0.7 = 0.147$
+**Quick sanity check** ·
+- $y = 1 \;\Rightarrow\; p^1 (1-p)^0 = p$ ✓
+- $y = 0 \;\Rightarrow\; p^0 (1-p)^1 = 1 - p$ ✓
 
-The **product over independent observations** is the heart of likelihood.
+This compact form is what makes the per-example log-likelihood $y\log p + (1-y)\log(1-p)$ work for both classes simultaneously — the seed of binary cross-entropy.
+
+---
+
+# Bernoulli · moments and a worked example
+
+<div class="math-box">
+
+**Mean** · $\mathbb{E}[Y] = 0 \cdot (1-p) + 1 \cdot p = p$
+**Variance** · $\text{Var}[Y] = \mathbb{E}[Y^2] - \mathbb{E}[Y]^2 = p - p^2 = p(1 - p)$
+
+</div>
+
+Variance is largest at $p = 0.5$ (most uncertain) and zero at $p \in \{0, 1\}$ (deterministic).
+
+**Worked · IID flips.** Coin with $p = 0.7$, three flips give $H, T, H$ (i.e. $Y_1, Y_2, Y_3 = 1, 0, 1$). Under the IID assumption ·
+$$P(\mathcal{D} \mid p) = P(Y_1 = 1) \cdot P(Y_2 = 0) \cdot P(Y_3 = 1) = 0.7 \cdot 0.3 \cdot 0.7 = 0.147$$
+
+The **product over independent observations** is the heart of likelihood — coming up in Part 2.
 
 ---
 
@@ -238,22 +260,39 @@ $$Y \sim \text{Categorical}(\boldsymbol\pi)$$
 
 <div class="math-box">
 
-**PMF** · $P(Y = k \mid \boldsymbol\pi) = \pi_k$
+**Probability mass function** · $P(Y = k \mid \boldsymbol\pi) = \pi_k$
 
-**One-hot compact form** · with $\mathbf{y} \in \{0,1\}^K$ s.t. $y_k = 1$ if $Y = k$ else 0,
+**One-hot compact form** · let $\mathbf{y} \in \{0,1\}^K$ with $y_k = 1$ if $Y = k$, else 0. Then ·
 $$P(Y \mid \boldsymbol\pi) = \prod_{k=1}^K \pi_k^{\,y_k}$$
-
-**Mean** · $\mathbb{E}[\mathbf{y}] = \boldsymbol\pi$. The Bernoulli is the special case $K = 2$.
 
 </div>
 
-**Worked** · MNIST classifier outputs $\boldsymbol\pi = (0.05, 0.7, 0.1, \ldots, 0.05)$ for one image. The probability of class 2 (digit "2") is $\pi_2 = 0.7$. If the true label is $Y = 2$, the model assigned probability **0.7** to the truth.
+The product collapses · only one $y_k = 1$, so only one factor survives.
 
-The softmax output of *any* classifier IS a Categorical distribution.
+**Mean** · $\mathbb{E}[\mathbf{y}] = \boldsymbol\pi$. **Bernoulli is the special case $K = 2$.**
 
 ---
 
-# Normal (Gaussian) · the bell curve (formal)
+# Categorical · a worked example
+
+**MNIST classifier** outputs $\boldsymbol\pi = (0.05, 0.7, 0.1, 0.02, \ldots, 0.05)$ for one image (10 components, summing to 1).
+
+<div class="math-box">
+
+The model says $P(\text{class }k)$ for each digit.
+
+If the true label is $Y = 2$ (digit "2"), then the probability the model assigned to **the truth** is
+$$\pi_{Y_{\text{true}}} = \pi_2 = 0.7$$
+
+</div>
+
+A perfect model would put all mass on class 2 (i.e. $\boldsymbol\pi = (0, 0, 1, 0, \ldots, 0)$). The further the prediction is from a one-hot truth, the *less likely* the data is under it — and the larger the cross-entropy loss.
+
+**The softmax output of *any* classifier IS a Categorical distribution.** Treat it that way and the loss falls out automatically.
+
+---
+
+# Normal (Gaussian) · the bell curve
 
 Continuous $Y \in \mathbb{R}$ with mean $\mu$ and variance $\sigma^2$.
 
@@ -261,19 +300,40 @@ $$Y \sim \mathcal{N}(\mu, \sigma^2)$$
 
 <div class="math-box">
 
-**Probability density (PDF)** ·
+**Probability density function (PDF)** ·
+
 $$p(y \mid \mu, \sigma^2) = \frac{1}{\sqrt{2\pi\sigma^2}}\,\exp\!\left(-\frac{(y - \mu)^2}{2\sigma^2}\right)$$
 
-**Mean & variance** · $\mathbb{E}[Y] = \mu,\quad \text{Var}[Y] = \sigma^2$
-
-**Three properties to memorize** ·
-1. Centred at $\mu$, spread controlled by $\sigma$.
-2. Density falls off **exponentially in the squared distance** $(y - \mu)^2$.
-3. The squared exponent will be the seed of MSE.
+**Mean & variance** · $\mathbb{E}[Y] = \mu, \quad \text{Var}[Y] = \sigma^2$
 
 </div>
 
-**Worked** · House prices $\sim \mathcal{N}(50, 5^2)$ lakh. $p(50) \approx 0.0798$, $p(70) \approx 2.7 \times 10^{-5}$ — a 4σ-away house is vanishingly unlikely under this model.
+Three properties to memorize ·
+
+1. **Centred at $\mu$**, spread controlled by $\sigma$.
+2. Density falls off **exponentially in the squared distance** $(y - \mu)^2$.
+3. The squared exponent will be the **seed of MSE** in Part 4.
+
+---
+
+# Normal · a worked numeric example
+
+**House prices** modelled as $\mathcal{N}(50, 5^2)$ lakh.
+
+<div class="math-box">
+
+| Sample value $y$ | Density $p(y)$ | Distance from mean |
+|:-:|:-:|:-:|
+| $50$ (the mean) | $1 / \sqrt{2\pi \cdot 25} \approx 0.0798$ | $0\sigma$ |
+| $55$ | $\approx 0.0484$ | $1\sigma$ |
+| $60$ | $\approx 0.0108$ | $2\sigma$ |
+| $70$ | $\approx 2.7 \times 10^{-5}$ | $4\sigma$ |
+
+</div>
+
+A house priced at the mean ($Y = 50$) is the most likely. A house priced at $Y = 70$ — four standard deviations away — is vanishingly unlikely under this model.
+
+This **squared-distance penalty** $(y - \mu)^2$ is the exact form that becomes MSE when we maximize the likelihood over data — covered in Part 4.
 
 ---
 
@@ -495,30 +555,42 @@ This **is what `torch.multinomial` does**. And — bigger picture — **this is 
 
 ---
 
-# Sampling from a Normal · and the reparameterization trick
+# Sampling from a Normal · the affine trick
 
 To sample $Y \sim \mathcal{N}(\mu, \sigma^2)$ ·
+
+<div class="math-box">
 
 1. Sample $\epsilon \sim \mathcal{N}(0, 1)$ (e.g. via Box-Muller, or just `torch.randn(...)`).
 2. Return $y = \mu + \sigma \cdot \epsilon$.
 
-This *works* because the affine transform of a Gaussian is a Gaussian (last lecture's "closed under linear ops").
-
-<div class="keypoint">
-
-This is the **reparameterization trick**, and it is one of the most important ideas in modern deep learning ·
-
-$$y = \mu_\theta(\mathbf{x}) + \sigma_\theta(\mathbf{x}) \cdot \epsilon, \qquad \epsilon \sim \mathcal{N}(0, 1)$$
-
-The randomness $\epsilon$ is **outside** the path we want gradients through. $\mu_\theta$ and $\sigma_\theta$ are deterministic functions of the input. So we can backprop through the sample.
-
 </div>
 
-This is what makes **VAEs trainable** (L19) and what powers the entire **diffusion** stack (L21–L22). You'll see it again, and you now know exactly where it comes from.
+**Why this works** · the affine transform of a Gaussian is a Gaussian (the "closed under linear ops" property from earlier). If $\epsilon \sim \mathcal{N}(0, 1)$, then $\mu + \sigma\epsilon \sim \mathcal{N}(\mu, \sigma^2)$ — exactly what we wanted.
+
+So we only ever need a routine to draw from $\mathcal{N}(0, 1)$. Everything else is multiplication and addition.
 
 ---
 
-# Monte Carlo expectation · the workhorse
+# The reparameterization trick · preview of L19
+
+The same affine trick is one of the most important ideas in modern DL.
+
+<div class="keypoint">
+
+Let the model output $\mu_\theta(\mathbf{x})$ and $\sigma_\theta(\mathbf{x})$ as deterministic functions of an input. To sample a **stochastic** output ·
+
+$$y = \mu_\theta(\mathbf{x}) + \sigma_\theta(\mathbf{x}) \cdot \epsilon, \qquad \epsilon \sim \mathcal{N}(0, 1)$$
+
+The randomness $\epsilon$ is **outside** the gradient path. $\mu_\theta, \sigma_\theta$ are deterministic ⇒ we can **backprop through the sample**.
+
+</div>
+
+This is what makes **VAEs trainable** (L19) and powers the entire **diffusion** stack (L21–L22). You'll see this exact form repeatedly — and you now know where it comes from.
+
+---
+
+# Monte Carlo expectation · the definition
 
 For an integral / sum we can't compute analytically ·
 
@@ -528,15 +600,32 @@ $$\mathbb{E}_{Y \sim p}[f(Y)] = \int f(y)\,p(y)\,dy \;\;\approx\;\; \frac{1}{N}\
 
 </div>
 
-**Law of large numbers** · the estimator is unbiased and its variance scales as $1/N$ — quadrupling samples halves the standard error.
+**Properties** ·
 
-**Hidden everywhere in DL** ·
-- **Mini-batch SGD** is a Monte Carlo estimate of the *expected gradient* over the data distribution. Each batch is one MC sample.
-- **VAE ELBO** uses $\mathbb{E}_{q(z\mid x)}[\log p(x\mid z)]$ — estimated from one $z$ sample per training step.
-- **Diffusion** averages over a randomly chosen timestep $t$ and noise $\epsilon$ — both Monte Carlo.
-- **REINFORCE / RLHF** averages over policy rollouts.
+- **Unbiased** · $\mathbb{E}\bigl[\tfrac{1}{N}\sum_i f(y_i)\bigr] = \mathbb{E}_p[f(Y)]$ exactly.
+- **Variance scales as $1/N$** (Law of large numbers).
+- **Standard error scales as $1/\sqrt{N}$** · quadrupling samples *halves* the error.
 
-Almost every "loss" you'll write is secretly an expectation that's being approximated by a single sample.
+The Monte Carlo trick · **trade an integral we can't compute for a sample mean we can.** Always works as long as we can sample from $p$.
+
+---
+
+# Monte Carlo · hidden everywhere in DL
+
+Almost every "loss" you'll write is secretly an expectation being approximated by a single sample ·
+
+<div class="math-box">
+
+| Where | The expectation | Estimated by |
+|:-:|:-:|:-:|
+| **Mini-batch SGD** | $\mathbb{E}_{(x, y) \sim \text{data}}[\nabla \mathcal{L}(\theta; x, y)]$ | one batch of size $B$ |
+| **VAE ELBO** (L19) | $\mathbb{E}_{z \sim q_\phi(z \mid x)}[\log p_\theta(x \mid z)]$ | usually **one** $z$ sample |
+| **Diffusion loss** (L21) | $\mathbb{E}_{t, \epsilon}[\|\epsilon - \hat\epsilon_\theta\|^2]$ | one random $t$ + one $\epsilon$ |
+| **REINFORCE / RLHF** (L16) | $\mathbb{E}_{\tau \sim \pi}[R(\tau) \nabla\log\pi(\tau)]$ | a few sampled trajectories |
+
+</div>
+
+Each loss above looks deterministic in code — `loss = ...` returns a number. But probabilistically, **it's a sample-mean estimate** of a deeper expectation. Variance reduction (control variates, importance sampling) is a research area for exactly this reason.
 
 ---
 
@@ -815,9 +904,11 @@ This pseudo-count interpretation is what makes the next slide's update so clean.
 
 # Beta-Binomial conjugacy · the derivation
 
-**Prior** $p \sim \text{Beta}(\alpha, \beta)$ · density $\propto p^{\alpha - 1}(1 - p)^{\beta - 1}$.
+**Prior** · $p \sim \text{Beta}(\alpha, \beta)$, density $\propto p^{\alpha - 1}(1 - p)^{\beta - 1}$.
 
-**Likelihood** of $h$ heads, $t$ tails in $N$ flips · $p^h (1 - p)^t$ (drop binomial coefficient · constant in $p$).
+**Likelihood** · $h$ heads and $t$ tails in $N$ flips ·
+$$p(\mathcal{D} \mid p) \;\propto\; p^h (1 - p)^t$$
+(we drop the binomial coefficient — it's constant in $p$).
 
 **Posterior** by Bayes ·
 
@@ -829,9 +920,25 @@ This is exactly $\text{Beta}(h + \alpha,\, t + \beta)$.
 
 </div>
 
-**Update rule** · $\boxed{\;\text{Beta}(\alpha, \beta) \xrightarrow{h \text{ heads},\, t \text{ tails}} \text{Beta}(\alpha + h,\, \beta + t)\;}$
+The posterior is in the **same family** as the prior — that's what "conjugate" means.
 
-**Interpretation** · just **add the observed counts to the pseudo-counts**. That's the whole update — no integral, no normalization.
+---
+
+# Beta-Binomial · the update rule
+
+<div class="math-box">
+
+$$\boxed{\;\text{Beta}(\alpha, \beta) \xrightarrow{h \text{ heads},\; t \text{ tails}} \text{Beta}(\alpha + h,\; \beta + t)\;}$$
+
+</div>
+
+**Interpretation** · just **add the observed counts to the pseudo-counts**. That's the whole update — no integral, no normalization, no MCMC.
+
+This is why we framed $\alpha, \beta$ as "pseudo-counts" earlier. They literally combine with real counts by addition.
+
+**Sequential updating** · because conjugacy preserves the family, you can update *one observation at a time* and the formulas stay the same. Each new flip just adds $1$ to either $\alpha$ or $\beta$.
+
+This is the **cleanest possible Bayesian inference**, and it's what made Bayesian statistics tractable in the pre-MCMC era. Modern DL breaks conjugacy (neural-net likelihoods aren't conjugate to anything) → we need approximations like variational inference (L19) or sampling.
 
 ---
 
@@ -1530,18 +1637,33 @@ $$I(y) := -\log p(y)$$
 
 </div>
 
-**Why this exact formula?** Three axioms · we want $I$ to satisfy ·
+**Why this exact formula?** Three axioms we want $I$ to satisfy ·
 
-1. $I$ depends only on $p(y)$ (not on $y$ itself).
-2. $I$ is decreasing in $p$ — rare events are more informative.
-3. $I(\text{independent events}) = I(y_1) + I(y_2)$ — information adds.
+1. $I$ depends **only on $p(y)$** (not on $y$ itself).
+2. $I$ is **decreasing** in $p$ — rare events are more informative.
+3. $I$ is **additive** for independent events · $I(y_1, y_2) = I(y_1) + I(y_2)$.
 
-The **only** function satisfying all three is $I(y) = -c \log p(y)$ for $c > 0$ (Shannon 1948). Choose $c = 1$ with log base 2 → bits.
+The **only** function satisfying all three is $I(y) = -c \log p(y)$ for $c > 0$ (Shannon 1948). With $c = 1$ and $\log = \log_2$, the unit is **bits**.
 
-**Worked** ·
-- Fair coin lands heads · $I = -\log_2 0.5 = 1$ bit.
-- A 1-in-1024 lottery wins · $I = -\log_2(1/1024) = 10$ bits — extremely surprising.
-- Certainty ($p = 1$) · $I = 0$ — no information when nothing was uncertain.
+---
+
+# Information content · worked examples
+
+<div class="math-box">
+
+| Event | $p$ | $I = -\log_2 p$ | Interpretation |
+|:-:|:-:|:-:|:-:|
+| Fair coin lands heads | $0.5$ | $1$ bit | one yes/no question |
+| Roll a 6 on a fair die | $1/6$ | $\approx 2.58$ bits | "less than 3 yes/no questions worth" |
+| Win a 1-in-1024 lottery | $1/1024$ | $10$ bits | extremely surprising |
+| The sun rises tomorrow | $\approx 1$ | $\approx 0$ bits | no information (already certain) |
+| Sample a specific token from 50k vocab | $1/50000$ | $\approx 15.6$ bits | one token = one short word in English |
+
+</div>
+
+**Reading** · large $I(y)$ = "I learned a lot from observing $y$." Small $I(y)$ = "I expected this, no information gained."
+
+This is **the per-sample log-loss** in disguise. Cross-entropy is just the *average* of these surprises.
 
 ---
 
@@ -1740,28 +1862,42 @@ For classification with a **one-hot true label** $p$, $H(p) = 0$ — so cross-en
 
 ---
 
-# Cross-entropy worked · one-hot truth meets softmax
+# Cross-entropy worked · the one-hot collapse
 
-In classification, the truth $\mathbf{y}$ is **one-hot** and the model output $\hat{\boldsymbol\pi}$ is a softmax. With $H(\mathbf{y}) = 0$ for any one-hot, the formula collapses ·
+In classification, the truth $\mathbf{y}$ is **one-hot** and the model output $\hat{\boldsymbol\pi}$ is a softmax.
 
 <div class="math-box">
 
-$$H(\mathbf{y}, \hat{\boldsymbol\pi}) = H(\mathbf{y}) + \text{KL}(\mathbf{y} \,\Vert\, \hat{\boldsymbol\pi}) = 0 + \text{KL}(\mathbf{y} \,\Vert\, \hat{\boldsymbol\pi}) = -\log\hat\pi_{\,y_{\text{true}}}$$
+For any one-hot, $H(\mathbf{y}) = 0$ — there's no uncertainty in the truth. So the cross-entropy formula collapses ·
 
-Cross-entropy of a one-hot truth against a softmax model **is** the NLL of the model on the true class.
+$$H(\mathbf{y}, \hat{\boldsymbol\pi}) = \underbrace{H(\mathbf{y})}_{=\,0} + \text{KL}(\mathbf{y} \,\Vert\, \hat{\boldsymbol\pi}) = -\log\hat\pi_{\,y_{\text{true}}}$$
 
 </div>
 
-**Worked** · 3 classes, true class is 1 (so $\mathbf{y} = (1, 0, 0)$). Model output $\hat{\boldsymbol\pi}$ varies ·
+**Cross-entropy of a one-hot truth against a softmax model is exactly the NLL of the model on the true class.** This is the standard classification loss.
+
+It's also exactly what L1 derived from a Bernoulli/Categorical assumption — same answer through two different lenses (NLL or KL). On the next slide we tabulate it across confidence levels.
+
+---
+
+# Cross-entropy · table across confidence levels
+
+3 classes, true class is 1 (so $\mathbf{y} = (1, 0, 0)$). Vary the model output and read off the loss ·
+
+<div class="math-box">
 
 | Model $\hat{\boldsymbol\pi}$ | $-\log \hat\pi_1$ (nats) | "Sentiment" |
 |:-:|:-:|:-:|
-| $(0.99, 0.005, 0.005)$ | $0.010$ | confidently right · ~no loss |
+| $(0.99, 0.005, 0.005)$ | $0.010$ | confidently right · tiny loss |
 | $(0.7, 0.2, 0.1)$ | $0.357$ | mostly right |
 | $(0.34, 0.33, 0.33)$ | $1.079$ | uncertain (≈ uniform) |
 | $(0.05, 0.5, 0.45)$ | $2.996$ | confidently wrong · big loss |
 
-This is **categorical cross-entropy on one example**. The classifier's training loss is just the average of this column over the dataset — same recipe as MLE.
+</div>
+
+The loss is small **iff the model assigned high probability to the true class** and grows steeply when the model is *confidently wrong*. This asymmetric penalty is what makes cross-entropy a **proper scoring rule** — it rewards calibration, not just accuracy.
+
+The classifier's training loss is just the average of this column over the dataset.
 
 ---
 
