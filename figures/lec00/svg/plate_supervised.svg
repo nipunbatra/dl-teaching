@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 240" width="560" height="240" font-family="EB Garamond, Georgia, serif">
+<rect width="100%" height="100%" fill="#F7F3E9"/>
+<circle cx="280" cy="48" r="24" fill="#F7F3E9" stroke="#1F1F1F" stroke-width="1.5"/>
+<text x="280" y="55" text-anchor="middle" font-size="20" font-style="italic" fill="#1F1F1F">θ</text>
+<rect x="120" y="100" width="320" height="115" fill="none" stroke="#7B6E5A" stroke-width="1.2" rx="4"/>
+<circle cx="195" cy="155" r="26" fill="#B85A3E" stroke="#1F1F1F" stroke-width="1.5"/>
+<text x="195" y="161" text-anchor="middle" font-size="18" font-style="italic" fill="#F7F3E9">x</text>
+<text x="210" y="166" font-size="13" font-style="italic" fill="#F7F3E9">i</text>
+<circle cx="365" cy="155" r="26" fill="#B85A3E" stroke="#1F1F1F" stroke-width="1.5"/>
+<text x="365" y="161" text-anchor="middle" font-size="18" font-style="italic" fill="#F7F3E9">Y</text>
+<text x="380" y="166" font-size="13" font-style="italic" fill="#F7F3E9">i</text>
+<line x1="222" y1="155" x2="338" y2="155" stroke="#1F1F1F" stroke-width="1.5" marker-end="url(#arr2)"/>
+<defs><marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1F1F"/></marker></defs>
+<path d="M295,68 Q330,100 360,128" stroke="#1F1F1F" stroke-width="1.5" fill="none" marker-end="url(#arr2)"/>
+<text x="425" y="208" font-size="13" fill="#7B6E5A">i = 1...N</text>
+<text x="20" y="40" font-size="14" fill="#1F1F1F">θ ∉ plate · shared</text>
+<text x="20" y="60" font-size="13" fill="#7B6E5A">across all N samples</text>
+<text x="20" y="200" font-size="13" fill="#7B6E5A">x_i, Y_i observed</text>
+<text x="20" y="218" font-size="13" fill="#7B6E5A">during training</text>
+</svg>

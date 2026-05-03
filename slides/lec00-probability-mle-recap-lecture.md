@@ -150,79 +150,162 @@ The model doesn't predict a number — it predicts a **distribution**
 
 ---
 
-# Random variable · in 30 seconds
+# Random variable · the notation we'll use
 
-A **random variable** $Y$ is a quantity whose value is uncertain. It follows a distribution $p$.
+A **random variable** $Y$ is a quantity whose value is uncertain. It follows a distribution $p(\cdot)$ that we read as "$Y$ is **distributed as** $p$":
 
 <div class="math-box">
 
-- **Discrete** $Y \in \{y_1, y_2, \ldots\}$ — described by a probability **mass** function $P(Y = y)$ summing to 1.
-- **Continuous** $Y \in \mathbb{R}$ — described by a probability **density** function $p(y)$ integrating to 1. (A density value at one point can exceed 1 — it's a density, not a probability.)
+$$Y \sim p(\cdot \mid \theta)$$
+
+The "$\sim$" is the central piece of notation in this lecture. Read it as **"distributed as"**.
+
+- **Discrete** $Y \in \{y_1, y_2, \ldots\}$ — described by a probability **mass** function $P(Y = y \mid \theta)$ summing to 1.
+- **Continuous** $Y \in \mathbb{R}$ — described by a probability **density** $p(y \mid \theta)$ integrating to 1.
 
 </div>
 
-We will mostly need three distributions today · **Bernoulli** for binary outcomes (coin, classification), **Categorical** for $K$-way outcomes (multiclass), **Normal** for continuous outcomes (regression, noise).
+**IID assumption** · the dataset $\mathcal{D} = \{Y_1, \ldots, Y_N\}$ consists of *independent and identically distributed* samples · $Y_i \stackrel{\text{iid}}{\sim} p(\cdot \mid \theta)$. Every $Y_i$ comes from the same distribution and knowing $Y_i$ tells you nothing about $Y_j$.
+
+This is the assumption that lets us write $P(\mathcal{D} \mid \theta) = \prod_i P(Y_i \mid \theta)$ — and turn likelihood into a product.
 
 ---
 
-# Bernoulli · the coin
+# Plate notation · the picture for IID
 
-Outcome $Y \in \{0, 1\}$, parameter $p \in [0, 1]$ = probability of "heads".
+Throughout this course, generative models are drawn as **directed graphical models** with **plate notation**. Two conventions ·
 
 <div class="math-box">
 
-$$P(Y = 1) = p,\qquad P(Y = 0) = 1 - p$$
+| Symbol | Meaning |
+|:-:|:-:|
+| ○ | a random variable (uncertain) |
+| ● (filled) | an **observed** random variable (we see its value) |
+| arrow $A \to B$ | $A$ generates $B$ (i.e. $B$ depends on $A$) |
+| rectangle (plate) labelled $i = 1\ldots N$ | the contents are repeated $N$ times — independence across $i$ |
 
-Compactly · $P(Y = y) = p^y\,(1 - p)^{1 - y}$
+</div>
+
+A single Bernoulli observation · $p \to \bullet\,Y$.
+
+A dataset of $N$ IID Bernoulli observations ·
+
+![w:380px](figures/lec00/svg/plate_iid_bernoulli.svg)
+
+The plate says *"draw a fresh $Y_i$ for each $i$, all from the same Bernoulli($p$)."*
+
+---
+
+# Bernoulli · the coin (formal)
+
+Outcome $Y \in \{0, 1\}$, parameter $p \in [0, 1]$ = probability of "heads."
+
+$$Y \sim \text{Bernoulli}(p)$$
+
+<div class="math-box">
+
+**Probability mass function (PMF)** ·
+$$P(Y = 1 \mid p) = p,\qquad P(Y = 0 \mid p) = 1 - p$$
+
+**Compact form** · $P(Y = y \mid p) = p^y\,(1 - p)^{1 - y}$
 - $y = 1 \Rightarrow p^1 (1-p)^0 = p$ ✓
 - $y = 0 \Rightarrow p^0 (1-p)^1 = 1 - p$ ✓
 
+**Mean & variance** · $\mathbb{E}[Y] = p,\quad \text{Var}[Y] = p(1 - p)$
+
 </div>
 
-**Worked** · Coin with $p = 0.7$. Three independent flips $H, T, H$. Probability of seeing this exact sequence ·
-$0.7 \cdot 0.3 \cdot 0.7 = 0.147$
+**Worked** · Coin with $p = 0.7$, three flips $H, T, H$ (i.e. $Y_1, Y_2, Y_3 = 1, 0, 1$). With IID assumption ·
+$P(\mathcal{D} \mid p) = 0.7 \cdot 0.3 \cdot 0.7 = 0.147$
 
-This **product over independent observations** is the heart of likelihood — coming up shortly.
+The **product over independent observations** is the heart of likelihood.
 
 ---
 
-# Normal (Gaussian) · the bell curve
+# Categorical · the K-sided die (formal)
 
-Continuous $Y \in \mathbb{R}$ with mean $\mu$ and variance $\sigma^2$.
+Outcome $Y \in \{1, 2, \ldots, K\}$, parameter vector $\boldsymbol\pi = (\pi_1, \ldots, \pi_K)$ with $\pi_k \ge 0$ and $\sum_k \pi_k = 1$.
+
+$$Y \sim \text{Categorical}(\boldsymbol\pi)$$
 
 <div class="math-box">
 
-$$p(y) = \frac{1}{\sqrt{2\pi\sigma^2}}\,\exp\!\left(-\frac{(y - \mu)^2}{2\sigma^2}\right)$$
+**PMF** · $P(Y = k \mid \boldsymbol\pi) = \pi_k$
+
+**One-hot compact form** · with $\mathbf{y} \in \{0,1\}^K$ s.t. $y_k = 1$ if $Y = k$ else 0,
+$$P(Y \mid \boldsymbol\pi) = \prod_{k=1}^K \pi_k^{\,y_k}$$
+
+**Mean** · $\mathbb{E}[\mathbf{y}] = \boldsymbol\pi$. The Bernoulli is the special case $K = 2$.
 
 </div>
 
-Three things to remember ·
-1. Centred at $\mu$, spread by $\sigma$.
-2. Density falls off **exponentially in $(y - \mu)^2$** — squared distance.
-3. The squared exponent is going to be the seed of MSE.
+**Worked** · MNIST classifier outputs $\boldsymbol\pi = (0.05, 0.7, 0.1, \ldots, 0.05)$ for one image. The probability of class 2 (digit "2") is $\pi_2 = 0.7$. If the true label is $Y = 2$, the model assigned probability **0.7** to the truth.
 
-**Worked** · House prices $\sim \mathcal{N}(50, 5^2)$ lakh. $p(50) \approx 0.080$. $p(70) \approx 2.7 \times 10^{-5}$ — a 4σ-away house is vanishingly unlikely under this model.
+The softmax output of *any* classifier IS a Categorical distribution.
+
+---
+
+# Normal (Gaussian) · the bell curve (formal)
+
+Continuous $Y \in \mathbb{R}$ with mean $\mu$ and variance $\sigma^2$.
+
+$$Y \sim \mathcal{N}(\mu, \sigma^2)$$
+
+<div class="math-box">
+
+**Probability density (PDF)** ·
+$$p(y \mid \mu, \sigma^2) = \frac{1}{\sqrt{2\pi\sigma^2}}\,\exp\!\left(-\frac{(y - \mu)^2}{2\sigma^2}\right)$$
+
+**Mean & variance** · $\mathbb{E}[Y] = \mu,\quad \text{Var}[Y] = \sigma^2$
+
+**Three properties to memorize** ·
+1. Centred at $\mu$, spread controlled by $\sigma$.
+2. Density falls off **exponentially in the squared distance** $(y - \mu)^2$.
+3. The squared exponent will be the seed of MSE.
+
+</div>
+
+**Worked** · House prices $\sim \mathcal{N}(50, 5^2)$ lakh. $p(50) \approx 0.0798$, $p(70) \approx 2.7 \times 10^{-5}$ — a 4σ-away house is vanishingly unlikely under this model.
+
+---
+
+# Multivariate Normal · briefly
+
+For $\mathbf{Y} \in \mathbb{R}^d$ ·
+
+$$\mathbf{Y} \sim \mathcal{N}(\boldsymbol\mu, \Sigma)$$
+
+<div class="math-box">
+
+$$p(\mathbf{y} \mid \boldsymbol\mu, \Sigma) = \frac{1}{\sqrt{(2\pi)^d \,|\Sigma|}}\,\exp\!\left(-\tfrac{1}{2}(\mathbf{y} - \boldsymbol\mu)^\top \Sigma^{-1} (\mathbf{y} - \boldsymbol\mu)\right)$$
+
+- $\boldsymbol\mu \in \mathbb{R}^d$ — mean vector.
+- $\Sigma \in \mathbb{R}^{d \times d}$ — covariance matrix (symmetric, positive definite).
+
+</div>
+
+If $\Sigma = \sigma^2 I$ (isotropic), the components are independent. **This is the case in diffusion (L21)** — every noise step samples isotropic Gaussian noise. We'll come back to this when we get there.
 
 ---
 
 # A small zoo of distributions you'll meet
 
-| Name | Type | Used for |
-|:-:|:-:|:-:|
-| **Bernoulli($p$)** | discrete, binary | binary classification |
-| **Categorical($\boldsymbol\pi$)** | discrete, $K$-way | multiclass classification |
-| **Normal($\mu, \sigma^2$)** | continuous | regression, Gaussian noise |
-| **Laplace($\mu, b$)** | continuous, heavy-tailed | L1 regularizer prior |
-| **Beta($\alpha, \beta$)** | $[0,1]$ | prior over a probability |
-| **Multinomial** | discrete, counts | bag-of-words, $n$ flips |
+| Name | Notation | Type | Used for |
+|:-:|:-:|:-:|:-:|
+| Bernoulli | $\text{Bernoulli}(p)$ | discrete, binary | binary classification |
+| Categorical | $\text{Categorical}(\boldsymbol\pi)$ | discrete, $K$-way | multiclass classification |
+| Normal | $\mathcal{N}(\mu, \sigma^2)$ | continuous | regression, Gaussian noise |
+| Laplace | $\text{Laplace}(\mu, b)$ | continuous, heavy-tail | L1 regularizer prior |
+| Beta | $\text{Beta}(\alpha, \beta)$ | continuous on $[0,1]$ | prior over a probability |
+| Multinomial | $\text{Multinomial}(n, \boldsymbol\pi)$ | discrete | counts in $n$ trials |
 
-You'll need the first three today. **Laplace** comes back when we derive L1.
+You'll need the first three today. **Laplace** comes back when we derive L1; **Beta** when we add a prior to the coin.
 
 ---
 
 # The conditional view · model outputs a distribution
 
-The neural net or regression model **does not output a number**. It outputs the *parameters of a distribution* over $Y$ given $\mathbf{x}$.
+In supervised learning the model **does not output a number**. It outputs the *parameters of a distribution* over $Y$ given the input $\mathbf{x}$.
 
 <div class="math-box">
 
@@ -235,6 +318,25 @@ The neural net or regression model **does not output a number**. It outputs the 
 </div>
 
 Training asks · *under these conditional distributions, how likely are the labels we actually saw?* Maximize that — the rest follows.
+
+---
+
+# The supervised graphical model · one picture
+
+Every supervised learning setup we'll see in this course shares the same plate diagram ·
+
+![w:560px](figures/lec00/svg/plate_supervised.svg)
+
+<div class="math-box">
+
+- $\theta$ — model parameters (we will estimate by MLE / MAP).
+- $\mathbf{x}_i$ — input, observed (filled).
+- $Y_i$ — output, observed during training (filled), unknown at test time.
+- The plate says · "$N$ IID samples, all sharing the same $\theta$."
+
+</div>
+
+Whether you are doing logistic regression, an MLP, a Transformer, or a diffusion model — the *outermost* graphical model is **always this**. Only the conditional distribution $p(y \mid \mathbf{x}, \theta)$ inside the plate changes.
 
 ---
 
@@ -656,22 +758,95 @@ That is **not** a coincidence — it's a feature of *generalized linear models*,
 
 ---
 
-# Multiclass · same pattern
+# Multiclass · the assumption
 
-For $K$-class classification with softmax output $\hat{\boldsymbol\pi}_\theta(\mathbf{x})$ · model $Y \mid \mathbf{x} \sim \text{Categorical}(\hat{\boldsymbol\pi}_\theta(\mathbf{x}))$.
-
-For one example with true class $k$ ·
-$\log p(y_i = k \mid \mathbf{x}_i, \theta) = \log \hat\pi_{i, k}$
-
-Negate and sum ·
+Now $y \in \{1, 2, \ldots, K\}$ — one of $K$ mutually exclusive classes. We need the model to output a full **probability distribution** over the $K$ classes. We use the **softmax**.
 
 <div class="math-box">
 
-$$L_{\text{NLL}}(\theta) = -\sum_{i=1}^N \log \hat\pi_{i, y_i}$$
+For each class $k$, learn a weight vector $\boldsymbol\theta_k \in \mathbb{R}^d$. Compute logits $z_k = \boldsymbol\theta_k^\top \mathbf{x}$ for $k = 1, \ldots, K$.
+
+**Softmax** turns logits into probabilities ·
+$$\hat\pi_k(\mathbf{x}) = \frac{\exp(z_k)}{\sum_{j=1}^K \exp(z_j)} = \frac{\exp(\boldsymbol\theta_k^\top \mathbf{x})}{\sum_{j=1}^K \exp(\boldsymbol\theta_j^\top \mathbf{x})}$$
+
+Two properties · $\hat\pi_k > 0$ (because $\exp > 0$) and $\sum_k \hat\pi_k = 1$. So $\hat{\boldsymbol\pi}$ is a valid distribution.
 
 </div>
 
-This is **categorical cross-entropy** — the loss every classifier in this course will use, including the next-token loss in LLMs (L13–L15). Same derivation, same recipe.
+Modelling assumption · $Y \mid \mathbf{x} \sim \text{Categorical}(\hat{\boldsymbol\pi}_\theta(\mathbf{x}))$. Binary logistic is the special case $K = 2$ (with the softmax collapsing to a sigmoid).
+
+---
+
+# Multiclass · the per-example log-likelihood
+
+If example $i$ has true class $y_i \in \{1, \ldots, K\}$, the probability the model assigns to that label is $\hat\pi_{i,\,y_i}$ — i.e. the entry of the softmax at position $y_i$.
+
+<div class="math-box">
+
+$$p(y_i \mid \mathbf{x}_i, \theta) = \hat\pi_{i,\,y_i}$$
+
+Equivalently with one-hot encoding $\mathbf{y}_i \in \{0, 1\}^K$ ·
+$$p(y_i \mid \mathbf{x}_i, \theta) = \prod_{k=1}^K \hat\pi_{i, k}^{\,y_{i, k}}$$
+
+Take logs ·
+$$\log p(y_i \mid \mathbf{x}_i, \theta) = \sum_{k=1}^K y_{i, k}\,\log \hat\pi_{i, k} = \log \hat\pi_{i,\, y_i}$$
+
+</div>
+
+Same compact-Bernoulli trick as before — only one term in the sum survives because the one-hot vector has a single 1.
+
+---
+
+# Multiclass · NLL = categorical cross-entropy
+
+Sum over the dataset and negate ·
+
+<div class="math-box">
+
+$$L_{\text{NLL}}(\theta) = -\sum_{i=1}^N \log \hat\pi_{i,\,y_i} \;=\; -\sum_{i=1}^N \sum_{k=1}^K y_{i,k}\,\log \hat\pi_{i,k}$$
+
+</div>
+
+The right-hand form is the textbook **categorical cross-entropy** — true distribution $\mathbf{y}_i$ (one-hot) against predicted distribution $\hat{\boldsymbol\pi}_i$.
+
+This loss powers every multiclass classifier in this course · CIFAR-10 ($K=10$), ImageNet ($K=1000$), and the **next-token loss in every LLM** ($K = $ vocab size, often 50,000+) in L13–L15.
+
+---
+
+# Multiclass · the elegant gradient
+
+Differentiate $L_{\text{NLL}}$ w.r.t. the logit $z_{i, k}$ (derivation uses the softmax-Jacobian trick) ·
+
+<div class="math-box">
+
+$$\frac{\partial L_{\text{NLL}}}{\partial z_{i, k}} = \hat\pi_{i, k} - y_{i, k}$$
+
+</div>
+
+**Prediction minus truth, per logit.** Same elegant form as binary logistic ($\hat p - y$) and linear regression ($\hat y - y$). All three are instances of the same generalized-linear-model identity.
+
+This is why **softmax + cross-entropy** are *always* implemented as one fused op (`F.cross_entropy(logits, target)`) — both for numerical stability (log-sum-exp trick) and because the gradient simplifies dramatically when you do them together.
+
+---
+
+# Multiclass · worked numeric
+
+3 classes (cat, dog, car). Image with true class **cat** (index 0). Model produces logits $\mathbf{z} = [2.0,\, 1.0,\, 0.1]$.
+
+<div class="math-box">
+
+**Softmax** (subtract max for stability) · $\mathbf{z} - 2.0 = [0,\, -1,\, -1.9]$.
+$\exp = [1.000,\, 0.368,\, 0.150]$ · sum $= 1.518$.
+$\hat{\boldsymbol\pi} = [\,0.659,\, 0.242,\, 0.099\,]$.
+
+**Per-example loss** · NLL of the true class.
+$L = -\log \hat\pi_{\text{cat}} = -\log 0.659 = \mathbf{0.418}$
+
+**Gradient on logits** · $\hat{\boldsymbol\pi} - \mathbf{y} = [0.659, 0.242, 0.099] - [1, 0, 0] = [-0.341,\, 0.242,\, 0.099]$.
+
+</div>
+
+The gradient says · *push the cat-logit up* (negative gradient → the optimizer subtracts it, so cat-logit increases), *push the dog and car logits down*. Exactly what you want.
 
 ---
 
