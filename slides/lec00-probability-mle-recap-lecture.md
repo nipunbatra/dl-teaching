@@ -206,18 +206,42 @@ A **random variable** $Y$ is a quantity whose value is uncertain. It follows a d
 
 <div class="math-box">
 
-$$Y \sim p(\cdot \mid \theta)$$
+$$Y \sim p$$
 
-Read · *"$Y$ is **distributed as** $p$"*. The "$\sim$" symbol is the central notation of this lecture.
+Read · *"$Y$ is **distributed as** $p$"*. The "$\sim$" is the central notation of this lecture.
 
 </div>
 
 Two flavours, depending on the type of value $Y$ takes ·
 
-- **Discrete** $Y \in \{y_1, y_2, \ldots\}$ — described by a probability **mass** function $P(Y = y \mid \theta)$ summing to $1$.
-- **Continuous** $Y \in \mathbb{R}$ — described by a probability **density** $p(y \mid \theta)$ integrating to $1$.
+- **Discrete** $Y \in \{y_1, y_2, \ldots\}$ — described by a probability **mass** function $P(Y = y)$ summing to $1$.
+- **Continuous** $Y \in \mathbb{R}$ — described by a probability **density** $p(y)$ integrating to $1$.
 
 We'll use both. The notation is mostly the same.
+
+---
+
+# Distributions usually have parameters
+
+Most distributions have **parameters** — knobs that shape the distribution. We collect all of a distribution's parameters into a single symbol $\theta$.
+
+<div class="math-box">
+
+$$Y \sim p(\cdot \mid \theta)$$
+
+Read · *"$Y$ is distributed as $p$, **given** parameters $\theta$."*
+
+</div>
+
+The vertical bar "$\mid$" means **"given"** (conditional on). It is the same conditional notation as in $P(A \mid B)$ from your probability course — *probability of $A$ given $B$ has happened*.
+
+Examples — the parameter symbol $\theta$ is just a placeholder ·
+
+- Coin · $\theta = p$ (one parameter, the bias). $Y \sim p(\cdot \mid p) = \text{Bernoulli}(p)$.
+- Normal · $\theta = (\mu, \sigma^2)$ (two parameters). $Y \sim p(\cdot \mid \mu, \sigma^2) = \mathcal{N}(\mu, \sigma^2)$.
+- Categorical · $\theta = \boldsymbol\pi$ (a vector of $K$ probabilities).
+
+In ML, **$\theta$ ends up being the model's weights** — the things we estimate from data via MLE / MAP later in this lecture. We will treat $\theta$ as known when we discuss distributions, and as something we infer when we discuss MLE.
 
 ---
 
@@ -240,37 +264,6 @@ $$P(\mathcal{D} \mid \theta) = \prod_{i=1}^N P(Y_i \mid \theta)$$
 This product is what becomes a sum after taking logs — and what becomes the **summed loss over a dataset** in every training loop. IID is the formal license to add up per-example losses.
 
 When IID fails (time series, video frames, sensor logs from one device) we need different math · autoregressive models, state-space models, etc. For this course, treat batches as IID.
-
----
-
-# Plate notation · graphical-model conventions
-
-Throughout this course, generative models are drawn as **directed graphical models** with **plate notation**. Four symbols ·
-
-<div class="math-box">
-
-| Symbol | Meaning |
-|:-:|:-:|
-| ○ | a random variable (uncertain) |
-| ● (filled) | an **observed** random variable (we see its value) |
-| arrow $A \to B$ | $A$ generates $B$ (i.e. $B$ depends on $A$) |
-| rectangle (plate) labelled $i = 1\ldots N$ | the contents are repeated $N$ times — independence across $i$ |
-
-</div>
-
-These four symbols compose every probabilistic model in the course. **Bayesian networks**, **HMMs**, **VAEs**, **diffusion models** — all drawn with these conventions.
-
----
-
-# Plate notation · IID Bernoulli example
-
-A single Bernoulli observation · $p \to \bullet\,Y$.
-
-A dataset of $N$ IID Bernoulli observations ·
-
-![w:380px](figures/lec00/svg/plate_iid_bernoulli.svg)
-
-The plate says *"draw a fresh $Y_i$ for each $i$, all from the same Bernoulli($p$)."* The single $p$ outside the plate is **shared across all observations** — that is what makes the dataset *identically distributed*.
 
 ---
 
@@ -328,6 +321,39 @@ Variance is largest at $p = 0.5$ (most uncertain) and zero at $p \in \{0, 1\}$ (
 $$P(\mathcal{D} \mid p) = P(Y_1 = 1) \cdot P(Y_2 = 0) \cdot P(Y_3 = 1) = 0.7 \cdot 0.3 \cdot 0.7 = 0.147$$
 
 The **product over independent observations** is the heart of likelihood — coming up in Part 2.
+
+---
+
+# Plate notation · graphical-model conventions
+
+We now have one concrete distribution (Bernoulli). A clean way to *draw* a probabilistic model is **plate notation** — the standard for the rest of this course.
+
+<div class="math-box">
+
+| Symbol | Meaning |
+|:-:|:-:|
+| ○ | a random variable (uncertain) |
+| ● (filled) | an **observed** random variable (we see its value) |
+| arrow $A \to B$ | $A$ generates $B$ (i.e. $B$ depends on $A$) |
+| rectangle (plate) labelled $i = 1\ldots N$ | the contents are repeated $N$ times — independence across $i$ |
+
+</div>
+
+These four symbols compose every probabilistic model in this course. **Bayesian networks**, **HMMs**, **VAEs**, **diffusion models** — all drawn with these conventions.
+
+---
+
+# Plate notation · IID Bernoulli example
+
+Apply the conventions to the simplest model · $N$ IID Bernoulli observations.
+
+A single Bernoulli observation · $p \to \bullet\,Y$.
+
+For $N$ observations, draw a plate around the repeated part ·
+
+![w:380px](figures/lec00/svg/plate_iid_bernoulli.svg)
+
+The plate says *"draw a fresh $Y_i$ for each $i$, all from the same Bernoulli($p$)."* The single $p$ outside the plate is **shared across all observations** — that is what makes the dataset *identically distributed*.
 
 ---
 
