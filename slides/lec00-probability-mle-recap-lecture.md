@@ -330,6 +330,18 @@ Then as $N \to \infty$, $Z_N \to \mathcal{N}(0, 1)$ regardless of the original d
 
 ---
 
+# CLT in pictures · sum of N uniforms
+
+![w:920px](figures/lec00/svg/clt_demo.svg)
+
+<div class="math-box">
+
+Sum of $N$ IID $\text{Uniform}[0, 1]$ samples, repeated 5000 times. **One uniform** is uniform; **two uniforms summed** form a triangular density; by **N = 30** the sum is essentially indistinguishable from a Gaussian. The CLT is not a special property of any one distribution — it's an *attractor* that almost any IID sum flows to.
+
+</div>
+
+---
+
 # Why Normal · maximum entropy
 
 **Entropy** quantifies "how spread-out / uncertain" a distribution is. Among all distributions with a *given* mean $\mu$ and variance $\sigma^2$ ·
@@ -461,11 +473,9 @@ For any 1-D distribution with CDF $F(y) = P(Y \le y)$, the algorithm is ·
 
 **Why it works** · $P(Y \le y) = P(F^{-1}(u) \le y) = P(u \le F(y)) = F(y)$. ✓
 
-**Worked · sampling from $\text{Bernoulli}(p)$** · the CDF jumps from $0$ to $1-p$ at $0$ and from $1-p$ to $1$ at $1$. Inverting ·
-- if $u < 1 - p$ return $0$
-- else return $1$
+![w:560px](figures/lec00/svg/inverse_cdf.svg)
 
-Equivalently · `return 1 if u < p else 0` (after a relabeling). One uniform draw, one comparison · that's the entire Bernoulli sampler.
+**Worked · sampling from $\text{Bernoulli}(p)$** · the CDF jumps from $0$ to $1-p$ at $0$ and from $1-p$ to $1$ at $1$. Inverting · `return 0 if u < 1-p else 1`. One uniform, one comparison.
 
 ---
 
@@ -743,6 +753,102 @@ The evidence becomes important only when we want a *full posterior* — Bayesian
 
 ---
 
+# Bayesian updating · the dynamic view
+
+Bayes' rule is not a one-shot operation. As more data arrives, **today's posterior becomes tomorrow's prior** ·
+
+<div class="math-box">
+
+After dataset $\mathcal{D}_1$ ·
+$$p(\theta \mid \mathcal{D}_1) \propto p(\mathcal{D}_1 \mid \theta)\,p(\theta)$$
+
+Now observe more data $\mathcal{D}_2$, independent of $\mathcal{D}_1$ given $\theta$ ·
+$$p(\theta \mid \mathcal{D}_1, \mathcal{D}_2) \propto p(\mathcal{D}_2 \mid \theta)\,p(\theta \mid \mathcal{D}_1)$$
+
+The previous posterior $p(\theta \mid \mathcal{D}_1)$ now plays the role of prior. Bayesian inference is **iterative belief updating**.
+
+</div>
+
+Practical issue · for general distributions, the posterior may not be in the same family as the prior, so each update changes the *shape* of the formula. **Conjugate priors** (next slide) avoid this · prior and posterior stay in the same family, and updates are just parameter arithmetic.
+
+---
+
+# Conjugacy · when the math stays clean
+
+<div class="math-box">
+
+A prior $p(\theta)$ is **conjugate** to a likelihood $p(\mathcal{D} \mid \theta)$ if the posterior $p(\theta \mid \mathcal{D})$ belongs to the **same family** as the prior — only the parameters change.
+
+</div>
+
+| Likelihood | Conjugate prior | Posterior |
+|:-:|:-:|:-:|
+| Bernoulli($\theta$) | Beta($\alpha, \beta$) | Beta($\alpha + h, \beta + t$) |
+| Categorical($\boldsymbol\pi$) | Dirichlet($\boldsymbol\alpha$) | Dirichlet($\boldsymbol\alpha + \mathbf{n}$) |
+| Normal($\mu, \sigma^2$), $\sigma$ known | Normal($\mu_0, \sigma_0^2$) | Normal (closed-form $\mu, \sigma$) |
+| Poisson($\lambda$) | Gamma($\alpha, \beta$) | Gamma($\alpha + n, \beta + N$) |
+
+Conjugacy is **why classical Bayesian statistics looks easy** · all the integrals collapse. Once we go to deep neural nets, conjugacy breaks and we need approximations (variational inference, MCMC) — but for this lecture, conjugacy makes the coin example airtight.
+
+---
+
+# Beta · prior over a probability
+
+The **Beta distribution** is supported on $[0, 1]$ — perfect for putting a prior on a Bernoulli's $p$.
+
+<div class="math-box">
+
+$$p \sim \text{Beta}(\alpha, \beta), \qquad p(p) = \frac{p^{\alpha - 1}(1 - p)^{\beta - 1}}{B(\alpha, \beta)}$$
+
+- $\alpha = \beta = 1$ · uniform on $[0, 1]$ — flat prior.
+- $\alpha = \beta = 2$ · "weakly fair" — peaks at $0.5$, allows variation.
+- $\alpha, \beta$ large · sharply concentrated near $\alpha / (\alpha + \beta)$.
+- Mean · $\mathbb{E}[p] = \alpha / (\alpha + \beta)$.
+
+</div>
+
+**Reading $\alpha, \beta$** · think of them as **pseudo-counts** of "fake" prior heads and tails you've already seen. $\text{Beta}(2, 2)$ ≈ "I've seen 1 fake head and 1 fake tail before this experiment" — a mild belief in fairness.
+
+This pseudo-count interpretation is what makes the next slide's update so clean.
+
+---
+
+# Beta-Binomial conjugacy · the derivation
+
+**Prior** $p \sim \text{Beta}(\alpha, \beta)$ · density $\propto p^{\alpha - 1}(1 - p)^{\beta - 1}$.
+
+**Likelihood** of $h$ heads, $t$ tails in $N$ flips · $p^h (1 - p)^t$ (drop binomial coefficient · constant in $p$).
+
+**Posterior** by Bayes ·
+
+<div class="math-box">
+
+$$p(p \mid \mathcal{D}) \;\propto\; \underbrace{p^h (1-p)^t}_{\text{likelihood}} \cdot \underbrace{p^{\alpha-1}(1-p)^{\beta-1}}_{\text{prior}} = p^{h + \alpha - 1}(1 - p)^{t + \beta - 1}$$
+
+This is exactly $\text{Beta}(h + \alpha,\, t + \beta)$.
+
+</div>
+
+**Update rule** · $\boxed{\;\text{Beta}(\alpha, \beta) \xrightarrow{h \text{ heads},\, t \text{ tails}} \text{Beta}(\alpha + h,\, \beta + t)\;}$
+
+**Interpretation** · just **add the observed counts to the pseudo-counts**. That's the whole update — no integral, no normalization.
+
+---
+
+# Beta-Binomial · the picture
+
+![w:920px](figures/lec00/svg/beta_binomial_update.svg)
+
+<div class="math-box">
+
+Start with a weakly-fair prior $\text{Beta}(2, 2)$. After 6 heads in 10 flips · posterior is $\text{Beta}(8, 6)$, peaking near $7/12 \approx 0.583$. After another 10 flips with the same rate (16H, 14T total) · $\text{Beta}(18, 16)$, even sharper near $0.529$.
+
+The posterior **gets narrower as more data arrives**. With infinite data, it converges to a point mass at the true $p$ — and Bayesian / frequentist inference agree.
+
+</div>
+
+---
+
 # Two estimators that fall out of Bayes
 
 <div class="columns">
@@ -856,6 +962,20 @@ $$p(y \mid \mathbf{x}, \boldsymbol\theta) = \mathcal{N}(y \mid \boldsymbol\theta
 
 The model's prediction $\hat\mu = \boldsymbol\theta^\top \mathbf{x}$ is the **mean** of the Gaussian. Real $y$ scatters around it with variance $\sigma^2$.
 
+---
+
+# Linear regression as MLE · the picture
+
+![w:780px](figures/lec00/svg/mle_linear_regression.svg)
+
+<div class="math-box">
+
+Each data point is one **draw** from a Gaussian whose mean lies on the regression line. MLE asks · *which line $\boldsymbol\theta^\top \mathbf{x}$ makes the observed $y$'s most probable?*
+
+Equivalently · *which line minimizes the squared distance from each point to the line* — exactly the OLS objective. That equivalence is the whole derivation.
+
+</div>
+
 This is the only modelling choice. Everything else is algebra.
 
 ---
@@ -912,6 +1032,28 @@ $$\boxed{\;\hat{\boldsymbol\theta}_{\text{MLE}} = (X^\top X)^{-1} X^\top \mathbf
 </div>
 
 The familiar **normal equation** is the closed-form MLE under Gaussian noise. SGD / gradient descent gives the same answer iteratively.
+
+---
+
+# Worked OLS by hand · 3 data points
+
+Let $x_i \in \mathbb{R}$ (single feature, no bias for clarity). Fit $\hat y = \theta x$.
+
+Data · $(x_1, y_1) = (1, 1.1),\ (x_2, y_2) = (2, 1.9),\ (x_3, y_3) = (3, 3.2)$.
+
+<div class="math-box">
+
+**Step 1.** $X^\top X = \sum x_i^2 = 1^2 + 2^2 + 3^2 = 1 + 4 + 9 = 14$.
+
+**Step 2.** $X^\top \mathbf{y} = \sum x_i y_i = 1 \cdot 1.1 + 2 \cdot 1.9 + 3 \cdot 3.2 = 1.1 + 3.8 + 9.6 = 14.5$.
+
+**Step 3.** $\hat\theta = (X^\top X)^{-1} X^\top \mathbf{y} = 14.5 / 14 \approx \mathbf{1.036}$.
+
+**Step 4.** Predictions · $\hat y_1 = 1.036$, $\hat y_2 = 2.071$, $\hat y_3 = 3.107$. Residuals · $0.064, -0.171, 0.093$. Sum-of-squared residuals · $\approx 0.043$.
+
+</div>
+
+**Sanity check** — gradient of MSE at $\hat\theta$ is $-2 \cdot 14 \cdot (\hat\theta - 14.5/14) = 0$. ✓ Same answer that `torch.linalg.lstsq` returns.
 
 ---
 
@@ -1100,11 +1242,31 @@ The loss is small **iff the model assigned high probability to the true class**.
 
 <!-- _class: section-divider -->
 
+# Session 1 · practice problems
+
+Try these on paper; answers worked through in the notebook (`lec00-mle-map.ipynb`).
+
+<div class="math-box">
+
+**P1.** A coin gives 12 heads in 20 flips. Compute the MLE for $p$ and the negative log-likelihood at that estimate.
+
+**P2.** Show that for $Y \mid x \sim \mathcal{N}(\theta x, \sigma^2)$ with **known** $\sigma^2$, the MLE for $\theta$ is $\hat\theta = \sum_i x_i y_i / \sum_i x_i^2$. (Hint · single-feature case of OLS.)
+
+**P3.** Write down the conditional distribution and the per-example log-likelihood for **Poisson regression** ($Y \mid x \sim \text{Poisson}(\exp(\theta^\top x))$). What is the resulting NLL loss?
+
+**P4.** For a 3-class softmax with logits $\mathbf{z} = [1, 2, 0]$ and true class $y = 1$, compute (a) the predicted probabilities, (b) the cross-entropy loss, (c) the gradient on each logit.
+
+**P5.** A coin's true bias is $p = 0.3$. You see 0 heads in 5 flips. What is the MLE? Why is the answer absurd, and what would a $\text{Beta}(2, 2)$ prior change?
+
+</div>
+
+---
+
 # End of Session 1
 
-So far · **probabilistic framework + MLE.** Bernoulli, Categorical, Normal · likelihood and log-likelihood · sampling primitives · Bayes' rule with its four named terms · MLE for the coin, linear regression, logistic regression, and multiclass — all derived as NLL of a chosen distribution.
+So far · **probabilistic framework + MLE.** Bernoulli, Categorical, Normal · likelihood and log-likelihood · sampling primitives · Bayes' rule with its four named terms · Beta-Binomial conjugate updates · MLE for the coin, linear regression, logistic regression, and multiclass — all derived as NLL of a chosen distribution.
 
-**Session 2 picks up from here** · MAP and regularization (L2 from Gaussian prior, L1 from Laplace), KL divergence as the unifying lens, and how it all fans out into VAEs, diffusion, RLHF, and the rest of the course.
+**Session 2 picks up from here** · MAP and regularization (L2 from Gaussian prior, L1 from Laplace), KL divergence and information theory as the unifying lens, and how it all fans out into VAEs, diffusion, RLHF, and the rest of the course.
 
 ---
 
@@ -1271,9 +1433,9 @@ $$\boxed{\;L_{\text{MAP}}(\boldsymbol\theta) = L_{\text{NLL}}(\boldsymbol\theta)
 
 ---
 
-# Why L1 produces sparse solutions
+# Why L1 produces sparse solutions · the geometry
 
-![w:880px](figures/lec00/svg/l1_l2_geometry.svg)
+![w:920px](figures/lec00/svg/l1_l2_geometry.svg)
 
 <div class="math-box">
 
@@ -1284,7 +1446,7 @@ Think of MAP as minimizing the loss subject to the prior. In 2D ·
 
 </div>
 
-L1's sparsity isn't a magic property — it's a direct consequence of the diamond geometry of the Laplace prior.
+L1's sparsity is a direct consequence of the **diamond geometry** of the Laplace prior — corners that lie exactly on the coordinate axes are the most likely touchpoints. Move to high dimensions and there are exponentially many corners → many features get zeroed simultaneously.
 
 ---
 
@@ -1358,6 +1520,65 @@ The whole course will keep instantiating the same NLL recipe. Each new model jus
 
 ---
 
+# Entropy · how uncertain is a distribution?
+
+The **entropy** of a distribution $p$ is the expected log-probability ·
+
+<div class="math-box">
+
+$$H(p) := -\mathbb{E}_{Y \sim p}[\log p(Y)] = -\sum_y p(y)\,\log p(y)$$
+
+When the log is base 2, $H(p)$ is in **bits**. It quantifies the average number of bits needed to encode a sample from $p$ using the optimal code for $p$.
+
+</div>
+
+**Worked numerics (in bits)** ·
+- Fair coin · $H = -2 \cdot 0.5 \log_2 0.5 = 1$ bit.
+- Biased coin $p = 0.99$ · $H \approx 0.08$ bits — almost no info per flip.
+- Uniform over 8 outcomes · $H = \log_2 8 = 3$ bits.
+- One-hot (deterministic) · $H = 0$ bits — no uncertainty.
+
+**Entropy peaks for uniform** distributions and is zero for deterministic ones. (See max-entropy principle — Normal is max-entropy given fixed mean and variance.)
+
+---
+
+# Entropy of a Bernoulli · in pictures
+
+![w:680px](figures/lec00/svg/entropy_bernoulli.svg)
+
+<div class="math-box">
+
+$H(p) = -p \log_2 p - (1 - p) \log_2 (1 - p)$ — concave, symmetric around $p = 0.5$, peaking at $1$ bit.
+
+A *fair* coin needs **one bit** to encode each flip. A coin with $p = 0.99$ is almost deterministic — encoded with arithmetic coding it costs ~$0.08$ bits/flip on average.
+
+This is the meaning of "log-probability is the natural unit." The whole machinery of NLL is just averaging this.
+
+</div>
+
+---
+
+# Mutual information · briefly (will return in L17)
+
+For two random variables $X, Y$ with joint $p(x, y)$ ·
+
+<div class="math-box">
+
+$$I(X; Y) := \text{KL}\bigl(p(x, y) \,\Vert\, p(x)\,p(y)\bigr) = H(X) - H(X \mid Y) = H(Y) - H(Y \mid X)$$
+
+</div>
+
+**Read** · "how much $X$ and $Y$ tell us about each other." Always $\ge 0$, equal to 0 iff $X \perp Y$.
+
+**Why we'll care** ·
+- **Self-supervised learning (L17)** · contrastive losses are *lower bounds on mutual information* between augmented views (InfoNCE).
+- **Information bottleneck** · representation learning as $I(X; Z)$ minimization subject to $I(Z; Y) \ge \text{target}$.
+- **Capacity of a channel** · classical result with the same formula.
+
+We won't compute $I(X; Y)$ directly today, but you'll see it surface in L17.
+
+---
+
 # KL divergence · definition
 
 KL divergence measures how different one distribution $p$ is from another distribution $q$ over the same support.
@@ -1373,9 +1594,28 @@ $$\text{KL}(p \,\Vert\, q) := \mathbb{E}_{Y \sim p}\!\left[\log \frac{p(Y)}{q(Y)
 **Read** · *"the average log-ratio when the data really comes from $p$ but you used $q$ to model it."*
 
 **Three properties** ·
-1. $\text{KL}(p \| q) \ge 0$ for all $p, q$ (Gibbs' inequality).
+1. $\text{KL}(p \| q) \ge 0$ for all $p, q$ (Gibbs' inequality — proof on next slide).
 2. $\text{KL}(p \| q) = 0$ if and only if $p = q$ everywhere.
-3. **Asymmetric** · $\text{KL}(p \| q) \ne \text{KL}(q \| p)$ in general. This asymmetry will matter — see two slides on.
+3. **Asymmetric** · $\text{KL}(p \| q) \ne \text{KL}(q \| p)$ in general. This asymmetry will matter — see "forward vs reverse KL" coming up.
+
+---
+
+# Why KL ≥ 0 · Jensen's inequality (proof)
+
+**Jensen's inequality** · for any *concave* function $\varphi$ and random variable $X$,
+$$\mathbb{E}[\varphi(X)] \le \varphi(\mathbb{E}[X])$$
+
+Since $\log$ is concave ·
+
+<div class="math-box">
+
+$$-\text{KL}(p \| q) = \mathbb{E}_p\!\left[\log\tfrac{q(Y)}{p(Y)}\right] \;\le\; \log\,\mathbb{E}_p\!\left[\tfrac{q(Y)}{p(Y)}\right] = \log\!\sum_y p(y)\,\tfrac{q(y)}{p(y)} = \log\!\sum_y q(y) = \log 1 = 0$$
+
+So $-\text{KL} \le 0$, i.e. $\text{KL}(p \| q) \ge 0$. Equality iff $q(y)/p(y)$ is constant — i.e. $p = q$. ∎
+
+</div>
+
+This is the full proof of **Gibbs' inequality**. Jensen's inequality is the same tool used to derive the **ELBO** in VAEs (L19). Same trick, same place — once you see it once, you see it everywhere.
 
 ---
 
@@ -1467,14 +1707,41 @@ KL is asymmetric — and the two directions give very different optimization pro
 </div>
 </div>
 
-<div class="keypoint">
+---
 
-**Picture · bimodal target, single Gaussian fit.**
+# Forward vs reverse KL · the picture
 
-- Forward KL · the Gaussian *spreads across both modes* — blurry but covers all data. Why VAE samples are blurry.
-- Reverse KL · the Gaussian *picks one mode* — sharp but ignores the other. Why GAN samples are sharp but mode-collapse.
+![w:920px](figures/lec00/svg/forward_reverse_kl.svg)
+
+<div class="math-box">
+
+Same bimodal target $p$ (grey shaded). Fit a single Gaussian by minimizing each direction of KL ·
+
+- **Forward KL** spreads the Gaussian across both modes — covers all data, but spends mass on the gap between modes (blurry samples). Why **VAE samples are blurry**.
+- **Reverse KL** concentrates on one mode — sharp samples but ignores the other half of the distribution. Why **GANs mode-collapse**.
+
+The two errors are *opposite failure modes*. Knowing which KL direction your loss optimizes tells you which failure mode to expect.
 
 </div>
+
+---
+
+# KL between two Gaussians · the closed form
+
+For $p = \mathcal{N}(\mu_1, \sigma_1^2)$ and $q = \mathcal{N}(\mu_2, \sigma_2^2)$, the KL is in closed form ·
+
+<div class="math-box">
+
+$$\text{KL}\bigl(\mathcal{N}(\mu_1, \sigma_1^2) \,\Vert\, \mathcal{N}(\mu_2, \sigma_2^2)\bigr) = \log\frac{\sigma_2}{\sigma_1} + \frac{\sigma_1^2 + (\mu_1 - \mu_2)^2}{2\sigma_2^2} - \frac{1}{2}$$
+
+For the special case $q = \mathcal{N}(0, 1)$ ·
+$$\text{KL}\bigl(\mathcal{N}(\mu, \sigma^2) \,\Vert\, \mathcal{N}(0, 1)\bigr) = \tfrac{1}{2}\bigl(\mu^2 + \sigma^2 - 1 - \log\sigma^2\bigr)$$
+
+</div>
+
+This is the **exact term that shows up in the VAE loss** (L19) — pulling the encoder's posterior toward a standard-normal prior. Memorize this form; it'll save you 5 minutes of staring when you re-derive it later.
+
+**Worked** · $\mu = 1, \sigma = 0.5$ ⇒ $\text{KL} = \tfrac{1}{2}(1 + 0.25 - 1 + \log 4) \approx 0.82$.
 
 ---
 
@@ -1496,6 +1763,26 @@ Once you see KL as the underlying object, every advanced model becomes a **speci
 </div>
 
 You will see KL terms in every generative or alignment loss for the next 24 lectures. Each is an instance of *what we just derived*.
+
+---
+
+# Session 2 · practice problems
+
+Try these on paper; the notebook has plotting and verification.
+
+<div class="math-box">
+
+**P6.** For linear regression with NLL $0.4$ and weights $\boldsymbol\theta = [-2, 3, 1]$, compute the MAP loss with (a) L2 penalty $\lambda = 0.5$, (b) L1 penalty $\lambda = 0.5$. Which weights does L1 push hardest?
+
+**P7.** Compute $\text{KL}(\mathcal{N}(2, 0.25) \,\Vert\, \mathcal{N}(0, 1))$ using the closed form. Interpret the answer.
+
+**P8.** Show that for one-hot true label $\mathbf{y}_i$ and softmax prediction $\hat{\boldsymbol\pi}_i$, cross-entropy equals $\text{KL}(\mathbf{y}_i \,\Vert\, \hat{\boldsymbol\pi}_i)$. (Hint · entropy of a one-hot is zero.)
+
+**P9.** A bimodal target has modes at $\pm 2$ with equal mass. You fit a single Gaussian $q$. Sketch the optimum under (a) forward KL, (b) reverse KL. Which one is mode-covering?
+
+**P10.** Coin flipped 10 times, observed 8 heads. Starting from $\text{Beta}(2, 2)$ prior, write down the Beta posterior and its mean. How does the posterior mean compare to the MLE $\hat p = 0.8$? Why does it differ?
+
+</div>
 
 ---
 
