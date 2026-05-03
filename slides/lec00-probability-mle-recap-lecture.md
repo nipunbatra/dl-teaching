@@ -7,9 +7,10 @@ math: mathjax
 
 <!-- _class: title-slide -->
 
-# Probability, MLE & NLL · the loss-functions-from-first-principles primer
+# A Probabilistic View of ML
+## From linear regression to MLE, MAP, L1 & L2
 
-## Lecture 0 · ES 667: Deep Learning
+### Lecture 0 · ES 667: Deep Learning
 
 **Prof. Nipun Batra**
 *IIT Gandhinagar · Aug 2026*
@@ -18,17 +19,18 @@ math: mathjax
 
 # Why this lecture
 
-This is not a generic probability recap. It is the probability **toolkit for deep learning**.
+You already know how to solve regression and classification. You wrote down a loss, took a gradient, ran SGD. It works.
 
-The whole course keeps reusing the same objects · likelihoods, negative log-likelihoods, KL terms, Gaussian noise, categorical tokens, and Monte Carlo expectations.
+But two questions you may never have asked ·
+
+1. **Where does the loss come from?** Why MSE for regression and cross-entropy for classification — and not something else?
+2. **What is L1 / L2 regularization, really?** They're not just "add this term, weights stay small." They have a meaning.
 
 <div class="paper">
 
-This lecture derives the core losses from one principle: **maximum likelihood estimation** under a probabilistic model. Once you see the pattern, "loss design" becomes a modeling choice, not a bag of formulas.
+Today's promise · one principle — **maximum likelihood under a probabilistic model** — gives every loss in this course, and a tiny twist on it gives every regularizer. From this lecture onward, "loss design" stops being a bag of tricks and becomes a modeling choice.
 
 </div>
-
-If you took probability in ES 654, treat this as a map from probability to DL. If not, these are the pieces you need before the course accelerates.
 
 ---
 
@@ -36,12 +38,105 @@ If you took probability in ES 654, treat this as a map from probability to DL. I
 
 By the end of this lecture you will be able to:
 
-1. State the **Bernoulli, Categorical, and Normal** distributions and their parameters.
-2. Compute **likelihood** and **log-likelihood** of a dataset under a model.
-3. Derive **MSE** as the MLE for regression with Gaussian noise.
-4. Derive **cross-entropy** as the MLE for classification with categorical / Bernoulli output.
-5. Connect **cross-entropy, KL divergence, and negative log-likelihood**.
-6. Explain how **MAP**, Monte Carlo expectations, and reparameterization reappear in VAEs, diffusion, and regularization.
+1. **State** the Bernoulli, Categorical, and Normal distributions and the conditional view of ML.
+2. **Apply Bayes' rule** and identify prior, likelihood, evidence, and posterior.
+3. **Derive MSE** as MLE for linear regression with Gaussian noise.
+4. **Derive cross-entropy** as MLE for logistic regression with Bernoulli output.
+5. **Derive L2 regularization** as MAP with a Gaussian prior on $\theta$.
+6. **Derive L1 regularization** as MAP with a Laplace prior — and explain why L1 gives sparsity.
+7. **Connect** these foundations to VAEs, diffusion, RLHF, and the rest of the course.
+
+---
+
+<!-- _class: section-divider -->
+
+### PART 0
+
+# Revision · linear & logistic regression
+
+The loss functions we used without asking why
+
+---
+
+# Linear regression · the recap
+
+Given dataset $\{(\mathbf{x}_i, y_i)\}_{i=1}^N$ with $\mathbf{x}_i \in \mathbb{R}^d$ and continuous $y_i \in \mathbb{R}$, fit:
+
+$$\hat y_i = \boldsymbol\theta^\top \mathbf{x}_i$$
+
+(absorb the bias into $\boldsymbol\theta$ by appending 1 to $\mathbf{x}_i$).
+
+<div class="math-box">
+
+**Loss** · mean squared error
+$$L(\boldsymbol\theta) = \frac{1}{N}\sum_{i=1}^N (y_i - \boldsymbol\theta^\top \mathbf{x}_i)^2$$
+
+**Train** · solve $\nabla_\theta L = 0$ in closed form ($\hat\theta = (X^\top X)^{-1} X^\top y$) or run gradient descent.
+
+</div>
+
+You probably justified MSE as *"penalize big errors more than small ones."* True — but **why squared and not absolute or cubed?** We'll see today.
+
+---
+
+# Logistic regression · the recap
+
+Same setup, but $y_i \in \{0, 1\}$ (binary classification). Output is a probability via the sigmoid:
+
+$$\hat p_i = \sigma(\boldsymbol\theta^\top \mathbf{x}_i),\qquad \sigma(z) = \frac{1}{1 + e^{-z}}$$
+
+<div class="math-box">
+
+**Loss** · binary cross-entropy (BCE)
+$$L(\boldsymbol\theta) = -\frac{1}{N}\sum_{i=1}^N \bigl[y_i \log\hat p_i + (1 - y_i)\log(1 - \hat p_i)\bigr]$$
+
+**Train** · gradient descent. No closed form.
+
+</div>
+
+You justified BCE as *"big penalty when confidently wrong."* Again true — but **why this exact form**, not $-(y - \hat p)^2$ or $-|y - \hat p|$? Same question.
+
+---
+
+# Regularization · the other half-mystery
+
+When the model overfits, you added a penalty term:
+
+<div class="math-box">
+
+**L2 (ridge)** · $L(\boldsymbol\theta) + \lambda \|\boldsymbol\theta\|_2^2 = L(\boldsymbol\theta) + \lambda \sum_j \theta_j^2$
+
+**L1 (lasso)** · $L(\boldsymbol\theta) + \lambda \|\boldsymbol\theta\|_1\, = L(\boldsymbol\theta) + \lambda \sum_j |\theta_j|$
+
+</div>
+
+You probably learned ·
+- **L2** keeps weights small (smooth shrinkage).
+- **L1** drives many weights to **exactly zero** (sparsity).
+
+But **why** does L1 hit zero and L2 doesn't? Why is the penalty *squared* in L2 and *absolute* in L1? We'll derive both from first principles.
+
+---
+
+# Today's question, on one slide
+
+Three loose threads from your last ML course ·
+
+| Object | Recipe | Where does it come from? |
+|:-:|:-:|:-:|
+| MSE | $\sum (y - \hat y)^2$ | ? |
+| BCE | $-\sum [y\log\hat p + (1-y)\log(1-\hat p)]$ | ? |
+| L2 | $\lambda \sum \theta_j^2$ | ? |
+| L1 | $\lambda \sum |\theta_j|$ | ? |
+
+<div class="keypoint">
+
+By the end of this lecture, all four are **derived consequences** of two ideas:
+
+1. The model defines a probability distribution over $y$.
+2. We pick parameters that make the data most likely (MLE), optionally tempered by a prior on $\theta$ (MAP).
+
+</div>
 
 ---
 
@@ -49,211 +144,97 @@ By the end of this lecture you will be able to:
 
 ### PART 1
 
-# Three distributions you must know
+# A probabilistic view of ML
 
-Bernoulli · Categorical · Normal
+The model doesn't predict a number — it predicts a **distribution**
 
 ---
 
 # Random variable · in 30 seconds
 
-A **random variable** $Y$ is a quantity whose value is uncertain · it follows a distribution.
+A **random variable** $Y$ is a quantity whose value is uncertain. It follows a distribution $p$.
 
 <div class="math-box">
 
-- **Discrete** · finite or countable values · spam/ham, digit class, dice roll. Described by a probability **mass** function $P(Y = y)$.
-- **Continuous** · real-valued · height, weight, sensor reading. Described by a probability **density** function $p(y)$.
-
-For continuous · $\int p(y) \, dy = 1$, but $p(y_0)$ at a single point can exceed 1 (it's a density, not a probability).
+- **Discrete** $Y \in \{y_1, y_2, \ldots\}$ — described by a probability **mass** function $P(Y = y)$ summing to 1.
+- **Continuous** $Y \in \mathbb{R}$ — described by a probability **density** function $p(y)$ integrating to 1. (A density value at one point can exceed 1 — it's a density, not a probability.)
 
 </div>
 
-We'll abuse notation and write $p(y)$ for both. Context tells you which.
-
----
-
-# The three distributions · in pictures
-
-![w:920px](figures/lec00/svg/three_distributions.svg)
-
----
-
-# Three properties of any distribution
-
-<div class="math-box">
-
-| Property | Definition | What it tells you |
-|:-:|:-:|:-:|
-| **Mean** | $\mathbb{E}[Y] = \int y \, p(y) \, dy$ | center of mass |
-| **Variance** | $\mathbb{E}[(Y - \mu)^2]$ | how spread out |
-| **Mode** | $\arg\max_y p(y)$ | most likely value |
-
-</div>
-
-**Examples** for a Normal $\mathcal{N}(5, 2^2)$ · mean = 5 · variance = 4 · mode = 5 (Gaussians are unimodal).
-
-For a Bernoulli with $p = 0.7$ · mean = 0.7 · variance = $p(1-p) = 0.21$ · mode = 1.
+We will mostly need three distributions today · **Bernoulli** for binary outcomes (coin, classification), **Categorical** for $K$-way outcomes (multiclass), **Normal** for continuous outcomes (regression, noise).
 
 ---
 
 # Bernoulli · the coin
 
-A single binary outcome ($Y \in \{0, 1\}$) parameterized by $p \in [0,1]$ · the probability of "heads."
+Outcome $Y \in \{0, 1\}$, parameter $p \in [0, 1]$ = probability of "heads".
 
 <div class="math-box">
 
-$$P(Y = 1) = p, \quad P(Y = 0) = 1 - p$$
+$$P(Y = 1) = p,\qquad P(Y = 0) = 1 - p$$
 
-Compactly · $P(Y = y) = p^y (1-p)^{1-y}$
-
-</div>
-
-**Examples** · email is spam (Y=1) or not (Y=0) · patient has disease or not · pixel is foreground or background.
-
----
-
-# Bernoulli · worked numeric
-
-A coin · $p = 0.7$.
-
-<div class="math-box">
-
-$P(Y = 1) = 0.7$ · "heads" · 70% chance.
-
-$P(Y = 0) = 1 - 0.7 = 0.3$ · "tails" · 30% chance.
-
-For 3 independent flips, what's $P(Y_1 = 1, Y_2 = 0, Y_3 = 1)$?
-
-$P = 0.7 \cdot 0.3 \cdot 0.7 = 0.147$
+Compactly · $P(Y = y) = p^y\,(1 - p)^{1 - y}$
+- $y = 1 \Rightarrow p^1 (1-p)^0 = p$ ✓
+- $y = 0 \Rightarrow p^0 (1-p)^1 = 1 - p$ ✓
 
 </div>
 
-This **product of per-sample probabilities** is the key idea behind likelihood · we'll use it all the time.
+**Worked** · Coin with $p = 0.7$. Three independent flips $H, T, H$. Probability of seeing this exact sequence ·
+$0.7 \cdot 0.3 \cdot 0.7 = 0.147$
 
----
-
-# Categorical · the K-sided die
-
-Generalization of Bernoulli to $K$ classes. Outcome $Y \in \{1, \ldots, K\}$, parameters $\boldsymbol{\pi} = (\pi_1, \ldots, \pi_K)$ with $\sum \pi_k = 1$.
-
-<div class="math-box">
-
-$$P(Y = k) = \pi_k$$
-
-Compactly · $P(Y) = \prod_{k=1}^K \pi_k^{[Y = k]}$
-
-</div>
-
-**Examples** · 10 digit classes for MNIST · 1000 ImageNet classes · 50,000 token vocabulary.
-
-The softmax output of any classifier IS a categorical distribution over classes.
-
----
-
-# The model outputs a conditional distribution
-
-In supervised learning the model does not just output a number. It defines a distribution **conditioned on the input**.
-
-<div class="math-box">
-
-| Task | Neural net output | Probabilistic meaning |
-|:-:|:-:|:-:|
-| Binary classification | $\hat p_\theta(x)$ | $Y \mid x \sim \text{Bernoulli}(\hat p_\theta(x))$ |
-| Multiclass classification | $\hat{\boldsymbol\pi}_\theta(x)$ | $Y \mid x \sim \text{Categorical}(\hat{\boldsymbol\pi}_\theta(x))$ |
-| Regression | $\hat\mu_\theta(x)$ | $Y \mid x \sim \mathcal{N}(\hat\mu_\theta(x), \sigma^2)$ |
-
-</div>
-
-Training asks: *under these conditional distributions, how likely are the observed labels?*
-
----
-
-# Categorical · worked numeric
-
-Image classifier · 3 classes · model outputs $\boldsymbol{\pi} = (0.1, 0.7, 0.2)$ for one input.
-
-<div class="math-box">
-
-The model says · $P(\text{class 1}) = 0.1$ · $P(\text{class 2}) = 0.7$ · $P(\text{class 3}) = 0.2$.
-
-If the **true class** is class 2, then the probability the model assigned to the truth is **0.7**.
-
-</div>
-
-A perfect model would put all mass on class 2 (i.e., $\boldsymbol{\pi} = (0, 1, 0)$). The further the model's prediction is from a one-hot truth, the less likely the data is under it.
+This **product over independent observations** is the heart of likelihood — coming up shortly.
 
 ---
 
 # Normal (Gaussian) · the bell curve
 
-Continuous outcome $Y \in \mathbb{R}$ parameterized by mean $\mu$ and variance $\sigma^2$.
+Continuous $Y \in \mathbb{R}$ with mean $\mu$ and variance $\sigma^2$.
 
 <div class="math-box">
 
-$$p(Y = y) = \frac{1}{\sqrt{2\pi \sigma^2}} \exp\!\left(-\frac{(y - \mu)^2}{2 \sigma^2}\right)$$
+$$p(y) = \frac{1}{\sqrt{2\pi\sigma^2}}\,\exp\!\left(-\frac{(y - \mu)^2}{2\sigma^2}\right)$$
 
 </div>
 
-**Examples** · house prices · sensor readings · activations after batch-norm · noise added to images in diffusion (L21).
+Three things to remember ·
+1. Centred at $\mu$, spread by $\sigma$.
+2. Density falls off **exponentially in $(y - \mu)^2$** — squared distance.
+3. The squared exponent is going to be the seed of MSE.
 
-The bell shape · centered at $\mu$ · spread by $\sigma$ · falls off exponentially in $(y - \mu)^2$.
-
----
-
-# Multivariate normal · the d-dimensional bell
-
-For $\mathbf{y} \in \mathbb{R}^d$ ·
-
-<div class="math-box">
-
-$$p(\mathbf{y}) = \frac{1}{\sqrt{(2\pi)^d |\Sigma|}} \exp\!\left(-\frac{1}{2} (\mathbf{y} - \boldsymbol\mu)^\top \Sigma^{-1} (\mathbf{y} - \boldsymbol\mu)\right)$$
-
-</div>
-
-- $\boldsymbol\mu \in \mathbb{R}^d$ · mean vector
-- $\Sigma \in \mathbb{R}^{d \times d}$ · covariance matrix (symmetric, positive definite)
-
-If $\Sigma = \sigma^2 I$ (isotropic) · independent Gaussian per coordinate. This is what diffusion uses · "add isotropic Gaussian noise."
-
-The exponent $(y - \mu)^\top \Sigma^{-1} (y - \mu)$ is the **Mahalanobis distance** · squared distance, scaled by inverse covariance.
+**Worked** · House prices $\sim \mathcal{N}(50, 5^2)$ lakh. $p(50) \approx 0.080$. $p(70) \approx 2.7 \times 10^{-5}$ — a 4σ-away house is vanishingly unlikely under this model.
 
 ---
 
-# A few more distributions you'll meet
-
-<div class="math-box">
+# A small zoo of distributions you'll meet
 
 | Name | Type | Used for |
 |:-:|:-:|:-:|
-| **Beta(α, β)** | continuous, [0,1] | prior over probabilities · A/B testing |
-| **Poisson(λ)** | discrete, ≥0 | event counts (clicks, bus arrivals) |
-| **Dirichlet(α)** | continuous, simplex | prior over categorical parameters |
-| **Exponential(λ)** | continuous, ≥0 | waiting times |
-| **Multinomial(n, π)** | discrete | "how many heads in n flips" |
+| **Bernoulli($p$)** | discrete, binary | binary classification |
+| **Categorical($\boldsymbol\pi$)** | discrete, $K$-way | multiclass classification |
+| **Normal($\mu, \sigma^2$)** | continuous | regression, Gaussian noise |
+| **Laplace($\mu, b$)** | continuous, heavy-tailed | L1 regularizer prior |
+| **Beta($\alpha, \beta$)** | $[0,1]$ | prior over a probability |
+| **Multinomial** | discrete, counts | bag-of-words, $n$ flips |
 
-</div>
-
-You'll mostly use **Bernoulli, Categorical, Normal**. The others appear in specific recipes (e.g., Beta in Bayesian methods, Poisson for count regression).
+You'll need the first three today. **Laplace** comes back when we derive L1.
 
 ---
 
-# Normal · worked numeric
+# The conditional view · model outputs a distribution
 
-Suppose the true house-price model is $\mu = 50$ lakh, $\sigma = 5$ lakh.
+The neural net or regression model **does not output a number**. It outputs the *parameters of a distribution* over $Y$ given $\mathbf{x}$.
 
 <div class="math-box">
 
-$p(Y = 50) = \frac{1}{\sqrt{2\pi \cdot 25}} \exp(0) \approx 0.0798$
-
-$p(Y = 55) = \frac{1}{\sqrt{2\pi \cdot 25}} \exp(-25/50) \approx 0.0484$
-
-$p(Y = 70) = \frac{1}{\sqrt{2\pi \cdot 25}} \exp(-400/50) \approx 2.7 \times 10^{-5}$
+| Task | Model output | Conditional distribution |
+|:-:|:-:|:-:|
+| Linear regression | $\hat\mu_\theta(\mathbf{x}) = \boldsymbol\theta^\top \mathbf{x}$ | $Y \mid \mathbf{x} \sim \mathcal{N}(\hat\mu_\theta(\mathbf{x}),\,\sigma^2)$ |
+| Logistic regression | $\hat p_\theta(\mathbf{x}) = \sigma(\boldsymbol\theta^\top \mathbf{x})$ | $Y \mid \mathbf{x} \sim \text{Bernoulli}(\hat p_\theta(\mathbf{x}))$ |
+| $K$-class softmax | $\hat{\boldsymbol\pi}_\theta(\mathbf{x})$ | $Y \mid \mathbf{x} \sim \text{Categorical}(\hat{\boldsymbol\pi}_\theta(\mathbf{x}))$ |
 
 </div>
 
-A house at the mean ($Y = 50$) is the most likely. A house at $Y = 70$ (4σ away) is **vanishingly unlikely** under this model.
-
-This squared-distance penalty — $(y - \mu)^2$ — is the seed of MSE.
+Training asks · *under these conditional distributions, how likely are the labels we actually saw?* Maximize that — the rest follows.
 
 ---
 
@@ -261,137 +242,80 @@ This squared-distance penalty — $(y - \mu)^2$ — is the seed of MSE.
 
 ### PART 2
 
-# Conditional probability and sampling
+# Likelihood
 
-The plumbing that makes everything work
+The probability of the data, viewed as a function of $\theta$
 
 ---
 
-# Conditional probability · the basics
+# Coin toss · setup
+
+You're handed a coin with **unknown** bias $p$. You flip it $N = 10$ times and observe ·
+
+$$\mathcal{D} = \texttt{H, H, T, H, T, T, H, H, T, H}$$
+
+Six heads, four tails.
+
+<div class="keypoint">
+
+Question · what value of $p$ is *most consistent* with this data?
+
+</div>
+
+Intuition says $p \approx 0.6$. We'll make that intuition rigorous and, in doing so, write down the entire framework for everything that follows.
+
+---
+
+# Likelihood · definition
+
+The **likelihood** of a parameter $\theta$ given data $\mathcal{D}$ is the probability of observing $\mathcal{D}$ under that parameter ·
 
 <div class="math-box">
 
-$$P(A \mid B) = \frac{P(A, B)}{P(B)}$$
-
-Given $B$ happened, what's the probability $A$ also happened?
+$$\mathcal{L}(\theta) := P(\mathcal{D} \mid \theta)$$
 
 </div>
 
-**Example** · $P(\text{disease} \mid \text{positive test}) = ?$
-- $P(\text{disease}) = 0.01$ (prior)
-- $P(\text{positive} \mid \text{disease}) = 0.95$ (test sensitivity)
-- $P(\text{positive} \mid \text{healthy}) = 0.05$ (false positive rate)
+It is **not** a probability over $\theta$ (we'll get that from Bayes' rule next). It is the data's probability, viewed as a function of $\theta$.
 
-Combine with **Bayes' rule** (next slide) to flip the conditional.
+For the coin, IID assumption gives ·
+$$\mathcal{L}(p) = \prod_{i=1}^{N} P(y_i \mid p) = \prod_{i=1}^{N} p^{y_i}(1 - p)^{1 - y_i} = p^{\#H}\,(1 - p)^{\#T}$$
+
+For our data · $\mathcal{L}(p) = p^6 (1 - p)^4$.
 
 ---
 
-# Bayes' rule · 90% of probability
+# Likelihood · plotted
+
+![w:780px](figures/lec00/svg/coin_likelihood.svg)
 
 <div class="math-box">
 
-$$P(A \mid B) = \frac{P(B \mid A) \, P(A)}{P(B)}$$
+$\mathcal{L}(p) = p^6 (1-p)^4$, plotted on $p \in [0, 1]$.
 
-</div>
-
-For the disease test ·
-
-$P(\text{disease} \mid +) = \frac{0.95 \cdot 0.01}{0.95 \cdot 0.01 + 0.05 \cdot 0.99} \approx 0.16$
-
-<div class="warning">
-
-**Counterintuitive** · even with 95% sensitivity and 95% specificity, a positive test only gives 16% disease probability when the prior is 1%. The base-rate fallacy. This is the entire reason "false positive paradoxes" exist in medical testing and ML systems.
+Maximum at $p = 0.6$ — which matches our intuition (6 heads out of 10).
 
 </div>
 
 ---
 
-# Expectation and the law of large numbers
+# Why we take logs · IID + numerical reality
+
+For $N$ IID observations · $\mathcal{L}(\theta) = \prod_{i=1}^N P(y_i \mid \theta)$.
+
+Two problems with the product ·
+1. **Underflow** · with $N = 1000$ and each factor $\sim 0.5$, we get $0.5^{1000} \approx 10^{-301}$ — below floating-point precision.
+2. **Hard to differentiate** · product rule generates $N$ terms.
 
 <div class="math-box">
 
-$$\mathbb{E}_{Y \sim p}[f(Y)] = \int f(y) \, p(y) \, dy$$
+**Fix · take the log.** Products become sums. Maxima are preserved (log is monotonic).
 
-We can't usually compute this integral analytically · so we **sample**:
-
-$$\mathbb{E}_p[f(Y)] \approx \frac{1}{N} \sum_{i=1}^N f(y_i), \quad y_i \sim p$$
+$$\ell(\theta) := \log \mathcal{L}(\theta) = \sum_{i=1}^N \log P(y_i \mid \theta)$$
 
 </div>
 
-This is **Monte Carlo estimation** · law of large numbers says the average converges to the true expectation as $N \to \infty$.
-
-VAE training (L19) · expectation over $z \sim q(z|x)$ · estimated by 1 sample. Diffusion (L21) · expectation over noise · estimated by 1 sample. Almost every loss in DL is a sample-mean approximation.
-
----
-
-# Sampling · how do we draw from a distribution?
-
-<div class="math-box">
-
-| Distribution | Sampling recipe |
-|:-:|:-:|
-| Uniform[0,1] | most languages have `rand()` built in |
-| Bernoulli($p$) | $u \sim U[0,1]$, return 1 if $u < p$ else 0 |
-| Categorical($\boldsymbol\pi$) | inverse-CDF · pick the smallest $k$ s.t. $\sum_{j \le k} \pi_j > u$ |
-| Normal $\mathcal{N}(0, 1)$ | Box-Muller · `randn()` in NumPy / PyTorch |
-| $\mathcal{N}(\mu, \sigma^2)$ | $z \sim \mathcal{N}(0,1)$, return $\mu + \sigma z$ |
-
-</div>
-
-The last row is the **reparameterization trick** (L19) · sample from a simple base distribution, then transform.
-
----
-
-# Worked example · sampling categorical
-
-Probabilities · $\boldsymbol\pi = (0.1, 0.3, 0.4, 0.2)$. Cumulative · $(0.1, 0.4, 0.8, 1.0)$.
-
-<div class="math-box">
-
-Draw $u \sim U[0, 1]$. Suppose $u = 0.55$.
-
-- 0.55 > 0.1 · skip class 1
-- 0.55 > 0.4 · skip class 2
-- 0.55 ≤ 0.8 · **return class 3** ✓
-
-</div>
-
-That's all "sampling a softmax output" is doing internally · convert to cumulative, draw one uniform, find where it lands. Fast.
-
----
-
-# Independent samples vs IID
-
-<div class="math-box">
-
-- **Independent** · knowing one sample tells you nothing about the next.
-- **Identically distributed** · all samples come from the same distribution.
-
-**IID** · both. The standard assumption for batches of training data.
-
-</div>
-
-When IID **fails** · time-series (today's stock depends on yesterday's), images from a single video, examples that share a common cause. Be careful · IID assumption is what lets us sum log-likelihoods. Violations need different math (autoregressive models, state-space models, etc.).
-
----
-
-# IID violations that break evaluation
-
-The IID assumption is also what makes a validation score mean anything.
-
-<div class="warning">
-
-If near-duplicate, same-patient, same-video, or future information leaks across train and validation, the model looks good without learning the intended mapping.
-
-</div>
-
-**Examples**
-- Medical images · train has one scan from a patient, validation has another scan from the same patient.
-- Video frames · random frame split makes train and validation almost identical.
-- LLM data · benchmark answers appear in pretraining data.
-- Time-series · random split lets the model train on the future and test on the past.
-
-When IID fails, split by the unit that creates dependence: patient, video, user, time, document source.
+We will *always* work with log-likelihood. By convention we minimize the **negative** log-likelihood (NLL) so that "loss" is something we drive down.
 
 ---
 
@@ -399,81 +323,147 @@ When IID fails, split by the unit that creates dependence: patient, video, user,
 
 ### PART 3
 
-# Information theory · in two slides
+# Bayes' rule
 
-Why log-probabilities are the natural unit
+Inverting conditional probabilities — the foundation of MAP
 
 ---
 
-# Entropy · uncertainty in bits
+# Conditional probability · refresher
+
+For two events $A, B$ with $P(B) > 0$ ·
 
 <div class="math-box">
 
-$$H(p) = -\sum_y p(y) \log p(y)$$
+$$P(A \mid B) = \frac{P(A, B)}{P(B)}$$
 
-The **expected number of bits** (when log is base 2) needed to encode a sample from $p$.
-
-</div>
-
-**Examples** ·
-- A fair coin · $H = -2 \cdot 0.5 \log 0.5 = 1$ bit. One bit for each flip.
-- A biased coin $p = 0.99$ · $H \approx 0.08$ bits. Almost no info per flip.
-- Uniform over 8 outcomes · $H = 3$ bits. Maximum uncertainty.
-
-Entropy peaks for uniform distributions (most uncertain) and is 0 for deterministic ones (no uncertainty).
-
----
-
-# KL · the wrong-dictionary analogy
-
-<div class="insight">
-
-You must send messages in English, but your only Morse codebook is for **French**. French uses 'q' and 'z' more often, so it has short codes for those and longer codes for 'e'. Encoding English with the French book is wasteful.
-
-- **Entropy $H(p)$** = length using the *correct* (English) codebook.
-- **Cross-entropy $H(p, q)$** = length using the *wrong* (French) codebook.
-- **KL divergence** = the *extra* length — your penalty for the wrong book.
+Read · "given that $B$ happened, the probability $A$ also happened."
 
 </div>
 
+Cross-multiply and you get the **product rule** ·
+$$P(A, B) = P(A \mid B)\,P(B) = P(B \mid A)\,P(A)$$
+
 ---
 
-# Cross-entropy · the quantity we minimize
+# Bayes' rule · the formula
 
-Cross-entropy is the expected code length when data comes from $p$ but we encode it using model $q$:
+From the two ways to factor $P(A, B)$ ·
+
+$$P(A \mid B)\,P(B) = P(B \mid A)\,P(A)$$
+
+Divide by $P(B)$ ·
 
 <div class="math-box">
 
-$$H(p, q) = -\sum_y p(y)\log q(y)$$
-
-and
-
-$$H(p, q) = H(p) + \text{KL}(p \| q)$$
+$$\boxed{\,P(A \mid B) = \frac{P(B \mid A)\,P(A)}{P(B)}\,}$$
 
 </div>
 
-For supervised classification, $p$ is usually a one-hot empirical label. Then $H(p)$ is constant and minimizing cross-entropy is the same as minimizing $\text{KL}(p\|q)$.
-
-This is the bridge between the **MLE view** ("maximize probability of the label") and the **information view** ("use fewer extra bits").
+This **flips the conditional** · if you know $P(B \mid A)$ but want $P(A \mid B)$, Bayes is the bridge.
 
 ---
 
-# KL · derive from scratch
+# Bayes worked example · disease test
 
-$\text{KL}(p\,\|\,q) = \sum_y p(y)\log\dfrac{p(y)}{q(y)}$
+A disease has prevalence 1%. A test has sensitivity 95% (true positive rate) and specificity 95% (true negative rate). You test positive. How likely are you to have the disease?
 
-Use $\log(a/b) = \log a - \log b$:
-$= \sum_y p(y)\log p(y) - \sum_y p(y)\log q(y)$
-$= -H(p) + H(p, q)$
+<div class="math-box">
 
-So: $\text{KL}(p \| q) = H(p, q) - H(p)$. KL = "extra bits beyond the optimal."
+Let $D$ = "have disease", $+$ = "test positive".
+- Prior · $P(D) = 0.01$, $P(\bar D) = 0.99$
+- Likelihood · $P(+ \mid D) = 0.95$, $P(+ \mid \bar D) = 0.05$
+- Total · $P(+) = 0.95 \cdot 0.01 + 0.05 \cdot 0.99 = 0.0095 + 0.0495 = 0.059$
 
-**Worked numeric.** True distribution $p = [0.1, 0.6, 0.3]$, model $q = [0.2, 0.5, 0.3]$.
-- $H(p, q) = -(0.1\log 0.2 + 0.6\log 0.5 + 0.3\log 0.3) \approx 0.935$.
-- $H(p) = -(0.1\log 0.1 + 0.6\log 0.6 + 0.3\log 0.3) \approx 0.900$.
-- $\text{KL} = 0.935 - 0.900 = \mathbf{0.035}$ — the cost of model inaccuracy.
+$$P(D \mid +) = \frac{0.95 \cdot 0.01}{0.059} \approx 0.16$$
 
-Minimizing cross-entropy = minimizing KL (since $H(p)$ is constant in our parameters).
+</div>
+
+Despite a "95% accurate" test, a positive result gives only **16%** chance of disease. This is the **base-rate fallacy**, and it's the same maths we'll apply to ML.
+
+---
+
+# Bayes for ML · flip onto $\theta$
+
+In ML, $A$ becomes the parameter $\theta$ and $B$ becomes the data $\mathcal{D}$.
+
+<div class="math-box">
+
+$$\boxed{\,p(\theta \mid \mathcal{D}) = \frac{p(\mathcal{D} \mid \theta)\,p(\theta)}{p(\mathcal{D})}\,}$$
+
+</div>
+
+This is the **central equation of probabilistic ML**. It tells us how to update our belief about $\theta$ after seeing data $\mathcal{D}$. Each term has a name and a role.
+
+---
+
+# The four terms · names and roles
+
+<div class="math-box">
+
+$$\underbrace{p(\theta \mid \mathcal{D})}_{\text{posterior}} \;=\; \frac{\overbrace{p(\mathcal{D} \mid \theta)}^{\text{likelihood}}\;\,\overbrace{p(\theta)}^{\text{prior}}}{\underbrace{p(\mathcal{D})}_{\text{evidence}}}$$
+
+</div>
+
+| Term | What it is | Where it comes from |
+|:-:|:-:|:-:|
+| **Likelihood** | how plausible is the data under $\theta$ | the model |
+| **Prior** | belief about $\theta$ before seeing data | choice / domain knowledge |
+| **Posterior** | updated belief about $\theta$ after data | what we compute |
+| **Evidence** | $\int p(\mathcal{D} \mid \theta)\,p(\theta)\,d\theta$ — a normalizer | usually intractable, often ignored |
+
+---
+
+# Why we usually ignore the evidence
+
+The evidence $p(\mathcal{D}) = \int p(\mathcal{D} \mid \theta)\,p(\theta)\,d\theta$ is a constant **with respect to $\theta$**. It does not change as we vary $\theta$.
+
+<div class="keypoint">
+
+For finding the *single best* $\theta$ (MLE or MAP), the evidence is irrelevant ·
+
+$$\arg\max_\theta\, p(\theta \mid \mathcal{D}) = \arg\max_\theta\, p(\mathcal{D} \mid \theta)\,p(\theta)$$
+
+We only need ·  **posterior $\propto$ likelihood $\times$ prior.**
+
+</div>
+
+The evidence becomes important only when we want a *full posterior* — Bayesian neural nets, model comparison, ELBO in VAEs (L19). For today, MLE + MAP, we drop it.
+
+---
+
+# Two estimators that fall out of Bayes
+
+<div class="columns">
+<div>
+
+### **MLE**
+
+Ignore the prior. Just maximize the likelihood ·
+
+$$\hat\theta_{\text{MLE}} = \arg\max_\theta\, p(\mathcal{D} \mid \theta)$$
+
+"What value of $\theta$ best explains the data?"
+
+</div>
+<div>
+
+### **MAP**
+
+Use the prior. Maximize the posterior ·
+
+$$\hat\theta_{\text{MAP}} = \arg\max_\theta\, p(\mathcal{D} \mid \theta)\,p(\theta)$$
+
+"Given my prior belief and the data, what's the most probable $\theta$?"
+
+</div>
+</div>
+
+<div class="keypoint">
+
+**MAP = MLE + a prior on $\theta$.** That single sentence is what makes regularization fall out of the same machinery as the loss.
+
+</div>
 
 ---
 
@@ -481,70 +471,246 @@ Minimizing cross-entropy = minimizing KL (since $H(p)$ is constant in our parame
 
 ### PART 4
 
-# Numerical tricks for log-probabilities
+# Maximum Likelihood Estimation
 
-Why your loss should never be a product of probabilities
-
----
-
-# Log-sum-exp · the trick everyone uses
-
-The softmax · $\sigma(\mathbf{z})_i = \frac{e^{z_i}}{\sum_j e^{z_j}}$.
-
-For large $z_i$ (e.g., $z = 1000$) · $e^{1000}$ overflows.
-
-<div class="math-box">
-
-**Trick** · subtract $z_\max = \max_j z_j$ from every term:
-
-$$\sigma(\mathbf{z})_i = \frac{e^{z_i - z_\max}}{\sum_j e^{z_j - z_\max}}$$
-
-Same answer (the $e^{z_\max}$ cancels), but now the largest exponent is 0 and nothing overflows.
-
-</div>
-
-For log-softmax · $\log \sigma(\mathbf{z})_i = z_i - z_\max - \log \sum_j e^{z_j - z_\max}$.
-
-This is `torch.logsumexp` · use it whenever you compute log-probabilities.
+Concrete derivations · coin · linear regression · logistic regression
 
 ---
 
-# Log-likelihood gradients · the elegant fact
+# MLE for the coin · setup
 
-For categorical NLL with softmax output:
+Data · $\#H = h = 6$ heads out of $N = 10$ flips. Likelihood ·
+$\mathcal{L}(p) = p^h (1 - p)^{N - h}$
 
+Take the log ·
 <div class="math-box">
 
-$$\frac{\partial \mathcal{L}}{\partial z_i} = \hat\pi_i - y_i$$
-
-The gradient of cross-entropy w.r.t. the logits is just **prediction minus truth**.
+$$\ell(p) = h \log p + (N - h) \log(1 - p)$$
 
 </div>
 
-Two consequences ·
-1. The "softmax + cross-entropy" pair is numerically stable when computed together (`F.cross_entropy(logits, target)` does this fused).
-2. The gradient is bounded · between -1 and 1 per logit · no exploding gradients from the loss itself.
-
-This is why classification training is so well-behaved compared to GANs / RL.
+**Step 1 · differentiate.**
+$$\frac{d\ell}{dp} = \frac{h}{p} - \frac{N - h}{1 - p}$$
 
 ---
 
-# Score function · the bridge to diffusion
+# MLE for the coin · solve
 
-The gradient of a log-density is called the **score**:
+**Step 2 · set derivative to zero.**
+$$\frac{h}{p} - \frac{N - h}{1 - p} = 0 \;\Longrightarrow\; h(1 - p) = (N - h)\,p$$
+
+Expand · $h - hp = Np - hp \Longrightarrow h = Np$.
 
 <div class="math-box">
 
-$$s_\theta(x) = \nabla_x \log p_\theta(x)$$
+$$\boxed{\;\hat p_{\text{MLE}} = \frac{h}{N} = \frac{\#H}{\#H + \#T}\;}$$
 
 </div>
 
-It points in the direction where the model density increases fastest. This object appears later in two ways:
+For our data $h = 6, N = 10$ · $\hat p = 0.6$. **Exactly** the empirical frequency.
 
-- **MLE / classification** · gradients of log-probability tell parameters how to fit the data.
-- **Diffusion / score matching** · learn a vector field that points noisy samples back toward high-density data.
+This is your first MLE derivation. Same recipe applies to everything below.
 
-Do not confuse this with a class score/logit. Same English word, different mathematical object.
+---
+
+# The MLE recipe · 3 steps
+
+To find the MLE for any model ·
+
+<div class="math-box">
+
+1. **Pick a probabilistic model** — choose a distribution $p(y \mid \theta)$ that matches your output type (Bernoulli for binary, Normal for continuous, …).
+2. **Write the log-likelihood** of the dataset under that model · sum the per-example $\log p(y_i \mid \theta)$.
+3. **Maximize over $\theta$** — by setting derivative to zero analytically, or by gradient ascent (equivalently, gradient descent on the negative log-likelihood).
+
+</div>
+
+We will now apply this recipe to **linear regression** (where the answer pops out as MSE) and **logistic regression** (where it pops out as BCE).
+
+---
+
+# MLE for linear regression · the assumption
+
+Modelling choice · the target is a linear function plus Gaussian noise ·
+
+$$y = \boldsymbol\theta^\top \mathbf{x} + \epsilon,\qquad \epsilon \sim \mathcal{N}(0, \sigma^2)$$
+
+Equivalently · the conditional distribution of $Y$ given $\mathbf{x}$ is
+
+<div class="math-box">
+
+$$p(y \mid \mathbf{x}, \boldsymbol\theta) = \mathcal{N}(y \mid \boldsymbol\theta^\top \mathbf{x}, \sigma^2) = \frac{1}{\sqrt{2\pi\sigma^2}}\exp\!\left(-\frac{(y - \boldsymbol\theta^\top \mathbf{x})^2}{2\sigma^2}\right)$$
+
+</div>
+
+The model's prediction $\hat\mu = \boldsymbol\theta^\top \mathbf{x}$ is the **mean** of the Gaussian. Real $y$ scatters around it with variance $\sigma^2$.
+
+This is the only modelling choice. Everything else is algebra.
+
+---
+
+# MLE for linear regression · log-likelihood
+
+For a single example,
+$\log p(y_i \mid \mathbf{x}_i, \boldsymbol\theta) = -\tfrac{1}{2}\log(2\pi\sigma^2) - \dfrac{(y_i - \boldsymbol\theta^\top \mathbf{x}_i)^2}{2\sigma^2}$
+
+Sum over the dataset · log of a product of IID terms is a sum.
+
+<div class="math-box">
+
+$$\ell(\boldsymbol\theta) = \sum_{i=1}^N \log p(y_i \mid \mathbf{x}_i, \boldsymbol\theta) = \underbrace{-\frac{N}{2}\log(2\pi\sigma^2)}_{\text{constant in }\theta} \;-\; \frac{1}{2\sigma^2}\sum_{i=1}^N (y_i - \boldsymbol\theta^\top \mathbf{x}_i)^2$$
+
+</div>
+
+Only the second term depends on $\boldsymbol\theta$.
+
+---
+
+# MLE for linear regression · MSE pops out
+
+Maximizing $\ell$ over $\boldsymbol\theta$ ·
+
+$$\hat{\boldsymbol\theta}_{\text{MLE}} = \arg\max_\theta \left[-\frac{1}{2\sigma^2}\sum_i (y_i - \boldsymbol\theta^\top \mathbf{x}_i)^2\right]$$
+
+The factor $-1/(2\sigma^2)$ is a negative constant — flip the sign and minimize ·
+
+<div class="math-box">
+
+$$\boxed{\;\hat{\boldsymbol\theta}_{\text{MLE}} = \arg\min_\theta \sum_{i=1}^N (y_i - \boldsymbol\theta^\top \mathbf{x}_i)^2\;}$$
+
+</div>
+
+**This is exactly MSE.** MSE is not a heuristic — it is the **MLE under Gaussian noise**.
+
+If the noise had been Laplace ($\epsilon \sim \text{Laplace}$), the same derivation would give MAE (mean absolute error) instead. Loss design = noise model.
+
+---
+
+# Closed-form OLS · for completeness
+
+The MSE objective is quadratic in $\boldsymbol\theta$, so we can set the gradient to zero analytically.
+
+Stack data · $X \in \mathbb{R}^{N \times d}$, $\mathbf{y} \in \mathbb{R}^N$. Then $\sum (y_i - \boldsymbol\theta^\top \mathbf{x}_i)^2 = \|\mathbf{y} - X\boldsymbol\theta\|^2$.
+
+<div class="math-box">
+
+$$\nabla_\theta \|\mathbf{y} - X\boldsymbol\theta\|^2 = -2 X^\top (\mathbf{y} - X\boldsymbol\theta) = 0$$
+
+$$\boxed{\;\hat{\boldsymbol\theta}_{\text{MLE}} = (X^\top X)^{-1} X^\top \mathbf{y}\;}$$
+
+</div>
+
+The familiar **normal equation** is the closed-form MLE under Gaussian noise. SGD / gradient descent gives the same answer iteratively.
+
+---
+
+# MLE for logistic regression · the assumption
+
+Now $y \in \{0, 1\}$. Model ·
+
+$$Y \mid \mathbf{x} \sim \text{Bernoulli}\bigl(\,\hat p_\theta(\mathbf{x})\,\bigr),\qquad \hat p_\theta(\mathbf{x}) = \sigma(\boldsymbol\theta^\top \mathbf{x})$$
+
+Per-example probability ·
+
+<div class="math-box">
+
+$$p(y \mid \mathbf{x}, \boldsymbol\theta) = \hat p_\theta(\mathbf{x})^{\,y}\,\bigl(1 - \hat p_\theta(\mathbf{x})\bigr)^{1 - y}$$
+
+</div>
+
+This is the same compact Bernoulli form as the coin — except $\hat p$ now depends on $\mathbf{x}$.
+
+---
+
+# MLE for logistic regression · log-likelihood
+
+Take the log ·
+$\log p(y_i \mid \mathbf{x}_i, \boldsymbol\theta) = y_i \log \hat p_i + (1 - y_i) \log(1 - \hat p_i)$
+where $\hat p_i = \sigma(\boldsymbol\theta^\top \mathbf{x}_i)$.
+
+Sum over the dataset and **negate** to get NLL ·
+
+<div class="math-box">
+
+$$L_{\text{NLL}}(\boldsymbol\theta) = -\sum_{i=1}^N \bigl[y_i \log \hat p_i + (1 - y_i) \log(1 - \hat p_i)\bigr]$$
+
+</div>
+
+**This is exactly binary cross-entropy.** Same story · BCE is not invented — it's the **MLE under a Bernoulli output**.
+
+---
+
+# MLE for logistic regression · gradient
+
+Differentiate $L_{\text{NLL}}$ w.r.t. $\boldsymbol\theta$. Using $\sigma'(z) = \sigma(z)(1 - \sigma(z))$ and the chain rule (derivation in any ML textbook) ·
+
+<div class="math-box">
+
+$$\nabla_\theta L_{\text{NLL}} = \sum_{i=1}^N (\hat p_i - y_i)\,\mathbf{x}_i$$
+
+</div>
+
+The gradient is "**prediction minus truth**, weighted by input." This is the exact same form as the linear regression gradient $(\hat y_i - y_i)\,\mathbf{x}_i$.
+
+That is **not** a coincidence — it's a feature of *generalized linear models*, all derived from MLE.
+
+---
+
+# Multiclass · same pattern
+
+For $K$-class classification with softmax output $\hat{\boldsymbol\pi}_\theta(\mathbf{x})$ · model $Y \mid \mathbf{x} \sim \text{Categorical}(\hat{\boldsymbol\pi}_\theta(\mathbf{x}))$.
+
+For one example with true class $k$ ·
+$\log p(y_i = k \mid \mathbf{x}_i, \theta) = \log \hat\pi_{i, k}$
+
+Negate and sum ·
+
+<div class="math-box">
+
+$$L_{\text{NLL}}(\theta) = -\sum_{i=1}^N \log \hat\pi_{i, y_i}$$
+
+</div>
+
+This is **categorical cross-entropy** — the loss every classifier in this course will use, including the next-token loss in LLMs (L13–L15). Same derivation, same recipe.
+
+---
+
+# Summary so far · the pattern
+
+<div class="math-box">
+
+| Output | Distribution chosen | NLL turns out to be |
+|:-:|:-:|:-:|
+| Continuous $y \in \mathbb{R}$ | Normal | **MSE** |
+| Binary $y \in \{0,1\}$ | Bernoulli | **BCE** |
+| $K$-class $y \in \{1,\ldots,K\}$ | Categorical | **CE** |
+
+</div>
+
+<div class="keypoint">
+
+Every loss = **NLL under an assumed conditional distribution** $p(y \mid \mathbf{x}, \theta)$.
+
+Pick the distribution to match your data. The loss falls out automatically. No more "memorize MSE for regression and CE for classification" — both come from the same place.
+
+</div>
+
+---
+
+# A worked numeric · BCE on one prediction
+
+Cat-vs-dog classifier · model output $\hat p = 0.8$ for one image.
+
+| true class $y$ | log-likelihood | NLL = loss | model "happy"? |
+|:-:|:-:|:-:|:-:|
+| 1 (cat) | $\log 0.8 = -0.223$ | $0.223$ | yes — small loss |
+| 0 (dog) | $\log 0.2 = -1.609$ | $1.609$ | no — big loss |
+
+<div class="keypoint">
+
+The loss is small **iff the model assigned high probability to the true class**. That's all cross-entropy is doing — and that's all "maximizing log-likelihood" means once you write it out.
+
+</div>
 
 ---
 
@@ -552,100 +718,210 @@ Do not confuse this with a class score/logit. Same English word, different mathe
 
 ### PART 5
 
-# MAP and the Bayesian view
+# MAP and the meaning of regularization
 
-Why L2 regularization is also MLE-flavored
+L2 from a Gaussian prior · L1 from a Laplace prior
 
 ---
 
-# MAP · the humble-scientist analogy
+# Why we need a prior · MLE's trap
 
-<div class="insight">
+You flip a coin **3 times** and see **3 heads**. MLE says $\hat p_{\text{MLE}} = 3/3 = 1.0$.
 
-**MLE scientist** flips a coin 3 times, gets 3 heads, declares: *"Probability of heads is 100%!"*
+<div class="warning">
 
-**MAP scientist** is humbler. They have a **prior belief** ("most coins are fair"). 3 heads is evidence for high $p$, but the prior pulls them away from 100% — they say "maybe 80% or 90%". For neural nets, the prior is usually *"weights should be small."*
+According to MLE, this coin is **certainly biased to always land heads**. Future tails impossible.
+
+This is absurd. Three flips is not enough evidence to make such an extreme claim. You *know* most coins are roughly fair.
 
 </div>
 
----
+The fix · **encode that prior knowledge** into the inference. That gives MAP.
 
-# MAP · L2 regularization derived
-
-**Bayes' rule** for parameters:
-$p(\theta \mid \mathcal{D}) \propto p(\mathcal{D} \mid \theta)\,p(\theta)$
-
-Maximize log-posterior:
-$\hat\theta_\text{MAP} = \arg\max_\theta \bigl[\log p(\mathcal{D} \mid \theta) + \log p(\theta)\bigr]$
-
-**Pick prior** $p(\theta) = \mathcal{N}(0, \sigma_p^2 I)$. Take logs:
-$\log p(\theta) = \text{const} - \dfrac{1}{2\sigma_p^2}\|\theta\|^2$
-
-Plug in and minimize negative log-posterior:
-$$\hat\theta_\text{MAP} = \arg\min_\theta \bigl[\underbrace{-\log p(\mathcal{D} \mid \theta)}_{\text{NLL loss}} + \underbrace{\lambda\|\theta\|^2}_{\text{L2 penalty}}\bigr],\quad \lambda = \dfrac{1}{2\sigma_p^2}$$
-
-**This is exactly L2 regularization (weight decay).** L2 = MAP under a Gaussian prior on weights.
-
-**Worked numeric.** NLL = 0.5, $\theta = [3, -4]$, $\|\theta\|^2 = 25$, $\lambda = 0.01$:
-$\text{Total} = 0.5 + 0.01 \cdot 25 = \mathbf{0.75}$. Optimizer balances data fit vs. small weights.
+In ML, the analogous trap is overfitting · with finite data, MLE drives weights to whatever value most exactly fits the training set, even if those values are wildly extreme. A prior pulls them back.
 
 ---
 
-# MAP gives more than L2
+# MAP · maximum a posteriori
 
-The prior determines the regularizer.
+By Bayes, $p(\theta \mid \mathcal{D}) \propto p(\mathcal{D} \mid \theta)\,p(\theta)$.
 
 <div class="math-box">
 
-| Prior on weight $w$ | Negative log-prior | Regularizer |
-|:-:|:-:|:-:|
-| Gaussian · $p(w)\propto e^{-w^2/(2\sigma^2)}$ | $w^2/(2\sigma^2)$ | L2 / weight decay |
-| Laplace · $p(w)\propto e^{-|w|/b}$ | $|w|/b$ | L1 / sparsity |
+$$\hat\theta_{\text{MAP}} = \arg\max_\theta\, p(\theta \mid \mathcal{D}) = \arg\max_\theta \bigl[\,p(\mathcal{D} \mid \theta)\,p(\theta)\,\bigr]$$
+
+In log space ·
+
+$$\hat\theta_{\text{MAP}} = \arg\max_\theta \bigl[\underbrace{\log p(\mathcal{D} \mid \theta)}_{\text{log-likelihood}} + \underbrace{\log p(\theta)}_{\text{log-prior}}\bigr]$$
 
 </div>
 
-So regularization is not just "add a penalty." It is a prior belief about which parameters are plausible before seeing the data.
+Equivalently, **minimize the negative** ·
+$$\hat\theta_{\text{MAP}} = \arg\min_\theta \bigl[\,L_{\text{NLL}}(\theta) - \log p(\theta)\,\bigr]$$
 
-This is useful but limited: modern DL regularization also comes from data augmentation, early stopping, normalization, architecture, and optimizer choices. L06 returns to this broader view.
+The first term is your usual loss. The second term is whatever the prior gives. **That second term is what we will recognize as L1 or L2.**
 
 ---
 
-# Putting it all together
+# MAP · the geometric picture
 
-A neural network's training loop is a *Monte Carlo MLE* algorithm:
+![w:780px](figures/lec00/svg/map_geometry.svg)
 
 <div class="math-box">
 
-1. Pick a distribution that matches your output.
-2. NLL of that distribution = your loss.
-3. Sample a batch from your training data.
-4. Estimate the gradient · sample-mean over the batch.
-5. Step in that direction.
-6. Repeat · law of large numbers takes you toward the MLE.
+The MAP estimate is the point in $\theta$-space that **best balances** the data's preferences (likelihood) against your prior beliefs (prior).
 
 </div>
-
-Add weight decay → MAP. Add KL to a prior on latent variables → ELBO (VAE). Add denoising noise → score matching (diffusion). Same skeleton, different probabilistic interpretation.
 
 ---
 
-# The probability map for this course
+# Gaussian prior · setup
+
+We choose a prior $p(\theta_j) = \mathcal{N}(0, \sigma_p^2)$ for every weight, independently. In words · *"a priori, weights are small and centred at zero."*
 
 <div class="math-box">
 
-| Probability idea | Where it reappears |
-|:-:|:-:|
-| Categorical NLL | classifiers, token prediction, BERT/GPT |
-| Gaussian NLL | regression, VAEs, diffusion noise |
-| KL divergence | VAEs, distillation, DPO/RLHF-style objectives |
-| Monte Carlo expectation | minibatches, dropout, VAEs, diffusion |
-| Reparameterization | VAEs, Gaussian noise injection, differentiable sampling |
-| Change of variables | normalizing flows, invertible models |
-| Score $\nabla_x\log p(x)$ | score matching, diffusion |
+For a single weight ·
+$\log p(\theta_j) = -\dfrac{\theta_j^2}{2\sigma_p^2} + \text{const}$
+
+For the whole vector $\boldsymbol\theta \in \mathbb{R}^d$ (independent prior on each component) ·
+$\log p(\boldsymbol\theta) = \sum_j \log p(\theta_j) = -\dfrac{1}{2\sigma_p^2}\sum_j \theta_j^2 + \text{const} = -\dfrac{1}{2\sigma_p^2}\|\boldsymbol\theta\|_2^2 + \text{const}$
 
 </div>
 
-This is why this lecture exists: it gives names to the objects that keep returning under different architectures.
+The constant doesn't depend on $\boldsymbol\theta$, so it drops out of the optimization.
+
+---
+
+# Gaussian prior · L2 pops out
+
+Plug into the MAP objective ·
+
+$$L_{\text{MAP}}(\boldsymbol\theta) = L_{\text{NLL}}(\boldsymbol\theta) - \log p(\boldsymbol\theta)$$
+$$= L_{\text{NLL}}(\boldsymbol\theta) + \frac{1}{2\sigma_p^2}\|\boldsymbol\theta\|_2^2 + \text{const}$$
+
+<div class="math-box">
+
+$$\boxed{\;L_{\text{MAP}}(\boldsymbol\theta) = L_{\text{NLL}}(\boldsymbol\theta) + \lambda\,\|\boldsymbol\theta\|_2^2,\qquad \lambda := \frac{1}{2\sigma_p^2}\;}$$
+
+</div>
+
+**This is exactly L2 regularization (a.k.a. ridge, weight decay).**
+
+- Strong prior (small $\sigma_p^2$) ⇒ large $\lambda$ ⇒ heavy penalty ⇒ weights pulled hard to zero.
+- Weak prior (large $\sigma_p^2$) ⇒ small $\lambda$ ⇒ MAP $\to$ MLE.
+
+---
+
+# Worked numeric · MAP with L2
+
+Linear regression. Suppose at the MLE estimate, the NLL is $L_{\text{NLL}} = 0.50$. Weight vector $\boldsymbol\theta = [3, -4]$ — so $\|\boldsymbol\theta\|_2^2 = 9 + 16 = 25$.
+
+Pick $\lambda = 0.01$ (corresponds to $\sigma_p^2 = 50$ — a fairly weak prior).
+
+<div class="math-box">
+
+$L_{\text{MAP}} = 0.50 + 0.01 \cdot 25 = 0.50 + 0.25 = \mathbf{0.75}$
+
+</div>
+
+The optimizer now pays a price for large weights. Since the gradient of $\|\theta\|^2$ is $2\theta$, every step **shrinks weights by a factor $(1 - 2\eta\lambda)$** before the data update. This is exactly **weight decay** — and you'll see this exact form again in Adam vs AdamW (L5).
+
+---
+
+# Laplace prior · setup
+
+Now choose a prior $p(\theta_j) = \text{Laplace}(0, b)$ — same idea (centred at zero) but **heavier tails and a sharper peak at zero**.
+
+<div class="math-box">
+
+The Laplace density ·
+$p(\theta_j) = \dfrac{1}{2b}\exp\!\left(-\dfrac{|\theta_j|}{b}\right)$
+
+For one weight ·
+$\log p(\theta_j) = -\dfrac{|\theta_j|}{b} + \text{const}$
+
+For the whole vector with independent components ·
+$\log p(\boldsymbol\theta) = -\dfrac{1}{b}\sum_j |\theta_j| + \text{const} = -\dfrac{1}{b}\|\boldsymbol\theta\|_1 + \text{const}$
+
+</div>
+
+Note the **absolute value** in the log — that's the structural difference from Gaussian's squared term.
+
+---
+
+# Laplace prior · L1 pops out
+
+Plug into MAP ·
+
+$$L_{\text{MAP}}(\boldsymbol\theta) = L_{\text{NLL}}(\boldsymbol\theta) + \frac{1}{b}\|\boldsymbol\theta\|_1 + \text{const}$$
+
+<div class="math-box">
+
+$$\boxed{\;L_{\text{MAP}}(\boldsymbol\theta) = L_{\text{NLL}}(\boldsymbol\theta) + \lambda\,\|\boldsymbol\theta\|_1,\qquad \lambda := \frac{1}{b}\;}$$
+
+</div>
+
+**This is exactly L1 regularization (a.k.a. lasso).**
+
+- Same machinery (MAP), different prior, different penalty.
+- The Laplace density is "sharply peaked at zero with heavy tails" — and that geometry is what makes L1 produce **sparse solutions**.
+
+---
+
+# Why L1 produces sparse solutions
+
+![w:880px](figures/lec00/svg/l1_l2_geometry.svg)
+
+<div class="math-box">
+
+Think of MAP as minimizing the loss subject to the prior. In 2D ·
+
+- **L2 ball** — circle. The data-loss contour can touch it anywhere on the circle. Generic touchpoints have *both* coordinates non-zero. Solutions are **shrunk but rarely zero**.
+- **L1 ball** — diamond. Corners stick out **on the axes**. Generic data-loss contours hit the diamond *at a corner*, where one or more coordinates **are exactly zero**. Solutions are **sparse**.
+
+</div>
+
+L1's sparsity isn't a magic property — it's a direct consequence of the diamond geometry of the Laplace prior.
+
+---
+
+# L1 vs L2 · summary table
+
+| | **L2 (Ridge)** | **L1 (Lasso)** |
+|---|---|---|
+| Prior | $\mathcal{N}(0, \sigma_p^2)$ | $\text{Laplace}(0, b)$ |
+| Log-prior penalty | $\lambda \sum \theta_j^2$ | $\lambda \sum |\theta_j|$ |
+| Geometry | Circle | Diamond |
+| Solution | small everywhere | many exactly zero |
+| Gradient of penalty | $2\lambda \theta_j$ (smooth) | $\lambda\,\text{sign}(\theta_j)$ (kink at 0) |
+| When to use | dense problems, "shrink everything" | feature selection, "kill weak features" |
+
+<div class="keypoint">
+
+L1 and L2 are **the same MAP machinery** — they differ only in the prior over $\theta$. Pick your prior, get your regularizer.
+
+</div>
+
+---
+
+# A coin · MLE vs MAP
+
+Back to the coin · 3 heads, 0 tails. MLE says $\hat p = 1.0$ (absurd).
+
+Suppose your prior is $p \sim \text{Beta}(2, 2)$ — *"coin is probably near 0.5"*. MAP combines this with the likelihood ·
+
+<div class="math-box">
+
+Posterior ∝ Likelihood × Prior · $p^3 (1-p)^0 \cdot p^{2-1} (1-p)^{2-1} = p^4 (1-p)^1$
+
+Maximize · $\log\text{post} = 4\log p + \log(1-p)$. Set derivative · $4/p - 1/(1-p) = 0$ ⇒ $p = 4/5 = 0.8$.
+
+</div>
+
+MAP says $\hat p = 0.8$ — **sensible**. Three heads is *some* evidence the coin is biased, but the prior keeps us from going to 1.0.
+
+This is the same regularization story as L1/L2 on weights — just with a different distribution.
 
 ---
 
@@ -653,362 +929,105 @@ This is why this lecture exists: it gives names to the objects that keep returni
 
 ### PART 6
 
-# Linear algebra · the bare minimum
+# Where this matters · the rest of the course
 
-Tensors, gradients, shapes
+NLL is the loss everywhere · KL connects · VAE/diffusion/GANs are MAP++
 
 ---
 
-# Vectors and matrices · refresher
+# Every loss is an NLL — the master table
 
 <div class="math-box">
 
-- $\mathbf{x} \in \mathbb{R}^d$ · a column vector with $d$ entries.
-- $W \in \mathbb{R}^{m \times n}$ · a matrix with $m$ rows, $n$ columns.
-- **Matrix-vector product** · $W \mathbf{x} \in \mathbb{R}^m$ · valid when $W$ is $m \times n$ and $\mathbf{x}$ is $n$-dim.
+| Output | Distribution | Loss = NLL | Lecture |
+|:-:|:-:|:-:|:-:|
+| Real-valued | Normal | MSE | L1 (recap), L19 (VAE recon) |
+| Binary | Bernoulli | BCE | L1 (recap) |
+| K classes | Categorical | Cross-entropy | L7+ (vision), L13–15 (LLMs) |
+| Pixels | per-pixel Normal | per-pixel MSE | L19 (VAE), L21 (diffusion) |
+| Tokens | Categorical | next-token CE | L13–L15 (LLMs) |
+| Image patch given noise | Normal in pixel/score space | MSE on noise | L21 (diffusion) |
+| Latent variable model | Normal + KL prior | ELBO = recon + KL | L19 (VAE) |
+| Two distributions match | KL minimization | DPO, distillation | L16, L23 |
 
 </div>
 
-A neural network layer · `y = W @ x + b` · is exactly this. The whole forward pass is a sequence of matrix-vector products with non-linearities sprinkled in.
-
-**Shape mistake** · the #1 source of bugs. Always print shapes.
+The whole course will keep instantiating the same NLL recipe. Each new model just changes **which distribution** is being assumed.
 
 ---
 
-# Worked example · MLP forward pass
+# KL divergence · cross-entropy in disguise
 
-Input · $\mathbf{x} \in \mathbb{R}^2$ · `[1.0, 2.0]`. Hidden 3 · output 1.
+For two distributions $p$ (true) and $q$ (model) ·
 
 <div class="math-box">
 
-$W_1 \in \mathbb{R}^{3 \times 2}$ · $\begin{bmatrix} 0.5 & -0.1 \\ 0.2 & 0.3 \\ -0.4 & 0.6 \end{bmatrix}$. $b_1 \in \mathbb{R}^3$ · $[0.1, 0.0, -0.2]$.
-
-$\mathbf{h}_1 = W_1 \mathbf{x} + b_1 = [0.5 \cdot 1 + (-0.1) \cdot 2 + 0.1, 0.2 \cdot 1 + 0.3 \cdot 2 + 0.0, -0.4 \cdot 1 + 0.6 \cdot 2 - 0.2]$
-$= [0.4, 0.8, 0.6]$
-
-After ReLU · same (all positive).
-
-$W_2 \in \mathbb{R}^{1 \times 3}$ · $[0.3, -0.2, 0.5]$. $b_2 = 0.1$.
-$y = 0.3 \cdot 0.4 + (-0.2) \cdot 0.8 + 0.5 \cdot 0.6 + 0.1 = 0.36$
+$$\text{KL}(p \,\Vert\, q) = \sum_y p(y)\log\frac{p(y)}{q(y)} = \underbrace{-\sum_y p(y)\log q(y)}_{\text{cross-entropy } H(p, q)} - \underbrace{\bigl(-\sum_y p(y)\log p(y)\bigr)}_{\text{entropy } H(p) \text{, constant in }\theta}$$
 
 </div>
 
-That's it · matrix multiply, add bias, activation, repeat. The whole course is variations on this loop.
+Up to a constant, **KL = cross-entropy**.
+
+- Classification with one-hot truth · CE = NLL of the model on the truth = KL up to a constant.
+- VAE (L19) · loss has an explicit KL term to a prior.
+- DPO (L16) · explicit KL between policy distributions.
+
+KL is not a new beast. It is the same NLL story, told in two-distributions form.
 
 ---
 
-# Gradient · in one line
+# Foreshadow · how this lecture powers DL
 
-For a scalar function $f(\theta)$ where $\theta \in \mathbb{R}^d$ ·
+Every advanced model in this course uses MLE (or MAP) under a specific distribution ·
 
 <div class="math-box">
 
-$$\nabla_\theta f = \begin{bmatrix} \partial f / \partial \theta_1 \\ \vdots \\ \partial f / \partial \theta_d \end{bmatrix}$$
-
-A vector pointing in the direction of steepest **increase**. To minimize, step in the **opposite** direction.
+| Model | Output distribution | Loss = NLL of … | Lecture |
+|:-:|:-:|:-:|:-:|
+| LLM (next-token) | Categorical over vocab | $-\log p_\theta(y_{t+1} \mid y_{1:t})$ | L13–L15 |
+| VAE | Normal pixel decoder + Gaussian latent | reconstruction NLL + KL to prior | L19 |
+| GAN | implicit generator | min–max over $\log D, \log(1-D)$ | L20 |
+| Diffusion | Gaussian forward process | MSE on predicted noise | L21–L22 |
+| RLHF / DPO | Bradley–Terry preference pair | log-sigmoid of reward gap | L16 |
 
 </div>
 
-Gradient descent · $\theta \leftarrow \theta - \eta \nabla_\theta f$. The whole optimization story is "compute this gradient, take a small step."
-
-Backprop is just an efficient algorithm for computing this gradient through a deep computation graph.
+You now know what *all* of these losses are. They're NLLs.
 
 ---
 
-# Chain rule · in pictures
+# Notebook teaser · MLE & MAP in PyTorch
 
-If $z = f(y)$ and $y = g(x)$ ·
+We will pair this lecture with a notebook (`lec00-mle-map.ipynb`) that walks through ·
 
 <div class="math-box">
 
-$$\frac{\partial z}{\partial x} = \frac{\partial z}{\partial y} \cdot \frac{\partial y}{\partial x}$$
+1. **MLE for a coin** with `torch.distributions.Bernoulli`.
+2. **MLE for linear regression** with `torch.distributions.Normal` — recover OLS.
+3. **MLE for logistic regression** with `BCEWithLogitsLoss` — show it equals NLL of Bernoulli.
+4. **MAP for linear regression with Gaussian prior** — recover ridge regression.
+5. **MAP for linear regression with Laplace prior** — recover lasso, see sparsity emerge as $\lambda$ grows.
+6. **Visualize** likelihood and posterior surfaces in 2D for a tiny example.
 
 </div>
 
-For deep networks · gradient at layer 1 = $\prod_{l = L}^{1} \frac{\partial \text{output}_l}{\partial \text{input}_l}$.
-
-Each factor is a Jacobian. If they're $< 1$ on average · gradient **vanishes**. If $> 1$ · **explodes**. We'll see this exact failure mode in L02 (deep MLPs) and L10 (RNNs).
-
----
-
-# Likelihood · in one line
-
-Given a dataset $\mathcal{D} = \{y_1, \ldots, y_N\}$ and a model with parameters $\theta$ that defines $p(y \mid \theta)$ ·
-
-<div class="math-box">
-
-$$\mathcal{L}(\theta) = p(\mathcal{D} \mid \theta) = \prod_{i=1}^N p(y_i \mid \theta)$$
-
-</div>
-
-The **likelihood** of $\theta$ is the probability of observing the data we actually saw.
-
-**Independence assumption** · we factor across data points. This is the IID assumption every ML course makes.
-
----
-
-# Why log-likelihood
-
-Likelihood is a **product of N small numbers**. For $N = 1000$ and each $p_i \approx 0.5$ ·
-$\mathcal{L} \approx 0.5^{1000} \approx 10^{-301}$
-
-That's smaller than any float can represent. Underflow.
-
-<div class="keypoint">
-
-**Fix · take logs.** Products become sums:
-
-$$\log \mathcal{L} = \sum_{i=1}^N \log p(y_i \mid \theta)$$
-
-Now we have a sum of N moderate negative numbers · numerically stable.
-
-</div>
-
-We always **maximize log-likelihood** in practice, never raw likelihood.
-
----
-
-# Maximum likelihood estimation (MLE)
-
-<div class="math-box">
-
-$$\hat\theta_\text{MLE} = \arg\max_\theta \sum_{i=1}^N \log p(y_i \mid \theta)$$
-
-</div>
-
-In words · "find the parameters $\theta$ that make the observed data most probable."
-
-**By convention · we *minimize* the negative log-likelihood (NLL).**
-
-$$\hat\theta_\text{MLE} = \arg\min_\theta -\sum_{i=1}^N \log p(y_i \mid \theta)$$
-
-Every loss in DL is an NLL under some assumed distribution. Watch.
-
----
-
-<!-- _class: section-divider -->
-
-### PART 3
-
-# Deriving the losses
-
-MSE for regression · cross-entropy for classification · all from MLE
-
----
-
-# Linear regression · the assumption
-
-Assume · the target $y$ is generated by
-
-$$y = \mathbf{w}^\top \mathbf{x} + b + \epsilon, \quad \epsilon \sim \mathcal{N}(0, \sigma^2)$$
-
-In words · the model's prediction is the *mean* of a Gaussian; observations differ from it by Gaussian noise of fixed variance.
-
-<div class="math-box">
-
-Equivalently · $p(y \mid \mathbf{x}, \mathbf{w}, b) = \mathcal{N}(\mathbf{w}^\top \mathbf{x} + b, \sigma^2)$
-
-</div>
-
-Given a dataset, we want $\mathbf{w}, b$ that **maximize the likelihood** of the observed $y$'s.
-
----
-
-# MSE · the archer's score analogy
-
-<div class="insight">
-
-An archer shoots at a bullseye. Perfect shot = the model's prediction $\hat y$. Real shots have random error around it (Gaussian noise).
-
-Score the archer's skill (the parameters) · we look at all their shots and ask "are these likely?". Maximizing the probability of all shots = **minimizing the average squared distance from the centre.**
-
-That's why MLE with a Gaussian assumption *is* MSE.
-
-</div>
-
----
-
-# MSE · derive step by step
-
-**1. Assumption.** $y_i \sim \mathcal{N}(\hat y_i, \sigma^2)$ with $\hat y_i = \mathbf{w}^\top\mathbf{x}_i$:
-$p(y_i \mid \mathbf{x}_i, \mathbf{w}) = \dfrac{1}{\sqrt{2\pi\sigma^2}}\exp\!\left(-\dfrac{(y_i - \hat y_i)^2}{2\sigma^2}\right)$
-
-**2. Likelihood** of a dataset (IID): $\mathcal{L}(\mathbf{w}) = \prod_i p(y_i \mid \mathbf{x}_i, \mathbf{w})$.
-
-**3. Take logs** to turn product → sum:
-$\log\mathcal{L}(\mathbf{w}) = \sum_i \log p(y_i \mid \mathbf{x}_i, \mathbf{w})$
-
-**4. Simplify** using $\log(AB) = \log A + \log B$ and $\log e^x = x$:
-$\log\mathcal{L}(\mathbf{w}) = N\log\dfrac{1}{\sqrt{2\pi\sigma^2}} - \dfrac{1}{2\sigma^2}\sum_i (y_i - \hat y_i)^2$
-
-**5. Maximize.** First term is constant in $\mathbf{w}$; the rest is $-C \cdot \sum (y_i - \hat y_i)^2$ for $C > 0$.
-$$\arg\max_\mathbf{w} \log\mathcal{L} = \arg\min_\mathbf{w}\,\sum_i (y_i - \hat y_i)^2$$
-
-**MSE for regression isn't an arbitrary choice — it's MLE under Gaussian noise.**
-
----
-
-# Logistic regression · the assumption
-
-Binary classification. Given $\mathbf{x}$, the target $y \in \{0, 1\}$ is **Bernoulli** with parameter $p = \sigma(\mathbf{w}^\top \mathbf{x} + b)$.
-
-<div class="math-box">
-
-$$p(y \mid \mathbf{x}) = \sigma(\mathbf{w}^\top \mathbf{x})^y \cdot (1 - \sigma(\mathbf{w}^\top \mathbf{x}))^{1-y}$$
-
-</div>
-
-The sigmoid squashes the linear output to $[0, 1]$ · interpretable as a probability for class 1.
-
----
-
-# Cross-entropy · the biased-coin analogy
-
-<div class="insight">
-
-Given a coin, find its bias $p$. Flip 10 times → H, T, T, H, … (your data). To find best $p$, write down probability of seeing **that exact sequence**:
-$P = p^{\#H} (1-p)^{\#T}$
-
-Maximize → $p = \#H / (\#H + \#T)$. **This is MLE.**
-
-For classification, our network outputs a different $p$ for every input $x$. Cross-entropy is just the log of this likelihood formula, summed and negated.
-
-</div>
-
----
-
-# Cross-entropy · derive step by step
-
-**1. Assumption.** $y_i \in \{0, 1\}$ Bernoulli with $\hat p_i = \sigma(\mathbf{w}^\top\mathbf{x}_i)$. Compact form:
-$p(y_i \mid \mathbf{x}_i) = \hat p_i^{y_i}\,(1 - \hat p_i)^{1 - y_i}$
-- If $y_i = 1$ · $\hat p_i^1 \cdot (1-\hat p_i)^0 = \hat p_i$ ✓
-- If $y_i = 0$ · $\hat p_i^0 \cdot (1-\hat p_i)^1 = 1 - \hat p_i$ ✓
-
-**2. Log** using $\log(A^x) = x\log A$ and $\log(AB) = \log A + \log B$:
-$\log p(y_i \mid \mathbf{x}_i) = y_i \log\hat p_i + (1 - y_i)\log(1 - \hat p_i)$
-
-**3. Sum + negate** to get NLL:
-$$\text{Loss}(\mathbf{w}) = -\sum_i \bigl[y_i \log\hat p_i + (1 - y_i)\log(1 - \hat p_i)\bigr]$$
-
-This is **binary cross-entropy** — directly from "assume Bernoulli, take MLE."
-
----
-
-# Multiclass · same story
-
-For $K$-way classification, the network's softmax output is a **Categorical** distribution.
-
-<div class="math-box">
-
-For one example with true class $y_i \in \{1, \ldots, K\}$:
-$\log p(y_i \mid \mathbf{x}_i) = \log \hat\pi_{i, y_i}$
-
-NLL · $-\sum_i \log \hat\pi_{i, y_i}$
-
-</div>
-
-This is **categorical cross-entropy** · the loss every classifier in this course will use. Same idea · different distribution · same recipe.
-
----
-
-# Worked example · bin-CE on one prediction
-
-Network outputs · $\hat p = 0.8$ for the cat-vs-dog classifier.
-
-<div class="math-box">
-
-| true class y | NLL = -log p(y) | model "happy"? |
-|:-:|:-:|:-:|
-| 1 (cat) | $-\log(0.8) = 0.223$ | yes (small loss) |
-| 0 (dog) | $-\log(0.2) = 1.609$ | no (big loss) |
-
-</div>
-
-The loss is **small when the model assigned high probability to the true class** and large otherwise. That's the entire idea behind cross-entropy.
-
----
-
-<!-- _class: section-divider -->
-
-### PART 4
-
-# Why this matters for DL
-
-Recap · every loss = NLL under an assumed distribution
-
----
-
-# The pattern
-
-<div class="math-box">
-
-| Output type | Distribution | Loss = NLL |
-|:-:|:-:|:-:|
-| Real number | Gaussian | **MSE** |
-| Binary | Bernoulli | **Binary cross-entropy** |
-| K classes | Categorical | **Categorical cross-entropy** |
-| Image pixels (continuous) | Gaussian per pixel | per-pixel MSE |
-| Discrete tokens | Categorical | next-token CE (LLMs · L13-15) |
-| Latent variables | Gaussian + KL | ELBO (VAE · L19) |
-
-</div>
-
-Every loss in this course follows the recipe:
-1. Pick a distribution that matches your output.
-2. Write down NLL.
-3. That's your loss.
-
----
-
-# Why log scales matter · numeric
-
-A network with 50% confidence on the wrong class:
-$-\log(0.5) = 0.693$
-
-A network with 99% confidence on the wrong class:
-$-\log(0.01) = 4.605$ · ~7× larger penalty.
-
-A network with 99.99% confidence on the wrong class:
-$-\log(0.0001) = 9.21$ · ~13× larger penalty.
-
-<div class="keypoint">
-
-Cross-entropy **strongly penalizes overconfident wrong predictions**. This forces the model to be both **accurate** and **calibrated** · not just accurate.
-
-</div>
-
----
-
-# Connecting to KL divergence
-
-KL divergence between two distributions $p$ and $q$:
-
-<div class="math-box">
-
-$$\text{KL}(p \| q) = \sum_y p(y) \log \frac{p(y)}{q(y)}$$
-
-For a one-hot true label $p$ and softmax model $q$ ·
-$\text{KL}(p \| q) = -\log q(y_\text{true}) + \text{const}$
-
-</div>
-
-So **cross-entropy is KL divergence to the one-hot true label**, up to a constant. This connects the same loss to information theory · "how many extra bits do I need to encode the truth using my model's predicted distribution?"
+Same code skeleton, three lines change between MLE and MAP. That's the punchline.
 
 ---
 
 # Common questions · FAQ
 
-**Q. Do we always use MLE?**
-A. No · we sometimes use MAP (maximum a posteriori) which adds a prior · same recipe but with a regularization term. L2 weight decay is exactly MAP under a Gaussian weight prior (we'll see this in L6).
+**Q.** Do we always have to pick a distribution before training?
+**A.** Yes — implicitly or explicitly. When you write MSE, you have *implicitly* assumed Gaussian noise. When you write BCE, Bernoulli. The conscious choice is what we're advocating today.
 
-**Q. Why minimize negative log-likelihood instead of maximizing log-likelihood?**
-A. Pure convention · ML libraries minimize · `loss.backward()` only goes downhill. Negate, minimize, same answer.
+**Q.** Why minimize NLL instead of maximize LL?
+**A.** Pure convention. ML libraries minimize. Negate, minimize, same answer.
 
-**Q. What if my output isn't Bernoulli/Categorical/Gaussian?**
-A. Pick whatever distribution matches. Poisson for counts. Beta for probabilities. Mixture-of-Gaussians for multimodal. The recipe (NLL = loss) is universal.
+**Q.** What if my output isn't Bernoulli/Categorical/Gaussian?
+**A.** Pick whatever distribution fits — Poisson for counts, Beta for probabilities, mixture-of-Gaussians for multimodal data. The recipe (NLL = loss) is universal.
 
-**Q. What if the model's distributional assumption is wrong?**
-A. Then the loss optimizes the wrong statistical model. Example: MSE assumes symmetric Gaussian noise, so it is fragile to outliers. For heavy-tailed noise, Laplace NLL / MAE or a Student-t likelihood may be a better model.
+**Q.** How does this connect to Bayesian deep learning?
+**A.** Bayesian DL keeps the *full posterior* over $\theta$ instead of a single point estimate. We won't go there in this course, but everything we do today is the entry point.
 
 ---
 
@@ -1016,22 +1035,22 @@ A. Then the loss optimizes the wrong statistical model. Example: MSE assumes sym
 
 # Lecture 0 — summary
 
-- **Bernoulli, Categorical, Normal** · the three distributions you'll see most.
-- **Likelihood** · probability of the data under the model.
-- **Log-likelihood** · sum-version, numerically stable.
-- **MLE** · choose params to maximize log-likelihood.
-- **MSE** · MLE under Gaussian noise (regression).
-- **Cross-entropy** · MLE under Bernoulli/Categorical (classification).
-- **Cross-entropy = entropy + KL.** With one-hot labels, minimizing CE minimizes KL to the empirical label distribution.
-- **MAP** · MLE plus a prior; Gaussian prior gives L2, Laplace prior gives L1.
-- **Monte Carlo + reparameterization + score** · the probability tools behind VAEs and diffusion.
-- **Negative log-likelihood = the loss** everywhere in DL.
+We made the probabilistic framework concrete ·
+
+- **Conditional view** · the model outputs a distribution $p(y \mid \mathbf{x}, \theta)$, not a number.
+- **Bayes' rule for parameters** · $p(\theta \mid \mathcal{D}) \propto p(\mathcal{D} \mid \theta)\,p(\theta)$ — four named terms.
+- **MLE** · ignore the prior, maximize log-likelihood.
+  - MSE = MLE under Gaussian noise.
+  - BCE / CE = MLE under Bernoulli / Categorical outputs.
+- **MAP** · MLE + a prior on $\theta$, log-prior becomes a regularizer.
+  - L2 = MAP with Gaussian prior on weights.
+  - L1 = MAP with Laplace prior — sparsity from diamond geometry.
+- **NLL is the loss everywhere.** Every advanced model in this course will be an instance of this recipe.
 
 ### Read before Lecture 1
 
-- Bishop & Bishop, *Deep Learning: Foundations and Concepts* · Ch 2-5 for probability, distributions, regression, and classification likelihoods.
-- Prince UDL · Ch 1 and Ch 3 for the first DL model view.
+Strang Ch 1 (vectors / matrices) · Bishop & Bishop §2.1–2.3 (probability primer) · §4.1–4.3 (linear regression as MLE) · §5.4 (logistic regression).
 
 ### Next lecture
 
-**Lecture 1 · Why deep learning?** · we'll use cross-entropy from day 1, now you know where it comes from.
+**Why deep learning** — why these tools alone aren't enough at scale, and what depth and non-linearity buy us.

@@ -25,11 +25,13 @@ Each lecture maps to one or more UDL chapters — see the tables below and the f
 
 ---
 
-## Module 0 · Probability &amp; MLE Primer
+## Module 0 · A Probabilistic View of ML (recommended pre-read)
+
+The spine that explains every loss and regularizer in the course. Linear regression, logistic regression, L1 / L2 — all derived from Bayes' rule, MLE, and MAP. Required if you've forgotten probability; optional otherwise but a strong foundation for VAE, GAN, diffusion, and RLHF later.
 
 | # | Topic | Reading | Slides | Notebook |
 |:---:|------|:-------:|:------:|:--------:|
-| 0 | Probability, MLE &amp; NLL | Bishop &amp; Bishop Ch 2–5; Prince Ch 1, 3 | [HTML](html/lec00-probability-mle-recap-lecture.html) · [PDF](pdf/lec00-probability-mle-recap-lecture.pdf) | [Notebook](notebooks/00-probability-mle.ipynb) |
+| 0 | A Probabilistic View of ML — MLE, MAP, L1 &amp; L2 | Bishop &amp; Bishop §2.1–2.3, §4.1–4.3, §5.4 | [HTML](html/lec00-probability-mle-recap-lecture.html) · [PDF](pdf/lec00-probability-mle-recap-lecture.pdf) | [Notebook](notebooks/lec00-mle-map.ipynb) |
 
 ## Module 1 · Foundations &amp; Deep Networks (L1–L3)
 
