@@ -64,6 +64,24 @@ Think before the next slide: *why* would that fail?
 
 ---
 
+# Pop quiz · which model would *you* pick?
+
+A friend asks · "I have $50{,}000$ raw $224\times224$ photos labelled as cat/dog. Which model do you reach for?"
+
+<div class="popquiz">
+
+(a) Logistic regression on raw pixel intensities.
+(b) Hand-engineer SIFT/HOG features, then SVM.
+(c) Train a CNN end-to-end.
+
+Stop and decide before the next slide. *Why* did you pick what you picked?
+
+</div>
+
+There is no trick · we want you to feel where each option helps and hurts. The next slides explain why **the right answer changed in 2012** — and why this whole course exists.
+
+---
+
 # Classical ML vs deep learning
 
 ![w:920px](figures/lec01/svg/ml_vs_dl_pipeline.svg)
@@ -1083,6 +1101,25 @@ Validation = practice exams, take many times.
 Training = studying.
 
 </div>
+
+---
+
+# Putting it all together · the L01 master sentence
+
+<div class="math-box">
+
+A neural network is just a **stack of (linear → non-linearity)** blocks · the linear layer mixes features, the non-linearity bends the space. **Backprop** assigns blame layer-by-layer using the chain rule, and **SGD** updates parameters in the descent direction.
+
+</div>
+
+| Step | What happens | Where it came from |
+|:-:|:-:|:-:|
+| 1 · Forward | $\mathbf{a}^{(\ell)} = \sigma(W^{(\ell)} \mathbf{a}^{(\ell-1)} + \mathbf{b}^{(\ell)})$ | composition of layers |
+| 2 · Loss | $\mathcal{L} = -\log p(y \mid x; \theta)$ | NLL of the chosen distribution (L00) |
+| 3 · Backward | $\delta^{(\ell-1)} = (W^{(\ell)})^\top \delta^{(\ell)} \odot \sigma'$ | chain rule on the comp. graph |
+| 4 · Update | $\theta \leftarrow \theta - \eta\, \nabla_\theta \mathcal{L}$ | SGD |
+
+Sigmoid + BCE = L00's logistic-MLE, just with a hidden layer in front. Softmax + CE = L00's multiclass NLL. **Same probabilistic story, more layers.**
 
 ---
 

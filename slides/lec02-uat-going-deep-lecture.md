@@ -71,6 +71,25 @@ A network can be expressive but untrainable. It can be trainable but overfit. It
 
 ---
 
+# Pop quiz · two architectures, same parameter budget
+
+You have ~$10\,000$ parameters to spend on a regression task with 1-D input.
+
+<div class="popquiz">
+
+(a) **Wide-and-shallow** · 1 hidden layer with 5,000 ReLU units.
+(b) **Tall-and-thin** · 50 hidden layers with 14 ReLU units each.
+
+Which one would you bet on for fitting a *complex* function like $\sin(50 x)$ on $[0, 1]$?
+
+Stop and decide. We'll come back to this exact question when we hit Telgarsky's separation — your gut answer should change once you've seen the proof.
+
+</div>
+
+This is L02's central tension · **width** is universal but expensive, **depth** is exponentially more efficient *when it can be trained*. Today we earn both halves of that sentence.
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 1
@@ -978,6 +997,25 @@ He doubles variance to compensate for ReLU's halving. Tanh doesn't halve — He 
 | ReLU, Leaky | He |
 | Sigmoid, Tanh | Xavier |
 | GELU, SiLU | He (convention) |
+
+---
+
+# Putting it all together · the L02 master sentence
+
+<div class="math-box">
+
+**Depth is mathematically expressive (UAT, Telgarsky), but practically fragile.**
+Three forces conspire against naive deep nets · vanishing/exploding **gradients**, vanishing/exploding **activations**, and the **degradation problem** even when both are tame.
+
+</div>
+
+| Symptom | Root cause | Fix introduced |
+|:-:|:-:|:-:|
+| Gradient → 0 in early layers | $\sigma'$ ceiling 0.25 + product of small Jacobians | ReLU family · skip connections |
+| Activation variance blows up / shrinks | Wrong init scale per layer | Xavier (tanh) · He (ReLU) |
+| Deeper net is *worse* at training loss | Optimization, not capacity | Residual blocks $\mathbf{y} = \mathbf{x} + \mathcal{F}(\mathbf{x})$ |
+
+The single insight underneath all three fixes · **make every layer easy to leave alone.** Identity-friendly initialization, identity skip-connections, and activations that pass gradients through unchanged in their linear regime. That's what made depth practical in 2015 and onward.
 
 ---
 
