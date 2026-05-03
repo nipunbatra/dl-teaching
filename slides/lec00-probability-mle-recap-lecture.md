@@ -1520,25 +1520,50 @@ The whole course will keep instantiating the same NLL recipe. Each new model jus
 
 ---
 
-# Entropy · how uncertain is a distribution?
+# Information content · the surprise of a single outcome
 
-The **entropy** of a distribution $p$ is the expected log-probability ·
+Before defining entropy, define the **information content** (or "surprise") of one outcome ·
 
 <div class="math-box">
 
-$$H(p) := -\mathbb{E}_{Y \sim p}[\log p(Y)] = -\sum_y p(y)\,\log p(y)$$
-
-When the log is base 2, $H(p)$ is in **bits**. It quantifies the average number of bits needed to encode a sample from $p$ using the optimal code for $p$.
+$$I(y) := -\log p(y)$$
 
 </div>
 
+**Why this exact formula?** Three axioms · we want $I$ to satisfy ·
+
+1. $I$ depends only on $p(y)$ (not on $y$ itself).
+2. $I$ is decreasing in $p$ — rare events are more informative.
+3. $I(\text{independent events}) = I(y_1) + I(y_2)$ — information adds.
+
+The **only** function satisfying all three is $I(y) = -c \log p(y)$ for $c > 0$ (Shannon 1948). Choose $c = 1$ with log base 2 → bits.
+
+**Worked** ·
+- Fair coin lands heads · $I = -\log_2 0.5 = 1$ bit.
+- A 1-in-1024 lottery wins · $I = -\log_2(1/1024) = 10$ bits — extremely surprising.
+- Certainty ($p = 1$) · $I = 0$ — no information when nothing was uncertain.
+
+---
+
+# Entropy · how uncertain is a distribution?
+
+The **entropy** of a distribution $p$ is the **expected information** of a draw from $p$ ·
+
+<div class="math-box">
+
+$$H(p) := \mathbb{E}_{Y \sim p}[I(Y)] = -\mathbb{E}_{Y \sim p}[\log p(Y)] = -\sum_y p(y)\,\log p(y)$$
+
+</div>
+
+In base 2 · *the average number of bits the optimal code spends per sample from $p$.*
+
 **Worked numerics (in bits)** ·
 - Fair coin · $H = -2 \cdot 0.5 \log_2 0.5 = 1$ bit.
-- Biased coin $p = 0.99$ · $H \approx 0.08$ bits — almost no info per flip.
-- Uniform over 8 outcomes · $H = \log_2 8 = 3$ bits.
-- One-hot (deterministic) · $H = 0$ bits — no uncertainty.
+- Biased coin $p = 0.99$ · $H = -0.99 \log_2 0.99 - 0.01 \log_2 0.01 \approx 0.014 + 0.066 = 0.08$ bits.
+- Uniform over 8 outcomes · $H = -\sum_{k=1}^8 \tfrac{1}{8} \log_2 \tfrac{1}{8} = \log_2 8 = 3$ bits.
+- One-hot (deterministic) · $H = 0$ bits.
 
-**Entropy peaks for uniform** distributions and is zero for deterministic ones. (See max-entropy principle — Normal is max-entropy given fixed mean and variance.)
+**Entropy peaks for uniform** and is zero for deterministic distributions.
 
 ---
 
@@ -1552,9 +1577,47 @@ $H(p) = -p \log_2 p - (1 - p) \log_2 (1 - p)$ — concave, symmetric around $p =
 
 A *fair* coin needs **one bit** to encode each flip. A coin with $p = 0.99$ is almost deterministic — encoded with arithmetic coding it costs ~$0.08$ bits/flip on average.
 
-This is the meaning of "log-probability is the natural unit." The whole machinery of NLL is just averaging this.
+</div>
+
+---
+
+# Entropy worked · Categorical (3-class)
+
+Let $\boldsymbol\pi$ vary over a 3-class Categorical and compute $H$ in bits ·
+
+<div class="math-box">
+
+| Distribution $\boldsymbol\pi$ | $H(\boldsymbol\pi)$ (bits) | Interpretation |
+|:-:|:-:|:-:|
+| $(1, 0, 0)$ — deterministic | $0$ | already certain |
+| $(0.7, 0.2, 0.1)$ — peaked | $-0.7\log_2 0.7 - 0.2\log_2 0.2 - 0.1\log_2 0.1 \approx 1.16$ | confident model |
+| $(0.5, 0.3, 0.2)$ — moderate | $\approx 1.49$ | mixed evidence |
+| $(\tfrac{1}{3}, \tfrac{1}{3}, \tfrac{1}{3})$ — uniform | $\log_2 3 \approx 1.58$ | maximum |
 
 </div>
+
+The maximum entropy of a $K$-Categorical is $\log_2 K$, achieved by the uniform. **A confident classifier has low-entropy predictions; a confused one has high-entropy predictions.** This connects directly to the **temperature** in LLM sampling — high $T$ pushes the categorical toward uniform (high entropy), low $T$ sharpens it (low entropy).
+
+---
+
+# Entropy in the continuous case · differential entropy
+
+For a continuous random variable, replace the sum with an integral ·
+
+<div class="math-box">
+
+$$h(p) := -\int p(y)\,\log p(y)\,dy$$
+
+(Lower-case $h$ by convention to distinguish from the discrete case. Differential entropy can be **negative** — it's not a "bits per sample" quantity in the same sense.)
+
+For a Normal $\mathcal{N}(\mu, \sigma^2)$ ·
+$$h\bigl(\mathcal{N}(\mu, \sigma^2)\bigr) = \tfrac{1}{2}\log(2\pi e \,\sigma^2)$$
+
+</div>
+
+**Reading** · the differential entropy of a Gaussian only depends on $\sigma^2$ (not on $\mu$). It is **maximum** among all continuous distributions on $\mathbb{R}$ with that fixed variance — recovering the max-entropy reason "Why Normal" from earlier.
+
+**Worked** · $\mathcal{N}(0, 1) \to h = \tfrac{1}{2}\log(2\pi e) \approx 1.42$ nats $\approx 2.05$ bits.
 
 ---
 
@@ -1600,6 +1663,45 @@ $$\text{KL}(p \,\Vert\, q) := \mathbb{E}_{Y \sim p}\!\left[\log \frac{p(Y)}{q(Y)
 
 ---
 
+# KL worked · two Bernoullis
+
+Let $p = (0.7, 0.3)$ (true) and $q = (0.5, 0.5)$ (model).
+
+<div class="math-box">
+
+$$\text{KL}(p \,\Vert\, q) = \sum_y p(y)\log\frac{p(y)}{q(y)} = 0.7 \log\frac{0.7}{0.5} + 0.3 \log\frac{0.3}{0.5}$$
+
+In nats (natural log) · $0.7 \cdot 0.336 + 0.3 \cdot (-0.511) = 0.235 - 0.153 = \mathbf{0.082}$ nats.
+
+In bits · divide by $\ln 2 \approx 0.693$, giving $\approx 0.119$ bits.
+
+</div>
+
+**Asymmetry check** · $\text{KL}(q \,\Vert\, p) = 0.5 \log\frac{0.5}{0.7} + 0.5 \log\frac{0.5}{0.3} = -0.168 + 0.255 = 0.087$ nats — close but **different**. KL is not a metric.
+
+---
+
+# KL worked · two Categoricals (3-class)
+
+True $p = (0.5, 0.3, 0.2)$. Two candidate models ·
+
+<div class="math-box">
+
+**Model A** · $q_A = (0.4, 0.4, 0.2)$ — close to truth.
+$\text{KL}(p \,\Vert\, q_A) = 0.5 \log\tfrac{0.5}{0.4} + 0.3 \log\tfrac{0.3}{0.4} + 0.2 \log\tfrac{0.2}{0.2}$
+$= 0.5 \cdot 0.223 + 0.3 \cdot (-0.288) + 0 = 0.112 - 0.086 = \mathbf{0.026}$ nats.
+
+**Model B** · $q_B = (0.1, 0.1, 0.8)$ — very wrong on class 3.
+$\text{KL}(p \,\Vert\, q_B) = 0.5 \log\tfrac{0.5}{0.1} + 0.3 \log\tfrac{0.3}{0.1} + 0.2 \log\tfrac{0.2}{0.8}$
+$= 0.5 \cdot 1.609 + 0.3 \cdot 1.099 + 0.2 \cdot (-1.386)$
+$= 0.805 + 0.330 - 0.277 = \mathbf{0.858}$ nats.
+
+</div>
+
+A roughly-aligned model has KL $\approx 0.03$; a wildly mismatched one has KL $\approx 0.86$. **KL ≈ 0 ⇒ the two distributions agree** ; large KL ⇒ they disagree, especially in directions where $p$ has mass but $q$ doesn't (mode-covering penalty).
+
+---
+
 # Why KL ≥ 0 · Jensen's inequality (proof)
 
 **Jensen's inequality** · for any *concave* function $\varphi$ and random variable $X$,
@@ -1635,6 +1737,31 @@ $$\boxed{\;H(p, q) \;=\; H(p) \;+\; \text{KL}(p \,\|\, q)\;}$$
 - **KL** · the *extra* bits we waste because $q \ne p$.
 
 For classification with a **one-hot true label** $p$, $H(p) = 0$ — so cross-entropy *is* KL. That's why we say "the classifier loss minimizes KL to the true label."
+
+---
+
+# Cross-entropy worked · one-hot truth meets softmax
+
+In classification, the truth $\mathbf{y}$ is **one-hot** and the model output $\hat{\boldsymbol\pi}$ is a softmax. With $H(\mathbf{y}) = 0$ for any one-hot, the formula collapses ·
+
+<div class="math-box">
+
+$$H(\mathbf{y}, \hat{\boldsymbol\pi}) = H(\mathbf{y}) + \text{KL}(\mathbf{y} \,\Vert\, \hat{\boldsymbol\pi}) = 0 + \text{KL}(\mathbf{y} \,\Vert\, \hat{\boldsymbol\pi}) = -\log\hat\pi_{\,y_{\text{true}}}$$
+
+Cross-entropy of a one-hot truth against a softmax model **is** the NLL of the model on the true class.
+
+</div>
+
+**Worked** · 3 classes, true class is 1 (so $\mathbf{y} = (1, 0, 0)$). Model output $\hat{\boldsymbol\pi}$ varies ·
+
+| Model $\hat{\boldsymbol\pi}$ | $-\log \hat\pi_1$ (nats) | "Sentiment" |
+|:-:|:-:|:-:|
+| $(0.99, 0.005, 0.005)$ | $0.010$ | confidently right · ~no loss |
+| $(0.7, 0.2, 0.1)$ | $0.357$ | mostly right |
+| $(0.34, 0.33, 0.33)$ | $1.079$ | uncertain (≈ uniform) |
+| $(0.05, 0.5, 0.45)$ | $2.996$ | confidently wrong · big loss |
+
+This is **categorical cross-entropy on one example**. The classifier's training loss is just the average of this column over the dataset — same recipe as MLE.
 
 ---
 
