@@ -978,20 +978,22 @@ This is the **central equation of probabilistic ML**. It tells us how to update 
 
 ---
 
-# The four terms · names and roles
+# The four terms · names, roles, colors
 
 <div class="math-box">
 
-$$\underbrace{p(\theta \mid \mathcal{D})}_{\text{posterior}} \;=\; \frac{\overbrace{p(\mathcal{D} \mid \theta)}^{\text{likelihood}}\;\,\overbrace{p(\theta)}^{\text{prior}}}{\underbrace{p(\mathcal{D})}_{\text{evidence}}}$$
+$$\underbrace{\color{#B85A3E}{p(\theta \mid \mathcal{D})}}_{\color{#B85A3E}{\text{posterior}}} \;=\; \frac{\overbrace{\color{#7B9E89}{p(\mathcal{D} \mid \theta)}}^{\color{#7B9E89}{\text{likelihood}}}\;\,\overbrace{\color{#4A6670}{p(\theta)}}^{\color{#4A6670}{\text{prior}}}}{\underbrace{\color{#7B6E5A}{p(\mathcal{D})}}_{\color{#7B6E5A}{\text{evidence}}}}$$
 
 </div>
 
 | Term | What it is | Where it comes from |
 |:-:|:-:|:-:|
-| **Likelihood** | how plausible is the data under $\theta$ | the model |
-| **Prior** | belief about $\theta$ before seeing data | choice / domain knowledge |
-| **Posterior** | updated belief about $\theta$ after data | what we compute |
-| **Evidence** | $\int p(\mathcal{D} \mid \theta)\,p(\theta)\,d\theta$ — a normalizer | usually intractable, often ignored |
+| <span style="color:#7B9E89">**Likelihood**</span> | how plausible is the data under $\theta$ | the model |
+| <span style="color:#4A6670">**Prior**</span> | belief about $\theta$ before seeing data | choice / domain knowledge |
+| <span style="color:#B85A3E">**Posterior**</span> | updated belief about $\theta$ after data | what we compute |
+| <span style="color:#7B6E5A">**Evidence**</span> | $\int p(\mathcal{D} \mid \theta)\,p(\theta)\,d\theta$ — a normalizer | usually intractable, often ignored |
+
+We will keep these colors consistent for the rest of the course.
 
 ---
 
@@ -1165,6 +1167,22 @@ The posterior **gets narrower as more data arrives**. With infinite data, it con
 
 ---
 
+# Beta-Binomial · numeric update (work it out)
+
+Prior · $\text{Beta}(2, 2)$ ·  pseudo-counts $(1\,H, 1\,T)$, prior mean $= 2/4 = 0.5$.
+
+Observe · $h = 6, t = 4$ in $N = 10$ flips · MLE $= 0.6$.
+
+**Step 1 · update parameters**
+$$\alpha' = \alpha + h = 2 + 6 = 8,\quad \beta' = \beta + t = 2 + 4 = 6$$
+
+**Step 2 · posterior summaries**
+$$\mathbb{E}[p \mid \mathcal{D}] = \frac{8}{14} \approx 0.571,\quad \text{mode} = \frac{8 - 1}{14 - 2} = \frac{7}{12} \approx 0.583$$
+
+The posterior mean **lives between** the prior mean ($0.5$) and the MLE ($0.6$) — exactly what "shrinkage" means. With more data, MAP $\to$ MLE; with less data, the prior pulls the estimate toward $0.5$.
+
+---
+
 # Estimator #1 · Maximum Likelihood (MLE)
 
 The simplest possible estimator · **ignore the prior**, just maximize the likelihood.
@@ -1218,6 +1236,40 @@ When the data is plentiful, the likelihood dominates and MAP $\to$ MLE. When dat
 # Maximum Likelihood Estimation
 
 Concrete derivations · coin · linear regression · logistic regression
+
+---
+
+# Pop quiz · which course did this student come from?
+
+Three sections of the same exam · grades modelled as Normal ·
+
+| Course | Mean $\mu$ | Std $\sigma$ |
+|---|---|---|
+| C1 | 80 | 10 |
+| C2 | 70 | 10 |
+| C3 | 90 | 5 |
+
+A student's marks $y = 82$. Which course is this student most likely from?
+
+*Stop and guess before the next slide.*
+
+---
+
+# Answer · pick the distribution that best explains the data
+
+Evaluate the density $\mathcal{N}(82 \mid \mu, \sigma^2)$ for each course ·
+
+$$p_1(82) \approx 0.0388,\quad p_2(82) \approx 0.0194,\quad p_3(82) \approx 0.0299$$
+
+Course **C1** wins · its bell is centred close to 82 with reasonable spread.
+
+<div class="math-box">
+
+**MLE intuition** · among candidate distributions, choose the one under which the **observed data has the highest probability**.
+
+</div>
+
+This is the entire idea. Everything below is just doing it carefully.
 
 ---
 
@@ -1606,6 +1658,28 @@ The loss is small **iff the model assigned high probability to the true class**.
 
 ---
 
+# Session 1 · putting it all together
+
+<div class="math-box">
+
+1. A model defines a **conditional distribution** $p(y \mid x; \theta)$.
+2. **Likelihood** of a dataset $= \prod_i p(y_i \mid x_i; \theta)$ · take $\log$ and sum.
+3. **MLE** $= \arg\max_\theta \sum_i \log p(y_i \mid x_i; \theta) = \arg\min_\theta \text{NLL}$.
+4. Plug in the right distribution and the right loss falls out automatically ·
+
+   - Normal $\Rightarrow$ MSE
+   - Bernoulli $\Rightarrow$ BCE
+   - Categorical $\Rightarrow$ Cross-entropy
+   - Poisson $\Rightarrow$ exp-link Poisson loss
+
+5. **Bayes' rule** turns this into a *belief-update* story · posterior $\propto$ likelihood $\times$ prior. With conjugate Beta prior, updates are just adding counts.
+
+</div>
+
+Session 2 will turn the prior into **regularization** and KL divergence into the *single language* used by every model in the rest of the course.
+
+---
+
 <!-- _class: section-divider -->
 
 # Session 1 · practice problems
@@ -1906,6 +1980,23 @@ The **only** function satisfying all three is $I(y) = -c \log p(y)$ for $c > 0$ 
 
 ---
 
+# Surprise · "snowing in Kashmir vs Gandhinagar"
+
+Same headline · *"It snowed today."* Two locations ·
+
+- **Kashmir in January** · $p(\text{snow}) \approx 0.5$ · $I = -\log_2 0.5 = 1$ bit. Mild surprise.
+- **Gandhinagar in January** · $p(\text{snow}) \approx 10^{-6}$ · $I = -\log_2 10^{-6} \approx 20$ bits. Front-page news.
+
+<div class="keypoint">
+
+The **same event** carries different surprise depending on the distribution generating it. That is *exactly* what $I(y) = -\log p(y)$ formalizes.
+
+</div>
+
+This is also why log-likelihood works as a model-quality signal · a model that places high probability on the data has *low* per-sample surprise.
+
+---
+
 # Information content · worked examples
 
 <div class="math-box">
@@ -1939,6 +2030,31 @@ $$H(p) := \mathbb{E}_{Y \sim p}[I(Y)] = -\mathbb{E}_{Y \sim p}[\log p(Y)] = -\su
 In base 2, $H$ is in **bits** · *the average number of bits the optimal code spends per sample from $p$.*
 
 So entropy is what you get when you average the per-sample surprise from the previous slides. Big entropy = on average, draws from $p$ are surprising. Small entropy = mostly predictable.
+
+---
+
+# Entropy as code length · the Huffman lens
+
+Imagine you must send samples from $p$ over a wire using a **prefix-free binary code**. Shannon's source-coding theorem says ·
+
+<div class="math-box">
+
+$$\underbrace{H(p)}_{\text{lower bound}} \;\le\; \mathbb{E}_p[\text{bits per symbol}] \;\le\; H(p) + 1$$
+
+</div>
+
+**Concrete** · alphabet $\{A, B, C, D\}$ with $p = (0.5, 0.25, 0.125, 0.125)$ ·
+
+| Symbol | $p$ | Optimal code | Code length |
+|:-:|:-:|:-:|:-:|
+| A | $0.5$ | `0` | 1 |
+| B | $0.25$ | `10` | 2 |
+| C | $0.125$ | `110` | 3 |
+| D | $0.125$ | `111` | 3 |
+
+Average length $= 0.5(1) + 0.25(2) + 0.125(3) + 0.125(3) = 1.75$ bits $= H(p)$ exactly.
+
+**Entropy = the cost of describing samples from $p$ optimally.** That's the right physical interpretation.
 
 ---
 
@@ -2108,6 +2224,26 @@ $= 0.805 + 0.330 - 0.277 = \mathbf{0.858}$ nats.
 </div>
 
 A roughly-aligned model has KL $\approx 0.03$; a wildly mismatched one has KL $\approx 0.86$. **KL ≈ 0 ⇒ the two distributions agree** ; large KL ⇒ they disagree, especially in directions where $p$ has mass but $q$ doesn't (mode-covering penalty).
+
+---
+
+# KL as wasted code length · the Huffman lens
+
+Same alphabet $\{A,B,C,D\}$. **True** $p = (0.5, 0.25, 0.125, 0.125)$ — Huffman code lengths $(1, 2, 3, 3)$ · optimal cost $H(p) = 1.75$ bits.
+
+Suppose we mistakenly built our code for **wrong** $q = (0.125, 0.125, 0.25, 0.5)$ — Huffman lengths $(3, 3, 2, 1)$.
+
+When we encode samples from $p$ with the code for $q$ ·
+
+$$H(p, q) = 0.5(3) + 0.25(3) + 0.125(2) + 0.125(1) = \mathbf{2.625}\text{ bits}$$
+
+<div class="math-box">
+
+$$\text{KL}(p \,\Vert\, q) \;=\; H(p, q) - H(p) \;=\; 2.625 - 1.75 \;=\; \mathbf{0.875}\text{ bits/symbol of waste}$$
+
+</div>
+
+**Reading** · KL is the literal *number of extra bits per sample* you pay for using the wrong code. Modelling = compression · this is why "**better model = better compression**" is not a metaphor.
 
 ---
 
