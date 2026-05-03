@@ -33,10 +33,11 @@ By the end of this lecture you will be able to:
 
 # Recap · where we left off
 
-- **MLPs** are stacks of affine + non-linearity.
-- **Backprop** is chain rule run right-to-left.
-- **Sigmoids vanish;** ReLU un-blocks depth.
-- **One hidden layer can approximate anything** — we need to make that precise.
+- **MLPs** are stacks of affine + non-linearity (L1).
+- **Backprop** is chain rule run right-to-left (L1).
+- **Logistic / softmax classification = 1-layer MLP** under categorical NLL (L0 + L1).
+- **Sigmoids vanish; ReLU un-blocks depth** (L1, end).
+- **One hidden layer can approximate anything** (UAT) — we need to make that precise today.
 
 <div class="paper">
 
@@ -44,11 +45,11 @@ Today maps to **UDL Ch 4** (deep networks), **Ch 7** (gradients &amp; init), **C
 
 </div>
 
-Three questions for today:
+<div class="keypoint">
 
-1. What does *"can approximate anything"* actually mean?
-2. If one layer suffices, why are SOTA models 100+ layers deep?
-3. How do we train deep nets without the gradient evaporating?
+Today's question · *if one hidden layer is universal, why do we ever go deeper?* Three answers · **width is exponential**, **depth is hierarchical**, and **depth is trainable** (with the right tools).
+
+</div>
 
 ---
 
@@ -141,6 +142,24 @@ for any non-polynomial activation $\sigma$ — including ReLU.
 </div>
 
 One hidden layer suffices. The catch hides in one word: **exist.**
+
+---
+
+# UAT · the proof in three moves
+
+We won't write a full proof — but the structure is short and worth knowing.
+
+<div class="math-box">
+
+**Move 1 · Approximate continuous functions by step functions.** Any continuous $f$ on $[0, 1]^d$ is *uniformly continuous* (Heine–Cantor). So for any $\epsilon$ we can partition $[0, 1]^d$ into small enough cells that $f$ varies by less than $\epsilon/2$ inside each cell. Replace $f$ by its average value on each cell · we get a step function within $\epsilon/2$ of $f$.
+
+**Move 2 · Approximate step functions by sums of sigmoids.** A sigmoid $\sigma(w(x - b))$ with large $w$ is essentially a step at $x = b$. A *bump* on $[a, b]$ is a difference of two such "near-steps." Each cell of the step function ⇒ one bump in the network. $N$ cells → $2N$ hidden units.
+
+**Move 3 · Density via Stone-Weierstrass / Hahn-Banach.** The space of finite sums $\sum \alpha_i \sigma(\mathbf{w}_i^\top \mathbf{x} + b_i)$ is **dense** in $C([0,1]^d)$ — a non-trivial functional-analysis theorem. Combined with Moves 1 and 2, this gives the bound $\|f - \hat f\|_\infty < \epsilon$.
+
+</div>
+
+**Bottom line** · UAT is *not* a constructive recipe — it's a density theorem. It says good weights *exist*; it says nothing about $N$, generalization, or whether SGD finds them.
 
 ---
 
@@ -351,6 +370,27 @@ Depth matches the structure of the problem:
 <div class="paper">
 
 Formal proof: Telgarsky, *"Benefits of Depth in Neural Networks,"* COLT 2016. We take the statement on faith today.
+
+</div>
+
+---
+
+# Depth-vs-width · the formal separation
+
+<div class="paper">
+
+**Theorem (Telgarsky 2016, simplified)** · There exists a function $f : [0, 1] \to [0, 1]$ representable by a ReLU network of depth $2k$ and width $\le 3$, such that **any** ReLU network of depth $\le k$ approximating $f$ within constant error needs **at least $2^{k}$** units.
+
+</div>
+
+The witness function is the $k$-fold composition of the **sawtooth** ·
+$$T(x) = \begin{cases} 2x & x \le 1/2 \\ 2 - 2x & x > 1/2\end{cases}$$
+
+Each composition doubles the number of "teeth" — depth $k$ gives $2^k$ teeth using $O(k)$ ReLUs. A shallow net **must enumerate** every tooth · exponential width.
+
+<div class="keypoint">
+
+**Depth is exponentially more parameter-efficient than width** for problems with compositional / recursive structure. Real-world data (images, language) is richly compositional · so depth pays off in practice.
 
 </div>
 
@@ -874,6 +914,29 @@ Factor of 2 compensates the ReLU halving.
 
 ---
 
+# Worked numeric · variance flow over 10 layers
+
+10-layer fully-connected ReLU net with $n_\text{in} = 512$ everywhere. Initial activation variance $\text{Var}(x) = 1$.
+
+<div class="math-box">
+
+**Naive init** $W \sim \mathcal{N}(0, 1)$ (no scaling) ·
+- Each layer · $\text{Var}(z) = n_\text{in} \cdot \text{Var}(W) \cdot \text{Var}(x) = 512 \cdot 1 \cdot 1 = 512$.
+- After ReLU · $\approx 256$.
+- Pass through layer 2 · $\text{Var}(z) = 512 \cdot 1 \cdot 256 = 131{,}072$. **Explodes.**
+- After 10 layers · $(256)^{10} \approx 10^{24}$. NaN at step 1.
+
+**He init** $W \sim \mathcal{N}(0,\, 2/512)$ ·
+- Each layer · $\text{Var}(z) = 512 \cdot (2/512) \cdot 1 = 2$.
+- After ReLU · $\approx 1$.
+- Stable for 10, 100, or 1000 layers. ✓
+
+</div>
+
+This is **why initialization is not optional**. Bad init → loss is NaN at step 1, or weights are stuck at $10^{-30}$ scale and never move. Good init keeps signal magnitude constant across depth.
+
+---
+
 # Initialization in PyTorch
 
 ```python
@@ -915,6 +978,26 @@ He doubles variance to compensate for ReLU's halving. Tanh doesn't halve — He 
 | ReLU, Leaky | He |
 | Sigmoid, Tanh | Xavier |
 | GELU, SiLU | He (convention) |
+
+---
+
+# Practice problems
+
+<div class="math-box">
+
+**P1.** UAT says $f(x) = x^2$ on $[0, 1]$ can be approximated to error $\epsilon$ by a sum of $N$ ReLUs. Estimate $N$ as a function of $\epsilon$. (Hint · piecewise-linear with $N$ breakpoints has error $\sim 1/N^2$ for smooth $f$.)
+
+**P2.** A 5-layer plain MLP with sigmoid activations is failing to train. Without changing the architecture, name **two** changes that would help and explain why each works.
+
+**P3.** Show that for a ResNet block $\mathbf{y} = \mathbf{x} + \mathcal{F}(\mathbf{x})$, $\partial \mathbf{y}/\partial \mathbf{x} = I + \partial \mathcal{F}/\partial \mathbf{x}$. Use this to argue that even if $\mathcal{F}$ has tiny Jacobian, gradient through the residual block does not vanish.
+
+**P4.** A 100-layer ReLU MLP with $n_\text{in} = 256$ everywhere uses Xavier init $W \sim \mathcal{N}(0, 1/n_\text{in})$. Will the activation variance grow, shrink, or stay constant? Why is this wrong for ReLU? What's the fix?
+
+**P5.** Telgarsky's separation says depth-$2k$ ReLU nets need $\ge 2^k$ units to be matched by depth-$k$ nets. Plug in $k = 10$ · how many shallow units? Why does this argue for going deep?
+
+**P6.** You replace ReLU with leaky ReLU ($\max(0.01 z, z)$) in a 50-layer net. (a) What changes for forward-pass variance? (b) What changes for vanishing gradients on initially-negative pre-activations?
+
+</div>
 
 ---
 

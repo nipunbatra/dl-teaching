@@ -125,6 +125,26 @@ Human top-5 error: ~5.1%. **AlexNet cut error by ~10 points in one year.**
 
 ---
 
+# Why now · concrete numbers
+
+![w:780px](figures/lec01/svg/compute_scaling.svg)
+
+<div class="math-box">
+
+| | 1990 | 2024 | growth |
+|---|---|---|---|
+| **Compute** ($/FLOP best-case) | $\sim$10⁸ FLOPs/\$ | $\sim$10¹⁵ FLOPs/\$ | $10^7\!\times$ |
+| **Datasets** (frontier) | 60k MNIST digits | 5T LLM tokens | $10^8\!\times$ |
+| **SOTA model params** | LeNet (60k) | Llama-3 405B | $7 \times 10^6\!\times$ |
+
+</div>
+
+Three exponential ramps compounding for 30+ years. Algorithms that were "impossible" in 1990 became cheap in 2012 and routine by 2020. **Deep learning didn't get smarter — the world got faster.**
+
+The 2012 ImageNet jump was the moment all three crossed the line at once.
+
+---
+
 # Learning outcomes · for this lecture
 
 By the end of this lecture you will be able to:
@@ -168,6 +188,26 @@ The building block you already know — tightened up
 # Our running example
 
 ![w:880px](figures/lec01/svg/mnist_samples.svg)
+
+---
+
+# Tying back to Lecture 0 · what changed
+
+In **L0** we showed every loss is **NLL of an assumed conditional distribution** ·
+
+| Task | Conditional | Loss |
+|:-:|:-:|:-:|
+| Regression | $Y \mid \mathbf{x} \sim \mathcal{N}(\boldsymbol\theta^\top \mathbf{x}, \sigma^2)$ | MSE |
+| Binary classification | $Y \mid \mathbf{x} \sim \text{Bernoulli}(\sigma(\boldsymbol\theta^\top \mathbf{x}))$ | BCE |
+| $K$-class | $Y \mid \mathbf{x} \sim \text{Categorical}(\text{softmax}(W \mathbf{x}))$ | CE |
+
+<div class="keypoint">
+
+**Logistic regression and softmax classification are 1-layer neural nets.** You've already met the entire framework. Today we add **hidden layers** so the conditional distribution can be a more complex function of $\mathbf{x}$.
+
+</div>
+
+The probabilistic story is unchanged · pick a distribution, write NLL, optimize. Only $p_\theta(y \mid \mathbf{x})$ becomes more expressive.
 
 ---
 
@@ -287,6 +327,82 @@ $x = \begin{bmatrix} 2 \\ 3 \end{bmatrix}$ · $W_1 = \begin{bmatrix} 1 & 0 \\ 0 
 # Without σ · depth gives nothing
 
 ![w:920px](figures/lec01/svg/stacked_linear_collapses.svg)
+
+---
+
+# XOR · the canonical "linear can't, MLP can" example
+
+XOR · 2D binary inputs, output $= x_1 \oplus x_2$ ·
+
+| $x_1$ | $x_2$ | $y$ |
+|:-:|:-:|:-:|
+| 0 | 0 | 0 |
+| 0 | 1 | 1 |
+| 1 | 0 | 1 |
+| 1 | 1 | 0 |
+
+<div class="keypoint">
+
+XOR is the historical "minor scandal" that **broke perceptrons** in the 1969 Minsky-Papert critique — and motivated the multi-layer / hidden-unit revolution of the 1980s.
+
+</div>
+
+**Try mentally** · can you find a single line $w_1 x_1 + w_2 x_2 + b = 0$ that puts $\{(0,1), (1,0)\}$ on one side and $\{(0,0), (1,1)\}$ on the other? Spoiler · *no straight line works*.
+
+---
+
+# XOR · linear fails, two-layer MLP succeeds
+
+![w:920px](figures/lec01/svg/xor_decision.svg)
+
+<div class="math-box">
+
+**Left** · Three attempts at a linear separator. Whichever line you draw, two same-class points end up on opposite sides.
+
+**Right** · A 2-layer MLP with **2 hidden ReLU units** carves out a curved decision region · all four points correctly classified.
+
+</div>
+
+---
+
+# XOR · build a 2-layer MLP by hand
+
+A 2-input, 2-hidden, 1-output MLP with ReLU ·
+
+<div class="math-box">
+
+$$\mathbf{h} = \mathrm{ReLU}(W_1 \mathbf{x} + \mathbf{b}_1), \qquad \hat y = \mathbf{w}_2^\top \mathbf{h} + b_2$$
+
+Choose by hand ·
+$W_1 = \begin{pmatrix} 1 & 1 \\ 1 & 1 \end{pmatrix},\quad \mathbf{b}_1 = \begin{pmatrix} 0 \\ -1 \end{pmatrix},\quad \mathbf{w}_2 = \begin{pmatrix} 1 \\ -2 \end{pmatrix},\quad b_2 = 0$
+
+| $\mathbf{x}$ | $W_1\mathbf{x}+\mathbf{b}_1$ | $\mathbf{h}=\text{ReLU}(\cdot)$ | $\mathbf{w}_2^\top \mathbf{h} + b_2$ |
+|:-:|:-:|:-:|:-:|
+| $(0,0)$ | $(0, -1)$ | $(0, 0)$ | $0$ |
+| $(0,1)$ | $(1, 0)$ | $(1, 0)$ | $1$ |
+| $(1,0)$ | $(1, 0)$ | $(1, 0)$ | $1$ |
+| $(1,1)$ | $(2, 1)$ | $(2, 1)$ | $2 - 2 = 0$ |
+
+</div>
+
+Outputs $0, 1, 1, 0$ — **exactly XOR**. The hidden ReLU "kink" gives the curved decision region we drew. Two neurons + one non-linearity is the smallest network that solves it.
+
+---
+
+# Feature-space transformation · the deeper view
+
+![w:920px](figures/lec01/svg/feature_transform.svg)
+
+<div class="math-box">
+
+A hidden layer **reshapes the data** so the next (linear) layer's job becomes easy.
+
+**Left** · two interlocking spirals · no straight line separates them.
+**Right** · the same data after a learned hidden layer · spirals are *unrolled* into bands that a linear classifier separates trivially.
+
+</div>
+
+This is what people mean by **"deep learning is representation learning."** The hidden layers learn a coordinate system in which the problem becomes linear. The final softmax is just classical logistic regression — applied to features the network designed for itself.
 
 ---
 
@@ -668,6 +784,34 @@ These three lines are the **entire** backward pass of a linear layer. Everything
 
 ---
 
+# End-to-end worked numeric · 2-layer MLP, one example
+
+Tiny 2-1-1 net with sigmoid hidden, sigmoid output. Input $x = 0.5$, target $y = 1$ (binary). Initial weights $w_1 = 0.4,\ b_1 = 0,\ w_2 = 0.6,\ b_2 = 0$. LR $\eta = 0.5$.
+
+<div class="math-box">
+
+**Forward** ·
+- $z_1 = 0.4 \cdot 0.5 + 0 = 0.2$, $h = \sigma(0.2) \approx 0.5498$
+- $z_2 = 0.6 \cdot 0.5498 = 0.3299$, $\hat y = \sigma(0.3299) \approx 0.5817$
+- BCE loss $L = -\log 0.5817 \approx \mathbf{0.5414}$
+
+**Backward** (using the BCE+sigmoid identity $\partial L / \partial z_2 = \hat y - y$) ·
+- $\delta_2 = \hat y - y = 0.5817 - 1 = -0.4183$
+- $\partial L/\partial w_2 = \delta_2 \cdot h = -0.4183 \cdot 0.5498 \approx -0.2300$
+- $\partial L/\partial h = w_2 \cdot \delta_2 = 0.6 \cdot (-0.4183) = -0.2510$
+- $\delta_1 = \partial L/\partial h \cdot \sigma'(z_1) = -0.2510 \cdot 0.5498 \cdot 0.4502 \approx -0.0621$
+- $\partial L/\partial w_1 = \delta_1 \cdot x = -0.0621 \cdot 0.5 \approx -0.0311$
+
+**Update** · $w_1 \to 0.4156,\ w_2 \to 0.7150$.
+
+**Forward at step 1** · $\hat y \approx 0.5959$, $L \approx 0.5176$ — **loss dropped** ✓
+
+</div>
+
+This is the entire training loop on one example, by hand. SGD does this for every (sample, weight) pair, every step, every epoch.
+
+---
+
 # Same rule with batches
 
 For a batch:
@@ -937,6 +1081,28 @@ Validation should answer the question: "Will this model work on new cases we act
 Test = final exam you take once.
 Validation = practice exams, take many times.
 Training = studying.
+
+</div>
+
+---
+
+# Practice problems
+
+Try these on paper; verify with the notebooks.
+
+<div class="math-box">
+
+**P1.** A 1-hidden-layer MLP for MNIST has $784 \to 512 \to 10$. How many parameters in total (weights + biases)? How many FLOPs in one forward pass for a single image?
+
+**P2.** Show that for sigmoid $\sigma(z) = 1/(1 + e^{-z})$, $\sigma'(z) = \sigma(z)(1 - \sigma(z))$ and the maximum value of $\sigma'$ is $1/4$ at $z = 0$.
+
+**P3.** Build a 2-hidden-unit ReLU MLP that computes the **AND** function ($y = x_1 \cdot x_2$). State the weights explicitly.
+
+**P4.** A 3-class classifier outputs logits $\mathbf{z} = [3, 1, -1]$ for an example with true class $0$. Compute (a) the softmax probabilities, (b) the cross-entropy loss, (c) the gradient on each logit using $\partial L / \partial z_k = \hat y_k - y_k$.
+
+**P5.** Why does PyTorch's `CrossEntropyLoss` take **logits** rather than probabilities as input? Give two reasons (numerical and gradient-related).
+
+**P6.** A 10-layer sigmoid network has weights initialized as $\mathcal{N}(0, 1)$. Estimate the magnitude of the gradient at the first layer when the upstream gradient at the loss is $1$. (Hint · use $|\sigma'| \le 0.25$ and the chain rule.)
 
 </div>
 
