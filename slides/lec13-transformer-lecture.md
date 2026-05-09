@@ -37,7 +37,12 @@ Last lecture: **attention** fixed Seq2Seq's bottleneck. Q, K, V scaled dot produ
 
 <div class="paper">
 
-Today maps to **Prince Ch 12** (mid sections). Backup video: Karpathy's *Let's build GPT: from scratch, in code, spelled out* (YouTube).
+**Reading & inspiration** ·
+- **Jay Alammar · *Illustrated Transformer*** + ***Illustrated GPT-2*** — the visual canon.
+- **Karpathy · *Let's build GPT: from scratch, in code***  (YouTube) — full implementation walk-through.
+- **Karpathy · `nanoGPT`** (GitHub) — clean reference implementation.
+- **CS224N (Manning) · Lectures 8–9** — Stanford slides on Transformers.
+- **UDL (Prince) · Ch 12 mid sections**.
 
 </div>
 
@@ -49,6 +54,26 @@ Today maps to **Prince Ch 12** (mid sections). Backup video: Karpathy's *Let's b
 2. Why **multi-head** attention instead of one big head?
 3. How does the model know position if there's no recurrence?
 4. What's the difference between encoder, decoder, and decoder-only models (GPT)?
+
+---
+
+# Pop quiz · what's missing from "attention alone"?
+
+L12 gave us attention · weighted lookup, $O(n^2)$ across the sequence.
+
+<div class="popquiz">
+
+If you stack 12 layers of pure self-attention, three problems appear ·
+
+(a) The output of attention is a **linear combination of values** — no per-position non-linearity.
+(b) Two sentences with the same words in different order get the **same** representation.
+(c) Stacking 12 attention layers will have **vanishing/exploding** activations.
+
+Stop and predict what the Transformer block adds to fix each.
+
+</div>
+
+The answers are **FFN, positional encoding, and LayerNorm + residual** — and that's exactly the recipe of one Transformer block.
 
 ---
 
@@ -600,6 +625,46 @@ Karpathy's "most common deep-learning bug" list puts attention-mask bugs at the 
 ---
 
 <!-- _class: summary-slide -->
+
+# Putting it all together · the L13 master sentence
+
+<div class="math-box">
+
+**A Transformer block = self-attention + FFN, each wrapped in residual + LayerNorm.** Stack 12 of those, add positional encodings + token embeddings, ship a final linear-to-vocab head. That's GPT. **The architecture has not changed since 2017** — only its scale has.
+
+</div>
+
+| Block component | Role | Why it's there |
+|:-:|:-:|:-:|
+| Multi-head attention | mix tokens across positions | content-based routing |
+| FFN | per-position non-linearity | non-linear transform |
+| Residual + LN | gradient highway | trainable depth |
+| Positional encoding | inject order | attention is permutation-equiv. |
+| Causal mask (decoder) | prevent peeking ahead | autoregressive training |
+
+Three flavours · **encoder-only** (BERT, classifying), **decoder-only** (GPT, generating), **encoder-decoder** (T5, translating).
+
+---
+
+# Practice problems
+
+<div class="math-box">
+
+**P1.** A Transformer block has $d_\text{model}=768$ and FFN hidden $d_\text{ff}=3072$. Count parameters of (a) one MHA layer with 12 heads of $d_k=64$, (b) one FFN. Which dominates?
+
+**P2.** Show that without positional encoding, a Transformer would output the **same logits** for "dog bites man" and "man bites dog." Where does the asymmetry need to come from?
+
+**P3.** Explain the difference between **pre-LN** $x + \text{Attn}(\text{LN}(x))$ and **post-LN** $\text{LN}(x + \text{Attn}(x))$. Which is preferred for training stability and why?
+
+**P4.** A causal/decoder mask is a lower-triangular matrix added to attention scores before softmax. What entry is set to $-\infty$? Why does this implement "no peeking"?
+
+**P5.** Sketch how multi-head attention is implemented as a single matrix multiplication using reshape/permute. Why is this faster than running $h$ separate attention modules in parallel?
+
+**P6.** Explain in one paragraph why GPT-2 is "just a bigger GPT-1" but BERT is structurally different. What is the single architectural switch?
+
+</div>
+
+---
 
 # Lecture 13 — summary
 

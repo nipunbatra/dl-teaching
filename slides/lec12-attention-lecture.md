@@ -41,7 +41,13 @@ Today we fix it.
 
 <div class="paper">
 
-Today maps to **Prince Ch 12** (early sections). This is the single most influential idea in deep learning between backprop and diffusion.
+**Reading & inspiration** — pick whichever clicks ·
+- **Jay Alammar · *The Illustrated Transformer*** — the canonical visual walk-through of Q, K, V (free online).
+- **CS224N (Manning) · Lecture 8** — Stanford slide deck on attention and seq2seq.
+- **UDL (Prince) · Ch 12** — chapters supporting today.
+- **Karpathy · *Let's build GPT*** (YouTube) — implements attention live.
+
+This is the single most influential idea in deep learning between backprop and diffusion.
 
 </div>
 
@@ -114,6 +120,28 @@ Attention is the mechanism for the *pull* — a differentiable version of "look 
 2. What are Q, K, V and why "retrieval"?
 3. Why do we divide by $\sqrt{d_k}$?
 4. What is **self**-attention and how does it differ from cross-attention?
+
+---
+
+# Pop quiz · the search-engine analogy
+
+You type *"chocolate cake recipe"* into Google.
+
+<div class="popquiz">
+
+(a) Google compares your **query** against millions of page **keys** (titles).
+(b) It picks the top match and returns just that page.
+(c) It picks the top-$k$ pages and **mixes** their contents into one summary.
+
+Which of these is closest to attention? Stop and decide.
+
+</div>
+
+The answer is **(c) · soft retrieval** — and that intuition (query × key → similarity → weighted sum of values) is **literally the attention formula**. The rest of L12 is just making this precise.
+
+---
+
+▶ **Interactive** · click tokens to see attention weights light up live → [attention](https://nipunbatra.github.io/interactive-articles/attention/).
 
 ---
 
@@ -777,6 +805,45 @@ Every major model since 2018 (BERT, GPT-*, T5, Claude, Llama) is this architectu
 ---
 
 <!-- _class: summary-slide -->
+
+# Putting it all together · the L12 master sentence
+
+<div class="math-box">
+
+**Attention is a soft, differentiable look-up.** Every output token computes a query, every input token offers a key + value, and the output is a **softmax-weighted average of values** based on query·key similarity. The bottleneck of L11 disappears because *every* output position can look at *every* input position directly.
+
+</div>
+
+| Symbol | Role | Friendly intuition |
+|:-:|:-:|:-:|
+| Query $Q$ | "what am I looking for?" | search box |
+| Key $K$ | "what do I describe?" | page title |
+| Value $V$ | "what content do I carry?" | page body |
+| $\text{softmax}(QK^\top / \sqrt{d_k})$ | "how much to read from each" | match score → weight |
+
+**Self-attention** uses the same sequence for $Q, K, V$ · the sentence reads itself. **Cross-attention** has $Q$ from the decoder and $K, V$ from the encoder — exactly seq2seq's "look back at the source."
+
+---
+
+# Practice problems
+
+<div class="math-box">
+
+**P1.** Compute attention for $Q = (1, 0)$, $K = \{(1,0), (0,1), (1,1)\}$, $V = \{(1,2), (3,4), (5,6)\}$ with $d_k = 2$. Show the softmax weights and the output vector.
+
+**P2.** Why divide by $\sqrt{d_k}$? Show that the dot product of two random vectors of dimension $d$ has standard deviation $\sqrt{d}$. What goes wrong in the softmax without the rescale?
+
+**P3.** Sketch the attention pattern of a model that learns *positional copying* (output token $i$ should equal input token $i$). What does the attention matrix look like?
+
+**P4.** Show that attention is permutation-equivariant on the keys/values · re-order $K, V$ together and the output stays the same. Why is this both a *feature* (set-friendly) and a *bug* (sequences need positions)?
+
+**P5.** Cross-attention vs self-attention · in a translation model, where does each appear? Sketch the data flow.
+
+**P6.** Multi-head attention with $h = 8$ and $d_\text{model} = 512$ uses heads of size $d_k = 64$. Count the parameters in the $W_Q, W_K, W_V, W_O$ matrices total.
+
+</div>
+
+---
 
 # Lecture 12 — summary
 

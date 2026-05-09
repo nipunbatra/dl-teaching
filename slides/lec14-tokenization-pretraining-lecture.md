@@ -24,7 +24,13 @@ But stacking requires *inputs*. And inputs are **discrete symbols** (characters,
 
 <div class="paper">
 
-Today maps to **Prince Ch 12 (pretraining)** + Karpathy's *Let's build the GPT Tokenizer* video. Tokenization is the part of LLMs everyone wants to skip — don't.
+**Reading & inspiration** ·
+- **Karpathy · *Let's build the GPT Tokenizer*** (YouTube) — best 2-hour walk-through.
+- **Hugging Face course · Ch 6 (Tokenizers)** — code-first, free.
+- **Hugging Face course · Ch 1–2** — pretraining paradigms (BERT, GPT, T5).
+- **UDL (Prince) · Ch 12 (pretraining)**.
+
+Tokenization is the part of LLMs everyone wants to skip — don't.
 
 </div>
 
@@ -34,6 +40,27 @@ Four questions:
 2. How does **BPE** work step-by-step?
 3. What are the three **pretraining paradigms** — BERT, GPT, T5?
 4. Why does tokenization cause so many LLM bugs?
+
+---
+
+# Pop quiz · how many "tokens" is this sentence?
+
+Take · **"GPT-4 is great!"**
+
+<div class="popquiz">
+
+(a) 4 tokens (one per word).
+(b) 5 tokens (split punctuation).
+(c) 7 tokens · `"G", "PT", "-", "4", " is", " great", "!"`.
+(d) Different number depending on the model.
+
+Stop and guess. The real answer is **(d)** — and the *exact* split depends on the BPE merges learned at training time. Which is why "strawberry has 3 r's" was an LLM-favourite stumbling block until 2024.
+
+</div>
+
+---
+
+▶ **Interactive** · watch BPE merges grow on real text → [bpe-merges](https://nipunbatra.github.io/interactive-articles/bpe-merges/).
 
 ---
 
@@ -622,6 +649,44 @@ The pretrained model is the brain. Fine-tuning is how you train it to do what yo
 ---
 
 <!-- _class: summary-slide -->
+
+# Putting it all together · the L14 master sentence
+
+<div class="math-box">
+
+**Tokenization is the first design decision of an LLM** · BPE merges the most common adjacent pairs until you have a 32k–128k vocabulary that balances "few short tokens" (efficient) and "no out-of-vocabulary" (robust). **Pretraining** then optimizes one of three NLL objectives over those tokens · **MLM** (BERT) for understanding, **CLM** (GPT) for generation, **span-corruption** (T5) for both.
+
+</div>
+
+| Paradigm | Loss | Best for |
+|:-:|:-:|:-:|
+| BERT (MLM) | predict masked tokens | classification, embeddings |
+| GPT (CLM) | predict next token | generation, dialogue |
+| T5 (span) | predict masked span | translation, summarization |
+
+All three are **NLL of a Categorical** (L00) — the only difference is *which* tokens are masked.
+
+---
+
+# Practice problems
+
+<div class="math-box">
+
+**P1.** A corpus has 10k unique words but 1k unique subwords cover 95% of tokens. Argue why **subword** tokenization is the right compromise between *word* and *character*.
+
+**P2.** Run BPE by hand on the corpus `"low low low lower newest"` for 3 merges. Show the vocabulary after each step.
+
+**P3.** Why does GPT use a **causal mask** during training but BERT doesn't? Sketch the attention mask matrix for each.
+
+**P4.** A masked LM masks 15% of tokens, replaces 80% of those with `[MASK]`, 10% with random tokens, 10% leaves them unchanged. Why this 80/10/10 split?
+
+**P5.** Token "**ing**" appears in `running`, `singing`, `meeting`. Why is BPE *certain* to learn `ing` as one token? Estimate after how many merges.
+
+**P6.** A tokenizer assigns a separate token to every digit 0–9. Why is this a poor design for arithmetic? What does Llama-3's tokenizer do differently?
+
+</div>
+
+---
 
 # Lecture 14 — summary
 

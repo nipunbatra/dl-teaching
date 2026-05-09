@@ -38,7 +38,13 @@ The **Transformer** stack is the architecture. The tokenizer is the input. Now l
 
 <div class="paper">
 
-Today maps to the **Chinchilla paper** (Hoffmann 2022), HuggingFace course Ch 1, Karpathy's *State of GPT*. UDL Ch 12 supports this at a high level; LLM scale details come from the literature.
+**Reading & inspiration** ·
+- **Karpathy · *State of GPT*** (Microsoft Build keynote) — the canonical 2023+ overview.
+- **Kaplan et al. 2020 · *Scaling Laws for Neural LMs*** — the original power-law paper.
+- **Hoffmann et al. 2022 · *Chinchilla*** — compute-optimal scaling.
+- **Hugging Face course · Ch 1** — high-level LLM walk-through.
+- **Anthropic · *Predictability of LM behavior on novel tasks***  — emergent-ability discussion.
+- **Llama-3 / Mistral / Qwen technical reports** — concrete 2024-era recipes.
 
 </div>
 
@@ -50,6 +56,26 @@ Today maps to the **Chinchilla paper** (Hoffmann 2022), HuggingFace course Ch 1,
 2. What changed in positional encoding — and what is **RoPE**?
 3. How do 100B+ models fit on GPUs — **GQA, distributed training**?
 4. What are **emergent abilities** and why are they surprising?
+
+---
+
+# Pop quiz · you have $1M of compute. Spend it.
+
+You can train a Transformer LM with $C \approx 10^{22}$ FLOPs. Which choice gets the best loss?
+
+<div class="popquiz">
+
+(a) A **70B-parameter** model on **300B tokens**.
+(b) A **20B-parameter** model on **1T tokens**.
+(c) A **7B-parameter** model on **3T tokens**.
+
+Stop and pick · this is the exact question Chinchilla answered. **Answer · (b)** by the compute-optimal rule "$N \approx D / 20$" (params ≈ tokens / 20). Most pre-2022 models were heavily under-trained. The whole modern era is about getting *this knob* right.
+
+</div>
+
+---
+
+▶ **Interactive** · play with sampling temperature and watch creativity vs determinism trade off → [softmax-temperature](https://nipunbatra.github.io/interactive-articles/softmax-temperature/).
 
 ---
 
@@ -655,6 +681,44 @@ This is where 2026 LLMs are. We'll see alignment + RLHF in the next lecture, the
 ---
 
 <!-- _class: summary-slide -->
+
+# Putting it all together · the L15 master sentence
+
+<div class="math-box">
+
+**LLMs are decoder-only Transformers from 2018, scaled.** What changed is *not* the architecture — it is **scaling laws** (loss is a power law in compute), **compute-optimal training** (Chinchilla · params ≈ tokens / 20), **modern positional encoding** (RoPE), **memory tricks** (GQA, FlashAttention), and **distributed training** (data + tensor + pipeline + ZeRO).
+
+</div>
+
+| Knob | What changed | Why it matters |
+|:-:|:-:|:-:|
+| Compute | $10^{20}$ → $10^{25}$ | scaling laws stay reliable |
+| Tokens | 1B → 15T | data is the real bottleneck |
+| Positional | sinusoidal → RoPE | context length scales |
+| KV cache | MHA → GQA | inference memory ↓ |
+| Training | single GPU → 10k+ GPUs | engineering, not architecture |
+
+---
+
+# Practice problems
+
+<div class="math-box">
+
+**P1.** Chinchilla's optimal $N \approx D / 20$. For $D = 2$ trillion tokens, what is the optimal model size? What if you have $D = 15$ trillion?
+
+**P2.** Sketch RoPE on a 4-dim head. What does it geometrically rotate? Why is relative position the only thing the attention dot-product sees afterwards?
+
+**P3.** **GQA** with 8 query heads sharing 2 KV heads · how many parameters does the KV-cache hold per token, vs vanilla MHA? Estimate the memory savings for a 70B model with context 32k.
+
+**P4.** Sketch the **scaling-law power curve** $L(N, D, C) \approx (a/N^\alpha + b/D^\beta + c/C^\gamma)$. What does each term capture?
+
+**P5.** Define an **emergent ability**. Pick one (e.g. multi-digit arithmetic, in-context learning, chain-of-thought) and describe how it appeared with scale.
+
+**P6.** Why is the architecture *almost the same* across Llama-3, Mistral, Qwen, GPT-4? Is the convergence a sign of mature engineering or a missed research opportunity? Argue both sides in 4–6 lines.
+
+</div>
+
+---
 
 # Lecture 15 — summary
 
