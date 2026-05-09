@@ -35,7 +35,12 @@ Training a 70B LLM costs ~$100M. But that's done *once*. **Inference** runs ever
 
 <div class="paper">
 
-Today maps to Chip Huyen's blog posts, HF inference docs, Dao 2022 (FlashAttention), Hinton 2015 (distillation), Leviathan 2022 (speculative decoding).
+**Reading & inspiration** ·
+- **Chip Huyen · *AI Engineering*** book — best practical overview of inference.
+- **Dao et al. 2022 · *FlashAttention*** + **2023 · *FlashAttention-2***.
+- **Leviathan et al. 2022 · *Speculative Decoding***.
+- **Hinton et al. 2015 · *Distilling the Knowledge***  + **Dettmers 2022 · *LLM.int8()*** + **GPTQ / AWQ**.
+- **Hugging Face · *Optimum* docs** + **vLLM blog** + **Tim Dettmers blog**.
 
 </div>
 
@@ -44,6 +49,23 @@ Four questions:
 2. What is the **KV-cache** and how do we manage it?
 3. What is **quantization** and how low can we go?
 4. What are **FlashAttention** and **speculative decoding**?
+
+---
+
+# Pop quiz · which makes inference 10× faster?
+
+You're serving Llama-3-70B on an A100. Throughput is 8 tokens/sec. Pick **the single change** with the biggest speed-up ·
+
+<div class="popquiz">
+
+(a) Switch from FP16 to INT4 quantization.
+(b) Use FlashAttention-2.
+(c) Add speculative decoding with a 7B draft model.
+(d) Move to a bigger GPU (H100).
+
+Stop and rank. The correct rank is **a > c > b > d** for typical chat workloads · INT4 alone often gives ~$3\times$ throughput by halving memory bandwidth · speculative adds another $2\times$ · FlashAttention is best at long contexts. **Memory bandwidth is the bottleneck**, not FLOPs.
+
+</div>
 
 ---
 
@@ -572,6 +594,46 @@ Reasoning models cost 5-10× more (inference-time compute). Same token count, mu
 ---
 
 <!-- _class: summary-slide -->
+
+# Putting it all together · the L23 master sentence
+
+<div class="math-box">
+
+**LLM inference is memory-bound, not compute-bound** · the GPU sits idle waiting for weights to stream from VRAM. Every speed-up is a way to **move fewer bytes** · **quantization** (less per-weight) · **FlashAttention** (reuse KV in SRAM) · **PagedAttention/vLLM** (batch concurrent users) · **speculative decoding** (verify many tokens in one forward pass) · **distillation** (smaller student model). **Compress what you load · share what you compute.**
+
+</div>
+
+| Trick | Saves | Cost |
+|:-:|:-:|:-:|
+| INT4 quantization | $4\times$ memory bandwidth | small accuracy drop |
+| FlashAttention-2 | reads/writes for attn | none |
+| PagedAttention (vLLM) | KV-cache fragmentation | engineering complexity |
+| Speculative decoding | latency on chat | extra draft model |
+| Distillation | size + cost | training run |
+
+These are the *2026 production toolkit* — every commercial LLM endpoint uses 3–5 of them.
+
+---
+
+# Practice problems
+
+<div class="math-box">
+
+**P1.** Compute the **arithmetic intensity** (FLOPs / bytes) of a single decoding step on a 70B model. Show it is well below the GPU's roofline ratio · explain why this means *memory-bound*.
+
+**P2.** **KV-cache** for a 70B model with 80 layers, $d_\text{model}=8192$, GQA(8), context $32{,}768$, FP16. Compute the cache size in GB. Compare to model weights.
+
+**P3.** **FlashAttention** keeps Q, K, V tiles in SRAM and recomputes softmax in chunks. Why does this avoid materializing the $O(N^2)$ attention matrix?
+
+**P4.** Speculative decoding · draft model proposes $k = 5$ tokens · target verifies in one pass · accepts the longest matching prefix. If acceptance rate is $p$, expected speed-up is $(1 + p + p^2 + \ldots + p^k)$. Compute for $p = 0.7$, $k = 5$.
+
+**P5.** **INT4 weight quantization with FP16 activations** · sketch the dequant-on-the-fly inner loop. Why don't we quantize activations to INT4 too?
+
+**P6.** **Distillation** trains a small student to match a large teacher's softmax with temperature $T$. Why is $T > 1$ used during training? What does that do to the loss surface?
+
+</div>
+
+---
 
 # Lecture 23 — summary
 

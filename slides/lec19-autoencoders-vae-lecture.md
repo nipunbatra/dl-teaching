@@ -36,7 +36,11 @@ Module 9 opens · **generative models**. Until now every model *classified* or *
 
 <div class="paper">
 
-Today maps to **Prince Ch 17** (Variational Autoencoders) + Kingma &amp; Welling 2013.
+**Reading & inspiration** ·
+- **Kingma & Welling 2013 · *Auto-Encoding Variational Bayes***  — original paper.
+- **Lilian Weng · *From Autoencoder to Beta-VAE*** (blog) — best visual walk-through.
+- **Doersch · *Tutorial on VAEs***  (arXiv 2016) — clean derivation of ELBO.
+- **UDL (Prince) · Ch 17**.
 
 </div>
 
@@ -46,6 +50,28 @@ Four questions:
 2. What does **VAE** add, and why does it work?
 3. What is the **reparameterization trick**?
 4. Where do VAEs fit in the 2026 generative landscape?
+
+---
+
+# Pop quiz · why isn't a plain autoencoder generative?
+
+A plain autoencoder squeezes images through a 32-dim bottleneck, then reconstructs.
+
+<div class="popquiz">
+
+Sample a random vector $\mathbf{z} \in \mathbb{R}^{32}$ from $\mathcal{N}(0, I)$ and pass it through the decoder.
+
+(a) You'll get a clean image.
+(b) You'll get a noisy *near-image*.
+(c) You'll get garbage.
+
+The answer is **(c) garbage** — the decoder only knows the small set of points that real images mapped to. The latent space has *holes*. **Fixing those holes is the entire idea of VAE.**
+
+</div>
+
+---
+
+▶ **Interactive** · explore VAE latent space, sample new digits → [vae-latent-explorer](https://nipunbatra.github.io/interactive-articles/vae-latent-explorer/) · multivariate normal warm-up → [multivariate-normal](https://nipunbatra.github.io/interactive-articles/multivariate-normal/).
 
 ---
 
@@ -709,6 +735,45 @@ A. No — the *true* posterior is arbitrary. The Gaussian parameterization is an
 ---
 
 <!-- _class: summary-slide -->
+
+# Putting it all together · the L19 master sentence
+
+<div class="math-box">
+
+**A VAE replaces "encode to a point" with "encode to a distribution"** · the encoder outputs $\mu(x), \sigma(x)$ · we sample $z \sim \mathcal{N}(\mu, \sigma^2)$ via the **reparameterization trick** ($z = \mu + \sigma\epsilon$, $\epsilon \sim \mathcal{N}(0, I)$) · the decoder reconstructs · we minimize the **ELBO** = reconstruction NLL + $\text{KL}(q_\phi(z\mid x) \,\Vert\, p(z))$. The KL forces the latent to look standard-Normal — so sampling new $z$ produces valid images.
+
+</div>
+
+| Piece | What it does | Where it came from |
+|:-:|:-:|:-:|
+| Encoder | $x \to (\mu, \sigma)$ | learned parameters of a Gaussian |
+| Reparam | $z = \mu + \sigma \epsilon$ | L00's affine trick |
+| Decoder | $z \to \hat x$ | NLL of pixel distribution |
+| KL term | shape latent | derived in L00 |
+
+**Pure L00 toolkit** · NLL + Gaussians + KL · only the *factorization* of the model is new.
+
+---
+
+# Practice problems
+
+<div class="math-box">
+
+**P1.** Derive the ELBO from $\log p(x) = \log \int p(x, z)\,dz$ via Jensen's inequality. Identify which term is reconstruction and which is the KL.
+
+**P2.** Compute the **closed-form KL** between $\mathcal{N}(\mu, \sigma^2)$ and $\mathcal{N}(0, 1)$. (You did this in L00 — re-derive.)
+
+**P3.** Why does a deterministic encoder **not** get the same job done? Sketch the failure (no continuity, holes in latent space).
+
+**P4.** $\beta$-VAE multiplies the KL term by $\beta > 1$. What happens to (a) reconstruction quality, (b) disentanglement of factors, (c) sample diversity?
+
+**P5.** For images, the decoder typically uses a **per-pixel Bernoulli (BCE)** for binary or **Gaussian (MSE)** for continuous. State why these are NLLs of the chosen distribution and tie back to L00.
+
+**P6.** Stable Diffusion uses a VAE as a **pre-compressor** to a $4 \times 64 \times 64$ latent. Why is this faster than running diffusion in pixel space?
+
+</div>
+
+---
 
 # Lecture 19 — summary
 

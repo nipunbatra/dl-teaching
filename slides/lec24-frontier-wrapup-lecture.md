@@ -35,7 +35,11 @@ By the end of this lecture you will be able to:
 
 <div class="paper">
 
-Today's reading is a collection of blogs and papers · Yao 2022 (ReAct), Wei 2022 (CoT), Anthropic interp blog, OpenAI o1 blog.
+**Reading & inspiration** ·
+- **Wei et al. 2022 · *Chain-of-Thought Prompting*** + **Yao et al. 2022 · *ReAct***.
+- **OpenAI · *Learning to reason with LLMs (o1)***  + **Anthropic · *Tracing the thoughts of a large language model*** (interp blog).
+- **Sutton 2019 · *The Bitter Lesson***  — frame for the whole course.
+- **Anthropic / OpenAI / DeepMind · agentic-AI blogs** through 2024–2026.
 
 </div>
 
@@ -44,6 +48,23 @@ Four questions:
 2. What are **reasoning models** (o1, Claude thinking)?
 3. What is **mechanistic interpretability**?
 4. What are the open problems — and where does this course take you next?
+
+---
+
+# Pop quiz · which of these matters in 2030?
+
+Pick what you think will still be central five years from now ·
+
+<div class="popquiz">
+
+(a) The **Transformer block** as we know it today.
+(b) The **scaling-laws + bitter-lesson** framing.
+(c) **Agents** as the dominant deployment pattern.
+(d) **Mechanistic interpretability** as a routine engineering tool.
+
+There is no single right answer — but **(b)** is almost certainly safe. **(a)** may be replaced (Mamba? something new?). **(c)** is a strong bet. **(d)** is a research goal still unmet at scale. The point of L24 is to give you the *taste* to make these calls yourself.
+
+</div>
 
 ---
 
@@ -540,6 +561,57 @@ This is the current skill floor for a DL engineer or research student.
 ---
 
 <!-- _class: summary-slide -->
+
+# Putting it all together · the L24 master sentence
+
+<div class="math-box">
+
+**The 2024–2026 frontier sits on top of every L00–L23 idea.** Agents = LLM (L15) + tool-calling (a function call wrapped in a prompt) + retrieval (RAG). Reasoning models = LLM + RL on chain-of-thought. Mechanistic interp = inspect attention (L12) + circuits (linear probes, sparse autoencoders). **Nothing is new — only the orchestration is.**
+
+</div>
+
+| Frontier topic | What it builds on | Open problem |
+|:-:|:-:|:-:|
+| Agents | L15 + tool-calling | reliability at long horizons |
+| Reasoning (o1) | L15 + RL on CoT | controllable thinking time |
+| Interpretability | L12 + sparse autoencoders | scale to GPT-4-class |
+| Multimodal agents | L18 + L24 | cost / latency |
+
+You now have **the full vocabulary** to read any 2026+ paper and place it.
+
+---
+
+# What this course gave you · the 24-lecture spine
+
+<div class="math-box">
+
+1. **L00–L05** · probabilistic ML + deep-net training pipeline.
+2. **L06–L09** · CNNs + transfer + detection / segmentation.
+3. **L10–L13** · sequences → attention → Transformer.
+4. **L14–L18** · LLMs · pretrain · align · self-supervise · multimodal.
+5. **L19–L22** · generative models · VAE · GAN · diffusion.
+6. **L23–L24** · efficient inference · 2024+ frontier.
+
+</div>
+
+**Every loss in this course is an NLL.** Every architecture is a wiring of attention, convolution, and MLP. Every regularizer is a prior. Once you see the framework, the field stops feeling like 24 disconnected topics and becomes one coherent story.
+
+---
+
+# Where to go next
+
+<div class="paper">
+
+- **Read** · arXiv-sanity, *Hugging Face Daily*, *Chip Huyen's newsletter*, *The Batch* (Andrew Ng), Lilian Weng's blog.
+- **Build** · re-implement one paper a month from scratch (Karpathy's discipline). nanoGPT → mini-CLIP → tiny diffusion.
+- **Specialize** · pick *one* of {RL, agents, interp, multimodal, efficient inference, theory} and dive deep for 6 months.
+- **Contribute** · open-source one small thing — a benchmark, a notebook, a reproduction. Public artifacts compound.
+
+</div>
+
+**You're not finished — you have the tools.** Have fun.
+
+---
 
 # Lecture 24 — summary
 

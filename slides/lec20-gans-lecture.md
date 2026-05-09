@@ -37,7 +37,12 @@ Today: **GANs**. Completely different philosophy — no likelihood, no prior, tw
 
 <div class="paper">
 
-Today maps to **Prince Ch 15** (GANs) + Goodfellow 2014 (original GAN) + Radford 2015 (DCGAN) + Arjovsky 2017 (WGAN).
+**Reading & inspiration** ·
+- **Goodfellow et al. 2014** — original GAN paper.
+- **Goodfellow · *NIPS 2016 GAN Tutorial*** — single best teaching artifact.
+- **Radford et al. 2015 · *DCGAN*** + **Arjovsky 2017 · *WGAN***.
+- **Lilian Weng · *From GAN to WGAN*** (blog).
+- **UDL (Prince) · Ch 15**.
 
 </div>
 
@@ -47,6 +52,26 @@ Four questions:
 2. Why is GAN training so **unstable**?
 3. What is **mode collapse** and how do we fight it?
 4. What is **WGAN** and what did it fix?
+
+---
+
+# Pop quiz · counterfeiter vs detective
+
+A counterfeiter prints fake currency. A detective inspects bills and flags fakes.
+
+<div class="popquiz">
+
+(a) The counterfeiter wins by making bills the detective can't tell from real.
+(b) The detective wins by catching every fake.
+(c) **They train each other.** The counterfeiter improves until the detective is forced to learn finer features. The detective improves until the counterfeiter must mint near-perfect bills.
+
+The whole GAN paradigm is **(c)** · two networks improving against each other in a **minimax game**. By the end, the counterfeiter (Generator) makes bills (images) the detective (Discriminator) can't distinguish from real.
+
+</div>
+
+---
+
+▶ **Interactive** · watch the GAN minimax dance live → [gan-minimax-dance](https://nipunbatra.github.io/interactive-articles/gan-minimax-dance/).
 
 ---
 
@@ -858,6 +883,45 @@ The single most durable idea from GANs is **"a neural network can act as a learn
 ---
 
 <!-- _class: summary-slide -->
+
+# Putting it all together · the L20 master sentence
+
+<div class="math-box">
+
+**A GAN is two networks playing a minimax game** · the Generator $G$ maps noise $z \sim p_z$ to fake images, the Discriminator $D$ tries to tell fake from real. They train alternately · $D$ to maximize $\log D(x_\text{real}) + \log(1 - D(G(z)))$, $G$ to minimize the same thing (or, in practice, to maximize $\log D(G(z))$). Sharp samples · unstable training · the whole story of L20 is **how to make this game converge**.
+
+</div>
+
+| Idea | What it fixes | What it costs |
+|:-:|:-:|:-:|
+| Non-saturating $G$ loss | early-training $G$ gradient | small detail |
+| DCGAN architecture | unstable convolutions | careful BN |
+| WGAN + gradient penalty | vanishing $D$ gradient | extra cost |
+| Spectral normalization | $D$ Lipschitz | a constraint |
+
+GANs lost the SOTA crown to diffusion in 2021 · but the *idea* of adversarial training reappears in CycleGAN, StyleGAN, NeRF discriminators. **Ideas don't retire just because models do.**
+
+---
+
+# Practice problems
+
+<div class="math-box">
+
+**P1.** Show that the optimal $D$ for fixed $G$ is $D^*(x) = p_\text{data}(x) / (p_\text{data}(x) + p_g(x))$. Substitute back to show $G$ minimizes $\text{JS}(p_\text{data} \,\Vert\, p_g)$ at convergence.
+
+**P2.** Why does the **non-saturating** $G$ loss $-\log D(G(z))$ work better than $\log(1 - D(G(z)))$ at the start of training?
+
+**P3.** Diagnose **mode collapse** from a single training curve. What changes? Name two regularizers that mitigate it.
+
+**P4.** WGAN replaces the JS-divergence with the **Earth Mover's distance**. Show that this requires $D$ to be 1-Lipschitz. How does the gradient penalty enforce this?
+
+**P5.** Compare GAN vs VAE vs Diffusion on (a) sample quality, (b) training stability, (c) mode coverage, (d) likelihood evaluation. Build the 3×4 trade-off table.
+
+**P6.** Why was StyleGAN influential beyond face generation? Sketch how its idea ("inject style at every layer") reappears in latent-conditional diffusion (L22).
+
+</div>
+
+---
 
 # Lecture 20 — summary
 

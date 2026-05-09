@@ -35,7 +35,13 @@ Last lecture · **DDPM** — forward noise, learn reverse, predict ε. Works on 
 
 <div class="paper">
 
-Today maps to **Prince Ch 18 (later sections)** + HF `diffusers` docs + Rombach 2022 (Stable Diffusion) + Ho &amp; Salimans 2022 (CFG).
+**Reading & inspiration** ·
+- **Rombach et al. 2022 · *Stable Diffusion (LDM)*** — latent diffusion paper.
+- **Ho & Salimans 2022 · *Classifier-Free Guidance***.
+- **Song et al. 2021 · *DDIM***  — fast sampling.
+- **Hugging Face · `diffusers` docs** — code-first.
+- **Lilian Weng · diffusion blog (later sections)**.
+- **UDL (Prince) · Ch 18 (later)**.
 
 </div>
 
@@ -45,6 +51,26 @@ Four questions:
 2. What is **classifier-free guidance**?
 3. Why does **latent diffusion** matter?
 4. What about **faster** sampling — DDIM and DiT?
+
+---
+
+# Pop quiz · how does "an astronaut riding a horse" become an image?
+
+L21 gave us *unconditional* diffusion · noise → image.
+
+<div class="popquiz">
+
+(a) The text is fed into the U-Net as a separate channel.
+(b) A frozen text encoder (CLIP) maps the prompt to a vector · the U-Net **cross-attends** to that vector at every layer.
+(c) The text is tokenized and prepended as image patches.
+
+Stop and decide. **Answer · (b)** — and the magic that lets the same network draw "a corgi in a tuxedo" or "a slice of pizza" is just *changing the prompt vector at inference*. Today's lecture is the engineering that makes this work.
+
+</div>
+
+---
+
+▶ **Interactive** · explore guidance scale · [cfg-scale-visualizer](https://nipunbatra.github.io/interactive-articles/cfg-scale-visualizer/) · text-to-image diffusion · [text-diffusion](https://nipunbatra.github.io/interactive-articles/text-diffusion/).
 
 ---
 
@@ -606,6 +632,45 @@ Stable Diffusion 3, Flux, and many 2024+ models use flow-matching instead of pur
 ---
 
 <!-- _class: summary-slide -->
+
+# Putting it all together · the L22 master sentence
+
+<div class="math-box">
+
+**Three engineering tricks turn DDPM into Stable Diffusion** · (1) **conditioning** via cross-attention to a CLIP text vector · (2) **classifier-free guidance** to amplify the prompt signal · (3) **latent diffusion** — run the whole process in a $4\times64\times64$ VAE latent instead of $3\times512\times512$ pixels. **DDIM** then drops the steps from 1000 → 25–50 by reusing the same trained model with a deterministic sampler. **DiT** swaps the U-Net for a Transformer, scaling more cleanly.
+
+</div>
+
+| Trick | What it costs | What it buys |
+|:-:|:-:|:-:|
+| Cross-attn conditioning | a frozen text encoder | text → image |
+| CFG (scale ~7.5) | doubled forward pass | sharper, more on-prompt |
+| Latent diffusion (VAE) | a pretrained VAE | $50\times$ faster, $50\times$ less memory |
+| DDIM | smarter sampling, no retrain | $20\times$ fewer steps |
+
+Stable Diffusion 2022, SD3 / FLUX 2024, Sora 2024 — all run this same recipe with bigger backbones.
+
+---
+
+# Practice problems
+
+<div class="math-box">
+
+**P1.** Cross-attention from U-Net features (queries) to a 77-token CLIP text vector (keys, values). Sketch the shapes.
+
+**P2.** **CFG** combines $\hat\epsilon_\text{cond}$ and $\hat\epsilon_\text{uncond}$ as $\hat\epsilon = \hat\epsilon_\text{uncond} + s(\hat\epsilon_\text{cond} - \hat\epsilon_\text{uncond})$. What does $s = 1$ produce? $s = 0$? $s = 7.5$?
+
+**P3.** Stable Diffusion's VAE compresses $3 \times 512 \times 512 = 786{,}432$ pixels into $4 \times 64 \times 64 = 16{,}384$ latents. Compute the compression ratio. Why doesn't this destroy image quality?
+
+**P4.** **DDIM** is a deterministic sampler (no extra noise per step). State the DDIM update rule and explain why it allows skipping steps.
+
+**P5.** Why does **DiT** (Transformer backbone) scale better than U-Net? Tie back to the L13 master sentence about Transformer scaling.
+
+**P6.** Pick **Stable Diffusion / DiT / FLUX / Sora** for each of (a) $512\times512$ photographs, (b) $1024\times1024$ vector-style art, (c) 5-second video clips. Why?
+
+</div>
+
+---
 
 # Lecture 22 — summary
 

@@ -39,7 +39,12 @@ Today · **diffusion**. Sharp samples + stable training + tractable likelihood. 
 
 <div class="paper">
 
-Today maps to **Prince Ch 18 (early)** + Ho et al. 2020 (DDPM) + Song &amp; Ermon 2020 (score-based).
+**Reading & inspiration** ·
+- **Lilian Weng · *What are Diffusion Models?*** (blog) — the canonical visual + math walk-through.
+- **Calvin Luo · *Understanding Diffusion Models: A Unified Perspective*** (arXiv 2022).
+- **Ho et al. 2020 · *DDPM*** + **Song & Ermon 2020 · *Score-based generative modeling***.
+- **Sohl-Dickstein et al. 2015** — the original noise-the-data idea.
+- **UDL (Prince) · Ch 18 (early)**.
 
 </div>
 
@@ -48,6 +53,28 @@ Four questions:
 2. What's the **closed-form** for $q(x_t \mid x_0)$?
 3. How do we **train** a diffusion model?
 4. What's the connection to **score matching**?
+
+---
+
+# Pop quiz · how would *you* generate images?
+
+You have 1 million natural images. You want a model that draws new ones.
+
+<div class="popquiz">
+
+(a) Train a *very large* CNN to map noise → image directly (one pass).
+(b) Add a *little* noise at a time over $T$ steps, then learn to **reverse one step at a time**.
+(c) Memorize and interpolate.
+
+The miraculous answer · **(b)**. Predicting *one step* of denoising is **vastly easier** than going from pure noise to an image in one pass — the same way drawing a line is easier than drawing the whole sketch in one stroke.
+
+This single re-framing — *"break a hard generative problem into many easy denoising problems"* — is why diffusion won.
+
+</div>
+
+---
+
+▶ **Interactive** · play with the diffusion forward + reverse process → [diffusion-denoise](https://nipunbatra.github.io/interactive-articles/diffusion-denoise/).
 
 ---
 
@@ -822,6 +849,45 @@ A. Use a different architecture (Transformer for sequences, GNN for graphs). The
 ---
 
 <!-- _class: summary-slide -->
+
+# Putting it all together · the L21 master sentence
+
+<div class="math-box">
+
+**Diffusion = noise the data over $T$ steps · learn to denoise one step at a time.** The forward process $q(x_t \mid x_{t-1}) = \mathcal{N}(\sqrt{1-\beta_t}\,x_{t-1}, \beta_t I)$ has a closed-form jump $q(x_t \mid x_0) = \mathcal{N}(\sqrt{\bar\alpha_t}\,x_0, (1-\bar\alpha_t) I)$ — a direct consequence of L00's "Gaussians stay Gaussian under linear ops". The training loss reduces to **predicting the noise** · $\mathcal{L} = \mathbb{E}_{x_0, t, \epsilon} \| \epsilon - \hat\epsilon_\theta(x_t, t) \|^2$. That's it · diffusion is **MSE on noise.**
+
+</div>
+
+| Object | Closed form | Where it came from |
+|:-:|:-:|:-:|
+| $q(x_t \mid x_0)$ | $\mathcal{N}(\sqrt{\bar\alpha_t}x_0, (1-\bar\alpha_t)I)$ | sum of indep. Gaussians (L00) |
+| Loss | $\| \epsilon - \hat\epsilon_\theta \|^2$ | NLL of Gaussian (L00) |
+| Score $\nabla \log p_t(x)$ | $\propto \hat\epsilon$ | score matching (L21) |
+| Sampling | reverse SDE / DDIM | next lecture (L22) |
+
+**Pure L00 + an iterative MSE.** That's the whole theory.
+
+---
+
+# Practice problems
+
+<div class="math-box">
+
+**P1.** Verify the closed-form jump · show $q(x_t \mid x_0) = \mathcal{N}(\sqrt{\bar\alpha_t}x_0, (1-\bar\alpha_t) I)$ where $\bar\alpha_t = \prod_{s \le t}(1 - \beta_s)$.
+
+**P2.** Show that the simplified DDPM loss (predict $\epsilon$) is equivalent to a **weighted ELBO**. Why does training with the simplified objective work better than the full ELBO?
+
+**P3.** Score $s_\theta(x, t) = \nabla_x \log p_t(x)$ vs noise $\hat\epsilon_\theta(x, t)$. Show $s_\theta(x_t, t) = -\hat\epsilon_\theta(x_t, t) / \sqrt{1 - \bar\alpha_t}$.
+
+**P4.** A linear $\beta$-schedule from $10^{-4}$ to $0.02$ over $T = 1000$ steps. Compute $\bar\alpha_T$. What does this say about how thoroughly $x_T$ has been noised?
+
+**P5.** **Why a U-Net for $\hat\epsilon_\theta$?** Connect to L09's segmentation argument · same image-in-image-out structure with skip connections preserves spatial fidelity.
+
+**P6.** Compare diffusion vs GAN on **mode coverage**. Why does diffusion's training objective avoid GAN's mode collapse?
+
+</div>
+
+---
 
 # Lecture 21 — summary
 
