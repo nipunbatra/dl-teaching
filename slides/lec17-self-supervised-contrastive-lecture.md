@@ -38,7 +38,12 @@ Meanwhile, the internet has **unlimited unlabeled data**. Can we learn from it?
 
 <div class="paper">
 
-Today maps to **UDL Ch 14** (unsupervised / contrastive). Papers: Chen 2020 (SimCLR), Grill 2020 (BYOL), He 2021 (MAE), Oquab 2023 (DINOv2).
+**Reading & inspiration** ·
+- **Lilian Weng · *Self-Supervised Representation Learning*** (blog) — the best single-page survey.
+- **Chen et al. 2020 · *SimCLR*** + **He et al. 2020 · *MoCo***.
+- **Grill et al. 2020 · *BYOL***  + **Caron et al. 2021 · *DINO***.
+- **He et al. 2021 · *MAE*** + **Oquab et al. 2023 · *DINOv2***.
+- **UDL (Prince) · Ch 14** — unsupervised / contrastive.
 
 </div>
 
@@ -47,6 +52,22 @@ Four questions:
 2. How does **SimCLR** use augmentations as supervision?
 3. Why does **BYOL** work **without negatives**?
 4. How does **MAE** (masked autoencoding) compare to contrastive?
+
+---
+
+# Pop quiz · how does a baby learn what a "cat" is?
+
+A toddler has never seen the label *"cat"*. They just see thousands of cats — different angles, lighting, breeds.
+
+<div class="popquiz">
+
+(a) The baby's brain learns by being told.
+(b) The baby's brain learns that *the same cat from two angles* is the *same thing*.
+(c) The baby's brain just memorizes pixel patterns.
+
+The right answer is **(b)** — and that single idea (*"different views of the same thing should be close in feature space"*) is **literally the SimCLR loss**. SSL formalizes infant learning.
+
+</div>
 
 ---
 
@@ -600,6 +621,46 @@ Self-supervision created the **foundation model** era. Every modality now has it
 ---
 
 <!-- _class: summary-slide -->
+
+# Putting it all together · the L17 master sentence
+
+<div class="math-box">
+
+**Self-supervised learning replaces "label this image" with "augmentation A and augmentation B come from the same image."** SimCLR makes that explicit (positives close, negatives far) · BYOL/DINO drop the negatives · MAE goes further (mask 75% of patches, reconstruct). Each method is a different way of writing **a free supervised signal out of the data itself** — and the resulting features beat ImageNet-supervised on most downstream tasks.
+
+</div>
+
+| Method | Signal | Key trick |
+|:-:|:-:|:-:|
+| SimCLR | augmentation pairs | InfoNCE with negatives |
+| MoCo | same as SimCLR | queue of negatives |
+| BYOL | no negatives | EMA target network |
+| DINO | no negatives | self-distillation + centering |
+| MAE | reconstruction | mask 75% patches |
+
+These features feed directly into L18 (CLIP, multimodal) and **even underpin diffusion's pretraining** (L21).
+
+---
+
+# Practice problems
+
+<div class="math-box">
+
+**P1.** SimCLR's InfoNCE loss with batch size $B = 256$. Each image has 1 positive and $2B - 2$ negatives. Write the loss for one anchor and explain why **bigger batches help**.
+
+**P2.** Show that the InfoNCE objective is a **lower bound on mutual information** between the two augmented views. (Hint · log of the softmax denominator.)
+
+**P3.** BYOL has no negatives. **Why doesn't it collapse** to the trivial solution where the encoder maps everything to a constant? Name the two architectural ingredients that prevent collapse.
+
+**P4.** **MAE** masks 75% of patches and reconstructs. Why does the encoder run *only* on the visible 25%? What does this save in compute?
+
+**P5.** **DINOv2** features are state-of-the-art for downstream tasks without any labels. Sketch how you'd use them for a 5-class plant-disease classifier with 100 images per class (compare to L08 transfer learning).
+
+**P6.** When does **contrastive** beat **MAE**? Name two scenarios and the reason for each.
+
+</div>
+
+---
 
 # Lecture 17 — summary
 

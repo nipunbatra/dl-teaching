@@ -36,7 +36,13 @@ By the end of this lecture you will be able to:
 
 <div class="paper">
 
-Today maps to HF PEFT docs + the **InstructGPT paper** (Ouyang 2022) + **DPO paper** (Rafailov 2023).
+**Reading & inspiration** ·
+- **Ouyang et al. 2022 · *InstructGPT*** — the canonical SFT + RLHF pipeline.
+- **Rafailov et al. 2023 · *DPO*** — RLHF without RL.
+- **Hu et al. 2021 · *LoRA*** + **Dettmers 2023 · *QLoRA***.
+- **Hugging Face · *PEFT* docs** + ***TRL* docs** — code-first.
+- **Anthropic · *Constitutional AI***.
+- **Karpathy · *State of GPT*** (alignment section).
 
 </div>
 
@@ -45,6 +51,26 @@ Four questions:
 2. What is **LoRA** and why did it eat the fine-tuning world?
 3. How does **RLHF** differ from **DPO**?
 4. What's happening with **reasoning models** (o1, Claude thinking)?
+
+---
+
+# Pop quiz · why doesn't pretraining-alone give us ChatGPT?
+
+You take GPT-3 raw (no fine-tuning) and prompt it · *"Write a polite email to my professor asking for a deadline extension."*
+
+<div class="popquiz">
+
+(a) It writes a polite email.
+(b) It continues with *"I have not done the homework, also write the same for asking for marks back, also for…"* — i.e. it generates plausible *training-like* continuation.
+(c) It refuses politely.
+
+Stop and predict. The real answer is **(b)** — pretraining only knows *complete the next token of internet text.* "Be a helpful assistant" is **not in the loss.** That gap between *capability* and *helpfulness* is the entire reason for L16.
+
+</div>
+
+---
+
+▶ **Interactive** · LoRA adapter knobs and rank effects → [lora-adapter](https://nipunbatra.github.io/interactive-articles/lora-adapter/).
 
 ---
 
@@ -591,6 +617,45 @@ In 2026 open source · QLoRA + DPO is the dominant recipe for instruction tuning
 ---
 
 <!-- _class: summary-slide -->
+
+# Putting it all together · the L16 master sentence
+
+<div class="math-box">
+
+**Alignment turns a "good completer" into a "good helper."** Three steps in order · **SFT** (clone good demonstrations) → **reward / preference model** (learn what humans like) → **RLHF or DPO** (push the policy toward preferred outputs while staying close to the SFT model). **LoRA / QLoRA** make each step cheap by training a tiny low-rank update instead of all the weights.
+
+</div>
+
+| Step | What it optimizes | Loss type |
+|:-:|:-:|:-:|
+| SFT | $-\log p(y_\text{good} \mid x)$ | NLL (L00) |
+| Reward modelling | $\sigma(r_\text{better} - r_\text{worse})$ | Bradley-Terry pairwise |
+| RLHF (PPO) | $\mathbb{E}[r(x, y)] - \beta \,\text{KL}(\pi \,\Vert\, \pi_\text{SFT})$ | RL + KL |
+| DPO | closed-form simplification of RLHF | direct preference |
+
+**Same NLL framework as L00** — the only thing that changes is *what counts as good $y$*.
+
+---
+
+# Practice problems
+
+<div class="math-box">
+
+**P1.** SFT loss is just NLL on (instruction → response) pairs. Why is the response often **left-padded out** of the loss for the *instruction* tokens but kept for the response?
+
+**P2.** A reward model assigns scores $r_a = 1.2, r_b = 0.5$ to two responses. Compute the Bradley-Terry probability that $a$ is preferred. Show how this maps to a binary cross-entropy training loss on pair labels.
+
+**P3.** Sketch why RLHF includes a **KL penalty** to the SFT model. What goes wrong if $\beta \to 0$?
+
+**P4.** **LoRA** with rank $r = 8$ on a $4096 \times 4096$ weight matrix. Count parameters in (a) the original matrix, (b) the LoRA $A, B$ matrices. Savings ratio?
+
+**P5.** **DPO** removes the explicit reward model. State the closed-form DPO loss in one line and explain why it has a similar shape to a binary classification loss.
+
+**P6.** Pick **SFT-only / LoRA / RLHF / DPO** for each of (a) tone matching to a brand, (b) safety-policy alignment with disagreement among annotators, (c) one-shot domain adaptation to legal text.
+
+</div>
+
+---
 
 # Lecture 16 — summary
 

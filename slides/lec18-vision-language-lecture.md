@@ -39,7 +39,12 @@ Today: what if one model handled **both** text AND vision?
 
 <div class="paper">
 
-Today maps to **Prince Ch 12 §12.5** (ViT) + the CLIP, LLaVA, Flamingo papers. This is where the full "multimodal" LLM came from.
+**Reading & inspiration** ·
+- **Dosovitskiy et al. 2020 · *ViT*** — *"An image is worth 16×16 words."*
+- **Radford et al. 2021 · *CLIP***  + Lilian Weng · *Generalized Visual Language Models*.
+- **Liu et al. 2023 · *LLaVA*** + **Alayrac et al. 2022 · *Flamingo***.
+- **UDL (Prince) · Ch 12 §12.5**.
+- **Chip Huyen · *MLLM blog post***  for the 2025 frontier.
 
 </div>
 
@@ -48,6 +53,26 @@ Four questions:
 2. What did **CLIP** unlock?
 3. How does **LLaVA** give an LLM eyes?
 4. What's the 2026 multimodal state?
+
+---
+
+# Pop quiz · "find the dog with the red collar"
+
+In a photo with a Labrador (red collar), a Beagle (blue collar), a cat, and a sofa.
+
+<div class="popquiz">
+
+(a) A standard ImageNet classifier — outputs `Labrador` (or maybe `dog`). Doesn't see *"red collar"*.
+(b) A CNN object detector — outputs boxes for `dog, dog, cat, sofa`. Still doesn't see *"red collar"*.
+(c) A **vision-language model** — given the *text prompt* "the dog with the red collar," locates and grounds the right one.
+
+Stop and think · what is **fundamentally** different about (c)? **Answer · the model's output space is text, so any concept that can be described in language is reachable.** That is what L18 buys.
+
+</div>
+
+---
+
+▶ **Interactive** · explore CLIP's zero-shot classification → [clip-zero-shot](https://nipunbatra.github.io/interactive-articles/clip-zero-shot/) · play with Vision Transformer attention → [vision-transformer](https://nipunbatra.github.io/interactive-articles/vision-transformer/).
 
 ---
 
@@ -663,6 +688,45 @@ The agentic side (Claude computer use, GPT operator) is where multimodal is most
 ---
 
 <!-- _class: summary-slide -->
+
+# Putting it all together · the L18 master sentence
+
+<div class="math-box">
+
+**Vision-language models are built on three ideas in succession** · (1) **ViT** — split an image into patches and treat them as tokens; (2) **CLIP** — train an image encoder + text encoder so that matching pairs are close in a shared embedding space; (3) **LLaVA / GPT-4V** — feed CLIP's image features into an LLM as if they were extra tokens. Each step is a small modification of L13's Transformer recipe.
+
+</div>
+
+| Model | Architecture | What it does |
+|:-:|:-:|:-:|
+| ViT | patch → Transformer | image classification |
+| CLIP | image enc + text enc + contrastive | zero-shot recognition / retrieval |
+| LLaVA | CLIP image enc → MLP → LLM | image-grounded chat |
+| Flamingo / GPT-4V | cross-attn from text → image features | full multimodal LLM |
+
+The contrastive idea (L17) plus the Transformer (L13) plus the LLM (L15) **compose** here — multimodal AI is *literally* the union of the previous three lectures.
+
+---
+
+# Practice problems
+
+<div class="math-box">
+
+**P1.** A ViT-B/16 takes a $224 \times 224$ image and produces patches of $16 \times 16$. How many patch-tokens? How many positional embeddings does the model need?
+
+**P2.** CLIP's contrastive loss with batch size $B$ creates $B$ positive pairs and $B^2 - B$ negatives. Write the loss in InfoNCE form.
+
+**P3.** Why is CLIP's text encoder *not* needed at inference time for image classification? What replaces it?
+
+**P4.** **LLaVA** projects CLIP image features through an MLP to the LLM's input embedding space. Why an MLP and not a linear layer? Why is the LLM kept frozen in v1?
+
+**P5.** Hallucination in VLMs · the model says "the cat is sleeping" when the image has a dog. State two failure modes and how RLHF/DPO mitigates each.
+
+**P6.** Open-vocabulary detection · CLIP gives a text vector $\mathbf{t}$ for *"a red bicycle"* and the image encoder gives spatial features $\mathbf{f}_{ij}$. Sketch the cosine-similarity matching score that turns this into a detection.
+
+</div>
+
+---
 
 # Lecture 18 — summary
 
