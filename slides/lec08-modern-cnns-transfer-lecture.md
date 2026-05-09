@@ -47,6 +47,25 @@ Two halves today:
 
 ---
 
+# Pop quiz · 1000 images, 5 classes
+
+Your client has **1000 labelled images** across **5 plant disease classes**. They ask you to build a classifier.
+
+<div class="popquiz">
+
+(a) Train a ResNet-50 from scratch on these 1000 images.
+(b) Train a tiny 4-layer CNN from scratch.
+(c) Take a **pretrained** ImageNet ResNet-50, replace the head, fine-tune.
+(d) Skip ResNet · use a Vision Transformer.
+
+Stop and decide. By the end of L08 the answer should feel obvious — and you'll know **what fine-tuning actually changes**.
+
+</div>
+
+This is **the most common practical task** in industry CV. The answer is (c), and the reason is **transfer learning** — the second half of today.
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 1
@@ -633,6 +652,62 @@ model = timm.create_model('vit_base_patch16_224', pretrained=True, num_classes=1
 <div class="realworld">
 
 `timm` by Ross Wightman · the de facto vision model zoo. Every competitive Kaggle vision solution uses it.
+
+</div>
+
+---
+
+# Putting it all together · the L08 master sentence
+
+<div class="math-box">
+
+The Inception → ResNet → MobileNet → EfficientNet arc is **one principle in different costumes** · *find a way to add depth or width that pays for itself*. Inception broadens kernels in parallel, ResNet adds skip connections, MobileNet factorizes spatial and channel mixing, EfficientNet scales all three jointly.
+
+</div>
+
+| Architecture | Trick | What it costs / saves |
+|:-:|:-:|:-:|
+| Inception | parallel multi-scale kernels | wider, but $1\times1$ bottleneck |
+| ResNet | identity skip-connections | depth without degradation |
+| MobileNet | depthwise + pointwise | ~$10\times$ FLOP reduction |
+| EfficientNet | compound width/depth/res scaling | one knob, balanced growth |
+
+**Transfer learning** is the *practical pay-off* · once a backbone learns ImageNet, those features transfer to nearly every vision task — and the recipe is just *replace head, freeze most layers, fine-tune low LR*.
+
+---
+
+# Pop quiz · revisit
+
+The 1000-image plant-disease problem? Answer **(c) pretrained ResNet-50, replace head, fine-tune**.
+
+<div class="keypoint">
+
+(a) Train from scratch · 1000 images is **way too few** for 25M parameters · severe overfit.
+(b) Tiny CNN from scratch · won't capture enough hierarchy.
+(c) ✓ Transfer · the ImageNet features are the *right starting point* for natural images.
+(d) ViT · also possible, but needs a pretrained ViT and similar transfer recipe.
+
+</div>
+
+This is the **default for any CV task with <100k labelled images** in 2026. Few exceptions.
+
+---
+
+# Practice problems
+
+<div class="math-box">
+
+**P1.** Compute the parameter count for a single ResNet-50 *bottleneck* block ($1\times1$ → $3\times3$ → $1\times1$, channels 256 → 64 → 64 → 256). Compare to a non-bottleneck block ($3\times3$ → $3\times3$, channels 256 → 256 → 256). What's the savings ratio?
+
+**P2.** A **depthwise separable** convolution (MobileNet) replaces a $3\times3 \times C_\text{in} \times C_\text{out}$ conv with a depthwise $3\times3$ + pointwise $1\times1$. Show the parameter ratio is $\tfrac{1}{C_\text{out}} + \tfrac{1}{9}$. For $C_\text{out} = 256$, what is the saving factor?
+
+**P3.** EfficientNet's compound scaling uses $d = \alpha^\phi$, $w = \beta^\phi$, $r = \gamma^\phi$ with $\alpha\cdot\beta^2\cdot\gamma^2 \approx 2$. Why the squared on $\beta$ and $\gamma$? (Hint · FLOPs scaling.)
+
+**P4.** Transfer-learn ResNet-50 on a 5-class problem. (a) Which layers do you freeze for the first epoch? (b) When do you unfreeze the rest? (c) What LR do you use for the new head vs the unfrozen backbone — and why?
+
+**P5.** Skip connections in ResNet enable **identity mapping** when $\mathcal{F}(x) \approx 0$. Why is this so much easier to learn than approximating identity through $\mathcal{F}(x) \approx x$?
+
+**P6.** Squeeze-and-Excitation block adds a global pool + small MLP + sigmoid to rescale channels. How many extra parameters for SE($r=16$) on a 512-channel feature map? Why is this almost free compared to the conv before it?
 
 </div>
 

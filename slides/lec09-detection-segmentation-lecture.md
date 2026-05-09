@@ -56,6 +56,29 @@ Today's jump: **one label per pixel, per object, per region.**
 
 ---
 
+# Pop quiz · count the pedestrians
+
+Self-driving car at an intersection · a single frame contains **7 pedestrians and 3 cars** of varying sizes, some partially occluded.
+
+<div class="popquiz">
+
+(a) Train a 10-output classifier (1 score per object).
+(b) Train a regressor that outputs 10 boxes.
+(c) Per-pixel classifier (segmentation) and post-process to boxes.
+(d) Detector that outputs *a variable number* of class+box pairs.
+
+Stop and decide. The answer is (d), and **why the other three fail** is what classification → localization → detection is about.
+
+</div>
+
+The naive options break because the *number of objects varies*. Detectors solve that.
+
+---
+
+▶ **Interactive** · draw your own boxes, watch IoU + NMS update live → [object-detection](https://nipunbatra.github.io/interactive-articles/object-detection/) · click-to-fill segmentation → [image-segmentation](https://nipunbatra.github.io/interactive-articles/image-segmentation/).
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 1
@@ -638,6 +661,60 @@ The open-vocabulary goal · build a **universal translator** that understands co
 5. Match → draw a box.
 
 Examples · OWLv2, GroundingDINO, SAM-with-text. The 2024–2026 frontier is **fully prompt-driven** vision.
+
+---
+
+# Putting it all together · the L09 master sentence
+
+<div class="math-box">
+
+**Detection = classification + localization × variable count.** Three engineering ideas make it work · (1) **multi-task loss** with a $\lambda$ trading class vs box, (2) **anchor / grid** to make the count tractable, (3) **NMS / Hungarian** to deduplicate. Segmentation is detection at the pixel level · same probabilistic story, finer support.
+
+</div>
+
+| Task | Output type | Probabilistic head |
+|:-:|:-:|:-:|
+| Classification | 1 class | Categorical |
+| Localization | 1 class + 1 box | Categorical + Normal |
+| Detection | $N$ classes + $N$ boxes | Categorical + Normal *per anchor* |
+| Semantic seg | label per pixel | per-pixel Categorical |
+| Instance seg | label + instance per pixel | Categorical + per-mask FCN |
+
+Same NLL framework as L00. The only thing that changes is **the support of the random variable**.
+
+---
+
+# Pop quiz · revisit
+
+The 7-pedestrians-and-3-cars frame? Answer **(d) variable-count class+box detector**.
+
+<div class="keypoint">
+
+A detector cleanly handles *unknown number of objects* by predicting at every grid cell or anchor and pruning with NMS. (a) requires a fixed object count, (b) doesn't generalize, (c) loses identity (which pixel belongs to which pedestrian).
+
+</div>
+
+This is why YOLO / DETR are the right tool — and why classifiers + regressors are not enough.
+
+---
+
+# Practice problems
+
+<div class="math-box">
+
+**P1.** Compute the IoU for a predicted box $(40, 60, 200, 220)$ and ground-truth box $(60, 70, 180, 200)$ (format $x_1, y_1, x_2, y_2$). Is this a TP at IoU threshold 0.5?
+
+**P2.** A YOLO grid is $13\times13$ with 3 anchors per cell on an 80-class dataset. How many predictions per image? Each prediction is (4 box + 1 obj + 80 class) = 85 numbers. Total tensor size?
+
+**P3.** Apply NMS to 4 boxes for one car · scores $0.95, 0.92, 0.80, 0.65$ with pairwise IoU matrix shown in the slides. Which boxes survive at threshold 0.5?
+
+**P4.** Show that the **Dice loss** $1 - 2|P\cap T|/(|P|+|T|)$ has gradient $\partial L / \partial P_i$ that depends on **all** target pixels, not just $P_i$ — and contrast this with pixel-wise BCE which is fully local.
+
+**P5.** A U-Net encoder downsamples $5\times$ and a decoder upsamples $5\times$. Why are the **skip connections** essential? Sketch what would happen to mask boundary sharpness without them.
+
+**P6.** Open-vocab detection · CLIP text encoder gives a vector $\mathbf{t}$ for the prompt "a red bicycle" and the image gives spatial features $\mathbf{f}_{ij}$. Sketch the matching score (cosine similarity) and how you'd convert top-K spatial peaks into bounding boxes.
+
+</div>
 
 ---
 

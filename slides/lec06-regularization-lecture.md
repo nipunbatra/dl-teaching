@@ -63,6 +63,25 @@ Today maps to **UDL Ch 9** (Regularization) and the BatchNorm parts of **Ch 11**
 
 ---
 
+# Pop quiz · which one would you reach for?
+
+Your model · 100M parameters, 50k images, train accuracy 99.8%, val accuracy 71%.
+
+<div class="popquiz">
+
+(a) Increase weight decay 10×.
+(b) Aggressive data augmentation (Mixup + RandAugment).
+(c) Add dropout p=0.5 after every layer.
+(d) Train longer with a cosine schedule.
+
+Stop and pick *one* before we start. By the end of this lecture you'll know not just which to try, but *which order*.
+
+</div>
+
+The right ordering is **data → architectural → classical**. The reason for that ordering is the entire point of L06.
+
+---
+
 # Two students · the regularization story
 
 <div class="keypoint">
@@ -1006,6 +1025,43 @@ criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
 
 # 6. Early stopping — checkpoint on val loss
 ```
+
+---
+
+# Pop quiz · revisit
+
+The 100M-param overfitting model? The right ordering is ·
+
+<div class="keypoint">
+
+1. **First** · Mixup + RandAugment (data is the cheapest, biggest win).
+2. **Then** · turn weight decay up to ~0.1 (architectural friction).
+3. **Then** · dropout 0.1–0.2 in MLP-heavy layers.
+4. **Last** · longer training with a schedule.
+
+</div>
+
+Adding all four at once tells you nothing about *what* fixed it. **Change one knob at a time** — that's L03's ablation discipline applied here.
+
+---
+
+# Practice problems
+
+<div class="math-box">
+
+**P1.** Show that L2 regularization with strength $\lambda$ is equivalent to MAP under a Gaussian prior $\mathcal{N}(0, 1/(2\lambda))$ on every weight. (You did this in L00 — redo it here for a vector $\boldsymbol\theta$.)
+
+**P2.** A 2-layer MLP with dropout $p = 0.5$ at training. What is the expected output magnitude relative to inference? Which scaling does PyTorch use to fix this — *inverted* dropout or *standard*?
+
+**P3.** Compute the **double-descent** curve qualitatively · sketch test error vs model capacity for a linear regression with $n = 50$ training points. Mark the interpolation threshold and the "modern overparameterized regime."
+
+**P4.** A 1000-class softmax with label smoothing $\epsilon = 0.1$. What is the smoothed target probability for the true class? For each of the other 999 classes? What does the cross-entropy loss become at the optimum?
+
+**P5.** BatchNorm uses batch statistics at training and running statistics at inference. Sketch a failure case where this discrepancy hurts — give a concrete example.
+
+**P6.** Mixup synthesizes $\tilde x = \lambda x_i + (1-\lambda) x_j$ with $\tilde y = \lambda y_i + (1-\lambda) y_j$, $\lambda \sim \text{Beta}(\alpha, \alpha)$. For $\alpha = 0.2$, is most mass near the endpoints or the middle? What does that imply about how often Mixup uses near-pure samples?
+
+</div>
 
 ---
 

@@ -54,6 +54,28 @@ ES 654 covered LeNet and CNN basics. We skim those and spend time on **receptive
 
 ---
 
+# Pop quiz · the parameter blowout
+
+A fully-connected layer mapping a $224\times224\times3$ image to 4096 hidden units uses ·
+
+$$224 \cdot 224 \cdot 3 \cdot 4096 \approx 6.2 \times 10^8 \text{ parameters}$$
+
+A single $3\times3\times3$ conv with 64 filters uses · $3 \cdot 3 \cdot 3 \cdot 64 + 64 = 1{,}792$ parameters.
+
+<div class="popquiz">
+
+The conv has ~$\mathbf{350{,}000\times}$ fewer parameters. Where did all that "capacity" go? Did the model just lose representational power?
+
+Stop and think. The answer is the central insight of CNNs — and we'll unpack it through *receptive fields* and *inductive bias*.
+
+</div>
+
+---
+
+▶ **Interactive** · play with conv kernels, padding, stride live → [convolution-visualizer](https://nipunbatra.github.io/interactive-articles/convolution-visualizer/) and [receptive-field-grower](https://nipunbatra.github.io/interactive-articles/receptive-field-grower/).
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 1
@@ -646,6 +668,53 @@ A. Double channels every time you halve spatial (32→64→128→256→512). Kee
 
 **Q. Padding · 'same' vs 'valid'?**
 A. `padding='same'` (PyTorch) keeps output size = input size. Default for most blocks. `'valid'` (no padding) shrinks · used when downsampling is the point.
+
+---
+
+# Putting it all together · the L07 master sentence
+
+<div class="math-box">
+
+A convolution is just a **shared, sparse linear layer** — and that single architectural choice (a) drops parameters by orders of magnitude, (b) builds in **translation equivariance**, and (c) makes the receptive field grow with depth. CNNs work because images obey those exact symmetries.
+
+</div>
+
+| Concept | What it buys | Symbol of |
+|:-:|:-:|:-:|
+| Sparse connectivity | $O(k^2)$ params per filter, not $O(HW)$ | locality of features |
+| Weight sharing | same filter scans every location | translation equivariance |
+| Stacked 3×3 | depth-effective receptive-field growth | hierarchy of features |
+| Channels | parallel feature detectors | "what kind of edge" |
+
+Same probabilistic story as L00 · the model still outputs $p(y \mid x; \theta)$ · we just chose a parameter-frugal $\theta$ that respects image symmetries.
+
+---
+
+# Pop quiz · revisit
+
+Where did the "missing capacity" go? **Nowhere — it was capacity we never needed.** Translation equivariance + locality means an FC layer that learns "edge detector at every pixel" is wasteful · 99.99% of those weights *should* be the same filter applied at every spot. Convs **bake that constraint in** for free.
+
+This is the same idea as ridge regression in ES654 · constraints on parameters that match the problem **don't reduce true capacity, they reduce the search space.**
+
+---
+
+# Practice problems
+
+<div class="math-box">
+
+**P1.** A $224 \times 224 \times 3$ input goes through `Conv2d(3 → 64, kernel=7, stride=2, pad=3)`. Compute (a) the output spatial size, (b) the number of parameters, (c) the number of FLOPs.
+
+**P2.** Show that the **receptive field** of two stacked $3\times3$ convs equals the receptive field of one $5\times5$ conv. Then compare their parameter counts (same input/output channels). Why is the stack preferred?
+
+**P3.** A pooling layer downsamples by stride 2. After 5 such reductions, what is the output spatial resolution from a $256\times256$ input? Write the formula.
+
+**P4.** Define **translation equivariance** in one equation. Show that a convolution with no padding satisfies it; show that a fully-connected layer does not.
+
+**P5.** A $1\times1$ conv from 256 channels to 64 channels — how many parameters? What does it accomplish that you can't do with a $3\times3$?
+
+**P6.** Compute the receptive field at the output of VGG-16's final conv layer (13 convs of $3\times3$ with stride 1, plus 5 maxpools of $2\times2$ stride 2). Hint · use the recursion $\text{RF}_\ell = \text{RF}_{\ell-1} + (k - 1) \cdot \prod_{i < \ell}\text{stride}_i$.
+
+</div>
 
 ---
 
