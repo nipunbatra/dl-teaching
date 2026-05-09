@@ -55,6 +55,28 @@ Today maps to **Bishop Ch 12** (RNNs). UDL skips RNNs and jumps to Transformers 
 
 ---
 
+# Pop quiz · finish the sentence
+
+> *"After the long flight from Mumbai, my parents finally arrived at the Frankfurt airport, and **they** ____."*
+
+<div class="popquiz">
+
+Whose pronoun is "they" referring to? Mumbai? The flight? The parents?
+
+(a) An MLP given the sentence as a flat 100-dim bag-of-words vector.
+(b) An MLP given the **last 5 words only**.
+(c) A model with **memory** that can carry "parents" forward through the sentence.
+
+Stop and think about (a) and (b). Why do they fail? That failure is the entire reason RNNs exist.
+
+</div>
+
+---
+
+▶ **Interactive** · click LSTM gates to see them open and close on a real sentence → [lstm-gates](https://nipunbatra.github.io/interactive-articles/lstm-gates/) · explore vanishing gradients → [vanishing-gradients](https://nipunbatra.github.io/interactive-articles/vanishing-gradients/).
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 1
@@ -606,6 +628,61 @@ The next lecture (L11) examines encoder-decoder Seq2Seq, which also struggles wi
 ---
 
 <!-- _class: summary-slide -->
+
+# Putting it all together · the L10 master sentence
+
+<div class="math-box">
+
+A **recurrent net is just an MLP that re-uses the same weights at every step** and carries a state forward. Vanilla RNN does this naively · LSTM/GRU add **gates** that decide what to keep, forget, or write — and the gates are why long-range dependencies survive.
+
+</div>
+
+| Idea | What it is | Friendly intuition |
+|:-:|:-:|:-:|
+| Hidden state $h_t$ | a vector summarizing the past | "what I remember so far" |
+| Recurrence | $h_t = f(h_{t-1}, x_t)$ | "update memory with new word" |
+| Gating (LSTM) | learned switches on the cell | "should I forget, write, or read?" |
+| BPTT | chain rule unrolled through time | "backprop, but $T$ steps deep" |
+
+Same NLL story as L00 · we model $p(y_t \mid y_{<t}, x; \theta)$ · the only new thing is *how* we compute the conditioning vector.
+
+---
+
+# Pop quiz · revisit
+
+The "they" pronoun? Only the model with memory (option **c**) can carry "my parents" forward across 14 words.
+
+<div class="keypoint">
+
+(a) Bag-of-words throws away order — *which* noun came right before "they" is gone.
+(b) Last-5-words misses "parents" entirely.
+(c) ✓ A recurrent state can hold "parents" the whole way.
+
+</div>
+
+The same need shows up in stock prices, audio, video. Anything ordered.
+
+---
+
+# Practice problems
+
+<div class="math-box">
+
+**P1.** A vanilla RNN has $h_t = \tanh(W_{hh} h_{t-1} + W_{xh} x_t + b)$. With $h \in \mathbb{R}^{128}$ and $x \in \mathbb{R}^{50}$, count parameters. Compare to a feedforward net with $T = 100$ time-steps that *doesn't* share weights — how many?
+
+**P2.** Show that the gradient $\partial h_T / \partial h_0$ is a product of $T$ Jacobians, each $W_{hh}^\top \,\text{diag}(\tanh')$. Argue why the spectral norm of this product can vanish (or explode) exponentially in $T$.
+
+**P3.** An LSTM forget gate outputs $f_t = \sigma(W_f [h_{t-1}; x_t] + b_f)$. Initial bias $b_f = 1$ is standard practice. Why? (Hint · think $\sigma(1) \approx 0.73$.)
+
+**P4.** A GRU has fewer gates than an LSTM. Write the GRU update equations from memory and identify which two LSTM gates are merged.
+
+**P5.** **Teacher forcing** at training, autoregressive at inference. Sketch one failure mode that arises when you switch (the *exposure bias* problem).
+
+**P6.** When *would* you still pick an RNN over a Transformer in 2026? Name two scenarios and the reason for each (hint · streaming, very long context with constant memory).
+
+</div>
+
+---
 
 # Lecture 10 — summary
 

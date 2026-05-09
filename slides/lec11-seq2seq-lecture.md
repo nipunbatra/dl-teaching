@@ -57,6 +57,30 @@ Today maps to **Bishop Ch 12** (Seq2Seq). UDL treats Transformers directly; we c
 
 ---
 
+# Pop quiz · the translation challenge
+
+You're translating ·
+
+> *"The book that the student who lived in Paris read was very long."*
+
+into Hindi · 14 English words → ~12 Hindi words in *different* order.
+
+<div class="popquiz">
+
+(a) Word-by-word with a dictionary.
+(b) An RNN that reads the whole sentence into a single fixed vector, then writes Hindi.
+(c) A model that can **look back** at any English word while writing each Hindi word.
+
+Stop and think · why does (a) fail? Why does (b) struggle on long sentences? (c) is attention — but we'll only get there in L12. Today's lecture is *(b) + its bottleneck*.
+
+</div>
+
+---
+
+▶ **Interactive** · watch the encoder bottleneck struggle as sentences grow → [seq2seq-bottleneck](https://nipunbatra.github.io/interactive-articles/seq2seq-bottleneck/).
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 1
@@ -572,6 +596,46 @@ The Seq2Seq **pattern** (encoder → context → decoder) is everywhere. Only th
 ---
 
 <!-- _class: summary-slide -->
+
+# Putting it all together · the L11 master sentence
+
+<div class="math-box">
+
+**Seq2Seq = encoder squeezes input into a vector · decoder unspools that vector into the output.** It works for short sentences and breaks for long ones · the fixed-size bottleneck can't hold everything. That failure is what *demands* attention in L12.
+
+</div>
+
+| Piece | Role | Friendly intuition |
+|:-:|:-:|:-:|
+| Encoder RNN | reads source sequence | "memorize what was said" |
+| Context $\mathbf{c}$ | final hidden state | "the gist" |
+| Decoder RNN | generates target sequence | "say it in the new language" |
+| Teacher forcing | feed true previous token | "read along while learning" |
+| Beam search | top-$k$ partial hypotheses | "keep $k$ best drafts" |
+
+This is **literally how Google Translate worked from 2014 to 2016** — and what made attention so urgent.
+
+---
+
+# Practice problems
+
+<div class="math-box">
+
+**P1.** Why is BLEU computed on $n$-grams ($n=1\ldots4$) rather than just on word matches? Sketch a translation that has high 1-gram precision but low BLEU.
+
+**P2.** Teacher forcing trains $p(y_t \mid y_{<t}^*, x)$ but inference uses $p(y_t \mid \hat y_{<t}, x)$. Name this distribution mismatch and one common mitigation (scheduled sampling).
+
+**P3.** Beam search with width $k = 5$ and vocabulary $V = 50{,}000$. How many candidate continuations are scored per step? Per generation step the top $k$ are kept — total cost for a 30-token output?
+
+**P4.** Show that for a fixed-size context vector $\mathbf{c} \in \mathbb{R}^{512}$, the encoder is *information-theoretically* limited · roughly how many bits of the source sentence can it preserve?
+
+**P5.** Greedy decoding can produce hallucinated repetitions (`I I I I…`). Why? What does **temperature > 1** or **top-$p$ sampling** do to fix this in practice?
+
+**P6.** A Seq2Seq model on a 50-word sentence has the encoder's *last* hidden state as context. Explain why this is the worst possible choice when the *answer* depends on word #1 (e.g. subject-verb agreement at the end).
+
+</div>
+
+---
 
 # Lecture 11 — summary
 
