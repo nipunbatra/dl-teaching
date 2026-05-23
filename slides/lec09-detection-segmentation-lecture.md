@@ -89,7 +89,7 @@ The naive options break because the *number of objects varies*. Detectors solve 
 
 ---
 
-▶ **Interactive** · draw your own boxes, watch IoU + NMS update live → [object-detection](https://nipunbatra.github.io/interactive-articles/object-detection/) · click-to-fill segmentation → [image-segmentation](https://nipunbatra.github.io/interactive-articles/image-segmentation/).
+▶ **Interactives for L09** · [object-detection](https://nipunbatra.github.io/interactive-articles/object-detection/) (draw boxes, watch IoU + NMS) · [image-segmentation](https://nipunbatra.github.io/interactive-articles/image-segmentation/) (click-to-fill) · [unet](https://nipunbatra.github.io/interactive-articles/unet/) (skip-connections in action).
 
 ---
 

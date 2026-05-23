@@ -89,7 +89,7 @@ Stop and pick · this is the exact question Chinchilla answered. **Answer · (b)
 
 ---
 
-▶ **Interactive** · play with sampling temperature and watch creativity vs determinism trade off → [softmax-temperature](https://nipunbatra.github.io/interactive-articles/softmax-temperature/).
+▶ **Interactives for L15** · [softmax-temperature](https://nipunbatra.github.io/interactive-articles/softmax-temperature/) (creativity vs determinism) · [in-context-learning](https://nipunbatra.github.io/interactive-articles/in-context-learning/) (few-shot prompting live) · [mixture-of-experts](https://nipunbatra.github.io/interactive-articles/mixture-of-experts/) (Mixtral-style routing) · [mamba](https://nipunbatra.github.io/interactive-articles/mamba/) (the post-Transformer candidate).
 
 ---
 

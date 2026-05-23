@@ -87,6 +87,10 @@ A network can be expressive but untrainable. It can be trainable but overfit. It
 
 ---
 
+▶ **Interactives for L02** · [universal-approximation](https://nipunbatra.github.io/interactive-articles/universal-approximation/) (build any function from ReLU bumps) · [vanishing-gradients](https://nipunbatra.github.io/interactive-articles/vanishing-gradients/) (sigmoid vs ReLU live) · [resnet](https://nipunbatra.github.io/interactive-articles/resnet/) (skip-connection gradient highway).
+
+---
+
 # Pop quiz · two architectures, same parameter budget
 
 You have ~$10\,000$ parameters to spend on a regression task with 1-D input.

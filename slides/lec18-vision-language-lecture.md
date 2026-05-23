@@ -86,7 +86,7 @@ Stop and think · what is **fundamentally** different about (c)? **Answer · the
 
 ---
 
-▶ **Interactive** · explore CLIP's zero-shot classification → [clip-zero-shot](https://nipunbatra.github.io/interactive-articles/clip-zero-shot/) · play with Vision Transformer attention → [vision-transformer](https://nipunbatra.github.io/interactive-articles/vision-transformer/).
+▶ **Interactives for L18** · [clip-zero-shot](https://nipunbatra.github.io/interactive-articles/clip-zero-shot/) (zero-shot classification) · [vision-transformer](https://nipunbatra.github.io/interactive-articles/vision-transformer/) (patch attention) · [vlm](https://nipunbatra.github.io/interactive-articles/vlm/) (multimodal chat) · [saliency](https://nipunbatra.github.io/interactive-articles/saliency/) (what the model "looks at").
 
 ---
 

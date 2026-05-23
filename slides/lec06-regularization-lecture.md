@@ -81,6 +81,10 @@ Today maps to **UDL Ch 9** (Regularization) and the BatchNorm parts of **Ch 11**
 
 ---
 
+▶ **Interactives for L06** · [double-descent](https://nipunbatra.github.io/interactive-articles/double-descent/) (the modern bias-variance curve) · [dropout-playground](https://nipunbatra.github.io/interactive-articles/dropout-playground/) (see how dropout masks change the network).
+
+---
+
 # Pop quiz · which one would you reach for?
 
 Your model · 100M parameters, 50k images, train accuracy 99.8%, val accuracy 71%.

@@ -69,6 +69,10 @@ Four questions:
 
 ---
 
+▶ **Interactives for L17** · [vision-ssl](https://nipunbatra.github.io/interactive-articles/vision-ssl/) (contrastive pairs animated) · [info-theory](https://nipunbatra.github.io/interactive-articles/info-theory/) (InfoNCE mutual-info lower bound).
+
+---
+
 # Pop quiz · how does a baby learn what a "cat" is?
 
 A toddler has never seen the label *"cat"*. They just see thousands of cats — different angles, lighting, breeds.

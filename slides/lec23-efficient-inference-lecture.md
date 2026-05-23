@@ -66,6 +66,10 @@ Four questions:
 
 ---
 
+▶ **Interactives for L23** · [quantize-prune](https://nipunbatra.github.io/interactive-articles/quantize-prune/) (FP16 → INT8 → INT4 trade-off) · [knowledge-distillation](https://nipunbatra.github.io/interactive-articles/knowledge-distillation/) (student matches teacher softmax).
+
+---
+
 # Pop quiz · which makes inference 10× faster?
 
 You're serving Llama-3-70B on an A100. Throughput is 8 tokens/sec. Pick **the single change** with the biggest speed-up ·

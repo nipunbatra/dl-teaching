@@ -85,6 +85,10 @@ Today · **per-parameter adaptive learning rates** — AdaGrad → RMSProp → A
 
 ---
 
+▶ **Interactives for L05** · [optimizer-race](https://nipunbatra.github.io/interactive-articles/optimizer-race/) (SGD vs momentum vs Adam trajectories on 2D loss) · [optimizers-beyond](https://nipunbatra.github.io/interactive-articles/optimizers-beyond/) (AdaGrad / RMSProp / AdamW side by side) · [lr-schedule-visualizer](https://nipunbatra.github.io/interactive-articles/lr-schedule-visualizer/) (cosine + warmup).
+
+---
+
 # Pop quiz · which optimizer would you bet on?
 
 You are training a 1B-parameter Transformer on text · gradients are sparse for embeddings, dense for attention, and large for a few outlier weights.

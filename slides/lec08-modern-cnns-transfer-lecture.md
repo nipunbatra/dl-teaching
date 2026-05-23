@@ -61,6 +61,10 @@ Two halves today:
 
 ---
 
+▶ **Interactives for L08** · [resnet](https://nipunbatra.github.io/interactive-articles/resnet/) (block + skip animated) · [knowledge-distillation](https://nipunbatra.github.io/interactive-articles/knowledge-distillation/) (transfer story preview).
+
+---
+
 # Pop quiz · 1000 images, 5 classes
 
 Your client has **1000 labelled images** across **5 plant disease classes**. They ask you to build a classifier.
