@@ -56,20 +56,6 @@ Today's jump: **one label per pixel, per object, per region.**
 
 ---
 
-# Teaching guide · 80-min plan
-
-<div class="paper">
-
-**⭐ Core (must do · 50 min)** · classification → localization → detection · IoU / NMS · YOLO grid + worked numeric · U-Net + skip connections.
-**⭐⭐ Should cover (25 min)** · multi-task loss · anchor delta decoding · Dice loss · SAM intuition.
-**⭐⭐⭐ Optional / skip-if-tight (5 min)** · R-CNN history · DETR + Hungarian matching · open-vocab grounding.
-
-**Survival tip** · IoU + NMS + a YOLO walk-through is the heart. If short on time, drop R-CNN history and DETR — students get the *core idea* from YOLO alone.
-
-</div>
-
----
-
 # Pop quiz · count the pedestrians
 
 Self-driving car at an intersection · a single frame contains **7 pedestrians and 3 cars** of varying sizes, some partially occluded.

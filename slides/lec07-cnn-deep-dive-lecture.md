@@ -54,20 +54,6 @@ ES 654 covered LeNet and CNN basics. We skim those and spend time on **receptive
 
 ---
 
-# Teaching guide · 80-min plan
-
-<div class="paper">
-
-**⭐ Core (must do · 50 min)** · convolution as shared-sparse linear · feature detector view · receptive field grows with depth · why stacked 3×3 · inductive biases.
-**⭐⭐ Should cover (25 min)** · LeNet / AlexNet / VGG progression · output-size formula · $1\times1$ conv.
-**⭐⭐⭐ Optional / skip-if-tight (5 min)** · receptive field recursion · equivariance proof.
-
-**Survival tip** · most students "know" convolution from ES654 — your job is to make the *inductive biases* click. The conv-visualizer + receptive-field-grower interactives carry the lecture.
-
-</div>
-
----
-
 # Pop quiz · the parameter blowout
 
 A fully-connected layer mapping a $224\times224\times3$ image to 4096 hidden units uses ·

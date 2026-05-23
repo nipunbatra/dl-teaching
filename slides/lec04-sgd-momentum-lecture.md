@@ -54,20 +54,6 @@ One piece we glossed over: **the optimizer**. Today we open that box.
 
 ---
 
-# Teaching guide · 80-min plan
-
-<div class="paper">
-
-**⭐ Core (must do · 50 min)** · loss landscape · ravines · vanilla SGD oscillation · momentum as EMA · the heavy-ball analogy · one PyTorch line.
-**⭐⭐ Should cover (20 min)** · Nesterov lookahead · effective LR $= \eta/(1-\beta)$ · debugging from training curves.
-**⭐⭐⭐ Optional / skip-if-tight (10 min)** · saddle-point analysis in high-dim · Nesterov geometric view · Rosenbrock trajectory.
-
-**Survival tip** · the heavy-ball / hiker analogies carry this lecture. Math is supportive, not central. Use the optimizer-race interactive if available.
-
-</div>
-
----
-
 # Pop quiz · what's killing this run?
 
 A 50-layer ResNet trains fine for 200 steps, then loss starts **oscillating** between 1.4 and 1.9 forever — never diverging, never improving.

@@ -52,20 +52,6 @@ Four questions:
 
 ---
 
-# Teaching guide · 80-min plan
-
-<div class="paper">
-
-**⭐ Core (must do · 50 min)** · memory-bound vs compute-bound · KV-cache · INT4 quantization · FlashAttention idea · speculative decoding.
-**⭐⭐ Should cover (25 min)** · prefill vs decode · PagedAttention / vLLM · distillation.
-**⭐⭐⭐ Optional / skip-if-tight (5 min)** · arithmetic-intensity roofline · GPTQ vs AWQ details.
-
-**Survival tip** · this lecture is *very* practical · students who deploy will love it. The "**memory-bound, not compute-bound**" headline is the takeaway.
-
-</div>
-
----
-
 ▶ **Interactives for L23** · [kv-cache](https://nipunbatra.github.io/interactive-articles/kv-cache/) (memory-bound made concrete) · [quantize-prune](https://nipunbatra.github.io/interactive-articles/quantize-prune/) (FP16 → INT8 → INT4) · [knowledge-distillation](https://nipunbatra.github.io/interactive-articles/knowledge-distillation/).
 
 ---

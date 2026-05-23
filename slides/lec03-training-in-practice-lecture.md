@@ -52,20 +52,6 @@ Four questions:
 
 ---
 
-# Teaching guide · 80-min plan
-
-<div class="paper">
-
-**⭐ Core (must do · 50 min)** · PyTorch recipe · DataLoader essentials · training loop · the debugging ladder (overfit one batch is the headline) · error analysis.
-**⭐⭐ Should cover (20 min)** · mixed precision (BF16) · gradient accumulation · LR finder · reproducibility checklist.
-**⭐⭐⭐ Optional / skip-if-tight (10 min)** · ceiling analysis · five-layer reproducibility · custom dataset boilerplate.
-
-**Survival tip** · this is the *practical* lecture students will reference all semester. Slow down on "overfit one batch" — it's the single most useful habit you can teach.
-
-</div>
-
----
-
 # Pop quiz · "my model isn't learning"
 
 You wrote a model, hit `train()`. Loss stays flat for 100 steps.

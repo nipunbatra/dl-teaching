@@ -54,20 +54,6 @@ Four questions:
 
 ---
 
-# Teaching guide · 80-min plan
-
-<div class="paper">
-
-**⭐ Core (must do · 50 min)** · text conditioning via cross-attention · classifier-free guidance · latent diffusion (Stable Diffusion).
-**⭐⭐ Should cover (25 min)** · DDIM faster sampling · DiT (Transformer backbone) · 2026 frontier (FLUX, Sora).
-**⭐⭐⭐ Optional / skip-if-tight (5 min)** · CFG derivation · DDIM update rule · classifier guidance pre-history.
-
-**Survival tip** · play with the cfg-scale interactive · students *see* what guidance scale does, no math needed.
-
-</div>
-
----
-
 # Pop quiz · how does "an astronaut riding a horse" become an image?
 
 L21 gave us *unconditional* diffusion · noise → image.

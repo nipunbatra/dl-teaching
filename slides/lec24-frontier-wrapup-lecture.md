@@ -51,20 +51,6 @@ Four questions:
 
 ---
 
-# Teaching guide · 80-min plan
-
-<div class="paper">
-
-**⭐ Core (must do · 50 min)** · agents · reasoning models (o1) · mechanistic interp · the 24-lecture spine recap.
-**⭐⭐ Should cover (25 min)** · ReAct loop · CoT · sparse autoencoders for interp · where to go next.
-**⭐⭐⭐ Optional / skip-if-tight (5 min)** · constitutional AI · safety research overview.
-
-**Survival tip** · this is the *celebration* lecture. Light on math, heavy on inspiration. Show demos · point at frontier labs · send students off feeling armed.
-
-</div>
-
----
-
 # Pop quiz · which of these matters in 2030?
 
 Pick what you think will still be central five years from now ·

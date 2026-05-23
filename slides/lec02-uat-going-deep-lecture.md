@@ -71,22 +71,6 @@ A network can be expressive but untrainable. It can be trainable but overfit. It
 
 ---
 
-# Teaching guide · 80-min plan
-
-<div class="paper">
-
-**⭐ Core (must do · 45 min)** · UAT in plain English · bumps from ReLU · depth-vs-width intuition · vanishing gradients · ReLU + skip connections fix.
-
-**⭐⭐ Should cover (25 min)** · Worked numeric "approximate $x^2$ with 4 ReLUs" · He init formula · sigmoid 0.25 ceiling.
-
-**⭐⭐⭐ Optional / skip-if-tight (10 min)** · UAT formal statement · Telgarsky depth separation proof · pre-activation ResNets · projection shortcuts.
-
-**Mid-section pop quiz** to bring energy back in min 40.
-
-</div>
-
----
-
 ▶ **Interactives for L02** · [universal-approximation](https://nipunbatra.github.io/interactive-articles/universal-approximation/) (build any function from ReLU bumps) · [vanishing-gradients](https://nipunbatra.github.io/interactive-articles/vanishing-gradients/) (sigmoid vs ReLU live) · [resnet](https://nipunbatra.github.io/interactive-articles/resnet/) (skip-connection gradient highway).
 
 ---

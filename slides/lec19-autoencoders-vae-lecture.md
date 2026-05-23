@@ -53,22 +53,6 @@ Four questions:
 
 ---
 
-# Teaching guide · 80-min plan
-
-<div class="paper">
-
-**⭐ Core (must do · 45 min)** · plain AE vs VAE (postcard analogy) · reparameterization trick · ELBO **picture** (recon + KL) · samples from a trained VAE.
-
-**⭐⭐ Should cover (25 min)** · why a prior · the encoder outputs a *distribution* · the punchline slide ("you can skip the derivation") · $\beta$-VAE.
-
-**⭐⭐⭐ Optional / skip-if-tight (10 min)** · ELBO step-by-step derivation · Jensen's inequality form · ELBO as evidence lower bound.
-
-**Survival tip** · if the math feels heavy in real time, jump straight to "the punchline · you can skip the derivation" slide and the VAE-in-PyTorch slide. Students learn more by playing with samples than parsing the bound.
-
-</div>
-
----
-
 # Pop quiz · why isn't a plain autoencoder generative?
 
 A plain autoencoder squeezes images through a 32-dim bottleneck, then reconstructs.

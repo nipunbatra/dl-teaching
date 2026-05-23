@@ -47,20 +47,6 @@ Two halves today:
 
 ---
 
-# Teaching guide · 80-min plan
-
-<div class="paper">
-
-**⭐ Core (must do · 50 min)** · Inception parallel kernels · ResNet skip-connection · MobileNet depthwise separable · **transfer learning recipe**.
-**⭐⭐ Should cover (25 min)** · bottleneck blocks · EfficientNet compound scaling · SE blocks.
-**⭐⭐⭐ Optional / skip-if-tight (5 min)** · pre-activation variants · NAS history.
-
-**Survival tip** · transfer learning is the headline · spend extra time on the *recipe* (replace head, freeze most, low LR). It's the one skill students will use in every project.
-
-</div>
-
----
-
 ▶ **Interactives for L08** · [resnet](https://nipunbatra.github.io/interactive-articles/resnet/) (block + skip animated) · [knowledge-distillation](https://nipunbatra.github.io/interactive-articles/knowledge-distillation/) (transfer story preview).
 
 ---

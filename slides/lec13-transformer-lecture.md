@@ -57,22 +57,6 @@ Last lecture: **attention** fixed Seq2Seq's bottleneck. Q, K, V scaled dot produ
 
 ---
 
-# Teaching guide · 80-min plan
-
-<div class="paper">
-
-**⭐ Core (must do · 50 min)** · the Transformer block (attention + FFN + residual + LN) · *why* this exact structure · multi-head attention as "team of specialists" · positional encoding · encoder vs decoder vs decoder-only.
-
-**⭐⭐ Should cover (20 min)** · pre-norm vs post-norm · parameter accounting · 20-line PyTorch block.
-
-**⭐⭐⭐ Optional / skip-if-tight (10 min)** · pre-norm gradient derivation · multi-head tensor-shape trace · sinusoidal proof.
-
-**Backup plan** · if running short, anchor on Jay Alammar's *Illustrated Transformer* diagram and walk through it instead of code.
-
-</div>
-
----
-
 ▶ **Interactives for L13** · [attention](https://nipunbatra.github.io/interactive-articles/attention/) (Q,K,V heatmap) · [positional-encoding](https://nipunbatra.github.io/interactive-articles/positional-encoding/) (sinusoid vs RoPE vs ALiBi side-by-side).
 
 ---

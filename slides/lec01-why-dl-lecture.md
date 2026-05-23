@@ -36,20 +36,6 @@ What is deep learning, and why now?
 
 ---
 
-# Teaching guide · 80-min plan
-
-<div class="paper">
-
-**⭐ Core (must do · 50 min)** · why pixels break linear models · representation learning in one sentence · MLP recap · backprop story.
-**⭐⭐ Should cover (25 min)** · XOR worked end-to-end · softmax + CE gradient · last-layer-bare bug · feature transformation.
-**⭐⭐⭐ Optional / skip-if-tight (5 min)** · three eras timeline · ImageNet history · 6 practice problems.
-
-**Survival tip** · this is the *first* lecture, so over-invest in motivation (XOR, MNIST). Students don't need every backprop equation today.
-
-</div>
-
----
-
 # A question to open the semester
 
 You already built classifiers in ES 654 — logistic regression, SVMs, decision trees.
