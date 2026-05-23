@@ -170,8 +170,8 @@ But **why** does L1 hit zero and L2 doesn't? Why is the penalty *squared* in L2 
 |:-:|:-:|:-:|
 | MSE | $\sum (y - \hat y)^2$ | ? |
 | BCE | $-\sum [y\log\hat p + (1-y)\log(1-\hat p)]$ | ? |
-| L2 | $\lambda \sum \theta_j^2$ | ? |
-| L1 | $\lambda \sum |\theta_j|$ | ? |
+| L2 | $\lambda \sum_j \theta_j^2$ | ? |
+| L1 | $\lambda \,\lVert \boldsymbol\theta \rVert_1$ | ? |
 
 </div>
 
@@ -280,13 +280,14 @@ The parameter symbol $\theta$ is just a placeholder. For the three distributions
 
 <div class="math-box">
 
-- **Coin** · $\theta = p$ (one parameter, the bias).
-$Y \sim p(\cdot \mid p) = \text{Bernoulli}(p)$.
+- **Coin** · one parameter, the bias. Call it $p \in [0, 1]$ (so here $\theta = p$).
+$Y \sim \text{Bernoulli}(p)$.
 
-- **Normal** · $\theta = (\mu, \sigma^2)$ (two parameters).
-$Y \sim p(\cdot \mid \mu, \sigma^2) = \mathcal{N}(\mu, \sigma^2)$.
+- **Normal** · two parameters · $\theta = (\mu, \sigma^2)$.
+$Y \sim \mathcal{N}(\mu, \sigma^2)$.
 
-- **Categorical** · $\theta = \boldsymbol\pi$ (a vector of $K$ probabilities summing to 1).
+- **Categorical** · $K$-vector of probabilities $\boldsymbol\pi$ (with $\sum_k \pi_k = 1$), so $\theta = \boldsymbol\pi$.
+$Y \sim \text{Categorical}(\boldsymbol\pi)$.
 
 </div>
 
@@ -2113,7 +2114,7 @@ L1's sparsity is a direct consequence of the **diamond geometry** of the Laplace
 | | **L2 (Ridge)** | **L1 (Lasso)** |
 |---|---|---|
 | Prior | $\mathcal{N}(0, \sigma_p^2)$ | $\text{Laplace}(0, b)$ |
-| Log-prior penalty | $\lambda \sum \theta_j^2$ | $\lambda \sum |\theta_j|$ |
+| Log-prior penalty | $\lambda \sum_j \theta_j^2$ | $\lambda \,\lVert \boldsymbol\theta \rVert_1$ |
 | Geometry | Circle | Diamond |
 | Solution | small everywhere | many exactly zero |
 | Gradient of penalty | $2\lambda \theta_j$ (smooth) | $\lambda\,\text{sign}(\theta_j)$ (kink at 0) |
