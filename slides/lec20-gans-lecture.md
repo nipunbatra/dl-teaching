@@ -55,6 +55,20 @@ Four questions:
 
 ---
 
+# Teaching guide · 80-min plan
+
+<div class="paper">
+
+**⭐ Core (must do · 50 min)** · counterfeiter-vs-detective game · DCGAN recipe · mode collapse · WGAN intuition.
+**⭐⭐ Should cover (25 min)** · non-saturating G loss · spectral normalization · GAN vs VAE vs Diffusion table.
+**⭐⭐⭐ Optional / skip-if-tight (5 min)** · WGAN-GP derivation · StyleGAN architecture · JS-divergence proof.
+
+**Survival tip** · GANs are *historically* important but losing relevance. Spend 60 min · move on.
+
+</div>
+
+---
+
 # Pop quiz · counterfeiter vs detective
 
 A counterfeiter prints fake currency. A detective inspects bills and flags fakes.

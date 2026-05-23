@@ -57,6 +57,22 @@ Last lecture: **attention** fixed Seq2Seq's bottleneck. Q, K, V scaled dot produ
 
 ---
 
+# Teaching guide · 80-min plan
+
+<div class="paper">
+
+**⭐ Core (must do · 50 min)** · the Transformer block (attention + FFN + residual + LN) · *why* this exact structure · multi-head attention as "team of specialists" · positional encoding · encoder vs decoder vs decoder-only.
+
+**⭐⭐ Should cover (20 min)** · pre-norm vs post-norm · parameter accounting · 20-line PyTorch block.
+
+**⭐⭐⭐ Optional / skip-if-tight (10 min)** · pre-norm gradient derivation · multi-head tensor-shape trace · sinusoidal proof.
+
+**Backup plan** · if running short, anchor on Jay Alammar's *Illustrated Transformer* diagram and walk through it instead of code.
+
+</div>
+
+---
+
 # Pop quiz · what's missing from "attention alone"?
 
 L12 gave us attention · weighted lookup, $O(n^2)$ across the sequence.
@@ -139,7 +155,7 @@ The genius was **gluing them together** into one block you can safely stack.
 
 ---
 
-# Pre-norm vs post-norm · derive the gradient
+# ⭐⭐⭐ Optional · Pre-norm vs post-norm · derive the gradient
 
 Block output `x_out = x_in + Sublayer(...)`. Goal · derivative $\partial x_\text{out} / \partial x_\text{in}$.
 
@@ -225,7 +241,7 @@ Why one head is never enough
 
 ---
 
-# Multi-head · trace the tensor shapes
+# ⭐⭐⭐ Optional · Multi-head · trace the tensor shapes
 
 Setup · 1 sentence, 3 tokens, $d_\text{model} = 4$, $h = 2$ heads, so $d_k = 4/2 = 2$.
 

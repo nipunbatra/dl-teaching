@@ -54,6 +54,20 @@ Four questions:
 
 ---
 
+# Teaching guide · 80-min plan
+
+<div class="paper">
+
+**⭐ Core (must do · 50 min)** · SFT · reward modelling · RLHF vs DPO · LoRA + QLoRA.
+**⭐⭐ Should cover (25 min)** · pick-the-method table · Bradley-Terry intuition · KL penalty.
+**⭐⭐⭐ Optional / skip-if-tight (5 min)** · PPO RL details · reasoning model (o1) speculation.
+
+**Survival tip** · "**a good completer isn't a good helper**" is the headline. Most students remember LoRA + DPO names · ground them in that one sentence.
+
+</div>
+
+---
+
 # Pop quiz · why doesn't pretraining-alone give us ChatGPT?
 
 You take GPT-3 raw (no fine-tuning) and prompt it · *"Write a polite email to my professor asking for a deadline extension."*

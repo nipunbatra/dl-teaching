@@ -57,6 +57,20 @@ Today maps to **Bishop Ch 12** (Seq2Seq). UDL treats Transformers directly; we c
 
 ---
 
+# Teaching guide · 80-min plan
+
+<div class="paper">
+
+**⭐ Core (must do · 50 min)** · encoder-decoder shape · teacher forcing · greedy / beam decoding · the bottleneck problem.
+**⭐⭐ Should cover (25 min)** · BLEU · nucleus sampling · scheduled sampling.
+**⭐⭐⭐ Optional / skip-if-tight (5 min)** · GNMT history · beam search math.
+
+**Survival tip** · end on the *bottleneck* slide · that gap motivates attention in L12 and gives a hard cliff-hanger.
+
+</div>
+
+---
+
 # Pop quiz · the translation challenge
 
 You're translating ·

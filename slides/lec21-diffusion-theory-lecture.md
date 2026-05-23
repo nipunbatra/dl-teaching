@@ -56,6 +56,22 @@ Four questions:
 
 ---
 
+# Teaching guide · 80-min plan
+
+<div class="paper">
+
+**⭐ Core (must do · 45 min)** · forward = noise step by step · reverse = denoise step by step · the **noise-guessing game** (train a U-Net to predict $\epsilon$) · sampling loop.
+
+**⭐⭐ Should cover (25 min)** · closed-form jump $q(x_t \mid x_0)$ · noise schedules · why predict $\epsilon$ instead of mean.
+
+**⭐⭐⭐ Optional / skip-if-tight (10 min)** · the closed-form derivation in 3 lines · score-matching equivalence · Langevin dynamics.
+
+**Survival tip** · the closed-form derivation is *already marked optional*. If asked "why is this Gaussian?" point at L00's "Gaussians are closed under linear ops" and move on. The intuition (noise → denoise) is what they need.
+
+</div>
+
+---
+
 # Pop quiz · how would *you* generate images?
 
 You have 1 million natural images. You want a model that draws new ones.

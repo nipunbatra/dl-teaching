@@ -71,6 +71,20 @@ Today · **per-parameter adaptive learning rates** — AdaGrad → RMSProp → A
 
 ---
 
+# Teaching guide · 80-min plan
+
+<div class="paper">
+
+**⭐ Core (must do · 50 min)** · per-parameter LR (two-knobs analogy) · AdaGrad → RMSProp → Adam → AdamW · warmup + cosine schedule · the right defaults for 2026.
+**⭐⭐ Should cover (20 min)** · bias correction at $t=1$ · why L2 is "broken" in Adam · `lr = 3e-4` rule.
+**⭐⭐⭐ Optional / skip-if-tight (10 min)** · bias-correction derivation · why Transformers need warmup (early-gradient analysis).
+
+**Survival tip** · students remember "use AdamW with warmup + cosine, $\text{lr}=3\!\times\!10^{-4}$". That single recipe is 80% of the lecture's value.
+
+</div>
+
+---
+
 # Pop quiz · which optimizer would you bet on?
 
 You are training a 1B-parameter Transformer on text · gradients are sparse for embeddings, dense for attention, and large for a few outlier weights.

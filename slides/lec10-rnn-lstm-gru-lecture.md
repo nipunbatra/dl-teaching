@@ -55,6 +55,20 @@ Today maps to **Bishop Ch 12** (RNNs). UDL skips RNNs and jumps to Transformers 
 
 ---
 
+# Teaching guide · 80-min plan
+
+<div class="paper">
+
+**⭐ Core (must do · 50 min)** · why MLPs fail on sequences · vanilla RNN · vanishing gradients · LSTM gates intuition · GRU.
+**⭐⭐ Should cover (25 min)** · BPTT · why $b_f = 1$ at init · teacher forcing vs autoregressive.
+**⭐⭐⭐ Optional / skip-if-tight (5 min)** · gradient-product proof · LSTM peephole variants.
+
+**Survival tip** · use the lstm-gates interactive · students learn more by playing with gates than reading the equations.
+
+</div>
+
+---
+
 # Pop quiz · finish the sentence
 
 > *"After the long flight from Mumbai, my parents finally arrived at the Frankfurt airport, and **they** ____."*

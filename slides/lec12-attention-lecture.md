@@ -123,6 +123,20 @@ Attention is the mechanism for the *pull* — a differentiable version of "look 
 
 ---
 
+# Teaching guide · 80-min plan
+
+<div class="paper">
+
+**⭐ Core (must do · 50 min)** · attention as soft retrieval · Q, K, V · scaled dot-product · self vs cross attention.
+**⭐⭐ Should cover (25 min)** · why $\sqrt{d_k}$ · attention heatmap reading · multi-head preview.
+**⭐⭐⭐ Optional / skip-if-tight (5 min)** · variance derivation · attention as kernel smoothing.
+
+**Survival tip** · the search-engine analogy is the lecture · everything follows from it. Use the attention interactive · watching weights light up makes Q,K,V click instantly.
+
+</div>
+
+---
+
 # Pop quiz · the search-engine analogy
 
 You type *"chocolate cake recipe"* into Google.

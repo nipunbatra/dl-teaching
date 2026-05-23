@@ -34,6 +34,26 @@ Today's promise · one principle — **maximum likelihood under a probabilistic 
 
 ---
 
+# Teaching guide · two 80-min sessions
+
+<div class="paper">
+
+**Session 1 — likelihood (80 min)**
+⭐ Core · distributions · IID · MLE for coin / linear / logistic · NLL.
+⭐⭐ Should cover · sampling primitives · plate notation · Bayes' rule + four terms.
+⭐⭐⭐ Optional · max-entropy derivation · multivariate Normal · CLT proof.
+
+**Session 2 — MAP + KL (80 min)**
+⭐ Core · MAP = MLE + prior · L2 from Gaussian · L1 from Laplace · entropy + KL definitions.
+⭐⭐ Should cover · Huffman code-length lens · cross-entropy = entropy + KL · forward vs reverse KL.
+⭐⭐⭐ Optional · Jensen's inequality proof · KL between Gaussians closed form.
+
+**Survival tip** · this is L00 · students will be tired. Lean on the worked numerics (coin, three-courses pop-quiz, Bayes disease test) — they carry the lecture.
+
+</div>
+
+---
+
 # Learning outcomes · Session 1
 
 Framework + likelihood. By end of Session 1 you can ·

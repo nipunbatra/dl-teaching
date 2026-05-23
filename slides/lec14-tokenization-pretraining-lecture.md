@@ -43,6 +43,20 @@ Four questions:
 
 ---
 
+# Teaching guide · 80-min plan
+
+<div class="paper">
+
+**⭐ Core (must do · 50 min)** · why tokenization is hard · BPE step-by-step · MLM (BERT) · CLM (GPT) · span (T5).
+**⭐⭐ Should cover (25 min)** · 80/10/10 mask split · the "strawberry" bug · why tokenization causes most LLM bugs.
+**⭐⭐⭐ Optional / skip-if-tight (5 min)** · WordPiece / SentencePiece details · Unicode normalization rabbit hole.
+
+**Survival tip** · use the bpe-merges interactive · run BPE on a fun sentence in real time. Skip Unicode horror stories if time is tight.
+
+</div>
+
+---
+
 # Pop quiz · how many "tokens" is this sentence?
 
 Take · **"GPT-4 is great!"**

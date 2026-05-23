@@ -55,6 +55,20 @@ Four questions:
 
 ---
 
+# Teaching guide · 80-min plan
+
+<div class="paper">
+
+**⭐ Core (must do · 50 min)** · labelling-bottleneck motivation · SimCLR (positives + negatives) · BYOL (no negatives) · MAE.
+**⭐⭐ Should cover (25 min)** · InfoNCE loss · MoCo queue · DINOv2 as 2026 default.
+**⭐⭐⭐ Optional / skip-if-tight (5 min)** · MI lower-bound proof · DINO centering trick.
+
+**Survival tip** · the "**babies learn without labels**" framing wins the room. Math is bonus.
+
+</div>
+
+---
+
 # Pop quiz · how does a baby learn what a "cat" is?
 
 A toddler has never seen the label *"cat"*. They just see thousands of cats — different angles, lighting, breeds.

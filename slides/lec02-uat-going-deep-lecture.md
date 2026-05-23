@@ -71,6 +71,22 @@ A network can be expressive but untrainable. It can be trainable but overfit. It
 
 ---
 
+# Teaching guide · 80-min plan
+
+<div class="paper">
+
+**⭐ Core (must do · 45 min)** · UAT in plain English · bumps from ReLU · depth-vs-width intuition · vanishing gradients · ReLU + skip connections fix.
+
+**⭐⭐ Should cover (25 min)** · Worked numeric "approximate $x^2$ with 4 ReLUs" · He init formula · sigmoid 0.25 ceiling.
+
+**⭐⭐⭐ Optional / skip-if-tight (10 min)** · UAT formal statement · Telgarsky depth separation proof · pre-activation ResNets · projection shortcuts.
+
+**Mid-section pop quiz** to bring energy back in min 40.
+
+</div>
+
+---
+
 # Pop quiz · two architectures, same parameter budget
 
 You have ~$10\,000$ parameters to spend on a regression task with 1-D input.
@@ -146,7 +162,7 @@ A weighted sum of neuron outputs · each neuron is a "LEGO brick."
 
 ---
 
-# UAT · the formal statement
+# ⭐⭐⭐ Optional · UAT · the formal statement
 
 <div class="math-box">
 
@@ -164,7 +180,7 @@ One hidden layer suffices. The catch hides in one word: **exist.**
 
 ---
 
-# UAT · the proof in three moves
+# ⭐⭐⭐ Optional · UAT · the proof in three moves
 
 We won't write a full proof — but the structure is short and worth knowing.
 

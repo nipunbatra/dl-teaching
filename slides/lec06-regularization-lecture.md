@@ -63,6 +63,24 @@ Today maps to **UDL Ch 9** (Regularization) and the BatchNorm parts of **Ch 11**
 
 ---
 
+# Teaching guide · two 80-min sessions
+
+<div class="paper">
+
+**Session 1 — classical + data (80 min)**
+⭐ Core · double descent picture · L2/L1 (skim) · data augmentation · Mixup · label smoothing.
+⭐⭐ Should cover · MAP reading of L2/L1 · early stopping geometry.
+
+**Session 2 — architectural (80 min)**
+⭐ Core · dropout · BatchNorm mechanics · LayerNorm · RMSNorm · pre vs post norm.
+⭐⭐ Should cover · ICS debate · running stats · why Transformers love LayerNorm.
+
+**Survival tip** · regularization can become a parade of tricks. Stick to *one mental model* — "every regularizer is a prior on what we don't have data for."
+
+</div>
+
+---
+
 # Pop quiz · which one would you reach for?
 
 Your model · 100M parameters, 50k images, train accuracy 99.8%, val accuracy 71%.

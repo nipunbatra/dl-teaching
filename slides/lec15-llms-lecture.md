@@ -59,6 +59,20 @@ The **Transformer** stack is the architecture. The tokenizer is the input. Now l
 
 ---
 
+# Teaching guide · 80-min plan
+
+<div class="paper">
+
+**⭐ Core (must do · 50 min)** · what changed 2018→2026 (scale, not architecture) · scaling laws · Chinchilla rule · GQA · RoPE intuition.
+**⭐⭐ Should cover (25 min)** · sampling (temperature, top-p, top-k) · emergent abilities · why architecture converged.
+**⭐⭐⭐ Optional / skip-if-tight (5 min)** · RoPE derivation · distributed training mechanics · per-vendor recipes.
+
+**Survival tip** · the "**Bitter Lesson**" frame anchors the whole lecture. Lean on it.
+
+</div>
+
+---
+
 # Pop quiz · you have $1M of compute. Spend it.
 
 You can train a Transformer LM with $C \approx 10^{22}$ FLOPs. Which choice gets the best loss?

@@ -52,6 +52,20 @@ Four questions:
 
 ---
 
+# Teaching guide · 80-min plan
+
+<div class="paper">
+
+**⭐ Core (must do · 50 min)** · memory-bound vs compute-bound · KV-cache · INT4 quantization · FlashAttention idea · speculative decoding.
+**⭐⭐ Should cover (25 min)** · prefill vs decode · PagedAttention / vLLM · distillation.
+**⭐⭐⭐ Optional / skip-if-tight (5 min)** · arithmetic-intensity roofline · GPTQ vs AWQ details.
+
+**Survival tip** · this lecture is *very* practical · students who deploy will love it. The "**memory-bound, not compute-bound**" headline is the takeaway.
+
+</div>
+
+---
+
 # Pop quiz · which makes inference 10× faster?
 
 You're serving Llama-3-70B on an A100. Throughput is 8 tokens/sec. Pick **the single change** with the biggest speed-up ·

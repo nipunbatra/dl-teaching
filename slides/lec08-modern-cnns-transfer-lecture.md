@@ -47,6 +47,20 @@ Two halves today:
 
 ---
 
+# Teaching guide · 80-min plan
+
+<div class="paper">
+
+**⭐ Core (must do · 50 min)** · Inception parallel kernels · ResNet skip-connection · MobileNet depthwise separable · **transfer learning recipe**.
+**⭐⭐ Should cover (25 min)** · bottleneck blocks · EfficientNet compound scaling · SE blocks.
+**⭐⭐⭐ Optional / skip-if-tight (5 min)** · pre-activation variants · NAS history.
+
+**Survival tip** · transfer learning is the headline · spend extra time on the *recipe* (replace head, freeze most, low LR). It's the one skill students will use in every project.
+
+</div>
+
+---
+
 # Pop quiz · 1000 images, 5 classes
 
 Your client has **1000 labelled images** across **5 plant disease classes**. They ask you to build a classifier.

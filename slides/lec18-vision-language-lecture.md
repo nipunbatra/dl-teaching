@@ -56,6 +56,20 @@ Four questions:
 
 ---
 
+# Teaching guide · 80-min plan
+
+<div class="paper">
+
+**⭐ Core (must do · 50 min)** · ViT (image as 16×16 patches) · CLIP shared embedding · LLaVA = CLIP feats → LLM.
+**⭐⭐ Should cover (25 min)** · contrastive image-text loss · zero-shot classification · open-vocab grounding.
+**⭐⭐⭐ Optional / skip-if-tight (5 min)** · Flamingo cross-attention · hallucination mitigation.
+
+**Survival tip** · the "**red-collar dog**" framing is the lecture. Pair with the clip-zero-shot interactive.
+
+</div>
+
+---
+
 # Pop quiz · "find the dog with the red collar"
 
 In a photo with a Labrador (red collar), a Beagle (blue collar), a cat, and a sofa.
