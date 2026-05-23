@@ -87,7 +87,7 @@ The answer is **(c) garbage** — the decoder only knows the small set of points
 
 ---
 
-▶ **Interactive** · explore VAE latent space, sample new digits → [vae-latent-explorer](https://nipunbatra.github.io/interactive-articles/vae-latent-explorer/) · multivariate normal warm-up → [multivariate-normal](https://nipunbatra.github.io/interactive-articles/multivariate-normal/).
+▶ **Interactives for L19** · [vae-latent-explorer](https://nipunbatra.github.io/interactive-articles/vae-latent-explorer/) (sample new digits) · [multivariate-normal](https://nipunbatra.github.io/interactive-articles/multivariate-normal/) (Gaussian intuition) · [elbo-decomposition](https://nipunbatra.github.io/interactive-articles/elbo-decomposition/) (recon vs KL trade-off live).
 
 ---
 

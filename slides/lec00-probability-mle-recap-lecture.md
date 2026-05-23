@@ -237,6 +237,7 @@ One framework today, ten lectures of dividends.
 
 Play along while you read · all run in the browser ·
 
+- [mle-map-coin](https://nipunbatra.github.io/interactive-articles/mle-map-coin/) · slide α, β, true p, N — watch MLE drift toward MAP.
 - [bayesian-posterior](https://nipunbatra.github.io/interactive-articles/bayesian-posterior/) · drag the prior, watch the posterior update.
 - [info-theory](https://nipunbatra.github.io/interactive-articles/info-theory/) · entropy + KL with sliders.
 - [multivariate-normal](https://nipunbatra.github.io/interactive-articles/multivariate-normal/) · 2D Gaussian shape vs covariance.

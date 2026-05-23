@@ -1,12 +1,28 @@
 ---
-title: "ES 667: Deep Learning"
+title: "ES 667 · Deep Learning"
 subtitle: "IIT Gandhinagar · Aug 2026 · Prof. Nipun Batra"
 ---
 
-[Course website](https://nipunbatra.github.io/dl-teaching/){.btn .btn-primary .btn-sm}
-[Syllabus &amp; reading map](syllabus.qmd){.btn .btn-outline-primary .btn-sm}
+::: {.hero-section}
+
+A 24-lecture, 80-minutes-each course that maps the modern deep-learning stack — from the probability that underlies every loss, through CNNs and Transformers, to LLMs, diffusion, and 2026 frontier topics.
+
+Each lecture · pop-quiz hook · worked numerics · linked interactives · canonical references · 6 practice problems · teaching guide with ⭐ Core / ⭐⭐ Should cover / ⭐⭐⭐ Optional markers.
+
+:::
+
+[Syllabus &amp; reading map](syllabus.qmd){.btn .btn-primary .btn-sm}
+[Resources · books · videos · interactives](resources.qmd){.btn .btn-primary .btn-sm}
 [L00 Primer](html/lec00-probability-mle-recap-lecture.html){.btn .btn-outline-primary .btn-sm}
+[All slides](slides.qmd){.btn .btn-outline-primary .btn-sm}
+[Notebooks](notebooks.qmd){.btn .btn-outline-primary .btn-sm}
+[Interactive library →](https://nipunbatra.github.io/interactive-articles/){.btn .btn-outline-primary .btn-sm}
 [GitHub repo](https://github.com/nipunbatra/dl-teaching){.btn .btn-outline-secondary .btn-sm}
+
+::: {.callout-tip}
+## How to use this site
+Start with the **[L00 Primer](html/lec00-probability-mle-recap-lecture.html)** if your probability is rusty, then **[Resources](resources.qmd)** for the canonical-video + blog map, then dive into any lecture. Every slide deck opens with a Teaching guide showing what's Core vs Optional.
+:::
 
 ---
 

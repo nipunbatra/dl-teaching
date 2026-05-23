@@ -81,6 +81,39 @@ h2 {
   border-color: #a63c30;
 }
 
+/* Hero section on index */
+.hero-section {
+  background: linear-gradient(135deg, #faf8f5 0%, #f0ebe5 100%);
+  border-left: 4px solid #c44536;
+  padding: 1.75rem 2rem;
+  margin: 1.5rem 0 2rem 0;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: #2a2a3e;
+}
+
+.quarto-dark .hero-section {
+  background: linear-gradient(135deg, #232336 0%, #2c2c40 100%);
+  color: #d8d8e0;
+  border-left-color: #e07a6b;
+}
+
+/* Module-card style headings (h2 with a left accent stripe) */
+h2 {
+  padding-left: 1rem;
+  border-left: 3px solid #c44536;
+}
+
+.quarto-dark h2 {
+  border-left-color: #e07a6b;
+}
+
+/* Status badges */
+.badge-ready { background: #28a745; color: #fff; padding: 2px 8px; border-radius: 999px; font-size: 0.75em; }
+.badge-polish { background: #ffc107; color: #2a2a2e; padding: 2px 8px; border-radius: 999px; font-size: 0.75em; }
+.badge-draft { background: #6c757d; color: #fff; padding: 2px 8px; border-radius: 999px; font-size: 0.75em; }
+
 /* Table styling */
 .table {
   width: 100%;

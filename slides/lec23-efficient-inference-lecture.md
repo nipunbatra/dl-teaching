@@ -66,7 +66,7 @@ Four questions:
 
 ---
 
-▶ **Interactives for L23** · [quantize-prune](https://nipunbatra.github.io/interactive-articles/quantize-prune/) (FP16 → INT8 → INT4 trade-off) · [knowledge-distillation](https://nipunbatra.github.io/interactive-articles/knowledge-distillation/) (student matches teacher softmax).
+▶ **Interactives for L23** · [kv-cache](https://nipunbatra.github.io/interactive-articles/kv-cache/) (memory-bound made concrete) · [quantize-prune](https://nipunbatra.github.io/interactive-articles/quantize-prune/) (FP16 → INT8 → INT4) · [knowledge-distillation](https://nipunbatra.github.io/interactive-articles/knowledge-distillation/).
 
 ---
 

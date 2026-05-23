@@ -73,6 +73,10 @@ Last lecture: **attention** fixed Seq2Seq's bottleneck. Q, K, V scaled dot produ
 
 ---
 
+▶ **Interactives for L13** · [attention](https://nipunbatra.github.io/interactive-articles/attention/) (Q,K,V heatmap) · [positional-encoding](https://nipunbatra.github.io/interactive-articles/positional-encoding/) (sinusoid vs RoPE vs ALiBi side-by-side).
+
+---
+
 # Pop quiz · what's missing from "attention alone"?
 
 L12 gave us attention · weighted lookup, $O(n^2)$ across the sequence.

@@ -20,10 +20,12 @@ website:
         href: slides.qmd
       - text: "Notebooks"
         href: notebooks.qmd
+      - text: "Resources"
+        href: resources.qmd
+      - text: "Interactives"
+        href: https://nipunbatra.github.io/interactive-articles/
       - text: "UDL Book"
         href: https://udlbook.github.io/udlbook/
-      - text: "Course Website"
-        href: https://nipunbatra.github.io/dl-teaching/
       - text: "L00 Primer"
         href: html/lec00-probability-mle-recap-lecture.html
   page-footer:

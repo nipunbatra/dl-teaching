@@ -81,7 +81,7 @@ Today maps to **UDL Ch 9** (Regularization) and the BatchNorm parts of **Ch 11**
 
 ---
 
-▶ **Interactives for L06** · [double-descent](https://nipunbatra.github.io/interactive-articles/double-descent/) (the modern bias-variance curve) · [dropout-playground](https://nipunbatra.github.io/interactive-articles/dropout-playground/) (see how dropout masks change the network).
+▶ **Interactives for L06** · [double-descent](https://nipunbatra.github.io/interactive-articles/double-descent/) (the modern bias-variance curve) · [dropout-playground](https://nipunbatra.github.io/interactive-articles/dropout-playground/) (see how dropout masks change the network) · [norm-comparison](https://nipunbatra.github.io/interactive-articles/norm-comparison/) (BN vs LN vs RMSNorm — see exactly which slice each averages over).
 
 ---
 
