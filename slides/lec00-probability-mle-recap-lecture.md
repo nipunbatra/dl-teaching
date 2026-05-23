@@ -315,6 +315,12 @@ This product is what becomes a sum after taking logs — and what becomes the **
 
 When IID fails (time series, video frames, sensor logs from one device) we need different math · autoregressive models, state-space models, etc. For this course, treat batches as IID.
 
+<div class="notebook">
+
+▶ **Notebook · [`lec00-iid-demo.ipynb`](../notebooks/lec00-iid-demo.ipynb)** — `torch.distributions` walks through four cases (IID · independent-not-identical · identical-not-independent · neither). Includes sequence + histogram + lag-1 scatter plots, and shows how `sum(log p)` is *blind* to autocorrelation — so shuffling the batch matters.
+
+</div>
+
 ---
 
 # Bernoulli · the coin
@@ -338,9 +344,24 @@ Two outcomes, two probabilities, summing to 1. This is the simplest non-trivial 
 
 ---
 
+# Bernoulli · why we need a *compact* form
+
+The two-case PMF works, but the two cases are awkward to differentiate ·
+
+$$P(Y = y \mid p) = \begin{cases} p & y = 1 \\ 1 - p & y = 0 \end{cases}$$
+
+Problems · the formula **branches** on $y$, you can't write $\nabla_p \log P$ with one expression, and stacking $N$ flips gives an *if-else tree* that's hopeless for code or maths.
+
+We want **one expression** that ·
+1. evaluates to $p$ when $y = 1$ and to $1 - p$ when $y = 0$,
+2. is differentiable in $p$,
+3. multiplies cleanly across $N$ samples.
+
+---
+
 # Bernoulli · the compact form we'll reuse
 
-We can fold the two cases of the PMF into a single expression ·
+The form that satisfies all three ·
 
 <div class="math-box">
 
@@ -352,7 +373,41 @@ $$P(Y = y \mid p) = p^y\,(1 - p)^{1 - y}$$
 - $y = 1 \;\Rightarrow\; p^1 (1-p)^0 = p$ ✓
 - $y = 0 \;\Rightarrow\; p^0 (1-p)^1 = 1 - p$ ✓
 
-This compact form is what makes the per-example log-likelihood $y\log p + (1-y)\log(1-p)$ work for both classes simultaneously — the **seed of binary cross-entropy**. We'll use it every time we write a BCE loss.
+The trick is using $y$ and $1 - y$ **as exponents** · only one of them is non-zero at a time, the other factor collapses to 1.
+
+---
+
+# Why not just $p\cdot y + (1-p)(1-y)$?
+
+A *linear* interpolation between $p$ and $1-p$ also gives the right answer at $y \in \{0, 1\}$ ·
+
+$$f(y) = p y + (1-p)(1-y)$$
+
+Evaluate · $f(1) = p$ ✓, $f(0) = 1-p$ ✓.
+
+But this form **fails the third requirement** · the product over $N$ samples doesn't collapse to a clean expression in $p$ and the counts of heads / tails. The exponential form $p^y (1-p)^{1-y}$ does ·
+
+$$\prod_{i=1}^N p^{y_i}(1-p)^{1 - y_i} = p^{\sum y_i}\,(1-p)^{N - \sum y_i} = p^{\#H}\,(1-p)^{\#T}$$
+
+**Only counts matter** — a clean *sufficient statistic*. This collapse is what makes the MLE derivation in Part 4 a one-liner.
+
+---
+
+# The compact form is the seed of BCE
+
+Take logs of the compact form ·
+
+<div class="math-box">
+
+$$\log P(Y = y \mid p) = y \log p + (1 - y) \log(1 - p)$$
+
+</div>
+
+Negate and average over a dataset and you get **binary cross-entropy** — *every* binary-classifier loss in this course.
+
+$$\text{BCE}(p, y) = -\bigl[y \log p + (1 - y) \log(1 - p)\bigr]$$
+
+The compact form turned a branching PMF into a single, differentiable expression that becomes the standard BCE loss. We'll use it every time.
 
 ---
 
@@ -420,6 +475,61 @@ For $N$ observations, draw a plate around the repeated part ·
 ![w:380px](figures/lec00/svg/plate_iid_bernoulli.svg)
 
 The plate says *"draw a fresh $Y_i$ for each $i$, all from the same Bernoulli($p$)."* The single $p$ outside the plate is **shared across all observations** — that is what makes the dataset *identically distributed*.
+
+---
+
+# Reading the plate · what's inside, what's outside
+
+<div class="math-box">
+
+| Where | What sits there | Why |
+|:-:|:-:|:-:|
+| **Outside** the plate | $p$ | a *single* parameter shared across all $i$ |
+| **Inside** the plate | $Y_i$ | one random variable per observation |
+| The arrow $p \to Y_i$ | "$p$ generates $Y_i$" | model structure |
+| The filled circle | $Y_i$ is observed | training data |
+
+</div>
+
+The picture *is* the factorisation $\;P(\mathcal{D}, p) = p(p) \cdot \prod_{i=1}^N P(Y_i \mid p)$ — drawn instead of written. Every probabilistic ML paper you read will assume you can switch between the two.
+
+---
+
+# Plate notation · spotting the IID assumption
+
+A node is **inside** the plate if it varies per sample. A node is **outside** if it's *shared*. The plate boundary is exactly where "identically distributed" lives.
+
+<div class="keypoint">
+
+**Quick test** · point at any node and ask "does this change with $i$?" If yes, draw it inside the plate. If no, draw it outside.
+
+</div>
+
+Examples in later lectures · in a VAE (L19) the *encoder weights* $\phi$ sit outside the plate but each *latent* $z_i$ sits inside. In a Bayesian neural net the *weights* sit outside, every observation $Y_i$ sits inside. **Same notation, deeper models.**
+
+---
+
+# Bernoulli · what we'd compute in code
+
+We now know the three things we *do* with any distribution. For Bernoulli($p = 0.6$) ·
+
+<div class="math-box">
+
+| Operation | Math | PyTorch |
+|:-:|:-:|:-:|
+| Sample | $Y \sim \text{Bernoulli}(p)$ | `dist.Bernoulli(0.6).sample((10,))` |
+| Score | $\log P(Y \mid p)$ | `d.log_prob(y)` |
+| Moments | $\mathbb{E}, \text{Var}$ | `d.mean, d.variance` |
+
+</div>
+
+Sample · score · know-the-moments. **These three operations are the entire interface** to any distribution we use in this course — Bernoulli, Categorical, Normal, Beta, Laplace, … all the same three.
+
+<div class="notebook">
+
+▶ **Notebook · [`lec00-bernoulli-playground.ipynb`](../notebooks/lec00-bernoulli-playground.ipynb)** — sample, score, IID factorisation, BCE = NLL of Bernoulli (all three operations from this slide, hands-on).
+
+</div>
 
 ---
 
