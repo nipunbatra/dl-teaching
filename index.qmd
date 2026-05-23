@@ -41,16 +41,17 @@ Each lecture maps to one or more UDL chapters — see the tables below and the f
 
 ---
 
-## Module 0 · A Probabilistic View of ML (spans 2 sessions, recommended pre-read)
+## Module 0 · A Probabilistic View of ML (two lectures, recommended pre-read)
 
 The spine that explains every loss and regularizer in the course. Linear and logistic regression, L1 / L2, KL — all derived from Bayes' rule, MLE, MAP, and information theory. Recommended for anyone who hasn't done probability recently; foundational for VAE, GAN, diffusion, RLHF, and distillation later.
 
-**Session 1** · distributions (Bernoulli / Categorical / Normal · why Normal · plate notation · sampling primitives · reparameterization trick) · Bayes' rule · MLE for coin / linear / logistic / multiclass.
-**Session 2** · MAP + L1/L2 from priors · KL divergence + forward vs reverse · how KL underlies VAE / diffusion / RLHF / distillation.
+**L00** · distributions (Bernoulli / Categorical / Normal · why Normal · plate notation · sampling primitives · reparameterization trick) · likelihood + NLL · MLE for coin / linear / logistic / multiclass — *MSE, BCE, CE pop out*.
+**L00B** · Bayes' rule · MAP = MLE + prior · L2 from Gaussian prior · L1 from Laplace prior · KL divergence + cross-entropy + forward vs reverse · how KL underlies VAE / diffusion / RLHF / distillation.
 
 | # | Topic | Reading | Slides | Notebook |
 |:---:|------|:-------:|:------:|:--------:|
-| 0 | A Probabilistic View of ML | Bishop &amp; Bishop §2.1–2.3, §4.1–4.3, §5.4; Murphy Ch 2 | [HTML](html/lec00-probability-mle-recap-lecture.html) · [PDF](pdf/lec00-probability-mle-recap-lecture.pdf) | [Notebook](notebooks/lec00-mle-map.ipynb) |
+| 0 | Distributions, Sampling, Likelihood, MLE | Bishop &amp; Bishop §2.1–2.3, §4.1–4.3 | [HTML](html/lec00-probability-mle-recap-lecture.html) · [PDF](pdf/lec00-probability-mle-recap-lecture.pdf) | [iid-demo](notebooks/lec00-iid-demo.ipynb) · [bernoulli-playground](notebooks/lec00-bernoulli-playground.ipynb) |
+| 0B | Bayes, MAP, Regularization, KL | Bishop &amp; Bishop §5.4; Murphy Ch 2 | [HTML](html/lec00b-bayes-map-kl-lecture.html) · [PDF](pdf/lec00b-bayes-map-kl-lecture.pdf) | [mle-map](notebooks/lec00-mle-map.ipynb) |
 
 ## Module 1 · Foundations &amp; Deep Networks (L1–L3)
 
