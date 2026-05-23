@@ -344,55 +344,177 @@ The MAP estimate is the point in $\theta$-space that **best balances** the data'
 
 # Gaussian prior · setup
 
-We choose a prior $p(\theta_j) = \mathcal{N}(0, \sigma_p^2)$ for every weight, independently. In words · *"a priori, weights are small and centred at zero."*
+We choose a prior $p(\theta_j) = \mathcal{N}(0, \sigma_p^2)$ for every weight, **independently**. In words · *"a priori, weights are small and centred at zero."*
 
 <div class="math-box">
 
-For a single weight ·
-$\log p(\theta_j) = -\dfrac{\theta_j^2}{2\sigma_p^2} + \text{const}$
+Start from the Gaussian density ·
+$$p(\theta_j) = \frac{1}{\sqrt{2\pi\sigma_p^2}}\,\exp\!\left(-\frac{\theta_j^2}{2\sigma_p^2}\right)$$
 
-For the whole vector $\boldsymbol\theta \in \mathbb{R}^d$ (independent prior on each component) ·
-$\log p(\boldsymbol\theta) = \sum_j \log p(\theta_j) = -\dfrac{1}{2\sigma_p^2}\sum_j \theta_j^2 + \text{const} = -\dfrac{1}{2\sigma_p^2}\|\boldsymbol\theta\|_2^2 + \text{const}$
+Take the log of both sides ·
+$$\log p(\theta_j) = -\log\sqrt{2\pi\sigma_p^2} - \frac{\theta_j^2}{2\sigma_p^2}$$
+
+The first term doesn't depend on $\theta_j$ — call it a constant ·
+$$\log p(\theta_j) = -\frac{\theta_j^2}{2\sigma_p^2} + \text{const}$$
 
 </div>
-
-The constant doesn't depend on $\boldsymbol\theta$, so it drops out of the optimization.
 
 ---
 
-# Gaussian prior · L2 pops out
+# Gaussian prior · stack across all weights
 
-Plug into the MAP objective ·
-
-$$L_{\text{MAP}}(\boldsymbol\theta) = L_{\text{NLL}}(\boldsymbol\theta) - \log p(\boldsymbol\theta)$$
-$$= L_{\text{NLL}}(\boldsymbol\theta) + \frac{1}{2\sigma_p^2}\|\boldsymbol\theta\|_2^2 + \text{const}$$
+Independence across the $d$ weights means the joint factorises ·
 
 <div class="math-box">
 
-$$\boxed{\;L_{\text{MAP}}(\boldsymbol\theta) = L_{\text{NLL}}(\boldsymbol\theta) + \lambda\,\|\boldsymbol\theta\|_2^2,\qquad \lambda := \frac{1}{2\sigma_p^2}\;}$$
+$$p(\boldsymbol\theta) = \prod_{j=1}^d p(\theta_j)$$
+
+Take log · product becomes a sum ·
+$$\log p(\boldsymbol\theta) = \sum_{j=1}^d \log p(\theta_j) = \sum_{j=1}^d \left(-\frac{\theta_j^2}{2\sigma_p^2}\right) + \text{const}$$
+
+Pull the $-1/(2\sigma_p^2)$ out of the sum ·
+$$\log p(\boldsymbol\theta) = -\frac{1}{2\sigma_p^2}\underbrace{\sum_{j=1}^d \theta_j^2}_{=\,\|\boldsymbol\theta\|_2^2} + \text{const} \;=\; -\frac{1}{2\sigma_p^2}\,\|\boldsymbol\theta\|_2^2 + \text{const}$$
 
 </div>
 
-**This is exactly L2 regularization (a.k.a. ridge, weight decay).**
+The constant drops out of any $\arg\min$. **Keep $-\dfrac{1}{2\sigma_p^2}\|\boldsymbol\theta\|_2^2$** — that's the only $\boldsymbol\theta$-dependent piece.
 
-- Strong prior (small $\sigma_p^2$) ⇒ large $\lambda$ ⇒ heavy penalty ⇒ weights pulled hard to zero.
+---
+
+# Gaussian prior · L2 pops out (step by step)
+
+**Start** · MAP objective ·
+$$\hat{\boldsymbol\theta}_{\text{MAP}} = \arg\min_{\boldsymbol\theta} \bigl[\,L_{\text{NLL}}(\boldsymbol\theta) - \log p(\boldsymbol\theta)\,\bigr]$$
+
+**Substitute** the Gaussian log-prior we just derived ·
+$$= \arg\min_{\boldsymbol\theta} \bigl[\,L_{\text{NLL}}(\boldsymbol\theta) - \bigl(-\tfrac{1}{2\sigma_p^2}\|\boldsymbol\theta\|_2^2 + \text{const}\bigr)\,\bigr]$$
+
+**Distribute the minus** and drop the constant ·
+$$= \arg\min_{\boldsymbol\theta} \bigl[\,L_{\text{NLL}}(\boldsymbol\theta) + \tfrac{1}{2\sigma_p^2}\|\boldsymbol\theta\|_2^2\,\bigr]$$
+
+**Rename** $\lambda := \dfrac{1}{2\sigma_p^2}$ to match standard ML notation ·
+
+<div class="math-box">
+
+$$\boxed{\;\hat{\boldsymbol\theta}_{\text{MAP}} = \arg\min_{\boldsymbol\theta} \bigl[\,L_{\text{NLL}}(\boldsymbol\theta) + \lambda\,\|\boldsymbol\theta\|_2^2\,\bigr]\;}$$
+
+</div>
+
+**This is exactly L2 regularization (a.k.a. ridge / weight decay).**
+
+- Strong prior (small $\sigma_p^2$) ⇒ large $\lambda$ ⇒ heavy penalty.
 - Weak prior (large $\sigma_p^2$) ⇒ small $\lambda$ ⇒ MAP $\to$ MLE.
 
+**DL linkage** · this is the `weight_decay` argument of `torch.optim.SGD` and `AdamW`. Every `weight_decay = 1e-4` you've written is a *Gaussian prior with $\sigma_p^2 = 5000$* on every weight. You've been doing Bayes the whole time.
+
 ---
 
-# Worked numeric · MAP with L2
+# Worked numeric · MAP with L2 (loss value)
 
-Linear regression. Suppose at the MLE estimate, the NLL is $L_{\text{NLL}} = 0.50$. Weight vector $\boldsymbol\theta = [3, -4]$ — so $\|\boldsymbol\theta\|_2^2 = 9 + 16 = 25$.
+Linear regression. At some candidate $\boldsymbol\theta = [3, -4]$, suppose NLL evaluates to $L_{\text{NLL}} = 0.50$.
 
-Pick $\lambda = 0.01$ (corresponds to $\sigma_p^2 = 50$ — a fairly weak prior).
+**Step 1 · compute $\|\boldsymbol\theta\|_2^2$.**
+$$\|\boldsymbol\theta\|_2^2 = 3^2 + (-4)^2 = 9 + 16 = 25$$
+
+**Step 2 · pick $\lambda = 0.01$** (this is a fairly weak prior since $\sigma_p^2 = 1/(2\lambda) = 50$).
+
+**Step 3 · plug into the boxed formula.**
 
 <div class="math-box">
 
-$L_{\text{MAP}} = 0.50 + 0.01 \cdot 25 = 0.50 + 0.25 = \mathbf{0.75}$
+$$L_{\text{MAP}} = L_{\text{NLL}} + \lambda \|\boldsymbol\theta\|_2^2 = 0.50 + 0.01 \cdot 25 = 0.50 + 0.25 = \mathbf{0.75}$$
 
 </div>
 
-The optimizer now pays a price for large weights. Since the gradient of $\|\theta\|^2$ is $2\theta$, every step **shrinks weights by a factor $(1 - 2\eta\lambda)$** before the data update. This is exactly **weight decay** — and you'll see this exact form again in Adam vs AdamW (L5).
+The optimizer now pays a 0.25 "tax" for these large weights.
+
+---
+
+# Worked numeric · MAP with L2 (gradient + update)
+
+Same setup. What does **one SGD step** look like with $\eta = 0.1$?
+
+**Gradient of the L2 term** ·
+$$\nabla_{\boldsymbol\theta} \bigl(\lambda \|\boldsymbol\theta\|_2^2\bigr) = 2\lambda\,\boldsymbol\theta = 2(0.01)\boldsymbol\theta = 0.02\,\boldsymbol\theta$$
+
+**Combined gradient** (assuming the data gradient is some vector $\mathbf{g}$) ·
+$$\nabla L_{\text{MAP}} = \mathbf{g} + 2\lambda\,\boldsymbol\theta$$
+
+**SGD update** ·
+$$\boldsymbol\theta \leftarrow \boldsymbol\theta - \eta\bigl(\mathbf{g} + 2\lambda\,\boldsymbol\theta\bigr) = \underbrace{(1 - 2\eta\lambda)}_{\text{shrink}}\boldsymbol\theta \;-\; \eta\,\mathbf{g}$$
+
+<div class="math-box">
+
+The weight is **multiplied by $(1 - 2\eta\lambda) = 1 - 0.002 = 0.998$** *before* the data update is applied.
+
+$$\boldsymbol\theta_{\text{after shrink}} = 0.998 \cdot [3, -4] = [2.994, -3.992]$$
+
+</div>
+
+This is *literally* the **weight decay** step in `torch.optim.SGD(..., weight_decay=λ)`. Read the source · it really is one line that multiplies $\boldsymbol\theta$ by $(1 - 2\eta\lambda)$. **You'll meet this exact pattern again in AdamW** (L5).
+
+---
+
+# Laplace prior · setup
+
+Now choose a prior $p(\theta_j) = \text{Laplace}(0, b)$ — same idea (centred at zero) but **heavier tails and a sharper peak at zero**.
+
+<div class="math-box">
+
+Start from the Laplace density ·
+$$p(\theta_j) = \frac{1}{2b}\,\exp\!\left(-\frac{|\theta_j|}{b}\right)$$
+
+Take the log ·
+$$\log p(\theta_j) = -\log(2b) - \frac{|\theta_j|}{b}$$
+
+The first term doesn't depend on $\theta_j$ ·
+$$\log p(\theta_j) = -\frac{|\theta_j|}{b} + \text{const}$$
+
+</div>
+
+Notice · the exponent is $|\theta_j|$ — **linear** in the absolute value. Compare to Gaussian's $\theta_j^2$ — **quadratic**. This single difference produces all of L1's distinctive behaviour.
+
+---
+
+# Laplace prior · stack across all weights
+
+Independent prior on each weight $\Rightarrow$ joint factorises ·
+
+<div class="math-box">
+
+$$\log p(\boldsymbol\theta) = \sum_{j=1}^d \log p(\theta_j) = \sum_{j=1}^d \left(-\frac{|\theta_j|}{b}\right) + \text{const}$$
+
+Pull out $-1/b$ ·
+$$\log p(\boldsymbol\theta) = -\frac{1}{b}\underbrace{\sum_{j=1}^d |\theta_j|}_{=\,\|\boldsymbol\theta\|_1} + \text{const} \;=\; -\frac{1}{b}\,\|\boldsymbol\theta\|_1 + \text{const}$$
+
+</div>
+
+Same structural moves as the Gaussian case · only the *form* of the per-weight penalty differs.
+
+---
+
+# Laplace prior · L1 pops out (step by step)
+
+**Start** · MAP objective ·
+$$\hat{\boldsymbol\theta}_{\text{MAP}} = \arg\min_{\boldsymbol\theta} \bigl[\,L_{\text{NLL}}(\boldsymbol\theta) - \log p(\boldsymbol\theta)\,\bigr]$$
+
+**Substitute** Laplace log-prior ·
+$$= \arg\min_{\boldsymbol\theta} \bigl[\,L_{\text{NLL}}(\boldsymbol\theta) - \bigl(-\tfrac{1}{b}\|\boldsymbol\theta\|_1 + \text{const}\bigr)\,\bigr]$$
+
+**Distribute minus**, drop constant ·
+$$= \arg\min_{\boldsymbol\theta} \bigl[\,L_{\text{NLL}}(\boldsymbol\theta) + \tfrac{1}{b}\|\boldsymbol\theta\|_1\,\bigr]$$
+
+**Rename** $\lambda := 1/b$ ·
+
+<div class="math-box">
+
+$$\boxed{\;\hat{\boldsymbol\theta}_{\text{MAP}} = \arg\min_{\boldsymbol\theta} \bigl[\,L_{\text{NLL}}(\boldsymbol\theta) + \lambda\,\|\boldsymbol\theta\|_1\,\bigr]\;}$$
+
+</div>
+
+**This is exactly L1 regularization (a.k.a. lasso).**
+
+**DL linkage** · L1 isn't typically a built-in optimizer option (it has a kink at 0 — see next slide for why that matters). To use it you add `lambda * w.abs().sum()` to the loss manually, or use **proximal gradient (ISTA)** which has a clean soft-thresholding step that produces *exact* zeros. We do this in [`lec00-mle-map.ipynb`](../notebooks/lec00-mle-map.ipynb).
 
 ---
 
@@ -449,7 +571,51 @@ Think of MAP as minimizing the loss subject to the prior. In 2D ·
 
 </div>
 
-L1's sparsity is a direct consequence of the **diamond geometry** of the Laplace prior — corners that lie exactly on the coordinate axes are the most likely touchpoints. Move to high dimensions and there are exponentially many corners → many features get zeroed simultaneously.
+---
+
+# Why L1 produces sparse solutions · the algebra
+
+Why does L1 *literally* drive a coordinate to **exact zero**? The gradient.
+
+<div class="math-box">
+
+**L2 gradient at a small weight** · $\nabla (\lambda \theta_j^2) = 2\lambda \theta_j$ — *proportional to $\theta_j$*. As $\theta_j \to 0$ the pull *also* goes to zero, so the weight settles near (but not at) zero.
+
+**L1 gradient at a small weight** · $\nabla(\lambda |\theta_j|) = \lambda \cdot \text{sign}(\theta_j)$ — **constant magnitude** $\lambda$, no matter how small $\theta_j$. The pull *never weakens.*
+
+</div>
+
+**Concrete · suppose the data gradient on $\theta_j$ is $g$.**
+
+- If $|g| < \lambda$ · the L1 penalty's constant pull **dominates** for *any* small $\theta_j$ — the optimum is $\theta_j = 0$ (kink at the origin).
+- If $|g| > \lambda$ · the data wins · $\theta_j$ settles at a non-zero value (specifically $\theta_j = g - \lambda \cdot \text{sign}(g)$ after one proximal step from zero — *soft-thresholding*).
+
+This is the **proximal / ISTA soft-thresholding update** ·
+$$\theta_j \leftarrow \text{sign}(\theta_j)\,\max\!\bigl(|\theta_j| - \eta\lambda,\;0\bigr)$$
+
+The $\max(\cdot, 0)$ is what *literally* clamps weights to zero · L2 never does this.
+
+---
+
+# Worked numeric · L1 zeroes a weight, L2 doesn't
+
+Same data gradient $g = 0.3$ acts on a tiny weight $\theta_j = 0.05$. $\eta = 1$, $\lambda = 0.5$.
+
+<div class="math-box">
+
+**L2 update** · $\theta_j \leftarrow \theta_j - \eta(g + 2\lambda \theta_j) = 0.05 - (0.3 + 2 \cdot 0.5 \cdot 0.05) = 0.05 - 0.35 = \mathbf{-0.30}$.
+*Crossed zero, didn't land on it.*
+
+**L1 (proximal / ISTA) update.**
+
+Step 1 · gradient step on data term · $\theta'_j = 0.05 - 0.3 = -0.25$.
+Step 2 · soft-threshold with $\eta\lambda = 0.5$ · $\theta_j \leftarrow \text{sign}(-0.25) \cdot \max(0.25 - 0.5, 0) = -1 \cdot 0 = \mathbf{0}$.
+
+</div>
+
+**L1 produced an exact zero; L2 did not.** That's the entire reason lasso induces *feature selection* and ridge does not.
+
+**DL linkage** · this is **why early stopping + L2 weight decay** is the dominant DL recipe (we don't usually need exact sparsity in neural networks), but **L1 is the right tool for interpretable linear models** and for *learning a sparse mask* (think · MoE routing, structured pruning · L23).
 
 ---
 
@@ -787,10 +953,18 @@ This is the full proof of **Gibbs' inequality**. Jensen's inequality is the same
 
 ---
 
-# Cross-entropy = entropy + KL
+# Cross-entropy = entropy + KL · derive it
 
-Algebra ·
-$$H(p, q) := -\mathbb{E}_p[\log q(Y)] = -\mathbb{E}_p[\log p(Y)] + \mathbb{E}_p\!\left[\log\tfrac{p(Y)}{q(Y)}\right] = H(p) + \text{KL}(p \| q)$$
+**Definition** ·
+$$H(p, q) := -\mathbb{E}_{Y \sim p}[\log q(Y)] = -\sum_y p(y) \log q(y)$$
+
+**Algebra · add and subtract $\log p(Y)$ inside the expectation** ·
+
+$$H(p, q) = -\mathbb{E}_p[\log q(Y)]$$
+
+$$= -\mathbb{E}_p\bigl[\log p(Y) - \log p(Y) + \log q(Y)\bigr]$$
+
+$$= \underbrace{-\mathbb{E}_p[\log p(Y)]}_{=\,H(p)} \;+\; \underbrace{\mathbb{E}_p\!\left[\log p(Y) - \log q(Y)\right]}_{=\,\mathbb{E}_p[\log(p(Y)/q(Y))] \,=\, \text{KL}(p \,\|\, q)}$$
 
 <div class="math-box">
 
@@ -798,11 +972,12 @@ $$\boxed{\;H(p, q) \;=\; H(p) \;+\; \text{KL}(p \,\|\, q)\;}$$
 
 </div>
 
-- **Cross-entropy $H(p, q)$** · "expected bits to encode samples from $p$ if we used a code optimized for $q$."
-- **Entropy $H(p)$** · "the irreducible cost of encoding $p$." Independent of $q$.
-- **KL** · the *extra* bits we waste because $q \ne p$.
+**Reading each term ·**
+- **Cross-entropy $H(p, q)$** · expected bits to encode samples from $p$ if we used a code optimized for $q$.
+- **Entropy $H(p)$** · irreducible cost. Independent of $q$.
+- **KL** · the *extra* bits we waste because $q \ne p$. Always $\ge 0$.
 
-For classification with a **one-hot true label** $p$, $H(p) = 0$ — so cross-entropy *is* KL. That's why we say "the classifier loss minimizes KL to the true label."
+**Why this matters for classification** · the **true label** distribution $p$ is one-hot. $H(\text{one-hot}) = 0$ (no uncertainty). So in that case · **cross-entropy = KL**. Minimising the cross-entropy loss *is* minimising KL to the true label distribution.
 
 ---
 
@@ -864,21 +1039,30 @@ So the score we already maximize is the *negative cross-entropy* between the emp
 
 ---
 
-# MLE through the KL lens · result
+# MLE through the KL lens · result (step by step)
 
-Use $H(p, q) = H(p) + \text{KL}(p\|q)$ and drop $H(\hat p_{\text{data}})$ as constant in $\theta$ ·
+**Step 1 · normalize log-likelihood.** Divide by $N$ ·
+$$\frac{1}{N}\ell(\boldsymbol\theta) = \frac{1}{N}\sum_{i=1}^N \log p_{\boldsymbol\theta}(y_i) = \mathbb{E}_{Y \sim \hat p_{\text{data}}}\bigl[\log p_{\boldsymbol\theta}(Y)\bigr]$$
+
+**Step 2 · recognise the right-hand side** as the **negative cross-entropy** between $\hat p_{\text{data}}$ and $p_{\boldsymbol\theta}$ ·
+$$\mathbb{E}_{\hat p_{\text{data}}}[\log p_{\boldsymbol\theta}] \;=\; -H(\hat p_{\text{data}}, p_{\boldsymbol\theta})$$
+
+**Step 3 · apply the identity** from the previous derivation ·
+$$H(\hat p_{\text{data}}, p_{\boldsymbol\theta}) \;=\; H(\hat p_{\text{data}}) + \text{KL}(\hat p_{\text{data}} \,\|\, p_{\boldsymbol\theta})$$
+
+**Step 4 · drop the constant.** $H(\hat p_{\text{data}})$ doesn't depend on $\boldsymbol\theta$, so it doesn't affect the $\arg\max$ ·
 
 <div class="math-box">
 
-$$\arg\max_\theta \,\ell(\theta) \;=\; \arg\min_\theta \,H(\hat p_{\text{data}}, p_\theta) \;=\; \arg\min_\theta \,\text{KL}(\hat p_{\text{data}} \,\|\, p_\theta)$$
+$$\arg\max_{\boldsymbol\theta}\, \ell(\boldsymbol\theta) \;=\; \arg\min_{\boldsymbol\theta}\, H(\hat p_{\text{data}}, p_{\boldsymbol\theta}) \;=\; \arg\min_{\boldsymbol\theta}\, \text{KL}(\hat p_{\text{data}} \,\|\, p_{\boldsymbol\theta})$$
 
 </div>
 
 **MLE = make the model distribution as KL-close as possible to the empirical distribution.**
 
-Same machinery, two-distribution view. Every classifier you've trained with cross-entropy has been silently minimizing this KL — to the one-hot empirical distribution of class labels.
+**DL linkage** · *every* classifier you have ever trained with cross-entropy loss has been **silently minimizing this KL** — to the one-hot empirical distribution of class labels. The "summed per-example loss" you write in code is *exactly* the KL up to a constant.
 
-This is also why MLE is **mode-covering** (forward KL) — covered in the "forward vs reverse KL" slide.
+This is also why MLE is **mode-covering** (forward KL) — the next-but-one slide makes the failure mode visible.
 
 ---
 
