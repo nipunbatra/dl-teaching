@@ -66,7 +66,7 @@ Stop and decide. By the end of L08 the answer should feel obvious — and you'll
 
 </div>
 
-This is **the most common practical task** in industry CV. The answer is (c), and the reason is **transfer learning** — the second half of today.
+This is **the most common practical task** in industry CV. We'll revisit your answer at the end of the lecture.
 
 ---
 
@@ -76,7 +76,7 @@ This is **the most common practical task** in industry CV. The answer is (c), an
 
 # Inception · parallel kernels
 
-Let SGD pick the right receptive field
+Which kernel size is right — and why pick just one?
 
 ---
 
@@ -145,7 +145,7 @@ Total: $64 + 144 + 128 = \mathbf{336}$ params. **~13.7× cheaper** for the same 
 
 # ResNet in CNNs
 
-Skip connections · bottleneck blocks
+Why did *deeper* plain networks get *worse*?
 
 ---
 
@@ -248,6 +248,10 @@ $\mathbf{W}_s$ is a **1×1 conv with the same stride** as the main branch:
 
 Now we can add. Everything else stays residual.
 
+---
+
+# The bottleneck block · in code
+
 ```python
 class Bottleneck(nn.Module):
     expansion = 4
@@ -259,6 +263,8 @@ class Bottleneck(nn.Module):
         self.bn1, self.bn2, self.bn3 = [nn.BatchNorm2d(x) for x in (c, c, c*self.expansion)]
         self.shortcut = nn.Conv2d(c_in, c*self.expansion, 1, stride) if stride != 1 or c_in != c*self.expansion else nn.Identity()
 ```
+
+The last line **is** the projection shortcut $\mathbf{W}_s$ — a 1×1 conv used only when shapes disagree, `nn.Identity()` otherwise.
 
 ---
 
@@ -274,7 +280,7 @@ class Bottleneck(nn.Module):
 
 <div class="realworld">
 
-ResNet-50 is the workhorse. Unless you have a specific reason, start there for any CNN task you face in 2026.
+ResNet-50 is the workhorse. Unless you have a specific reason, start there for any CNN task you face today.
 
 </div>
 
@@ -286,7 +292,7 @@ ResNet-50 is the workhorse. Unless you have a specific reason, start there for a
 
 # MobileNet · efficient CNNs
 
-Depthwise separable convolutions
+Can a CNN run in 30 ms on a phone?
 
 ---
 
@@ -325,13 +331,9 @@ $\text{cost}_1 = (D_K \cdot D_K \cdot 1) \cdot C = D_K^2\,C$
 2. **Pointwise** · 1×1 conv mixing the $C$ channels into $C$ new ones:
 $\text{cost}_2 = (1 \cdot 1 \cdot C) \cdot C = C^2$
 
-Total: $D_K^2\,C + C^2$.
+Total: $D_K^2\,C + C^2$. For $D_K = 3,\ C = 128$: $147{,}456 \to 17{,}536$ — **~8.4× cheaper.**
 
-**Numeric ($D_K = 3,\ C = 128$):**
-- Standard: $9 \cdot 16{,}384 = 147{,}456$.
-- Depthwise: $9 \cdot 128 = 1{,}152$. Pointwise: $128^2 = 16{,}384$. Total: $\mathbf{17{,}536}$.
-
-**~8.4× cheaper.** Accuracy drop ~1%. Speedup 8–10×. In every mobile model since 2017.
+Accuracy drop ~1%. Speedup 8–10×. In every mobile model since 2017.
 
 ---
 
@@ -383,7 +385,21 @@ Real-time on-device tasks (camera AR, live caption, wake-word) need ≤30 ms bud
 
 # EfficientNet · compound scaling
 
-Scale depth, width, and resolution together
+Deeper, wider, or higher-res — which knob do you turn?
+
+---
+
+# How do we make a network "bigger"?
+
+You have a baseline net (a small car engine). Three knobs to make it more powerful:
+
+1. **Depth** · add more layers (more cylinders).
+2. **Width** · more channels per layer (wider cylinders).
+3. **Resolution** · feed it bigger images (higher-octane fuel).
+
+The old way · pick one knob, turn it all the way up (VGG → depth · WideResNet → width · ProGAN → resolution).
+
+Is one knob enough?
 
 ---
 
@@ -401,19 +417,6 @@ EfficientNet's insight · the same is true of neural networks. Depth, width, and
 
 ---
 
-# How do we make a network "bigger"?
-
-You have a baseline net (a small car engine). Three knobs to make it more powerful:
-
-1. **Depth** · add more layers (more cylinders).
-2. **Width** · more channels per layer (wider cylinders).
-3. **Resolution** · feed it bigger images (higher-octane fuel).
-
-The old way · pick one knob, turn it all the way up (VGG → depth · WideResNet → width · ProGAN → resolution).
-**EfficientNet's idea** · turn **all three** up *in balance*.
-
----
-
 # Compound scaling · the rule
 
 Define a single scaling knob $\phi$. Choose constants $\alpha, \beta, \gamma$ once via grid search.
@@ -423,13 +426,13 @@ subject to $\alpha \cdot \beta^2 \cdot \gamma^2 \approx 2$ (so doubling $\phi$ d
 
 For EfficientNet-B0..B7, the paper found roughly $\alpha = 1.2,\ \beta = 1.1,\ \gamma = 1.15$.
 
-**Worked numeric · scaling B0 → B2 ($\phi = 2$).**
+**Worked numeric · scaling B0 → B3 ($\phi = 2$).**
 
 - Depth: $1.2^2 = 1.44$ → ~44% deeper.
 - Width: $1.1^2 = 1.21$ → ~21% more channels.
-- Resolution: $1.15^2 \approx 1.32 \to 224 \cdot 1.32 \approx 296$ (rounded to 300 for B3).
+- Resolution: $1.15^2 \approx 1.32 \to 224 \cdot 1.32 \approx 296$ (the paper rounds to 300).
 
-Single $\phi$ gives a principled way to scale the whole architecture instead of guessing.
+Check against the table on the next slide: B3 has depth 1.4, width 1.2, res 300. ✓ One knob $\phi$, no guessing.
 
 ---
 
@@ -445,7 +448,7 @@ Single $\phi$ gives a principled way to scale the whole architecture instead of 
 
 <div class="realworld">
 
-EfficientNet set the accuracy/param Pareto frontier for 2019–2021 before Vision Transformers took over.
+EfficientNet set the accuracy/param Pareto frontier for 2019–2021 — until ViTs took over, and ConvNeXt showed a modernized ResNet could match it. The compound-scaling *idea* outlived the architecture.
 
 </div>
 
@@ -457,7 +460,7 @@ EfficientNet set the accuracy/param Pareto frontier for 2019–2021 before Visio
 
 # Transfer learning
 
-The skill you'll use 90% of the time
+1.2M images already taught a net what an edge is — why relearn it?
 
 ---
 
@@ -475,7 +478,7 @@ The pretrained network is a **learned prior**. You're not training from random i
 
 ---
 
-# The premise
+# What the backbone already knows
 
 ImageNet pretraining gives you a **generic vision stack**:
 
@@ -502,10 +505,17 @@ ImageNet pretraining gives you a **generic vision stack**:
 
 Almost always Option 2 wins when labels are scarce. Now · how to adapt?
 
-**Jargon unpacked**
+---
+
+# Jargon unpacked
+
+Three words you'll hear in every transfer-learning conversation:
+
 - **Backbone** · the conv body of the pretrained net. The "feature extractor."
 - **Head** · the final classifier layers. We discard the original ImageNet head (1000 classes) and add our own (e.g. 102 flower classes).
 - **Freezing** · setting `requires_grad=False`. Optimizer skips that layer; it's a fixed feature extractor.
+
+The three recipes that follow are just different choices of *how much backbone to freeze*.
 
 ---
 
@@ -537,23 +547,6 @@ Smaller data → more frozen. Larger data → more trainable. If you have 1M lab
 
 ---
 
-# The bitter truth · negative transfer
-
-<div class="warning">
-
-Sometimes transfer learning **hurts**. Medical MRI → ImageNet-pretrained ResNet. Natural photos teach features that don't transfer to grayscale medical modalities.
-
-</div>
-
-Symptoms:
-- Val loss starts higher with pretraining than from scratch
-- Fine-tuned performance plateaus
-- Early layers still detect ImageNet-like edges; later layers never adapt
-
-Fix · try from-scratch, or use **domain-specific pretraining** (RadImageNet for medical, SatCLIP for satellite). Generic features aren't universal.
-
----
-
 # Discriminative (layer-wise) learning rates
 
 When you do unfreeze early layers, they should learn more *slowly* than late layers — early layers are already good.
@@ -579,19 +572,36 @@ fastai popularized "1cycle + discriminative LRs" for transfer learning — often
 
 ---
 
-# When transfer learning fails
+# The bitter truth · negative transfer
 
 <div class="warning">
 
-**Large domain gap.** ImageNet (natural photos) → medical X-rays, satellite imagery, microscopy. Early-layer features may still transfer; late-layer features definitely won't.
-
-**Very different image sizes.** ImageNet is 224×224; medical imaging may be 1024+. You may need to resize or re-pretrain.
-
-**Very small target dataset** (≪ 100 examples). Even linear probing won't save you — consider self-supervised pretraining on your domain first (L17).
+Sometimes transfer learning **hurts**. Medical MRI → ImageNet-pretrained ResNet. Natural photos teach features that don't transfer to grayscale medical modalities.
 
 </div>
 
-In those cases — pre-train on a closer domain, or use self-supervised methods (coming in L17).
+Symptoms:
+- Val loss starts higher with pretraining than from scratch
+- Fine-tuned performance plateaus
+- Early layers still detect ImageNet-like edges; later layers never adapt
+
+---
+
+# When to expect negative transfer
+
+Three warning signs, visible *before* you even train:
+
+<div class="warning">
+
+**Large domain gap.** ImageNet (natural photos) → X-rays, satellite imagery, microscopy. Early-layer features may still transfer; late-layer features definitely won't.
+
+**Very different image sizes.** ImageNet is 224×224; medical imaging may be 1024+. You may need to resize or re-pretrain.
+
+**Very small target dataset** (≪ 100 examples). Even linear probing won't save you.
+
+</div>
+
+Fix · train a from-scratch baseline to compare, pre-train on a closer domain (RadImageNet for medical, SatCLIP for satellite), or use self-supervised pretraining on your own unlabeled data (L17).
 
 ---
 
@@ -607,7 +617,7 @@ In those cases — pre-train on a closer domain, or use self-supervised methods 
 
 <div class="realworld">
 
-In 2026, **DINOv2** (self-supervised on 142M images) is often the starting point for vision-backbone features — even better than ImageNet-supervised ResNets for downstream tasks.
+As of this writing, **DINOv2** (self-supervised on 142M images) is often the starting point for vision-backbone features — even better than ImageNet-supervised ResNets for downstream tasks.
 
 </div>
 
@@ -637,11 +647,13 @@ opt = torch.optim.AdamW(model.fc.parameters(), lr=1e-3)
 for p in model.layer4.parameters(): p.requires_grad = True
 ```
 
+**Preprocessing contract** · use the *same* resize + normalization as pretraining — `ResNet50_Weights.IMAGENET1K_V2.transforms()` hands them to you.
+
 ---
 
 # The `timm` ecosystem
 
-For 2026, stop hand-rolling architectures:
+These days, stop hand-rolling architectures:
 
 ```python
 import timm
@@ -693,7 +705,7 @@ The 1000-image plant-disease problem? Answer **(c) pretrained ResNet-50, replace
 
 </div>
 
-This is the **default for any CV task with <100k labelled images** in 2026. Few exceptions.
+This is currently the **default for any CV task with <100k labelled images**. Few exceptions.
 
 ---
 
@@ -707,6 +719,14 @@ This is the **default for any CV task with <100k labelled images** in 2026. Few 
 
 **P3.** EfficientNet's compound scaling uses $d = \alpha^\phi$, $w = \beta^\phi$, $r = \gamma^\phi$ with $\alpha\cdot\beta^2\cdot\gamma^2 \approx 2$. Why the squared on $\beta$ and $\gamma$? (Hint · FLOPs scaling.)
 
+</div>
+
+---
+
+# Practice problems · transfer learning
+
+<div class="math-box">
+
 **P4.** Transfer-learn ResNet-50 on a 5-class problem. (a) Which layers do you freeze for the first epoch? (b) When do you unfreeze the rest? (c) What LR do you use for the new head vs the unfrozen backbone — and why?
 
 **P5.** Skip connections in ResNet enable **identity mapping** when $\mathcal{F}(x) \approx 0$. Why is this so much easier to learn than approximating identity through $\mathcal{F}(x) \approx x$?
@@ -714,6 +734,18 @@ This is the **default for any CV task with <100k labelled images** in 2026. Few 
 **P6.** Squeeze-and-Excitation block adds a global pool + small MLP + sigmoid to rescale channels. How many extra parameters for SE($r=16$) on a 512-channel feature map? Why is this almost free compared to the conv before it?
 
 </div>
+
+---
+
+# What breaks · symptom → suspect → test
+
+| Symptom | Suspect | Fastest test |
+|---|---|---|
+| Fine-tuned net does *worse* than linear probe | backbone LR too high — wrecked pretrained features | redo with backbone LR ÷10, head LR unchanged |
+| Val accuracy stuck at chance with a pretrained model | forgot to replace the 1000-way head, or wrong mean/std | `print(model.fc)` · check transforms use ImageNet stats |
+| Loss never moves at all | froze everything, including the new head | count params with `requires_grad=True` |
+| Train accuracy fine, eval accuracy collapses | BatchNorm running stats drifting in the "frozen" backbone | call `.eval()` on frozen backbone, re-measure |
+| Pretraining helps on photos, hurts on X-rays | negative transfer — domain gap too large | train a small from-scratch baseline, compare val curves |
 
 ---
 
@@ -728,6 +760,7 @@ This is the **default for any CV task with <100k labelled images** in 2026. Few 
 - **Compound scaling** (EfficientNet) — scale depth × width × resolution together.
 - **Transfer learning** recipes — feature-extract · fine-tune top · fine-tune all. Match to data size.
 - **Practically** · start from `timm.create_model('resnet50', pretrained=True)` and go from there.
+- The same freeze/fine-tune recipe transfers verbatim to ViTs and CLIP backbones (L17–L18).
 
 ### Read before Lecture 9
 
@@ -742,3 +775,15 @@ Bishop Ch 10 + CS231n OD notes (UDL doesn't cover detection/segmentation).
 **Notebook 8** · `08-transfer-learning.ipynb` — fine-tune ResNet-50 on Flowers-102 with discriminative LRs, measure effect of freezing depth.
 
 </div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**Skip connections let layers learn corrections instead of replacements.**
+
+</div>
+
+*Next: one frozen backbone, many tasks — detection and segmentation reuse everything you just learned.*

@@ -45,7 +45,7 @@ You learned in ES 654 that L2 / L1 regularization "shrinks weights." We never sa
 (b) They're arbitrary penalties · pick whichever generalizes on val data.
 (c) Each is the **negative log of a prior distribution on $\boldsymbol\theta$** — L2 ⟺ Gaussian prior · L1 ⟺ Laplace prior.
 
-Stop and guess. By the end of L00B the answer is **(c)** — derived from one machinery (MAP).
+Stop and guess — and hold your answer. By the end of L00B you won't just know which it is; you'll be able to **derive** it from one machinery (MAP).
 
 </div>
 
@@ -81,10 +81,26 @@ By the end of this lecture you will be able to ·
 
 ---
 
+# Bridge from ES 654 · you already know this
+
+| From ES 654 | What changes today |
+|---|---|
+| Ridge penalty $\lambda \lVert \boldsymbol\theta \rVert_2^2$, used as a knob | revealed as a **Gaussian prior** on the weights |
+| Lasso penalty $\lambda \lVert \boldsymbol\theta \rVert_1$, used as a knob | revealed as a **Laplace prior** on the weights |
+| "L1 gives sparsity" — memorized | **derived** — from the prior's kink at zero |
+| Cross-entropy as a loss formula | re-read as entropy + KL · the course's central distance |
+
+<div class="keypoint">
+
+Ridge = Gaussian prior · Lasso = Laplace prior. In ES 654 you used these as penalties; today you see *why* they're priors.
+
+</div>
+
+---
 
 <!-- _class: section-divider -->
 
-### PART 3
+### PART 1
 
 # Bayes' rule
 
@@ -235,6 +251,14 @@ Practical issue · for general distributions, the posterior may not be in the sa
 
 ---
 
+# Conjugate updating · Beta prior, in pictures
+
+![w:760px](figures/lec00/svg/beta_binomial_update.svg)
+
+Beta prior + Bernoulli likelihood → Beta posterior · the update is pure arithmetic, $\text{Beta}(\alpha, \beta) \to \text{Beta}(\alpha + \#H,\, \beta + \#T)$. More flips ⇒ the posterior sharpens; the prior's pull fades.
+
+---
+
 # Estimator #1 · Maximum Likelihood (MLE)
 
 The simplest possible estimator · **ignore the prior**, just maximize the likelihood.
@@ -247,7 +271,7 @@ $$\hat\theta_{\text{MLE}} = \arg\max_\theta\, p(\mathcal{D} \mid \theta)$$
 
 Read · *"what value of $\theta$ best explains the data we actually saw?"*
 
-This is what we'll spend Part 4 of this lecture on. Coin → linear regression → logistic regression → multiclass — all derive their loss as the negative log-likelihood under MLE.
+This was all of L00 · coin → linear regression → logistic regression → multiclass — each derived its loss as the negative log-likelihood under MLE.
 
 ---
 
@@ -263,7 +287,7 @@ $$\hat\theta_{\text{MAP}} = \arg\max_\theta\, p(\mathcal{D} \mid \theta)\,p(\the
 
 Read · *"given my prior belief and the data, what's the most probable $\theta$?"*
 
-This is Part 5 (Session 2). MAP = MLE *plus* a regularizer that comes from the log-prior. With a Gaussian prior we'll recover **L2**; with a Laplace prior we'll recover **L1**. Same machinery, different prior.
+This is Part 2 — the heart of today. MAP = MLE *plus* a regularizer that comes from the log-prior. With a Gaussian prior we'll recover **L2**; with a Laplace prior we'll recover **L1**. Same machinery, different prior.
 
 ---
 
@@ -283,7 +307,7 @@ When the data is plentiful, the likelihood dominates and MAP $\to$ MLE. When dat
 
 <!-- _class: section-divider -->
 
-### PART 5
+### PART 2
 
 # MAP and the meaning of regularization
 
@@ -402,10 +426,18 @@ $$\boxed{\;\hat{\boldsymbol\theta}_{\text{MAP}} = \arg\min_{\boldsymbol\theta} \
 
 **This is exactly L2 regularization (a.k.a. ridge / weight decay).**
 
+---
+
+# L2 · reading $\lambda$ · the weight-decay connection
+
 - Strong prior (small $\sigma_p^2$) ⇒ large $\lambda$ ⇒ heavy penalty.
 - Weak prior (large $\sigma_p^2$) ⇒ small $\lambda$ ⇒ MAP $\to$ MLE.
 
+<div class="keypoint">
+
 **DL linkage** · this is the `weight_decay` argument of `torch.optim.SGD` and `AdamW`. Every `weight_decay = 1e-4` you've written is a *Gaussian prior with $\sigma_p^2 = 5000$* on every weight. You've been doing Bayes the whole time.
+
+</div>
 
 ---
 
@@ -514,47 +546,15 @@ $$\boxed{\;\hat{\boldsymbol\theta}_{\text{MAP}} = \arg\min_{\boldsymbol\theta} \
 
 **This is exactly L1 regularization (a.k.a. lasso).**
 
-**DL linkage** · L1 isn't typically a built-in optimizer option (it has a kink at 0 — see next slide for why that matters). To use it you add `lambda * w.abs().sum()` to the loss manually, or use **proximal gradient (ISTA)** which has a clean soft-thresholding step that produces *exact* zeros. We do this in [`lec00-mle-map.ipynb`](../notebooks/lec00-mle-map.ipynb).
-
 ---
 
-# Laplace prior · setup
+# L1 · how to use it in practice
 
-Now choose a prior $p(\theta_j) = \text{Laplace}(0, b)$ — same idea (centred at zero) but **heavier tails and a sharper peak at zero**.
+<div class="keypoint">
 
-<div class="math-box">
-
-The Laplace density ·
-$p(\theta_j) = \dfrac{1}{2b}\exp\!\left(-\dfrac{|\theta_j|}{b}\right)$
-
-For one weight ·
-$\log p(\theta_j) = -\dfrac{|\theta_j|}{b} + \text{const}$
-
-For the whole vector with independent components ·
-$\log p(\boldsymbol\theta) = -\dfrac{1}{b}\sum_j |\theta_j| + \text{const} = -\dfrac{1}{b}\|\boldsymbol\theta\|_1 + \text{const}$
+**DL linkage** · L1 isn't typically a built-in optimizer option (it has a kink at 0 — see ahead for why that matters). To use it you add `lambda * w.abs().sum()` to the loss manually, or use **proximal gradient (ISTA)** which has a clean soft-thresholding step that produces *exact* zeros. We do this in [`lec00-mle-map.ipynb`](../notebooks/lec00-mle-map.ipynb).
 
 </div>
-
-Note the **absolute value** in the log — that's the structural difference from Gaussian's squared term.
-
----
-
-# Laplace prior · L1 pops out
-
-Plug into MAP ·
-
-$$L_{\text{MAP}}(\boldsymbol\theta) = L_{\text{NLL}}(\boldsymbol\theta) + \frac{1}{b}\|\boldsymbol\theta\|_1 + \text{const}$$
-
-<div class="math-box">
-
-$$\boxed{\;L_{\text{MAP}}(\boldsymbol\theta) = L_{\text{NLL}}(\boldsymbol\theta) + \lambda\,\|\boldsymbol\theta\|_1,\qquad \lambda := \frac{1}{b}\;}$$
-
-</div>
-
-**This is exactly L1 regularization (a.k.a. lasso).**
-
-- Same machinery (MAP), different prior, different penalty.
-- The Laplace density is "sharply peaked at zero with heavy tails" — and that geometry is what makes L1 produce **sparse solutions**.
 
 ---
 
@@ -585,13 +585,23 @@ Why does L1 *literally* drive a coordinate to **exact zero**? The gradient.
 
 </div>
 
-**Concrete · suppose the data gradient on $\theta_j$ is $g$.**
+The constant-magnitude pull is the seed of sparsity. The next slide turns it into an explicit update rule.
+
+---
+
+# Soft-thresholding · the update that creates exact zeros
+
+**Suppose the data gradient on $\theta_j$ is $g$.** Two regimes ·
 
 - If $|g| < \lambda$ · the L1 penalty's constant pull **dominates** for *any* small $\theta_j$ — the optimum is $\theta_j = 0$ (kink at the origin).
 - If $|g| > \lambda$ · the data wins · $\theta_j$ settles at a non-zero value (specifically $\theta_j = g - \lambda \cdot \text{sign}(g)$ after one proximal step from zero — *soft-thresholding*).
 
-This is the **proximal / ISTA soft-thresholding update** ·
+<div class="math-box">
+
+The **proximal / ISTA soft-thresholding update** ·
 $$\theta_j \leftarrow \text{sign}(\theta_j)\,\max\!\bigl(|\theta_j| - \eta\lambda,\;0\bigr)$$
+
+</div>
 
 The $\max(\cdot, 0)$ is what *literally* clamps weights to zero · L2 never does this.
 
@@ -660,11 +670,11 @@ This is the same regularization story as L1/L2 on weights — just with a differ
 
 <!-- _class: section-divider -->
 
-### PART 6
+### PART 3
 
-# Where this matters · the rest of the course
+# Entropy & KL divergence
 
-NLL is the loss everywhere · KL connects · VAE/diffusion/GANs are MAP++
+What is the right *distance* between two distributions — and why is every loss ahead "fit + don't drift"?
 
 ---
 
@@ -972,6 +982,16 @@ $$\boxed{\;H(p, q) \;=\; H(p) \;+\; \text{KL}(p \,\|\, q)\;}$$
 
 </div>
 
+---
+
+# Cross-entropy = entropy + KL · reading the terms
+
+<div class="math-box">
+
+$$H(p, q) \;=\; H(p) \;+\; \text{KL}(p \,\|\, q)$$
+
+</div>
+
 **Reading each term ·**
 - **Cross-entropy $H(p, q)$** · expected bits to encode samples from $p$ if we used a code optimized for $q$.
 - **Entropy $H(p)$** · irreducible cost. Independent of $q$.
@@ -995,7 +1015,7 @@ $$H(\mathbf{y}, \hat{\boldsymbol\pi}) = \underbrace{H(\mathbf{y})}_{=\,0} + \tex
 
 **Cross-entropy of a one-hot truth against a softmax model is exactly the NLL of the model on the true class.** This is the standard classification loss.
 
-It's also exactly what L1 derived from a Bernoulli/Categorical assumption — same answer through two different lenses (NLL or KL). On the next slide we tabulate it across confidence levels.
+It's also exactly what we derived in L00 from the Bernoulli/Categorical assumption — same answer through two different lenses (NLL or KL). On the next slide we tabulate it across confidence levels.
 
 ---
 
@@ -1060,9 +1080,17 @@ $$\arg\max_{\boldsymbol\theta}\, \ell(\boldsymbol\theta) \;=\; \arg\min_{\boldsy
 
 **MLE = make the model distribution as KL-close as possible to the empirical distribution.**
 
+---
+
+# MLE = KL minimization · what it buys
+
+<div class="keypoint">
+
 **DL linkage** · *every* classifier you have ever trained with cross-entropy loss has been **silently minimizing this KL** — to the one-hot empirical distribution of class labels. The "summed per-example loss" you write in code is *exactly* the KL up to a constant.
 
-This is also why MLE is **mode-covering** (forward KL) — the next-but-one slide makes the failure mode visible.
+</div>
+
+This is also why MLE is **mode-covering** (forward KL) — the upcoming slides make the failure mode visible.
 
 ---
 
@@ -1307,3 +1335,15 @@ Strang Ch 1 (vectors / matrices) · Bishop & Bishop §2.1–2.3 (probability pri
 ### Next lecture
 
 **Why deep learning** — why these tools alone aren't enough at scale, and what depth and non-linearity buy us.
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**Every regularizer is a prior in disguise.**
+
+</div>
+
+*Next (L01) · the same probabilistic machinery — but now the features themselves are learned.*

@@ -35,12 +35,7 @@ Training a 70B LLM costs ~$100M. But that's done *once*. **Inference** runs ever
 
 <div class="paper">
 
-**Reading & inspiration** ·
-- **Chip Huyen · *AI Engineering*** book — best practical overview of inference.
-- **Dao et al. 2022 · *FlashAttention*** + **2023 · *FlashAttention-2***.
-- **Leviathan et al. 2022 · *Speculative Decoding***.
-- **Hinton et al. 2015 · *Distilling the Knowledge***  + **Dettmers 2022 · *LLM.int8()*** + **GPTQ / AWQ**.
-- **Hugging Face · *Optimum* docs** + **vLLM blog** + **Tim Dettmers blog**.
+**Reading & inspiration** · **Chip Huyen, *AI Engineering*** (best practical overview) · **Dao et al. 2022/2023 *FlashAttention 1–2*** · **Leviathan et al. 2022** (speculative decoding) · **Hinton et al. 2015** (distillation) + **Dettmers 2022 *LLM.int8()*** + **GPTQ/AWQ** · **vLLM blog** + **Tim Dettmers blog**.
 
 </div>
 
@@ -49,10 +44,6 @@ Four questions:
 2. What is the **KV-cache** and how do we manage it?
 3. What is **quantization** and how low can we go?
 4. What are **FlashAttention** and **speculative decoding**?
-
----
-
-▶ **Interactives for L23** · [kv-cache](https://nipunbatra.github.io/interactive-articles/kv-cache/) (memory-bound made concrete) · [quantize-prune](https://nipunbatra.github.io/interactive-articles/quantize-prune/) (FP16 → INT8 → INT4) · [knowledge-distillation](https://nipunbatra.github.io/interactive-articles/knowledge-distillation/).
 
 ---
 
@@ -79,7 +70,7 @@ Stop and rank. The correct rank is **a > c > b > d** for typical chat workloads 
 
 # Prefill vs decode
 
-Two phases · two bottlenecks
+Why does one request have *two* different bottlenecks?
 
 ---
 
@@ -138,7 +129,7 @@ Modern inference servers (vLLM, TGI) optimize the two phases separately.
 
 # The KV-cache
 
-Where most of the memory pressure lives
+What's actually eating all the GPU memory?
 
 ---
 
@@ -151,6 +142,12 @@ Where most of the memory pressure lives
 # Cost with vs without cache
 
 ![w:900px](figures/lec23/svg/kv_cache_growth.svg)
+
+<div class="realworld">
+
+▶ Interactive: watch the cache grow token by token — [kv-cache](https://nipunbatra.github.io/interactive-articles/kv-cache/).
+
+</div>
 
 ---
 
@@ -165,6 +162,52 @@ The V vectors have the same property. So cache $K$ and $V$ as you go — each ne
 </div>
 
 Memory grows linearly with context, but saves an order of magnitude in compute. The reason KV-cache is the first thing *any* LLM inference stack implements.
+
+---
+
+# Pop quiz · how big is the KV cache?
+
+<div class="popquiz">
+
+**Llama-7B · 4096-token context · FP16 · batch 1.** How big is the KV cache?
+
+(a) ~20 MB &nbsp;&nbsp; (b) ~200 MB &nbsp;&nbsp; (c) ~2 GB &nbsp;&nbsp; (d) ~20 GB
+
+**Guess before computing.** Everything you need · 32 layers · $d_\text{model} = 4096$ · standard MHA (K and V are each $d_\text{model}$ wide per layer) · 2 bytes per value in FP16.
+
+</div>
+
+---
+
+# KV-cache by hand · Llama-7B
+
+<div class="math-box">
+
+**Per token, per layer** · $2 \;(\text{K and V}) \times 4096 \;(d_\text{model}) \times 2 \text{ bytes} = \mathbf{16\ KB}$
+
+**Per token, all layers** · $16 \text{ KB} \times 32 \text{ layers} = \mathbf{512\ KB}$
+
+**Full context** · $512 \text{ KB} \times 4096 \text{ tokens} = \mathbf{2\ GB}$
+
+</div>
+
+Answer · **(c) ~2 GB** — for **one** sequence. Half a megabyte of bookkeeping for every token generated.
+
+---
+
+# The punchline · memory runs out before compute
+
+| Batch | KV cache | + weights (14 GB) | Fits on A100-40GB? |
+|:-:|:-:|:-:|:-:|
+| 1 | 2 GB | 16 GB | yes |
+| 4 | 8 GB | 22 GB | yes |
+| 16 | 32 GB | 46 GB | **no — OOM** |
+
+<div class="insight">
+
+The GPU runs out of **memory** long before it runs out of **FLOPs**. This is why GQA, paged attention, and quantization exist — the rest of this lecture is about moving fewer bytes.
+
+</div>
 
 ---
 
@@ -213,7 +256,7 @@ Solution · **paged attention** — split the KV-cache into fixed-size pages, ma
 
 <div class="realworld">
 
-vLLM and TGI both use paged attention. **~4× throughput gain** over naive implementations in production LLM serving in 2026.
+vLLM and TGI both use paged attention. **~4× throughput gain** over naive implementations in production LLM serving as of this writing.
 
 </div>
 
@@ -225,13 +268,19 @@ vLLM and TGI both use paged attention. **~4× throughput gain** over naive imple
 
 # Quantization
 
-Run bigger models on smaller hardware
+How few bits can a weight survive on?
 
 ---
 
 # The quantization ladder
 
 ![w:920px](figures/lec23/svg/quantization_ladder.svg)
+
+<div class="realworld">
+
+▶ Interactive: squeeze FP16 → INT8 → INT4 and watch quality — [quantize-prune](https://nipunbatra.github.io/interactive-articles/quantize-prune/).
+
+</div>
 
 ---
 
@@ -279,7 +328,7 @@ Convert $w = [0.5, -0.2, 0.0, -1.0]$ from FP32 to INT8.
 
 **Stored** · 4 INT8 (4 bytes) + scale FP32 (4 bytes) = **8 bytes** vs 16 bytes (4× FP32). **50% saving.**
 
-**Reconstruction.** $64 \cdot 0.007874 = 0.5039$ (vs original 0.5). Max error ~0.001 — quality drop barely measurable.
+**Reconstruction.** $64 \cdot 0.007874 = 0.5039$ (vs original 0.5). Max error ~0.004 — quality drop barely measurable.
 
 PyTorch · `torch.quantization.quantize_dynamic` or `bitsandbytes`.
 
@@ -288,22 +337,6 @@ PyTorch · `torch.quantization.quantize_dynamic` or `bitsandbytes`.
 # Quantization · arithmetic in pictures
 
 ![w:920px](figures/lec23/svg/quantization_worked.svg)
-
----
-
-# Worked example · quantize a single weight row
-
-<div class="math-box">
-
-Channel · 5 weights · `w = [0.42, -0.81, 0.05, 0.37, -0.12]`
-
-**Step 1.** $s = \max(|w|) / 127 = 0.81 / 127 \approx 0.00638$
-**Step 2.** $w_\text{int} = \text{round}(w / s) = [66, -127, 8, 58, -19]$
-**Step 3.** Stored · the 5 INT8 values (5 bytes) plus one float scale $s$ (4 bytes) · 9 bytes total instead of 20 bytes for FP32.
-
-</div>
-
-**Reconstruction** at inference · $\hat w = w_\text{int} \cdot s$ → $[0.421, -0.810, 0.051, 0.370, -0.121]$. Max error $\sim 0.001$. Roundoff is small; quality drop on benchmarks barely measurable.
 
 ---
 
@@ -318,7 +351,7 @@ Both work well at 4-bit; AWQ edges out GPTQ at extreme compression (3-bit, 2-bit
 
 <div class="realworld">
 
-**2026 practical recipe** · AWQ 4-bit quantization for any LLM you're running on consumer hardware. `exllamav2` or `vLLM` both support it.
+**Practical recipe (as of this writing)** · AWQ 4-bit quantization for any LLM you're running on consumer hardware. `exllamav2` or `vLLM` both support it.
 
 </div>
 
@@ -330,7 +363,7 @@ Both work well at 4-bit; AWQ edges out GPTQ at extreme compression (3-bit, 2-bit
 
 # FlashAttention
 
-Rewrite attention for modern GPUs
+Can *exact* attention avoid the N×N matrix entirely?
 
 ---
 
@@ -344,7 +377,7 @@ weights = scores.softmax(dim=-1)
 out = weights @ V                 # [B, H, N, d_h]
 ```
 
-For $N = 8192$, a single layer needs ~8 GB just for the softmax matrix. GPU HBM bandwidth becomes the bottleneck, not FLOPs.
+For $N = 8192$ in FP16 · $8192^2 \cdot 2$ bytes ≈ 134 MB *per head* — about 4 GB per layer across 32 heads. GPU HBM bandwidth becomes the bottleneck, not FLOPs.
 
 ---
 
@@ -392,7 +425,7 @@ PyTorch 2.0+ ships `F.scaled_dot_product_attention` — just use it.
 
 <div class="realworld">
 
-Just call `F.scaled_dot_product_attention` — don't roll your own attention in 2026.
+Just call `F.scaled_dot_product_attention` — there is no reason to roll your own attention anymore.
 
 </div>
 
@@ -404,7 +437,7 @@ Just call `F.scaled_dot_product_attention` — don't roll your own attention in 
 
 # Speculative decoding
 
-Generate multiple tokens per forward pass
+One token per forward pass — or can we do better?
 
 ---
 
@@ -436,7 +469,7 @@ When the draft is wrong · same cost as normal decoding (pay for one extra forwa
 
 <div class="realworld">
 
-Used in GPT-4, Claude 3/4, and most hosted LLMs. The "draft" is often a specially-trained small version of the verifier or a lightweight heads-only model.
+Widely used in hosted LLM serving (and reportedly inside most frontier products). The "draft" is often a specially-trained small version of the verifier or a lightweight heads-only model.
 
 </div>
 
@@ -448,7 +481,7 @@ Used in GPT-4, Claude 3/4, and most hosted LLMs. The "draft" is often a speciall
 
 # Knowledge distillation
 
-Train a student to mimic a teacher
+Can a small student inherit a big teacher's knowledge?
 
 ---
 
@@ -461,6 +494,12 @@ How does an apprentice learn from a master?
 - **Soft labels** · master says *"lots of tomato, a little basil, a hint of oregano — and crucially, more basil than oregano."* Apprentice learns relative proportions and "dark knowledge" of *what not to do*.
 
 Distillation = method 2.
+
+</div>
+
+<div class="realworld">
+
+▶ Interactive: soften the teacher's logits and watch what the student learns — [knowledge-distillation](https://nipunbatra.github.io/interactive-articles/knowledge-distillation/).
 
 </div>
 
@@ -499,7 +538,7 @@ Now the student learns: increase Cat, decrease Dog and Car, **but keep Dog about
 
 ---
 
-# Distillation in 2026
+# Distillation today
 
 - **DistilBERT** (2019) · 40% smaller, 60% faster, 97% of BERT's quality. Still used.
 - **DistilLLaMA, DistilGPT-2** · similar story for generative.
@@ -507,7 +546,7 @@ Now the student learns: increase Cat, decrease Dog and Car, **but keep Dog about
 
 <div class="insight">
 
-Many "small-but-good" 2026 models (Phi, Gemma, DistilRoBERTa) are distilled from bigger siblings. The frontier labs train big, then distill to ship.
+Many small-but-good models as of this writing (Phi, Gemma, DistilRoBERTa) are distilled from bigger siblings. The frontier labs train big, then distill to ship.
 
 </div>
 
@@ -517,7 +556,9 @@ Many "small-but-good" 2026 models (Phi, Gemma, DistilRoBERTa) are distilled from
 
 ### PART 7
 
-# Full inference stack · 2026
+# The full inference stack
+
+How do all these tricks compose in a production server?
 
 ---
 
@@ -575,7 +616,7 @@ Real production serving · ~30-100× over naive PyTorch. The rest is latency eng
 
 ---
 
-# Cost economics · 2026
+# Cost economics · a snapshot (as of this writing)
 
 <div class="math-box">
 
@@ -591,7 +632,7 @@ Real production serving · ~30-100× over naive PyTorch. The rest is latency eng
 
 <div class="realworld">
 
-Reasoning models cost 5-10× more (inference-time compute). Same token count, much more compute per token. "Think longer" is pay-per-second.
+Prices move fast — treat these as orders of magnitude, not quotes. Reasoning models cost 5-10× more (inference-time compute) · "think longer" is pay-per-second.
 
 </div>
 
@@ -615,7 +656,7 @@ Reasoning models cost 5-10× more (inference-time compute). Same token count, mu
 | Speculative decoding | latency on chat | extra draft model |
 | Distillation | size + cost | training run |
 
-These are the *2026 production toolkit* — every commercial LLM endpoint uses 3–5 of them.
+This is the production toolkit as of this writing — every commercial LLM endpoint uses 3–5 of these.
 
 ---
 
@@ -660,5 +701,17 @@ Anthropic interp blog; Chi et al. 2023 (Diffusion Policy); blog posts on Claude 
 <div class="notebook">
 
 **Notebook 23** · `23-kv-cache.ipynb` — take a small GPT; add KV-cache to generation loop; measure tokens/second speedup.
+
+</div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**Inference is memory-bound, not compute-bound.**
+
+*Next lecture — the last one: agents, reasoning models, interpretability, and what nobody has solved yet.*
 
 </div>

@@ -48,11 +48,14 @@ Today: what if one model handled **both** text AND vision?
 
 </div>
 
-Four questions:
+---
+
+# Four questions
+
 1. How do Transformers process images (no convolutions)?
 2. What did **CLIP** unlock?
 3. How does **LLaVA** give an LLM eyes?
-4. What's the 2026 multimodal state?
+4. What's the current multimodal state?
 
 ---
 
@@ -82,7 +85,7 @@ Stop and think · what is **fundamentally** different about (c)? **Answer · the
 
 # Vision Transformer (ViT)
 
-Apply Transformer to images — no convolutions
+Can a Transformer *see* — with no convolutions at all?
 
 ---
 
@@ -134,6 +137,10 @@ $\text{Image} = \begin{pmatrix} 10 & 20 & 150 & 160 \\ 30 & 40 & 170 & 180 \\ 19
 **Step 2 · flatten.** Patch 1 → $[10, 20, 30, 40]$.
 **Step 3 · linear-project.** Multiply by learned $W$ (size $4 \times 3$ for output dim 3) → 3-d embedding.
 **Step 4 · prepend `[CLS]`, add position embeddings.** Sequence: `[CLS, p1, p2, p3, p4]` + `[pe_0, pe_1, …]`.
+
+---
+
+# From pixels to tokens · real ViT numbers
 
 For real 224×224 RGB with 16×16 patches:
 - Each patch · $16 \cdot 16 \cdot 3 = 768$ numbers.
@@ -203,6 +210,8 @@ $\text{embedding} = \mathbf{[6.0,\ 6.0,\ 7.0]}$ — the first "token" the Transf
 
 ---
 
+<!-- _class: code-heavy -->
+
 # ViT in PyTorch · 30 lines
 
 ```python
@@ -235,7 +244,7 @@ Literally a Transformer from L13 with a patch-embed preamble. No vision-specific
 
 # CLIP · contrastive image-text pretraining
 
-The paper that launched zero-shot vision
+What happens if you train *one* embedding space for images and their captions?
 
 ---
 
@@ -277,6 +286,11 @@ Tiny batch · $N = 3$ image-text pairs $(I_1, T_1), (I_2, T_2), (I_3, T_3)$.
 2. **Step 2 · similarity matrix.** $S_{ij} = i_i \cdot t_j$.
 $S = \begin{pmatrix} i_1 \cdot t_1 & i_1 \cdot t_2 & i_1 \cdot t_3 \\ i_2 \cdot t_1 & i_2 \cdot t_2 & i_2 \cdot t_3 \\ i_3 \cdot t_1 & i_3 \cdot t_2 & i_3 \cdot t_3 \end{pmatrix}$
 **Diagonal** = correct matches → maximize. Off-diagonal → minimize.
+
+---
+
+# CLIP · from matrix to loss
+
 3. **Step 3 · scale by temperature.** $\text{logits} = S / \tau$.
 4. **Step 4 · row-wise CE.** Each row of logits → softmax → CE against the diagonal label. (Image $I_1$ should match text $T_1$.)
 5. **Step 5 · column-wise CE.** Same for columns (text $T_1$ should match image $I_1$).
@@ -302,9 +316,9 @@ $S_\text{row 1} = [0.98,\ -0.28]$
 
 **Logits row 1.** $S_\text{row 1} / 0.1 = [9.8,\ -2.8]$.
 
-**Softmax.** $\exp([9.8, -2.8]) \approx [18034, 0.061]$. Normalize → $[0.99997, 0.00003]$.
+**Softmax.** $\exp([9.8, -2.8]) \approx [18034, 0.061]$. Normalize → $[0.9999966, 0.0000034]$.
 
-**Loss row 1 (correct = index 0).** $-\log 0.99997 \approx \mathbf{3 \times 10^{-5}}$ — very low.
+**Loss row 1 (correct = index 0).** $-\log 0.9999966 \approx \mathbf{3.4 \times 10^{-6}}$ — essentially zero.
 
 If the off-diagonal were higher, the loss spikes immediately. CLIP just runs this over 32k images simultaneously.
 
@@ -333,23 +347,41 @@ sims = (img_emb @ txt_embs.T).softmax(dim=-1)
 
 ---
 
-# Worked example · zero-shot a single image
+# Pop quiz · classify with no classifier
 
-Image · a photo of a tabby cat. CLIP image encoder produces a 768-dim vector (after L2-normalize · unit length).
+CLIP was never trained on ImageNet labels. There is **no dog logit, no softmax head, no dog classifier anywhere** in the model.
 
-<div class="math-box">
+<div class="popquiz">
 
-Build text prompts · `"a photo of a {cat / dog / car}"`. Run through CLIP text encoder.
+Yet given a dog photo and three captions, it says "dog". Why does this work?
 
-| class | text emb | cos · img emb | softmax |
-|:-:|:-:|:-:|:-:|
-| cat | `t_cat` | 0.32 | **0.89** |
-| dog | `t_dog` | 0.19 | 0.08 |
-| car | `t_car` | 0.04 | 0.03 |
+(a) It secretly memorized class labels during pretraining.
+(b) The **caption embeddings act as classifier weights** — nearest caption wins.
+(c) It can't — you must fine-tune a head first.
+
+Stop and think. **Answer · (b).** In a shared embedding space, *naming* a class is enough to recognize it. The text encoder **writes the classifier** on the fly.
 
 </div>
 
-Pick `argmax` · "cat" wins with 89% confidence. **Total inference cost · 1 image-encoder call + 3 text-encoder calls.** No fine-tuning. Add 100 classes · still 100 text-encoder calls (a few seconds, total) and you're done.
+---
+
+# Worked numeric · zero-shot in 3-D
+
+Toy CLIP space with $d = 3$. Image embedding (normalized) · $i = [0.8,\ 0.6,\ 0]$. Temperature $\tau = 0.1$.
+
+| caption | $t$ (unit vector) | $i \cdot t$ | logit $= i \cdot t / \tau$ | softmax |
+|:-:|:-:|:-:|:-:|:-:|
+| "a photo of a **dog**" | $[0.6, 0.8, 0]$ | $0.48 + 0.48 = \mathbf{0.96}$ | 9.6 | **0.83** |
+| "a photo of a **cat**" | $[1, 0, 0]$ | $0.80$ | 8.0 | 0.17 |
+| "a photo of a **car**" | $[0, 0, 1]$ | $0.00$ | 0 | 0.0001 |
+
+<div class="math-box">
+
+$\text{softmax} = \dfrac{[e^{9.6},\ e^{8.0},\ e^{0}]}{e^{9.6} + e^{8.0} + e^{0}} = \dfrac{[14765,\ 2981,\ 1]}{17747} \approx [0.83,\ 0.17,\ 0.0001]$
+
+</div>
+
+`argmax` → **"dog"**, 83% confident. Cost · 1 image-encoder call + 3 text-encoder calls. 100 classes? Just 100 caption embeddings — no training, ever.
 
 ---
 
@@ -361,7 +393,7 @@ Pick `argmax` · "cat" wins with 89% confidence. **Total inference cost · 1 ima
 
 <div class="realworld">
 
-CLIP is the **default general-purpose vision-language model** in 2026. For retrieval, search, zero-shot classification, content moderation, CLIP features are the first thing you try.
+CLIP is still the **default general-purpose vision-language model** as of this writing. For retrieval, search, zero-shot classification, content moderation, CLIP features are the first thing you try.
 
 </div>
 
@@ -391,7 +423,7 @@ The model's "understanding" of a class is mediated by the caption distribution i
 
 # LLaVA · give an LLM eyes
 
-Project image features into token space
+Can an LLM read image features as if they were just more tokens?
 
 ---
 
@@ -403,17 +435,7 @@ Project image features into token space
 
 # LLaVA · the architecture
 
-```
-image → ViT-L/14 (CLIP encoder) → 256 image tokens (frozen)
-                                              ↓
-                                     Linear projection
-                                              ↓
-                                       "Image tokens" in LLM space
-                                              ↓
-                          Llama 2 / Vicuna (autoregressive)
-                                              ↓
-                                       text response
-```
+The full stack on the previous slide, as a recipe:
 
 <div class="math-box">
 
@@ -502,9 +524,9 @@ Both approaches work. LLaVA is simpler and became dominant in open-source; Flami
 
 ### PART 4
 
-# Multimodal LLMs in 2026
+# Multimodal LLMs at the frontier
 
-The frontier
+Bolt the eyes onto a finished brain — or grow up with both?
 
 ---
 
@@ -545,33 +567,13 @@ You want a dog that understands verbal **and** hand commands.
 
 <div class="insight">
 
-2026 frontier leans **native**. Bolt-on dominates open-source · only feasible approach when you can't pretrain a 100B+ model from scratch.
+As of this writing, the frontier leans **native**. Bolt-on dominates open-source · the only feasible approach when you can't pretrain a 100B+ model from scratch.
 
 </div>
 
 ---
 
-# Cross-attention · Flamingo's design
-
-Instead of converting the image into LLM-space tokens, Flamingo keeps vision features *separate* and injects them via **cross-attention layers inserted between LLM blocks**.
-
-<div class="math-box">
-
-- Visible to LLM · text tokens (normal self-attention).
-- Every few LLM blocks · an added cross-attention layer that queries image features.
-- Image features condensed via a **Perceiver Resampler** · learned query tokens distill arbitrary-resolution images into a fixed set.
-
-</div>
-
-<div class="insight">
-
-Benefit · LLM never "sees" pixels as tokens; it *asks* for image info when it needs it. Drawback · more complex architecture, more params to train. LLaVA's simpler "concat tokens" won on ease; Flamingo-style persists in frontier labs.
-
-</div>
-
----
-
-# 2026 multimodal state
+# Multimodal state · as of this writing
 
 | Model | What it sees | What it does |
 |-------|--------------|--------------|
@@ -580,9 +582,11 @@ Benefit · LLM never "sees" pixels as tokens; it *asks* for image info when it n
 | **Gemini 2 Ultra (Google)** | image, audio, video | natively multimodal from pretraining |
 | **LLaVA / Qwen-VL (open)** | image | open-source equivalent of GPT-4V |
 
-**Key trend**: the input side is increasingly "anything", the output is still mostly text. True any-to-any (text→image→video→audio) is the 2026+ frontier.
+**Key trend**: the input side is increasingly "anything", the output is still mostly text. True any-to-any (text→image→video→audio) is the current frontier.
 
 ---
+
+<!-- _class: code-heavy -->
 
 # Practical multimodal prompting
 
@@ -624,7 +628,7 @@ Three lines in; a paragraph of reasoning out. The API abstracts away all the CLI
 
 </div>
 
-Claude / GPT-4o / Gemini all push 85%+ on VQAv2 now. MMMU remains hard (50-60%) · genuine multi-modal reasoning is the frontier.
+As of this writing, Claude / GPT-4o / Gemini all push 85%+ on VQAv2. MMMU remains hard (50-60%) · genuine multi-modal reasoning is the frontier.
 
 ---
 
@@ -683,7 +687,7 @@ GPT-4o and Claude 3.5+ dramatically reduced hallucination via more curated train
 </div>
 </div>
 
-The agentic side (Claude computer use, GPT operator) is where multimodal is most valuable in 2026.
+The agentic side (Claude computer use, GPT operator) is where multimodal is currently most valuable.
 
 ---
 
@@ -734,7 +738,7 @@ The contrastive idea (L17) plus the Transformer (L13) plus the LLM (L15) **compo
 - **CLIP** · dual encoder, contrastive on 400M image-text pairs · zero-shot vision via text prompts.
 - **LLaVA** · CLIP features → linear projection → LLM token space. Simple, effective.
 - **Flamingo** · cross-attention bridge with Perceiver Resampler. Alternate approach.
-- **2026** · every frontier LLM is multimodal (GPT-5, Claude 4, Gemini 2). Output side still text-dominated.
+- **As of this writing** · every frontier LLM is multimodal (GPT-5, Claude 4, Gemini 2). Output side still text-dominated.
 
 ### Read before Lecture 19
 
@@ -747,5 +751,17 @@ Prince Ch 17 · Variational Autoencoders.
 <div class="notebook">
 
 **Notebook 18** · `18-clip-zero-shot.ipynb` — load pretrained CLIP; zero-shot classify custom images; sweep text prompts to see how wording changes the result.
+
+</div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**Once images and text share one embedding space, a caption is a classifier.**
+
+*Next · generation begins — encode inputs to distributions, not points (VAEs).*
 
 </div>

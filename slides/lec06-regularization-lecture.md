@@ -63,7 +63,9 @@ Today maps to **UDL Ch 9** (Regularization) and the BatchNorm parts of **Ch 11**
 
 ---
 
-▶ **Interactives for L06** · [double-descent](https://nipunbatra.github.io/interactive-articles/double-descent/) (the modern bias-variance curve) · [dropout-playground](https://nipunbatra.github.io/interactive-articles/dropout-playground/) (see how dropout masks change the network) · [norm-comparison](https://nipunbatra.github.io/interactive-articles/norm-comparison/) (BN vs LN vs RMSNorm — see exactly which slice each averages over).
+# Try these · interactives for L06
+
+▶ [double-descent](https://nipunbatra.github.io/interactive-articles/double-descent/) (the modern bias-variance curve) · [dropout-playground](https://nipunbatra.github.io/interactive-articles/dropout-playground/) (see how dropout masks change the network) · [norm-comparison](https://nipunbatra.github.io/interactive-articles/norm-comparison/) (BN vs LN vs RMSNorm — see exactly which slice each averages over).
 
 ---
 
@@ -135,13 +137,30 @@ We spend time here.
 
 ---
 
+# Bridge from ES 654 · you already know this
+
+| From ES 654 | What changes today |
+|---|---|
+| ridge = L2 penalty = Gaussian prior | weight decay becomes the *least* interesting tool |
+| bias-variance U-curve | double descent — the U-curve has a second act |
+| regularize the **model** (shrink $\theta$) | regularize the **data** (aug, Mixup) and the **architecture** (dropout, norms) |
+| lasso for sparsity | nearly absent in DL — sparsity breaks distributed features |
+
+<div class="keypoint">
+
+Ridge = Gaussian prior — you saw L2 as a penalty term. Now meet the regularizers that have no penalty term at all.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ### SESSION 1 · PART 1
 
 # Double descent
 
-Classical bias-variance, revisited
+Why don't $10^{11}$ parameters on $10^6$ examples catastrophically overfit?
 
 ---
 
@@ -175,7 +194,7 @@ Three regimes:
 
 <div class="keypoint">
 
-More parameters past the threshold *does not hurt*. Implicit regularization from SGD + overparameterization finds flat, generalizing minima.
+Past the threshold, more parameters *can* help — when data, augmentation, and SGD's implicit regularization keep up. This is **not** "bigger is always better": the spike at the threshold is sharpest with label noise and no regularization, and explicit regularization can wash the bump out entirely.
 
 </div>
 
@@ -185,13 +204,13 @@ This is one of the big open questions in DL theory. Prince Ch 20 — *"Why does 
 
 # Practical implication
 
-You don't need to shrink a model to generalize. You can just **go bigger** and rely on:
+You don't have to shrink a model to make it generalize. A bigger model is *not automatically doomed to overfit* — provided you supply:
 
 - **Implicit regularization** from SGD
 - **Explicit regularization** (today's topic)
 - **Massive data** (when available)
 
-ResNet-50 has 25M params; modern LLMs have 10¹¹. Both generalize fine *because* they are past the interpolation threshold.
+ResNet-50 has 25M params; modern LLMs have 10¹¹. Both generalize well past the interpolation threshold — *with* the full regularization stack, never without it.
 
 ---
 
@@ -324,7 +343,7 @@ Covered in Lecture 1 — the curve with the "best val" marker.
 
 # Data augmentation
 
-The single highest-value regularizer for vision
+What if we regularized the *data* instead of the model?
 
 ---
 
@@ -387,7 +406,7 @@ RandAugment is the 2026 default for vision pre-training. Two-line change, consis
 
 # Mixup &amp; CutMix
 
-Augment the *label*, not just the input
+What if we could augment the *label*, not just the input?
 
 ---
 
@@ -402,18 +421,6 @@ Standard augmentation: one image → one transformed image, same label.
 # Mixup and CutMix in one picture
 
 ![w:920px](figures/lec06/svg/mixup_cutmix.svg)
-
----
-
-# Why Mixup and CutMix work
-
-Three observations:
-
-1. **Decision boundary smoothing.** The model sees "half-cat half-dog" examples with mixed labels → boundary becomes smoother, not piecewise-constant.
-2. **Implicit regularizer.** Forces calibration — the output distribution has to reflect the interpolation.
-3. **Free data.** No manual annotation; the mixing happens inside the training loop.
-
-Empirically: Mixup/CutMix adds ~1–2% CIFAR-10 accuracy. Essentially a free win for vision.
 
 ---
 
@@ -451,6 +458,18 @@ Cats = class 0, dogs = class 1. One-hot:
 $$y_\text{mix} = 0.7 \cdot [1, 0] + 0.3 \cdot [0, 1] = [0.7, 0.3]$$
 
 The model now sees a faded cat overlaid with 30%-opacity dog, and must produce $[0.7, 0.3]$ to minimize the loss. **Calibrated outputs** for free.
+
+---
+
+# Why Mixup and CutMix work
+
+Three observations:
+
+1. **Decision boundary smoothing.** The model sees "half-cat half-dog" examples with mixed labels → boundary becomes smoother, not piecewise-constant.
+2. **Implicit regularizer.** Forces calibration — the output distribution has to reflect the interpolation.
+3. **Free data.** No manual annotation; the mixing happens inside the training loop.
+
+Empirically: Mixup/CutMix adds ~1–2% CIFAR-10 accuracy. Essentially a free win for vision classification — but **skip it for localization tasks** (boxes and masks don't interpolate like labels do).
 
 ---
 
@@ -532,6 +551,8 @@ $$y_\text{smooth} = (1-\alpha)\,y_\text{hard} + \frac{\alpha}{K}$$
 2. **Regularizes the output layer.** Softer target → smaller logit magnitudes.
 3. **Label noise robustness.** Some labels are wrong anyway — smoothing acknowledges that.
 
+One downside worth knowing · smoothed models make **worse teachers for distillation** (the inter-class structure in their logits gets flattened).
+
 <div class="realworld">
 
 One flag in PyTorch: `CrossEntropyLoss(label_smoothing=0.1)`.
@@ -568,7 +589,7 @@ All 2026-relevant. All in every modern architecture.
 
 # Dropout
 
-An implicit ensemble, one line of code
+What happens if we randomly silence neurons during training?
 
 ---
 
@@ -717,9 +738,17 @@ def forward(self, x):
 
 </div>
 
+---
+
+# One letter, two conventions · what does $p$ mean?
+
 <div class="warning">
 
-**Convention mismatch warning** · in lecture math, $p$ often denotes **keep** probability (Bernoulli$(p)$). PyTorch's `nn.Dropout(p)` uses $p$ as the **drop** probability. Keep-prob 0.8 ↔ `nn.Dropout(p=0.2)`. Always double-check.
+**Convention mismatch warning** · in lecture math (and many papers), $p$ denotes the **keep** probability — the mask is Bernoulli$(p)$ and survivors are scaled by $1/p$.
+
+PyTorch's `nn.Dropout(p)` uses $p$ as the **drop** probability.
+
+Keep-prob 0.8 ↔ `nn.Dropout(p=0.2)`. Always double-check which convention your code and your paper are using.
 
 </div>
 
@@ -749,7 +778,7 @@ Dropout was the biggest regularization breakthrough of 2012. Today it is oversha
 
 # Normalization
 
-Same family, three flavours, one knob at a time
+Why does every modern network re-center its activations — and along which axis?
 
 ---
 
@@ -821,7 +850,7 @@ $\mu = (1+3+5+7)/4 = 4.0$
 $\hat x = (x - \mu)/\sqrt{\sigma^2 + \epsilon} \approx [-1.34, -0.45, 0.45, 1.34]$
 
 **Step 4 · scale + shift** with learned $\gamma = 2.0,\ \beta = 0.5$:
-$$y = \gamma\hat x + \beta = [-2.18,\ -0.40,\ 1.40,\ 3.18]$$
+$$y = \gamma\hat x + \beta = [-2.18,\ -0.39,\ 1.39,\ 3.18]$$
 
 This vector is what the next layer sees. At **eval** time · use the running mean/var collected during training, not batch stats. (`model.eval()` flips this switch.)
 
@@ -1007,14 +1036,9 @@ The full regularization stack for 2026
 # The stack for a real vision training run
 
 ```python
-# 1. Architecture regularization
-model = ResNet50(dropout=0.0)      # BN already in ResNet
-
-# 2. Optimizer regularization (from L5)
-opt = AdamW(model.parameters(), weight_decay=0.05)
-
-# 3. Data augmentation
-train_tfm = transforms.Compose([
+model = ResNet50(dropout=0.0)          # 1. architecture — BN already inside
+opt = AdamW(model.parameters(), weight_decay=0.05)   # 2. optimizer (L5)
+train_tfm = transforms.Compose([       # 3. data augmentation
     transforms.RandomResizedCrop(224),
     transforms.RandomHorizontalFlip(),
     transforms.RandAugment(num_ops=2, magnitude=9),
@@ -1022,11 +1046,8 @@ train_tfm = transforms.Compose([
     transforms.RandomErasing(p=0.25),
     transforms.Normalize(MEAN, STD),
 ])
-
 # 4. Mixup inside the training loop (conditional)
-# 5. Label smoothing in the loss
-criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
-
+criterion = nn.CrossEntropyLoss(label_smoothing=0.1)  # 5. label smoothing
 # 6. Early stopping — checkpoint on val loss
 ```
 
@@ -1069,6 +1090,18 @@ Adding all four at once tells you nothing about *what* fixed it. **Change one kn
 
 ---
 
+# What breaks · symptom → suspect → test
+
+| Symptom | Suspect | Fastest test |
+|---|---|---|
+| Train acc 99% / val acc 70% | augmentation off or too weak | plot 16 images *straight from the train dataloader* — are they actually transformed? |
+| Val accuracy drops the moment you call `model.eval()` | stale BatchNorm running stats (tiny batches, short run) | eval the same val set in train vs eval mode; large gap → BN stats |
+| Great in training, garbage in deployment | dropout still on — `model.eval()` never called | `assert not model.training` at inference entry |
+| Added dropout `p=0.5`, everything got *worse* | dropout stacked on a CNN already regularized by BN + aug | remove it (or `p ≤ 0.1`); CNNs rarely want 0.5 |
+| Accuracy *fell* after adding flips on digit data | label-destroying augmentation (6 ↔ 9) | eyeball augmented samples next to their labels |
+
+---
+
 <!-- _class: summary-slide -->
 
 # Lecture 6 — summary
@@ -1107,3 +1140,17 @@ Adding all four at once tells you nothing about *what* fixed it. **Change one kn
 **Notebook 6b** · `06b-batchnorm-by-hand.ipynb` — implement BatchNorm1d forward + backward manually (Karpathy-style); verify against `nn.BatchNorm1d`.
 
 </div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**The best regularizers don't look like penalties.**
+
+Augmentation rewrites the data, dropout rewires the network, normalization reshapes the landscape — none of them adds a $\lambda\|\theta\|$ term, and together they beat the ones that do.
+
+</div>
+
+*Next lecture: the architecture that is itself a regularizer — convolution, and why its baked-in assumptions are worth 350,000× fewer parameters.*

@@ -26,6 +26,23 @@ This lecture mirrors UDL **Ch 1** (introduction) and **Ch 3** (shallow networks)
 
 ---
 
+# Bridge from ES 654 · you already know this
+
+| From ES 654 | What changes today |
+|---|---|
+| Logistic regression on hand-picked features (apples vs oranges) | same classifier — but the **features are learned** |
+| You engineered features; the model only drew the boundary | layers learn the representation end-to-end |
+| MLE → cross-entropy for logistic regression | identical loss · only $p_\theta(y \mid \mathbf{x})$ gets deeper |
+| Gradient descent derived from Taylor series | the same update — pushed through a stack of layers by backprop |
+
+<div class="keypoint">
+
+In ES 654 you built classifiers on engineered features. Today's question · what if the features themselves are learned?
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 1
@@ -143,9 +160,13 @@ Human top-5 error: ~5.1%. **AlexNet cut error by ~10 points in one year.**
 
 ---
 
-# Why now · concrete numbers
+# Why now · the compute curve
 
-![w:780px](figures/lec01/svg/compute_scaling.svg)
+![w:680px](figures/lec01/svg/compute_scaling.svg)
+
+---
+
+# Why now · concrete numbers
 
 <div class="math-box">
 
@@ -802,7 +823,7 @@ These three lines are the **entire** backward pass of a linear layer. Everything
 
 ---
 
-# End-to-end worked numeric · 2-layer MLP, one example
+# End-to-end worked numeric · forward pass
 
 Tiny 2-1-1 net with sigmoid hidden, sigmoid output. Input $x = 0.5$, target $y = 1$ (binary). Initial weights $w_1 = 0.4,\ b_1 = 0,\ w_2 = 0.6,\ b_2 = 0$. LR $\eta = 0.5$.
 
@@ -811,7 +832,17 @@ Tiny 2-1-1 net with sigmoid hidden, sigmoid output. Input $x = 0.5$, target $y =
 **Forward** ·
 - $z_1 = 0.4 \cdot 0.5 + 0 = 0.2$, $h = \sigma(0.2) \approx 0.5498$
 - $z_2 = 0.6 \cdot 0.5498 = 0.3299$, $\hat y = \sigma(0.3299) \approx 0.5817$
-- BCE loss $L = -\log 0.5817 \approx \mathbf{0.5414}$
+- BCE loss $L = -\log 0.5817 \approx \mathbf{0.5417}$
+
+</div>
+
+Loss in hand. Now · who's to blame, and by how much?
+
+---
+
+# End-to-end worked numeric · backward + update
+
+<div class="math-box">
 
 **Backward** (using the BCE+sigmoid identity $\partial L / \partial z_2 = \hat y - y$) ·
 - $\delta_2 = \hat y - y = 0.5817 - 1 = -0.4183$
@@ -822,7 +853,7 @@ Tiny 2-1-1 net with sigmoid hidden, sigmoid output. Input $x = 0.5$, target $y =
 
 **Update** · $w_1 \to 0.4156,\ w_2 \to 0.7150$.
 
-**Forward at step 1** · $\hat y \approx 0.5959$, $L \approx 0.5176$ — **loss dropped** ✓
+**Forward at step 1** · $\hat y \approx 0.5974$, $L \approx 0.5152$ — **loss dropped** ✓
 
 </div>
 
@@ -979,6 +1010,24 @@ Lecture 2 derives why these tools make depth trainable.
 
 ---
 
+# Three axes · keep them separate in your head
+
+"Does a deep net work?" is really **three independent questions** ·
+
+<div class="math-box">
+
+| Axis | Question | Who answers it |
+|:-:|:-:|:-:|
+| **Expressivity** | *can* the architecture represent the function? | UAT, depth-vs-width (L02) |
+| **Trainability** | can gradient descent *find* good weights? | init, ReLU, residuals (L02–L05) |
+| **Generalization** | do those weights work on *new* data? | splits, regularization (L06) |
+
+</div>
+
+A net can be expressive but untrainable (deep sigmoid stacks), or trainable but overfit. Whenever a model "doesn't work," first ask **which axis** failed — the fixes are completely different.
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 5
@@ -1013,6 +1062,12 @@ for epoch in range(10):
 ```
 
 Every real training script is a variation on this.
+
+---
+
+# The training loop · anatomy
+
+![w:920px](figures/lec01/svg/training_loop_anatomy.svg)
 
 ---
 
@@ -1123,6 +1178,18 @@ Sigmoid + BCE = L00's logistic-MLE, just with a hidden layer in front. Softmax +
 
 ---
 
+# What breaks · symptom → suspect → test
+
+| Symptom | Suspect | Fastest test |
+|---|---|---|
+| Loss frozen at $\approx 2.30 = \log 10$ | double softmax (softmax in model **and** `CrossEntropyLoss`) | print the last layer — it must output raw logits |
+| Updates grow each step, loss explodes | missing `opt.zero_grad()` · gradients accumulate | print `p.grad.norm()` over steps — it should not climb |
+| Shape error or silent broadcasting | batch-dimension bug | print every tensor's `.shape` through one forward pass |
+| Train loss ↓ · val loss ↑ | overfitting | plot both curves on one axis · find the divergence epoch |
+| Great val accuracy · fails on new data | dishonest split (leakage) | re-split by patient / video / user, re-evaluate |
+
+---
+
 # Practice problems
 
 Try these on paper; verify with the notebooks.
@@ -1172,3 +1239,15 @@ Why depth, ResNets, Xavier / He initialization derived from first principles.
 **1b** · `01b-mlp-mnist.ipynb` — train this MLP on MNIST end-to-end.
 
 </div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**Deep learning = learning the representation instead of engineering it.**
+
+</div>
+
+*Next (L02) · if one hidden layer can approximate anything, why go deep at all?*

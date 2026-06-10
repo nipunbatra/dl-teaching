@@ -23,7 +23,7 @@ By the end of this lecture you will be able to:
 1. State the three **scaling laws** (compute, data, params) as power-law exponents.
 2. Derive the **Chinchilla** D/N ≈ 20 optimum and explain why over-training is OK.
 3. Describe **RoPE** (rotary position embedding) geometrically.
-4. Explain **GQA** · fewer KV heads, same speed, same quality.
+4. Explain **GQA** · fewer KV heads, near-same quality, far smaller cache.
 5. Contrast **DP / TP / PP** and know when to combine them.
 6. Articulate **emergent abilities** · what they are and why they're contested.
 
@@ -61,7 +61,7 @@ The **Transformer** stack is the architecture. The tokenizer is the input. Now l
 
 # Pop quiz · you have $1M of compute. Spend it.
 
-You can train a Transformer LM with $C \approx 10^{22}$ FLOPs. Which choice gets the best loss?
+You can train a Transformer LM with $C \approx 1.2 \times 10^{23}$ FLOPs. Which choice gets the best loss?
 
 <div class="popquiz">
 
@@ -69,7 +69,7 @@ You can train a Transformer LM with $C \approx 10^{22}$ FLOPs. Which choice gets
 (b) A **20B-parameter** model on **1T tokens**.
 (c) A **7B-parameter** model on **3T tokens**.
 
-Stop and pick · this is the exact question Chinchilla answered. **Answer · (b)** by the compute-optimal rule "$N \approx D / 20$" (params ≈ tokens / 20). Most pre-2022 models were heavily under-trained. The whole modern era is about getting *this knob* right.
+Stop and pick · this is the exact question Chinchilla answered. **Answer · (b)** — its $D/N = 50$ is the closest to the compute-optimal rule "$D \approx 20\,N$" (the others sit at 4.3 and 429). Most pre-2022 models were heavily under-trained. The whole modern era is about getting *this knob* right.
 
 </div>
 
@@ -79,7 +79,7 @@ Stop and pick · this is the exact question Chinchilla answered. **Answer · (b)
 
 ---
 
-# What changed · 2018 to 2026
+# What changed · 2018 to today
 
 <div class="columns">
 <div>
@@ -93,10 +93,12 @@ Stop and pick · this is the exact question Chinchilla answered. **Answer · (b)
 
 ### Scale & engineering
 
+As of this writing:
+
 Params · 117M → 1T+ (10,000×)
 Data · 1B → 15T tokens (15,000×)
 Compute · 10²⁰ → 10²⁵ FLOPs (100,000×)
-Context · 512 → 1M tokens
+Context · 512 → 1M+ tokens
 
 </div>
 </div>
@@ -115,7 +117,7 @@ Context · 512 → 1M tokens
 
 # Scaling laws
 
-The empirical backbone of the LLM era
+Given a fixed compute budget, how big a model should you train — and on how much data?
 
 ---
 
@@ -149,7 +151,52 @@ Optimal ratio: **D / N ≈ 20 tokens per parameter**.
 
 </div>
 
+*Fine print* · the paper actually fits $L(N, D) = E + A/N^\alpha + B/D^\beta$ and minimizes under $C = 6ND$; "20 tokens per parameter" is the headline ratio that falls out, not the whole law.
+
 GPT-3 (175B params, 300B tokens · D/N ≈ 1.7) was hugely **undertrained** by this standard. Chinchilla (70B params, 1.4T tokens · D/N = 20) got better results with far fewer parameters.
+
+---
+
+# Pop quiz · how many tokens for a 1B model?
+
+You have compute for a **1-billion-parameter** model. How many tokens should you train on?
+
+<div class="popquiz">
+
+(a) **1B** tokens — one token per parameter.
+(b) **20B** tokens.
+(c) **300B** tokens — more is always better.
+
+Stop and compute · the answer is one multiplication away. **(b)** — apply the Chinchilla rule on the next slide, then compare with what GPT-3 actually did.
+
+</div>
+
+---
+
+# Worked numeric · Chinchilla by hand
+
+<div class="math-box">
+
+**Rule.** $D \approx 20\,N$.
+
+**Apply.** $N = 10^9$ → $D = 20 \times 10^9 = \mathbf{2 \times 10^{10} = 20\text{B tokens}}$.
+
+**Budget check.** $C = 6\,N\,D = 6 \cdot 10^9 \cdot 2 \times 10^{10} = 1.2 \times 10^{20}$ FLOPs.
+
+</div>
+
+Now hold GPT-3 up against the same rule:
+
+| | Params $N$ | Tokens $D$ | $D/N$ | Rule says $D$ should be |
+|:-:|:-:|:-:|:-:|:-:|
+| Chinchilla rule | 1B | 20B | 20 | — |
+| **GPT-3 (2020)** | 175B | 300B | **≈ 1.7** | $20 \times 175\text{B} = $ **3.5T** |
+
+<div class="insight">
+
+GPT-3 saw 300B tokens where the rule asks for 3.5T — **~10× undertrained**. That's why Chinchilla mattered.
+
+</div>
 
 ---
 
@@ -234,7 +281,7 @@ For 10× more compute · $N$ grows by $\sqrt{10} \approx 3.16$, $D$ grows by $\s
 
 # RoPE · rotary positional encoding
 
-The 2021 fix that stuck
+Can attention see *how far apart* two tokens are — not just where each one sits?
 
 ---
 
@@ -253,45 +300,6 @@ Problems:
 # RoPE · rotation in pictures
 
 ![w:920px](figures/lec15/svg/rope_rotation.svg)
-
----
-
-# RoPE · three key properties
-
-<div class="math-box">
-
-1. **Relative positions encoded naturally** · inner product after rotation depends only on $m - n$ (query-minus-key position), not absolute positions.
-
-2. **Extrapolates beyond training length** · rotation frequencies are fixed; a model trained at 4k context can extend to 32k without re-training (with minor fixes).
-
-3. **Zero added parameters** · rotation matrices are deterministic given position; no `nn.Embedding(max_len, d_model)` allocation.
-
-</div>
-
-<div class="keypoint">
-
-Llama, Mistral, Qwen, GPT-NeoX all use RoPE in 2026. A 2021 paper (Su et al.) that took ~2 years to catch on is now the default.
-
-</div>
-
----
-
-# Context length · the scaling wall
-
-| Year | Frontier model | Context |
-|:-:|:-:|:-:|
-| 2018 | BERT | 512 tokens |
-| 2020 | GPT-3 | 2,048 |
-| 2023 | GPT-4 | 32k |
-| 2023 | Claude 2 | 100k |
-| 2024 | Gemini 1.5 | **1,000,000** |
-| 2026 | frontier | 2-10M |
-
-<div class="insight">
-
-What unlocked 1M? · **RoPE extrapolation**, **FlashAttention** (O(N) memory), **GQA** (smaller KV cache), and training on long documents from the start. No single trick; the stack compounds.
-
-</div>
 
 ---
 
@@ -322,14 +330,22 @@ $q'_m = R_{\theta_m} q,\quad k'_n = R_{\theta_n} k$
 Attention score:
 $(q'_m)^\top k'_n = q^\top R_{\theta_m}^\top R_{\theta_n}\,k$
 
-Two properties:
+*Can the product $R_{\theta_m}^\top R_{\theta_n}$ be simplified? What do rotations compose to?*
+
+---
+
+# RoPE · derivation, the punchline
+
+Two properties of rotation matrices:
 - $R_\theta^\top = R_{-\theta}$
 - $R_{-\theta_m} R_{\theta_n} = R_{\theta_n - \theta_m}$
 
 Substitute:
 $(q'_m)^\top k'_n = q^\top R_{(n-m)\Theta}\,k$
 
-**The score depends only on the relative position $n - m$, not on absolutes.** In high-dim, group dimensions into pairs; rotate each pair with a different frequency $\Theta_i$. That's "block-diagonal."
+**The score depends only on the relative position $n - m$, not on absolutes.**
+
+In high-dim, group dimensions into pairs; rotate each pair with a different frequency $\Theta_i$. That's "block-diagonal."
 
 ---
 
@@ -346,10 +362,62 @@ $k'_n = R_3 k \approx [-2.97,\ 0.42]^\top$
 
 **Dot product.** $(-2.24)(-2.97) + (0.07)(0.42) \approx 6.65 + 0.03 = \mathbf{6.68}$.
 
-**Verify** with the relative-position form ($n - m = 1$): $q^\top R_1 k$ where $R_1 \approx \begin{pmatrix} 0.54 & -0.84 \\ 0.84 & 0.54 \end{pmatrix}$:
-$R_1 k = [1.62, 2.52]$, $q \cdot [1.62, 2.52] = 1.62 + 5.04 = \mathbf{6.66}$ ✓ (rounding only).
+*The derivation claims this should equal the relative-position form. Does it?*
 
-Used in Llama 1/2/3, Mistral, PaLM, GPT-NeoX. **No extra params**, **extrapolates** beyond training length.
+---
+
+# Worked numeric · verify the relative-position claim
+
+The relative offset is $n - m = 1$, so the derivation predicts the score equals $q^\top R_1 k$:
+
+$$R_1 \approx \begin{pmatrix} 0.54 & -0.84 \\ 0.84 & 0.54 \end{pmatrix},\quad R_1 k = [1.62,\ 2.52]$$
+
+$$q \cdot [1.62,\ 2.52] = 1.62 + 5.04 = \mathbf{6.66}\ \checkmark \text{ (matches 6.68 up to rounding)}$$
+
+<div class="insight">
+
+Two rotations, one dot product — and only the **offset** survives. That's the whole trick: relative position for free, with zero extra parameters.
+
+</div>
+
+---
+
+# RoPE · three key properties
+
+<div class="math-box">
+
+1. **Relative positions encoded naturally** · inner product after rotation depends only on $m - n$ (query-minus-key position), not absolute positions.
+
+2. **Extrapolates beyond training length** · rotation frequencies are fixed; a model trained at 4k context can extend to 32k without re-training (with minor fixes).
+
+3. **Zero added parameters** · rotation matrices are deterministic given position; no `nn.Embedding(max_len, d_model)` allocation.
+
+</div>
+
+<div class="keypoint">
+
+Llama, Mistral, Qwen, GPT-NeoX all use RoPE as of this writing. A 2021 paper (Su et al.) that took ~2 years to catch on is now the default.
+
+</div>
+
+---
+
+# Context length · the scaling wall
+
+| Year | Frontier model | Context |
+|:-:|:-:|:-:|
+| 2018 | BERT | 512 tokens |
+| 2020 | GPT-3 | 2,048 |
+| 2023 | GPT-4 | 32k |
+| 2023 | Claude 2 | 100k |
+| 2024 | Gemini 1.5 | **1,000,000** |
+| today | frontier (as of this writing) | 2-10M |
+
+<div class="insight">
+
+What unlocked 1M? · **RoPE extrapolation**, **FlashAttention** (O(N) memory), **GQA** (smaller KV cache), and training on long documents from the start. No single trick; the stack compounds.
+
+</div>
 
 ---
 
@@ -359,7 +427,7 @@ Used in Llama 1/2/3, Mistral, PaLM, GPT-NeoX. **No extra params**, **extrapolate
 
 # Efficient attention
 
-MQA, GQA, and the KV-cache
+Why does generation run out of *memory* before it runs out of compute?
 
 ---
 
@@ -425,14 +493,7 @@ Now compare for Llama 2 70B ($T = 32k$, $L = 80$, $d_h = 128$):
 | **GQA** (Llama 2, 8 groups) | 8 | $32k \cdot 80 \cdot 8 \cdot 128 \cdot 4 \approx \mathbf{10.5\ \text{GB}}$ |
 | **MQA** | 1 | $\approx \mathbf{1.3\ \text{GB}}$ (quality drops) |
 
-**GQA reduces KV-cache by $H_q / H_{kv} = 64/8 = 8\times$** with negligible quality loss — the modern default.
-
-```python
-# In Llama 2 70B:
-n_heads = 64       # query heads
-n_kv    = 8        # GQA groups
-d_head  = 128
-```
+**GQA reduces KV-cache by $H_q / H_{kv} = 64/8 = 8\times$** with negligible quality loss — the modern default (Llama 2 70B: `n_heads=64`, `n_kv=8`).
 
 ---
 
@@ -442,13 +503,7 @@ d_head  = 128
 
 # Distributed training
 
-How you fit a 70B model on real hardware
-
----
-
-# Distributed training · three parallelisms
-
-![w:920px](figures/lec15/svg/distributed_3d.svg)
+A 70B model doesn't fit on one GPU — so how does anyone train it?
 
 ---
 
@@ -468,48 +523,15 @@ Frontier training combines **all three** · 3D parallelism. Each axis trades off
 
 ---
 
-# Three parallelism strategies
+# Distributed training · three parallelisms
 
-<div class="columns">
-<div>
-
-### Data parallel (DP)
-
-Each GPU has a **full copy** of the model, trains on different batches. Gradients averaged across GPUs.
-
-Simple. Works for models that fit on one GPU. Breaks at 10B+.
-
-</div>
-<div>
-
-### Tensor parallel (TP)
-
-Split each **matrix multiply** across GPUs. Each GPU holds a slice of W.
-
-Megatron-LM. Required for >10B. Heavy all-reduce bandwidth.
-
-</div>
-</div>
+![w:920px](figures/lec15/svg/distributed_3d.svg)
 
 ---
 
-# Pipeline + 3D parallelism
+# The reality today
 
-### Pipeline parallel (PP)
-
-Split the **layer stack** across GPUs. Layer 1-10 on GPU 1, layer 11-20 on GPU 2, etc. Bubble of idle time unless you use micro-batching.
-
-<div class="keypoint">
-
-**Modern training runs combine all three** (3D parallelism). Add ZeRO (sharded optimizer state) and you get the full picture.
-
-</div>
-
----
-
-# The 2026 reality
-
-Training a 70B from scratch in 2026 · ~10k H100 GPUs for ~2 months.
+Training a 70B from scratch, as of this writing · ~10k H100-class GPUs for ~2 months.
 
 - Data center cost: ~$100M
 - Energy: ~1 GWh
@@ -529,7 +551,7 @@ Almost no one trains from scratch. **Everyone fine-tunes** open-weight models (L
 
 # Emergent abilities
 
-When more params unlock new behaviors
+Do bigger models just get *better* — or do they get *different*?
 
 ---
 
@@ -594,24 +616,7 @@ Resolution · both sides are partially right. Capability improves continuously i
 
 ---
 
-# Chain-of-thought · prompting unlocks reasoning
-
-<div class="math-box">
-
-Standard prompt · "Q: 23 × 47 = ?"   →   A: "1081" (often wrong)
-
-CoT prompt · "Q: 23 × 47 = ? Let's think step by step."   →
-  A: "23 × 47 = 23 × (50 − 3) = 1150 − 69 = 1081"
-
-</div>
-
-CoT unlocks **multi-digit arithmetic, commonsense, logic** at 60B+. Below that, CoT adds nothing (the model can't reason in steps either).
-
-<div class="insight">
-
-The prompt itself is a learnable control · "let's think step by step" (Kojima 2022) can add 15 points on GSM8K. No fine-tuning. This thread becomes reasoning models (o1, Claude thinking) in 2024.
-
-</div>
+# Where abilities emerge · the scale table
 
 | Ability | Roughly where it emerges |
 |---------|--------------------------|
@@ -651,7 +656,7 @@ This is **few-shot learning without weight updates**. Emergent at scale; the fou
 
 ---
 
-# Chain of thought
+# Chain of thought · "let's think step by step"
 
 Prompting the model to "think step by step" dramatically improves multi-step reasoning:
 
@@ -664,7 +669,13 @@ With CoT:    "He starts with 5. 2 cans × 3 = 6 more.
               Total: 5 + 6 = 11." ← reliably correct
 ```
 
-CoT *emerges* at scale. At 10B params, adding "let's think step by step" doesn't help. At 100B+, it adds 20+ percentage points on math benchmarks.
+CoT *emerges* at scale. At 10B params, adding "let's think step by step" doesn't help. At 100B+, it adds 20+ percentage points on math benchmarks (Kojima 2022).
+
+<div class="insight">
+
+The prompt itself is a control knob — no fine-tuning needed. This thread becomes **reasoning models** (next slide).
+
+</div>
 
 ---
 
@@ -676,7 +687,7 @@ The latest generation — **o1, o3, Claude extended thinking, DeepSeek R1** — 
 - Spends 10×–100× more compute per answer.
 - Often dramatically better on math, code, logic.
 
-This is where 2026 LLMs are. We'll see alignment + RLHF in the next lecture, then peek at reasoning in L16's final slide.
+This is where frontier LLMs are as of this writing. We'll see alignment + RLHF in the next lecture, then peek at reasoning in L16's final slide.
 
 ---
 
@@ -708,7 +719,7 @@ This is where 2026 LLMs are. We'll see alignment + RLHF in the next lecture, the
 
 **P2.** Sketch RoPE on a 4-dim head. What does it geometrically rotate? Why is relative position the only thing the attention dot-product sees afterwards?
 
-**P3.** **GQA** with 8 query heads sharing 2 KV heads · how many parameters does the KV-cache hold per token, vs vanilla MHA? Estimate the memory savings for a 70B model with context 32k.
+**P3.** **GQA** with 8 query heads sharing 2 KV heads · how many values does the KV-cache hold per token, vs vanilla MHA? Estimate the memory savings for a 70B model with context 32k.
 
 **P4.** Sketch the **scaling-law power curve** $L(N, D, C) \approx (a/N^\alpha + b/D^\beta + c/C^\gamma)$. What does each term capture?
 
@@ -723,8 +734,8 @@ This is where 2026 LLMs are. We'll see alignment + RLHF in the next lecture, the
 # Lecture 15 — summary
 
 - **Chinchilla** · D/N ≈ 20 tokens per parameter is compute-optimal. Modern Llama-style models intentionally overtrain for inference gains.
-- **RoPE** · rotate Q and K by position-dependent angles; relative positions baked in; extrapolates. Default in 2026 LLMs.
-- **GQA** · grouped-query attention shrinks KV-cache ~4× with near-zero quality loss. Default in Llama 2 70B+.
+- **RoPE** · rotate Q and K by position-dependent angles; relative positions baked in; extrapolates. The current default.
+- **GQA** · grouped-query attention shrinks KV-cache ~8× (64 → 8 KV heads) with near-zero quality loss. Default in Llama 2 70B+.
 - **Distributed training** · DP + TP + PP + ZeRO. 70B from scratch is a ~$100M engineering feat.
 - **Emergence** · few-shot learning, CoT reasoning, tool use — all appear at scale, not specifically trained.
 
@@ -739,5 +750,17 @@ HF PEFT docs; Ouyang 2022 (InstructGPT); Rafailov 2023 (DPO).
 <div class="notebook">
 
 **Notebook 15** · `15-rope.ipynb` — implement RoPE from scratch; compare to sinusoidal PE on extrapolation.
+
+</div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**Scale changed, the architecture didn't.**
+
+*Next · a model that completes text is not yet a model that helps you — that gap is alignment.*
 
 </div>

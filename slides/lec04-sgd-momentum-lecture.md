@@ -73,13 +73,30 @@ This is **the most common failure mode** of vanilla SGD on real loss surfaces. B
 
 ---
 
+# Bridge from ES 654 · you already know this
+
+| From ES 654 | What changes today |
+|---|---|
+| GD = step down the Taylor-series slope | the *surface* itself: ravines, saddles, $\kappa \gg 1$ |
+| SGD noise = a nuisance to average away | noise becomes a feature — it escapes saddles |
+| one global learning rate $\eta$ | $\eta$ plus a velocity $\mathbf{v}$ with memory $\beta$ |
+| convex-ish bowls (height-weight) | $10^6$-dim landscapes that are almost all saddle |
+
+<div class="keypoint">
+
+You know vanilla SGD. Here is the family tree it spawned — and why ravines defeat it.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 1
 
 # The loss landscape
 
-What makes neural-net optimization hard
+What does a $10^6$-dimensional loss surface actually look like — and why is it hard?
 
 ---
 
@@ -139,17 +156,13 @@ Loss: $\mathcal{L}(\theta) = \tfrac{1}{2}(10\theta_1^2 + \theta_2^2)$. Hessian e
    - $\theta_{t,2} = (1 - \eta)\,\theta_{t-1,2}$
 4. **Stability constraint.** $|1-10\eta|<1 \Rightarrow \eta < 0.2$.
 
-Pick the largest stable LR: $\eta=0.15$.
-- $\theta_1$ shrinks by $|1 - 1.5| = 0.5$ — actually **flips sign** (overshoots).
-- $\theta_2$ shrinks by only $0.85$ — **crawls.**
-
-The high-curvature direction forces a tiny LR; the low-curvature direction then converges painfully slowly.
+The high-curvature direction caps the LR; at any stable $\eta$, the low-curvature direction then converges painfully slowly. Watch it happen on the next slide.
 
 ---
 
 # Worked numeric · SGD in a ravine
 
-Start $\theta_0 = [10, 1]$, $\eta = 0.15$.
+Start $\theta_0 = [10, 1]$ with the largest comfortable LR, $\eta = 0.15$ (stability needs $\eta < 0.2$).
 
 | step | $\theta$ | $\nabla\mathcal{L}$ | next $\theta$ |
 |------|----------|---------------------|---------------|
@@ -210,7 +223,7 @@ Gradient from a batch is a *noisy estimate* of the full gradient.
 
 <div class="insight">
 
-Larger batch → less noise → worse generalization in practice. "Linear-scaling" rule: if you 2× the batch, 2× the learning rate.
+Larger batch → less noise → often slightly worse generalization (an empirical tendency, not a law). "Linear-scaling" heuristic: 2× the batch, 2× the learning rate — it works up to a critical batch size, beyond which you need warmup and the gains flatten anyway.
 
 </div>
 
@@ -222,7 +235,7 @@ Larger batch → less noise → worse generalization in practice. "Linear-scalin
 
 # Momentum
 
-The single most important change to SGD
+Can a memory of past gradients cancel the zig-zag?
 
 ---
 
@@ -240,38 +253,41 @@ Algorithmically · keep an exponentially-weighted average of past gradients · u
 
 ---
 
+# Momentum · build the update step-by-step
+
+1. **Define velocity $\mathbf{v}$** — a vector that remembers past gradients.
+2. **Velocity update.** Mix old velocity with the new gradient using $\beta \in (0, 1)$:
+$$\mathbf{v}_t = \underbrace{\beta\, \mathbf{v}_{t-1}}_{\text{inertia · keep most of old velocity}} \;+\; \underbrace{(1-\beta)\, \nabla\mathcal{L}(\theta_{t-1})}_{\text{new info · nudge with current gradient}}$$
+3. **Position update.** Step using the smoothed velocity, not the raw gradient:
+$$\theta_t = \theta_{t-1} - \eta\, \mathbf{v}_t$$
+
+This is an **Exponential Moving Average (EMA)**. With $\beta = 0.9$: keep 90% of the old velocity, mix in 10% of the new gradient. Effective memory $\frac{1}{1-\beta} = 10$ steps.
+
+PyTorch's `SGD(..., momentum=0.9)` uses an equivalent form.
+
+---
+
 # Momentum = EMA of gradients
 
 ![w:920px](figures/lec04/svg/momentum_ema.svg)
 
 ---
 
-# The physical intuition
+# Worked numeric · momentum smooths the ravine
 
-Replace **position updates** with **velocity updates**. A ball rolling down the valley:
+Ravine gradients: $g_t = [\pm 1.0,\ 0.1]$ — first component flips sign every step, second is constant. $\beta = 0.9,\ \mathbf{v}_0 = [0, 0]$.
 
-- accumulates speed in consistent directions
-- averages out back-and-forth from noise
+| $t$ | $g_t$ | $\mathbf{v}_t = 0.9\,\mathbf{v}_{t-1} + 0.1\,g_t$ |
+|----|------|----------------------------------------|
+| 1 | $[-1.0, 0.1]$ | $[0,0]\cdot 0.9 + [-1, 0.1]\cdot 0.1 = [-0.100,\ 0.0100]$ |
+| 2 | $[+1.0, 0.1]$ | $[-0.090, 0.009] + [0.1, 0.01] = [+0.010,\ 0.0190]$ |
+| 3 | $[-1.0, 0.1]$ | $[0.009, 0.0171] + [-0.1, 0.01] = [-0.091,\ 0.0271]$ |
 
-Formally — keep an exponential moving average of past gradients.
+**Observation.**
+- $v_{t,1}$ oscillates near zero ($-0.10 \to 0.01 \to -0.09$): zig-zags **cancel out**.
+- $v_{t,2}$ steadily grows ($0.010 \to 0.019 \to 0.027$): consistent push **accumulates**.
 
----
-
-# Momentum · numerical trace
-
-Let gradients in a ravine look like: $g_t = [\pm 1, 0.1]$ (flipping sign on $\theta_1$ every step, small consistent push on $\theta_2$).
-
-<div class="math-box">
-
-With $\beta = 0.9$, EMA settles to:
-- $v_{t,1}$ · average of $\pm 1$ oscillations → **near zero**
-- $v_{t,2}$ · average of $0.1$ → **0.1** (preserved)
-
-</div>
-
-Vanilla SGD zig-zags $\pm 1$ on $\theta_1$. Momentum cancels that out — direction 2 gets all the step budget. **Zig-zag in, drift out.**
-
-The same EMA mechanism shows up in Adam (L5), batch-norm running stats, and target networks in RL. One primitive, many uses.
+Momentum **damps oscillation, amplifies persistence**. The same EMA primitive shows up again in Adam (L5), batch-norm running stats, and RL target networks.
 
 ---
 
@@ -291,50 +307,6 @@ Yes — but a forgiving one.
 Most practitioners set $\beta = 0.9$ once and never touch it again. The knob you tune is $\eta$.
 
 </div>
-
----
-
-# From hiker to heavy ball
-
-Vanilla SGD only cares about the slope **right now**. A heavy ball has **inertia** — its motion today is a mix of *where it was already going* and the *new push from the slope*.
-
-<div class="insight">
-
-**Analogy · pushing a bowling ball.** Push it once → it rolls. Push it again in the same direction → it speeds up. Push it sideways → it changes direction, but it doesn't stop and turn on a dime. This **memory of past motion** is what we add to SGD.
-
-</div>
-
----
-
-# Momentum · build the update step-by-step
-
-1. **Define velocity $\mathbf{v}$** — a vector that remembers past gradients.
-2. **Velocity update.** Mix old velocity with the new gradient using $\beta \in (0, 1)$:
-$$\mathbf{v}_t = \underbrace{\beta\, \mathbf{v}_{t-1}}_{\text{inertia · keep most of old velocity}} \;+\; \underbrace{(1-\beta)\, \nabla\mathcal{L}(\theta_{t-1})}_{\text{new info · nudge with current gradient}}$$
-3. **Position update.** Step using the smoothed velocity, not the raw gradient:
-$$\theta_t = \theta_{t-1} - \eta\, \mathbf{v}_t$$
-
-This is an **Exponential Moving Average (EMA)**. With $\beta = 0.9$: keep 90% of the old velocity, mix in 10% of the new gradient. Effective memory $\frac{1}{1-\beta} = 10$ steps.
-
-PyTorch's `SGD(..., momentum=0.9)` uses an equivalent form.
-
----
-
-# Worked numeric · momentum smooths the ravine
-
-Ravine gradients: $g_t = [\pm 1.0,\ 0.1]$ — first component flips sign every step, second is constant. $\beta = 0.9,\ \mathbf{v}_0 = [0, 0]$.
-
-| $t$ | $g_t$ | $\mathbf{v}_t = 0.9\,\mathbf{v}_{t-1} + 0.1\,g_t$ |
-|----|------|----------------------------------------|
-| 1 | $[-1.0, 0.1]$ | $[0,0]\cdot 0.9 + [-1, 0.1]\cdot 0.1 = [-0.100,\ 0.0100]$ |
-| 2 | $[+1.0, 0.1]$ | $[-0.090, 0.009] + [0.1, 0.01] = [+0.010,\ 0.0190]$ |
-| 3 | $[-1.0, 0.1]$ | $[0.009, 0.0171] + [-0.1, 0.01] = [-0.091,\ 0.0271]$ |
-
-**Observation.**
-- $v_{t,1}$ oscillates near zero ($-0.10 \to 0.01 \to -0.09$): zig-zags **cancel out**.
-- $v_{t,2}$ steadily grows ($0.010 \to 0.019 \to 0.027$): consistent push **accumulates**.
-
-Momentum **damps oscillation, amplifies persistence**.
 
 ---
 
@@ -387,21 +359,7 @@ Never use vanilla SGD without momentum for a deep network. It is a Lego brick, n
 
 # Nesterov accelerated gradient
 
-Evaluate the gradient one step ahead
-
----
-
-# Nesterov · driving with a longer-range view
-
-<div class="keypoint">
-
-Standard momentum is like driving by looking at the road right in front of your bumper · you steer based on what's directly under you.
-
-**Nesterov** is like looking *down the road*. You first imagine where momentum is taking you, look at the slope **at that future point**, and steer based on that.
-
-</div>
-
-The result · less overshoot near valley walls · cleaner approach to the minimum · provably better convergence rate (in the convex case).
+What if the ball could peek one step ahead before committing?
 
 ---
 
@@ -424,7 +382,7 @@ Standard momentum is a bit reckless. It computes the gradient **at the current s
 
 </div>
 
-If your velocity was about to drive you into a wall, the lookahead gradient already points back — correcting the course **before** you fully commit.
+If your velocity was about to drive you into a wall, the lookahead gradient already points back — correcting the course **before** you fully commit. Result · less overshoot near valley walls, and a provably better convergence rate in the convex case.
 
 ---
 
@@ -528,6 +486,12 @@ opt = torch.optim.SGD(model.parameters(),
 
 That is the entire cost of using it.
 
+<div class="paper">
+
+PyTorch implements the standard *shifted-variable* form of NAG — it stores $\theta_\text{look}$ instead of $\theta$, so the code looks different from our three steps but traces the same trajectory (P5 asks you to show the equivalence).
+
+</div>
+
 ---
 
 <!-- _class: section-divider -->
@@ -536,7 +500,7 @@ That is the entire cost of using it.
 
 # Practical recommendations
 
-What to actually use
+So which optimizer should you actually use — and what do you do when it fails?
 
 ---
 
@@ -551,7 +515,7 @@ What to actually use
 
 <div class="insight">
 
-Image researchers often prefer SGD-Momentum for final runs — it tends to find flatter minima that generalize slightly better. Everyone else uses AdamW.
+Image researchers often prefer SGD-Momentum for final runs — it tends to find minima that generalize slightly better on vision benchmarks. That is an **empirical observation, not a theorem**, and it varies by model family. Everyone else uses AdamW.
 
 </div>
 
@@ -628,26 +592,6 @@ Practical recipe: fix $\beta = 0.9$; use the LR finder to pick $\eta$. Revisit $
 
 ---
 
-# Debugging optimizer failures
-
-Common symptoms and fixes:
-
-| Symptom | Likely cause | Fix |
-|:-:|:-:|:-:|
-| Loss → NaN after step 1 | LR too high, fp16 overflow | halve $\eta$, enable gradient clipping |
-| Loss oscillates (±) | ravine + momentum too low | raise $\beta$ to 0.9 |
-| Loss plateaus for hundreds of steps | stuck near saddle | raise $\beta$ or switch to Adam |
-| Loss drops then climbs | overfitting (not optimizer) | add weight decay, lower $\eta$ |
-| Training slower than Keras example | no momentum | add `momentum=0.9` |
-
-<div class="insight">
-
-Most "my network doesn't train" bugs are optimizer-level. The debug ladder from L3 + this table catches ~90% of them in practice.
-
-</div>
-
----
-
 # Putting it all together · the L04 master sentence
 
 <div class="math-box">
@@ -699,6 +643,18 @@ Vanishing gradients (a) would *flatten* loss, not oscillate. Bad shuffling (c) w
 
 ---
 
+# What breaks · symptom → suspect → test
+
+| Symptom | Suspect | Fastest test |
+|---|---|---|
+| Loss oscillates between two values, never improves | $\eta$ too high for the ravine's steep direction | halve $\eta$, watch 100 steps — the cycle should collapse |
+| Loss flat for hundreds of steps, grad norm ≈ 0 | saddle plateau, no velocity to coast through it | one run with $\beta: 0.9 \to 0.95$ — plateau should shorten |
+| Raised $\beta$ to 0.99, run went NaN | effective LR $\eta/(1-\beta)$ silently jumped 10× | restore $\beta=0.9$ **or** divide $\eta$ by 10 — change one, compare |
+| Diverges only in the first ~50 steps, fine after restart from checkpoint | heavy ball + chaotic early gradients | clip grad-norm to 1.0 for the first 500 steps |
+| Trains, but slower than every published baseline | `momentum=0` — PyTorch SGD's silent default | print `opt.defaults['momentum']` |
+
+---
+
 <!-- _class: summary-slide -->
 
 # Lecture 4 — summary
@@ -722,3 +678,17 @@ Vanishing gradients (a) would *flatten* loss, not oscillate. Bad shuffling (c) w
 **Notebook 4** · `04-optimizer-race.ipynb` — implement SGD, momentum, Nesterov from scratch; animate trajectories on a 2D quadratic and Rosenbrock.
 
 </div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**Momentum is a moving average of gradients.**
+
+Everything else — Nesterov, the $1/(1-\beta)$ effective LR, saddle escape — falls out of that one EMA.
+
+</div>
+
+*Next lecture: you tuned one learning rate for every parameter. What if each parameter chose its own? Enter Adam.*

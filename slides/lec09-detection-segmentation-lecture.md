@@ -67,11 +67,11 @@ Self-driving car at an intersection · a single frame contains **7 pedestrians a
 (c) Per-pixel classifier (segmentation) and post-process to boxes.
 (d) Detector that outputs *a variable number* of class+box pairs.
 
-Stop and decide. The answer is (d), and **why the other three fail** is what classification → localization → detection is about.
+Stop and decide. What's the *one property of this frame* that breaks three of these options?
 
 </div>
 
-The naive options break because the *number of objects varies*. Detectors solve that.
+Hold your answer — classification → localization → detection is exactly the story of why the naive options fail. We revisit at the end.
 
 ---
 
@@ -85,7 +85,7 @@ The naive options break because the *number of objects varies*. Detectors solve 
 
 # Classification → Localization → Detection
 
-Three increasing levels of spatial specificity
+What's in this image — and *where*, exactly?
 
 ---
 
@@ -133,7 +133,7 @@ For one image:
 
 $$\mathcal{L} = \underbrace{\mathcal{L}_\text{class}(\text{logits}, y)}_{\text{cross-entropy}} + \lambda \cdot \underbrace{\mathcal{L}_\text{box}(\hat{\mathbf{b}}, \mathbf{b})}_{\text{Smooth L1 / MSE}}$$
 
-$\lambda$ is the **balancing knob**: $\lambda > 1$ → box matters more; $\lambda < 1$ → class matters more. Typical $\mathcal{L}_\text{box}$ is **Smooth L1** (L2 near 0, L1 far → robust).
+$\lambda$ is the balancing knob (the "2.0 · drawing" from the exam analogy); typical $\mathcal{L}_\text{box}$ is **Smooth L1** — L2 near 0, L1 far, robust to outlier boxes.
 
 ---
 
@@ -161,7 +161,7 @@ This `3.18` is what backprop sees → updates *both* the class head and the box 
 
 # IoU and NMS
 
-Two primitives every detector needs
+How good is a box — and which duplicates do we delete?
 
 ---
 
@@ -217,15 +217,8 @@ Concretely · sort by confidence, keep the best, discard any later box that over
 
 # NMS · step-by-step example
 
-5 predicted boxes for one car. IoU threshold 0.5.
-
-| Box | Score |
-|-----|-------|
-| A | 0.95 |
-| B | 0.90 |
-| C | 0.80 |
-| D | 0.75 |
-| E | 0.70 |
+5 predicted boxes for one car, IoU threshold 0.5.
+Scores · **A** 0.95 · **B** 0.90 · **C** 0.80 · **D** 0.75 · **E** 0.70.
 
 **Step 1 · pick A** (highest score). Add to `keep`.
 Compare IoU(A, others): IoU(A,B)=0.8 → drop B; IoU(A,C)=0.2 → keep; IoU(A,D)=0.7 → drop D; IoU(A,E)=0.1 → keep.
@@ -298,7 +291,7 @@ Trade-off · 100% recall = return everything; 100% precision = return only one s
 
 # One-stage vs two-stage detectors
 
-R-CNN family · YOLO · DETR
+Propose-then-classify, or one glance? R-CNN · YOLO · DETR
 
 ---
 
@@ -430,7 +423,7 @@ Choose by constraint · real-time camera feed → YOLO. Labeled-data poor → DE
 
 <div class="realworld">
 
-For any real-time detection task in 2026, start with `ultralytics` YOLOv11. `pip install ultralytics` → model downloads + runs in 10 lines.
+As of this writing, for any real-time detection task, start with `ultralytics` YOLOv11. `pip install ultralytics` → model downloads + runs in 10 lines.
 
 </div>
 
@@ -462,7 +455,7 @@ DETR cleans up detection conceptually but is slower and data-hungry. YOLO still 
 
 # Semantic segmentation · U-Net
 
-Pixel-level classification
+What if *every pixel* needs a label?
 
 ---
 
@@ -595,6 +588,12 @@ Built on Faster R-CNN. Adds a third head:
 - **Bbox** head (from Faster R-CNN)
 - **Mask** head — a small FCN producing a pixel mask per region
 
+<div class="keypoint">
+
+The enabling trick is **RoIAlign** · crop region features with *bilinear sampling* instead of rounding to the nearest cell — without it, quantization shifts masks by several pixels.
+
+</div>
+
 <div class="paper">
 
 He et al. 2017 · Mask R-CNN — cleanly combines detection and segmentation. Standard baseline for instance tasks.
@@ -609,7 +608,7 @@ He et al. 2017 · Mask R-CNN — cleanly combines detection and segmentation. St
 
 # 2026 frontier · SAM
 
-Zero-shot segmentation by prompting
+Can one model segment *anything* — without retraining?
 
 ---
 
@@ -629,7 +628,7 @@ SAM changed segmentation the way CLIP changed classification — you don't need 
 
 <div class="realworld">
 
-In 2026: for most segmentation tasks, start with SAM-2 and fine-tune only if the domain is truly specialized (medical, satellite).
+Current practice: for most segmentation tasks, start with SAM-2 and fine-tune only if the domain is truly specialized (medical, satellite). Two caveats · SAM returns **masks, not labels** (pair it with CLIP or a classifier for semantics), and mask quality is **prompt-sensitive** on niche domains.
 
 </div>
 
@@ -660,7 +659,7 @@ The open-vocabulary goal · build a **universal translator** that understands co
 4. **Search** the image for regions whose embeddings are close to the text embedding.
 5. Match → draw a box.
 
-Examples · OWLv2, GroundingDINO, SAM-with-text. The 2024–2026 frontier is **fully prompt-driven** vision.
+Examples · OWLv2, GroundingDINO, SAM-with-text. As of this writing, the frontier is **fully prompt-driven** vision.
 
 ---
 
@@ -706,7 +705,15 @@ This is why YOLO / DETR are the right tool — and why classifiers + regressors 
 
 **P2.** A YOLO grid is $13\times13$ with 3 anchors per cell on an 80-class dataset. How many predictions per image? Each prediction is (4 box + 1 obj + 80 class) = 85 numbers. Total tensor size?
 
-**P3.** Apply NMS to 4 boxes for one car · scores $0.95, 0.92, 0.80, 0.65$ with pairwise IoU matrix shown in the slides. Which boxes survive at threshold 0.5?
+**P3.** Apply NMS to 4 boxes for one car · scores $0.95, 0.92, 0.80, 0.65$, pairwise IoUs $\text{IoU}(1,2)=0.7$, $\text{IoU}(1,3)=0.3$, $\text{IoU}(1,4)=0.6$, $\text{IoU}(2,3)=0.2$, $\text{IoU}(3,4)=0.4$. Which boxes survive at threshold 0.5?
+
+</div>
+
+---
+
+# Practice problems · segmentation &amp; open-vocab
+
+<div class="math-box">
 
 **P4.** Show that the **Dice loss** $1 - 2|P\cap T|/(|P|+|T|)$ has gradient $\partial L / \partial P_i$ that depends on **all** target pixels, not just $P_i$ — and contrast this with pixel-wise BCE which is fully local.
 
@@ -715,6 +722,18 @@ This is why YOLO / DETR are the right tool — and why classifiers + regressors 
 **P6.** Open-vocab detection · CLIP text encoder gives a vector $\mathbf{t}$ for the prompt "a red bicycle" and the image gives spatial features $\mathbf{f}_{ij}$. Sketch the matching score (cosine similarity) and how you'd convert top-K spatial peaks into bounding boxes.
 
 </div>
+
+---
+
+# What breaks · symptom → suspect → test
+
+| Symptom | Suspect | Fastest test |
+|---|---|---|
+| Train loss falls but mAP ≈ 0 | box format mismatch — `xywh` vs `x₁y₁x₂y₂` | draw 5 predicted boxes on one image, eyeball them |
+| Dozens of overlapping boxes per object | NMS missing, or IoU threshold too high | print box count before/after `nms(0.5)` |
+| Segmentation 99% "accurate", mask all background | class imbalance + plain cross-entropy | print foreground pixel fraction · switch to Dice |
+| Mask finds the organ, boundaries are mush | U-Net skip connections dropped or misconnected | check decoder `cat()`s encoder features at each level |
+| Small objects never detected | anchors far larger than ground-truth boxes | histogram GT box sizes vs anchor sizes |
 
 ---
 
@@ -743,3 +762,15 @@ Bishop Ch 12 · sequences and recurrence.
 **Notebook 9** · `09-yolo-unet.ipynb` — run pretrained YOLOv11 on sample images; train a small U-Net on a toy segmentation task; measure IoU per class.
 
 </div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**Detection and segmentation don't replace the classifier — they bolt new heads onto the same backbone.**
+
+</div>
+
+*Next: images hold still, sequences don't — RNNs and the problem of memory.*

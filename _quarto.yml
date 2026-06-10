@@ -3,6 +3,7 @@ project:
   output-dir: .
   render:
     - "*.qmd"
+    - "labs/*.qmd"
     - "labs/*.ipynb"
     - "notebooks/*.ipynb"
     - "!slides/"
@@ -20,6 +21,8 @@ website:
         href: slides.qmd
       - text: "Notebooks"
         href: notebooks.qmd
+      - text: "Labs"
+        href: labs/index.qmd
       - text: "Resources"
         href: resources.qmd
       - text: "Interactives"

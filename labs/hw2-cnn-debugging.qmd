@@ -1,0 +1,167 @@
+---
+title: "HW2 · CNNs, Transfer Learning, and the Sabotaged Script"
+---
+
+**Out after L09 · due in 2 weeks · 100 points.**
+
+Part of being good at deep learning is building models. A bigger part — the one
+nobody puts on a slide — is figuring out why a model that *should* work doesn't.
+This assignment grades both. Part (c) hands you a training script we broke on
+purpose, three different ways. Your job is to find every bug *systematically*,
+using the debug ladder from L03 — not by staring at the code until something
+looks wrong.
+
+## Goals
+
+- Predict tensor shapes and parameter counts *before* running code (L07: the conv arithmetic).
+- See, with your own numbers, when transfer learning crushes training from scratch — and when the gap narrows (L08).
+- Turn the debug ladder (L03) from a slide into a reflex: **symptom → suspect → test → fix**.
+- Learn that the most expensive bugs are the ones that don't crash.
+
+## Setup
+
+Start from [`../notebooks/07-cnn-shape-tour.ipynb`](../notebooks/07-cnn-shape-tour.ipynb)
+and [`../notebooks/03-debug-ladder.ipynb`](../notebooks/03-debug-ladder.ipynb).
+You'll need a GPU for parts (a) and (b) — free Colab is enough (each training run
+below is under 10 minutes there). Part (c) needs only your eyes and a CPU.
+
+---
+
+## Part (a) · A CNN on CIFAR-10, shapes first — 30 points
+
+Design a CNN for CIFAR-10 with **at most 500k parameters** and **at least 3 conv layers**.
+
+1. **Before writing any PyTorch**, fill in this table by hand for your architecture (use the formula $\lfloor (n + 2p - k)/s \rfloor + 1$):
+
+   | Layer | In shape | Out shape | # params | Why |
+   |---|---|---|---:|---|
+   | conv1 (k=?, s=?, p=?) | 3×32×32 | ? | ? | |
+   | ... | | | | |
+
+   Include every layer, including the classifier head. Total the parameter column.
+2. Then build it and verify: print `sum(p.numel() for p in model.parameters())` and a forward-pass shape trace. If your hand count disagrees with PyTorch, find out why and write one sentence about what you forgot (bias terms are the classic).
+3. Train with standard augmentation (random crop + horizontal flip) for ~15 epochs. Report test accuracy. Anything ≥ 70% is fine — **the table is worth more than the accuracy**.
+4. One question: your network's final conv layer sees how much of the input image (receptive field)? Compute it layer by layer, like in the notebook.
+
+## Part (b) · Transfer learning vs from scratch, with starving data — 30 points
+
+The question: *how much is ImageNet pretraining worth, per training example?*
+
+1. Subsample CIFAR-10 train set to **{500, 2500, 10000}** images (class-balanced).
+2. For each size, train two models for the same number of *epochs*:
+   - your Part (a) CNN from scratch;
+   - a pretrained `resnet18` with **all layers frozen except a new final linear layer** (remember to resize/normalize inputs the way the pretrained weights expect — look up the ImageNet statistics).
+3. Plot test accuracy vs training-set size, one curve per model (6 runs total; each is a few minutes on Colab).
+4. Written (3–6 sentences each):
+   - Where is the gap biggest, and *why*? What is the frozen ResNet bringing to the table that 500 CIFAR images cannot teach?
+   - The frozen ResNet is just a linear classifier on fixed features. Which ML-course model is this exactly? Why does it still beat a deep net trained from scratch at small n?
+   - Predict (no need to run): at 50,000 images and 100 epochs, which wins? Justify.
+
+## Part (c) · The sabotaged script — 40 points
+
+The script below is a CIFAR-10 trainer that **contains exactly three bugs**. None
+of them raise an error — the script runs to completion every time. It just trains
+badly. Each bug is in a different conceptual category.
+
+Your job, for **each** bug, is a four-line lab report in this exact format:
+
+> **Symptom:** what you observed (a number, a curve, a printout — evidence, not vibes)
+> **Suspect:** which ladder rung pointed here and what you hypothesized
+> **Test:** the minimal experiment that confirmed it (e.g., "overfit one batch", "print the gradient norm", "inspect one normalized image")
+> **Fix:** the one-line change
+
+Rules of engagement: you may add print statements, plot things, and run the
+ladder. You may *not* just diff against a reference trainer and submit "found
+them". We grade the *diagnosis*, not the find — a correct fix with no symptom/test
+trail gets at most half credit for that bug.
+
+```python
+# train_cifar.py -- runs fine. trains terribly. three bugs.
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
+
+torch.manual_seed(0)
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+train_tf = transforms.Compose([
+    transforms.RandomCrop(32, padding=4),
+    transforms.RandomHorizontalFlip(),
+    transforms.ToTensor(),
+    transforms.Normalize((0.247, 0.243, 0.261), (0.4914, 0.4822, 0.4465)),
+])
+test_tf = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
+])
+
+train_ds = datasets.CIFAR10("data", train=True,  download=True, transform=train_tf)
+test_ds  = datasets.CIFAR10("data", train=False, download=True, transform=test_tf)
+train_dl = DataLoader(train_ds, batch_size=128, shuffle=True,  num_workers=2)
+test_dl  = DataLoader(test_ds,  batch_size=256, shuffle=False, num_workers=2)
+
+class Net(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv2d(3, 32, 3, padding=1)
+        self.conv2 = nn.Conv2d(32, 64, 3, padding=1)
+        self.conv3 = nn.Conv2d(64, 128, 3, padding=1)
+        self.fc1 = nn.Linear(128 * 4 * 4, 256)
+        self.fc2 = nn.Linear(256, 10)
+
+    def forward(self, x):
+        x = F.max_pool2d(F.relu(self.conv1(x)), 2)
+        x = F.max_pool2d(F.relu(self.conv2(x)), 2)
+        x = F.max_pool2d(F.relu(self.conv3(x)), 2)
+        x = x.flatten(1)
+        x = F.relu(self.fc1(x))
+        return self.fc2(x)
+
+model = Net().to(device)
+opt = torch.optim.SGD(model.parameters(), lr=5.0, momentum=0.9)
+loss_fn = nn.CrossEntropyLoss()
+
+for epoch in range(10):
+    model.train()
+    running = 0.0
+    for x, y in train_dl:
+        x, y = x.to(device), y.to(device)
+        loss = loss_fn(model(x), y)
+        loss.backward()
+        opt.step()
+        running += loss.item()
+    model.eval()
+    correct = 0
+    with torch.no_grad():
+        for x, y in test_dl:
+            x, y = x.to(device), y.to(device)
+            correct += (model(x).argmax(1) == y).sum().item()
+    print(f"epoch {epoch}: loss {running/len(train_dl):.3f}  test acc {correct/len(test_ds):.3f}")
+```
+
+Hints, in the spirit of the ladder, not the answer key:
+
+- Rung 1 says inspect the data *after* the transform pipeline. What should the per-channel mean and std of a normalized batch be, roughly?
+- Rung 3 says overfit one batch. If you can't, the bug is upstream of "not enough data or epochs". Which two suspects does L03 name for a flat (or exploding) loss?
+- One of the bugs makes each `loss.backward()` see ghosts of every batch that came before it. What single print statement, placed before `opt.step()`, exposes it?
+
+After fixing all three, run 5 epochs and report the test accuracy — it should land
+somewhere sane (55–70%). This confirms you found all three and didn't introduce a fourth.
+
+## Deliverables
+
+- **One notebook** containing Parts (a)–(b), the three bug reports for (c) in the symptom/suspect/test/fix format, and the fixed script with the three changed lines marked `# FIXED:`.
+- `Restart & Run All` must succeed (it's fine for the notebook to load saved metrics for the longer runs — note where you did).
+
+## Rubric
+
+| Component | Points | What we look for |
+|---|---:|---|
+| (a) Hand-filled shape/param table | 15 | Every layer; matches PyTorch or discrepancy explained |
+| (a) Training + receptive field | 15 | ≥70% test acc; RF computed layer-by-layer |
+| (b) 6 runs, accuracy-vs-n plot | 15 | Class-balanced subsets, fair comparison |
+| (b) Written analysis | 15 | Names the linear-probe connection; prediction justified |
+| (c) Bug 1 / Bug 2 / Bug 3 reports | 10+10+10 | Evidence-driven; minimal confirming test for each |
+| (c) Fixed script trains sanely | 10 | 5-epoch accuracy in a plausible range |

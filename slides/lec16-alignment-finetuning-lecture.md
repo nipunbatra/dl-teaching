@@ -22,7 +22,7 @@ By the end of this lecture you will be able to:
 
 1. Explain why pretrained LLMs are **not chat assistants** out of the box.
 2. Write the **instruction-tuning** recipe (SFT on demo data).
-3. Implement **LoRA** adapter in ~20 lines of PyTorch.
+3. Explain the **LoRA** low-rank update and wire it up with `peft`.
 4. Compute **LoRA parameter count** and memory savings for a 70B model.
 5. Derive the **DPO loss** from the RLHF optimal-policy closed-form.
 6. Pick **SFT / LoRA / QLoRA / RLHF / DPO** for a given alignment task.
@@ -46,7 +46,10 @@ By the end of this lecture you will be able to:
 
 </div>
 
-Four questions:
+---
+
+# Four questions
+
 1. How do we turn pretrained models into **instruction followers**?
 2. What is **LoRA** and why did it eat the fine-tuning world?
 3. How does **RLHF** differ from **DPO**?
@@ -80,7 +83,7 @@ Stop and predict. The real answer is **(b)** — pretraining only knows *complet
 
 # SFT · Instruction tuning
 
-The first step after pretraining
+How do you teach a text *completer* to *answer*?
 
 ---
 
@@ -113,8 +116,8 @@ conversation = [
 # Apply chat template → single string with delimiters
 text = tokenizer.apply_chat_template(conversation)
 
-# Train with standard causal LM loss, but **only on the assistant response**
-# (mask system + user tokens)
+# Train with standard causal LM loss, but ONLY on the assistant
+# response (mask system + user tokens)
 loss = ce_loss(logits, labels, label_smoothing=0.0)
 ```
 
@@ -126,7 +129,7 @@ Dataset sizes: 10k–1M high-quality examples. Much smaller than pretraining (tr
 
 <div class="warning">
 
-**Overtraining** — SFT on too narrow a dataset makes the model parroting rather than helpful.
+**Overtraining** — SFT on too narrow a dataset makes the model parrot rather than help.
 
 **Forgetting** — aggressive SFT can destroy pretraining knowledge. Use small LRs (1e-6 to 1e-5).
 
@@ -142,7 +145,7 @@ Dataset sizes: 10k–1M high-quality examples. Much smaller than pretraining (tr
 
 # LoRA · parameter-efficient fine-tuning
 
-The technique everyone uses
+Can you fine-tune a 70B model by training 0.06% of it?
 
 ---
 
@@ -152,10 +155,10 @@ To fine-tune a 70B model with Adam:
 
 - **Weights** · 70B × 2 bytes (bf16) = 140 GB
 - **Gradients** · 140 GB
-- **Optimizer state** (Adam m and v) · 2 × 280 GB
+- **Optimizer state** (Adam $m$ and $v$, fp32) · 70B × 4 × 2 = 560 GB
 - **Activations** · ~200 GB (depends on batch)
 
-Total: **~760 GB**. Needs an H100 cluster. Most people don't have that.
+Total: **~1 TB**. Needs an H100 cluster. Most people don't have that.
 
 ---
 
@@ -291,9 +294,12 @@ Per parameter:
 $70 \times 10^9 \cdot 2 = 1.4 \times 10^{11}$ bytes = **140 GB** → needs 2× A100 80 GB.
 
 **QLoRA (4-bit base).**
-$70 \times 10^9 \cdot 0.5 = 3.5 \times 10^{10}$ bytes = **35 GB** → fits on a single A100 40 GB or a consumer 48 GB GPU. LoRA adapters add < 100 MB.
+$70 \times 10^9 \cdot 0.5 = 3.5 \times 10^{10}$ bytes = **35 GB** → fits on a single 48 GB GPU (the QLoRA paper's setting), with room left for activations. LoRA adapters add < 100 MB.
 
-**Mechanism.**
+---
+
+# QLoRA · the mechanism
+
 1. Load base, quantize to 4-bit (4× shrink).
 2. Freeze 4-bit weights.
 3. Attach **bf16** LoRA adapters. Train only these.
@@ -309,7 +315,7 @@ Used everywhere in open-source LLM fine-tuning since 2023.
 
 # RLHF · reward model + PPO
 
-The alignment loop that made ChatGPT
+What if there is no single *right* answer to clone — only better and worse ones?
 
 ---
 
@@ -416,7 +422,7 @@ Mitigating these is half the art of alignment.
 
 # DPO · Direct Preference Optimization
 
-Bypass the reward model entirely
+Do we actually *need* the reward model and the RL loop?
 
 ---
 
@@ -458,25 +464,65 @@ Build it from inside:
 
 ---
 
-# Worked numeric · DPO step
+# Pop quiz · DPO at step zero
 
-Prompt · "Suggest a coffee shop name." Winner $y_w$ = "The Daily Grind". Loser $y_l$ = "Coffee Shop". $\beta = 1$.
+DPO training starts from the SFT model, so at step zero $\pi_\theta = \pi_\text{ref}$ exactly.
 
-| | $\pi_\text{ref}$ | $\pi_\theta$ |
-|---|---|---|
-| $y_w$ | 0.05 | 0.06 |
-| $y_l$ | 0.10 | 0.12 |
+<div class="popquiz">
 
-**Winner score.** $\log(0.06/0.05) = \log 1.2 \approx 0.18$.
-**Loser score.** $\log(0.12/0.10) = \log 1.2 \approx 0.18$.
+What is the DPO loss on the very first batch?
 
-**Difference** = $0.18 - 0.18 = \mathbf{0}$. Both got the same boost — model hasn't learned the preference yet.
+(a) **0** — nothing has diverged yet.
+(b) Depends on the log-probs of $y_w$ and $y_l$.
+(c) **$\log 2 \approx 0.693$** — always.
 
-**Loss** = $-\log \sigma(0) = -\log 0.5 \approx \mathbf{0.69}$ — non-zero.
+Stop and reason from the formula. **Answer · (c).** Every ratio $\pi_\theta / \pi_\text{ref} = 1$, so both scores are 0, the margin is 0, and $\sigma(0) = \tfrac{1}{2}$. DPO starts exactly where a binary classifier starts — at chance.
 
-Gradient pushes $\theta$ to increase $\pi_\theta(y_w)$ (e.g. to 0.08) and decrease $\pi_\theta(y_l)$ (e.g. to 0.11). Now the difference is positive → loss drops.
+</div>
 
-Pure supervised loss. No RL loop. No reward model. ~50 lines vs RLHF's thousands.
+---
+
+# Worked numeric · DPO loss by hand
+
+Prompt $x$ · "Suggest a coffee shop name." Preferred $y_w$ = "The Daily Grind" · rejected $y_l$ = "Coffee Shop". Take $\beta = 0.5$, fresh from SFT ($\pi_\theta = \pi_\text{ref}$):
+
+| | $\log \pi_\text{ref}(y \mid x)$ | $\log \pi_\theta(y \mid x)$ |
+|:-:|:-:|:-:|
+| $y_w$ | $-2.0$ | $-2.0$ |
+| $y_l$ | $-1.0$ | $-1.0$ |
+
+<div class="math-box">
+
+**Winner score** · $\beta\,[\log \pi_\theta(y_w) - \log \pi_\text{ref}(y_w)] = 0.5\,(-2.0 + 2.0) = 0$
+**Loser score** · $0.5\,(-1.0 + 1.0) = 0$
+**Margin** · $0 - 0 = 0 \;\Rightarrow\; \sigma(0) = 0.5$
+**Loss** · $-\log 0.5 \approx \mathbf{0.693}$
+
+</div>
+
+Note · the reference model *prefers the rejected answer* ($e^{-1} = 0.37 > e^{-2} = 0.14$). DPO doesn't care about raw probabilities — only about how $\pi_\theta$ **moves relative to** $\pi_\text{ref}$.
+
+---
+
+# Worked numeric · one gradient step later
+
+The gradient of $-\log\sigma(\text{margin})$ pushes the winner's log-prob **up** and the loser's **down**. Say one step gives:
+
+| | $\log \pi_\theta$ before | after | probability |
+|:-:|:-:|:-:|:-:|
+| $y_w$ | $-2.0$ | $-1.5$ | $0.14 \to 0.22$ **↑** |
+| $y_l$ | $-1.0$ | $-1.5$ | $0.37 \to 0.22$ **↓** |
+
+<div class="math-box">
+
+**Winner score** · $0.5\,(-1.5 + 2.0) = +0.25$
+**Loser score** · $0.5\,(-1.5 + 1.0) = -0.25$
+**Margin** · $0.25 - (-0.25) = 0.5 \;\Rightarrow\; \sigma(0.5) \approx 0.62$
+**Loss** · $-\log 0.62 \approx \mathbf{0.47}$ — down from $0.693$ ✓
+
+</div>
+
+Pure supervised loss. No RL loop, no reward model · ~50 lines of code vs RLHF's thousands.
 
 ---
 
@@ -498,7 +544,7 @@ Pure supervised loss. No RL loop. No reward model. ~50 lines vs RLHF's thousands
 
 <div class="realworld">
 
-Open-source (Hugging Face, Mistral, most Llama fine-tunes) · **DPO**. Frontier labs (Anthropic, OpenAI, Google) · **RLHF variants** with proprietary tooling. Both work.
+As of this writing · open-source (Hugging Face, Mistral, most Llama fine-tunes) favors **DPO**; frontier labs (Anthropic, OpenAI, Google) favor **RLHF variants** with proprietary tooling. Both work.
 
 </div>
 
@@ -523,13 +569,13 @@ Scales human annotation by factors of 100+. Used in Claude's alignment pipeline.
 
 # Reasoning models · the 2024 turn
 
-Test-time compute as a new axis
+What happens if you let the model *think longer* before it answers?
 
 ---
 
 # Reasoning models
 
-Latest generation · **o1, o3, Claude extended thinking, DeepSeek R1.**
+The latest generation as of this writing · **o1, o3, Claude extended thinking, DeepSeek R1.**
 
 The core idea:
 
@@ -567,7 +613,7 @@ Traditional RL reward · "was the final answer correct?" · sparse, late signal.
 
 </div>
 
-OpenAI's "math-shepherd" (2024) · PRM-trained models beat outcome-reward-only models by 20+ points on AIME. Process > outcome rewards for multi-step reasoning.
+*Let's Verify Step by Step* (Lightman et al., OpenAI 2023) · PRM-based verifiers solve substantially more MATH problems than outcome-reward-only baselines. Process > outcome rewards for multi-step reasoning.
 
 ---
 
@@ -582,11 +628,13 @@ OpenAI's "math-shepherd" (2024) · PRM-trained models beat outcome-reward-only m
 | o1 | 74% | ~1900 | 78% |
 | o3 | **97%** | **~2700** (grandmaster) | **88%** |
 
+*(OpenAI-reported figures, Dec 2024 · take vendor benchmarks with salt.)*
+
 </div>
 
 <div class="insight">
 
-o3 at 97% on AIME · humans gold-medal at ~85%. **One year** of inference-compute scaling delivered this jump. Same base model class; the training regime changed.
+o3's 97% on AIME puts it above nearly all human contestants. **One year** of inference-compute scaling delivered this jump. Same base model class; the training regime changed.
 
 </div>
 
@@ -610,7 +658,7 @@ o3 at 97% on AIME · humans gold-medal at ~85%. **One year** of inference-comput
 
 <div class="realworld">
 
-In 2026 open source · QLoRA + DPO is the dominant recipe for instruction tuning. Frontier labs mix all of the above.
+As of this writing, in open source · QLoRA + DPO is the dominant recipe for instruction tuning. Frontier labs mix all of the above.
 
 </div>
 
@@ -641,7 +689,7 @@ In 2026 open source · QLoRA + DPO is the dominant recipe for instruction tuning
 
 <div class="math-box">
 
-**P1.** SFT loss is just NLL on (instruction → response) pairs. Why is the response often **left-padded out** of the loss for the *instruction* tokens but kept for the response?
+**P1.** SFT loss is just NLL on (instruction → response) pairs. Why are the *instruction* tokens masked out of the loss while the *response* tokens are kept? What would the model learn without the mask?
 
 **P2.** A reward model assigns scores $r_a = 1.2, r_b = 0.5$ to two responses. Compute the Bradley-Terry probability that $a$ is preferred. Show how this maps to a binary cross-entropy training loss on pair labels.
 
@@ -677,5 +725,17 @@ Prince Ch 14 (unsupervised, contrastive).
 <div class="notebook">
 
 **Notebook 16** · `16-lora-finetune.ipynb` — fine-tune a 7B model with LoRA + peft on a small instruction dataset · compare responses before / after.
+
+</div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**Pretraining builds a completer; preferences build a helper.**
+
+*Next · what if the data could label itself? Self-supervised learning.*
 
 </div>

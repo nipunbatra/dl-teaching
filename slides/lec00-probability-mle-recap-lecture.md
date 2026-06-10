@@ -54,6 +54,23 @@ L00B (next lecture) takes this and adds priors → MAP → L1/L2 → KL.
 
 ---
 
+# Bridge from ES 654 · you already know this
+
+| From ES 654 | What changes today |
+|---|---|
+| You derived BCE for logistic regression from Bernoulli MLE | that one derivation becomes the recipe for **every** loss |
+| MSE justified as "penalize big errors more" | MSE = NLL under Gaussian noise — a *modeling choice* |
+| Each task came with its loss, handed down | losses are **derived** · pick the distribution, the loss falls out |
+| The model outputs a number | the model outputs a **distribution** over $y$ |
+
+<div class="keypoint">
+
+You derived cross-entropy for logistic regression from Bernoulli MLE in ES 654. Today that one trick becomes the organizing principle of the whole course.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 0
@@ -285,6 +302,14 @@ $Y \sim \text{Categorical}(\boldsymbol\pi)$.
 
 ---
 
+# The three distributions · one picture
+
+![w:920px](figures/lec00/svg/three_distributions.svg)
+
+Binary → Bernoulli · multi-class → Categorical · continuous → Normal. Each will hand us its loss in Part 3.
+
+---
+
 # IID · the assumption that makes everything work
 
 A dataset $\mathcal{D} = \{Y_1, \ldots, Y_N\}$ is **independent and identically distributed** if ·
@@ -301,7 +326,11 @@ $$Y_i \stackrel{\text{iid}}{\sim} p(\cdot \mid \theta)$$
 These two assumptions together give us the **product factorization** ·
 $$P(\mathcal{D} \mid \theta) = \prod_{i=1}^N P(Y_i \mid \theta)$$
 
-This product is what becomes a sum after taking logs — and what becomes the **summed loss over a dataset** in every training loop. IID is the formal license to add up per-example losses.
+---
+
+# IID · why it matters (and when it fails)
+
+The product factorization is what becomes a sum after taking logs — and what becomes the **summed loss over a dataset** in every training loop. IID is the formal license to add up per-example losses.
 
 When IID fails (time series, video frames, sensor logs from one device) we need different math · autoregressive models, state-space models, etc. For this course, treat batches as IID.
 
@@ -379,7 +408,7 @@ But this form **fails the third requirement** · the product over $N$ samples do
 
 $$\prod_{i=1}^N p^{y_i}(1-p)^{1 - y_i} = p^{\sum y_i}\,(1-p)^{N - \sum y_i} = p^{\#H}\,(1-p)^{\#T}$$
 
-**Only counts matter** — a clean *sufficient statistic*. This collapse is what makes the MLE derivation in Part 4 a one-liner.
+**Only counts matter** — a clean *sufficient statistic*. This collapse is what makes the MLE derivation in Part 3 a one-liner.
 
 ---
 
@@ -558,7 +587,7 @@ The most important continuous distribution in all of statistics — and the seed
 
 1. **Centred at $\mu$**, spread controlled by $\sigma$.
 2. Density falls off **exponentially in the squared distance** $(y - \mu)^2$.
-3. The squared exponent will be the **seed of MSE** in Part 4.
+3. The squared exponent will be the **seed of MSE** in Part 3.
 
 </div>
 
@@ -603,7 +632,7 @@ This **squared, exponential decay** is what makes Gaussians "tightly concentrate
 
 A house priced at the mean ($Y = 50$) is the most likely. A house priced at $Y = 70$ — four standard deviations away — is vanishingly unlikely under this model.
 
-This **squared-distance penalty** $(y - \mu)^2$ is the exact form that becomes MSE when we maximize the likelihood over data — covered in Part 4.
+This **squared-distance penalty** $(y - \mu)^2$ is the exact form that becomes MSE when we maximize the likelihood over data — covered in Part 3.
 
 ---
 
@@ -1056,7 +1085,7 @@ We will *always* work with log-likelihood from this point onward.
 
 <!-- _class: section-divider -->
 
-### PART 4
+### PART 3
 
 # Maximum Likelihood Estimation
 
@@ -1068,6 +1097,8 @@ Concrete derivations · coin · linear regression · logistic regression
 
 Three sections of the same exam · grades modelled as Normal ·
 
+<div class="popquiz">
+
 | Course | Mean $\mu$ | Std $\sigma$ |
 |---|---|---|
 | C1 | 80 | 10 |
@@ -1078,13 +1109,15 @@ A student's marks $y = 82$. Which course is this student most likely from?
 
 *Stop and guess before the next slide.*
 
+</div>
+
 ---
 
 # Answer · pick the distribution that best explains the data
 
 Evaluate the density $\mathcal{N}(82 \mid \mu, \sigma^2)$ for each course ·
 
-$$p_1(82) \approx 0.0388,\quad p_2(82) \approx 0.0194,\quad p_3(82) \approx 0.0299$$
+$$p_1(82) \approx 0.0391,\quad p_2(82) \approx 0.0194,\quad p_3(82) \approx 0.0222$$
 
 Course **C1** wins · its bell is centred close to 82 with reasonable spread.
 
@@ -1355,7 +1388,7 @@ $\exp = [1.000,\, 0.368,\, 0.150]$ · sum $= 1.518$.
 $\hat{\boldsymbol\pi} = [\,0.659,\, 0.242,\, 0.099\,]$.
 
 **Per-example loss** · NLL of the true class.
-$L = -\log \hat\pi_{\text{cat}} = -\log 0.659 = \mathbf{0.418}$
+$L = -\log \hat\pi_{\text{cat}} = -\log 0.659 = \mathbf{0.417}$
 
 **Gradient on logits** · $\hat{\boldsymbol\pi} - \mathbf{y} = [0.659, 0.242, 0.099] - [1, 0, 0] = [-0.341,\, 0.242,\, 0.099]$.
 
@@ -1455,3 +1488,15 @@ Try these on paper; answers worked through in the notebook (`lec00-mle-map.ipynb
 **P5.** A coin's true bias is $p = 0.3$. You see 0 heads in 5 flips. What is the MLE? Why is the answer absurd, and what would a $\text{Beta}(2, 2)$ prior change?
 
 </div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**Every loss function is a negative log-likelihood in disguise.**
+
+</div>
+
+*Next (L00B) · put a prior on $\boldsymbol\theta$ — and every regularizer turns out to be a prior in disguise.*

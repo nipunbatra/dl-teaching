@@ -26,7 +26,7 @@ By the end of this lecture you will be able to:
 4. Derive the **KL term** for Gaussian posterior vs standard normal.
 5. Explain and implement the **reparameterization trick**.
 6. Train a **β-VAE** and discuss disentanglement.
-7. Place VAEs in context · pre-compressor for Stable Diffusion in 2026.
+7. Place VAEs in context · pre-compressor for latent diffusion (Stable Diffusion).
 
 ---
 
@@ -44,12 +44,14 @@ Module 9 opens · **generative models**. Until now every model *classified* or *
 
 </div>
 
-Four questions:
+---
+
+# Four questions
 
 1. What's a plain **autoencoder** and why isn't it generative?
 2. What does **VAE** add, and why does it work?
 3. What is the **reparameterization trick**?
-4. Where do VAEs fit in the 2026 generative landscape?
+4. Where do VAEs fit in today's generative landscape?
 
 ---
 
@@ -129,7 +131,7 @@ Diffusion (L21) is a *layered* latent model with $T$ levels. The recipe of "add 
 
 # The generative model family tree
 
-A brief taxonomy
+Four ways to learn a distribution — where will the VAE sit?
 
 ---
 
@@ -152,7 +154,7 @@ Today is VAE. Each family has tradeoffs between sample quality, training stabili
 
 # Autoencoder first
 
-The building block
+What does pure compression buy you — and what does it still miss?
 
 ---
 
@@ -279,7 +281,7 @@ You'd need the latent space to be **dense** and **structured** — that's what V
 
 # The VAE fix
 
-A prior and a KL penalty
+What single change makes the latent space safe to sample from?
 
 ---
 
@@ -474,6 +476,12 @@ If the decoder is too powerful, the KL term will drive $q(z|x) \to p(z) = \mathc
 
 ### PART 4
 
+# The reparameterization trick
+
+How do you backprop through a random sample?
+
+---
+
 # Reparameterization in one picture
 
 ![w:920px](figures/lec19/svg/reparam_trick.svg)
@@ -500,12 +508,6 @@ The belt-loading randomness ≡ the noise $\epsilon$. The robot's picking motion
 
 ---
 
-# The reparameterization trick
-
-How to backprop through a sample
-
----
-
 # Reparameterization trick · making randomness differentiable
 
 **Problem.** We need $z \sim \mathcal{N}(\mu, \sigma^2)$. But `sample_from_gaussian(μ, σ)` is a black box — no gradient through it.
@@ -515,7 +517,11 @@ $$z = \mu + \sigma \cdot \epsilon, \qquad \epsilon \sim \mathcal{N}(0, 1)$$
 
 The randomness now sits **outside** $\mu, \sigma$. The path from $z$ back to $\mu, \sigma$ is just deterministic add + multiply → gradients flow.
 
-**Worked numeric.** Encoder outputs $\mu = 2.0$, $\sigma = 0.5$. Sample $\epsilon = 1.2$.
+---
+
+# Worked numeric · gradients through the sample
+
+Encoder outputs $\mu = 2.0$, $\sigma = 0.5$. Sample $\epsilon = 1.2$.
 $z = 2.0 + 0.5 \cdot 1.2 = 2.6$.
 Suppose $\partial \mathcal{L}/\partial z = 4.0$.
 
@@ -604,7 +610,7 @@ No supervision — the structure emerges from the KL regularization plus the rec
 
 </div>
 
-The trade-off · stronger KL forces shared structure, but loses reconstruction detail. β = 1 is the theoretical sweet spot; higher β sacrifices quality for interpretability.
+The trade-off · stronger KL forces shared structure, but loses reconstruction detail. β = 1 is the theoretical sweet spot; higher β sacrifices quality for interpretability. **Caveat** · β-VAE does not *guarantee* semantic disentanglement (Locatello et al. 2019) — which factors separate varies across runs and datasets.
 
 ---
 
@@ -636,6 +642,8 @@ CVAE was used for controllable generation before diffusion + CFG took over. Stil
 
 # Generating with a VAE
 
+The latent space is smooth now — what does that let us do?
+
 ---
 
 # Worked example · one VAE forward pass
@@ -652,12 +660,12 @@ $z = \mu + \sigma \odot \epsilon = [0.4 + 0.5 \cdot 0.6, -0.3 + 0.37 \cdot (-0.2
 **Step 3 · decode.** Suppose decoder outputs $\hat x = [0.92, 0.45, 0.25, 0.81]$.
 
 **Step 4 · loss.**
-- Reconstruction MSE · $\|\hat x - x\|^2 = 0.008^2 + 0.05^2 + 0.05^2 + 0.01^2 \approx 0.005$
+- Reconstruction MSE · $\|\hat x - x\|^2 = 0.08^2 + 0.05^2 + 0.05^2 + 0.01^2 \approx 0.012$
 - KL · $\frac{1}{2} \sum (\sigma^2 + \mu^2 - 1 - \log \sigma^2)$
   - $z_1$: $0.25 + 0.16 - 1 + 1.4 = 0.81$
-  - $z_2$: $0.137 + 0.09 - 1 + 2.0 = 1.23$
+  - $z_2$: $0.135 + 0.09 - 1 + 2.0 = 1.23$
   - sum / 2 = **1.02**
-- Total loss = 0.005 + 1.02 = **1.025**
+- Total loss = 0.012 + 1.02 = **1.03**
 
 </div>
 
@@ -715,7 +723,7 @@ The interpolation is the magic · it produces *valid* intermediate images becaus
 
 <div class="insight">
 
-VAEs remain useful for **latent-space exploration** and **pre-compression** — Stable Diffusion uses a VAE to compress images into a 4× smaller latent space *before* running diffusion there.
+VAEs remain useful for **latent-space exploration** and **pre-compression** — Stable Diffusion uses a VAE to compress 512×512×3 images into a 64×64×4 latent (~48× fewer numbers) *before* running diffusion there.
 
 </div>
 
@@ -783,7 +791,7 @@ A. No — the *true* posterior is arbitrary. The Gaussian parameterization is an
 - **KL term** · closed form for Gaussian; pulls q(z|x) toward N(0, I).
 - **Reparameterization trick** · z = μ + σ·ε; differentiable.
 - **β-VAE** · tune the KL weight for disentanglement.
-- **2026 role** · pre-compressor in latent diffusion models (next week).
+- **Role today** · pre-compressor in latent diffusion models (next week).
 
 ### Read before Lecture 20
 
@@ -796,5 +804,17 @@ Prince Ch 15 · GANs.
 <div class="notebook">
 
 **Notebook 19** · `19-vae-mnist.ipynb` — build and train a VAE on MNIST; visualize 2D latent; interpolate digits; sample from N(0, I).
+
+</div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**Encode to a distribution, not a point — then sampling becomes generating.**
+
+*Next · drop the encoder and let two networks fight it out — GANs.*
 
 </div>

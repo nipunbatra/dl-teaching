@@ -75,7 +75,7 @@ Think about translating a 40-word English sentence into French. A Seq2Seq encode
 - the coreference chains ("it" refers to "the box")
 - the sentiment
 
-...into a **single 512-dim vector**. One number for every 0.3 bits of meaning.
+...into a **single 512-dim vector** — no matter how long the sentence gets.
 
 <div class="warning">
 
@@ -137,7 +137,7 @@ Which of these is closest to attention? Stop and decide.
 
 </div>
 
-The answer is **(c) · soft retrieval** — and that intuition (query × key → similarity → weighted sum of values) is **literally the attention formula**. The rest of L12 is just making this precise.
+Hold your answer. By Part 3 — when query, key, and value get their formal names — it should feel obvious. We revisit at the end.
 
 ---
 
@@ -151,7 +151,7 @@ The answer is **(c) · soft retrieval** — and that intuition (query × key →
 
 # Attention as soft alignment
 
-The heatmap view
+What does "looking back at the source" actually look like?
 
 ---
 
@@ -191,7 +191,7 @@ No one told the model what "it" refers to. It learned this by minimizing transla
 
 # From Bahdanau to QKV
 
-Two parameterizations · one abstraction
+How do you *score* which source word matters?
 
 ---
 
@@ -207,9 +207,9 @@ Decoder state: $s_t = [0.1, 0.9]$ (about to emit *chat*)
 
 Raw scores (dot products): $s_t \cdot h_1 = 0.1$, $s_t \cdot h_2 = 0.9$, $s_t \cdot h_3 = 0.11$
 
-Softmax: $[0.24, 0.54, 0.22]$ — *"cat"* gets the largest weight.
+Softmax: $[0.24, 0.53, 0.24]$ — *"cat"* gets the largest weight.
 
-Context: $c_t = 0.24 h_1 + 0.54 h_2 + 0.22 h_3 = [0.29, 0.56]$
+Context: $c_t = 0.24\, h_1 + 0.53\, h_2 + 0.24\, h_3 \approx [0.29, 0.55]$
 
 </div>
 
@@ -268,7 +268,7 @@ This is the version Vaswani et al. kept for the Transformer in 2017, with one sm
 
 Two reasons the ML community moved from Bahdanau to Luong:
 
-1. **Hardware** — a dot product is one matrix multiply; GPUs love it. Bahdanau's MLP has element-wise tanh, which is slower per op and harder to batch.
+1. **Hardware** — a dot product is one matrix multiply; GPUs love it. Bahdanau's MLP needs its own parameters ($W_1, W_2 \in \mathbb{R}^{d\times d}$ and $\mathbf{v} \in \mathbb{R}^d$ — about $2d^2$ extra) plus an element-wise tanh pass, slower per op and harder to batch.
 2. **Enough capacity elsewhere** — once we added learned $W_Q, W_K$ projections (next section), we no longer needed the $\tanh(W_1 h + W_2 s)$ to *learn* the similarity. The dot product of projections already gives it.
 
 <div class="insight">
@@ -285,7 +285,7 @@ Pattern in DL · keep the core operation small + fast, push learning into the li
 
 # Q, K, V · the clean abstraction
 
-Attention as database retrieval
+What exactly are a query, a key, and a value?
 
 ---
 
@@ -310,26 +310,6 @@ You use the query to **match against keys**. The match score decides how much of
 </div>
 
 That's it · attention is a soft library lookup. The next slides formalize the math; the analogy is the whole intuition.
-
----
-
-# The retrieval metaphor
-
-Imagine a Python dictionary lookup:
-
-```python
-db = {"cat": "meow", "dog": "bark"}
-query = "cat"
-result = db[query]      # returns "meow"
-```
-
-Attention is the **soft** version of this:
-
-- **Query** — what you're looking for (from the decoder).
-- **Key** — what each encoder state announces itself as.
-- **Value** — what each encoder state actually *contains*.
-
-Score keys against the query → softmax → use weights to blend values.
 
 ---
 
@@ -396,6 +376,10 @@ $QK^\top = \begin{pmatrix} 1 & 2 \\ 1 & 0 \end{pmatrix}$ — token 1's query mat
 **Step 2 · scale.**
 $QK^\top / \sqrt{2} = \begin{pmatrix} 0.707 & 1.414 \\ 0.707 & 0 \end{pmatrix}$
 
+---
+
+# Scaled dot-product · worked numeric (steps 3–4)
+
 **Step 3 · row-wise softmax.**
 Row 1: $\text{softmax}([0.707, 1.414]) = \left[\dfrac{2.03}{6.14}, \dfrac{4.11}{6.14}\right] \approx [0.33, 0.67]$
 Row 2: $\text{softmax}([0.707, 0]) \approx [0.67, 0.33]$
@@ -407,8 +391,6 @@ $AV = \begin{pmatrix} 0.33 \cdot 0.1 + 0.67 \cdot 0.3 & 0.33 \cdot 0.2 + 0.67 \c
 Output for token 1 is **33% of $v_1$ + 67% of $v_2$**.
 
 ---
-
-<!-- _class: code-heavy -->
 
 # One actor, three roles
 
@@ -437,7 +419,11 @@ $$W_Q = \begin{pmatrix} 1 & 0 \\ 0 & 1 \\ 1 & 1 \\ 0 & 0 \end{pmatrix},\quad W_K
 
 The single input $[1, 2, 3, 4]$ now plays **three roles**: query $[4, 5]$, key $[6, 5]$, value $[5, 4]$.
 
-The full $Q, K, V$ matrices are this calculation repeated for every token. PyTorch:
+The full $Q, K, V$ matrices are this calculation repeated for every token.
+
+---
+
+# One attention head · PyTorch
 
 ```python
 class AttentionHead(nn.Module):
@@ -454,20 +440,7 @@ class AttentionHead(nn.Module):
         return weights @ V
 ```
 
-```python
-class AttentionHead(nn.Module):
-    def __init__(self, d_in, d_k):
-        super().__init__()
-        self.Wq = nn.Linear(d_in, d_k, bias=False)
-        self.Wk = nn.Linear(d_in, d_k, bias=False)
-        self.Wv = nn.Linear(d_in, d_k, bias=False)
-
-    def forward(self, x):
-        Q, K, V = self.Wq(x), self.Wk(x), self.Wv(x)
-        scores = Q @ K.transpose(-2, -1) / math.sqrt(Q.size(-1))
-        weights = scores.softmax(dim=-1)
-        return weights @ V
-```
+Three `nn.Linear` layers and two matrix multiplies — that's the whole mechanism.
 
 ---
 
@@ -508,6 +481,12 @@ Standard deviation $\sqrt{d_k}$ → typical magnitudes scale **like $\sqrt{d_k}$
 
 With $d_k = 512$ raw scores are $\sim \pm 22$. Softmax of $[22, -22, 22, \ldots]$ → nearly one-hot. Scale by $1/\sqrt{d_k}$ → variance back to 1.
 
+<div class="keypoint">
+
+The scaling is **dimension-invariant by construction** — the same attention block works at $d_k = 64$ or $d_k = 4096$ without retuning any temperature.
+
+</div>
+
 ---
 
 # Worked numeric · the scaling factor in action
@@ -515,7 +494,7 @@ With $d_k = 512$ raw scores are $\sim \pm 22$. Softmax of $[22, -22, 22, \ldots]
 $d_k = 256 \Rightarrow \sqrt{d_k} = 16$. A typical raw-score vector for a query: $[15.5, -16.1, 2.3]$.
 
 **Without scaling.**
-$\exp(15.5) \approx 5.4 \times 10^6$. Softmax $\approx [0.999995,\ 0.000000,\ 0.000005]$ — essentially **one-hot** → gradient ≈ 0 → learning stalls.
+$\exp(15.5) \approx 5.4 \times 10^6$. Softmax $\approx [0.999998,\ 0.000000,\ 0.000002]$ — essentially **one-hot** → gradient ≈ 0 → learning stalls.
 
 **With scaling.** Divide by 16: $[0.97, -1.01, 0.14]$.
 $\exp \approx [2.64, 0.36, 1.15]$, sum $\approx 4.15$. Softmax $\approx [0.64, 0.09, 0.27]$ — soft, gradients flow.
@@ -528,11 +507,11 @@ $\exp \approx [2.64, 0.36, 1.15]$, sum $\approx 4.15$. Softmax $\approx [0.64, 0
 
 Raw logits $[s_1, s_2, s_3] = [2.0, 1.0, 0.5]$. Softmax behaves nicely:
 
-| temperature | softmax |
+| logits scaled by | softmax |
 |:-:|:-:|
-| /1    | (0.58, 0.21, 0.13, ...) — soft |
-| /4    | (0.40, 0.30, 0.26, ...) — very soft |
-| ×10   | (0.9999, 4e-5, 2e-7) — one-hot |
+| ÷1    | (0.63, 0.23, 0.14) — soft |
+| ÷4    | (0.41, 0.32, 0.28) — very soft |
+| ×10   | (0.99995, 0.00005, ≈0) — one-hot |
 
 </div>
 
@@ -562,29 +541,13 @@ Scores stay in a healthy range → softmax stays soft → gradients keep flowing
 
 ---
 
-# ⚠️ optional · The $\sqrt{d_k}$ derivation in three lines
-
-Assume $Q, K$ entries are i.i.d. with zero mean and unit variance.
-
-$$\mathbb{E}[Q^\top K] = 0, \quad \text{Var}[Q^\top K] = \sum_{k=1}^{d_k} \text{Var}[Q_k K_k] = d_k$$
-
-So $Q^\top K \sim \mathcal{N}(0, d_k)$. Dividing by $\sqrt{d_k}$ makes the variance **1** — independent of dimension.
-
-<div class="keypoint">
-
-**Why this matters** · the same attention block can be used at $d_k = 64$ or $d_k = 4096$ without retuning temperatures. The scaling is *dimension-invariant* by construction.
-
-</div>
-
----
-
 <!-- _class: section-divider -->
 
 ### PART 5
 
 # Self-attention vs cross-attention
 
-Same machinery · different sources for QKV
+Same machinery — but who asks, and who answers?
 
 ---
 
@@ -678,7 +641,7 @@ Every output row is a weighted blend of value rows — a contextualized embeddin
 
 <div class="insight">
 
-Convolution bakes in "nearby tokens matter"; self-attention lets the network decide from data whether nearby or far-away tokens matter. When you have lots of data, *learned* bias wins over *hand-designed* bias. That's the whole arc of the 2017–2025 vision revolution in one sentence.
+Convolution bakes in "nearby tokens matter"; self-attention lets the network decide from data whether nearby or far-away tokens matter. With lots of data, *learned* bias wins over *hand-designed* bias — but with small data the hand-built bias still wins (ViT needed ~300M images to beat ResNet). That's the whole arc of the 2017–2025 vision revolution in one sentence.
 
 </div>
 
@@ -720,7 +683,7 @@ $$S' = \begin{pmatrix} 2.1 & -\infty & -\infty \\ 0.8 & 3.1 & -\infty \\ 1.4 & 0
 **Step 2 · row-wise softmax.** Since $\exp(-\infty) = 0$:
 - Row 1: $\text{softmax}([2.1, -\infty, -\infty]) = [1.0,\ 0,\ 0]$
 - Row 2: $\text{softmax}([0.8, 3.1, -\infty]) \approx [0.09,\ 0.91,\ 0]$
-- Row 3: $\text{softmax}([1.4, 0.7, 2.5]) \approx [0.21,\ 0.10,\ 0.69]$
+- Row 3: $\text{softmax}([1.4, 0.7, 2.5]) \approx [0.22,\ 0.11,\ 0.67]$
 
 The $-\infty$ guarantees future tokens get **exact zero** weight after softmax. Token 1 sees only itself; token 2 sees 1–2; token 3 sees all.
 
@@ -734,7 +697,7 @@ Self-attention on a sequence of length $n$:
 
 <div class="warning">
 
-At $n = 8{,}192$ and $d = 4096$, one head's attention matrix is already **64 MB per layer**. Scaling context to 1M tokens naively would need 500 GB per layer. This is the wall that motivates:
+At $n = 8{,}192$, one head's score matrix has $8192^2 \approx 67$M entries — **~134 MB in fp16, per head, per layer**. At $n = 1$M tokens that becomes a *trillion*-entry matrix (terabytes) — naive attention simply cannot store it. This is the wall that motivates:
 
 - **FlashAttention** (L23) · recompute attention in tiles, avoiding the full $n \times n$ matrix.
 - **Sparse / local / linear attention** (reading) · trade off quality for $O(n \log n)$ or $O(n)$.
@@ -753,6 +716,8 @@ At $n = 8{,}192$ and $d = 4096$, one head's attention matrix is already **64 MB 
 | Cross-attention | decoder | encoder | Seq2Seq decoder, translation |
 | Masked/local attention | input | input (masked) | Longformer, Reformer, etc. |
 
+Two more ingredients you'll meet in real code · the **padding mask** (ignore `<pad>` tokens when batching unequal lengths) and **attention dropout** (randomly zero some weights during training).
+
 ---
 
 <!-- _class: section-divider -->
@@ -761,7 +726,7 @@ At $n = 8{,}192$ and $d = 4096$, one head's attention matrix is already **64 MB 
 
 # What attention unlocked
 
-One slide of consequences
+So what did one 2014 idea actually buy us?
 
 ---
 
@@ -770,7 +735,7 @@ One slide of consequences
 1. **Bottleneck solved** · no more "fit everything into 512 dims."
 2. **Long-range dependencies** · every target step can see any source step.
 3. **Parallelizable** · unlike RNNs, all attention scores can be computed at once.
-4. **Interpretable** · attention heatmaps are the first DL visualization tool that's actually informative.
+4. **Interpretable** · attention heatmaps are the first DL visualization tool that's actually informative — with a caveat: weights are *suggestive, not explanations*; heads can attend to tokens that don't causally drive the output.
 5. **Transfer** · attention blocks compose cleanly — stack them, mix them with cross-attention, make them multi-headed. The Transformer (L13) is exactly this.
 
 <div class="realworld">
@@ -804,8 +769,6 @@ Every major model since 2018 (BERT, GPT-*, T5, Claude, Llama) is this architectu
 
 ---
 
-<!-- _class: summary-slide -->
-
 # Putting it all together · the L12 master sentence
 
 <div class="math-box">
@@ -825,6 +788,22 @@ Every major model since 2018 (BERT, GPT-*, T5, Claude, Llama) is this architectu
 
 ---
 
+# Pop quiz · revisit
+
+The search-engine question? Answer **(c) · mix the top matches into one summary**.
+
+<div class="keypoint">
+
+(a) Query-against-keys is only the *scoring* step — it produces the similarities, not the output.
+(b) Returning just the top page is **hard** retrieval — exactly what attention degenerates to when softmax goes one-hot (the failure the $\sqrt{d_k}$ scaling prevents).
+(c) ✓ A softmax-**weighted blend of values** — that *is* $\text{softmax}(QK^\top/\sqrt{d_k})\,V$.
+
+</div>
+
+The intuition you had before any math is literally the formula. That's why attention spread so fast.
+
+---
+
 # Practice problems
 
 <div class="math-box">
@@ -835,6 +814,14 @@ Every major model since 2018 (BERT, GPT-*, T5, Claude, Llama) is this architectu
 
 **P3.** Sketch the attention pattern of a model that learns *positional copying* (output token $i$ should equal input token $i$). What does the attention matrix look like?
 
+</div>
+
+---
+
+# Practice problems · self- &amp; cross-attention
+
+<div class="math-box">
+
 **P4.** Show that attention is permutation-equivariant on the keys/values · re-order $K, V$ together and the output stays the same. Why is this both a *feature* (set-friendly) and a *bug* (sequences need positions)?
 
 **P5.** Cross-attention vs self-attention · in a translation model, where does each appear? Sketch the data flow.
@@ -844,6 +831,20 @@ Every major model since 2018 (BERT, GPT-*, T5, Claude, Llama) is this architectu
 </div>
 
 ---
+
+# What breaks · symptom → suspect → test
+
+| Symptom | Suspect | Fastest test |
+|---|---|---|
+| Attention weights one-hot, training stalls | forgot the $/\sqrt{d_k}$ scaling | print std of scores before softmax — should be ≈ 1 |
+| Causal LM gets suspiciously perfect train accuracy | mask missing — model peeks at the future | check the attention matrix is lower-triangular |
+| Shuffling input tokens doesn't change the output | no positional information — attention is a set operation | feed a shuffled sentence, diff the outputs |
+| OOM the moment you double sequence length | the $n \times n$ score matrix — $O(n^2)$ memory | estimate $n^2 \cdot \text{heads} \cdot \text{layers} \cdot 4$ bytes |
+| Loss goes NaN after adding padding masks | a fully-masked row — softmax over all $-\infty$ | find rows where every key is masked |
+
+---
+
+<!-- _class: summary-slide -->
 
 # Lecture 12 — summary
 
@@ -867,3 +868,15 @@ Every major model since 2018 (BERT, GPT-*, T5, Claude, Llama) is this architectu
 **Notebook 12** · `12-attention-nmt.ipynb` — add attention to Lecture 11's Seq2Seq; visualize attention heatmaps; watch BLEU improve on long sentences.
 
 </div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**Attention is a differentiable dictionary lookup.**
+
+</div>
+
+*Next: stack it, multi-head it, mask it, norm it — the Transformer, built from parts.*

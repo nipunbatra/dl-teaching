@@ -39,12 +39,7 @@ Today · **diffusion**. Sharp samples + stable training + tractable likelihood. 
 
 <div class="paper">
 
-**Reading & inspiration** ·
-- **Lilian Weng · *What are Diffusion Models?*** (blog) — the canonical visual + math walk-through.
-- **Calvin Luo · *Understanding Diffusion Models: A Unified Perspective*** (arXiv 2022).
-- **Ho et al. 2020 · *DDPM*** + **Song & Ermon 2020 · *Score-based generative modeling***.
-- **Sohl-Dickstein et al. 2015** — the original noise-the-data idea.
-- **UDL (Prince) · Ch 18 (early)**.
+**Reading & inspiration** · **Lilian Weng, *What are Diffusion Models?*** (the canonical walk-through) · **Calvin Luo, *Understanding Diffusion Models*** (arXiv 2022) · **Ho et al. 2020 *DDPM*** + **Song & Ermon 2020** (score-based) · **Sohl-Dickstein et al. 2015** (the original idea) · **UDL (Prince) Ch 18 (early)**.
 
 </div>
 
@@ -74,17 +69,13 @@ This single re-framing — *"break a hard generative problem into many easy deno
 
 ---
 
-▶ **Interactive** · play with the diffusion forward + reverse process → [diffusion-denoise](https://nipunbatra.github.io/interactive-articles/diffusion-denoise/).
-
----
-
 <!-- _class: section-divider -->
 
 ### PART 1
 
 # Forward &amp; reverse · the big picture
 
-Corrupt then learn to uncorrupt
+How can *destroying* data teach a network to *create* it?
 
 ---
 
@@ -182,7 +173,7 @@ A GAN asks a network to hit a moving target (the discriminator's decision bounda
 
 # The forward process
 
-Fixed · Markov · Gaussian
+What exactly does one noising step do? Fixed · Markov · Gaussian
 
 ---
 
@@ -203,7 +194,11 @@ $$q(x_t \mid x_{t-1}) = \mathcal{N}\!\left(x_t;\ \sqrt{1 - \beta_t}\,x_{t-1},\ \
 
 i.e. $x_t = \sqrt{1-\beta_t}\,x_{t-1} + \sqrt{\beta_t}\,\epsilon$ with $\epsilon \sim \mathcal{N}(0, 1)$.
 
-**Worked numeric.** $x_{t-1} = 100$, $\beta_t = 0.01$.
+---
+
+# One forward step · worked numeric
+
+$x_{t-1} = 100$, $\beta_t = 0.01$.
 - Fade · $\sqrt{0.99} \approx 0.995$, so mean = $99.5$.
 - Noise · std $= \sqrt{0.01} = 0.1$.
 - Update · $x_t = 0.995 \cdot 100 + 0.1 \cdot \epsilon$.
@@ -243,11 +238,11 @@ Start with $x_0 = 2.0$. Apply 5 forward steps with $\beta_t = 0.01$:
 | $t$ | $x_t$ | noise added |
 |:-:|:-:|:-:|
 | 0 | 2.00 | — |
-| 1 | 1.99 · √0.99 + 0.1·ε = 1.97 + 0.08 = 2.05 | ε = 0.8 |
+| 1 | 2.00 · √0.99 + 0.1·ε = 1.99 + 0.08 = 2.07 | ε = 0.8 |
 | 2 | 2.02 | ε = -0.4 |
-| 3 | 2.00 | ε = -0.2 |
-| 4 | 2.03 | ε = 0.3 |
-| 5 | 2.06 | ε = 0.2 |
+| 3 | 1.99 | ε = -0.2 |
+| 4 | 2.01 | ε = 0.3 |
+| 5 | 2.02 | ε = 0.2 |
 
 </div>
 
@@ -264,14 +259,17 @@ $$\boxed{x_t = \sqrt{\bar\alpha_t}\,x_0 + \sqrt{1 - \bar\alpha_t}\,\epsilon,\qua
 
 Variance check · we designed the process so total variance stays 1. If $\bar\alpha_t$ is the fraction left from the signal, $1 - \bar\alpha_t$ is the fraction from noise. **Sums to 1.**
 
-**Worked numeric · jump from $x_0$ to $x_{500}$.**
-$x_0 = 2.0$, $\bar\alpha_{500} = 0.17$.
-- Signal scale · $\sqrt{0.17} \approx 0.412$.
-- Noise scale · $\sqrt{0.83} \approx 0.911$.
-- Sample $\epsilon = -0.8$.
-- $x_{500} = 0.412 \cdot 2.0 + 0.911 \cdot (-0.8) = 0.824 - 0.729 = \mathbf{0.095}$.
+---
 
-After 500 steps the original signal of 2.0 has nearly washed away. **No iteration needed during training.**
+# Closed form · worked numeric · jump straight to $x_{500}$
+
+$x_0 = 2.0$, and the linear DDPM schedule gives $\bar\alpha_{500} \approx 0.08$.
+- Signal scale · $\sqrt{0.08} \approx 0.283$.
+- Noise scale · $\sqrt{0.92} \approx 0.959$.
+- Sample $\epsilon = -0.8$.
+- $x_{500} = 0.283 \cdot 2.0 + 0.959 \cdot (-0.8) = 0.566 - 0.767 = \mathbf{-0.20}$.
+
+After 500 steps the original signal of 2.0 has nearly washed away — $x_{500}$ is mostly noise. **No iteration needed during training.**
 
 ---
 
@@ -306,7 +304,7 @@ This closed-form is the single biggest practical advantage over continuous-time 
 
 ---
 
-# ⚠️ optional · Closed-form · the derivation in 3 lines
+# Closed-form · the derivation in 3 lines · the one to know
 
 <div class="math-box">
 
@@ -335,10 +333,10 @@ where $\bar\epsilon \sim \mathcal{N}(0, I)$ replaces the $t$-step chain of indep
 | $t$ | Linear α̅_t | Cosine α̅_t | What's left |
 |-----|-------------|-------------|-------------|
 | 0 | 1.00 | 1.00 | clean signal |
-| 250 | 0.62 | 0.82 | linear: 38% destroyed · cosine: 18% |
-| 500 | 0.17 | 0.50 | linear: already mostly gone |
-| 750 | 0.02 | 0.18 | linear: essentially pure noise |
-| 1000 | 0.00 | 0.00 | both: N(0, I) |
+| 250 | 0.52 | 0.85 | linear: 48% destroyed · cosine: 15% |
+| 500 | 0.08 | 0.49 | linear: already mostly gone |
+| 750 | 0.003 | 0.14 | linear: essentially pure noise |
+| 1000 | 0.00 | 0.00 | both: ≈ N(0, I) |
 
 <div class="insight">
 
@@ -387,7 +385,7 @@ DDPM (Ho 2020) used T=1000 with linear schedule. Nichol &amp; Dhariwal 2021 show
 
 # Training objective
 
-Predict the noise
+What should the network predict — and with what loss?
 
 ---
 
@@ -395,7 +393,7 @@ Predict the noise
 
 We want $p_\theta(x_{t-1} \mid x_t)$ — learn to denoise.
 
-Ho et al. 2020 showed that if $q(x_{t-1} \mid x_t, x_0)$ is Gaussian (it is), the optimal reverse process is also Gaussian. So parameterize:
+The posterior $q(x_{t-1} \mid x_t, x_0)$ is exactly Gaussian, and for small $\beta_t$ the true reverse step is well-approximated by a Gaussian too. So parameterize:
 
 $$p_\theta(x_{t-1} \mid x_t) = \mathcal{N}(x_{t-1}; \mu_\theta(x_t, t), \Sigma_\theta(x_t, t))$$
 
@@ -409,7 +407,7 @@ Given $x_t = \sqrt{\bar\alpha_t} x_0 + \sqrt{1-\bar\alpha_t} \epsilon$, there ar
 
 <div class="math-box">
 
-- Predict $x_0$ · known as "x0-prediction" or "v-prediction variant"
+- Predict $x_0$ · "x0-prediction" — the clean signal directly
 - Predict $\mu_\theta(x_t, t)$ · the mean of the reverse distribution
 - Predict $\epsilon$ · the noise that was added
 
@@ -417,7 +415,7 @@ Given $x_t = \sqrt{\bar\alpha_t} x_0 + \sqrt{1-\bar\alpha_t} \epsilon$, there ar
 
 Ho et al. 2020 showed **$\epsilon$-prediction gives the best sample quality**. Intuition · noise is unit-variance and dimension-independent; the network doesn't need to learn the scale of the signal.
 
-Modern models (SDXL, Imagen) often use "v-prediction" — a weighted combination that's more numerically stable at small $t$.
+Modern models (SDXL, Imagen) often use a fourth target, "v-prediction" — a fixed mix of $\epsilon$ and $x_0$ that's more numerically stable across timesteps.
 
 ---
 
@@ -499,7 +497,7 @@ def sample(model, shape, T=1000):
         predicted   = model(x, torch.tensor([t]))
         mean = (x - (1 - alpha_t) / (1 - alpha_bar_t).sqrt() * predicted) / alpha_t.sqrt()
         if t > 0:
-            x = mean + alpha_t.sqrt() * torch.randn_like(x)
+            x = mean + (1 - alpha_t).sqrt() * torch.randn_like(x)   # sigma_t = sqrt(beta_t)
         else:
             x = mean
     return x
@@ -517,7 +515,13 @@ To go from $x_t$ to $x_{t-1}$:
 
 $$x_{t-1} = \underbrace{\frac{1}{\sqrt{\alpha_t}}\!\left(x_t - \frac{1 - \alpha_t}{\sqrt{1 - \bar\alpha_t}}\,\epsilon_\theta(x_t, t)\right)}_{\text{denoised mean}} + \underbrace{\sigma_t\,z}_{\text{small fresh noise}}$$
 
-**Worked numeric (1D).** $x_{100} = 1.5$. Schedule · $\alpha_{100} = 0.99$, $\bar\alpha_{100} = 0.8$. Network predicts $\epsilon_\theta = 0.6$.
+Why re-noise at all? Without it every chain from the same $x_T$ collapses to one deterministic path — the noise keeps sampling *stochastic*. Let's run one step by hand.
+
+---
+
+# Reverse step · worked numeric
+
+**1D example.** $x_{100} = 1.5$. Schedule · $\alpha_{100} = 0.99$, $\bar\alpha_{100} = 0.8$. Network predicts $\epsilon_\theta = 0.6$.
 
 - $1/\sqrt{0.99} \approx 1.005$
 - $(1 - 0.99)/\sqrt{1 - 0.8} = 0.01 / \sqrt{0.2} \approx 0.0224$
@@ -601,6 +605,8 @@ Each U-Net residual block receives the time embedding and adds it to the channel
 
 Same thing, different derivation
 
+*Optional depth (⭐⭐⭐) — examinable only for the curious.*
+
 ---
 
 # The score field in one picture
@@ -613,29 +619,15 @@ Same thing, different derivation
 
 <div class="keypoint">
 
-Pause and look at this from a different angle. Imagine our data points sit at the **bottom of valleys** in a landscape.
+Imagine the probability density as a landscape. Real data sits on the **high peaks**; far from the data, the landscape is a **flat lowland**.
 
-The **score** is an arrow at every point in space that points in the steepest **uphill** direction.
-
-</div>
-
-If we can learn this field of "uphill" arrows, we can just **follow them backwards** to always go downhill toward valleys (i.e., toward real data).
-
-That's score-based generation. Mathematically equivalent to DDPM · just a different lens. Picking either lens is fine; many find score-based more intuitive (gradients pointing toward data).
-
----
-
-# Score · the mountain-range analogy
-
-<div class="insight">
-
-Imagine probability is a landscape. Real data points sit in **deep valleys**; noise sits on **high flat plains**.
-
-The **score** is an arrow at every point pointing **uphill** — toward higher density.
-
-If we learn this field of "uphill" arrows, we can generate data · start on a high plain (noise) and walk **toward the arrows** until we land in a valley (real data).
+The **score** is an arrow at every point pointing **uphill** — toward higher density, i.e. toward real data.
 
 </div>
+
+If we learn this field of uphill arrows, we can generate · start anywhere in the lowlands (pure noise) and **follow the arrows uphill**, with a little random jitter, until we reach a peak (real data).
+
+That's score-based generation. Mathematically equivalent to DDPM · just a different lens — gradients pointing toward data.
 
 ---
 
@@ -702,10 +694,21 @@ $\nabla_{x_t}\log q = -\dfrac{1}{1 - \bar\alpha_t}(x_t - \sqrt{\bar\alpha_t}\,x_
 But the forward equation rearranges to $\epsilon = (x_t - \sqrt{\bar\alpha_t}\,x_0)/\sqrt{1 - \bar\alpha_t}$. Substitute:
 $$\nabla_{x_t}\log q(x_t \mid x_0) = -\frac{\epsilon}{\sqrt{1 - \bar\alpha_t}}$$
 
-**Punchline.** The true score is just (negative, scaled) noise. Predicting $\epsilon$ with MSE = predicting the score:
+The true score is just… the noise, negated and rescaled.
+
+---
+
+# The punchline · noise prediction *is* score estimation
+
+<div class="insight">
+
+The true score is just (negative, scaled) noise. So a network trained to predict $\epsilon$ with MSE is *already* a score model:
+
 $$s_\theta(x_t, t) = -\frac{\epsilon_\theta(x_t, t)}{\sqrt{1 - \bar\alpha_t}}$$
 
-DDPM (Ho 2020) and score-SDE (Song 2020) are two lenses on the **same** model.
+</div>
+
+DDPM (Ho 2020) and score-SDE (Song 2020) are two lenses on the **same** model — one trains "guess the noise", the other "learn the uphill arrows", and the equations coincide.
 
 ---
 
@@ -792,7 +795,7 @@ This is why diffusion samples look sharper and more coherent than any single-for
 
 ---
 
-# Applications · 2026 state
+# Applications · the landscape today
 
 - **Text-to-image** · Stable Diffusion, Midjourney, DALL-E 3, Imagen.
 - **Video** · Sora, Runway Gen-3, VEO.
@@ -800,7 +803,7 @@ This is why diffusion samples look sharper and more coherent than any single-for
 - **Molecule design** · RFdiffusion for proteins.
 - **Robotics policies** · diffusion policy (Chi et al. 2023).
 
-Diffusion has become the default generative model across modalities.
+As of this writing, diffusion is the default generative model across modalities.
 
 ---
 
@@ -829,7 +832,7 @@ Diffusion has become the default generative model across modalities.
 
 <div class="realworld">
 
-Consistency models and flow matching are closing the "slow sampling" gap. In 2026 · expect 1-step diffusion samplers to become competitive with GANs on speed.
+Consistency models and flow matching are closing the "slow sampling" gap — as of this writing, few-step samplers are already approaching GAN speed on many tasks.
 
 </div>
 
@@ -909,5 +912,17 @@ Prince Ch 18 (later sections) + HF `diffusers` docs + Rombach 2022 (Stable Diffu
 <div class="notebook">
 
 **Notebook 21** · `21-ddpm-2d.ipynb` — implement DDPM on a 2D toy dataset (Swiss roll); visualize forward noising + reverse denoising animations.
+
+</div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**Learn to denoise; generate by iterating.**
+
+*Next lecture: the engineering that turns this recipe into Stable Diffusion.*
 
 </div>

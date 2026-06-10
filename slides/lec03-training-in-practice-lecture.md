@@ -71,6 +71,23 @@ The right answer (revealed in PART 4) is the one that **isolates the bug fastest
 
 ---
 
+# Bridge from ES 654 · you already know this
+
+| From ES 654 | What changes today |
+|---|---|
+| `model.fit(X, y)` — done in seconds | a hand-written loop, hours on a GPU |
+| Bugs crash with an error message | DL bugs are **silent** · loss just doesn't go down |
+| Full-batch gradient descent on small data | mini-batches, loaders, mixed precision, accumulation |
+| Check accuracy once, at the end | diagnose curves + per-layer stats **during** training |
+
+<div class="keypoint">
+
+In ES 654 your models fit in seconds. Now training takes hours — and silent failure is the default. Today is the discipline that catches it.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 1
@@ -321,6 +338,12 @@ Data loading is successful when the GPU almost never waits for the CPU.
 | transfer to CUDA slow | pageable host memory | `pin_memory=True` |
 | random crop dominates time | heavy CPU transforms | cache, simplify, or move to GPU |
 
+---
+
+# Benchmark the loader alone
+
+Before blaming the model, time the data path by itself ·
+
 ```python
 import time
 t0 = time.perf_counter()
@@ -399,7 +422,7 @@ For deep learning, **range matters far more than ultra-fine precision**. BF16 al
 
 <div class="keypoint">
 
-BF16 · trades precision for range. Same memory as FP16. Available on NVIDIA A100+, AMD MI200+, TPU v3+. Default on any modern LLM training.
+BF16 · trades precision for range. Same memory as FP16. Available on NVIDIA A100+, AMD MI200+, TPU v3+. As of this writing (2026), the default for LLM-scale training.
 
 </div>
 
@@ -805,8 +828,7 @@ When improving a model, change one thing at a time.
 
 Rules:
 
-- Keep the data split fixed.
-- Log the config, seed, commit, and metric.
+- Keep the data split fixed · log the config, seed, commit, and metric.
 - Repeat important comparisons with 3 seeds if the gain is small.
 - Compare against the simplest baseline that could work.
 
@@ -919,6 +941,12 @@ torch.backends.cudnn.benchmark     = False
 
 Seed set at the start; every experiment records its seed in the config.
 
+<div class="keypoint">
+
+**Bitwise determinism ≠ statistical reproducibility.** The cudnn flags buy bit-exact reruns (slower). What you usually want is the *conclusion* to survive a seed change — run 3 seeds and report the spread.
+
+</div>
+
 ---
 
 # Minimal experiment record
@@ -934,15 +962,6 @@ Every serious run should leave enough evidence to reproduce and compare it.
 | hardware + precision | speed and numeric behavior |
 | final checkpoint + best checkpoint | resume and deploy |
 | metrics over time | diagnose underfit/overfit |
-
-```python
-run = {
-    "commit": git_sha,
-    "seed": seed,
-    "config": cfg,
-    "best_val": best_val,
-}
-```
 
 If you cannot compare two runs later, the experiment did not really happen.
 
@@ -1031,3 +1050,15 @@ Optimization properly — loss landscapes, momentum, Nesterov.
 **Notebook 3b** · `03b-debug-ladder.ipynb` — all seven rungs applied to a small task.
 
 </div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**If you can't overfit one batch, nothing else matters.**
+
+</div>
+
+*Next (L04) · optimization proper — loss landscapes, momentum, Nesterov.*

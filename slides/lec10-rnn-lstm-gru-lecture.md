@@ -25,7 +25,7 @@ By the end of this lecture you will be able to:
 3. Diagnose the **vanishing/exploding** gradient in **BPTT**.
 4. Explain how **LSTM gates** sidestep vanishing gradients.
 5. Contrast **LSTM vs GRU** and know when each is appropriate.
-6. Name 2026 niches where RNNs (or Mamba/RWKV) still win.
+6. Name the niches where RNNs (or Mamba/RWKV) still win today.
 
 ---
 
@@ -51,7 +51,7 @@ Today maps to **Bishop Ch 12** (RNNs). UDL skips RNNs and jumps to Transformers 
 1. Why can't we just use an MLP for sequences?
 2. What does a vanilla RNN actually compute?
 3. Why do RNNs struggle with long-range dependencies — and how do LSTMs fix it?
-4. When should you still use RNNs in 2026?
+4. When should you still use RNNs today?
 
 ---
 
@@ -83,7 +83,7 @@ Stop and think about (a) and (b). Why do they fail? That failure is the entire r
 
 # Why MLPs fail on sequences
 
-The parameter-sharing argument
+Why can't an MLP just read the whole sentence?
 
 ---
 
@@ -125,7 +125,11 @@ $$W = \begin{pmatrix} 0.1 & 0.2 \\ 0.3 & 0.4 \\ 0.5 & 0.6 \end{pmatrix},\quad U 
 **Step 2 · "love".** Use the **same** $W, U$ with new input $x_2$ and previous state $h_1$:
 $h_2 = \tanh(Wx_2 + Uh_1)$.
 
-The recurrence:
+---
+
+# RNN · the recurrence at a glance
+
+Continue the same pattern for all four words:
 | step | input | update | result |
 |:-:|:-:|:-:|:-:|
 | 1 | $x_1$ | $\tanh(Wx_1 + Uh_0)$ | $h_1$ encodes "I" |
@@ -202,7 +206,7 @@ for t in range(seq_len):
 
 # BPTT and vanishing gradients in time
 
-Same problem as depth, now along the time axis
+What happens to a gradient that travels back 50 steps?
 
 ---
 
@@ -279,6 +283,12 @@ for chunk in sequence.split(K, dim=1):
 
 Typical $K = 32$ to $256$. Keeps training tractable at the cost of losing very-long-range gradient signal.
 
+<div class="keypoint">
+
+Why bother? BPTT must **store every intermediate $h_t$** for the backward pass — activation memory grows $O(T)$ with sequence length. Truncation caps both compute *and* memory at $O(K)$.
+
+</div>
+
 ---
 
 # Gradient clipping · the second fix
@@ -304,7 +314,7 @@ Pascanu et al. 2013 showed clipping at norm ~1 makes RNN training robust. Still 
 
 # LSTM · the gating fix
 
-Three sigmoid gates protect a cell state
+How do you keep one memory alive for 100 steps?
 
 ---
 
@@ -326,22 +336,6 @@ Three sigmoid gates protect a cell state
 
 ---
 
-# LSTM · gatekeeper, janitor, press secretary
-
-<div class="keypoint">
-
-A vanilla RNN treats every input the same. The LSTM has three "specialists":
-
-- **Gatekeeper** (input gate) · is this new word important enough to write to memory?
-- **Janitor** (forget gate) · cleans out old memories that don't matter anymore.
-- **Press secretary** (output gate) · decides which parts of internal memory to expose to downstream layers.
-
-</div>
-
-The next slide gives the math · keep these roles in mind as you read the equations.
-
----
-
 # LSTM · the conveyor-belt analogy
 
 <div class="insight">
@@ -355,7 +349,7 @@ LSTM adds a separate **memory conveyor belt** · the **cell state $\mathbf{c}_t$
 
 </div>
 
-A protected long-term memory + learned controllers for write / forget / read. That's the whole idea.
+A protected long-term memory + learned controllers for write / forget / read. Keep the three roles in mind — the equations next are just these roles in symbols.
 
 ---
 
@@ -370,6 +364,10 @@ $$\mathbf{f}_t = \sigma(W_f [\mathbf{h}_{t-1}, \mathbf{x}_t] + b_f)$$
 **Step 2 · Input gate** + **candidate**:
 $$\mathbf{i}_t = \sigma(W_i [\mathbf{h}_{t-1}, \mathbf{x}_t] + b_i),\quad \tilde{\mathbf{c}}_t = \tanh(W_c [\mathbf{h}_{t-1}, \mathbf{x}_t] + b_c)$$
 $\mathbf{i}_t$ controls *how much* of the candidate $\tilde{\mathbf{c}}_t$ to write.
+
+---
+
+# LSTM equations · update and output
 
 **Step 3 · Update the cell state** · throw out old, add new:
 $$\mathbf{c}_t = \underbrace{\mathbf{f}_t \odot \mathbf{c}_{t-1}}_{\text{kept}} + \underbrace{\mathbf{i}_t \odot \tilde{\mathbf{c}}_t}_{\text{added}}$$
@@ -400,17 +398,9 @@ The memory **flipped** from large positive (plural) to negative (singular) in on
 
 # Each gate · in plain English
 
-- **Forget gate $\mathbf{f}_t$** · "what should I erase from the cell state?"
-  - Close to 0 · forget (reset a counter, flush old context)
-  - Close to 1 · keep it around (persistent memory)
-
-- **Input gate $\mathbf{i}_t$** · "how much of the new candidate should I actually write?"
-  - Close to 0 · ignore this input
-  - Close to 1 · accept fully
-
-- **Output gate $\mathbf{o}_t$** · "what of the cell state do I expose to downstream layers?"
-  - Close to 0 · keep memory silent
-  - Close to 1 · project it out
+- **Forget gate $\mathbf{f}_t$** · "what should I erase from the cell state?" — 0 · flush old context · 1 · persistent memory.
+- **Input gate $\mathbf{i}_t$** · "how much of the new candidate should I write?" — 0 · ignore input · 1 · accept fully.
+- **Output gate $\mathbf{o}_t$** · "what of the cell state do I expose downstream?" — 0 · keep silent · 1 · project out.
 
 <div class="keypoint">
 
@@ -456,7 +446,7 @@ This is the same idea as ResNet skip connections, in the time dimension.
 
 # GRU · the lighter sibling
 
-Fewer gates, comparable accuracy
+Do we really need all three gates?
 
 ---
 
@@ -487,6 +477,8 @@ $$\mathbf{z}_t = \sigma(W_z [\mathbf{h}_{t-1}, \mathbf{x}_t])$$
 $$\mathbf{h}_t = (1 - \mathbf{z}_t) \odot \mathbf{h}_{t-1} + \mathbf{z}_t \odot \tilde{\mathbf{h}}_t$$
 
 The **additive** structure (like LSTM's cell state) is what keeps gradients flowing.
+
+*(Convention note · PyTorch's `nn.GRU` swaps the roles, $\mathbf{h}_t = \mathbf{z}_t \odot \mathbf{h}_{t-1} + (1-\mathbf{z}_t) \odot \tilde{\mathbf{h}}_t$ — same model, relabeled gate.)*
 
 ---
 
@@ -554,11 +546,13 @@ Both tricks combinable: 2-layer bidirectional LSTMs were the standard NLP archit
 
 ### PART 5
 
-# When to still use RNNs in 2026
+# When to still use RNNs today
+
+Didn't Transformers kill them?
 
 ---
 
-# The 2026 reality
+# The reality · as of this writing
 
 Transformers have largely replaced RNNs for:
 - **Language modeling** (GPT, Llama, Claude)
@@ -599,6 +593,8 @@ Starting in 2023, a new class of models has re-emerged · **state-space models**
 - **Mamba** (Gu 2023) · selective state-space model · same asymptotic scaling, competitive on language.
 - **Mamba-2** (2024) · faster, matches Transformer-7B quality.
 
+The core of an SSM is a **linear recurrence** · $\mathbf{h}_t = \bar{A}\,\mathbf{h}_{t-1} + \bar{B}\,\mathbf{x}_t$, $\;\mathbf{y}_t = C\,\mathbf{h}_t$ — no $\tanh$ between steps, so the whole sequence unrolls into a parallel scan at training time.
+
 </div>
 
 <div class="insight">
@@ -626,8 +622,6 @@ The next lecture (L11) examines encoder-decoder Seq2Seq, which also struggles wi
 </div>
 
 ---
-
-<!-- _class: summary-slide -->
 
 # Putting it all together · the L10 master sentence
 
@@ -674,15 +668,37 @@ The same need shows up in stock prices, audio, video. Anything ordered.
 
 **P3.** An LSTM forget gate outputs $f_t = \sigma(W_f [h_{t-1}; x_t] + b_f)$. Initial bias $b_f = 1$ is standard practice. Why? (Hint · think $\sigma(1) \approx 0.73$.)
 
+</div>
+
+---
+
+# Practice problems · gates &amp; usage
+
+<div class="math-box">
+
 **P4.** A GRU has fewer gates than an LSTM. Write the GRU update equations from memory and identify which two LSTM gates are merged.
 
-**P5.** **Teacher forcing** at training, autoregressive at inference. Sketch one failure mode that arises when you switch (the *exposure bias* problem).
+**P5** *(L11 preview).* **Teacher forcing** at training, autoregressive at inference. Sketch one failure mode that arises when you switch (the *exposure bias* problem).
 
-**P6.** When *would* you still pick an RNN over a Transformer in 2026? Name two scenarios and the reason for each (hint · streaming, very long context with constant memory).
+**P6.** When *would* you still pick an RNN over a Transformer today? Name two scenarios and the reason for each (hint · streaming, very long context with constant memory).
 
 </div>
 
 ---
+
+# What breaks · symptom → suspect → test
+
+| Symptom | Suspect | Fastest test |
+|---|---|---|
+| Loss explodes to NaN after ~50 steps | exploding gradients through time | clip grad norm at 1.0, plot grad norms per step |
+| Model nails recent tokens, blind beyond ~20 steps | vanishing gradients in the vanilla RNN | plot $\|\partial\mathcal{L}/\partial h_t\|$ vs $t$ · swap in LSTM/GRU |
+| LSTM forgets everything early in training | forget gate starts near 0 | init $b_f = 1$ · log mean $f_t$ over a batch |
+| Great teacher-forced loss, gibberish when sampling | exposure bias — train/inference mismatch | decode autoregressively on *training* sentences |
+| Loss plateaus on long-range tasks despite LSTM | TBPTT window $K$ shorter than the dependency | increase $K$ · check where `h.detach()` cuts the graph |
+
+---
+
+<!-- _class: summary-slide -->
 
 # Lecture 10 — summary
 
@@ -691,7 +707,7 @@ The same need shows up in stock prices, audio, video. Anything ordered.
 - **BPTT** — backprop through unrolled graph; same vanishing/exploding problem as depth.
 - **LSTM** — gated cell state is an additive "conveyor belt"; gradients flow through gates, not through tanh products.
 - **GRU** — simpler (2 gates instead of 3); often equivalent accuracy, ~15% faster.
-- **2026** — Transformers own most sequence tasks, but RNNs still win for streaming and tiny devices.
+- **Currently** — Transformers own most sequence tasks, but RNNs still win for streaming and tiny devices.
 
 ### Read before Lecture 11
 
@@ -706,3 +722,15 @@ Bishop Ch 12 · Seq2Seq.
 **Notebook 10** · `10-lstm-from-scratch.ipynb` — implement an LSTMCell with only `nn.Linear` layers; verify output matches `nn.LSTMCell`; train a char-level LSTM on Tiny Shakespeare.
 
 </div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**LSTMs don't remember harder — they learn what to forget.**
+
+</div>
+
+*Next: two RNNs back to back, and the fixed-length bottleneck that strangles them.*

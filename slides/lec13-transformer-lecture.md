@@ -77,7 +77,7 @@ Stop and predict what the Transformer block adds to fix each.
 
 </div>
 
-The answers are **FFN, positional encoding, and LayerNorm + residual** — and that's exactly the recipe of one Transformer block.
+Keep your three guesses — each Part of today fixes exactly one of them. We tally at the end.
 
 ---
 
@@ -87,7 +87,7 @@ The answers are **FFN, positional encoding, and LayerNorm + residual** — and t
 
 # The block
 
-Two sublayers, two residuals, two norms
+What do you wrap around attention so it stacks 100 deep?
 
 ---
 
@@ -261,20 +261,6 @@ Two other tokens' keys: $k_1 = [5, 6, 7, 8]$, $k_2 = [9, 0, 1, 2]$. Split into h
 
 ---
 
-# Multi-head · the team-of-specialists analogy
-
-<div class="keypoint">
-
-A single attention head must average over **all kinds of relationships** at once · subject-verb, pronoun-antecedent, adjective-noun, syntax, semantics.
-
-Multi-head attention is a **team of specialists** running in parallel · one head specializes in syntax, another in coreference, another in long-range dependencies.
-
-</div>
-
-After each head computes its own answer, the outputs are concatenated and projected · the network learns the right division of labor among heads.
-
----
-
 # Why split into heads?
 
 A single attention head has to choose *one* distribution over positions per query. But real language has **multiple relations** to track at once:
@@ -286,7 +272,7 @@ A single attention head has to choose *one* distribution over positions per quer
 
 <div class="keypoint">
 
-Multiple heads = multiple "attention circuits" running in parallel. Each head specializes in a different kind of relationship.
+Multi-head attention is a **team of specialists** — multiple attention circuits running in parallel, each specializing in one kind of relationship. The outputs are concatenated and projected; the network learns the division of labor.
 
 </div>
 
@@ -326,8 +312,6 @@ $d_\text{model} = 512$, $d_\text{ff} = 2048$, $h = 8$:
 
 **Conclusion · the FFN ("thinking") uses 2× the parameters of attention ("communication").**
 
-Anthropic interpretability work · FFN layers store *facts and concepts*; attention layers *route information* between them. Different roles, different param budgets.
-
 Attention params are **independent of sequence length** — the same weights process 10 or 10,000 tokens. Big scaling advantage over RNNs.
 
 ---
@@ -364,7 +348,7 @@ def multi_head_attention(x, Wq, Wk, Wv, Wo, n_heads):
 
 # Positional encoding
 
-Telling the model "this is position 7"
+No recurrence — so how does the model know token order?
 
 ---
 
@@ -422,17 +406,21 @@ $$\begin{pmatrix} \sin\theta(pos+k) \\ \cos\theta(pos+k) \end{pmatrix} = \underb
 
 **A 2D rotation matrix that depends only on $k$, not on $pos$!** The model can learn one linear transformation per relative offset → great at *relative* positions.
 
-**Worked numeric.** $pos = 5$, $k = 2$, $\theta = 0.1$.
+---
+
+# Rotation property · worked numeric
+
+$pos = 5$, $k = 2$, $\theta = 0.1$.
 - $PE_5 = [\sin 0.5, \cos 0.5] = [0.479, 0.878]$
 - $PE_7 = [\sin 0.7, \cos 0.7] = [0.644, 0.765]$
 - $R(2) = \begin{pmatrix} 0.980 & 0.199 \\ -0.199 & 0.980 \end{pmatrix}$
-- $R(2) \cdot PE_5 = [0.980 \cdot 0.479 + 0.199 \cdot 0.878,\ -0.199 \cdot 0.479 + 0.980 \cdot 0.878] = [0.645, 0.765]$ ✓ matches $PE_7$.
+- $R(2) \cdot PE_5 = [0.980 \cdot 0.479 + 0.199 \cdot 0.878,\ -0.199 \cdot 0.479 + 0.980 \cdot 0.878] = [0.644, 0.765]$ ✓ matches $PE_7$.
 
 Learned embeddings work too but don't extrapolate past training length. Sinusoidal does.
 
 ---
 
-# Two modern alternatives
+# The four positional encodings you'll meet
 
 | Method | How | Used in |
 |--------|-----|---------|
@@ -443,7 +431,7 @@ Learned embeddings work too but don't extrapolate past training length. Sinusoid
 
 <div class="realworld">
 
-2026 · **RoPE** dominates new LLMs. We'll cover it in L15 (LLMs). For now, any of the four works — pick the one that matches your base model.
+As of this writing, **RoPE** dominates new LLMs. We'll cover it in L15 (LLMs). For now, any of the four works — pick the one that matches your base model.
 
 </div>
 
@@ -473,7 +461,9 @@ Encoder · decoder · causal mask
 | **Decoder-only** (GPT, Llama, Claude) | stack of decoder blocks, **no cross-attn** | autoregressive generation |
 | **Encoder-decoder** (T5, BART) | both, with cross-attention | translation, summarization |
 
-In 2026, **decoder-only** dominates LLMs. Encoder-only ships in retrieval pipelines. Encoder-decoder survives for translation-style tasks.
+The training objectives differ too · encoder-only predicts **masked tokens** (sees both sides), decoder-only predicts the **next token** (causal). Compared in depth in L14.
+
+Currently, **decoder-only** dominates LLMs. Encoder-only ships in retrieval pipelines. Encoder-decoder survives for translation-style tasks.
 
 ---
 
@@ -517,17 +507,19 @@ out, _ = self.attn(x, x, x, attn_mask=mask)
 
 ### PART 5
 
-# Full stack · one figure
+# Build GPT-tiny
+
+Can ~80 lines of PyTorch really generate Shakespeare?
+
+---
+
+# The full stack · one figure
 
 ![w:920px](figures/lec13/svg/transformer_full_stack.svg)
 
 ---
 
-# Put it all together · build GPT-tiny
-
-Karpathy nanoGPT in 80 lines
-
----
+<!-- _class: code-heavy -->
 
 # nanoGPT · 80 lines that changed the world
 
@@ -589,12 +581,13 @@ GPT and Llama drop the encoder and cross-attention entirely — decoder-only. T5
 | **GQA** (vs MHA) | fewer KV heads than Q heads | Llama 2 70B+ |
 | **RMSNorm** (vs LayerNorm) | drop mean centering | Llama, Mistral |
 | **Parallel attention + FFN** | attn and FFN run in parallel, not sequentially | GPT-J, PaLM |
+| **FlashAttention** | tile the $n\times n$ computation, never materialize it | every 2024+ training stack |
 
 </div>
 
 <div class="insight">
 
-Each tweak is small (0.1-1% win). Stacked, they define a "2026 default Transformer" that looks quite different from Vaswani 2017 in details, identical in structure.
+Each tweak is small (0.1-1% win). Stacked, they define the current default Transformer — quite different from Vaswani 2017 in details, identical in structure.
 
 </div>
 
@@ -628,8 +621,6 @@ Karpathy's "most common deep-learning bug" list puts attention-mask bugs at the 
 
 ---
 
-<!-- _class: summary-slide -->
-
 # Putting it all together · the L13 master sentence
 
 <div class="math-box">
@@ -650,6 +641,22 @@ Three flavours · **encoder-only** (BERT, classifying), **decoder-only** (GPT, g
 
 ---
 
+# Pop quiz · revisit
+
+The three problems with "attention alone"? Each Part fixed one:
+
+<div class="keypoint">
+
+(a) Attention output is linear in the values → the **FFN** adds the per-position non-linearity (Part 1).
+(b) Same words, different order, same output → **positional encoding** breaks the tie (Part 3).
+(c) 12 stacked layers blow up or die → **residual + LayerNorm** keep activations and gradients healthy (Part 1).
+
+</div>
+
+If you predicted all three, you effectively re-derived the Transformer block.
+
+---
+
 # Practice problems
 
 <div class="math-box">
@@ -660,7 +667,15 @@ Three flavours · **encoder-only** (BERT, classifying), **decoder-only** (GPT, g
 
 **P3.** Explain the difference between **pre-LN** $x + \text{Attn}(\text{LN}(x))$ and **post-LN** $\text{LN}(x + \text{Attn}(x))$. Which is preferred for training stability and why?
 
-**P4.** A causal/decoder mask is a lower-triangular matrix added to attention scores before softmax. What entry is set to $-\infty$? Why does this implement "no peeking"?
+</div>
+
+---
+
+# Practice problems · masks &amp; heads
+
+<div class="math-box">
+
+**P4.** A causal/decoder mask keeps only the lower triangle of the attention-score matrix. Which entries are set to $-\infty$, and why does this implement "no peeking"?
 
 **P5.** Sketch how multi-head attention is implemented as a single matrix multiplication using reshape/permute. Why is this faster than running $h$ separate attention modules in parallel?
 
@@ -669,6 +684,20 @@ Three flavours · **encoder-only** (BERT, classifying), **decoder-only** (GPT, g
 </div>
 
 ---
+
+# What breaks · symptom → suspect → test
+
+| Symptom | Suspect | Fastest test |
+|---|---|---|
+| Loss stuck at $\ln(\text{vocab})$ from step 1 | forgot causal mask or positional encoding | check attention matrix is lower-triangular · diff outputs on a shuffled input |
+| Teacher-forced loss superb, generated text garbage | mask leak — the model saw the future in training | measure next-token accuracy *autoregressively*, not teacher-forced |
+| Loss diverges once you stack past ~24 layers | post-norm without warmup | switch to pre-norm, or add LR warmup and retry |
+| NaN appears only in fp16 runs | softmax overflow in half precision | run softmax in fp32 / bf16, same seed, compare |
+| Quality collapses past training context length | learned positional embeddings can't extrapolate | eval at 2× train length · swap in RoPE/ALiBi |
+
+---
+
+<!-- _class: summary-slide -->
 
 # Lecture 13 — summary
 
@@ -692,3 +721,15 @@ Three flavours · **encoder-only** (BERT, classifying), **decoder-only** (GPT, g
 **Notebook 13** · `13-nanogpt.ipynb` — build the full Transformer block + nanoGPT from scratch; train on Tiny Shakespeare; generate text.
 
 </div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**The transformer is five ingredients, none of them new.**
+
+</div>
+
+*Next: before a transformer reads anything, someone has to chop text into tokens — and that choice haunts everything downstream.*

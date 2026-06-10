@@ -1,0 +1,90 @@
+---
+title: "HW4 · VAEs, Diffusion, and the KL Knob"
+---
+
+**Out after L22 · due in 2 weeks · 100 points.**
+
+Two generative models, two philosophies. The VAE compresses data into a latent
+space and pays a KL tax for keeping that space tidy. The diffusion model never
+builds a latent space at all — it just learns to undo noise, one step at a time.
+You will train both, break one on purpose (by turning the KL term off and then
+way up), and finish by arguing — like an engineer, not a fan — when you'd reach
+for each.
+
+## Goals
+
+- Train a VAE and *see* the ELBO's two terms fighting each other in the latent space (L19).
+- Run the β ablation and explain reconstruction–regularization trade-off from evidence, not from the slide (L19).
+- Train a DDPM on 2D data and visualize the reverse process actually carving structure out of noise (L21).
+- Build the judgment layer: model selection across VAE / GAN / diffusion as an engineering decision.
+
+## Setup
+
+Start from [`../notebooks/19-vae-mnist.ipynb`](../notebooks/19-vae-mnist.ipynb)
+and [`../notebooks/21-ddpm-2d.ipynb`](../notebooks/21-ddpm-2d.ipynb).
+Part (a) wants a Colab GPU (~2 min per VAE run, and you'll run three); Part (b)
+trains in minutes on CPU.
+
+---
+
+## Part (a) · VAE on MNIST + the β ablation — 45 points
+
+The loss you are training (β-VAE form):
+
+$$\mathcal{L} = \underbrace{\text{reconstruction}}_{\mathbb{E}_{q}[-\log p(x|z)]} + \beta \cdot \underbrace{\text{KL}\big(q(z|x)\,\|\,\mathcal{N}(0,I)\big)}_{\text{the tax}}$$
+
+1. Train the notebook's VAE (2D latent) with **β = 1**. Reproduce the three lecture visuals: (i) latent space colored by digit class, (ii) a grid of decoded samples from $z \sim \mathcal{N}(0, I)$, (iii) one interpolation between two digits.
+2. Now retrain from scratch with **β = 0** and **β = 10** (same architecture, epochs, seed). For each of the three runs report: final reconstruction loss, final KL, the latent scatter, and the prior-sample grid. A 3-row comparison figure is the ideal deliverable.
+3. The written part (20 of the 45 points), 3–6 sentences each, **every claim pointing at one of your figures**:
+   - **β = 0** is a plain autoencoder. Its reconstructions are the best of the three — so why are its *prior samples* garbage? What does the latent scatter show about where $q(z|x)$ actually lives relative to $\mathcal{N}(0,I)$? (The phrase "holes in the latent space" should appear, justified by your plot.)
+   - **β = 10**: what happened to the reconstructions, and what happened to the latent scatter? Some latent dimensions may have stopped carrying information entirely — what's the name for this failure mode, and how would you detect it from the per-dimension KL?
+   - State the trade-off in one sentence of the form "β buys you ___ at the price of ___."
+   - Connect backwards to L00B: the KL term is a regularizer. What is the prior, and what is being pulled toward it?
+4. One derivation to reproduce (from L19, closed book, then check yourself): the KL between $\mathcal{N}(\mu, \sigma^2)$ and $\mathcal{N}(0, 1)$ for a single dimension. Show the steps; this is *the* spine derivation of the lecture.
+
+## Part (b) · DDPM on a 2D toy — 35 points
+
+1. Train the notebook's DDPM on a 2D dataset that is **not** the Swiss roll — pick `make_moons`, two concentric circles, or a smiley-face point cloud (be ambitious; it's 2D). Show real vs generated scatter at the end of training.
+2. **Visualize the denoising trajectory**: starting from $x_T \sim \mathcal{N}(0, I)$, plot the full sample cloud at, say, $t \in \{T, 0.75T, 0.5T, 0.25T, 0\}$ — a 1×5 panel. This figure is the heart of the assignment: noise on the left, your dataset on the right, and the interesting part in between.
+3. Also plot the *forward* process at the same timesteps for comparison. The two rows should look like mirror images. Do they?
+4. Written, 2–5 sentences each:
+   - At which timesteps does recognizable structure emerge — early in the reverse process (near T) or late (near 0)? Connect to the noise schedule: at large t, what is the network's prediction target mostly made of, and why is that an *easy* regression problem?
+   - The network was only ever trained to predict noise $\epsilon$ from $(x_t, t)$ — one step, no notion of "the whole trajectory". Why does iterating this local skill produce samples from the data distribution? One paragraph, in your own words (L21's "learn to denoise; generate by iterating").
+   - What happens if you sample with 10 reverse steps instead of T? Try it, show the plot, explain.
+
+## Part (c) · VAE vs GAN vs diffusion — when to reach for which — 20 points
+
+A written section, ~300–500 words total. No code. You have now trained a VAE and
+a DDPM, and seen GANs in lecture (L20). For **each** of the three scenarios below,
+pick a model family, and justify with the *properties* you observed or derived —
+training stability, sample quality, sampling speed/cost, latent space (does one
+exist? is it useful?), likelihood/ELBO availability, mode coverage:
+
+1. A medical-imaging lab wants **anomaly detection**: flag scans that look unlike the training distribution, with some score for "how unlikely".
+2. A game studio wants to generate **high-resolution textures**, offline, quality above all; generation can take minutes.
+3. A startup wants **real-time avatar generation** on-device at 30 fps, and is willing to sacrifice some fidelity.
+
+There is no single right answer — there are *defensible* and *indefensible*
+answers. "Diffusion because it's the best" is indefensible. "Diffusion, because
+quality dominates and its main cost (slow iterative sampling) is explicitly
+forgiven by the offline constraint" is the shape we want. End with two sentences
+on why, as of 2026, diffusion has largely displaced GANs for images — and one
+thing GANs still have over diffusion.
+
+## Deliverables
+
+- **One notebook**: three VAE runs with the comparison figure, the KL derivation (markdown/LaTeX or a legible photo), DDPM trajectory panels, and Part (c) as a closing markdown section.
+- Cache long-run outputs if needed, but the β = 1 VAE and the DDPM must train live on `Restart & Run All`.
+
+## Rubric
+
+| Component | Points | What we look for |
+|---|---:|---|
+| (a) β = 1 VAE + three visuals | 12 | Matches lecture quality; labeled |
+| (a) β ∈ {0, 10} ablation runs | 8 | Same seed/epochs; losses reported separately (recon vs KL) |
+| (a) Written β analysis | 20 | Holes-in-latent-space argument made from *your* scatter; trade-off sentence |
+| (a) KL derivation | 5 | Steps shown, not just the final formula |
+| (b) DDPM on a non-Swiss-roll dataset | 10 | Generated cloud resembles data |
+| (b) Trajectory panels (reverse + forward) | 10 | Both directions, same timesteps |
+| (b) Written analysis + 10-step experiment | 15 | The "local skill, global result" paragraph is coherent |
+| (c) Model-selection essay | 20 | Decisions argued from properties; honest about trade-offs |

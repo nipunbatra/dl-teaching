@@ -47,7 +47,10 @@ Meanwhile, the internet has **unlimited unlabeled data**. Can we learn from it?
 
 </div>
 
-Four questions:
+---
+
+# Four questions
+
 1. What is self-supervised learning, formally?
 2. How does **SimCLR** use augmentations as supervision?
 3. Why does **BYOL** work **without negatives**?
@@ -75,6 +78,16 @@ The right answer is **(b)** — and that single idea (*"different views of the s
 
 ---
 
+<!-- _class: section-divider -->
+
+### PART 1
+
+# The labeling bottleneck
+
+What do you do when labels are the scarcest resource?
+
+---
+
 # The labeling bottleneck · in numbers
 
 <div class="math-box">
@@ -90,17 +103,7 @@ The right answer is **(b)** — and that single idea (*"different views of the s
 
 At 14M × $0.5, ImageNet cost ~$7M to label. Segmentation at that scale would be ~$500M. **Labels don't scale.**
 
-Meanwhile · Common Crawl has 10⁹+ web pages, Flickr has billions of photos, YouTube has zetabytes of video. All unlabeled.
-
----
-
-<!-- _class: section-divider -->
-
-### PART 1
-
-# The labeling bottleneck
-
-Why self-supervision scaled
+Meanwhile · Common Crawl has 10⁹+ web pages, Flickr has billions of photos, YouTube has zettabytes of video. All unlabeled.
 
 ---
 
@@ -140,7 +143,7 @@ All of these train an encoder to produce **useful representations** — features
 
 # Contrastive learning · SimCLR
 
-Augmentations as implicit labels
+If humans won't provide the labels, can *augmentations* play that role?
 
 ---
 
@@ -202,28 +205,40 @@ It's standard softmax cross-entropy where the "classes" are batch positions and 
 
 ---
 
+# Pop quiz · how big is a "good" InfoNCE loss?
+
+Batch of 2 images → 4 views. The model gives $\text{sim}(z_1, z_2) = 0.9$ (the positive) and $0.2, -0.1$ to the two negatives, with $\tau = 0.1$.
+
+<div class="popquiz">
+
+Roughly what is the loss for anchor $z_1$?
+
+(a) $\approx 1$ — cross-entropy losses start near $\log(\#\text{classes})$.
+(b) $\approx 0.1$.
+(c) $\approx 0.001$ — essentially zero.
+
+Stop and estimate before computing. Hint · what does dividing by $\tau = 0.1$ do to a gap of $0.7$ in similarity? **Answer on the next slide.**
+
+</div>
+
+---
+
 # Worked numeric · InfoNCE
 
-Tiny batch of 2 images → 4 views. $z_1, z_2$ from image A; $z_3, z_4$ from image B. $\tau = 0.1$.
+2 images → 4 views · $z_1, z_2$ from image A (the positive pair), $z_3, z_4$ from image B · $\tau = 0.1$. Compute the loss for anchor $z_1$:
 
-Compute loss for $z_1$ (positive · $z_2$, negatives · $z_3, z_4$).
+<div class="math-box">
 
-**Step 1 · similarities.**
-- $\text{sim}(z_1, z_2) = 0.9$ (positive)
-- $\text{sim}(z_1, z_3) = 0.2$
-- $\text{sim}(z_1, z_4) = -0.1$
+**Step 1 · similarities.** $\text{sim}(z_1, z_2) = 0.9$ (positive) · $\text{sim}(z_1, z_3) = 0.2$ · $\text{sim}(z_1, z_4) = -0.1$
 
-**Step 2 · scaled exps.**
-- $\exp(0.9/0.1) = \exp(9) \approx 8103.1$ (positive — also in denominator)
-- $\exp(0.2/0.1) = \exp(2) \approx 7.4$
-- $\exp(-0.1/0.1) = \exp(-1) \approx 0.4$
+**Step 2 · scaled exps.** $\exp(9) \approx 8103.1$ (positive) · $\exp(2) \approx 7.4$ · $\exp(-1) \approx 0.4$
+Denominator $\approx 8103.1 + 7.4 + 0.4 = 8110.9$ (the positive is in the denominator too).
 
-Denominator $\approx 8103.1 + 7.4 + 0.4 = 8110.9$.
+**Step 3 · loss.** $\mathcal{L} = -\log(8103.1 / 8110.9) = -\log(0.999) \approx \mathbf{0.001}$
 
-**Step 3 · loss.**
-$\mathcal{L} = -\log(8103.1 / 8110.9) = -\log(0.999) \approx \mathbf{0.001}$.
+</div>
 
-Loss is tiny because the positive's similarity dominates. If the model had assigned similarity 0.2 instead of 0.9 to $z_2$, the loss would be ~ $\log 3 \approx 1$ — gradient kicks in.
+**Punchline · (c), loss ≈ 0.001.** The temperature turns a similarity gap of 0.7 into a logit gap of 7 — the positive dominates. Had the model assigned the positive only 0.2 (tied with a negative), the loss would jump to $\approx 0.72$ — ~700× larger, and the gradient kicks in.
 
 ---
 
@@ -337,7 +352,7 @@ Contrastive learning is as much about **what invariances you pick** as about the
 
 # BYOL · self-distillation without negatives
 
-Two networks chase each other
+Drop the negatives — why doesn't everything collapse to a single point?
 
 ---
 
@@ -367,9 +382,17 @@ Worked numeric · $m = 0.9$, $\theta_0 = [10, 2]$, init $\xi_0 = \theta_0$.
 
 The teacher **trails** the student smoothly. The student is chasing a stable, slow-moving version of itself.
 
+---
+
+# BYOL · stop-gradient completes the trick
+
 **Mechanism 2 · stop-gradient on the target.** Loss = `MSE(online_pred, sg(target))`. Gradients flow back through online only. The teacher can't "cheat" by moving its output to match the student.
 
+<div class="keypoint">
+
 The asymmetry (predictor + EMA + stop-grad) prevents collapse without needing negatives.
+
+</div>
 
 ---
 
@@ -419,6 +442,10 @@ We've forged a new chef's knife (the pretrained encoder). How do we test its qua
 
 </div>
 
+---
+
+# Evaluating SSL encoders · four protocols
+
 | Method | What's measured | What's frozen |
 |:-:|:-:|:-:|
 | **Linear probe** | inherent feature quality | encoder frozen; only 1-layer classifier trained |
@@ -430,7 +457,7 @@ Linear probe is the **cleanest** measure — it isolates the encoder. Fine-tune 
 
 ---
 
-# 2026 SSL benchmarks · who wins what
+# SSL benchmarks · who wins what (as of this writing)
 
 <div class="math-box">
 
@@ -471,7 +498,7 @@ The architecture and loss differ, but the meta-idea is the same · **make the da
 
 # MAE · BERT for pixels
 
-Masked autoencoding for images
+What if you just delete 75% of the image and ask for it back?
 
 ---
 
@@ -561,7 +588,7 @@ He et al. 2021 · ViT-Huge MAE pretraining → SOTA on many downstream vision ta
 
 <div class="insight">
 
-Rule of thumb (2026) · if labels cost more than compute, use SSL. In most real-world contexts, labels ARE the bottleneck. SSL tilts the equation.
+Rule of thumb (as of this writing) · if labels cost more than compute, use SSL. In most real-world contexts, labels ARE the bottleneck. SSL tilts the equation.
 
 </div>
 
@@ -592,7 +619,7 @@ Contrast · NLP went straight to SSL because text is abundant and labels are exp
 
 <div class="realworld">
 
-DINOv2 features are the *de facto* general-purpose vision representation in 2026 — ship it for any vision task where you can't afford full fine-tuning.
+DINOv2 features are the *de facto* general-purpose vision representation as of this writing — ship it for any vision task where you can't afford full fine-tuning.
 
 </div>
 
@@ -602,7 +629,9 @@ DINOv2 features are the *de facto* general-purpose vision representation in 2026
 
 ### PART 5
 
-# Where self-supervision lives in 2026
+# Where self-supervision lives today
+
+Which recipe won, in each modality?
 
 ---
 
@@ -672,7 +701,7 @@ These features feed directly into L18 (CLIP, multimodal) and **even underpin dif
 - **SimCLR** · pull two augmentations of the same image together, push all others apart. Needs large batches (for negatives).
 - **BYOL** · two networks with EMA + stop-gradient; no negatives needed. Still works.
 - **MAE** · mask 75% of patches; reconstruct; asymmetric encoder-decoder; the 2022 winner.
-- **DINO(v2)** · self-distillation for ViTs; emergent segmentation in attention; the 2026 general-purpose vision representation.
+- **DINO(v2)** · self-distillation for ViTs; emergent segmentation in attention; the current general-purpose vision representation.
 
 ### Read before Lecture 18
 
@@ -685,5 +714,17 @@ Prince Ch 12 §12.5 (ViT) + CLIP paper (Radford 2021).
 <div class="notebook">
 
 **Notebook 17** · `17-simclr-mini.ipynb` — implement NT-Xent from scratch; pretrain on CIFAR-10; t-SNE the embeddings to see class clustering without labels.
+
+</div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**The labels were inside the data all along.**
+
+*Next · the same contrastive trick, but the second "view" of an image is its caption — CLIP.*
 
 </div>

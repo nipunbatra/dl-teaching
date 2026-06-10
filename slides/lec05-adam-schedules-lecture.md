@@ -71,7 +71,9 @@ Today · **per-parameter adaptive learning rates** — AdaGrad → RMSProp → A
 
 ---
 
-▶ **Interactives for L05** · [optimizer-race](https://nipunbatra.github.io/interactive-articles/optimizer-race/) (SGD vs momentum vs Adam trajectories on 2D loss) · [optimizers-beyond](https://nipunbatra.github.io/interactive-articles/optimizers-beyond/) (AdaGrad / RMSProp / AdamW side by side) · [lr-schedule-visualizer](https://nipunbatra.github.io/interactive-articles/lr-schedule-visualizer/) (cosine + warmup).
+# Try these · interactives for L05
+
+▶ [optimizer-race](https://nipunbatra.github.io/interactive-articles/optimizer-race/) (SGD vs momentum vs Adam trajectories on 2D loss) · [optimizers-beyond](https://nipunbatra.github.io/interactive-articles/optimizers-beyond/) (AdaGrad / RMSProp / AdamW side by side) · [lr-schedule-visualizer](https://nipunbatra.github.io/interactive-articles/lr-schedule-visualizer/) (cosine + warmup).
 
 ---
 
@@ -94,33 +96,36 @@ The exact same loss-curve shape would be diagnosed differently for each optimize
 
 ---
 
+# Bridge from ES 654 · you already know this
+
+| From ES 654 | What changes today |
+|---|---|
+| you hand-tuned one $\eta$ for the whole model | every parameter earns its *own* effective $\eta$ |
+| L2 penalty $=$ weight decay (identical in SGD) | inside Adam they silently diverge — AdamW repairs it |
+| one fixed LR for the whole run | a *schedule*: warmup, then cosine decay |
+| momentum (L4) = EMA of gradients | Adam adds a second EMA — of *squared* gradients |
+
+<div class="keypoint">
+
+You tuned one learning rate by hand. What if every parameter chose its own?
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 1
 
 # The family tree
 
-SGD → AdaGrad → RMSProp → Adam
+How did one global learning rate become a million per-parameter ones? SGD → AdaGrad → RMSProp → Adam
 
 ---
 
 # The lineage
 
 ![w:920px](figures/lec05/svg/optimizer_family_tree.svg)
-
----
-
-# Per-parameter LR · the two-knobs analogy
-
-<div class="keypoint">
-
-Imagine tuning two knobs · one is sensitive (you've already moved it a lot) · the other you've barely touched.
-
-Which deserves a bigger turn? Obviously **the untouched one**.
-
-</div>
-
-AdaGrad does this for every parameter · if a parameter has accumulated lots of gradient (big knob movement so far), shrink its effective LR. If it's been quiet, leave its LR large. This is the core idea behind every adaptive optimizer (RMSProp, Adam, AdamW).
 
 ---
 
@@ -135,7 +140,7 @@ AdaGrad does this for every parameter · if a parameter has accumulated lots of 
 
 </div>
 
-**AdaGrad's idea** · keep a *total movement history* for each knob. The more a knob has moved, the smaller its future turns.
+**AdaGrad's idea** · keep a *total movement history* for each knob. The more a knob has moved, the smaller its future turns. This is the core idea behind every adaptive optimizer — RMSProp, Adam, AdamW all refine it.
 
 ---
 
@@ -405,7 +410,7 @@ Bias correction is a first-few-steps phenomenon. It keeps early steps the right 
 
 # Adam → AdamW
 
-The decoupled-weight-decay fix
+You set `weight_decay` — so why is L2 silently broken inside Adam?
 
 ---
 
@@ -477,12 +482,6 @@ Why one learning rate isn't enough over a full run
 
 ---
 
-# LR schedules · four common shapes
-
-![w:920px](figures/lec05/svg/lr_schedule_shapes.svg)
-
----
-
 # Four common schedules
 
 ![w:920px](figures/lec05/svg/lr_schedules.svg)
@@ -492,6 +491,20 @@ Why one learning rate isn't enough over a full run
 ▶ Interactive: sliders for peak LR and warmup — [lr-schedule-visualizer](https://nipunbatra.github.io/interactive-articles/lr-schedule-visualizer/).
 
 </div>
+
+---
+
+# A schedule is coupled to your budget
+
+<div class="keypoint">
+
+Cosine and warmup+cosine need `total_steps` **up front** — the curve is stretched to fit the budget. Double the budget and the *same* schedule becomes a different experiment.
+
+</div>
+
+- Budget unknown / exploratory → constant, or constant-with-decay-on-plateau.
+- Fixed budget, one shot → warmup + cosine (decay to ~peak/10 by the end).
+- Comparing two runs? Match their schedules *relative to budget*, not in absolute steps.
 
 ---
 
@@ -523,31 +536,23 @@ sched = LambdaLR(opt, lr_lambda)
 
 # Why are early gradients so chaotic?
 
-A randomly-initialized network knows **nothing**.
-
-- Loss is high → gradients are large.
-- The model makes wildly overconfident-but-wrong predictions (e.g. softmax assigns 99% to the wrong class) → massive corrective gradients.
+A randomly-initialized network knows **nothing** — and Transformers make it worse: attention can accidentally focus everything on one irrelevant token, producing enormous gradients on that head.
 
 Two things go wrong **simultaneously** at step 1:
 
-1. **Chaotic, large gradients** from a random network.
-2. **Adam's $v_t$ is itself noisy** — only one batch has been seen; the EMA estimate is unreliable.
+1. **Chaotic, large gradients** — the random net makes overconfident-but-wrong predictions (softmax assigns 99% to the wrong class) → massive corrective gradients.
+2. **Adam's $\hat v_t$ is itself unreliable** — only a few batches seen; if they happen to be small, $\sqrt{\hat v_t}$ is tiny.
 
-Big gradient ÷ tiny, unreliable $\sqrt{v_t}$ → **explosive** first step that throws weights into unrecoverable territory.
+$$\text{Update} \propto \frac{\text{large } g_t}{\text{tiny } \sqrt{\hat{v}_t}} \;\Longrightarrow\; \text{EXPLOSION}$$
+
+One explosive first step throws the weights into unrecoverable territory.
 
 ---
 
-# Why Transformers need warmup
+# Warmup · the safety valve
 
-A perfect storm at the start:
+Linearly ramp $\eta$ from 0 over the first 1–10% of training:
 
-1. **Adam's denominator is unstable.** $\hat{v}_t$ is based on a few batches; if those happen to be small, $\sqrt{\hat{v}_t}$ is tiny → updates are **huge**.
-2. **Transformer gradients are spiky.** Random init → attention accidentally focuses everything on one irrelevant token → enormous gradient on that head's weights.
-
-Combine:
-$$\text{Update} \propto \frac{\text{large } g_t}{\text{tiny } \sqrt{\hat{v}_t}} \;\Longrightarrow\; \text{EXPLOSION}$$
-
-**Warmup is a safety valve.** Linearly ramp $\eta$ from 0 over the first 1–10% of training:
 - At step 1, $\eta \approx 0$ → tiny update no matter how crazy the gradient.
 - This gives $m_t, v_t$ time to **stabilize** over many batches.
 - By the time $\eta$ reaches its target, $\hat{v}_t$ is a reliable estimate.
@@ -561,6 +566,8 @@ After warmup, use cosine decay.
 ### PART 5
 
 # What to actually use
+
+Which optimizer, which LR, which schedule — for *your* model?
 
 ---
 
@@ -601,7 +608,7 @@ def lr_lambda(step, total, warmup):
 
 <div class="realworld">
 
-`lr = 3e-4` is not magic — it's the number to use when you don't want to think. For a real run, do the **LR finder** (Lecture 3).
+`lr = 3e-4` is not magic — it's the number to use when you don't want to think. For a real run, do the **LR finder** (Lecture 3). And the first row is no accident: on vision-from-scratch, well-tuned SGD-momentum still often edges out AdamW in final accuracy — an empirical pattern, not a theorem.
 
 </div>
 
@@ -683,6 +690,18 @@ The 1B-parameter Transformer? The answer is **(c) AdamW with warmup + cosine**.
 
 ---
 
+# What breaks · symptom → suspect → test
+
+| Symptom | Suspect | Fastest test |
+|---|---|---|
+| Adam diverges in the first ~100 steps of fine-tuning | no warmup — $\hat v_t$ still unreliable | add a 500-step linear warmup, rerun |
+| `weight_decay` set, yet huge weights & overfitting | plain Adam: L2 term gets divided by $\sqrt{\hat v}$ | switch the class to **AdamW**, same $\lambda$ |
+| Loss plateaus early, never reaches baseline | constant LR — no annealing phase | add cosine decay; final LR should be ~peak/10 |
+| Embeddings learn, dense layers stall (or vice versa) | one global LR on mixed sparse/dense gradients | log per-layer grad norms; swap SGD → AdamW |
+| AdamW "regularizes" nothing | `weight_decay` silently left at its 0 default | print `opt.param_groups[0]['weight_decay']` |
+
+---
+
 <!-- _class: summary-slide -->
 
 # Lecture 5 — summary
@@ -708,3 +727,17 @@ The 1B-parameter Transformer? The answer is **(c) AdamW with warmup + cosine**.
 **Notebook 5** · `05-adam-schedules.ipynb` — implement Adam and AdamW from scratch; sweep step-decay vs cosine on CIFAR-10.
 
 </div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**Adam gives every parameter its own learning rate.**
+
+Momentum smooths *where* to step ($m_t$); the second moment decides *how far* ($\sqrt{\hat v_t}$); warmup buys time for both estimates to become trustworthy.
+
+</div>
+
+*Next lecture: the optimizer is tuned — now we stop the model from memorizing. Regularization, including the kinds with no penalty term at all.*

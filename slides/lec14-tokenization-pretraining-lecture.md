@@ -16,6 +16,19 @@ math: mathjax
 
 ---
 
+# Learning outcomes
+
+By the end of this lecture you will be able to:
+
+1. Explain why **tokenization** is the "first design decision of an LLM."
+2. Run the **BPE** algorithm on paper for 5 merges.
+3. Distinguish **character / word / subword / byte-BPE** and pick appropriately.
+4. Identify common **tokenization bugs** (counting letters, arithmetic, whitespace).
+5. Contrast the three **pretraining paradigms** · BERT · GPT · T5.
+6. Name the **data + compute economics** of a 70B-param training run.
+
+---
+
 # Where we are
 
 Last lecture: the **Transformer block**. Stack it, add positional encoding, mask if autoregressive.
@@ -34,7 +47,9 @@ Tokenization is the part of LLMs everyone wants to skip — don't.
 
 </div>
 
-Four questions:
+---
+
+# Four questions
 
 1. Why is tokenization hard?
 2. How does **BPE** work step-by-step?
@@ -54,7 +69,7 @@ Take · **"GPT-4 is great!"**
 (c) 7 tokens · `"G", "PT", "-", "4", " is", " great", "!"`.
 (d) Different number depending on the model.
 
-Stop and guess. The real answer is **(d)** — and the *exact* split depends on the BPE merges learned at training time. Which is why "strawberry has 3 r's" was an LLM-favourite stumbling block until 2024.
+Stop and guess — and hold that guess. By the end of Part 2 you'll be able to *derive* the answer, and it explains why "how many r's in strawberry?" stumped LLMs until 2024.
 
 </div>
 
@@ -71,19 +86,6 @@ Stop and guess. The real answer is **(d)** — and the *exact* split depends on 
 # Why tokenization is hard
 
 Spoiler · there's no good answer
-
----
-
-# Learning outcomes
-
-By the end of this lecture you will be able to:
-
-1. Explain why **tokenization** is the "first design decision of an LLM."
-2. Run the **BPE** algorithm on paper for 5 merges.
-3. Distinguish **character / word / subword / byte-BPE** and pick appropriately.
-4. Identify common **tokenization bugs** (counting letters, arithmetic, whitespace).
-5. Contrast the three **pretraining paradigms** · BERT · GPT · T5.
-6. Name the **data + compute economics** of a 70B-param training run.
 
 ---
 
@@ -112,12 +114,6 @@ But it's expensive:
 - Equivalent word-level model: 1000 tokens → **1M entries**. 36× cheaper.
 
 Plus · character LMs have to *learn* that "t-h-e" is a word, unit by unit. That's capacity wasted on a solved problem.
-
-<div class="insight">
-
-Subwords compromise: keep common sequences as one unit (saving sequence length), split rare sequences (keeping open vocabulary). The winning middle path.
-
-</div>
 
 ---
 
@@ -220,19 +216,28 @@ Like a basic file compressor. If "ABCABCABC" appears a lot, define a new symbol 
 `l o w </w>`, `l o w e r </w>`, `n e w e s t </w>`, `w i d e s t </w>`
 
 **Step 1 · count adjacent pairs.**
-`(l, o): 2`, `(o, w): 2`, `(e, s): 2`, `(s, t): 2`, `(w, e): 1`, `(e, r): 1`, …
-Tie among `(l,o), (o,w), (e,s), (s,t)`. Pick `(e, s)`.
+`(l, o): 2`, `(o, w): 2`, `(w, e): 2`, `(e, s): 2`, `(s, t): 2`, `(t, </w>): 2`, `(e, r): 1`, …
+Six-way tie. Break it however you like — say, pick `(e, s)`.
 
 **Merge 1 · `(e, s) → "es"`.**
-`l o w`, `l o w e r`, `n e w es t`, `w i d es t`
+`l o w </w>`, `l o w e r </w>`, `n e w es t </w>`, `w i d es t </w>`
 
-**Step 2 · recount.** Now `(es, t): 2` is a *new* pair tied with `(l,o), (o,w)`. Pick `(es, t)`.
+**Step 2 · recount.** `(es, t): 2` is a *new* pair, tied with `(l,o), (o,w), (t,</w>)`. Pick `(es, t)`.
 
 **Merge 2 · `(es, t) → "est"`.**
-`l o w`, `l o w e r`, `n e w est`, `w i d est`
+`l o w </w>`, `l o w e r </w>`, `n e w est </w>`, `w i d est </w>`
 
-**Merge 3 · `(l, o) → "lo"`.** **Merge 4 · `(lo, w) → "low"`.**
-After 4 merges we have learned `low`, `est` as single tokens. At inference, apply merges 1–4 in order to any new word.
+---
+
+# Worked BPE · merges 3–4 and the result
+
+**Merge 3 · `(l, o) → "lo"`** (count 2) · then **Merge 4 · `(lo, w) → "low"`** (count 2).
+
+`low </w>`, `low e r </w>`, `n e w est </w>`, `w i d est </w>`
+
+After 4 merges the vocabulary has learned `low` and `est` as single tokens — a whole common word and a reusable suffix, discovered purely from counts.
+
+At inference, apply merges 1–4 **in the same order** to any new word: `lowest` → `low est </w>` — a word never seen in training, tokenized into two familiar units.
 
 ---
 
@@ -267,6 +272,8 @@ Result · a 50k-token vocab that covers English, code, Japanese, emoji, and anyt
 
 Llama, GPT-*, Mistral, Claude all use byte-level BPE with minor tweaks. SentencePiece is the same idea packaged for cross-language training.
 
+**Trade-off** · a vocab trained mostly on English splits other languages into far more tokens (higher *fertility*) — non-English users pay more context and more cost per word.
+
 ---
 
 # Tokenizer comparison · same sentence, different counts
@@ -275,7 +282,7 @@ Llama, GPT-*, Mistral, Claude all use byte-level BPE with minor tweaks. Sentence
 
 ---
 
-# Three BPE variants you will meet
+# Four tokenizers you will meet
 
 | Variant | How | Used in |
 |---------|-----|---------|
@@ -363,10 +370,10 @@ Input · `…sat [MASK] the…`. Correct answer · "on".
 Transformer outputs logits over vocab at the `[MASK]` position:
 - $\text{logit}(\text{on}) = 3.5$, $\text{logit}(\text{above}) = 2.1$, $\text{logit}(\text{under}) = 1.5$, …
 
-Softmax · $\exp(3.5) \approx 33.1$, $\exp(2.1) \approx 8.2$, $\exp(1.5) \approx 4.5$, …
-$P(\text{on}) \approx 33.1 / (33.1 + 8.2 + 4.5 + \ldots) \approx \mathbf{0.75}$.
+Softmax · $\exp(3.5) \approx 33.1$, $\exp(2.1) \approx 8.2$, $\exp(1.5) \approx 4.5$ (rest of vocab ≈ negligible).
+$P(\text{on}) \approx 33.1 / (33.1 + 8.2 + 4.5) \approx \mathbf{0.72}$.
 
-Loss · $-\log 0.75 \approx \mathbf{0.287}$.
+Loss · $-\log 0.72 \approx \mathbf{0.33}$.
 
 If the model were more confident ($P = 0.99$), loss would be $-\log 0.99 \approx 0.01$ — model rewarded for confidence on the right answer.
 
@@ -425,10 +432,10 @@ Context · "The cat …". Correct next word · "sat".
 
 Logits over vocab · $\text{logit}(\text{sat}) = 4.0$, $\text{logit}(\text{ran}) = 2.5$, $\text{logit}(\text{jumped}) = 2.0$, …
 
-Softmax · $\exp(4.0) \approx 54.6$, $\exp(2.5) \approx 12.2$, $\exp(2.0) \approx 7.4$, …
-$P(\text{sat} \mid \text{The cat}) \approx 54.6 / (54.6 + 12.2 + 7.4 + \ldots) \approx \mathbf{0.78}$.
+Softmax · $\exp(4.0) \approx 54.6$, $\exp(2.5) \approx 12.2$, $\exp(2.0) \approx 7.4$ (rest of vocab ≈ negligible).
+$P(\text{sat} \mid \text{The cat}) \approx 54.6 / (54.6 + 12.2 + 7.4) \approx \mathbf{0.74}$.
 
-Loss at $t = 3$ · $-\log 0.78 \approx \mathbf{0.248}$.
+Loss at $t = 3$ · $-\log 0.74 \approx \mathbf{0.30}$.
 
 Total sentence loss · sum these up across every position. A 2048-token window gives 2048 little training problems for free, every step.
 
@@ -477,6 +484,8 @@ Frame every task as text-to-text:
 Raffel et al. 2019 · T5 — *Text-to-Text Transfer Transformer*. Unified framework; same model does translation, summarization, QA, classification.
 
 </div>
+
+Its pretraining objective is **span corruption** · mask out contiguous *spans* of tokens, train the decoder to reconstruct them — MLM's idea, adapted to encoder-decoder.
 
 Survives in some translation pipelines. But for pure generation, decoder-only (GPT pattern) won.
 
@@ -600,8 +609,8 @@ $$\text{FLOPs} \approx 6 \cdot N \cdot D$$
 
 One training run of a 70B-parameter model on Chinchilla-optimal $D = 1.4$T tokens:
 - FLOPs $\approx 6 \cdot (7 \cdot 10^{10}) \cdot (1.4 \cdot 10^{12}) \approx 5.9 \times 10^{23}$
-- Time · ~25 days on 4k A100 GPUs (at ~150 TFLOPS / GPU effective utilization)
-- Cost · ~$5M at commercial GPU-hour rates
+- Time · $5.9 \times 10^{23} / (4000 \cdot 1.5 \times 10^{14}) \approx 10^6$ s → **~11 days** on 4k A100s (at ~150 TFLOPS / GPU effective)
+- Cost · ~1.1M GPU-hours → **~$5M** at commercial GPU-hour rates
 
 **Smaller check · Llama 2 7B.** $N = 7 \times 10^9$, $D = 2 \times 10^{12}$:
 $\text{FLOPs} \approx 6 \cdot 7 \cdot 10^9 \cdot 2 \cdot 10^{12} = 8.4 \times 10^{22}$.
@@ -648,8 +657,6 @@ The pretrained model is the brain. Fine-tuning is how you train it to do what yo
 
 ---
 
-<!-- _class: summary-slide -->
-
 # Putting it all together · the L14 master sentence
 
 <div class="math-box">
@@ -668,6 +675,22 @@ All three are **NLL of a Categorical** (L00) — the only difference is *which* 
 
 ---
 
+# Pop quiz · revisit
+
+"GPT-4 is great!" — how many tokens? Answer **(d) · it depends on the model's tokenizer**.
+
+<div class="keypoint">
+
+(a), (b) Word-level splits — no modern LLM tokenizes this way.
+(c) Correct for *one particular* vocabulary — a GPT-2-style byte-level BPE gives exactly `"G", "PT", "-", "4", " is", " great", "!"` — but a different vocab merges differently.
+(d) ✓ Token count is a property of the **tokenizer**, not the sentence. Same text, different model → different count, different context cost.
+
+</div>
+
+And the model never sees the letters *inside* those chunks — which is exactly why "how many r's in strawberry?" was hard.
+
+---
+
 # Practice problems
 
 <div class="math-box">
@@ -677,6 +700,14 @@ All three are **NLL of a Categorical** (L00) — the only difference is *which* 
 **P2.** Run BPE by hand on the corpus `"low low low lower newest"` for 3 merges. Show the vocabulary after each step.
 
 **P3.** Why does GPT use a **causal mask** during training but BERT doesn't? Sketch the attention mask matrix for each.
+
+</div>
+
+---
+
+# Practice problems · masking &amp; vocab design
+
+<div class="math-box">
 
 **P4.** A masked LM masks 15% of tokens, replaces 80% of those with `[MASK]`, 10% with random tokens, 10% leaves them unchanged. Why this 80/10/10 split?
 
@@ -688,6 +719,20 @@ All three are **NLL of a Categorical** (L00) — the only difference is *which* 
 
 ---
 
+# What breaks · symptom → suspect → test
+
+| Symptom | Suspect | Fastest test |
+|---|---|---|
+| Model can't count letters in a word | tokenization, not intelligence | print the token IDs for "strawberry" |
+| Arithmetic fine on small numbers, breaks on big ones | numbers tokenize inconsistently | tokenize "1234" vs "12345", compare the splits |
+| Same prompt, trailing space → different answer | " the" and "the" are different tokens | tokenize both variants, diff the IDs |
+| Non-English input costs 3× tokens, context "shrinks" | tokenizer fertility — vocab trained on English | compute tokens-per-word for each language |
+| BERT fine-tune aces classification, can't write a sentence | MLM objective — never trained to generate left-to-right | sample autoregressively from it, watch the mush |
+
+---
+
+<!-- _class: summary-slide -->
+
 # Lecture 14 — summary
 
 - **Tokenization** balances sequence length vs vocab size. Subword wins.
@@ -695,7 +740,7 @@ All three are **NLL of a Categorical** (L00) — the only difference is *which* 
 - **Tokenization bugs** · spelling errors, arithmetic weirdness, space sensitivity — all trace to token boundaries.
 - **BERT** · encoder-only · bidirectional MLM · classification + embeddings.
 - **GPT** · decoder-only · causal LM · generation. **The winner for scaled LLMs.**
-- **T5** · encoder-decoder · text-to-text framing. Niche role in 2026.
+- **T5** · encoder-decoder · text-to-text framing. Niche role today.
 
 ### Read before Lecture 15
 
@@ -710,3 +755,15 @@ Chinchilla paper (Hoffmann 2022) + HuggingFace course Chapter 1.
 **Notebook 14** · `14-bpe-from-scratch.ipynb` — implement BPE tokenizer from scratch; train on a small corpus; visualize merges; tokenize new sentences.
 
 </div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**LLMs see tokens, not letters — half their bugs start there.**
+
+</div>
+
+*Next: scale it — Chinchilla, RoPE, GQA, and what a trillion tokens buys you.*

@@ -25,7 +25,7 @@ By the end of this lecture you will be able to:
 3. Apply the **DCGAN cookbook** architectural guidelines.
 4. Diagnose **mode collapse** and apply fixes.
 5. Derive why **Wasserstein distance** stabilizes training (JS vs EMD).
-6. Place GANs vs VAE vs Diffusion in the 2026 generative landscape.
+6. Place GANs vs VAE vs Diffusion in today's generative landscape.
 
 ---
 
@@ -37,12 +37,7 @@ Today: **GANs**. Completely different philosophy — no likelihood, no prior, tw
 
 <div class="paper">
 
-**Reading & inspiration** ·
-- **Goodfellow et al. 2014** — original GAN paper.
-- **Goodfellow · *NIPS 2016 GAN Tutorial*** — single best teaching artifact.
-- **Radford et al. 2015 · *DCGAN*** + **Arjovsky 2017 · *WGAN***.
-- **Lilian Weng · *From GAN to WGAN*** (blog).
-- **UDL (Prince) · Ch 15**.
+**Reading & inspiration** · **Goodfellow et al. 2014** (original paper) · **Goodfellow, *NIPS 2016 GAN Tutorial*** (single best teaching artifact) · **Radford 2015 *DCGAN*** + **Arjovsky 2017 *WGAN*** · **Lilian Weng, *From GAN to WGAN*** (blog) · **UDL (Prince) Ch 15**.
 
 </div>
 
@@ -68,10 +63,6 @@ A counterfeiter prints fake currency. A detective inspects bills and flags fakes
 The whole GAN paradigm is **(c)** · two networks improving against each other in a **minimax game**. By the end, the counterfeiter (Generator) makes bills (images) the detective (Discriminator) can't distinguish from real.
 
 </div>
-
----
-
-▶ **Interactive** · watch the GAN minimax dance live → [gan-minimax-dance](https://nipunbatra.github.io/interactive-articles/gan-minimax-dance/).
 
 ---
 
@@ -222,7 +213,7 @@ This trajectory is **animated in the interactive**. The math that follows formal
 
 # The minimax objective
 
-The math behind the dance
+What exactly are G and D each optimizing?
 
 ---
 
@@ -273,10 +264,21 @@ $$D^*(x) = \frac{p_\text{data}(x)}{p_\text{data}(x) + p_G(x)}$$
 - Clearly fake ($p_\text{data} = 0.05, p_G = 0.95$): $D^* = 0.05 / 1.0 = 0.05$ ✓
 - **Nash equilibrium ($p_\text{data} = p_G$):** $D^* = 0.5$ everywhere ✓
 
+---
+
+# ⚠️ optional · what is G really minimizing?
+
 Plug $D^*$ back into the GAN objective and simplify · the outer min becomes
+
 $$\min_G\; 2\,\text{JSD}(p_\text{data}\,\|\,p_G) - \log 4$$
 
+<div class="insight">
+
 The GAN objective is **equivalent to minimizing Jensen–Shannon divergence**. JSD = 0 iff $p_G = p_\text{data}$.
+
+</div>
+
+Hold on to this fact — it is exactly what WGAN (Part 5) will attack: JSD behaves badly when the two distributions don't overlap.
 
 ---
 
@@ -352,7 +354,7 @@ Chain rule · $\partial L / \partial a = -\sigma(a)$. At $\sigma = 0.01$: gradie
 **Non-saturating loss** $L = -\log \sigma(a)$.
 Chain rule · $\partial L / \partial a = \sigma(a) - 1$. At $\sigma = 0.01$: gradient $= 0.01 - 1 = \mathbf{-0.99}$.
 
-**The non-saturating gradient is ~100× stronger** in this common early-training regime. That gap kept vanilla GANs untrainable for 2 years until Goodfellow's footnote fix.
+**The non-saturating gradient is ~100× stronger** in this common early-training regime. Goodfellow spotted this in the original 2014 paper — the fix lives in a footnote that everyone has used ever since.
 
 ---
 
@@ -376,7 +378,7 @@ This is a *saddle-point search* in a 10⁹-dimensional game. Standard optimizati
 
 # DCGAN · the architecture that worked
 
-Radford et al. 2015
+What finally made GANs trainable? (Radford et al. 2015)
 
 ---
 
@@ -403,6 +405,18 @@ Radford, Metz, Chintala 2015 · *"Unsupervised Representation Learning with Deep
 
 ---
 
+# DCGAN · five architectural guidelines
+
+1. Replace pooling with **strided convolutions** (both D and G).
+2. Use **batch normalization** in both.
+3. Remove fully-connected hidden layers.
+4. **ReLU** in G (except output, which uses Tanh).
+5. **LeakyReLU** in D.
+
+These aren't deep insights — they are a cookbook that made GANs actually train. But *why* these five?
+
+---
+
 # DCGAN · why these specific tricks?
 
 The DCGAN rules aren't arbitrary · each is a **stabilizer** for the tricky GAN game.
@@ -420,18 +434,6 @@ Each rule is a small wedge that prevents a known failure mode. Combined, they ma
 
 ---
 
-# DCGAN · five architectural guidelines
-
-1. Replace pooling with **strided convolutions** (both D and G).
-2. Use **batch normalization** in both.
-3. Remove fully-connected hidden layers.
-4. **ReLU** in G (except output, which uses Tanh).
-5. **LeakyReLU** in D.
-
-These aren't deep insights — they are a cookbook that made GANs actually train.
-
----
-
 # Transposed convolution · upsampling primitive
 
 G needs to go from `(batch, noise_dim)` to `(batch, 3, 64, 64)` — *upsampling*. Use `ConvTranspose2d`:
@@ -442,7 +444,7 @@ A normal conv shrinks (or preserves) spatial size. A transposed conv *inflates* 
 
 **Dimension formula** (inverse of conv) · $O = (W - 1) \cdot S - 2P + K$
 
-For $W=1, S=1, P=0, K=4$ · output is $4 \times 4$. Four such blocks, each stride-2, take $1 \times 1 \to 64 \times 64$.
+For $W=1, S=1, P=0, K=4$ · output is $4 \times 4$. Then stride-2 blocks double the size each time · $4 \to 8 \to 16 \to 32 \to 64$.
 
 </div>
 
@@ -547,7 +549,7 @@ This exact recipe trains on most small-to-medium image datasets without hand-hol
 
 # Training instability &amp; mode collapse
 
-The pathologies
+What goes wrong, and how do you see it coming?
 
 ---
 
@@ -597,7 +599,7 @@ Picture · instead of p_G covering p_data, p_G is a point mass (or thin ridge) s
 
 <div class="realworld">
 
-In 2026, if you need a GAN you almost always use WGAN-GP or StyleGAN architecture; both mostly eliminate mode collapse in practice.
+As of this writing, if you need a GAN you almost always use a WGAN-GP or StyleGAN architecture; both mostly eliminate mode collapse in practice.
 
 </div>
 
@@ -613,7 +615,7 @@ Standard diagnostics:
 - **Inception Score (IS)** · diversity + quality metric for image GANs.
 - **FID (Fréchet Inception Distance)** · distance between fake and real feature distributions. Lower is better.
 
-FID is the main quantitative metric for image generation in 2026.
+FID remains the main quantitative metric for image generation as of this writing.
 
 ---
 
@@ -639,7 +641,7 @@ Lower is better. FID of 10-20 · "looks good". FID of 3-5 · "basically indistin
 
 # WGAN · Wasserstein distance
 
-Arjovsky et al. 2017
+Can a better distance fix the zero-gradient problem? (Arjovsky et al. 2017)
 
 ---
 
@@ -687,13 +689,25 @@ Vanilla GAN's classifier draws an infinitely steep cliff between real/fake. When
 
 </div>
 
-Using Kantorovich–Rubinstein duality:
-$$W(p_\text{data}, p_G) = \sup_{\|D\|_L \le 1}\,\mathbb{E}_{p_\text{data}}[D(x)] - \mathbb{E}_{p_G}[D(G(z))]$$
-
-D's job · **maximize** the score difference (high on real, low on fake). G's job · **minimize** $\mathbb{E}_{p_G}[D]$. No sigmoid, no log, just raw scores.
-
 **1-Lipschitz check.** $D(x) = 5x$? With $a=2, b=3$: $|D(a)-D(b)| = 5 > 1 = |a-b|$. **Not** 1-Lipschitz.
 $D(x) = 0.5x$? $|D(a)-D(b)| = 0.5 \le 1$. **Yes.**
+
+---
+
+# The WGAN objective · duality in one line
+
+How do you *compute* an infimum over all transport plans? You don't. Kantorovich–Rubinstein duality turns it into a maximization over 1-Lipschitz critics:
+
+<div class="math-box">
+
+$$W(p_\text{data}, p_G) = \sup_{\|D\|_L \le 1}\,\mathbb{E}_{p_\text{data}}[D(x)] - \mathbb{E}_{p_G}[D(G(z))]$$
+
+</div>
+
+- **D's job** · **maximize** the score difference (high on real, low on fake).
+- **G's job** · **minimize** $\mathbb{E}_{p_G}[D(G(z))]$.
+
+No sigmoid, no log, just raw scores. One question remains · how do we *enforce* the 1-Lipschitz constraint on a neural network?
 
 ---
 
@@ -701,7 +715,7 @@ $D(x) = 0.5x$? $|D(a)-D(b)| = 0.5 \le 1$. **Yes.**
 
 <div class="insight">
 
-We want D's slope to be 1 everywhere — but checking *everywhere* is impossible. Highway patrol can't put a camera on every metre, so it places **random** ones. WGAN-GP picks **random points $\hat x$** on the line between real and fake, and penalizes any slope $\ne 1$ there. Surprisingly enough.
+We want D's slope to be 1 everywhere — but checking *everywhere* is impossible. Highway patrol can't put a camera on every metre, so it places **random** ones. WGAN-GP picks **random points $\hat x$** on the line between real and fake, and penalizes any slope $\ne 1$ there. Spot checks at random points turn out to be enough.
 
 </div>
 
@@ -720,16 +734,18 @@ $$\mathcal{L}_\text{GP} = \lambda\,\mathbb{E}_{\hat x}\bigl[(\,\underbrace{\|\na
 
 Critic's full loss · $\mathbb{E}[D(G(z))] - \mathbb{E}[D(x)] + \lambda \cdot \text{GP}$.
 
-Stabilizes training and effectively eliminates mode collapse.
+Stabilizes training and makes mode collapse far rarer in practice.
 
 ---
 
-# Why WGAN fixed everything
+# What WGAN actually fixed
 
 - **Smooth gradients even for disjoint distributions** · G always gets a meaningful signal.
 - **Loss correlates with sample quality** · for the first time, you can watch training curves and know if it's working.
 - **Less sensitive to hyperparameters** · default lr=1e-4, batch=64, $\beta_1 = 0$, $\beta_2 = 0.9$ works for most datasets.
 - **Mode collapse rare** · earth-mover distance doesn't allow p_G to collapse inside p_data.
+
+It did **not** fix everything — GAN training is still a two-player game with no convergence guarantee, and WGANs can still oscillate or diverge. WGAN fixed the *gradient* problem, not the *game* problem.
 
 <div class="realworld">
 
@@ -745,7 +761,7 @@ Between 2017 and 2020 WGAN-GP became the default "safe" GAN variant. Beyond it, 
 
 # StyleGAN · the GAN peak
 
-Disentangled latents, hyper-realistic faces
+How far did GANs get? Disentangled latents, hyper-realistic faces
 
 ---
 
@@ -800,9 +816,9 @@ This era gave us "AI-generated photo" as a concept.
 
 ### PART 7
 
-# GANs in 2026
+# GANs today
 
-Still alive, but niche
+If diffusion won, why study GANs at all?
 
 ---
 
@@ -832,7 +848,7 @@ Still alive, but niche
 
 <div class="realworld">
 
-In 2026 · **diffusion dominates** text-to-image / video. GANs survive where inference speed matters (real-time face generation, StyleGAN-based editing).
+As of this writing · **diffusion dominates** text-to-image / video. GANs survive where inference speed matters (real-time face generation, StyleGAN-based editing).
 
 </div>
 
@@ -931,7 +947,7 @@ GANs lost the SOTA crown to diffusion in 2021 · but the *idea* of adversarial t
 - **Mode collapse** · G produces few distinct outputs; fight with diversity regularizers or WGAN.
 - **WGAN-GP** · Wasserstein distance + gradient penalty · stable training.
 - **StyleGAN** · disentangled $w$-space, hyper-realistic faces, the 2019-2021 peak.
-- **2026** · diffusion has largely replaced GANs; StyleGAN still used where real-time generation matters.
+- **Today** · diffusion has largely replaced GANs; StyleGAN still used where real-time generation matters.
 
 ### Read before Lecture 21
 
@@ -944,5 +960,17 @@ Prince Ch 18 · Diffusion models (early sections).
 <div class="notebook">
 
 **Notebook 20** · `20-dcgan-mnist.ipynb` — DCGAN on MNIST or CelebA subset; monitor D/G loss balance; generate face grid.
+
+</div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**When you can't write down the loss, train a network to be the loss.**
+
+*Next lecture: drop the adversary entirely — corrupt data with noise, and learn to reverse it.*
 
 </div>

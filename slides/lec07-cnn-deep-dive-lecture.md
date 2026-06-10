@@ -72,7 +72,26 @@ Stop and think. The answer is the central insight of CNNs — and we'll unpack i
 
 ---
 
-▶ **Interactive** · play with conv kernels, padding, stride live → [convolution-visualizer](https://nipunbatra.github.io/interactive-articles/convolution-visualizer/) and [receptive-field-grower](https://nipunbatra.github.io/interactive-articles/receptive-field-grower/).
+# Try these · interactives for L07
+
+▶ Play with conv kernels, padding, stride live → [convolution-visualizer](https://nipunbatra.github.io/interactive-articles/convolution-visualizer/) and [receptive-field-grower](https://nipunbatra.github.io/interactive-articles/receptive-field-grower/).
+
+---
+
+# Bridge from ES 654 · you already know this
+
+| From ES 654 | What changes today |
+|---|---|
+| convolution / pooling mechanics — *what* they compute | *why* those choices win: inductive bias |
+| stride &amp; padding formulas | receptive field — how depth buys context |
+| LeNet on MNIST | the LeNet → AlexNet → VGG arms race |
+| MLPs: one weight per connection | weight sharing as a ~350,000× compression |
+
+<div class="keypoint">
+
+You did convolution + pooling mechanics in ES 654. Today is *why* those choices win, not *what* they are.
+
+</div>
 
 ---
 
@@ -82,7 +101,7 @@ Stop and think. The answer is the central insight of CNNs — and we'll unpack i
 
 # Convolution mechanics
 
-A brisk recap with new diagrams
+A brisk recap — where does each term in the output-size formula come from?
 
 ---
 
@@ -156,7 +175,14 @@ ImageNet stem: input `(3, 224, 224)`, apply `Conv2d(3, 64, kernel_size=7, stride
 $$O = \lfloor(224 - 7 + 6)/2\rfloor + 1 = 112$$
 Output: `(64, 112, 112)`.
 
-**Why convolution is cheap.** MLP doing the same thing: $224^2 \cdot 3 \cdot (64 \cdot 112^2) \approx 10^{11}$ ops. Conv: $7^2 \cdot 3 \cdot 64 \cdot 112^2 \approx 1.2 \cdot 10^8$ ops — **~1000× cheaper.**
+---
+
+# Why convolution is cheap · count the ops
+
+Same stem, done two ways:
+
+- **MLP** doing the same mapping: $224^2 \cdot 3 \cdot (64 \cdot 112^2) \approx 10^{11}$ ops.
+- **Conv:** $7^2 \cdot 3 \cdot 64 \cdot 112^2 \approx 1.2 \cdot 10^8$ ops — **~1000× cheaper.**
 
 <div class="insight">
 
@@ -166,7 +192,7 @@ Parameters are *shared* across positions, and each output depends on a small reg
 
 ---
 
-# The four hyperparameters, in one picture
+# The four hyperparameters, in order of importance
 
 For every conv layer, think in this order:
 
@@ -309,13 +335,7 @@ Three stacked 3×3 convs vs. one 7×7 conv (stride=1, $C \to C$ channels).
 - Three 3×3 convs: $3 \cdot (3 \cdot 3 \cdot C \cdot C) = 27\,C^2$. **45% cheaper.**
 - Plus we get **3 ReLUs** instead of 1 → richer function class.
 
-| | 1× (7×7) | 3× (3×3) stacked |
-|---|----------|-------------------|
-| RF | 7 | 7 |
-| Params | $49\,C^2$ | $27\,C^2$ |
-| ReLUs | 1 | 3 |
-
-VGG (2014) built its whole architecture around this trade.
+Same receptive field, ~half the parameters, three non-linearities instead of one. VGG (2014) built its whole architecture around this trade.
 
 ---
 
@@ -341,7 +361,13 @@ Saving: **~1.5 million parameters per block**, plus 2 extra non-linearities. Rep
 For a stack with stride 1, the RF formula is:
 $$\text{RF}_\text{new} = \text{RF}_\text{prev} + (K - 1)$$
 
-5-layer CNN, all 3×3, $K - 1 = 2$:
+Each layer adds $K-1$ pixels of context. Let's tabulate a 5-layer stack.
+
+---
+
+# RF layer by layer · a 5-layer stack
+
+All layers 3×3, stride 1, so each adds $K - 1 = 2$:
 
 | Layer | Calculation | RF |
 |-------|-------------|----|
@@ -356,7 +382,7 @@ $$\text{RF}_\text{new} = \text{RF}_\text{prev} + (K - 1)$$
 
 ---
 
-# What can a 11×11 patch "see"?
+# What can an 11×11 patch "see"?
 
 The RF size tells us the **scale of features** a layer can detect.
 
@@ -394,7 +420,7 @@ Two consequences:
 
 # Classic architecture evolution
 
-LeNet → AlexNet → VGG → Inception → ResNet → MobileNet → EfficientNet
+What did each era figure out? LeNet → AlexNet → VGG → Inception → ResNet → MobileNet → EfficientNet
 
 ---
 
@@ -434,7 +460,7 @@ Used everywhere in modern CNNs and Transformers (the "output projection" of atte
 
 ---
 
-# 1×1 conv · the math, with a worked example
+# 1×1 conv · the math
 
 A 1×1 conv = a small linear (FC) layer applied **at every pixel independently**.
 
@@ -443,19 +469,21 @@ At pixel $(i, j)$:
 - Weight matrix $W$ of shape $(C_\text{out},\,C_\text{in})$.
 - Output: $y_{i,j} = W\,x_{i,j}$ — matrix–vector product, repeated $H \cdot W$ times.
 
-**Worked numeric · 3 channels (RGB) → 2 channels.** Pixel value $x = [255, 100, 50]$.
+---
+
+# 1×1 conv · worked numeric · mixing RGB
+
+**3 channels (RGB) → 2 channels.** Pixel value $x = [255, 100, 50]$.
 - Recipe 1 (grayscale): $w_1 = [0.30, 0.59, 0.11]$
 $y_1 = 0.30 \cdot 255 + 0.59 \cdot 100 + 0.11 \cdot 50 = 76.5 + 59 + 5.5 = \mathbf{141}$
 - Recipe 2 (red − green): $w_2 = [0.5, -0.5, 0.0]$
 $y_2 = 0.5 \cdot 255 - 0.5 \cdot 100 + 0 = \mathbf{77.5}$
 
-Output at this pixel: $[141, 77.5]$. The network **learns** the best recipes during training.
-
-**Uses everywhere in modern networks** · reduce channels before 3×3 (GoogLeNet bottleneck) · expand after (ResNet $1{\times}1{\to}3{\times}3{\to}1{\times}1$) · "attention output projection" in Transformers.
+Output at this pixel: $[141, 77.5]$. The network **learns** the best recipes during training — grayscale and red−green are just two hand-picked examples.
 
 ---
 
-# 1×1 conv · worked example
+# 1×1 conv · the bottleneck trick
 
 Input tensor `(256, 14, 14)` — 256 channels at 14×14 spatial resolution.
 Apply `Conv2d(256, 64, kernel_size=1)` → `(64, 14, 14)`.
@@ -536,8 +564,6 @@ Stacking convs builds larger receptive fields. Deep networks *compose* features 
 
 ---
 
----
-
 # Assumptions are a shortcut
 
 <div class="insight">
@@ -564,9 +590,7 @@ $$\text{params} = 150{,}528 \cdot 4{,}096 \approx \mathbf{616\,\text{million}}$$
 **CNN.** 3×3 kernel, $C_\text{in} = 3$, $C_\text{out} = 64$.
 $$\text{params} = (K \cdot K \cdot C_\text{in}) \cdot C_\text{out} = (3 \cdot 3 \cdot 3) \cdot 64 = 27 \cdot 64 = \mathbf{1{,}728}$$
 
-**Difference: 616,000,000 vs. 1,728 — a factor of ~350,000.**
-
-This is what locality (small kernel) and weight sharing (sliding the same kernel) buy. The CNN is *forced* to learn reusable patterns; the MLP must learn every connection from scratch.
+**Difference: 616,000,000 vs. 1,728 — a factor of ~350,000.** That's what locality + weight sharing buy: the CNN is *forced* to learn reusable patterns.
 
 <div class="insight">
 
@@ -718,6 +742,18 @@ This is the same idea as ridge regression in ES654 · constraints on parameters 
 
 ---
 
+# What breaks · symptom → suspect → test
+
+| Symptom | Suspect | Fastest test |
+|---|---|---|
+| CNN stuck at chance (10% on CIFAR-10) | channel/shape bug or missing input normalization | assert shapes per layer; overfit one batch of 8 |
+| `RuntimeError: size mismatch` at the FC head | output-size formula misapplied somewhere | hand-compute $O = \lfloor(W{-}K{+}2P)/S\rfloor{+}1$ layer by layer |
+| Loss astronomically large at step 1 | pixels still 0–255 — `Normalize` missing | print `x.min(), x.max()` on one batch; expect ≈ ±2 |
+| Fails whenever the object is off-centre | final RF smaller than the object scale | compute RF via $\text{RF}_\ell = \text{RF}_{\ell-1} + (K{-}1)\prod_{i<\ell} S_i$ |
+| One layer holds ~99% of all parameters | FC head on a full-resolution feature map | print per-layer param counts; pool before the head |
+
+---
+
 <!-- _class: summary-slide -->
 
 # Lecture 7 — summary
@@ -742,3 +778,17 @@ This is the same idea as ridge regression in ES654 · constraints on parameters 
 **Notebook 7** · `07-cnn-from-scratch.ipynb` — build a VGG-style mini-CNN for CIFAR-10; print tensor shapes at each layer; compute receptive field per layer.
 
 </div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**A convolution is a linear layer that confesses its assumptions.**
+
+Locality, weight sharing, hierarchy — written directly into the architecture, and worth ~350,000× fewer parameters because images actually obey them.
+
+</div>
+
+*Next lecture: what happened when "just stack more layers" stopped working — ResNet, modern CNNs, and transfer learning.*

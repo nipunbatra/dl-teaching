@@ -25,7 +25,7 @@ By the end of this lecture you will be able to:
 3. Read the **residual stream view** of a Transformer.
 4. Recognize **induction heads** and sparse-autoencoder features.
 5. Articulate the **open problems** of DL (continual learning, data efficiency, grounding).
-6. Identify **2026-2030 research directions** worth pursuing.
+6. Identify the **open research directions** worth pursuing next.
 
 ---
 
@@ -35,11 +35,7 @@ By the end of this lecture you will be able to:
 
 <div class="paper">
 
-**Reading & inspiration** ·
-- **Wei et al. 2022 · *Chain-of-Thought Prompting*** + **Yao et al. 2022 · *ReAct***.
-- **OpenAI · *Learning to reason with LLMs (o1)***  + **Anthropic · *Tracing the thoughts of a large language model*** (interp blog).
-- **Sutton 2019 · *The Bitter Lesson***  — frame for the whole course.
-- **Anthropic / OpenAI / DeepMind · agentic-AI blogs** through 2024–2026.
+**Reading & inspiration** · **Wei et al. 2022 *Chain-of-Thought*** + **Yao et al. 2022 *ReAct*** · **OpenAI, *Learning to reason with LLMs (o1)*** + **Anthropic, *Tracing the thoughts of an LLM*** (interp blog) · **Sutton 2019, *The Bitter Lesson*** (frame for the whole course) · frontier-lab agentic-AI blogs, 2024–2026.
 
 </div>
 
@@ -74,7 +70,7 @@ There is no single right answer — but **(b)** is almost certainly safe. **(a)*
 
 # Agents &amp; tool use
 
-2024's big shift
+What changes when the model can *act*, not just answer?
 
 ---
 
@@ -116,6 +112,8 @@ The difference: **closing the perceive-think-act loop** with external tools. The
 
 ---
 
+<!-- _class: code-heavy -->
+
 # Function calling · how agents work
 
 Modern APIs (Claude, OpenAI, Gemini) support **structured tool calling**:
@@ -150,16 +148,11 @@ Claude Computer Use (2024) · the model sees a **screenshot**, outputs **mouse +
 Screenshot → Claude → "move_mouse(320, 450) ; click() ; type('hello')" → screenshot
 ```
 
-This is RL-like but trained mostly supervised on human demonstrations and synthetic examples. Opens up:
-
-- Browser automation
-- Desktop task completion
-- Form filling
-- Legacy-app bridging
+Trained on human demonstrations and synthetic trajectories (exact recipes undisclosed). Opens up · browser automation · desktop task completion · form filling · legacy-app bridging.
 
 <div class="realworld">
 
-This course itself was built largely by Claude Code — an agent loop over bash / edit / read tools. Agents are the **application layer** of 2026 AI.
+This course itself was built largely by Claude Code — an agent loop over bash / edit / read tools. As of this writing, agents are the **application layer** of AI.
 
 </div>
 
@@ -171,7 +164,7 @@ This course itself was built largely by Claude Code — an agent loop over bash 
 
 # Reasoning models
 
-Test-time compute as a new axis
+What if a model could *think longer* on harder questions?
 
 ---
 
@@ -285,7 +278,7 @@ Both pay off. OpenAI reported that o1's performance on math benchmarks scales sm
 | o1 | 74% | ~1800 Elo |
 | o3 | 97% | ~2700 Elo (grandmaster) |
 
-Comparable gains on HumanEval, MATH, GPQA. This is an entirely new capability curve.
+Comparable gains on HumanEval, MATH, GPQA — an entirely new capability curve. (Numbers are OpenAI's reported results; treat as indicative, not gospel.)
 
 <div class="realworld">
 
@@ -399,7 +392,11 @@ A **sparse autoencoder (SAE)** · *inverted* bottleneck. *"Have a 100,000-word d
 3. **Decoder** · reconstruct $x' = W_\text{dec} f + b'$.
 4. **Train** to minimize $\|x - x'\|^2$ + sparsity penalty.
 
-**Worked numeric (toy).** $x = [0.9, 0.8, -0.7, 0.1]$ (meaningless — superposition). Trained encoder maps to:
+---
+
+# SAE · worked numeric
+
+$x = [0.9, 0.8, -0.7, 0.1]$ (meaningless — superposition). Trained encoder maps to:
 $f = [0, 0, 0, 0, 0, \mathbf{0.95}, 0, 0, 0, 0]$
 
 Researchers find **all inputs** that activate feature 6 → all about the **Golden Gate Bridge**. Label: *"Feature 6 = Golden Gate Bridge"*.
@@ -417,7 +414,7 @@ Two reasons:
 
 <div class="insight">
 
-Still a young field. Most interp results are about small models or narrow circuits. Scaling interp to frontier-level models is a 2026+ research agenda.
+Still a young field. Most interp results are about small models or narrow circuits. Scaling interp to frontier-level models is the open research agenda as of this writing.
 
 </div>
 
@@ -429,7 +426,7 @@ Still a young field. Most interp results are about small models or narrow circui
 
 # Open problems
 
-What the next decade of DL research looks like
+What's still unsolved — and worth a PhD?
 
 ---
 
@@ -449,25 +446,6 @@ As models become more capable, the cost of misalignment grows:
 <div class="keypoint">
 
 **Claude, GPT, Gemini all ship with elaborate safety stacks** · constitutional AI, RL from safety feedback, red-teaming, classifier filters, refusal training. Safety is not a layer; it's the product.
-
-</div>
-
----
-
-# What you've learned · a final recap
-
-<div class="math-box">
-
-| Module | Covered |
-|:-:|:-:|
-| **Foundations** (L1-L2) | why DL, UAT, depth vs width, residuals |
-| **Training craft** (L3-L6) | recipe, SGD / Adam, schedules, regularization |
-| **Vision** (L7-L9) | CNN mechanics, ResNet family, detection, SAM |
-| **Sequences → Transformers** (L10-L14) | RNN/LSTM/GRU, Seq2Seq, attention, Transformer, tokenization |
-| **LLMs** (L15-L16) | scaling laws, RoPE, GQA, LoRA, RLHF, DPO |
-| **Self-supervision + VLMs** (L17-L18) | SimCLR, MAE, CLIP, LLaVA |
-| **Generative** (L19-L22) | VAE, GAN, DDPM, CFG, latent diffusion |
-| **Systems + frontier** (L23-L24) | KV-cache, quantization, agents, reasoning, interp |
 
 </div>
 
@@ -493,7 +471,7 @@ Each is a PhD worth of work. Pick one.
 Predictions (take with salt):
 
 - **Reasoning compute** will scale 10× per year for a few years — expect ~1000× by 2028.
-- **Agentic AI** will move from demos to production workflows in 2026.
+- **Agentic AI** is moving from demos to production workflows as we speak.
 - **Multimodal** will absorb audio, video, 3D into the same models.
 - **Open-weight models** will continue closing the frontier gap (Llama, Mistral, DeepSeek).
 - **Domain-specific** small models (medical, legal, scientific) will win niche deployments.
@@ -507,7 +485,7 @@ Predictions (take with salt):
 
 # Course recap
 
-What you learned
+What did 24 lectures add up to?
 
 ---
 
@@ -530,7 +508,7 @@ What you learned
 
 # What you can now do
 
-1. **Read any 2026 ML paper** and understand the architecture.
+1. **Read any current ML paper** and understand the architecture.
 2. **Implement a Transformer, a diffusion model, a LoRA fine-tune** from scratch.
 3. **Know when to use what** — CNN vs ViT, SGD vs AdamW, RLHF vs DPO.
 4. **Debug training failures** using the ladder and error analysis.
@@ -577,37 +555,19 @@ This is the current skill floor for a DL engineer or research student.
 | Interpretability | L12 + sparse autoencoders | scale to GPT-4-class |
 | Multimodal agents | L18 + L24 | cost / latency |
 
-You now have **the full vocabulary** to read any 2026+ paper and place it.
+You now have **the full vocabulary** to read any new paper and place it.
 
 ---
 
-# What this course gave you · the 24-lecture spine
+# The ideas that lasted · one coherent story
 
-<div class="math-box">
+<div class="insight">
 
-1. **L00–L05** · probabilistic ML + deep-net training pipeline.
-2. **L06–L09** · CNNs + transfer + detection / segmentation.
-3. **L10–L13** · sequences → attention → Transformer.
-4. **L14–L18** · LLMs · pretrain · align · self-supervise · multimodal.
-5. **L19–L22** · generative models · VAE · GAN · diffusion.
-6. **L23–L24** · efficient inference · 2024+ frontier.
+**Every loss in this course is an NLL.** Every architecture is a wiring of attention, convolution, and MLP. Every regularizer is a prior. Every generative model is "learn a distribution, then sample from it."
 
 </div>
 
-**Every loss in this course is an NLL.** Every architecture is a wiring of attention, convolution, and MLP. Every regularizer is a prior. Once you see the framework, the field stops feeling like 24 disconnected topics and becomes one coherent story.
-
----
-
-# Where to go next
-
-<div class="paper">
-
-- **Read** · arXiv-sanity, *Hugging Face Daily*, *Chip Huyen's newsletter*, *The Batch* (Andrew Ng), Lilian Weng's blog.
-- **Build** · re-implement one paper a month from scratch (Karpathy's discipline). nanoGPT → mini-CLIP → tiny diffusion.
-- **Specialize** · pick *one* of {RL, agents, interp, multimodal, efficient inference, theory} and dive deep for 6 months.
-- **Contribute** · open-source one small thing — a benchmark, a notebook, a reproduction. Public artifacts compound.
-
-</div>
+Once you see the framework, the field stops feeling like 24 disconnected topics and becomes one coherent story — likelihood · compositionality · invariance · optimization · scale.
 
 **You're not finished — you have the tools.** Have fun.
 
@@ -619,7 +579,19 @@ You now have **the full vocabulary** to read any 2026+ paper and place it.
 - **Reasoning models** · train for long chains of thought with RL; spend more test-time compute.
 - **Mech interp** · residual-stream view + sparse autoencoders; progress but still early.
 - **Open problems** · reliability, continual learning, alignment, interpretability, grounding.
-- **What you have now** · end-to-end understanding of every major DL system in 2026.
+- **What you have now** · end-to-end understanding of every major DL system in deployment today.
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**Deep learning is one idea told twenty-four ways · differentiable modules, a likelihood, and scale.**
+
+*The field is younger than you are — go write the lecture that isn't here yet.*
+
+</div>
 
 ---
 

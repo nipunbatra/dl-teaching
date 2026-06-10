@@ -25,7 +25,7 @@ By the end of this lecture you will be able to:
 3. Explain why **latent diffusion** made Stable Diffusion shippable.
 4. Describe **DDIM** sampling and skip 95% of steps with no retraining.
 5. Recognize **DiT** (diffusion Transformer) as U-Net's replacement.
-6. Place **flow matching** and **consistency models** as the 2026 frontier.
+6. Place **flow matching** and **consistency models** as the current frontier.
 
 ---
 
@@ -35,13 +35,7 @@ Last lecture · **DDPM** — forward noise, learn reverse, predict ε. Works on 
 
 <div class="paper">
 
-**Reading & inspiration** ·
-- **Rombach et al. 2022 · *Stable Diffusion (LDM)*** — latent diffusion paper.
-- **Ho & Salimans 2022 · *Classifier-Free Guidance***.
-- **Song et al. 2021 · *DDIM***  — fast sampling.
-- **Hugging Face · `diffusers` docs** — code-first.
-- **Lilian Weng · diffusion blog (later sections)**.
-- **UDL (Prince) · Ch 18 (later)**.
+**Reading & inspiration** · **Rombach et al. 2022 *Stable Diffusion (LDM)*** · **Ho & Salimans 2022 *Classifier-Free Guidance*** · **Song et al. 2021 *DDIM*** (fast sampling) · **Hugging Face `diffusers` docs** (code-first) · **Lilian Weng** diffusion blog (later sections) · **UDL (Prince) Ch 18 (later)**.
 
 </div>
 
@@ -70,15 +64,13 @@ Stop and decide. **Answer · (b)** — and the magic that lets the same network 
 
 ---
 
-▶ **Interactive** · explore guidance scale · [cfg-scale-visualizer](https://nipunbatra.github.io/interactive-articles/cfg-scale-visualizer/) · text-to-image diffusion · [text-diffusion](https://nipunbatra.github.io/interactive-articles/text-diffusion/).
-
----
-
 <!-- _class: section-divider -->
 
 ### PART 1
 
 # Conditioning · from unconditional to text-to-image
+
+How does the prompt actually steer the denoiser?
 
 ---
 
@@ -91,22 +83,6 @@ Three common ways to inject $c$:
 1. **Concatenate** $c$ to the input channels (for class labels).
 2. **Add** $c$ to the time embedding (simple but loses detail).
 3. **Cross-attention** between $c$ and intermediate features (Stable Diffusion, most modern).
-
----
-
-# Cross-attention · the painter-following-instructions analogy
-
-<div class="keypoint">
-
-How does an image model **listen** to a text prompt?
-
-Imagine a painter following instructions. For every brushstroke they ask, *"Which part of the instruction applies right here?"*
-
-Cross-attention is exactly this · each spatial location in the image listens to the most relevant words in the prompt.
-
-</div>
-
-The result · a dynamic, **spatial** link between text and pixels. The "cat" word strongly influences cat-shaped regions; the "background" word influences corners.
 
 ---
 
@@ -123,6 +99,12 @@ The mechanism — for each image region:
 2. **Get region "questions"** from the U-Net's intermediate features → queries $Q$.
 3. **Score relevance** · $\text{sim}(Q, K)$, then softmax.
 4. **Final instruction** · weighted sum of $V$ → used to denoise that region.
+
+---
+
+<!-- _class: code-heavy -->
+
+# Cross-attention · in code
 
 ```python
 text_emb = clip_text_encoder("a cat astronaut")  # [1, 77, 768]
@@ -170,6 +152,12 @@ At a high-resolution block · each pixel asks "which prompt tokens matter for me
 
 Visualizing the cross-attention maps reveals exactly this — each word has a blob of pixels that listened most to it. This is the mechanism behind DreamBooth, Prompt-to-Prompt, and every prompt-editing technique.
 
+<div class="realworld">
+
+▶ Interactive: type a prompt, watch text tokens steer the denoising — [text-diffusion](https://nipunbatra.github.io/interactive-articles/text-diffusion/).
+
+</div>
+
 ---
 
 <!-- _class: section-divider -->
@@ -178,7 +166,7 @@ Visualizing the cross-attention maps reveals exactly this — each word has a bl
 
 # Classifier-Free Guidance
 
-The trick that makes generation feel "on-prompt"
+Conditioning is in — so why do samples still half-ignore the prompt?
 
 ---
 
@@ -215,7 +203,7 @@ $$\epsilon_\text{CFG} = \epsilon_\text{uncond} + w \cdot \Delta = \epsilon_\thet
 - $w = 1$ → exactly the conditional prediction.
 - $w > 1$ → **amplify** prompt adherence by overshooting.
 
-Default $w = 7$ in Stable Diffusion.
+Default $w = 7.5$ in Stable Diffusion.
 
 ---
 
@@ -291,7 +279,7 @@ Larger $w$ pushes the noise prediction further along the "more cat-like" directi
 |:-:|:-:|
 | 1 | pure conditional · ignores extrapolation |
 | 3 | subtle prompt adherence · natural-looking |
-| 7 | Stable Diffusion default · balanced |
+| 7.5 | Stable Diffusion default · balanced |
 | 12+ | strong adherence · saturated colors, artifacts |
 | 25+ | cartoonish oversaturation; often broken |
 
@@ -309,7 +297,7 @@ CFG trades **diversity for prompt adherence**. Low $w$ produces many different i
 
 # Latent diffusion
 
-The one trick that made Stable Diffusion ship
+What made Stable Diffusion cheap enough to ship?
 
 ---
 
@@ -401,7 +389,7 @@ This is the only thing you train.
 
 # Faster sampling
 
-DDIM and DiT
+1000 forward passes per image — can we skip most of them?
 
 ---
 
@@ -462,7 +450,7 @@ DDIM reformulates the reverse process to be **deterministic** given the initial 
 
 **Effect** · 50 DDIM steps ≈ 1000 DDPM steps in quality. **20× speedup** essentially for free.
 
-In 2026, DDIM (and its successor DPM-Solver++) is the default sampler in every diffusion library.
+As of this writing, DDIM (and its successor DPM-Solver++) is the default sampler in most diffusion libraries.
 
 ---
 
@@ -485,9 +473,10 @@ Peebles & Xie 2023 · replace the U-Net with a Transformer.
 1. **Patchify** the (small, latent) noisy image into a grid of patches (like ViT).
 2. **Treat patches as tokens** · flatten each → vector. Image becomes a *sequence*.
 3. **Transformer blocks** · self-attention lets every patch look at every other.
-4. **Re-assemble** → noise prediction.
+4. **Condition** on time + class/text via **adaLN** (adaptive LayerNorm).
+5. **Re-assemble** → noise prediction.
 
-**Why** · Transformers scale incredibly well. More data + more compute = better, indefinitely. Inheriting LLM-ecosystem optimizations (FlashAttention, tensor parallelism). Backbone of **Sora**, **Stable Diffusion 3**, and most 2024+ frontier image/video models.
+**Why** · Transformers scale incredibly well — more data + compute = better samples where U-Net plateaus — and DiT inherits the LLM ecosystem (FlashAttention, tensor parallelism). Backbone of **Sora**, **Stable Diffusion 3**, and most 2024+ frontier image/video models.
 
 ---
 
@@ -495,11 +484,13 @@ Peebles & Xie 2023 · replace the U-Net with a Transformer.
 
 ### PART 5
 
-# The generative landscape · 2026
+# The generative landscape
+
+Where does all of this stand today — and what comes after diffusion?
 
 ---
 
-# What ships in 2026
+# What ships · as of this writing
 
 | System | Architecture | Notes |
 |--------|-------------|-------|
@@ -514,79 +505,24 @@ All diffusion-based. All descendants of the 2020 DDPM paper.
 
 ---
 
-# Diffusion for non-image modalities
-
-- **Text** · text-diffusion (still exploratory; LLMs beat it for quality).
-- **Audio** · AudioGen, Riffusion, MusicLM.
-- **3D** · DreamFusion, Gaussian Splatting integrates with diffusion priors.
-- **Molecules** · RFdiffusion designs proteins (Baker lab, won 2024 Nobel adjacent).
-- **Robotics** · Diffusion Policy (Chi 2023) — action generation via diffusion.
-
-Diffusion is one of the two big generative paradigms now (the other: autoregressive LLMs).
-
----
-
-# 2026 · the sampler menu
+# Diffusion · by modality
 
 <div class="math-box">
 
-| Sampler | Steps | Quality | Notes |
-|:-:|:-:|:-:|:-:|
-| DDPM (original) | 1000 | baseline | slowest, stochastic |
-| DDIM (deterministic) | 50-100 | = | same model; drop-in |
-| DPM-Solver++ | 20-30 | = | ODE solver · default in HF diffusers |
-| Flow matching ODE | 8-20 | = | straighter trajectories |
-| Consistency models | **1-4** | slight drop | distilled; near-real-time |
-
-</div>
-
-<div class="insight">
-
-5-year trajectory · 1000 steps (2020) → 50 steps (DDIM) → 4 steps (consistency) → 1 step (Rectified Flow v3 distilled). Each generation reduced inference cost by ~10×.
-
-</div>
-
----
-
-# DiT · Transformer backbone
-
-Peebles &amp; Xie 2022 · replace U-Net entirely with a Transformer.
-
-<div class="math-box">
-
-- **Patchify** the noisy latent (like ViT).
-- **Transformer blocks** with attention + FFN.
-- **Time + class conditioning** via adaLN (adaptive LayerNorm).
-- Scales cleanly · more params → better (U-Net plateaus).
-
-</div>
-
-<div class="realworld">
-
-Stable Diffusion 3 and Sora both use DiT-based architectures. DiT inherits Transformer's scaling laws · more data + compute = better samples, indefinitely.
-
-</div>
-
----
-
-# Diffusion · by modality in 2026
-
-<div class="math-box">
-
-| Modality | Model | Pixels / sec to generate |
+| Modality | Model | Speed to generate |
 |:-:|:-:|:-:|
 | Images 1024² | SD3 · Flux | ~0.5 images/s (20 steps) |
 | Video 720p · 16s | Sora · VEO | minutes per clip |
 | Audio music | AudioGen · MusicLM | real-time (8 DDIM steps) |
 | 3D meshes | Diffusion-SDF · ShapE | ~30s per mesh |
-| Molecules | RFdiffusion | 10s per protein structure |
-| Robot policies | Diffusion Policy | 50 Hz control loop |
+| Molecules | RFdiffusion (Baker lab — 2024 Chemistry Nobel) | ~10s per protein |
+| Robot policies | Diffusion Policy (Chi 2023) | 50 Hz control loop |
 
 </div>
 
 <div class="insight">
 
-The diffusion paradigm scaled to every signal that can be noised. 2026 is the golden age · expect more modalities (brain signals, weather, materials) by 2028.
+The diffusion paradigm scaled to every signal that can be noised. The one big exception · **text**, where autoregressive LLMs still win — diffusion is one of the two big generative paradigms, not the only one.
 
 </div>
 
@@ -631,6 +567,28 @@ Stable Diffusion 3, Flux, and many 2024+ models use flow-matching instead of pur
 
 ---
 
+# The sampler menu · as of this writing
+
+<div class="math-box">
+
+| Sampler | Steps | Quality | Notes |
+|:-:|:-:|:-:|:-:|
+| DDPM (original) | 1000 | baseline | slowest, stochastic |
+| DDIM (deterministic) | 50-100 | = | same model; drop-in |
+| DPM-Solver++ | 20-30 | = | ODE solver · default in HF diffusers |
+| Flow matching ODE | 8-20 | = | straighter trajectories |
+| Consistency models | **1-4** | slight drop | distilled; near-real-time |
+
+</div>
+
+<div class="insight">
+
+5-year trajectory · 1000 steps (2020) → 50 steps (DDIM) → 4 steps (consistency) → 1 step (distilled rectified flow). Each generation cut inference cost by ~10×.
+
+</div>
+
+---
+
 <!-- _class: summary-slide -->
 
 # Putting it all together · the L22 master sentence
@@ -645,7 +603,7 @@ Stable Diffusion 3, Flux, and many 2024+ models use flow-matching instead of pur
 |:-:|:-:|:-:|
 | Cross-attn conditioning | a frozen text encoder | text → image |
 | CFG (scale ~7.5) | doubled forward pass | sharper, more on-prompt |
-| Latent diffusion (VAE) | a pretrained VAE | $50\times$ faster, $50\times$ less memory |
+| Latent diffusion (VAE) | a pretrained VAE | $48\times$ fewer dimensions to diffuse |
 | DDIM | smarter sampling, no retrain | $20\times$ fewer steps |
 
 Stable Diffusion 2022, SD3 / FLUX 2024, Sora 2024 — all run this same recipe with bigger backbones.
@@ -675,7 +633,7 @@ Stable Diffusion 2022, SD3 / FLUX 2024, Sora 2024 — all run this same recipe w
 # Lecture 22 — summary
 
 - **Text conditioning** · CLIP text encoder + cross-attention in every U-Net block.
-- **CFG** · $\epsilon_\text{CFG} = \epsilon(x, \emptyset) + w(\epsilon(x, c) - \epsilon(x, \emptyset))$. Default $w = 7$.
+- **CFG** · $\epsilon_\text{CFG} = \epsilon(x, \emptyset) + w(\epsilon(x, c) - \epsilon(x, \emptyset))$. Default $w = 7.5$.
 - **Latent diffusion** · VAE compresses 48×; U-Net diffuses in latent. Made SD feasible.
 - **DDIM** · deterministic sampling, 20×+ fewer steps, no retraining.
 - **DiT** · Transformer backbone replacing U-Net; powers Sora, SD3.
@@ -692,5 +650,17 @@ Chip Huyen blog posts on efficient inference; Dao 2022 (FlashAttention).
 <div class="notebook">
 
 **Notebook 22** · `22-stable-diffusion.ipynb` — use HF `diffusers`; implement CFG loop manually from a pretrained model; sweep guidance scale; compare samplers.
+
+</div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**Diffuse where the information lives — in latent space, not pixel space.**
+
+*Next lecture: the model is trained; now make it cheap enough to serve.*
 
 </div>

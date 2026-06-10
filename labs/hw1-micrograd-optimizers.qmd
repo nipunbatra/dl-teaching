@@ -1,0 +1,97 @@
+---
+title: "HW1 · Micrograd, an MLP, and the Optimizer Race"
+---
+
+**Out after L05 · due in 2 weeks · 100 points.**
+
+You built a `Value` class in lecture that does reverse-mode autodiff in ~100 lines.
+You also watched four optimizers race across a loss surface. This assignment makes
+you the one holding the wrench: you extend the autodiff engine, train a network
+with it, and then explain — in words — why Adam beats SGD on some problems and
+why "beats" is the wrong word anyway.
+
+## Goals
+
+- Extend a working autograd engine and *prove* your gradients are correct (L01: chain rule as code).
+- Train an MLP end-to-end with an engine you can read in one sitting (L01).
+- Reproduce the SGD / momentum / Adam comparison on a real (toy) learning problem, not just a 2D surface (L04–L05).
+- Practice the skill this course grades hardest: **explaining a curve, not just producing it**.
+
+## Setup
+
+Start from [`../notebooks/01-micrograd-mlp.ipynb`](../notebooks/01-micrograd-mlp.ipynb)
+and [`../notebooks/05-optimizers.ipynb`](../notebooks/05-optimizers.ipynb).
+Copy both into a single working notebook. Everything runs on CPU; no GPU needed.
+
+---
+
+## Part (a) · Extend micrograd — 35 points
+
+The lecture `Value` class supports `+`, `*`, and `relu`. Add **three** new operations:
+
+1. `tanh(self)` — you may use `math.tanh` for the forward pass. What is $\frac{d}{dx}\tanh(x)$ in terms of $\tanh(x)$ itself? Use that.
+2. `__pow__(self, other)` for a *constant* exponent (enough for `x**2`, `x**-1`). Why is a constant exponent so much easier than `x**y` with both as `Value`s?
+3. `exp(self)` — and then use it to write `sigmoid` *as a composition* of ops you already have ($\sigma(x) = 1/(1+e^{-x})$). No new backward rule allowed for sigmoid itself.
+
+**Gradient checks (this is where the points are).** For each new op, verify against
+the centered finite difference
+
+$$\frac{f(x+h) - f(x-h)}{2h}, \qquad h = 10^{-5}$$
+
+at **3 different input points** each, including at least one negative input.
+Report a small table: op, input, analytic grad, numeric grad, relative error.
+All relative errors should be below $10^{-6}$.
+
+- *Question to answer in a markdown cell:* why centered differences and not the
+  one-sided $\frac{f(x+h)-f(x)}{h}$? (One sentence + the order of the error.)
+
+## Part (b) · Train an MLP on a toy 2D dataset — 25 points
+
+Use `sklearn.datasets.make_moons(n_samples=200, noise=0.15)`.
+
+1. Build an MLP `2 → 16 → 16 → 1` using your extended micrograd (use `tanh` hidden activations — you just wrote it).
+2. Train with plain SGD on binary cross-entropy (build BCE out of your `exp`/`log`-style ops; if you didn't add `log`, add it now — it's 4 lines).
+3. Plot the decision boundary at initialization, halfway, and at the end.
+4. Reach ≥ 95% training accuracy. **We are not grading the accuracy** — we are grading that you can tell us, in 3–4 sentences, what the boundary plots show about *what the network learned and when*.
+
+Sanity check before training long: can you overfit 4 points perfectly? If not,
+stop and debug (this foreshadows L03's ladder).
+
+## Part (c) · The optimizer race — 40 points
+
+Same moons problem, same architecture, same initialization (seed everything;
+re-initialize identically for each run).
+
+1. Implement **SGD**, **SGD + momentum** (β = 0.9), and **Adam** (β₁ = 0.9, β₂ = 0.999, ε = 1e-8) as small Python classes with a `.step()` method, operating on your micrograd parameters. You may port them from the lecture notebook — but they must run on *your* engine, not NumPy arrays from the 2D surface demo.
+2. Run each for the same number of epochs at a *tuned* learning rate: try {1.0, 0.1, 0.01, 0.001} for each optimizer and keep the best. Report the grid as a table.
+3. Plot all three loss curves on one figure (log-scale y-axis).
+
+**The written part (20 of the 40 points).** Answer each in 2–5 sentences:
+
+- Why does momentum's curve often *overshoot* and oscillate before settling? Connect to the "heavy ball" picture from L04.
+- Why is Adam's best learning rate so different from SGD's best? What is Adam dividing by, and what does that do to the effective step size per parameter?
+- Did Adam *win*? Define what "win" means here (fastest early progress? lowest final loss?) and argue from your plot. If your plot shows something surprising, say so — honest reading of evidence beats a textbook answer that contradicts your figure.
+- Bias correction: at step t = 1 with β₂ = 0.999, what would Adam's denominator look like *without* the correction, and what would that do to the first step?
+
+## Deliverables
+
+- **One notebook** (`hw1_<rollno>.ipynb`), run top to bottom (`Restart & Run All` before submitting — a notebook that doesn't run loses 10 points immediately).
+- Written answers as markdown cells *next to the plots they discuss*, not in a separate document.
+- The gradient-check table from Part (a).
+
+## Rubric
+
+| Component | Points | What we look for |
+|---|---:|---|
+| (a) Three ops implemented correctly | 15 | Backward rules right; sigmoid is a composition |
+| (a) Gradient checks | 15 | Table complete, errors < 1e-6, multiple points |
+| (a) Centered-difference question | 5 | Error order stated correctly |
+| (b) MLP trains, boundary plots | 17 | ≥95% train acc; three boundary snapshots |
+| (b) Boundary explanation | 8 | Says *what* changed and *when*, not just "it got better" |
+| (c) Three optimizers on micrograd | 12 | Same init, tuned LRs, grid reported |
+| (c) Loss-curve figure | 8 | One figure, log scale, labeled |
+| (c) Written explanations | 20 | Mechanistic reasons, consistent with *your* plot |
+
+**Common ways to lose points:** gradient checks at only one point; optimizers
+run at the same LR "for fairness" (it isn't — each method's best LR *is* part of
+the method); written answers that could have been written without running the code.

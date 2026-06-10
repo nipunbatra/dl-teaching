@@ -71,18 +71,28 @@ A network can be expressive but untrainable. It can be trainable but overfit. It
 
 ---
 
-▶ **Interactives for L02** · [universal-approximation](https://nipunbatra.github.io/interactive-articles/universal-approximation/) (build any function from ReLU bumps) · [vanishing-gradients](https://nipunbatra.github.io/interactive-articles/vanishing-gradients/) (sigmoid vs ReLU live) · [resnet](https://nipunbatra.github.io/interactive-articles/resnet/) (skip-connection gradient highway).
+# ▶ Interactives for L02
+
+<div class="paper">
+
+Play along while you read · all run in the browser ·
+
+- [universal-approximation](https://nipunbatra.github.io/interactive-articles/universal-approximation/) · build any function from ReLU bumps.
+- [vanishing-gradients](https://nipunbatra.github.io/interactive-articles/vanishing-gradients/) · sigmoid vs ReLU, live.
+- [resnet](https://nipunbatra.github.io/interactive-articles/resnet/) · skip-connection gradient highway.
+
+</div>
 
 ---
 
 # Pop quiz · two architectures, same parameter budget
 
-You have ~$10\,000$ parameters to spend on a regression task with 1-D input.
+You have ~$15\,000$ parameters to spend on a regression task with 1-D input.
 
 <div class="popquiz">
 
-(a) **Wide-and-shallow** · 1 hidden layer with 5,000 ReLU units.
-(b) **Tall-and-thin** · 50 hidden layers with 14 ReLU units each.
+(a) **Wide-and-shallow** · 1 hidden layer with 5,000 ReLU units (≈ 15,001 params).
+(b) **Tall-and-thin** · 50 hidden layers with 17 ReLU units each (≈ 15,046 params).
 
 Which one would you bet on for fitting a *complex* function like $\sin(50 x)$ on $[0, 1]$?
 
@@ -91,6 +101,23 @@ Stop and decide. We'll come back to this exact question when we hit Telgarsky's 
 </div>
 
 This is L02's central tension · **width** is universal but expensive, **depth** is exponentially more efficient *when it can be trained*. Today we earn both halves of that sentence.
+
+---
+
+# Bridge from ES 654 · you already know this
+
+| From ES 654 | What changes today |
+|---|---|
+| Gradient descent derived from first-order Taylor expansion | that same gradient must now survive a **product of 50 Jacobians** |
+| More capacity ⇒ overfitting risk (bias-variance) | **degradation** · deeper nets can fail to even fit *train* |
+| Weight init = "small random numbers" | init **derived** from variance preservation (Xavier / He) |
+| One model = one function class | depth vs width · same budget, exponentially different reach |
+
+<div class="keypoint">
+
+You proved gradient descent from Taylor series in ES 654. Now · what happens to that gradient through 50 layers?
+
+</div>
 
 ---
 
@@ -104,7 +131,7 @@ What a single hidden layer can — and can't — do
 
 ---
 
-# Build a bump from two ReLUs
+# Build a bump from ReLU kinks · the intuition
 
 ![w:900px](figures/lec02/svg/uat_bump_construction.svg)
 
@@ -202,20 +229,36 @@ Pick 4 ReLU bumps at $x = 0.0, 0.25, 0.5, 0.75$ on $[0, 1]$. Each is `relu(w·(x
 |:-:|:-:|:-:|:-:|
 | 1 | 0.0  | 0.25 | 0.0 |
 | 2 | 0.25 | 0.50 | 0.25 |
-| 3 | 0.50 | 0.75 | 0.50 |
-| 4 | 0.75 | 1.00 | 0.75 |
+| 3 | 0.50 | 0.50 | 0.50 |
+| 4 | 0.75 | 0.50 | 0.75 |
 
 </div>
 
-The output is a piecewise-linear staircase that hugs $x²$. With more ReLUs, the staircase gets finer · the error $\epsilon \to 0$.
+Each $\alpha_i$ adds to the running slope, so the segments have slopes $0.25, 0.75, 1.25, 1.75$ — and the piecewise-linear output **matches $x^2$ exactly at every knot** ($f(0.5) = 0.25$, $f(1) = 1$ ✓). With more ReLUs, the fit gets finer · the error $\epsilon \to 0$.
 
 **That's UAT in numbers.** A weighted sum of ReLU bumps approximates any 1D continuous function.
 
 ---
 
-# Building a triangle bump · step-by-step
+# Two ReLUs · a soft step
 
-A single ReLU is a ramp going up forever. To make it come back down to zero we need **three** ReLUs.
+A single ReLU is a ramp going up forever. The **difference of two ReLUs** flattens the ramp into a **soft step** ·
+
+<div class="math-box">
+
+$$\text{step}(x;\, a, b) = \text{relu}(x - a) - \text{relu}(x - b), \quad a < b$$
+
+Zero before $a$ · rises linearly on $[a, b]$ · then **plateaus** at height $b - a$ forever after. (For $x > b$ the two ramps cancel each other's slope, not each other's value.)
+
+</div>
+
+Shifted, scaled soft steps stack into any **staircase** — exactly the step functions from Move 1 of the proof. But a step never comes back down. For a *localized* bump we need one more ReLU · next slide.
+
+---
+
+# Three ReLUs · a triangle bump
+
+To go up **and come back down to zero**, add a third ReLU ·
 
 <div class="math-box">
 
@@ -231,23 +274,7 @@ $f(x) = \text{relu}(x - 1) - 2 \cdot \text{relu}(x - 2) + \text{relu}(x - 3)$
 
 </div>
 
-A perfect triangular bump centered at $x=2$. Place enough such bumps and you can approximate any continuous function. **This is what UAT proves.**
-
----
-
-# Two-ReLU bumps · the real building block
-
-A single ReLU is a half-plane. Subtract two ReLUs · you get a **bump** of any width and height.
-
-<div class="math-box">
-
-$$\text{bump}(x; a, b) = \text{relu}(x - a) - \text{relu}(x - b), \quad a < b$$
-
-This is 0 outside $[a, b]$ and rises linearly in between. Place enough bumps and you can build any continuous function · just place a bump where each fine slice is.
-
-</div>
-
-UAT's existence proof essentially tiles the function space with bumps. A network finds these bumps automatically through gradient descent. <em>Existence</em> is given by the construction; <em>training</em> is the open problem.
+A perfect triangular bump centred at $x=2$. Tile the axis with such bumps, weight each by the function value there — and you can approximate any continuous function. **This is what UAT proves.** *Existence* is given by the construction; *training* is the open problem.
 
 ---
 
@@ -258,11 +285,11 @@ Piecewise-linear approximation of $f$ to error $\epsilon$:
 - 1D: $N \approx O(1 / \sqrt{\epsilon})$
 - $d$D: $N \approx O(1 / \epsilon^{d/2})$
 
-| $d$ | $\epsilon = 0.01$ | neurons |
-|-----|-------------------|---------|
-| 1   |  | ~10 |
-| 10  |  | $10^{10}$ |
-| 100 |  | $10^{100}$ |
+| $d$ | neurons needed for $\epsilon = 0.01$ |
+|:-:|:-:|
+| 1   | ~10 |
+| 10  | $10^{10}$ |
+| 100 | $10^{100}$ |
 
 <div class="warning">
 
@@ -860,26 +887,6 @@ The variance argument on the next slide gives a one-line fix · scale init by $1
 
 ---
 
-# Vanishing gradient · numeric example
-
-Suppose · 10-layer sigmoid network. Sigmoid derivative max is $0.25$ (at $x = 0$).
-
-<div class="math-box">
-
-Even at the *best* point, gradient through one layer multiplies by $\le 0.25$.
-
-After 10 layers · $0.25^{10} \approx 10^{-6}$
-
-After 20 layers · $0.25^{20} \approx 10^{-12}$
-
-</div>
-
-The first layer's effective learning rate is **a million times smaller** than the last layer's. It barely updates · network never learns features in early layers.
-
-This is the practical reason ReLU (derivative = 0 or 1) replaced sigmoid in deep nets · it doesn't shrink the gradient by a factor every layer.
-
----
-
 # Variance · three regimes across layers
 
 ![w:920px](figures/lec02/svg/variance_flow.svg)
@@ -982,9 +989,13 @@ nn.init.xavier_normal_(model.weight)
 
 ---
 
+# Pop quiz · the mismatched init
+
 <div class="popquiz">
 
 **Pop quiz.** You build a 10-layer MLP with **Tanh** activations and **He** initialization. Loss oscillates, activations saturate. Why?
+
+*Stop and reason before the next slide.*
 
 </div>
 
@@ -1020,6 +1031,18 @@ Three forces conspire against naive deep nets · vanishing/exploding **gradients
 | Deeper net is *worse* at training loss | Optimization, not capacity | Residual blocks $\mathbf{y} = \mathbf{x} + \mathcal{F}(\mathbf{x})$ |
 
 The single insight underneath all three fixes · **make every layer easy to leave alone.** Identity-friendly initialization, identity skip-connections, and activations that pass gradients through unchanged in their linear regime. That's what made depth practical in 2015 and onward.
+
+---
+
+# What breaks · symptom → suspect → test
+
+| Symptom | Suspect | Fastest test |
+|---|---|---|
+| Loss flat from step 0 | vanishing gradients · bad init | print per-layer gradient norms after one backward |
+| Loss `NaN` at step 1 | exploding activations · init variance too large | log activation std per layer on one forward pass |
+| Deeper net trains *worse* than shallow | degradation (optimization, not capacity) | compare **training** curves · add skip connections |
+| Tanh net saturates, loss oscillates | He init on a non-ReLU activation | histogram activations · switch to Xavier |
+| Many units output 0 forever | dead ReLUs (LR too high · bad init) | log fraction of active ReLUs per layer |
 
 ---
 
@@ -1069,3 +1092,15 @@ Tensors, autograd, `nn.Module`, `DataLoader`, the full training recipe, debuggin
 **Notebook 2** · `02-depth-and-resnets.ipynb` — shallow-wide vs deep-narrow on spirals; build a residual block; visualize gradient norms across depth.
 
 </div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**Depth buys exponential feature reuse — if gradients survive the trip.**
+
+</div>
+
+*Next (L03) · the training loop in practice — where silent failure is the default.*

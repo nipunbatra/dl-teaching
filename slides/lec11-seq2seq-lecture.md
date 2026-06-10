@@ -87,7 +87,7 @@ Stop and think · why does (a) fail? Why does (b) struggle on long sentences? (c
 
 # The encoder-decoder architecture
 
-Read all, then generate
+How do you map 14 words to 12 — in a different order?
 
 ---
 
@@ -96,6 +96,8 @@ Read all, then generate
 <div class="paper">
 
 Sutskever, Vinyals, Le 2014 · *"Sequence to Sequence Learning with Neural Networks"* — achieved BLEU 34 on English→French, within striking distance of phrase-based MT.
+
+*(BLEU · n-gram overlap between system output and reference translations, 0–100, higher better. The standard MT score.)*
 
 </div>
 
@@ -150,20 +152,6 @@ The problem · for *long* sentences, even a great human's mental summary fails. 
 
 ---
 
-# The big picture · encoder–decoder
-
-<div class="insight">
-
-Forget RNNs for a second. Two black boxes:
-1. **Encoder** · reads the entire English sentence and squishes its meaning into a single **thought vector** $\mathbf{c}$.
-2. **Decoder** · takes $\mathbf{c}$ and unpacks it, word by word, into French.
-
-Like reading a sentence, thinking *"got it"*, and explaining it in another language.
-
-</div>
-
----
-
 # The architecture
 
 ![w:920px](figures/lec11/svg/seq2seq_bottleneck.svg)
@@ -215,7 +203,7 @@ class Seq2Seq(nn.Module):
 
 # Teacher forcing
 
-How we train sequence generators
+Should training feed the model its own mistakes?
 
 ---
 
@@ -285,23 +273,26 @@ The biggest reason for teacher forcing isn't safety — it's **parallelism**.
 - **Autoregressive** · compute step 1 → step 2 → step 3 → … sequential.
 - **Teacher forcing** · all decoder inputs `<s>, "The", "cat", …` are known up-front → feed them in **all at once** → one big matrix multiply.
 
-A slow sequential loop becomes a fast parallel computation — **10–100× speedup** on training. Empirically tolerated despite the "you train on a distribution you won't see at inference" critique.
+A slow sequential loop becomes a fast parallel computation — **10–100× speedup** on training. (The unrolled graph still stores activations for every timestep, so memory grows with sequence length either way.)
 
 ---
 
-# Teacher forcing · why it's OK pragmatically
+# Teacher forcing · what it actually optimizes
 
-Even though training ≠ inference, teacher forcing works because:
+<div class="math-box">
 
-1. **Loss is averaged over all time steps** · bad predictions at step 10 aren't penalized harder than bad predictions at step 1. Every position gets balanced gradient.
-2. **The model learns conditional distributions $P(y_t | y_{<t})$** · if you give it the right $y_{<t}$ at inference (as in a perfect rollout), it generalizes.
-3. **Huge speedup from parallelization** · with ground truth, all decoder steps can be computed in parallel (one big matrix multiply) instead of sequentially.
+$$\mathcal{L} = -\sum_{t=1}^{T} \log p\bigl(y_t \mid y_{<t}^{*},\, x;\, \theta\bigr)$$
 
-<div class="insight">
-
-The "you're training on a distribution you won't see at inference" critique is real (exposure bias, next slide). But empirically it's tolerated because the alternative — fully autoregressive training — is 10-100× slower.
+The **conditional likelihood** of the target given the *true* history — the sequence version of the L00 NLL story.
 
 </div>
+
+Why this is statistically OK:
+
+1. **Loss is averaged over all time steps** · every position gets balanced gradient.
+2. **The model learns the right conditionals $P(y_t \mid y_{<t})$** · given the correct history at inference, it generalizes.
+
+The "you train on a distribution you won't see at inference" critique is real — that's **exposure bias**, next slide.
 
 ---
 
@@ -337,7 +328,7 @@ The model trained in a perfect world, tested in a messy one.
 
 # Decoding strategies
 
-How to generate at inference
+The model outputs probabilities — how do you pick the words?
 
 ---
 
@@ -368,13 +359,15 @@ Example (simplified):
 
 # Greedy fails · the canonical example
 
-Imagine the true best translation is "The cat sits on the mat" (probability 0.7).
+At step 1, the model's next-token probabilities are:
+- "A" · 0.6 — locally the best
+- "The" · 0.4
 
-At step 1, probabilities are:
-- "The" · 0.6 (leads to the correct sequence)
-- "A" · 0.8 (leads to "A feline rests...", probability 0.5)
+Greedy commits to "A". But follow each path to the end:
+- Best sequence starting "A" · "A feline rests…" · $0.6 \times 0.3 = \mathbf{0.18}$
+- Best sequence starting "The" · "The cat sits on the mat" · $0.4 \times 0.8 = \mathbf{0.32}$
 
-Greedy picks "A" because it's locally higher. But the full-sequence score is lower than starting with "The".
+The globally best translation began with the *locally worse* token.
 
 <div class="warning">
 
@@ -433,11 +426,9 @@ Plain log-prob picks "I am". Wrong.
 **Length normalization** · divide by sentence length raised to $\alpha$:
 $$\text{score}(y) = \frac{1}{T^\alpha}\sum_{t=1}^T \log P(y_t \mid y_{<t})$$
 
-- $\alpha = 0$ · no penalty (broken).
-- $\alpha = 1$ · simple average per token.
-- **$\alpha \approx 0.6$–$0.7$** · typical compromise (a soft penalty).
+$\alpha = 0$ · no penalty (broken) · $\alpha = 1$ · per-token average · **$\alpha \approx 0.6$–$0.7$** typical.
 
-It makes finished, longer hypotheses **comparable** to short ones — the goal is fair comparison, not always preferring long.
+The goal is **fair comparison** between hypotheses of different lengths — not always preferring long.
 
 ---
 
@@ -447,6 +438,12 @@ At each step, maintain $k$ candidate prefixes. Expand each by all next tokens, k
 
 Typical $k = 4$ to $10$. More = better quality, slower. Still deterministic given $k$.
 
+<div class="keypoint">
+
+When output is bad, ask which error you have · **search error** — a high-probability sequence exists but beam missed it (bigger $k$ helps) · **model error** — the model assigns its highest probability to garbage (no beam width can fix that).
+
+</div>
+
 ---
 
 # Beam search · worked example with $k=2$
@@ -455,29 +452,24 @@ Vocab · {The, A, cat, dog, sat, ran}. Decoding "The cat sat".
 
 <div class="math-box">
 
-**Step 1.** Beams · `[<s>]`. Top-2 next-token log-probs:
-| token | logP |
-|:-:|:-:|
-| The | -0.5 |
-| A | -0.7 |
+**Step 1.** Beams · `[<s>]`. Top-2 next tokens · **A** (−0.5) · **The** (−0.7). Keep both.
 
-Keep both. Beams · `[<s>, The]` (-0.5), `[<s>, A]` (-0.7).
+**Step 2.** Expand each beam; top extensions:
 
-**Step 2.** Expand each. For brevity, top extensions:
 | sequence | logP |
 |:-:|:-:|
-| `<s> The cat` | -0.5 + -0.6 = **-1.1** |
-| `<s> The dog` | -0.5 + -1.3 = -1.8 |
-| `<s> A feline` | -0.7 + -0.9 = -1.6 |
-| `<s> A dog` | -0.7 + -1.0 = -1.7 |
+| `<s> The cat` | −0.7 + −0.6 = **−1.3** |
+| `<s> The dog` | −0.7 + −1.3 = −2.0 |
+| `<s> A dog` | −0.5 + −0.9 = −1.4 |
+| `<s> A feline` | −0.5 + −1.1 = −1.6 |
 
-Keep the top 2 · `<s> The cat` (-1.1) and `<s> A feline` (-1.6).
+Keep the top 2 · `<s> The cat` (−1.3) and `<s> A dog` (−1.4).
 
 **Step 3.** Continue. Final score divides by $T^{0.6}$ to compare different lengths.
 
 </div>
 
-A beam of $k=2$ already finds "The cat sat" (logP -1.7) where greedy might have committed early to "A" and ended at "A dog ran" (logP -2.5).
+Greedy would have committed to "A" at step 1 (locally best) and ended at "A dog ran" (logP −2.5). The beam kept "The…" alive and finds "The cat sat" (logP −1.7).
 
 ---
 
@@ -505,7 +497,7 @@ When the next-token distribution has one tall bar, nucleus narrows automatically
 
 <div class="realworld">
 
-**2026 LLM default** — nucleus with $p = 0.9$ or $0.95$, plus a temperature knob.
+**Current LLM default** — nucleus with $p = 0.9$ or $0.95$, plus a temperature knob.
 
 </div>
 
@@ -576,7 +568,7 @@ That is **attention**. Bahdanau et al. 2014 — the paper that launched a decade
 
 # Applications of classic Seq2Seq
 
-Even in 2026, some parts survive
+What survived into 2026?
 
 ---
 
@@ -589,13 +581,11 @@ Even in 2026, some parts survive
 
 <div class="realworld">
 
-The Seq2Seq **pattern** (encoder → context → decoder) is everywhere. Only the *implementation* of "context" changed: fixed vector (2014) → attention (2015) → self-attention (2017) → ... → your favorite 2026 LLM.
+The Seq2Seq **pattern** (encoder → context → decoder) is everywhere. Only the *implementation* of "context" changed: fixed vector (2014) → attention (2015) → self-attention (2017) → ... → your favorite LLM today.
 
 </div>
 
 ---
-
-<!-- _class: summary-slide -->
 
 # Putting it all together · the L11 master sentence
 
@@ -617,6 +607,22 @@ This is **literally how Google Translate worked from 2014 to 2016** — and what
 
 ---
 
+# Pop quiz · revisit
+
+The 14-word relative-clause sentence into Hindi?
+
+<div class="keypoint">
+
+(a) Word-by-word fails · Hindi reorders the clauses — there is no per-word alignment to follow.
+(b) The Seq2Seq of today's lecture · works, but the *whole* nested sentence must squeeze through one fixed vector — exactly the bottleneck that makes long sentences degrade.
+(c) ✓ Looking back at any source word while writing each target word — that's **attention**, and it's the entire subject of L12.
+
+</div>
+
+You now know precisely *why* (b) breaks. Next lecture builds (c).
+
+---
+
 # Practice problems
 
 <div class="math-box">
@@ -626,6 +632,14 @@ This is **literally how Google Translate worked from 2014 to 2016** — and what
 **P2.** Teacher forcing trains $p(y_t \mid y_{<t}^*, x)$ but inference uses $p(y_t \mid \hat y_{<t}, x)$. Name this distribution mismatch and one common mitigation (scheduled sampling).
 
 **P3.** Beam search with width $k = 5$ and vocabulary $V = 50{,}000$. How many candidate continuations are scored per step? Per generation step the top $k$ are kept — total cost for a 30-token output?
+
+</div>
+
+---
+
+# Practice problems · bottleneck &amp; decoding
+
+<div class="math-box">
 
 **P4.** Show that for a fixed-size context vector $\mathbf{c} \in \mathbb{R}^{512}$, the encoder is *information-theoretically* limited · roughly how many bits of the source sentence can it preserve?
 
@@ -637,12 +651,26 @@ This is **literally how Google Translate worked from 2014 to 2016** — and what
 
 ---
 
+# What breaks · symptom → suspect → test
+
+| Symptom | Suspect | Fastest test |
+|---|---|---|
+| Great on short sentences, garbage past ~30 tokens | fixed-length context bottleneck | plot BLEU vs source length — look for the cliff |
+| Low training loss, but generation derails after one wrong word | exposure bias — teacher forcing at train, autoregressive at test | decode *training* pairs autoregressively, watch the cascade |
+| Beam search always returns suspiciously short outputs | no length normalization — log-probs punish length | rescore with $\tfrac{1}{T^{0.6}}\sum\log P$, compare winners |
+| Decoder loops · "I I I I…" | greedy decoding stuck in a repetition attractor | switch to nucleus $p=0.9$ + temperature, regenerate |
+| Output is `<unk>` or empty from token 1 | decoder input not shifted right / missing `<s>` | print the first decoder input batch — it must start with `<s>` |
+
+---
+
+<!-- _class: summary-slide -->
+
 # Lecture 11 — summary
 
 - **Seq2Seq** · encoder-decoder for variable-length input → variable-length output.
 - **Context vector** is the encoder's final hidden state — a compressed summary.
 - **Teacher forcing** trains the decoder with ground-truth history; **exposure bias** is the price.
-- **Decoding** — greedy, beam (length-normalized), top-k, **nucleus (2026 default)**.
+- **Decoding** — greedy, beam (length-normalized), top-k, **nucleus (the current default)**.
 - **The bottleneck** — one fixed vector for all source info; BLEU collapses past ~30 tokens.
 - **Attention** is the fix · next lecture opens Module 6.
 
@@ -659,3 +687,15 @@ This is **literally how Google Translate worked from 2014 to 2016** — and what
 **Notebook 11** · `11-seq2seq-nmt.ipynb` — tiny English→French translator with an LSTM encoder-decoder; no attention yet. Next notebook adds attention and you'll see the BLEU gap close.
 
 </div>
+
+---
+
+# The one-sentence takeaway
+
+<div class="insight">
+
+**If the whole sentence must squeeze through one vector, long sentences will always lose.**
+
+</div>
+
+*Next: stop compressing — let the decoder look back at every word. Attention.*
