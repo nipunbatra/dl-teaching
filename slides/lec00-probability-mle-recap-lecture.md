@@ -548,7 +548,15 @@ $$Y \sim \text{Categorical}(\boldsymbol\pi), \qquad P(Y = k \mid \boldsymbol\pi)
 
 </div>
 
-**Bernoulli is the special case $K = 2$.** Mean · $\mathbb{E}[\mathbf{y}] = \boldsymbol\pi$.
+**Bernoulli is the special case $K = 2$.**
+
+<div class="math-box">
+
+**What the "mean" means** · encode the outcome one-hot as $\mathbf{y}\in\{0,1\}^K$. Average many rolls and each coordinate converges to that class's frequency · $\mathbb{E}[\mathbf{y}] = \boldsymbol\pi$.
+
+**Example** · a loaded 3-sided die with $\boldsymbol\pi = (0.2, 0.5, 0.3)$ — over many rolls the one-hot average $\to (0.2, 0.5, 0.3)$, literally the class probabilities.
+
+</div>
 
 ---
 
@@ -802,7 +810,7 @@ We need the same answer in a form that doesn't underflow and is easy to differen
 
 # The fix · take the log
 
-The logarithm turns products into sums and is monotonic — so maxima are preserved.
+The logarithm turns the product into a **sum** ·
 
 <div class="math-box">
 
@@ -810,7 +818,17 @@ $$\ell(\theta) := \log \mathcal{L}(\theta) = \log \prod_{i=1}^N P(y_i \mid \thet
 
 </div>
 
-Now the dataset's "score" is a **sum of $N$ moderate negative numbers** — numerically stable and easy to differentiate term-by-term.
+The dataset's "score" is now a **sum of $N$ moderate numbers** — numerically stable and easy to differentiate term-by-term.
+
+---
+
+# Why taking the log is safe · monotonicity
+
+$\log$ is **monotonic increasing** · if $a > b$ then $\log a > \log b$. So whatever $\theta$ maximizes $\mathcal{L}$ also maximizes $\log\mathcal{L}$ — **the location of the peak doesn't move**, only the $y$-axis rescales.
+
+![w:880px](figures/lec00/svg/log_monotonic.svg)
+
+Both curves peak at the same $p = 0.6$. We optimize the friendlier (log) curve and get the identical answer.
 
 ---
 
@@ -914,7 +932,10 @@ $$\boxed{\;\hat p_{\text{MLE}} = \frac{h}{N} = \frac{\#H}{\#H + \#T}\;}$$
 
 For our data $h = 6, N = 10$ · $\hat p = 0.6$. **Exactly** the empirical frequency.
 
-This is your first MLE derivation. Same recipe applies to everything below.
+**Step 3 · confirm it's a maximum (second-derivative test).**
+$$\frac{d^2\ell}{dp^2} = -\frac{h}{p^2} - \frac{N-h}{(1-p)^2} < 0 \quad\text{for all } p$$
+
+$\ell$ is **concave**, so the critical point is a *maximum* — not a minimum or saddle. Your first MLE derivation, done properly.
 
 ---
 
@@ -993,7 +1014,26 @@ $$\boxed{\;\hat{\boldsymbol\theta}_{\text{MLE}} = \arg\min_\theta \sum_{i=1}^N (
 
 **This is exactly MSE.** MSE is not a heuristic — it is the **MLE under Gaussian noise**.
 
-If the noise had been Laplace ($\epsilon \sim \text{Laplace}$), the same derivation would give MAE (mean absolute error) instead. Loss design = noise model.
+**Loss design = noise model.** Change the noise distribution and a *different* loss falls out — let's do Laplace noise next.
+
+---
+
+# Worked · Laplace noise → MAE
+
+Same model $y = \boldsymbol\theta^\top\mathbf{x} + \epsilon$, but now $\epsilon \sim \text{Laplace}(0, b)$ ·
+
+<div class="math-box">
+
+$$p(y \mid \mathbf{x}, \boldsymbol\theta) = \frac{1}{2b}\exp\!\left(-\frac{|y - \boldsymbol\theta^\top\mathbf{x}|}{b}\right)$$
+
+Log, sum, negate — the $1/b$ and $\log 2b$ are constants in $\boldsymbol\theta$ ·
+$$L_{\text{NLL}}(\boldsymbol\theta) = \frac{1}{b}\sum_{i=1}^N |y_i - \boldsymbol\theta^\top\mathbf{x}_i| + \text{const}$$
+
+$$\boxed{\;\hat{\boldsymbol\theta}_{\text{MLE}} = \arg\min_\theta \sum_{i=1}^N |y_i - \boldsymbol\theta^\top\mathbf{x}_i|\;}$$
+
+</div>
+
+**Exactly MAE.** Gaussian noise → squared error; Laplace noise → absolute error. Laplace's heavier tails make MAE **robust to outliers** — same recipe, different distribution.
 
 ---
 
