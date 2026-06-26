@@ -64,52 +64,50 @@ def bayesian_updating():
     save(fig, "bayesian_updating.svg")
 
 
-# ---- 2. MAP geometry: likelihood ellipses + prior circles + ridge path -------
+# ---- 2. MAP geometry: real tiny dataset, SSE ellipses, prior circles, path --
 def map_geometry_lambda():
-    A = np.array([[3.0, 1.2], [1.2, 1.6]])     # XtX (data curvature)
-    theta_ols = np.array([3.0, 2.2])
-    Xty = A @ theta_ols
+    # concrete dataset (bias + 1 feature): (x,y) = (1,2),(2,2),(3,4)
+    X = np.array([[1.0, 1.0], [1.0, 2.0], [1.0, 3.0]])
+    y = np.array([2.0, 2.0, 4.0])
+    A = X.T @ X                      # [[3,6],[6,14]]
+    Xty = X.T @ y                    # [8, 18]
+    theta_ols = np.linalg.solve(A, Xty)   # [0.667, 1.0]
 
-    g = np.linspace(-0.6, 4.2, 300)
-    T1, T2 = np.meshgrid(g, g)
-    # data loss = (theta - ols)^T A (theta - ols)
-    d1, d2 = T1 - theta_ols[0], T2 - theta_ols[1]
-    data_loss = A[0, 0]*d1*d1 + 2*A[0, 1]*d1*d2 + A[1, 1]*d2*d2
-    prior = T1**2 + T2**2
+    g0 = np.linspace(-0.6, 1.6, 320)
+    g1 = np.linspace(-0.3, 1.6, 320)
+    T0, T1 = np.meshgrid(g0, g1)
+    d0, d1 = T0 - theta_ols[0], T1 - theta_ols[1]
+    sse = A[0, 0]*d0*d0 + 2*A[0, 1]*d0*d1 + A[1, 1]*d1*d1   # SSE - SSE_min
+    prior = T0**2 + T1**2
 
-    fig, ax = plt.subplots(figsize=(7.4, 6.0))
-    ax.contour(T1, T2, data_loss, levels=[0.5, 2, 5, 10], colors=[SLATE],
-               linewidths=1.1, alpha=0.8)
-    ax.contour(T1, T2, prior, levels=[1, 4, 9], colors=[SAGE],
-               linewidths=1.0, linestyles="--", alpha=0.8)
+    fig, ax = plt.subplots(figsize=(7.2, 6.0))
+    ax.contour(T0, T1, sse, levels=[0.4, 1.5, 4, 9], colors=[SLATE],
+               linewidths=1.1, alpha=0.85)
+    ax.contour(T0, T1, prior, levels=[0.25, 1, 2.25], colors=[SAGE],
+               linewidths=1.0, linestyles="--", alpha=0.85)
 
-    # ridge path: theta(lambda) = (A + lambda I)^-1 Xty
     lams = np.concatenate([[0], np.geomspace(0.05, 200, 40)])
     path = np.array([np.linalg.solve(A + l*np.eye(2), Xty) for l in lams])
     ax.plot(path[:, 0], path[:, 1], color=RUST, lw=2.6, zorder=4)
 
     ax.scatter(*theta_ols, color=SLATE, s=90, zorder=5)
     ax.annotate(r"$\hat\theta_{\rm MLE}$ (OLS, $\lambda=0$)", theta_ols,
-                xytext=(theta_ols[0]-0.1, theta_ols[1]+0.5), color=SLATE, fontsize=11)
+                xytext=(theta_ols[0]-0.05, theta_ols[1]+0.22), color=SLATE, fontsize=11)
     ax.scatter(0, 0, color=SAGE, s=70, zorder=5)
-    ax.annotate(r"$\lambda\to\infty$  (prior wins)", (0, 0),
-                xytext=(0.15, -0.45), color=SAGE, fontsize=11)
-    mid = path[12]
-    ax.annotate(r"$\hat\theta_{\rm MAP}(\lambda)$", mid,
-                xytext=(mid[0]+0.35, mid[1]+0.35), color=RUST, fontsize=12)
+    ax.annotate(r"$\lambda\to\infty$", (0, 0),
+                xytext=(0.05, -0.22), color=SAGE, fontsize=11)
 
-    # legend proxies
     from matplotlib.lines import Line2D
     ax.legend(handles=[
-        Line2D([0], [0], color=SLATE, lw=1.4, label="data loss (likelihood) — ellipses"),
-        Line2D([0], [0], color=SAGE, lw=1.4, ls="--", label=r"prior $\|\theta\|^2$ — circles"),
-        Line2D([0], [0], color=RUST, lw=2.4, label="MAP path as $\\lambda$ grows"),
-    ], frameon=False, fontsize=10.5, loc="upper right")
+        Line2D([0], [0], color=SLATE, lw=1.4, label="data loss SSE — ellipses"),
+        Line2D([0], [0], color=SAGE, lw=1.4, ls="--", label=r"prior $\theta_0^2+\theta_1^2$ — circles"),
+        Line2D([0], [0], color=RUST, lw=2.4, label=r"MAP path as $\lambda$ grows"),
+    ], frameon=False, fontsize=10.5, loc="lower right")
 
-    ax.set_xlabel(r"$\theta_1$"); ax.set_ylabel(r"$\theta_2$")
-    ax.set_title("MAP geometry · the prior pulls OLS toward 0 as λ grows",
-                 fontsize=13.5, loc="left", color=INK, pad=10)
-    ax.set_xlim(-0.6, 4.3); ax.set_ylim(-0.7, 4.3)
+    ax.set_xlabel(r"$\theta_0$ (bias)"); ax.set_ylabel(r"$\theta_1$ (slope)")
+    ax.set_title("MAP geometry · data ellipses vs prior circles, for a 3-point dataset",
+                 fontsize=12.5, loc="left", color=INK, pad=10)
+    ax.set_xlim(-0.6, 1.6); ax.set_ylim(-0.3, 1.6)
     ax.set_aspect("equal")
     _clean(ax)
     save(fig, "map_geometry_lambda.svg")
@@ -163,10 +161,87 @@ def laplace_vs_gaussian():
     save(fig, "laplace_vs_gaussian.svg")
 
 
+# ---- 5. Gaussian prior cases: 3D surface, isotropic, diagonal, correlated ----
+def gaussian_prior_cases():
+    import numpy as np
+    g = np.linspace(-3, 3, 120)
+    T0, T1 = np.meshgrid(g, g)
+
+    def dens(S):
+        Si = np.linalg.inv(S)
+        q = Si[0, 0]*T0**2 + 2*Si[0, 1]*T0*T1 + Si[1, 1]*T1**2
+        return np.exp(-0.5 * q)
+
+    fig = plt.figure(figsize=(11, 9))
+
+    # (a) 3D surface, isotropic
+    ax = fig.add_subplot(2, 2, 1, projection="3d")
+    Z = dens(np.eye(2))
+    ax.plot_surface(T0, T1, Z, cmap="BuGn", linewidth=0, antialiased=True, alpha=0.95)
+    ax.set_title("isotropic  $\\sigma^2 I$  ·  the 3-D bump", fontsize=12, color=INK)
+    ax.set_xlabel(r"$\theta_0$"); ax.set_ylabel(r"$\theta_1$")
+    ax.set_zticks([])
+    ax.view_init(elev=38, azim=-60)
+
+    # (b) isotropic contours -> circles
+    ax = fig.add_subplot(2, 2, 2)
+    ax.contour(T0, T1, dens(np.eye(2)), levels=6, colors=[SAGE], linewidths=1.1)
+    ax.set_title(r"isotropic $\to$ circles (independent, equal $\sigma$)", fontsize=12, color=INK)
+    ax.set_aspect("equal"); _clean(ax)
+    ax.set_xlabel(r"$\theta_0$"); ax.set_ylabel(r"$\theta_1$")
+
+    # (c) diagonal, unequal -> axis-aligned ellipse
+    ax = fig.add_subplot(2, 2, 3)
+    ax.contour(T0, T1, dens(np.diag([2.2, 0.4])), levels=6, colors=[SLATE], linewidths=1.1)
+    ax.set_title(r"diagonal $\Sigma \to$ axis-aligned ellipse" "\n" r"(independent, different $\sigma$)",
+                 fontsize=12, color=INK)
+    ax.set_aspect("equal"); _clean(ax)
+    ax.set_xlabel(r"$\theta_0$"); ax.set_ylabel(r"$\theta_1$")
+
+    # (d) full covariance -> tilted ellipse
+    ax = fig.add_subplot(2, 2, 4)
+    ax.contour(T0, T1, dens(np.array([[1.4, 0.9], [0.9, 1.0]])), levels=6,
+               colors=[RUST], linewidths=1.1)
+    ax.set_title(r"full $\Sigma \to$ tilted ellipse" "\n" r"(correlated weights)", fontsize=12, color=INK)
+    ax.set_aspect("equal"); _clean(ax)
+    ax.set_xlabel(r"$\theta_0$"); ax.set_ylabel(r"$\theta_1$")
+
+    fig.suptitle("Gaussian prior · the covariance sets the shape (we use the simplest: isotropic)",
+                 fontsize=13.5, color=INK)
+    fig.tight_layout()
+    save(fig, "gaussian_prior_cases.svg", tight=False)
+
+
+# ---- 6. KL "extra bits" weather example (Jia-Bin Huang style) ---------------
+def kl_weather():
+    labels = ["Sunny", "Cloudy", "Rainy"]
+    P = [0.5, 0.25, 0.25]
+    Q = [0.25, 0.25, 0.5]
+    x = np.arange(3)
+
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(10, 4.0), layout="constrained")
+    a1.bar(x, P, color=SAGE, edgecolor=MUTED, lw=0.6)
+    a1.set_title("true weather  P  ·  optimal code = 1.5 bits", fontsize=12, color=INK)
+    for i, (p, code) in enumerate(zip(P, ["0", "10", "11"])):
+        a1.text(i, p + 0.02, f"'{code}'", ha="center", color=INK, fontsize=11)
+    a2.bar(x, Q, color=RUST, edgecolor=MUTED, lw=0.6)
+    a2.set_title("forecast model  Q  ·  its code costs 1.75 bits on P", fontsize=12, color=INK)
+    for i, (q, code) in enumerate(zip(Q, ["10", "11", "0"])):
+        a2.text(i, q + 0.02, f"'{code}'", ha="center", color=INK, fontsize=11)
+    for a in (a1, a2):
+        a.set_xticks(x); a.set_xticklabels(labels)
+        a.set_ylim(0, 0.62); a.set_ylabel("probability"); _clean(a)
+    fig.suptitle(r"KL(P $\|$ Q) = 1.75 - 1.5 = 0.25 extra bits/day for using the wrong code",
+                 fontsize=13, color=INK)
+    save(fig, "kl_weather.svg", tight=False)
+
+
 if __name__ == "__main__":
     print("Generating lec00b figures...")
     bayesian_updating()
     map_geometry_lambda()
     gaussian_prior_2d()
+    gaussian_prior_cases()
     laplace_vs_gaussian()
+    kl_weather()
     print("Done.")

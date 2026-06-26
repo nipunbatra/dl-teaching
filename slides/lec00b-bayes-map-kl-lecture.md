@@ -237,19 +237,33 @@ The evidence becomes important only when we want a *full posterior* — Bayesian
 
 Bayes' rule is not one-shot · as data arrives, **today's posterior becomes tomorrow's prior**.
 
-![w:760px](figures/lec00/svg/bayesian_updating.svg)
+![w:620px](figures/lec00/svg/bayesian_updating.svg)
 
 $$p(\theta \mid \mathcal{D}_1, \mathcal{D}_2) \propto p(\mathcal{D}_2 \mid \theta)\,\underbrace{p(\theta \mid \mathcal{D}_1)}_{\text{previous posterior = new prior}}$$
 
-More data ⇒ the posterior sharpens, the prior's pull fades. ▶ Play with it · [bayesian-posterior](https://nipunbatra.github.io/interactive-articles/bayesian-posterior/) — drag the prior and watch it update.
+▶ Watch it update live · [bayesian-posterior](https://nipunbatra.github.io/interactive-articles/bayesian-posterior/).
+
+---
+
+# The Beta distribution · a prior over a probability
+
+To put a prior on a coin's bias $p$ we need a distribution *over* $[0,1]$. The **Beta** is the natural choice ·
+
+<div class="math-box">
+
+$$p \sim \text{Beta}(\alpha, \beta), \qquad \text{mean} = \frac{\alpha}{\alpha+\beta}$$
+
+Read $\alpha-1$ as "prior heads" and $\beta-1$ as "prior tails." $\text{Beta}(1,1)$ is **uniform** (no opinion); $\text{Beta}(2,2)$ is a gentle bump at $0.5$ ("probably fair").
+
+</div>
 
 ---
 
 # Conjugate updating · Beta prior, in pictures
 
-![w:760px](figures/lec00/svg/beta_binomial_update.svg)
+![w:680px](figures/lec00/svg/beta_binomial_update.svg)
 
-Beta prior + Bernoulli likelihood → Beta posterior · the update is pure arithmetic, $\text{Beta}(\alpha, \beta) \to \text{Beta}(\alpha + \#H,\, \beta + \#T)$. More flips ⇒ the posterior sharpens; the prior's pull fades.
+Beta prior + Bernoulli likelihood → Beta posterior · pure arithmetic · $\text{Beta}(\alpha, \beta) \to \text{Beta}(\alpha + \#H,\, \beta + \#T)$. More flips ⇒ sharper posterior, weaker prior.
 
 ---
 
@@ -348,27 +362,39 @@ The first term is your usual loss. The second term is whatever the prior gives. 
 
 ---
 
+# MAP · the geometric picture (setup)
+
+A 3-point dataset · $(x,y) = (1,2),(2,2),(3,4)$, model $\hat y = \theta_0 + \theta_1 x$. The data loss is an explicit quadratic in $(\theta_0, \theta_1)$ ·
+
+<div class="math-box">
+
+$$\text{SSE}(\theta_0,\theta_1) = (2-\theta_0-\theta_1)^2 + (2-\theta_0-2\theta_1)^2 + (4-\theta_0-3\theta_1)^2$$
+
+</div>
+
+Its contours are **ellipses** around the OLS solution $(\theta_0,\theta_1) = (\tfrac{2}{3}, 1)$; the prior $\theta_0^2 + \theta_1^2$ adds **circles** around 0.
+
+---
+
 # MAP · the geometric picture
 
-Take a tiny 2-weight problem. The **data loss** (likelihood) forms ellipses around the OLS solution; the **prior** $\|\boldsymbol\theta\|^2$ forms circles around 0.
+![w:620px](figures/lec00/svg/map_geometry_lambda.svg)
 
-![w:600px](figures/lec00/svg/map_geometry_lambda.svg)
-
-MAP sits where the two balance. Crank $\lambda$ up and the solution slides along the rust path from OLS toward 0 — **that path is ridge regression.**
+MAP sits where data ellipses meet prior circles. Crank $\lambda$ up and the solution slides along the rust path from OLS toward 0 — **that path is ridge regression.**
 
 ---
 
 # Gaussian prior · the idea
 
-We assume each weight is *a priori* small and centred at zero · $p(\theta_j) = \mathcal{N}(0, \sigma_p^2)$, **independently** across weights.
+Each weight is *a priori* small, centred at zero · $p(\theta_j)=\mathcal{N}(0,\sigma_p^2)$ independently. The **covariance sets the shape** — we use the simplest, **isotropic** ($\Sigma=\sigma_p^2 I$).
 
-![w:480px](figures/lec00/svg/gaussian_prior_2d.svg)
-
-**Independent dims** ⇒ the joint prior is a product, and in 2D its contours are **circles** — no preferred direction, same $\sigma_p$ on every axis.
+![w:680px](figures/lec00/svg/gaussian_prior_cases.svg)
 
 ---
 
 # Gaussian prior · setup (the algebra)
+
+In $\sim$ notation · $\theta_j \sim \mathcal{N}(0, \sigma_p^2)$ for each weight, independently. Now the math ·
 
 <div class="math-box">
 
@@ -451,6 +477,25 @@ Recall $\lambda = \dfrac{1}{2\sigma_p^2}$ — the prior's *width* sets the penal
 
 ---
 
+# Weight decay · code and effect
+
+```python
+# PyTorch — weight_decay IS the Gaussian-prior shrink
+opt = torch.optim.SGD(model.parameters(), lr=0.1, weight_decay=0.01)
+```
+
+With data gradient $g \approx 0$ (an idle weight), $\eta = 0.1$ ·
+
+| per step | **no decay** ($\lambda=0$) | **with decay** ($\lambda=0.01$) |
+|---|---|---|
+| shrink factor | $\times 1.000$ | $\times 0.998$ |
+| $\theta=[3,-4]$ after 1 step | $[3,\,-4]$ | $[2.994,\,-3.992]$ |
+| after 100 steps | $[3,\,-4]$ | $[2.46,\,-3.27]$ |
+
+Without decay an idle weight stays put; with decay it **drifts toward 0** every step — the Gaussian prior quietly pulling it in.
+
+---
+
 # Worked numeric · MAP with L2 (loss value)
 
 Tiny dataset, 2 weights · $(\mathbf{x}_1, y_1) = ([1,1],\,0)$ and $(\mathbf{x}_2, y_2) = ([1,-1],\,7)$. Candidate $\boldsymbol\theta = [3, -4]$, noise $\sigma^2 = 1$.
@@ -509,11 +554,11 @@ If you've trained with `weight_decay` and never realized it was a **Gaussian pri
 
 # Laplace prior · the idea
 
-Swap the Gaussian for a **Laplace** prior · $p(\theta_j) = \text{Laplace}(0,b)$ — same "weights are small" idea, but a **sharp peak at 0** and **heavier tails**.
+Swap the Gaussian for a **Laplace** prior · $p(\theta_j) = \dfrac{1}{2b}\exp\!\left(-\dfrac{|\theta_j|}{b}\right)$ — same "weights are small" idea, but a **sharp peak at 0** and **heavier tails**.
 
-![w:680px](figures/lec00/svg/laplace_vs_gaussian.svg)
+![w:660px](figures/lec00/svg/laplace_vs_gaussian.svg)
 
-That spike at zero is the whole story · it puts real prior mass *right at* 0, so MAP will park weak weights *exactly* there.
+That spike at zero is the whole story · it puts real prior mass *right at* 0, so MAP parks weak weights *exactly* there.
 
 ---
 
@@ -583,57 +628,6 @@ $$\boxed{\;\hat{\boldsymbol\theta}_{\text{MAP}} = \arg\min_{\boldsymbol\theta} \
 **DL linkage** · L1 isn't typically a built-in optimizer option (it has a kink at 0 — see ahead for why that matters). To use it you add `lambda * w.abs().sum()` to the loss manually, or use **proximal gradient (ISTA)** which has a clean soft-thresholding step that produces *exact* zeros. We do this in [`lec00-mle-map.ipynb`](../notebooks/lec00-mle-map.ipynb).
 
 </div>
-
----
-
-# Why L1 produces sparse solutions · the geometry
-
-We just saw the Laplace prior's **spike at 0**. Geometrically that spike becomes the diamond's **sharp corners on the axes** — and that's where solutions land.
-
-![w:800px](figures/lec00/svg/l1_l2_geometry.svg)
-
-<div class="math-box">
-
-Think of MAP as minimizing the loss subject to the prior. In 2D ·
-
-- **L2 ball** — circle. The data-loss contour can touch it anywhere on the circle. Generic touchpoints have *both* coordinates non-zero. Solutions are **shrunk but rarely zero**.
-- **L1 ball** — diamond. Corners stick out **on the axes**. Generic data-loss contours hit the diamond *at a corner*, where one or more coordinates **are exactly zero**. Solutions are **sparse**.
-
-</div>
-
----
-
-# Why L1 produces sparse solutions · the algebra
-
-Why does L1 *literally* drive a coordinate to **exact zero**? The gradient.
-
-<div class="math-box">
-
-**L2 gradient at a small weight** · $\nabla (\lambda \theta_j^2) = 2\lambda \theta_j$ — *proportional to $\theta_j$*. As $\theta_j \to 0$ the pull *also* goes to zero, so the weight settles near (but not at) zero.
-
-**L1 gradient at a small weight** · $\nabla(\lambda |\theta_j|) = \lambda \cdot \text{sign}(\theta_j)$ — **constant magnitude** $\lambda$, no matter how small $\theta_j$. The pull *never weakens.*
-
-</div>
-
-The constant-magnitude pull is the seed of sparsity. The next slide turns it into an explicit update rule.
-
----
-
-# Soft-thresholding · the update that creates exact zeros
-
-**Suppose the data gradient on $\theta_j$ is $g$.** Two regimes ·
-
-- If $|g| < \lambda$ · the L1 penalty's constant pull **dominates** for *any* small $\theta_j$ — the optimum is $\theta_j = 0$ (kink at the origin).
-- If $|g| > \lambda$ · the data wins · $\theta_j$ settles at a non-zero value (specifically $\theta_j = g - \lambda \cdot \text{sign}(g)$ after one proximal step from zero — *soft-thresholding*).
-
-<div class="math-box">
-
-The **proximal / ISTA soft-thresholding update** ·
-$$\theta_j \leftarrow \text{sign}(\theta_j)\,\max\!\bigl(|\theta_j| - \eta\lambda,\;0\bigr)$$
-
-</div>
-
-The $\max(\cdot, 0)$ is what *literally* clamps weights to zero · L2 never does this.
 
 ---
 
@@ -783,7 +777,7 @@ $$H(p) := \mathbb{E}_{Y \sim p}[I(Y)] = -\mathbb{E}_{Y \sim p}[\log p(Y)] = -\su
 
 </div>
 
-In base 2, $H$ is in **bits** · *the average number of bits the optimal code spends per sample from $p$.*
+In base 2, $H$ is in **bits** · roughly *the average number of yes/no questions needed to pin down a draw from $p$* — the average surprise per sample.
 
 So entropy is what you get when you average the per-sample surprise from the previous slides. Big entropy = on average, draws from $p$ are surprising. Small entropy = mostly predictable.
 
@@ -835,19 +829,45 @@ The maximum entropy of a $K$-Categorical is $\log_2 K$, achieved by the uniform.
 
 ---
 
-# KL divergence · the intuition first
+# KL divergence · the intuition (a scoring game)
 
-Truth is $p$; your model is $q$. On every sample you're surprised by $-\log q(y)$ instead of the best-possible $-\log p(y)$. **KL is the average *extra* surprise you pay for using $q$ instead of $p$.**
+Data really comes from $p$; you model it with $q$. Score each sample by its **surprise** $-\log q(y)$ and average ·
+
+- Score with the **true** $p$ → the *best possible* average = **entropy** $H(p)$. You can't beat it.
+- Score with a **wrong** $q$ → a worse average = **cross-entropy** $H(p, q)$.
 
 <div class="keypoint">
 
-Zero if $q = p$ (no extra surprise). Large when $q$ is confident where $p$ has mass. It's a *directed* gap from $p$ to $q$ — not a symmetric distance.
+**KL is the penalty** — the *extra* score for modelling $p$ with the wrong $q$ ·
+$$\text{KL}(p\,\Vert\,q) = H(p, q) - H(p) \;\ge\; 0, \qquad = 0 \text{ iff } q = p.$$
 
 </div>
 
-Now the formula — literally the average of that extra surprise ·
+*Intuition after L. Serrano's dice game and J.-B. Huang's weather example.*
+
+---
+
+# KL · counting the extra bits (weather)
+
+True weather $p = (\tfrac12, \tfrac14, \tfrac14)$ has an optimal code costing $H(p) = 1.5$ bits/day. Build a code for the *wrong* forecast $q = (\tfrac14, \tfrac14, \tfrac12)$ and use it on real weather ·
+
+![w:760px](figures/lec00/svg/kl_weather.svg)
+
+$$H(p, q) = 1.75 \text{ bits} \;\Rightarrow\; \text{KL}(p\,\Vert\,q) = 1.75 - 1.5 = \mathbf{0.25}\text{ extra bits/day.}$$
+
+---
+
+# KL · the formula
+
+Both pictures — "penalty" and "extra bits" — are the **same average extra surprise** ·
+
+<div class="math-box">
 
 $$\text{KL}(p \,\Vert\, q) = \mathbb{E}_{Y \sim p}\!\left[\log \frac{p(Y)}{q(Y)}\right] = \sum_y p(y)\,\log\frac{p(y)}{q(y)}$$
+
+</div>
+
+Zero iff $q = p$; **directed** — a gap *from $p$ to $q$*, not a symmetric distance. For the weather numbers, $\sum_x p\log_2(p/q)$ gives exactly $0.25$ bits, matching the count.
 
 ---
 

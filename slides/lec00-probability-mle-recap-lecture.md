@@ -9,7 +9,7 @@ math: mathjax
 
 # A Probabilistic View of ML
 
-## Distributions · Sampling · Likelihood · MLE
+## Distributions · Likelihood · MLE
 
 ### Lecture 0 · ES 667: Deep Learning
 
@@ -44,9 +44,8 @@ By the end of this lecture you can ·
 1. **State** the Bernoulli, Categorical, and Normal distributions and the `~` notation.
 2. **Read a plate-notation** graphical model and recognize the supervised setup.
 3. Explain three reasons why **the Normal shows up everywhere** (CLT, max entropy, closed-under-linear).
-4. **Sample** from Bernoulli, Categorical, and Normal — and recognize the **reparameterization trick** as an affine map of a base sample.
-5. **Derive MSE / BCE / categorical CE** as NLL under Gaussian / Bernoulli / Categorical outputs.
-6. State **the MLE recipe** in 3 steps and apply it to coin, linear, logistic, multiclass.
+4. **Derive MSE / BCE / categorical CE** as NLL under Gaussian / Bernoulli / Categorical outputs.
+5. State **the MLE recipe** in 3 steps and apply it to coin, linear, logistic, multiclass.
 
 L00B (next lecture) takes this and adds priors → MAP → L1/L2 → KL.
 
@@ -1141,7 +1140,7 @@ $$L_{\text{NLL}}(\theta) = -\sum_{i=1}^N \log \hat\pi_{i,\,y_i} \;=\; -\sum_{i=1
 
 The right-hand form is the textbook **categorical cross-entropy** — true distribution $\mathbf{y}_i$ (one-hot) against predicted distribution $\hat{\boldsymbol\pi}_i$.
 
-This loss powers every multiclass classifier in this course · CIFAR-10 ($K=10$), ImageNet ($K=1000$), and the **next-token loss in every LLM** ($K = $ vocab size, often 50,000+) in L13–L15.
+This loss powers every multiclass classifier in this course · CIFAR-10 (K = 10), ImageNet (K = 1000), and the **next-token loss in every LLM** (K = vocab size, often 50,000+) in L13–L15.
 
 ---
 
@@ -1218,161 +1217,6 @@ Cat-vs-dog classifier · model output $\hat p = 0.8$ for one image.
 The loss is small **iff the model assigned high probability to the true class**. That's all cross-entropy is doing — and that's all "maximizing log-likelihood" means once you write it out.
 
 </div>
-
----
-
-<!-- _class: section-divider -->
-
-### PART 4
-
-# Sampling
-
-How we draw from distributions — and why every generative model needs it
-
----
-
-# Why we sample · two roles
-
-Sampling appears all over deep learning, in two distinct roles ·
-
-<div class="math-box">
-
-| Role | What it means | Examples |
-|:-:|:-:|:-:|
-| **Generation** | Produce new instances from a learned distribution | LLM next-token, VAE images, diffusion, GAN |
-| **Monte Carlo estimation** | Approximate an expectation we can't compute analytically | mini-batch SGD, REINFORCE, dropout averaging, evaluating ELBOs |
-
-</div>
-
-These two uses are technically the same operation — *draw $y \sim p$* — but conceptually different. Today we set up the primitives. The advanced uses (reparameterization in VAEs, ancestral sampling in diffusion, nucleus sampling in LLMs) all reduce to combinations of what's on the next four slides.
-
----
-
-# ⭐⭐⭐ Optional · the master sampling primitive · inverse CDF
-
-For any 1-D distribution with CDF $F(y) = P(Y \le y)$ ·
-
-<div class="math-box">
-
-1. Draw $u \sim \text{Uniform}[0, 1]$.
-2. Return $y = F^{-1}(u)$.
-
-</div>
-
-**Why it works** · $P(Y \le y) = P(F^{-1}(u) \le y) = P(u \le F(y)) = F(y)$. ✓
-
-![w:560px](figures/lec00/svg/inverse_cdf.svg)
-
----
-
-# ⭐⭐⭐ Optional · Inverse CDF · worked on a Bernoulli
-
-To sample $Y \sim \text{Bernoulli}(p)$ ·
-
-<div class="math-box">
-
-The CDF jumps from $0$ to $1-p$ at $y = 0$, then from $1-p$ to $1$ at $y = 1$.
-
-Inverting ·
-
-```python
-return 0 if u < 1 - p else 1
-```
-
-</div>
-
-One uniform draw + one comparison · this is what `torch.bernoulli` does internally. **Same algorithm extends to any 1-D distribution** as long as you can compute the CDF.
-
----
-
-# Sampling from a Categorical · the algorithm
-
-Categorical with probabilities $\boldsymbol\pi = (\pi_1, \ldots, \pi_K)$. The CDF is the **stick-breaking cumulative** ·
-
-<div class="math-box">
-
-Build $c_k = \sum_{j=1}^k \pi_j$ (so $c_K = 1$). Draw $u \sim \text{Uniform}[0, 1]$. Return the smallest $k$ such that $c_k \ge u$.
-
-</div>
-
-**Worked** · $\boldsymbol\pi = (0.1, 0.4, 0.3, 0.2)$ → cumulative $(0.1, 0.5, 0.8, 1.0)$.
-
-Draw $u = 0.55$ · smallest $k$ with $c_k \ge 0.55$ is $k = 3$. Return class **3**.
-
----
-
-# Categorical sampling · why it matters
-
-This is what `torch.multinomial` does · one uniform + one cumulative scan.
-
-<div class="keypoint">
-
-**Every LLM samples its next token with exactly this algorithm.**
-
-The model produces a vector of $K$ probabilities (where $K \approx$ vocab size, often 50,000+) and we run a single Categorical draw.
-
-</div>
-
-You will see this primitive in ·
-- L13–L15 · LLM token generation
-- L19 · VAE discrete latents
-- L21 · diffusion class-conditional sampling
-
-Knowing it once means knowing it everywhere.
-
----
-
-# Sampling from a Normal · the affine trick
-
-To sample $Y \sim \mathcal{N}(\mu, \sigma^2)$ ·
-
-<div class="math-box">
-
-1. Sample $\epsilon \sim \mathcal{N}(0, 1)$ (e.g. via Box-Muller, or just `torch.randn(...)`).
-2. Return $y = \mu + \sigma \cdot \epsilon$.
-
-</div>
-
-**Why this works** · the affine transform of a Gaussian is a Gaussian (the "closed under linear ops" property from earlier). If $\epsilon \sim \mathcal{N}(0, 1)$, then $\mu + \sigma\epsilon \sim \mathcal{N}(\mu, \sigma^2)$ — exactly what we wanted.
-
-So we only ever need a routine to draw from $\mathcal{N}(0, 1)$. Everything else is multiplication and addition.
-
----
-
-# The reparameterization trick · preview of L19
-
-The same affine trick is one of the most important ideas in modern DL.
-
-<div class="keypoint">
-
-Let the model output $\mu_\theta(\mathbf{x})$ and $\sigma_\theta(\mathbf{x})$ as deterministic functions of an input. To sample a **stochastic** output ·
-
-$$y = \mu_\theta(\mathbf{x}) + \sigma_\theta(\mathbf{x}) \cdot \epsilon, \qquad \epsilon \sim \mathcal{N}(0, 1)$$
-
-The randomness $\epsilon$ is **outside** the gradient path. $\mu_\theta, \sigma_\theta$ are deterministic ⇒ we can **backprop through the sample**.
-
-</div>
-
-This is what makes **VAEs trainable** (L19) and powers the entire **diffusion** stack (L21–L22). You'll see this exact form repeatedly — and you now know where it comes from.
-
----
-
-# LLM token sampling · preview of L14
-
-You now know the primitive (sampling from a Categorical). LLM generation is just Categorical sampling at every step — but with a few tweaks to control diversity ·
-
-<div class="math-box">
-
-| Strategy | What it does | When to use |
-|:-:|:-:|:-:|
-| **Greedy** ($\arg\max$) | Pick the most likely token | Deterministic; safe but boring |
-| **Temperature** $T$ | Sample from $\tilde\pi_k \propto \pi_k^{1/T}$ | $T \to 0$ = greedy; $T = 1$ = unchanged; $T > 1$ = more random |
-| **Top-$k$** | Keep top $k$ logits, renormalize, sample | Caps diversity at the top |
-| **Top-$p$ (nucleus)** | Keep smallest set with cumulative prob $\ge p$ | Adapts to the model's confidence |
-
-</div>
-
-L14 covers the full story. The point today · the underlying operation is *sampling from a Categorical* — exactly the inverse-CDF primitive from two slides ago.
 
 ---
 
@@ -1588,7 +1432,7 @@ exists **exactly because sums of independent Gaussians are Gaussian** — no int
 
 <div class="math-box">
 
-**Reparameterization trick (Part 4)** · sampling from a non-standard Normal is just an affine transform of a standard one ·
+**Reparameterization trick (L19/L21)** · sampling from a non-standard Normal is just an affine transform of a standard one ·
 
 $$z = \mu + \sigma \cdot \epsilon,\quad \epsilon \sim \mathcal{N}(0, 1)$$
 
