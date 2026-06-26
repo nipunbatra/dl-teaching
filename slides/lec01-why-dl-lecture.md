@@ -53,11 +53,17 @@ What is deep learning, and why now?
 
 ---
 
+# The models you already know · and their limit
+
+You built logistic regression, SVMs, and decision trees in ES 335. On the right data they work beautifully — but a straight boundary fails the moment the classes curve.
+
+![w:880px](figures/lec01/svg/linear_vs_nonlinear_data.svg)
+
+---
+
 # A question to open the semester
 
-You already built classifiers in ES 335 — logistic regression, SVMs, decision trees.
-
-**Q.** Point any of them at a raw $224 \times 224$ colour photo.
+Now point any of those models at a raw $224 \times 224$ colour photo.
 
 <div class="popquiz">
 
@@ -66,12 +72,6 @@ Input dimension: $224 \times 224 \times 3 = 150{,}528$ features.
 Think before the next slide: *why* would that fail?
 
 </div>
-
----
-
-# Linear · works for separable data, fails for curved data
-
-![w:920px](figures/lec01/svg/linear_vs_nonlinear_data.svg)
 
 ---
 
@@ -143,6 +143,8 @@ The key change is not "more parameters". It is that each layer learns a transfor
 
 # ImageNet · the turning point (2012)
 
+The task · **classify each photo into one of 1000 object categories** (dog breeds, vehicles, instruments…), trained on **1.2M labelled images**. "Top-5 error" = the true label is not in the model's top 5 guesses.
+
 | Year | Winner | Top-5 error | Method |
 |------|--------|-------------|--------|
 | 2010 | NEC-UIUC | 28.2% | SIFT + Fisher |
@@ -157,12 +159,6 @@ Human top-5 error: ~5.1%. **AlexNet cut error by ~10 points in one year.**
 # Why now? Three ingredients compounded
 
 ![w:900px](figures/lec01/svg/three_ingredients.svg)
-
----
-
-# Why now · the compute curve
-
-![w:680px](figures/lec01/svg/compute_scaling.svg)
 
 ---
 
@@ -252,17 +248,13 @@ The probabilistic story is unchanged · pick a distribution, write NLL, optimize
 
 # From linear models to neurons
 
-You already know **linear regression / classification** from ES 335:
+A neuron is your ES 335 linear model plus **one** new ingredient — a non-linear squash.
 
-$$\hat y = \mathbf{w}^\top \mathbf{x} + b$$
-
-A neuron is just this · plus a non-linear "squashing" function:
-
-$$\hat y = \sigma(\mathbf{w}^\top \mathbf{x} + b)$$
+![w:1000px](figures/lec01/svg/linear_to_neuron.svg)
 
 <div class="keypoint">
 
-That's the only new ingredient. Everything in this course builds on top · stack many of these neurons, learn the weights, you get a deep network.
+Stack many of these, learn the weights, and you have a deep network. That is the whole idea.
 
 </div>
 
@@ -305,17 +297,13 @@ $$y = \sigma\big(\underbrace{\mathbf{w}^\top \mathbf{x} + b}_{\text{pre-activati
 
 # Why we need a non-linearity · the magnifying-glass analogy
 
+![w:880px](figures/lec01/svg/magnifying_glass.svg)
+
 <div class="keypoint">
 
-Stack two magnifying glasses · you get a bigger image. Still just a *bigger linear* version of the original.
-
-Stack two linear layers · same story. The composition of linear maps is just another linear map. No new patterns become learnable.
-
-A non-linearity is like adding a **prism** · it bends the input in a way no linear stack can replicate. Each layer can learn a new *kind* of feature.
+Two magnifying glasses → a bigger image, still a *linear* version. Two linear layers → same story · their composition is just one linear map. A **non-linearity** is the prism that bends the space, so each layer can learn a new *kind* of feature.
 
 </div>
-
-This is why every deep network has activation functions between linear layers. Without them, depth is wasted.
 
 ---
 
@@ -344,22 +332,35 @@ $$y = W_\text{eff} x + b_\text{eff}$$
 
 ---
 
-# Worked numeric example · the collapse
+# Worked numeric · the collapse (forward)
 
 <div class="math-box">
 
 $x = \begin{bmatrix} 2 \\ 3 \end{bmatrix}$ · $W_1 = \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix}$ · $b_1 = \begin{bmatrix} 1 \\ 0 \end{bmatrix}$ · $W_2 = \begin{bmatrix} 2 & 1 \\ 1 & 2 \end{bmatrix}$ · $b_2 = \begin{bmatrix} 0 \\ 1 \end{bmatrix}$
 
 **Forward through the 2 layers:**
-- $h = W_1 x + b_1 = \begin{bmatrix} 2 \\ 3 \end{bmatrix} + \begin{bmatrix} 1 \\ 0 \end{bmatrix} = \begin{bmatrix} 3 \\ 3 \end{bmatrix}$
-- $y = W_2 h + b_2 = \begin{bmatrix} 9 \\ 9 \end{bmatrix} + \begin{bmatrix} 0 \\ 1 \end{bmatrix} = \begin{bmatrix} 9 \\ 10 \end{bmatrix}$
 
-**Equivalent single layer:**
-- $W_\text{eff} = W_2 W_1 = \begin{bmatrix} 2 & 1 \\ 1 & 2 \end{bmatrix}$
-- $b_\text{eff} = W_2 b_1 + b_2 = \begin{bmatrix} 2 \\ 1 \end{bmatrix} + \begin{bmatrix} 0 \\ 1 \end{bmatrix} = \begin{bmatrix} 2 \\ 2 \end{bmatrix}$
-- Check · $W_\text{eff} x + b_\text{eff} = \begin{bmatrix} 7 \\ 8 \end{bmatrix} + \begin{bmatrix} 2 \\ 2 \end{bmatrix} = \begin{bmatrix} 9 \\ 10 \end{bmatrix}$ · **same!**
+$$h = W_1 x + b_1 = \begin{bmatrix} 2 \\ 3 \end{bmatrix} + \begin{bmatrix} 1 \\ 0 \end{bmatrix} = \begin{bmatrix} 3 \\ 3 \end{bmatrix}$$
+
+$$y = W_2 h + b_2 = \begin{bmatrix} 9 \\ 9 \end{bmatrix} + \begin{bmatrix} 0 \\ 1 \end{bmatrix} = \begin{bmatrix} 9 \\ 10 \end{bmatrix}$$
 
 </div>
+
+---
+
+# Worked numeric · the collapse (one layer matches)
+
+Now multiply the two layers into a single equivalent layer ·
+
+<div class="math-box">
+
+$$W_\text{eff} = W_2 W_1 = \begin{bmatrix} 2 & 1 \\ 1 & 2 \end{bmatrix} \qquad b_\text{eff} = W_2 b_1 + b_2 = \begin{bmatrix} 2 \\ 1 \end{bmatrix} + \begin{bmatrix} 0 \\ 1 \end{bmatrix} = \begin{bmatrix} 2 \\ 2 \end{bmatrix}$$
+
+**Check** · $W_\text{eff}\, x + b_\text{eff} = \begin{bmatrix} 7 \\ 8 \end{bmatrix} + \begin{bmatrix} 2 \\ 2 \end{bmatrix} = \begin{bmatrix} 9 \\ 10 \end{bmatrix}$ · **same answer!**
+
+</div>
+
+The 2-layer network *is* one linear layer. The depth bought nothing — until we add a non-linearity.
 
 ---
 
@@ -392,15 +393,9 @@ XOR is the historical "minor scandal" that **broke perceptrons** in the 1969 Min
 
 # XOR · linear fails, two-layer MLP succeeds
 
-![w:920px](figures/lec01/svg/xor_decision.svg)
+![w:780px](figures/lec01/svg/xor_decision.svg)
 
-<div class="math-box">
-
-**Left** · Three attempts at a linear separator. Whichever line you draw, two same-class points end up on opposite sides.
-
-**Right** · A 2-layer MLP with **2 hidden ReLU units** carves out a curved decision region · all four points correctly classified.
-
-</div>
+**Left** · any single line puts two same-class points on opposite sides. **Right** · a 2-layer MLP with 2 hidden ReLU units carves a curved region — all four points correct.
 
 ---
 
@@ -430,18 +425,15 @@ Outputs $0, 1, 1, 0$ — **exactly XOR**. The hidden ReLU "kink" gives the curve
 
 # Feature-space transformation · the deeper view
 
-![w:920px](figures/lec01/svg/feature_transform.svg)
+![w:820px](figures/lec01/svg/feature_transform.svg)
 
-<div class="math-box">
+A hidden layer **reshapes the data** so the final linear layer's job becomes trivial — here, rings that no line can split become two bands a line separates cleanly.
 
-A hidden layer **reshapes the data** so the next (linear) layer's job becomes easy.
+<div class="keypoint">
 
-**Left** · two interlocking spirals · no straight line separates them.
-**Right** · the same data after a learned hidden layer · spirals are *unrolled* into bands that a linear classifier separates trivially.
+This is what *"deep learning is representation learning"* means · the hidden layers learn a coordinate system where the problem is linear. The final softmax is just logistic regression on features the network designed for itself.
 
 </div>
-
-This is what people mean by **"deep learning is representation learning."** The hidden layers learn a coordinate system in which the problem becomes linear. The final softmax is just classical logistic regression — applied to features the network designed for itself.
 
 ---
 
@@ -463,7 +455,7 @@ This is what people mean by **"deep learning is representation learning."** The 
 | Activation | Failure mode | Practical consequence |
 |------------|--------------|-----------------------|
 | Sigmoid | Saturates; derivative $\le 0.25$ | vanishing gradients |
-| Tanh | Saturates for large $|z|$ | early layers learn slowly |
+| Tanh | Saturates for large $\lvert z\rvert$ | early layers learn slowly |
 | ReLU | zero gradient for $z < 0$ | dead units if updates are harsh |
 | GELU / SiLU | smoother but costlier | common in Transformers, less common in tiny CNNs |
 
@@ -477,7 +469,9 @@ An activation is not decoration. It controls both the representation and the bac
 
 # Stacking neurons → MLP
 
-![w:820px](figures/lec01/svg/mlp_architecture.svg)
+![w:760px](figures/lec01/svg/mlp_architecture.svg)
+
+For MNIST · input $784 \to$ hidden $256 \to$ hidden $256 \to$ output $10$. Each arrow is a weight matrix ($W_1{:}\,784{\times}256$, $W_2{:}\,256{\times}256$, $W_3{:}\,256{\times}10$) plus a bias vector.
 
 ---
 
@@ -536,15 +530,31 @@ class MLP(nn.Module):
 
 # The last layer is bare · the #1 beginner bug
 
-For classification:
-- Output should be $K$ raw scores (logits).
-- `nn.CrossEntropyLoss` internally applies `log_softmax`.
-- Adding your own softmax → **double softmax** → frozen loss near $\log K$.
+For classification the output should be $K$ **raw logits**. `nn.CrossEntropyLoss` *internally* applies `log_softmax` — so adding your own softmax means **softmax twice**.
 
 <div class="warning">
 
-Symptom to memorize: training loss stuck at ~2.30 (= $\log 10$) and refusing to move.
-Fix: remove the extra softmax.
+Symptom to memorize · training loss stuck near **2.30** and refusing to move.
+**Why 2.30?** A model that has learned nothing predicts uniform $\tfrac{1}{10}$ over 10 classes, so the loss is $-\ln\tfrac{1}{10} = \ln 10 \approx 2.30$ (CE uses natural log). Fix · remove the extra softmax.
+
+</div>
+
+---
+
+# Which loss takes what · logits vs probabilities
+
+The PyTorch loss family trips everyone up — some take **logits**, some take **probabilities** ·
+
+| Loss | Expects | Internally |
+|---|---|---|
+| `CrossEntropyLoss` | **logits** | fuses `log_softmax` + `NLLLoss` |
+| `NLLLoss` | **log-probs** (`log_softmax` output) | gathers $-\log \hat y_c$ |
+| `BCEWithLogitsLoss` | **logits** | fuses `sigmoid` + `BCELoss` |
+| `BCELoss` | **probabilities** (after `sigmoid`) | plain BCE |
+
+<div class="keypoint">
+
+Prefer the **fused** versions (`CrossEntropyLoss`, `BCEWithLogitsLoss`) · feeding logits lets PyTorch use the numerically stable log-sum-exp instead of `log(softmax(x))`, which overflows.
 
 </div>
 
@@ -1182,7 +1192,7 @@ Sigmoid + BCE = L00's logistic-MLE, just with a hidden layer in front. Softmax +
 
 | Symptom | Suspect | Fastest test |
 |---|---|---|
-| Loss frozen at $\approx 2.30 = \log 10$ | double softmax (softmax in model **and** `CrossEntropyLoss`) | print the last layer — it must output raw logits |
+| Loss frozen at $\approx 2.30 = \ln 10$ | double softmax (softmax in model **and** `CrossEntropyLoss`) | print the last layer — it must output raw logits |
 | Updates grow each step, loss explodes | missing `opt.zero_grad()` · gradients accumulate | print `p.grad.norm()` over steps — it should not climb |
 | Shape error or silent broadcasting | batch-dimension bug | print every tensor's `.shape` through one forward pass |
 | Train loss ↓ · val loss ↑ | overfitting | plot both curves on one axis · find the divergence epoch |
