@@ -167,7 +167,13 @@ $$1 \text{ nat} = \tfrac{1}{\ln 2} \approx 1.44 \text{ bits}$$
 
 </div>
 
-A fair coin: $-\log_2 \tfrac12 = 1$ bit — exactly one yes/no question ("heads?") to pin down the outcome.
+A fair coin: $-\log_2 \tfrac12 = 1$ bit — one yes/no question ("heads?") pins it down.
+
+<div class="keypoint">
+
+**3Blue1Brown's picture** · one bit = information that **halves** the possibilities. $N$ options, $I$ bits → $N/2^I$ left. Wordle has ~13 000 words, so winning needs $\log_2 13000 \approx 13.6$ bits; a strong first guess already buys ~5.8 of them.
+
+</div>
 
 ---
 
@@ -201,17 +207,27 @@ Average surprise — and the length of the best possible code
 
 # Entropy = expected surprise
 
-A *distribution* has an average surprise · sample from it many times, average $-\log p$ ·
+The **expectation** $\mathbb{E}_{Y\sim p}[\,\cdot\,]$ means "average the quantity, weighting each outcome $y$ by how often $p$ produces it" ·
 
 <div class="math-box">
 
-$$H(p) = \mathbb{E}_{Y \sim p}[-\log p(Y)] = -\sum_y p(y)\log p(y)$$
+$$H(p) = \underbrace{\mathbb{E}_{Y \sim p}}_{\text{average over draws from } p}\big[\,\underbrace{-\log p(Y)}_{\text{surprise}}\,\big] = -\sum_y p(y)\,\log p(y)$$
 
 </div>
 
-- High entropy · draws are unpredictable (a fair die).
-- Low entropy · draws are mostly predictable (a loaded die).
-- Zero entropy · deterministic (you already know the outcome).
+The subscript $Y\sim p$ says *which* distribution we average over — it will matter the moment two distributions appear (cross-entropy, soon).
+
+- High entropy · unpredictable draws (fair die) · Low entropy · predictable (loaded die) · Zero · deterministic.
+
+---
+
+# Entropy = the long-run average surprise
+
+An expectation is just the **sample average in the limit** (law of large numbers) · draw many days, average their surprise, and it settles onto $H(P)$ ·
+
+![w:740px](figures/lec00c/svg/entropy_samples.svg)
+
+This is why your **training loss** — the average $-\log p$ over the dataset — *is* an estimate of a (cross-)entropy. The dataset is the samples.
 
 ---
 
@@ -239,7 +255,7 @@ Give the frequent symbol the 1-bit code, the rare ones 2 bits. The average lengt
 
 # Optimal code length = −log p
 
-The best code gives symbol $y$ a length of about $-\log_2 p(y)$ bits ·
+**Why $-\log_2 p$?** A symbol with probability $p$ is one of about $1/p$ equally-likely cases, so it takes $\log_2(1/p) = -\log_2 p$ yes/no questions (halvings) to single out. *Halve a symbol's probability → add exactly one bit to its code.*
 
 <div class="math-box">
 
@@ -253,7 +269,17 @@ Average $= \tfrac12(1) + \tfrac14(2) + \tfrac14(2) = 1.5$ bits $= H(P)$.
 
 </div>
 
-**Entropy is the average length of the optimal code** — the fewest bits/symbol anyone could ever achieve for data from $P$.
+**Entropy is the average length of the optimal code** — the fewest bits/symbol achievable for data from $P$.
+
+---
+
+# What if we just used a simple code?
+
+A lazy fixed-length code gives every symbol the same number of bits ·
+
+![w:660px](figures/lec00c/svg/naive_vs_optimal_code.svg)
+
+Ignoring that Sunny is common costs **0.5 bits/day**. Matching code length to probability ($-\log p$) is what reaches the entropy floor — and it is exactly what a good *model* does with its predictions.
 
 ---
 
@@ -360,6 +386,23 @@ The wrong model costs $1.0$ bit/symbol; the best possible is $0.88$. The **gap i
 
 ---
 
+# Cross-entropy · the ML reading (cat vs dog)
+
+In classification the label is **certain** — it really is a cat · $P=(\text{cat}{=}1,\,\text{dog}{=}0)$. The model $Q$ is your classifier's softmax. Cross-entropy = the model's **surprise at the truth** ·
+
+<div class="math-box">
+
+| model $Q(\text{cat})$ | surprise $-\log_2 Q(\text{cat})$ | verdict |
+|:-:|:-:|:-:|
+| $0.25$ (bad) | $2.0$ bits | very surprised — big loss |
+| $0.99$ (good) | $0.014$ bits | barely surprised — tiny loss |
+
+</div>
+
+This **is** the logistic-regression / classification loss from L00 · $-\log Q(\text{true class})$. Training = nudge the weights until the model is *least surprised* by the real labels.
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 4
@@ -410,18 +453,21 @@ $$\text{KL}(P\,\Vert\,Q) = \sum_y p(y)\log\frac{p(y)}{q(y)} \;=\; \mathbb{E}_{P}
 
 ---
 
-# KL · worked numeric (two coins)
+# KL · worked numeric · the two routes agree
 
-$P=(0.7,0.3)$, $Q=(0.5,0.5)$ ·
+$P=(0.7,0.3)$, $Q=(0.5,0.5)$ — compute KL **two ways** ·
 
 <div class="math-box">
 
-$$\text{KL}(P\,\Vert\,Q) = 0.7\log_2\tfrac{0.7}{0.5} + 0.3\log_2\tfrac{0.3}{0.5}$$
-$$= 0.7(0.485) + 0.3(-0.737) = 0.34 - 0.22 = \mathbf{0.12}\text{ bits}$$
+**Route 1 · waste = cross-entropy − entropy**
+$$\text{KL}(P\Vert Q) = H(P,Q) - H(P) = 1.00 - 0.88 = \mathbf{0.12}\text{ bits}$$
+
+**Route 2 · the direct formula**
+$$\text{KL}(P\Vert Q) = 0.7\log_2\tfrac{0.7}{0.5} + 0.3\log_2\tfrac{0.3}{0.5} = 0.7(0.485) + 0.3(-0.737) = \mathbf{0.12}\text{ bits}$$
 
 </div>
 
-Exactly the gap we found · $H(P,Q) - H(P) = 1.0 - 0.88 = 0.12$. The two routes agree — KL is the waste, measured directly.
+Same number. "Extra bits over the optimal code" and "average log-ratio" are *the same quantity* — that is why KL is **the** measure of model error.
 
 ---
 
@@ -453,6 +499,18 @@ Same bimodal target. Forward KL spreads across both modes (why **VAE samples blu
 # The ML connection
 
 Why training a classifier *is* compression
+
+---
+
+# The one-paragraph version
+
+<div class="keypoint">
+
+**Reality** produces data from some true $P$. Your **model** $Q$ assigns a probability to everything it sees. Each example surprises the model by $-\log Q$. Training nudges $Q$ until it is **as unsurprised as possible by the real data** — i.e. until $Q$ matches $P$.
+
+</div>
+
+That single sentence is cross-entropy loss, MLE, KL minimization, and compression — the next four slides are just that idea, made precise.
 
 ---
 
@@ -504,11 +562,11 @@ $-\log_2 q(\text{data})$ is the **number of bits** to encode the data with model
 
 <div class="keypoint">
 
-"A good language model = a good compressor of text" is not a metaphor — the cross-entropy loss, in bits, **is** the compressed size per token.
+**3Blue1Brown · "compression is intelligence."** A smart model is rarely surprised — it gives the true next token high probability, so $-\log_2 q \approx 0$, and the data shrinks to a tiny file. Being a good predictor and being a good compressor are *the same skill*.
 
 </div>
 
-This is why frontier-model reports quote **bits-per-byte** · it is literally the cross-entropy loss in base 2.
+So "a good language model = a good compressor of text" is not a metaphor · the cross-entropy loss, in bits, **is** the compressed size per token — which is why frontier reports quote **bits-per-byte**.
 
 ---
 

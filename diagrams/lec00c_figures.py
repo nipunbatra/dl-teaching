@@ -143,10 +143,60 @@ def dice_scoring():
     save(fig, "dice_scoring.svg", tight=False)
 
 
+# ---- 5. sample average of surprise -> entropy (law of large numbers) -------
+def entropy_samples():
+    from matplotlib.colors import ListedColormap
+    rng = np.random.default_rng(7)
+    P = np.array([0.5, 0.25, 0.25])
+    cols = [SAGE, SLATE, RUST]
+    n = 60
+    draws = rng.choice(3, size=n, p=P)
+    surprise = -np.log2(P[draws])
+    runmean = np.cumsum(surprise) / np.arange(1, n + 1)
+
+    fig, (a0, a1) = plt.subplots(2, 1, figsize=(9.2, 4.8),
+                                 height_ratios=[1, 3], layout="constrained")
+    a0.imshow(draws.reshape(1, -1), aspect="auto", cmap=ListedColormap(cols), vmin=0, vmax=2)
+    a0.set_yticks([]); a0.set_xticks([])
+    a0.set_title("60 sampled days · Sunny (green) · Cloudy (slate) · Rainy (rust)",
+                 fontsize=11.5, color=INK)
+    a1.plot(np.arange(1, n + 1), runmean, color=RUST, lw=2.3)
+    a1.axhline(1.5, color=SLATE, ls="--", lw=1.5)
+    a1.text(n * 0.5, 1.62, "entropy  H(P) = 1.5 bits", color=SLATE, fontsize=11)
+    a1.set_xlabel("number of samples  n"); a1.set_ylabel("running avg surprise (bits)")
+    a1.set_ylim(0, 3); _clean(a1)
+    fig.suptitle(r"Average surprise over samples $\to$ the expectation = entropy",
+                 fontsize=13.5, color=INK)
+    save(fig, "entropy_samples.svg", tight=False)
+
+
+# ---- 6. naive fixed code vs optimal code -----------------------------------
+def naive_vs_optimal_code():
+    fig, ax = plt.subplots(figsize=(7.8, 4.5))
+    ax.bar([0, 1], [2.0, 1.5], width=0.5, color=[SLATE, SAGE], edgecolor=MUTED, lw=0.8)
+    ax.axhline(1.5, color=RUST, ls="--", lw=1.2)
+    ax.text(1.55, 1.54, "entropy floor = 1.5 bits", color=RUST, fontsize=10)
+    for x, v, t in [(0, 2.0, "naive fixed code\n'00' / '01' / '10'\n2 bits each"),
+                    (1, 1.5, "optimal code\n'0' / '10' / '11'")]:
+        ax.text(x, v + 0.05, f"{v:.1f}", ha="center", color=INK, fontsize=12)
+        ax.text(x, -0.2, t, ha="center", va="top", color=INK, fontsize=10.5)
+    ax.annotate("0.5 bits wasted\nper day", xy=(0, 1.75), xytext=(0.42, 2.08),
+                color=RUST, fontsize=10.5,
+                arrowprops=dict(arrowstyle="-|>", color=RUST, lw=1.1))
+    ax.set_xticks([]); ax.set_ylabel("average bits / day")
+    ax.set_ylim(0, 2.4); ax.set_xlim(-0.6, 2.2)
+    ax.set_title("A simple code wastes bits · the optimal code matches the distribution",
+                 fontsize=12.5, loc="left", color=INK, pad=10)
+    _clean(ax)
+    save(fig, "naive_vs_optimal_code.svg")
+
+
 if __name__ == "__main__":
     print("Generating lec00c figures...")
     info_content()
     coding_tree()
     cross_entropy_extrabits()
     dice_scoring()
+    entropy_samples()
+    naive_vs_optimal_code()
     print("Done.")
