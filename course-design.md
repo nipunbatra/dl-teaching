@@ -1,6 +1,6 @@
 # ES 667 Course Design — Making It Land for Post-ML Undergrads
 
-**Audience:** undergrads who just finished ES 654 (ml-teaching). They know: gradient descent from Taylor series, MLPs + autograd, basic CNN/RNN mechanics, MLE → cross-entropy for logistic regression, bias–variance, ridge/lasso.
+**Audience:** undergrads who just finished ES 335 (ml-teaching). They know: gradient descent from Taylor series, MLPs + autograd, basic CNN/RNN mechanics, MLE → cross-entropy for logistic regression, bias–variance, ridge/lasso.
 
 **Design goal:** amazing + accessible + sustainable. The content is ~80% built (26 decks, 15 notebooks, 30+ interactives). What remains is *calibration*, not creation.
 

@@ -26,9 +26,9 @@ This lecture mirrors UDL **Ch 1** (introduction) and **Ch 3** (shallow networks)
 
 ---
 
-# Bridge from ES 654 · you already know this
+# Bridge from ES 335 · you already know this
 
-| From ES 654 | What changes today |
+| From ES 335 | What changes today |
 |---|---|
 | Logistic regression on hand-picked features (apples vs oranges) | same classifier — but the **features are learned** |
 | You engineered features; the model only drew the boundary | layers learn the representation end-to-end |
@@ -37,7 +37,7 @@ This lecture mirrors UDL **Ch 1** (introduction) and **Ch 3** (shallow networks)
 
 <div class="keypoint">
 
-In ES 654 you built classifiers on engineered features. Today's question · what if the features themselves are learned?
+In ES 335 you built classifiers on engineered features. Today's question · what if the features themselves are learned?
 
 </div>
 
@@ -55,7 +55,7 @@ What is deep learning, and why now?
 
 # A question to open the semester
 
-You already built classifiers in ES 654 — logistic regression, SVMs, decision trees.
+You already built classifiers in ES 335 — logistic regression, SVMs, decision trees.
 
 **Q.** Point any of them at a raw $224 \times 224$ colour photo.
 
@@ -252,7 +252,7 @@ The probabilistic story is unchanged · pick a distribution, write NLL, optimize
 
 # From linear models to neurons
 
-You already know **linear regression / classification** from ES 654:
+You already know **linear regression / classification** from ES 335:
 
 $$\hat y = \mathbf{w}^\top \mathbf{x} + b$$
 

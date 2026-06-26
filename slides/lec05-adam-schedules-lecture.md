@@ -96,9 +96,9 @@ The exact same loss-curve shape would be diagnosed differently for each optimize
 
 ---
 
-# Bridge from ES 654 · you already know this
+# Bridge from ES 335 · you already know this
 
-| From ES 654 | What changes today |
+| From ES 335 | What changes today |
 |---|---|
 | you hand-tuned one $\eta$ for the whole model | every parameter earns its *own* effective $\eta$ |
 | L2 penalty $=$ weight decay (identical in SGD) | inside Adam they silently diverge — AdamW repairs it |
@@ -414,7 +414,7 @@ You set `weight_decay` — so why is L2 silently broken inside Adam?
 
 ---
 
-# L2 · quick recap from ES 654
+# L2 · quick recap from ES 335
 
 L2 regularization adds $\frac{\lambda}{2}\|\theta\|^2$ to the loss. Gradient contribution: $\lambda\, \theta$.
 

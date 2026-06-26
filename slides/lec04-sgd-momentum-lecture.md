@@ -73,9 +73,9 @@ This is **the most common failure mode** of vanilla SGD on real loss surfaces. B
 
 ---
 
-# Bridge from ES 654 · you already know this
+# Bridge from ES 335 · you already know this
 
-| From ES 654 | What changes today |
+| From ES 335 | What changes today |
 |---|---|
 | GD = step down the Taylor-series slope | the *surface* itself: ravines, saddles, $\kappa \gg 1$ |
 | SGD noise = a nuisance to average away | noise becomes a feature — it escapes saddles |

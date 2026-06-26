@@ -2,7 +2,7 @@
 
 **Instructor:** Prof. Nipun Batra, IIT Gandhinagar
 **Semester:** August 2026
-**Prerequisites:** ES 654 (Machine Learning) or equivalent — students are expected to know MLPs, basic CNNs/RNNs, backpropagation, SGD, linear algebra, probability
+**Prerequisites:** ES 335 (Machine Learning) or equivalent — students are expected to know MLPs, basic CNNs/RNNs, backpropagation, SGD, linear algebra, probability
 
 ## Design Principles
 

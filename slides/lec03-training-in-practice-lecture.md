@@ -71,9 +71,9 @@ The right answer (revealed in PART 4) is the one that **isolates the bug fastest
 
 ---
 
-# Bridge from ES 654 · you already know this
+# Bridge from ES 335 · you already know this
 
-| From ES 654 | What changes today |
+| From ES 335 | What changes today |
 |---|---|
 | `model.fit(X, y)` — done in seconds | a hand-written loop, hours on a GPU |
 | Bugs crash with an error message | DL bugs are **silent** · loss just doesn't go down |
@@ -82,7 +82,7 @@ The right answer (revealed in PART 4) is the one that **isolates the bug fastest
 
 <div class="keypoint">
 
-In ES 654 your models fit in seconds. Now training takes hours — and silent failure is the default. Today is the discipline that catches it.
+In ES 335 your models fit in seconds. Now training takes hours — and silent failure is the default. Today is the discipline that catches it.
 
 </div>
 

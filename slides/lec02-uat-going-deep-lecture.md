@@ -104,9 +104,9 @@ This is L02's central tension · **width** is universal but expensive, **depth**
 
 ---
 
-# Bridge from ES 654 · you already know this
+# Bridge from ES 335 · you already know this
 
-| From ES 654 | What changes today |
+| From ES 335 | What changes today |
 |---|---|
 | Gradient descent derived from first-order Taylor expansion | that same gradient must now survive a **product of 50 Jacobians** |
 | More capacity ⇒ overfitting risk (bias-variance) | **degradation** · deeper nets can fail to even fit *train* |
@@ -115,7 +115,7 @@ This is L02's central tension · **width** is universal but expensive, **depth**
 
 <div class="keypoint">
 
-You proved gradient descent from Taylor series in ES 654. Now · what happens to that gradient through 50 layers?
+You proved gradient descent from Taylor series in ES 335. Now · what happens to that gradient through 50 layers?
 
 </div>
 

@@ -2,7 +2,7 @@
 
 **Instructor:** Prof. Nipun Batra, IIT Gandhinagar
 **Semester:** Aug 2026
-**Prerequisite:** ES 654 (ML 2025) — students already know MLPs, autograd, basic CNNs, gradient descent, logistic regression, L1/L2 regularization, PyTorch basics, RL basics.
+**Prerequisite:** ES 335 (ML 2025) — students already know MLPs, autograd, basic CNNs, gradient descent, logistic regression, L1/L2 regularization, PyTorch basics, RL basics.
 
 ---
 

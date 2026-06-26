@@ -39,7 +39,7 @@ By the end of this lecture you will be able to:
 
 Today maps to **UDL Ch 10** · *Convolutional networks* (early sections).
 
-ES 654 covered LeNet and CNN basics. We skim those and spend time on **receptive fields, the classic architecture progression, and inductive biases**.
+ES 335 covered LeNet and CNN basics. We skim those and spend time on **receptive fields, the classic architecture progression, and inductive biases**.
 
 </div>
 
@@ -78,9 +78,9 @@ Stop and think. The answer is the central insight of CNNs — and we'll unpack i
 
 ---
 
-# Bridge from ES 654 · you already know this
+# Bridge from ES 335 · you already know this
 
-| From ES 654 | What changes today |
+| From ES 335 | What changes today |
 |---|---|
 | convolution / pooling mechanics — *what* they compute | *why* those choices win: inductive bias |
 | stride &amp; padding formulas | receptive field — how depth buys context |
@@ -89,7 +89,7 @@ Stop and think. The answer is the central insight of CNNs — and we'll unpack i
 
 <div class="keypoint">
 
-You did convolution + pooling mechanics in ES 654. Today is *why* those choices win, not *what* they are.
+You did convolution + pooling mechanics in ES 335. Today is *why* those choices win, not *what* they are.
 
 </div>
 
@@ -718,7 +718,7 @@ Same probabilistic story as L00 · the model still outputs $p(y \mid x; \theta)$
 
 Where did the "missing capacity" go? **Nowhere — it was capacity we never needed.** Translation equivariance + locality means an FC layer that learns "edge detector at every pixel" is wasteful · 99.99% of those weights *should* be the same filter applied at every spot. Convs **bake that constraint in** for free.
 
-This is the same idea as ridge regression in ES654 · constraints on parameters that match the problem **don't reduce true capacity, they reduce the search space.**
+This is the same idea as ridge regression in ES335 · constraints on parameters that match the problem **don't reduce true capacity, they reduce the search space.**
 
 ---
 

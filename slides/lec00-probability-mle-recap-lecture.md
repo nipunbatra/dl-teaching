@@ -54,18 +54,18 @@ L00B (next lecture) takes this and adds priors → MAP → L1/L2 → KL.
 
 ---
 
-# Bridge from ES 654 · you already know this
+# Bridge from ES 335 · you already know this
 
-| From ES 654 | What changes today |
+| From ES 335 | What changes today |
 |---|---|
-| You derived BCE for logistic regression from Bernoulli MLE | that one derivation becomes the recipe for **every** loss |
+| You were *told* cross-entropy is the loss for logistic regression | today you **derive** it from a Bernoulli model — the recipe for *every* loss |
 | MSE justified as "penalize big errors more" | MSE = NLL under Gaussian noise — a *modeling choice* |
 | Each task came with its loss, handed down | losses are **derived** · pick the distribution, the loss falls out |
 | The model outputs a number | the model outputs a **distribution** over $y$ |
 
 <div class="keypoint">
 
-You derived cross-entropy for logistic regression from Bernoulli MLE in ES 654. Today that one trick becomes the organizing principle of the whole course.
+In ES 335 cross-entropy was handed to you as "the classification loss" — *stated*, never derived. Today you derive it from a Bernoulli model, and that one derivation becomes the organizing principle of the whole course.
 
 </div>
 
@@ -83,19 +83,11 @@ The loss functions we used without asking why
 
 # Linear regression · the model
 
-Given a dataset $\{(\mathbf{x}_i, y_i)\}_{i=1}^N$ with $\mathbf{x}_i \in \mathbb{R}^d$ and continuous targets $y_i \in \mathbb{R}$, fit a linear model ·
+Given $\{(\mathbf{x}_i, y_i)\}_{i=1}^N$ with targets $y_i \in \mathbb{R}$, fit a line and **read off a prediction** — no probability anywhere in sight yet.
 
-<div class="math-box">
+$$\hat y_i = \boldsymbol\theta^\top \mathbf{x}_i \qquad\text{— a single number, a *point estimate*}$$
 
-$$\hat y_i = \boldsymbol\theta^\top \mathbf{x}_i$$
-
-(absorb the bias into $\boldsymbol\theta$ by appending a $1$ to each $\mathbf{x}_i$).
-
-</div>
-
-The prediction is a single real number — a *point estimate* of $y$.
-
-So far, no probability anywhere in sight. We pick weights, we predict a number, we measure how wrong we are.
+![w:660px](figures/lec00/svg/linreg_frequentist.svg)
 
 ---
 
@@ -244,24 +236,30 @@ The model doesn't predict a number — it predicts a **distribution**
 
 ---
 
-# Random variable · the basic object
+# Random variable · the definition from first-year probability
 
-A **random variable** $Y$ is a quantity whose value is uncertain. It follows a distribution $p$.
+In your probability course, a **random variable** $X$ was a *function* that maps each outcome in the sample space $\Omega$ to a number.
+
+![w:600px](figures/lec00/svg/random_variable_map.svg)
+
+Flip two coins · $X =$ number of heads sends each outcome to $\{0, 1, 2\}$.
+
+---
+
+# Random variable · the view we'll use today
+
+For ML we care less about $\Omega$ and more about the **distribution** of the values $Y$ takes ·
 
 <div class="math-box">
 
 $$Y \sim p$$
 
-Read · *"$Y$ is **distributed as** $p$"*. The "$\sim$" is the central notation of this lecture.
+Read · *"$Y$ is **distributed as** $p$"* — the central notation of this lecture.
 
 </div>
 
-Two flavours, depending on the type of value $Y$ takes ·
-
-- **Discrete** $Y \in \{y_1, y_2, \ldots\}$ — described by a probability **mass** function $P(Y = y)$ summing to $1$.
-- **Continuous** $Y \in \mathbb{R}$ — described by a probability **density** $p(y)$ integrating to $1$.
-
-We'll use both. The notation is mostly the same.
+- **Discrete** $Y \in \{y_1, y_2, \ldots\}$ — probability **mass** $P(Y = y)$, sums to $1$.
+- **Continuous** $Y \in \mathbb{R}$ — probability **density** $p(y)$, integrates to $1$.
 
 ---
 
@@ -310,56 +308,75 @@ Binary → Bernoulli · multi-class → Categorical · continuous → Normal. Ea
 
 ---
 
-# IID · the assumption that makes everything work
+# IID · start with the picture
 
-A dataset $\mathcal{D} = \{Y_1, \ldots, Y_N\}$ is **independent and identically distributed** if ·
+Every supervised dataset is a table · $N$ rows, each one an (input, target) example.
+
+![w:720px](figures/lec00/svg/iid_matrix.svg)
+
+Two questions about those rows lead to the **IID** assumption →
+
+---
+
+# IID · the assumption, formally
 
 <div class="math-box">
 
 $$Y_i \stackrel{\text{iid}}{\sim} p(\cdot \mid \theta)$$
 
-- **Identically distributed** · every $Y_i$ comes from the *same* distribution.
-- **Independent** · knowing $Y_i$ tells you *nothing* about $Y_j$ for $i \ne j$.
+- **Identically distributed** · every row comes from the *same* $p(\cdot\mid\theta)$.
+- **Independent** · knowing $Y_i$ tells you *nothing* about $Y_j$ ($i \ne j$).
 
 </div>
 
-These two assumptions together give us the **product factorization** ·
+Examples first, then the algebra · together they give the **product factorization** ·
 $$P(\mathcal{D} \mid \theta) = \prod_{i=1}^N P(Y_i \mid \theta)$$
 
 ---
 
-# IID · why it matters (and when it fails)
+# IID · why it matters
 
-The product factorization is what becomes a sum after taking logs — and what becomes the **summed loss over a dataset** in every training loop. IID is the formal license to add up per-example losses.
+The product factorization becomes a **sum after taking logs** — and that sum is the **summed loss over a dataset** in every training loop.
 
-When IID fails (time series, video frames, sensor logs from one device) we need different math · autoregressive models, state-space models, etc. For this course, treat batches as IID.
+<div class="keypoint">
 
-<div class="notebook">
-
-▶ **Notebook · [`lec00-iid-demo.ipynb`](../notebooks/lec00-iid-demo.ipynb)** — `torch.distributions` walks through four cases (IID · independent-not-identical · identical-not-independent · neither). Includes sequence + histogram + lag-1 scatter plots, and shows how `sum(log p)` is *blind* to autocorrelation — so shuffling the batch matters.
+IID is the formal license to add up per-example losses. Shuffle the batch order and the summed loss is unchanged — that is independence at work.
 
 </div>
 
 ---
 
-# Bernoulli · the coin
+# IID · and when it breaks
 
-Outcome $Y \in \{0, 1\}$, parameter $p \in [0, 1]$ = probability of "heads."
+![w:1000px](figures/lec00/svg/iid_fails.svg)
 
-$$Y \sim \text{Bernoulli}(p)$$
+Time series, video frames, one-device sensors · here $y_t$ depends on $y_{t-1}$, so the product factorization is simply wrong. Then you need different math — autoregressive or state-space models. For this course, treat *shuffled* batches as IID.
 
-<div class="math-box">
+<div class="notebook">
 
-**Probability mass function** ·
-
-$$P(Y = 1 \mid p) = p$$
-$$P(Y = 0 \mid p) = 1 - p$$
+▶ **Notebook · [`lec00-iid-demo.ipynb`](../notebooks/lec00-iid-demo.ipynb)** — four cases (IID / indep-not-identical / identical-not-indep / neither) with sequence, histogram and lag-1 scatter plots; shows `sum(log p)` is *blind* to autocorrelation.
 
 </div>
 
-Two outcomes, two probabilities, summing to 1. This is the simplest non-trivial distribution.
+---
 
-**Examples** · email is spam (Y=1) or not (Y=0) · patient has disease or not · pixel is foreground or background.
+# Bernoulli · the coin (the simplest distribution)
+
+A **Bernoulli** models a single yes/no outcome $Y \in \{0, 1\}$. One parameter $p \in [0,1]$ = the probability of a "1" (call it "heads").
+
+<div class="math-box">
+
+$$Y \sim \text{Bernoulli}(p), \qquad P(Y=1\mid p) = p,\quad P(Y=0\mid p) = 1-p$$
+
+</div>
+
+Anything binary is a Bernoulli ·
+
+- **spam** · an email is spam ($Y=1$) or not ($Y=0$)
+- **diagnosis** · a patient has the disease or does not
+- **segmentation** · a pixel is foreground or background
+
+Two outcomes, two probabilities summing to 1 — the simplest non-trivial distribution, and the seed of binary cross-entropy.
 
 ---
 
@@ -521,63 +538,57 @@ Sample · score · know-the-moments. **These three operations are the entire int
 
 ---
 
-# Categorical · the K-sided die (formal)
+# Categorical · the K-sided die
 
-Outcome $Y \in \{1, 2, \ldots, K\}$, parameter vector $\boldsymbol\pi = (\pi_1, \ldots, \pi_K)$ with $\pi_k \ge 0$ and $\sum_k \pi_k = 1$.
-
-$$Y \sim \text{Categorical}(\boldsymbol\pi)$$
+A **Categorical** models one outcome out of $K$ classes — think a (possibly loaded) $K$-sided die. Parameter $\boldsymbol\pi = (\pi_1, \ldots, \pi_K)$ with $\pi_k \ge 0$, $\sum_k \pi_k = 1$.
 
 <div class="math-box">
 
-**Probability mass function** · $P(Y = k \mid \boldsymbol\pi) = \pi_k$
+$$Y \sim \text{Categorical}(\boldsymbol\pi), \qquad P(Y = k \mid \boldsymbol\pi) = \pi_k$$
 
-**One-hot compact form** · let $\mathbf{y} \in \{0,1\}^K$ with $y_k = 1$ if $Y = k$, else 0. Then ·
+</div>
+
+**Bernoulli is the special case $K = 2$.** Mean · $\mathbb{E}[\mathbf{y}] = \boldsymbol\pi$.
+
+---
+
+# Categorical · the one-hot compact form
+
+Encode the label as a **one-hot** vector $\mathbf{y} \in \{0,1\}^K$ — a single $1$ in the true class, $0$ everywhere else.
+
+<div class="math-box">
+
 $$P(Y \mid \boldsymbol\pi) = \prod_{k=1}^K \pi_k^{\,y_k}$$
 
 </div>
 
-The product collapses · only one $y_k = 1$, so only one factor survives.
+**Why this works** · say $K = 4$ and the true class is $Y = 3$, so $\mathbf{y} = (0,0,1,0)$ ·
 
-**Mean** · $\mathbb{E}[\mathbf{y}] = \boldsymbol\pi$. **Bernoulli is the special case $K = 2$.**
+$$\pi_1^{\,0}\,\pi_2^{\,0}\,\pi_3^{\,1}\,\pi_4^{\,0} = \pi_3$$
+
+Every factor with exponent $0$ collapses to $1$ — only the true class survives. Same exponent trick as Bernoulli, and the seed of categorical cross-entropy.
 
 ---
 
-# Categorical · a worked example
+# Categorical · a worked example (MNIST)
 
-**MNIST classifier** outputs $\boldsymbol\pi = (0.05, 0.7, 0.1, 0.02, \ldots, 0.05)$ for one image (10 components, summing to 1).
+An MNIST classifier outputs a 10-way softmax for one image. Here the true digit is **2** ·
 
-<div class="math-box">
+![w:780px](figures/lec00/svg/mnist_categorical.svg)
 
-The model says $P(\text{class }k)$ for each digit.
-
-If the true label is $Y = 2$ (digit "2"), then the probability the model assigned to **the truth** is
-$$\pi_{Y_{\text{true}}} = \pi_2 = 0.7$$
-
-</div>
-
-A perfect model would put all mass on class 2 (i.e. $\boldsymbol\pi = (0, 0, 1, 0, \ldots, 0)$). The further the prediction is from a one-hot truth, the *less likely* the data is under it — and the larger the cross-entropy loss.
-
-**The softmax output of *any* classifier IS a Categorical distribution.** Treat it that way and the loss falls out automatically.
+The model put $\hat\pi_2 = 0.70$ on the truth (a perfect model would put all mass on class 2). **The softmax output of *any* classifier IS a Categorical** — treat it that way and cross-entropy falls out automatically.
 
 ---
 
 # Normal (Gaussian) · the bell curve
 
-Continuous $Y \in \mathbb{R}$ with mean $\mu$ and variance $\sigma^2$.
+Continuous $Y \in \mathbb{R}$ with mean $\mu$, variance $\sigma^2$ · $Y \sim \mathcal{N}(\mu, \sigma^2)$.
 
-$$Y \sim \mathcal{N}(\mu, \sigma^2)$$
-
-<div class="math-box">
-
-**Probability density function (PDF)** ·
+![w:600px](figures/lec00/svg/normal_bellcurve.svg)
 
 $$p(y \mid \mu, \sigma^2) = \frac{1}{\sqrt{2\pi\sigma^2}}\,\exp\!\left(-\frac{(y - \mu)^2}{2\sigma^2}\right)$$
 
-**Mean & variance** · $\mathbb{E}[Y] = \mu, \quad \text{Var}[Y] = \sigma^2$
-
-</div>
-
-The most important continuous distribution in all of statistics — and the seed of the MSE loss.
+The most important continuous distribution — and the seed of the MSE loss.
 
 ---
 
@@ -652,145 +663,13 @@ These three properties together explain why the Gaussian dominates classical sta
 
 ---
 
-# Why Normal · the Central Limit Theorem
+# The conditional view · the model outputs a distribution
 
-**Statement (informal)** · let $X_1, X_2, \ldots, X_N$ be IID with mean $\mu$ and variance $\sigma^2$. Define the standardized sum ·
+In supervised learning the model outputs the **parameters of a distribution** over $Y$ given $\mathbf{x}$ — never just a number.
 
-<div class="math-box">
+![w:1000px](figures/lec00/svg/conditional_view.svg)
 
-$$Z_N = \frac{1}{\sqrt{N}}\sum_{i=1}^N \frac{X_i - \mu}{\sigma}$$
-
-Then as $N \to \infty$, $Z_N \to \mathcal{N}(0, 1)$ — **regardless of the original distribution** of $X_i$.
-
-</div>
-
-**Implication** · any quantity arising as the *aggregate of many small effects* looks Gaussian. Sensor noise, human height, daily temperature deviation — all approximately Normal because the underlying causes are sums of many small contributions.
-
----
-
-# CLT · a worked numeric
-
-A clean way to see CLT in action ·
-
-<div class="math-box">
-
-Sum of 12 IID $\text{Uniform}[0, 1]$ samples ·
-
-$$S = \sum_{i=1}^{12} U_i,\quad U_i \stackrel{\text{iid}}{\sim} \text{Uniform}[0,1]$$
-
-- **Mean** of $S$ · $12 \cdot 0.5 = 6$.
-- **Variance** of $S$ · $12 \cdot 1/12 = 1$.
-- **Distribution** of $S$ · approximately $\mathcal{N}(6, 1)$.
-
-</div>
-
-Historically used to *generate* Gaussian samples before better algorithms (Box-Muller) existed · subtract 6, you get a draw from $\mathcal{N}(0, 1)$.
-
----
-
-# CLT in pictures · sum of N uniforms
-
-![w:920px](figures/lec00/svg/clt_demo.svg)
-
-<div class="math-box">
-
-Sum of $N$ IID $\text{Uniform}[0, 1]$ samples, repeated 5000 times. **One uniform** is uniform; **two uniforms summed** form a triangular density; by **N = 30** the sum is essentially indistinguishable from a Gaussian. The CLT is not a special property of any one distribution — it's an *attractor* that almost any IID sum flows to.
-
-</div>
-
----
-
-# Why Normal · maximum entropy
-
-**Entropy** quantifies "how spread-out / uncertain" a distribution is. Among all distributions with a *given* mean $\mu$ and variance $\sigma^2$ ·
-
-<div class="math-box">
-
-$$\boxed{\;\arg\max_{p}\; H(p) \;\text{ s.t. }\; \mathbb{E}_p[Y] = \mu,\; \mathbb{E}_p[(Y - \mu)^2] = \sigma^2 \;\;\Longrightarrow\;\; p = \mathcal{N}(\mu, \sigma^2)\;}$$
-
-</div>
-
-**Reading** · *"if all you know about a quantity is its first two moments, the least committal probability model is Gaussian."* This is **Occam's razor for distributions** — don't bake in assumptions you can't justify.
-
----
-
-# Why Normal · closed under linear operations
-
-Two structural facts make Gaussians uniquely well-behaved under linear maps ·
-
-<div class="math-box">
-
-**Sum of independent Gaussians is Gaussian.** If $X \sim \mathcal{N}(\mu_1, \sigma_1^2)$ and $Y \sim \mathcal{N}(\mu_2, \sigma_2^2)$ are independent ·
-$$X + Y \sim \mathcal{N}\bigl(\mu_1 + \mu_2,\; \sigma_1^2 + \sigma_2^2\bigr)$$
-
-**Affine transform of a Gaussian is Gaussian.**
-$$aY + b \sim \mathcal{N}\bigl(a\mu + b,\; a^2 \sigma^2\bigr)$$
-
-</div>
-
-**No other common distribution behaves this nicely.** Sum of two Bernoullis isn't Bernoulli; sum of two uniforms isn't uniform. The Gaussian is the *fixed point* of summing.
-
-This is why Gaussians compound cleanly under repeated additive operations.
-
----
-
-# Why Normal · where this pays off (1/2)
-
-Two consequences you'll see in the next few weeks ·
-
-<div class="math-box">
-
-**Diffusion (L21)** · the forward process adds Gaussian noise at every step. The closed-form jump
-
-$$x_t = \sqrt{\bar\alpha_t}\,x_0 + \sqrt{1-\bar\alpha_t}\,\epsilon,\quad \epsilon \sim \mathcal{N}(0, I)$$
-
-exists **exactly because sums of independent Gaussians are Gaussian** — no integral needed.
-
-</div>
-
-<div class="math-box">
-
-**Kalman filter** · linear-Gaussian state-space models have a closed-form posterior at every time step. Used in robotics, control, and signal processing — and a stepping-stone to L19's variational inference.
-
-</div>
-
----
-
-# Why Normal · where this pays off (2/2)
-
-<div class="math-box">
-
-**Reparameterization trick (next!)** · sampling from a non-standard Normal is just an affine transform of a standard one ·
-
-$$z = \mu + \sigma \cdot \epsilon,\quad \epsilon \sim \mathcal{N}(0, 1)$$
-
-</div>
-
-This is the **single most important sampling trick in deep learning** ·
-
-- VAEs (L19) · sample latent codes through it.
-- Diffusion (L21) · every denoising step uses it.
-- Bayesian neural nets · weights are sampled this way.
-
-All three rely on Gaussians being closed under affine maps. Each lecture above is a direct consequence of the two structural properties we just stated.
-
----
-
-# The conditional view · model outputs a distribution
-
-In supervised learning the model **does not output a number**. It outputs the *parameters of a distribution* over $Y$ given the input $\mathbf{x}$.
-
-<div class="math-box">
-
-| Task | Model output | Conditional distribution |
-|:-:|:-:|:-:|
-| Linear regression | $\hat\mu_\theta(\mathbf{x}) = \boldsymbol\theta^\top \mathbf{x}$ | $Y \mid \mathbf{x} \sim \mathcal{N}(\hat\mu_\theta(\mathbf{x}),\,\sigma^2)$ |
-| Logistic regression | $\hat p_\theta(\mathbf{x}) = \sigma(\boldsymbol\theta^\top \mathbf{x})$ | $Y \mid \mathbf{x} \sim \text{Bernoulli}(\hat p_\theta(\mathbf{x}))$ |
-| $K$-class softmax | $\hat{\boldsymbol\pi}_\theta(\mathbf{x})$ | $Y \mid \mathbf{x} \sim \text{Categorical}(\hat{\boldsymbol\pi}_\theta(\mathbf{x}))$ |
-
-</div>
-
-Training asks · *under these conditional distributions, how likely are the labels we actually saw?* Maximize that — the rest follows.
+Training asks · *under these distributions, how likely are the labels we actually saw?* Maximize that — everything else follows.
 
 ---
 
@@ -813,158 +692,24 @@ Whether you are doing logistic regression, an MLP, a Transformer, or a diffusion
 
 ---
 
-<!-- _class: section-divider -->
+# Bayes' rule in ML · why we start with the likelihood
 
-### PART 1.5
-
-# Sampling
-
-How we draw from distributions — and why every generative model needs it
-
----
-
-# Why we sample · two roles
-
-Sampling appears all over deep learning, in two distinct roles ·
+We really want the parameters **given** the data — the *posterior* $p(\theta \mid \mathcal{D})$. Bayes' rule splits it into two pieces ·
 
 <div class="math-box">
 
-| Role | What it means | Examples |
-|:-:|:-:|:-:|
-| **Generation** | Produce new instances from a learned distribution | LLM next-token, VAE images, diffusion, GAN |
-| **Monte Carlo estimation** | Approximate an expectation we can't compute analytically | mini-batch SGD, REINFORCE, dropout averaging, evaluating ELBOs |
+$$\underbrace{p(\theta \mid \mathcal{D})}_{\text{posterior}} \;\propto\; \underbrace{p(\mathcal{D} \mid \theta)}_{\text{likelihood}}\;\cdot\;\underbrace{p(\theta)}_{\text{prior}}$$
 
 </div>
 
-These two uses are technically the same operation — *draw $y \sim p$* — but conceptually different. Today we set up the primitives. The advanced uses (reparameterization in VAEs, ancestral sampling in diffusion, nucleus sampling in LLMs) all reduce to combinations of what's on the next four slides.
-
----
-
-# ⭐⭐⭐ Optional · the master sampling primitive · inverse CDF
-
-For any 1-D distribution with CDF $F(y) = P(Y \le y)$ ·
-
-<div class="math-box">
-
-1. Draw $u \sim \text{Uniform}[0, 1]$.
-2. Return $y = F^{-1}(u)$.
-
-</div>
-
-**Why it works** · $P(Y \le y) = P(F^{-1}(u) \le y) = P(u \le F(y)) = F(y)$. ✓
-
-![w:560px](figures/lec00/svg/inverse_cdf.svg)
-
----
-
-# ⭐⭐⭐ Optional · Inverse CDF · worked on a Bernoulli
-
-To sample $Y \sim \text{Bernoulli}(p)$ ·
-
-<div class="math-box">
-
-The CDF jumps from $0$ to $1-p$ at $y = 0$, then from $1-p$ to $1$ at $y = 1$.
-
-Inverting ·
-
-```python
-return 0 if u < 1 - p else 1
-```
-
-</div>
-
-One uniform draw + one comparison · this is what `torch.bernoulli` does internally. **Same algorithm extends to any 1-D distribution** as long as you can compute the CDF.
-
----
-
-# Sampling from a Categorical · the algorithm
-
-Categorical with probabilities $\boldsymbol\pi = (\pi_1, \ldots, \pi_K)$. The CDF is the **stick-breaking cumulative** ·
-
-<div class="math-box">
-
-Build $c_k = \sum_{j=1}^k \pi_j$ (so $c_K = 1$). Draw $u \sim \text{Uniform}[0, 1]$. Return the smallest $k$ such that $c_k \ge u$.
-
-</div>
-
-**Worked** · $\boldsymbol\pi = (0.1, 0.4, 0.3, 0.2)$ → cumulative $(0.1, 0.5, 0.8, 1.0)$.
-
-Draw $u = 0.55$ · smallest $k$ with $c_k \ge 0.55$ is $k = 3$. Return class **3**.
-
----
-
-# Categorical sampling · why it matters
-
-This is what `torch.multinomial` does · one uniform + one cumulative scan.
+- **Likelihood** $p(\mathcal{D}\mid\theta)$ — how well $\theta$ explains the data. Maximize it alone → **MLE**. *That is the whole of today.*
+- **Prior** $p(\theta)$ — what we believed before any data. Multiply it back in → **MAP**, and every regularizer — *next lecture (L00B)*.
 
 <div class="keypoint">
 
-**Every LLM samples its next token with exactly this algorithm.**
-
-The model produces a vector of $K$ probabilities (where $K \approx$ vocab size, often 50,000+) and we run a single Categorical draw.
+We spend L00 entirely on the **likelihood** term. The prior is a one-line addition in L00B — and L2 / L1 fall straight out of it.
 
 </div>
-
-You will see this primitive in ·
-- L13–L15 · LLM token generation
-- L19 · VAE discrete latents
-- L21 · diffusion class-conditional sampling
-
-Knowing it once means knowing it everywhere.
-
----
-
-# Sampling from a Normal · the affine trick
-
-To sample $Y \sim \mathcal{N}(\mu, \sigma^2)$ ·
-
-<div class="math-box">
-
-1. Sample $\epsilon \sim \mathcal{N}(0, 1)$ (e.g. via Box-Muller, or just `torch.randn(...)`).
-2. Return $y = \mu + \sigma \cdot \epsilon$.
-
-</div>
-
-**Why this works** · the affine transform of a Gaussian is a Gaussian (the "closed under linear ops" property from earlier). If $\epsilon \sim \mathcal{N}(0, 1)$, then $\mu + \sigma\epsilon \sim \mathcal{N}(\mu, \sigma^2)$ — exactly what we wanted.
-
-So we only ever need a routine to draw from $\mathcal{N}(0, 1)$. Everything else is multiplication and addition.
-
----
-
-# The reparameterization trick · preview of L19
-
-The same affine trick is one of the most important ideas in modern DL.
-
-<div class="keypoint">
-
-Let the model output $\mu_\theta(\mathbf{x})$ and $\sigma_\theta(\mathbf{x})$ as deterministic functions of an input. To sample a **stochastic** output ·
-
-$$y = \mu_\theta(\mathbf{x}) + \sigma_\theta(\mathbf{x}) \cdot \epsilon, \qquad \epsilon \sim \mathcal{N}(0, 1)$$
-
-The randomness $\epsilon$ is **outside** the gradient path. $\mu_\theta, \sigma_\theta$ are deterministic ⇒ we can **backprop through the sample**.
-
-</div>
-
-This is what makes **VAEs trainable** (L19) and powers the entire **diffusion** stack (L21–L22). You'll see this exact form repeatedly — and you now know where it comes from.
-
----
-
-# LLM token sampling · preview of L14
-
-You now know the primitive (sampling from a Categorical). LLM generation is just Categorical sampling at every step — but with a few tweaks to control diversity ·
-
-<div class="math-box">
-
-| Strategy | What it does | When to use |
-|:-:|:-:|:-:|
-| **Greedy** ($\arg\max$) | Pick the most likely token | Deterministic; safe but boring |
-| **Temperature** $T$ | Sample from $\tilde\pi_k \propto \pi_k^{1/T}$ | $T \to 0$ = greedy; $T = 1$ = unchanged; $T > 1$ = more random |
-| **Top-$k$** | Keep top $k$ logits, renormalize, sample | Caps diversity at the top |
-| **Top-$p$ (nucleus)** | Keep smallest set with cumulative prob $\ge p$ | Adapts to the model's confidence |
-
-</div>
-
-L14 covers the full story. The point today · the underlying operation is *sampling from a Categorical* — exactly the inverse-CDF primitive from two slides ago.
 
 ---
 
@@ -1006,7 +751,7 @@ $$\mathcal{L}(\theta) := P(\mathcal{D} \mid \theta)$$
 
 </div>
 
-It is **not** a probability over $\theta$ (we'll get that from Bayes' rule next). It is the data's probability, viewed as a function of $\theta$.
+It is **not** a probability over $\theta$ — that would be the *posterior*, from the Bayes'-rule slide we just saw. It is the data's probability, viewed as a function of $\theta$.
 
 For the coin, IID assumption gives ·
 $$\mathcal{L}(p) = \prod_{i=1}^{N} P(y_i \mid p) = \prod_{i=1}^{N} p^{y_i}(1 - p)^{1 - y_i} = p^{\#H}\,(1 - p)^{\#T}$$
@@ -1046,6 +791,12 @@ This is *below* the smallest representable double-precision float ($\approx 10^{
 </div>
 
 We need the same answer in a form that doesn't underflow and is easy to differentiate.
+
+<div class="notebook">
+
+▶ **Notebook · [`lec00-mle-map.ipynb`](../notebooks/lec00-mle-map.ipynb)** — watch $0.5^{1000}$ underflow to exactly `0.0` in float64 while the log-likelihood stays finite.
+
+</div>
 
 ---
 
@@ -1203,17 +954,9 @@ The model's prediction $\hat\mu = \boldsymbol\theta^\top \mathbf{x}$ is the **me
 
 # Linear regression as MLE · the picture
 
-![w:780px](figures/lec00/svg/mle_linear_regression.svg)
+![w:680px](figures/lec00/svg/mle_linear_regression.svg)
 
-<div class="math-box">
-
-Each data point is one **draw** from a Gaussian whose mean lies on the regression line. MLE asks · *which line $\boldsymbol\theta^\top \mathbf{x}$ makes the observed $y$'s most probable?*
-
-Equivalently · *which line minimizes the squared distance from each point to the line* — exactly the OLS objective. That equivalence is the whole derivation.
-
-</div>
-
-This is the only modelling choice. Everything else is algebra.
+Each point is a **draw** from a Gaussian centred on the line. MLE asks · *which line makes the observed $y$'s most probable?* — equivalently, *which line minimizes squared distance to the points.* That equivalence is the whole derivation; everything else is algebra.
 
 ---
 
@@ -1256,19 +999,13 @@ If the noise had been Laplace ($\epsilon \sim \text{Laplace}$), the same derivat
 
 # MLE for logistic regression · the assumption
 
-Now $y \in \{0, 1\}$. Model ·
+Now $y \in \{0, 1\}$. Model each label as a **Bernoulli** whose parameter is the sigmoid of a linear score ·
 
-$$Y \mid \mathbf{x} \sim \text{Bernoulli}\bigl(\,\hat p_\theta(\mathbf{x})\,\bigr),\qquad \hat p_\theta(\mathbf{x}) = \sigma(\boldsymbol\theta^\top \mathbf{x})$$
+$$Y \mid \mathbf{x} \sim \text{Bernoulli}\bigl(\hat p_\theta(\mathbf{x})\bigr),\qquad \hat p_\theta(\mathbf{x}) = \sigma(\boldsymbol\theta^\top \mathbf{x})$$
 
-Per-example probability ·
+![w:600px](figures/lec00/svg/logistic_mle_picture.svg)
 
-<div class="math-box">
-
-$$p(y \mid \mathbf{x}, \boldsymbol\theta) = \hat p_\theta(\mathbf{x})^{\,y}\,\bigl(1 - \hat p_\theta(\mathbf{x})\bigr)^{1 - y}$$
-
-</div>
-
-This is the same compact Bernoulli form as the coin — except $\hat p$ now depends on $\mathbf{x}$.
+Same compact Bernoulli form as the coin — $p(y\mid\mathbf{x},\boldsymbol\theta) = \hat p^{\,y}(1-\hat p)^{1-y}$ — except $\hat p$ now depends on $\mathbf{x}$.
 
 ---
 
@@ -1306,42 +1043,49 @@ That is **not** a coincidence — it's a feature of *generalized linear models*,
 
 ---
 
-# Multiclass · the assumption
+# Multiclass · the softmax
 
-Now $y \in \{1, 2, \ldots, K\}$ — one of $K$ mutually exclusive classes. We need the model to output a full **probability distribution** over the $K$ classes. We use the **softmax**.
+Now $y \in \{1, \ldots, K\}$. Learn one weight vector $\boldsymbol\theta_k$ per class; the **logit** for class $k$ is $\textcolor{#37535F}{z_k} = \boldsymbol\theta_k^\top \mathbf{x}$.
 
 <div class="math-box">
 
-For each class $k$, learn a weight vector $\boldsymbol\theta_k \in \mathbb{R}^d$. Compute logits $z_k = \boldsymbol\theta_k^\top \mathbf{x}$ for $k = 1, \ldots, K$.
-
 **Softmax** turns logits into probabilities ·
-$$\hat\pi_k(\mathbf{x}) = \frac{\exp(z_k)}{\sum_{j=1}^K \exp(z_j)} = \frac{\exp(\boldsymbol\theta_k^\top \mathbf{x})}{\sum_{j=1}^K \exp(\boldsymbol\theta_j^\top \mathbf{x})}$$
-
-Two properties · $\hat\pi_k > 0$ (because $\exp > 0$) and $\sum_k \hat\pi_k = 1$. So $\hat{\boldsymbol\pi}$ is a valid distribution.
+$$\textcolor{#5F8573}{\hat\pi_k(\mathbf{x})} = \frac{\exp(\textcolor{#37535F}{z_k})}{\sum_{j=1}^K \exp(\textcolor{#37535F}{z_j})}$$
 
 </div>
 
-Modelling assumption · $Y \mid \mathbf{x} \sim \text{Categorical}(\hat{\boldsymbol\pi}_\theta(\mathbf{x}))$. Binary logistic is the special case $K = 2$ (with the softmax collapsing to a sigmoid).
+Reading guide · <span style="color:#37535F">**slate = logits** $z_k$</span> (any real number) → <span style="color:#5F8573">**green = probabilities** $\hat\pi_k$</span> (all positive, sum to 1).
+
+---
+
+# Multiclass · the modelling assumption
+
+<div class="math-box">
+
+$$Y \mid \mathbf{x} \sim \text{Categorical}\bigl(\hat{\boldsymbol\pi}_\theta(\mathbf{x})\bigr)$$
+
+</div>
+
+Same recipe as before · the model outputs the parameters $\hat{\boldsymbol\pi}$ of a Categorical, and we maximize the probability it assigns to the true labels.
+
+**Binary logistic is the special case $K = 2$** — the softmax collapses to a sigmoid.
 
 ---
 
 # Multiclass · the per-example log-likelihood
 
-If example $i$ has true class $y_i \in \{1, \ldots, K\}$, the probability the model assigns to that label is $\hat\pi_{i,\,y_i}$ — i.e. the entry of the softmax at position $y_i$.
+The probability the model assigns to the **true** class $\textcolor{#B85A3E}{y_i}$ is just the softmax entry at that position ·
 
 <div class="math-box">
 
-$$p(y_i \mid \mathbf{x}_i, \theta) = \hat\pi_{i,\,y_i}$$
+$$p(\textcolor{#B85A3E}{y_i} \mid \mathbf{x}_i, \theta) = \textcolor{#5F8573}{\hat\pi_{i,\,y_i}} \;=\; \prod_{k=1}^K \textcolor{#5F8573}{\hat\pi_{i, k}}^{\,\textcolor{#B85A3E}{y_{i, k}}}$$
 
-Equivalently with one-hot encoding $\mathbf{y}_i \in \{0, 1\}^K$ ·
-$$p(y_i \mid \mathbf{x}_i, \theta) = \prod_{k=1}^K \hat\pi_{i, k}^{\,y_{i, k}}$$
-
-Take logs ·
-$$\log p(y_i \mid \mathbf{x}_i, \theta) = \sum_{k=1}^K y_{i, k}\,\log \hat\pi_{i, k} = \log \hat\pi_{i,\, y_i}$$
+Take logs — only the true-class term survives the one-hot ·
+$$\log p(\textcolor{#B85A3E}{y_i} \mid \mathbf{x}_i, \theta) = \sum_{k=1}^K \textcolor{#B85A3E}{y_{i, k}}\,\log \textcolor{#5F8573}{\hat\pi_{i, k}} = \log \textcolor{#5F8573}{\hat\pi_{i,\, y_i}}$$
 
 </div>
 
-Same compact-Bernoulli trick as before — only one term in the sum survives because the one-hot vector has a single 1.
+<span style="color:#B85A3E">**rust = the truth** (one-hot $y_i$)</span> · <span style="color:#5F8573">**green = the model's probabilities** $\hat\pi$</span>. The $0$ exponents kill every term except the true class.
 
 ---
 
@@ -1439,6 +1183,161 @@ The loss is small **iff the model assigned high probability to the true class**.
 
 <!-- _class: section-divider -->
 
+### PART 4
+
+# Sampling
+
+How we draw from distributions — and why every generative model needs it
+
+---
+
+# Why we sample · two roles
+
+Sampling appears all over deep learning, in two distinct roles ·
+
+<div class="math-box">
+
+| Role | What it means | Examples |
+|:-:|:-:|:-:|
+| **Generation** | Produce new instances from a learned distribution | LLM next-token, VAE images, diffusion, GAN |
+| **Monte Carlo estimation** | Approximate an expectation we can't compute analytically | mini-batch SGD, REINFORCE, dropout averaging, evaluating ELBOs |
+
+</div>
+
+These two uses are technically the same operation — *draw $y \sim p$* — but conceptually different. Today we set up the primitives. The advanced uses (reparameterization in VAEs, ancestral sampling in diffusion, nucleus sampling in LLMs) all reduce to combinations of what's on the next four slides.
+
+---
+
+# ⭐⭐⭐ Optional · the master sampling primitive · inverse CDF
+
+For any 1-D distribution with CDF $F(y) = P(Y \le y)$ ·
+
+<div class="math-box">
+
+1. Draw $u \sim \text{Uniform}[0, 1]$.
+2. Return $y = F^{-1}(u)$.
+
+</div>
+
+**Why it works** · $P(Y \le y) = P(F^{-1}(u) \le y) = P(u \le F(y)) = F(y)$. ✓
+
+![w:560px](figures/lec00/svg/inverse_cdf.svg)
+
+---
+
+# ⭐⭐⭐ Optional · Inverse CDF · worked on a Bernoulli
+
+To sample $Y \sim \text{Bernoulli}(p)$ ·
+
+<div class="math-box">
+
+The CDF jumps from $0$ to $1-p$ at $y = 0$, then from $1-p$ to $1$ at $y = 1$.
+
+Inverting ·
+
+```python
+return 0 if u < 1 - p else 1
+```
+
+</div>
+
+One uniform draw + one comparison · this is what `torch.bernoulli` does internally. **Same algorithm extends to any 1-D distribution** as long as you can compute the CDF.
+
+---
+
+# Sampling from a Categorical · the algorithm
+
+Categorical with probabilities $\boldsymbol\pi = (\pi_1, \ldots, \pi_K)$. The CDF is the **stick-breaking cumulative** ·
+
+<div class="math-box">
+
+Build $c_k = \sum_{j=1}^k \pi_j$ (so $c_K = 1$). Draw $u \sim \text{Uniform}[0, 1]$. Return the smallest $k$ such that $c_k \ge u$.
+
+</div>
+
+**Worked** · $\boldsymbol\pi = (0.1, 0.4, 0.3, 0.2)$ → cumulative $(0.1, 0.5, 0.8, 1.0)$.
+
+Draw $u = 0.55$ · smallest $k$ with $c_k \ge 0.55$ is $k = 3$. Return class **3**.
+
+---
+
+# Categorical sampling · why it matters
+
+This is what `torch.multinomial` does · one uniform + one cumulative scan.
+
+<div class="keypoint">
+
+**Every LLM samples its next token with exactly this algorithm.**
+
+The model produces a vector of $K$ probabilities (where $K \approx$ vocab size, often 50,000+) and we run a single Categorical draw.
+
+</div>
+
+You will see this primitive in ·
+- L13–L15 · LLM token generation
+- L19 · VAE discrete latents
+- L21 · diffusion class-conditional sampling
+
+Knowing it once means knowing it everywhere.
+
+---
+
+# Sampling from a Normal · the affine trick
+
+To sample $Y \sim \mathcal{N}(\mu, \sigma^2)$ ·
+
+<div class="math-box">
+
+1. Sample $\epsilon \sim \mathcal{N}(0, 1)$ (e.g. via Box-Muller, or just `torch.randn(...)`).
+2. Return $y = \mu + \sigma \cdot \epsilon$.
+
+</div>
+
+**Why this works** · the affine transform of a Gaussian is a Gaussian (the "closed under linear ops" property from earlier). If $\epsilon \sim \mathcal{N}(0, 1)$, then $\mu + \sigma\epsilon \sim \mathcal{N}(\mu, \sigma^2)$ — exactly what we wanted.
+
+So we only ever need a routine to draw from $\mathcal{N}(0, 1)$. Everything else is multiplication and addition.
+
+---
+
+# The reparameterization trick · preview of L19
+
+The same affine trick is one of the most important ideas in modern DL.
+
+<div class="keypoint">
+
+Let the model output $\mu_\theta(\mathbf{x})$ and $\sigma_\theta(\mathbf{x})$ as deterministic functions of an input. To sample a **stochastic** output ·
+
+$$y = \mu_\theta(\mathbf{x}) + \sigma_\theta(\mathbf{x}) \cdot \epsilon, \qquad \epsilon \sim \mathcal{N}(0, 1)$$
+
+The randomness $\epsilon$ is **outside** the gradient path. $\mu_\theta, \sigma_\theta$ are deterministic ⇒ we can **backprop through the sample**.
+
+</div>
+
+This is what makes **VAEs trainable** (L19) and powers the entire **diffusion** stack (L21–L22). You'll see this exact form repeatedly — and you now know where it comes from.
+
+---
+
+# LLM token sampling · preview of L14
+
+You now know the primitive (sampling from a Categorical). LLM generation is just Categorical sampling at every step — but with a few tweaks to control diversity ·
+
+<div class="math-box">
+
+| Strategy | What it does | When to use |
+|:-:|:-:|:-:|
+| **Greedy** ($\arg\max$) | Pick the most likely token | Deterministic; safe but boring |
+| **Temperature** $T$ | Sample from $\tilde\pi_k \propto \pi_k^{1/T}$ | $T \to 0$ = greedy; $T = 1$ = unchanged; $T > 1$ = more random |
+| **Top-$k$** | Keep top $k$ logits, renormalize, sample | Caps diversity at the top |
+| **Top-$p$ (nucleus)** | Keep smallest set with cumulative prob $\ge p$ | Adapts to the model's confidence |
+
+</div>
+
+L14 covers the full story. The point today · the underlying operation is *sampling from a Categorical* — exactly the inverse-CDF primitive from two slides ago.
+
+---
+
+<!-- _class: section-divider -->
+
 # Putting L00 together · the master sentence
 
 <div class="math-box">
@@ -1471,6 +1370,38 @@ Today gives you **half** the answer to the four mysteries. L00B gives the other 
 
 ---
 
+# In-class problem · single-feature linear regression
+
+Model $Y \mid x \sim \mathcal{N}(\theta x, \sigma^2)$ with **known** $\sigma^2$ (one feature, no bias).
+
+<div class="popquiz">
+
+Derive the MLE for $\theta$ from scratch · write the log-likelihood, differentiate, set it to zero.
+
+*Try it now — 3 minutes. Solution on the next slide.*
+
+</div>
+
+---
+
+# Solution · single-feature linear regression MLE
+
+<div class="math-box">
+
+Per-example · $\log p(y_i \mid x_i, \theta) = \text{const} - \dfrac{(y_i - \theta x_i)^2}{2\sigma^2}$.
+
+Sum and drop constants → minimize $\displaystyle\sum_i (y_i - \theta x_i)^2$.
+
+Differentiate · $\dfrac{d}{d\theta}\displaystyle\sum_i (y_i - \theta x_i)^2 = -2\sum_i x_i(y_i - \theta x_i) = 0$.
+
+Solve · $\sum_i x_i y_i = \theta \sum_i x_i^2 \;\Longrightarrow\; \boxed{\;\hat\theta = \dfrac{\sum_i x_i y_i}{\sum_i x_i^2}\;}$
+
+</div>
+
+The single-feature OLS estimate — and a template for the full normal equation $\hat{\boldsymbol\theta} = (X^\top X)^{-1}X^\top \mathbf{y}$.
+
+---
+
 # Practice problems
 
 Try these on paper; answers worked through in the notebook (`lec00-mle-map.ipynb`).
@@ -1479,13 +1410,11 @@ Try these on paper; answers worked through in the notebook (`lec00-mle-map.ipynb
 
 **P1.** A coin gives 12 heads in 20 flips. Compute the MLE for $p$ and the negative log-likelihood at that estimate.
 
-**P2.** Show that for $Y \mid x \sim \mathcal{N}(\theta x, \sigma^2)$ with **known** $\sigma^2$, the MLE for $\theta$ is $\hat\theta = \sum_i x_i y_i / \sum_i x_i^2$. (Hint · single-feature case of OLS.)
+**P2.** Write down the conditional distribution and the per-example log-likelihood for **Poisson regression** ($Y \mid x \sim \text{Poisson}(\exp(\theta^\top x))$). What is the resulting NLL loss?
 
-**P3.** Write down the conditional distribution and the per-example log-likelihood for **Poisson regression** ($Y \mid x \sim \text{Poisson}(\exp(\theta^\top x))$). What is the resulting NLL loss?
+**P3.** For a 3-class softmax with logits $\mathbf{z} = [1, 2, 0]$ and true class $y = 1$, compute (a) the predicted probabilities, (b) the cross-entropy loss, (c) the gradient on each logit.
 
-**P4.** For a 3-class softmax with logits $\mathbf{z} = [1, 2, 0]$ and true class $y = 1$, compute (a) the predicted probabilities, (b) the cross-entropy loss, (c) the gradient on each logit.
-
-**P5.** A coin's true bias is $p = 0.3$. You see 0 heads in 5 flips. What is the MLE? Why is the answer absurd, and what would a $\text{Beta}(2, 2)$ prior change?
+**P4.** A coin's true bias is $p = 0.3$. You see 0 heads in 5 flips. What is the MLE? Why is the answer absurd, and what would a $\text{Beta}(2, 2)$ prior change?
 
 </div>
 
@@ -1500,3 +1429,135 @@ Try these on paper; answers worked through in the notebook (`lec00-mle-map.ipynb
 </div>
 
 *Next (L00B) · put a prior on $\boldsymbol\theta$ — and every regularizer turns out to be a prior in disguise.*
+
+---
+
+<!-- _class: section-divider -->
+
+# Appendix · optional depth
+
+*Why the Normal is everywhere — CLT, max-entropy, closed-under-linear. Reference material; not examinable.*
+
+---
+
+# Why Normal · the Central Limit Theorem
+
+**Statement (informal)** · let $X_1, X_2, \ldots, X_N$ be IID with mean $\mu$ and variance $\sigma^2$. Define the standardized sum ·
+
+<div class="math-box">
+
+$$Z_N = \frac{1}{\sqrt{N}}\sum_{i=1}^N \frac{X_i - \mu}{\sigma}$$
+
+Then as $N \to \infty$, $Z_N \to \mathcal{N}(0, 1)$ — **regardless of the original distribution** of $X_i$.
+
+</div>
+
+**Implication** · any quantity arising as the *aggregate of many small effects* looks Gaussian. Sensor noise, human height, daily temperature deviation — all approximately Normal because the underlying causes are sums of many small contributions.
+
+---
+
+# CLT · a worked numeric
+
+A clean way to see CLT in action ·
+
+<div class="math-box">
+
+Sum of 12 IID $\text{Uniform}[0, 1]$ samples ·
+
+$$S = \sum_{i=1}^{12} U_i,\quad U_i \stackrel{\text{iid}}{\sim} \text{Uniform}[0,1]$$
+
+- **Mean** of $S$ · $12 \cdot 0.5 = 6$.
+- **Variance** of $S$ · $12 \cdot 1/12 = 1$.
+- **Distribution** of $S$ · approximately $\mathcal{N}(6, 1)$.
+
+</div>
+
+Historically used to *generate* Gaussian samples before better algorithms (Box-Muller) existed · subtract 6, you get a draw from $\mathcal{N}(0, 1)$.
+
+---
+
+# CLT in pictures · sum of N uniforms
+
+![w:920px](figures/lec00/svg/clt_demo.svg)
+
+<div class="math-box">
+
+Sum of $N$ IID $\text{Uniform}[0, 1]$ samples, repeated 5000 times. **One uniform** is uniform; **two uniforms summed** form a triangular density; by **N = 30** the sum is essentially indistinguishable from a Gaussian. The CLT is not a special property of any one distribution — it's an *attractor* that almost any IID sum flows to.
+
+</div>
+
+---
+
+# Why Normal · maximum entropy
+
+**Entropy** quantifies "how spread-out / uncertain" a distribution is. Among all distributions with a *given* mean $\mu$ and variance $\sigma^2$ ·
+
+<div class="math-box">
+
+$$\boxed{\;\arg\max_{p}\; H(p) \;\text{ s.t. }\; \mathbb{E}_p[Y] = \mu,\; \mathbb{E}_p[(Y - \mu)^2] = \sigma^2 \;\;\Longrightarrow\;\; p = \mathcal{N}(\mu, \sigma^2)\;}$$
+
+</div>
+
+**Reading** · *"if all you know about a quantity is its first two moments, the least committal probability model is Gaussian."* This is **Occam's razor for distributions** — don't bake in assumptions you can't justify.
+
+---
+
+# Why Normal · closed under linear operations
+
+Two structural facts make Gaussians uniquely well-behaved under linear maps ·
+
+<div class="math-box">
+
+**Sum of independent Gaussians is Gaussian.** If $X \sim \mathcal{N}(\mu_1, \sigma_1^2)$ and $Y \sim \mathcal{N}(\mu_2, \sigma_2^2)$ are independent ·
+$$X + Y \sim \mathcal{N}\bigl(\mu_1 + \mu_2,\; \sigma_1^2 + \sigma_2^2\bigr)$$
+
+**Affine transform of a Gaussian is Gaussian.**
+$$aY + b \sim \mathcal{N}\bigl(a\mu + b,\; a^2 \sigma^2\bigr)$$
+
+</div>
+
+**No other common distribution behaves this nicely.** Sum of two Bernoullis isn't Bernoulli; sum of two uniforms isn't uniform. The Gaussian is the *fixed point* of summing.
+
+This is why Gaussians compound cleanly under repeated additive operations.
+
+---
+
+# Why Normal · where this pays off (1/2)
+
+Two consequences you'll see in the next few weeks ·
+
+<div class="math-box">
+
+**Diffusion (L21)** · the forward process adds Gaussian noise at every step. The closed-form jump
+
+$$x_t = \sqrt{\bar\alpha_t}\,x_0 + \sqrt{1-\bar\alpha_t}\,\epsilon,\quad \epsilon \sim \mathcal{N}(0, I)$$
+
+exists **exactly because sums of independent Gaussians are Gaussian** — no integral needed.
+
+</div>
+
+<div class="math-box">
+
+**Kalman filter** · linear-Gaussian state-space models have a closed-form posterior at every time step. Used in robotics, control, and signal processing — and a stepping-stone to L19's variational inference.
+
+</div>
+
+---
+
+# Why Normal · where this pays off (2/2)
+
+<div class="math-box">
+
+**Reparameterization trick (Part 4)** · sampling from a non-standard Normal is just an affine transform of a standard one ·
+
+$$z = \mu + \sigma \cdot \epsilon,\quad \epsilon \sim \mathcal{N}(0, 1)$$
+
+</div>
+
+This is the **single most important sampling trick in deep learning** ·
+
+- VAEs (L19) · sample latent codes through it.
+- Diffusion (L21) · every denoising step uses it.
+- Bayesian neural nets · weights are sampled this way.
+
+All three rely on Gaussians being closed under affine maps. Each lecture above is a direct consequence of the two structural properties we just stated.

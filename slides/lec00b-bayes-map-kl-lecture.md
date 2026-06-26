@@ -37,7 +37,7 @@ Today · what changes when we add a **prior** on $\theta$ — and why **KL diver
 
 # Today's question
 
-You learned in ES 654 that L2 / L1 regularization "shrinks weights." We never said *why*.
+You learned in ES 335 that L2 / L1 regularization "shrinks weights." We never said *why*.
 
 <div class="popquiz">
 
@@ -81,9 +81,9 @@ By the end of this lecture you will be able to ·
 
 ---
 
-# Bridge from ES 654 · you already know this
+# Bridge from ES 335 · you already know this
 
-| From ES 654 | What changes today |
+| From ES 335 | What changes today |
 |---|---|
 | Ridge penalty $\lambda \lVert \boldsymbol\theta \rVert_2^2$, used as a knob | revealed as a **Gaussian prior** on the weights |
 | Lasso penalty $\lambda \lVert \boldsymbol\theta \rVert_1$, used as a knob | revealed as a **Laplace prior** on the weights |
@@ -92,7 +92,7 @@ By the end of this lecture you will be able to ·
 
 <div class="keypoint">
 
-Ridge = Gaussian prior · Lasso = Laplace prior. In ES 654 you used these as penalties; today you see *why* they're priors.
+Ridge = Gaussian prior · Lasso = Laplace prior. In ES 335 you used these as penalties; today you see *why* they're priors.
 
 </div>
 
@@ -104,7 +104,7 @@ Ridge = Gaussian prior · Lasso = Laplace prior. In ES 654 you used these as pen
 
 # Bayes' rule
 
-Inverting conditional probabilities — the foundation of MAP
+A quick refresher (you met the ML form in L00) — then onto MAP
 
 ---
 
@@ -145,16 +145,18 @@ This **flips the conditional** · if you know $P(B \mid A)$ but want $P(A \mid B
 
 # Bayes worked example · disease test (setup)
 
-A disease has prevalence 1%. A test has sensitivity 95% and specificity 95%.
+Three terms first — most people mix these up ·
 
-**You test positive. How likely are you to have the disease?**
+- **Prevalence** · how common the disease is · $P(D)$.
+- **Sensitivity** · if you *have* it, the test catches it · $P(+ \mid D)$.
+- **Specificity** · if you're *healthy*, the test stays negative · $P(- \mid \bar D)$.
+
+Here · prevalence $1\%$, sensitivity $95\%$, specificity $95\%$. **You test positive — how likely are you to actually have the disease?**
 
 <div class="math-box">
 
-Let $D$ = "have disease", $+$ = "test positive".
-
-- **Prior** · $P(D) = 0.01$, $P(\bar D) = 0.99$
-- **Likelihood** · $P(+ \mid D) = 0.95$, $P(+ \mid \bar D) = 0.05$
+$D$ = have disease, $+$ = test positive ·
+$P(D) = 0.01$ (prior) · $P(+\mid D) = 0.95$ (sensitivity) · $P(+\mid \bar D) = 0.05$ (= 1 − specificity)
 
 </div>
 
@@ -182,7 +184,7 @@ This is the **base-rate fallacy** — and it's the same maths we'll apply to ML 
 
 # Bayes for ML · flip onto $\theta$
 
-In ML, $A$ becomes the parameter $\theta$ and $B$ becomes the data $\mathcal{D}$.
+In ML, $A$ becomes the parameter $\theta$ and $B$ becomes the data $\mathcal{D}$. You previewed *posterior ∝ likelihood × prior* in L00; here is the full four-term form.
 
 <div class="math-box">
 
@@ -190,7 +192,7 @@ $$\boxed{\,p(\theta \mid \mathcal{D}) = \frac{p(\mathcal{D} \mid \theta)\,p(\the
 
 </div>
 
-This is the **central equation of probabilistic ML**. It tells us how to update our belief about $\theta$ after seeing data $\mathcal{D}$. Each term has a name and a role.
+This is the **central equation of probabilistic ML** · how to update our belief about $\theta$ after seeing data $\mathcal{D}$. Each term has a name and a role (next slide).
 
 ---
 
@@ -233,21 +235,13 @@ The evidence becomes important only when we want a *full posterior* — Bayesian
 
 # Bayesian updating · the dynamic view
 
-Bayes' rule is not a one-shot operation. As more data arrives, **today's posterior becomes tomorrow's prior** ·
+Bayes' rule is not one-shot · as data arrives, **today's posterior becomes tomorrow's prior**.
 
-<div class="math-box">
+![w:760px](figures/lec00/svg/bayesian_updating.svg)
 
-After dataset $\mathcal{D}_1$ ·
-$$p(\theta \mid \mathcal{D}_1) \propto p(\mathcal{D}_1 \mid \theta)\,p(\theta)$$
+$$p(\theta \mid \mathcal{D}_1, \mathcal{D}_2) \propto p(\mathcal{D}_2 \mid \theta)\,\underbrace{p(\theta \mid \mathcal{D}_1)}_{\text{previous posterior = new prior}}$$
 
-Now observe more data $\mathcal{D}_2$, independent of $\mathcal{D}_1$ given $\theta$ ·
-$$p(\theta \mid \mathcal{D}_1, \mathcal{D}_2) \propto p(\mathcal{D}_2 \mid \theta)\,p(\theta \mid \mathcal{D}_1)$$
-
-The previous posterior $p(\theta \mid \mathcal{D}_1)$ now plays the role of prior. Bayesian inference is **iterative belief updating**.
-
-</div>
-
-Practical issue · for general distributions, the posterior may not be in the same family as the prior, so each update changes the *shape* of the formula. **Conjugate priors** (next slide) avoid this · prior and posterior stay in the same family, and updates are just parameter arithmetic.
+More data ⇒ the posterior sharpens, the prior's pull fades. ▶ Play with it · [bayesian-posterior](https://nipunbatra.github.io/interactive-articles/bayesian-posterior/) — drag the prior and watch it update.
 
 ---
 
@@ -356,19 +350,25 @@ The first term is your usual loss. The second term is whatever the prior gives. 
 
 # MAP · the geometric picture
 
-![w:780px](figures/lec00/svg/map_geometry.svg)
+Take a tiny 2-weight problem. The **data loss** (likelihood) forms ellipses around the OLS solution; the **prior** $\|\boldsymbol\theta\|^2$ forms circles around 0.
 
-<div class="math-box">
+![w:600px](figures/lec00/svg/map_geometry_lambda.svg)
 
-The MAP estimate is the point in $\theta$-space that **best balances** the data's preferences (likelihood) against your prior beliefs (prior).
-
-</div>
+MAP sits where the two balance. Crank $\lambda$ up and the solution slides along the rust path from OLS toward 0 — **that path is ridge regression.**
 
 ---
 
-# Gaussian prior · setup
+# Gaussian prior · the idea
 
-We choose a prior $p(\theta_j) = \mathcal{N}(0, \sigma_p^2)$ for every weight, **independently**. In words · *"a priori, weights are small and centred at zero."*
+We assume each weight is *a priori* small and centred at zero · $p(\theta_j) = \mathcal{N}(0, \sigma_p^2)$, **independently** across weights.
+
+![w:480px](figures/lec00/svg/gaussian_prior_2d.svg)
+
+**Independent dims** ⇒ the joint prior is a product, and in 2D its contours are **circles** — no preferred direction, same $\sigma_p$ on every axis.
+
+---
+
+# Gaussian prior · setup (the algebra)
 
 <div class="math-box">
 
@@ -387,21 +387,29 @@ $$\log p(\theta_j) = -\frac{\theta_j^2}{2\sigma_p^2} + \text{const}$$
 
 # Gaussian prior · stack across all weights
 
-Independence across the $d$ weights means the joint factorises ·
+Independence across the $d$ weights means the joint factorises — and log turns the product into a sum ·
 
 <div class="math-box">
 
 $$p(\boldsymbol\theta) = \prod_{j=1}^d p(\theta_j)$$
 
-Take log · product becomes a sum ·
 $$\log p(\boldsymbol\theta) = \sum_{j=1}^d \log p(\theta_j) = \sum_{j=1}^d \left(-\frac{\theta_j^2}{2\sigma_p^2}\right) + \text{const}$$
 
-Pull the $-1/(2\sigma_p^2)$ out of the sum ·
+</div>
+
+---
+
+# Gaussian prior · collect the sum into a norm
+
+Pull the constant $-1/(2\sigma_p^2)$ out of the sum ·
+
+<div class="math-box">
+
 $$\log p(\boldsymbol\theta) = -\frac{1}{2\sigma_p^2}\underbrace{\sum_{j=1}^d \theta_j^2}_{=\,\|\boldsymbol\theta\|_2^2} + \text{const} \;=\; -\frac{1}{2\sigma_p^2}\,\|\boldsymbol\theta\|_2^2 + \text{const}$$
 
 </div>
 
-The constant drops out of any $\arg\min$. **Keep $-\dfrac{1}{2\sigma_p^2}\|\boldsymbol\theta\|_2^2$** — that's the only $\boldsymbol\theta$-dependent piece.
+The constant drops out of any $\arg\min$. **Keep $-\dfrac{1}{2\sigma_p^2}\|\boldsymbol\theta\|_2^2$** — the only $\boldsymbol\theta$-dependent piece, and the seed of L2.
 
 ---
 
@@ -430,12 +438,14 @@ $$\boxed{\;\hat{\boldsymbol\theta}_{\text{MAP}} = \arg\min_{\boldsymbol\theta} \
 
 # L2 · reading $\lambda$ · the weight-decay connection
 
-- Strong prior (small $\sigma_p^2$) ⇒ large $\lambda$ ⇒ heavy penalty.
-- Weak prior (large $\sigma_p^2$) ⇒ small $\lambda$ ⇒ MAP $\to$ MLE.
+Recall $\lambda = \dfrac{1}{2\sigma_p^2}$ — the prior's *width* sets the penalty's *strength* ·
+
+- **Strong belief that weights are small** (small $\sigma_p^2$) ⇒ **large $\lambda$** ⇒ heavy penalty ⇒ pulled far along the rust path toward 0.
+- **Weak belief** (large $\sigma_p^2$) ⇒ **small $\lambda$** ⇒ MAP $\to$ MLE (stays near OLS).
 
 <div class="keypoint">
 
-**DL linkage** · this is the `weight_decay` argument of `torch.optim.SGD` and `AdamW`. Every `weight_decay = 1e-4` you've written is a *Gaussian prior with $\sigma_p^2 = 5000$* on every weight. You've been doing Bayes the whole time.
+**DL linkage** · this is exactly the `weight_decay` argument in `torch.optim.SGD` / `AdamW`. Every `weight_decay=1e-4` you've ever set *is* a Gaussian prior on every weight. You've been doing Bayes the whole time.
 
 </div>
 
@@ -443,53 +453,71 @@ $$\boxed{\;\hat{\boldsymbol\theta}_{\text{MAP}} = \arg\min_{\boldsymbol\theta} \
 
 # Worked numeric · MAP with L2 (loss value)
 
-Linear regression. At some candidate $\boldsymbol\theta = [3, -4]$, suppose NLL evaluates to $L_{\text{NLL}} = 0.50$.
-
-**Step 1 · compute $\|\boldsymbol\theta\|_2^2$.**
-$$\|\boldsymbol\theta\|_2^2 = 3^2 + (-4)^2 = 9 + 16 = 25$$
-
-**Step 2 · pick $\lambda = 0.01$** (this is a fairly weak prior since $\sigma_p^2 = 1/(2\lambda) = 50$).
-
-**Step 3 · plug into the boxed formula.**
+Tiny dataset, 2 weights · $(\mathbf{x}_1, y_1) = ([1,1],\,0)$ and $(\mathbf{x}_2, y_2) = ([1,-1],\,7)$. Candidate $\boldsymbol\theta = [3, -4]$, noise $\sigma^2 = 1$.
 
 <div class="math-box">
 
-$$L_{\text{MAP}} = L_{\text{NLL}} + \lambda \|\boldsymbol\theta\|_2^2 = 0.50 + 0.01 \cdot 25 = 0.50 + 0.25 = \mathbf{0.75}$$
+**Predict** · $\hat y_1 = 3(1){+}(-4)(1) = -1$ · $\hat y_2 = 3(1){+}(-4)(-1) = 7$.
+**Residuals** · $y_1 - \hat y_1 = 1$ · $y_2 - \hat y_2 = 0$.
+**Data NLL** (Gaussian) · $L_{\text{NLL}} = \tfrac{1}{2}\sum_i (y_i - \hat y_i)^2 = \tfrac{1}{2}(1^2 + 0^2) = 0.5$.
+
+**L2 term** · $\|\boldsymbol\theta\|_2^2 = 9 + 16 = 25$; take $\lambda = 0.01$ ·
+$$L_{\text{MAP}} = L_{\text{NLL}} + \lambda \|\boldsymbol\theta\|_2^2 = 0.5 + 0.01(25) = \mathbf{0.75}$$
 
 </div>
 
-The optimizer now pays a 0.25 "tax" for these large weights.
+The optimizer now pays a $0.25$ "tax" for these large weights.
 
 ---
 
-# Worked numeric · MAP with L2 (gradient + update)
+# Worked numeric · MAP with L2 (the gradient)
 
-Same setup. What does **one SGD step** look like with $\eta = 0.1$?
-
-**Gradient of the L2 term** ·
-$$\nabla_{\boldsymbol\theta} \bigl(\lambda \|\boldsymbol\theta\|_2^2\bigr) = 2\lambda\,\boldsymbol\theta = 2(0.01)\boldsymbol\theta = 0.02\,\boldsymbol\theta$$
-
-**Combined gradient** (assuming the data gradient is some vector $\mathbf{g}$) ·
-$$\nabla L_{\text{MAP}} = \mathbf{g} + 2\lambda\,\boldsymbol\theta$$
-
-**SGD update** ·
-$$\boldsymbol\theta \leftarrow \boldsymbol\theta - \eta\bigl(\mathbf{g} + 2\lambda\,\boldsymbol\theta\bigr) = \underbrace{(1 - 2\eta\lambda)}_{\text{shrink}}\boldsymbol\theta \;-\; \eta\,\mathbf{g}$$
+Same setup, one SGD step with $\eta = 0.1$. The L2 term adds a very simple gradient ·
 
 <div class="math-box">
 
-The weight is **multiplied by $(1 - 2\eta\lambda) = 1 - 0.002 = 0.998$** *before* the data update is applied.
+$$\nabla_{\boldsymbol\theta}\bigl(\lambda\|\boldsymbol\theta\|_2^2\bigr) = 2\lambda\,\boldsymbol\theta$$
+
+Combine with the data gradient $\mathbf{g}$ and rearrange ·
+$$\boldsymbol\theta \leftarrow \boldsymbol\theta - \eta(\mathbf{g} + 2\lambda\boldsymbol\theta) = \underbrace{(1 - 2\eta\lambda)}_{\text{shrink}}\,\boldsymbol\theta \;-\; \eta\,\mathbf{g}$$
+
+</div>
+
+So the prior contributes a term that **multiplies $\boldsymbol\theta$ by a factor just below 1** *before* the data step — it literally shrinks the weights every iteration.
+
+---
+
+# Why it's called "weight decay"
+
+With $\eta = 0.1$, $\lambda = 0.01$ · the shrink factor is $1 - 2\eta\lambda = 1 - 0.002 = 0.998$ ·
+
+<div class="math-box">
 
 $$\boldsymbol\theta_{\text{after shrink}} = 0.998 \cdot [3, -4] = [2.994, -3.992]$$
 
 </div>
 
-This is *literally* the **weight decay** step in `torch.optim.SGD(..., weight_decay=λ)`. Read the source · it really is one line that multiplies $\boldsymbol\theta$ by $(1 - 2\eta\lambda)$. **You'll meet this exact pattern again in AdamW** (L5).
+This is *literally* the `weight_decay` step in `torch.optim.SGD` — one line that multiplies $\boldsymbol\theta$ by $(1 - 2\eta\lambda)$ each iteration.
+
+<div class="keypoint">
+
+If you've trained with `weight_decay` and never realized it was a **Gaussian prior** quietly decaying your weights — that's exactly the point of today. The same pattern returns in **AdamW** (L05).
+
+</div>
 
 ---
 
-# Laplace prior · setup
+# Laplace prior · the idea
 
-Now choose a prior $p(\theta_j) = \text{Laplace}(0, b)$ — same idea (centred at zero) but **heavier tails and a sharper peak at zero**.
+Swap the Gaussian for a **Laplace** prior · $p(\theta_j) = \text{Laplace}(0,b)$ — same "weights are small" idea, but a **sharp peak at 0** and **heavier tails**.
+
+![w:680px](figures/lec00/svg/laplace_vs_gaussian.svg)
+
+That spike at zero is the whole story · it puts real prior mass *right at* 0, so MAP will park weak weights *exactly* there.
+
+---
+
+# Laplace prior · setup (the algebra)
 
 <div class="math-box">
 
@@ -560,7 +588,9 @@ $$\boxed{\;\hat{\boldsymbol\theta}_{\text{MAP}} = \arg\min_{\boldsymbol\theta} \
 
 # Why L1 produces sparse solutions · the geometry
 
-![w:920px](figures/lec00/svg/l1_l2_geometry.svg)
+We just saw the Laplace prior's **spike at 0**. Geometrically that spike becomes the diamond's **sharp corners on the axes** — and that's where solutions land.
+
+![w:800px](figures/lec00/svg/l1_l2_geometry.svg)
 
 <div class="math-box">
 
@@ -678,24 +708,11 @@ What is the right *distance* between two distributions — and why is every loss
 
 ---
 
-# Every loss is an NLL — the master table
+# Every loss is an NLL — the master picture
 
-<div class="math-box">
+![w:1000px](figures/lec00/svg/nll_master_poster.svg)
 
-| Output | Distribution | Loss = NLL | Lecture |
-|:-:|:-:|:-:|:-:|
-| Real-valued | Normal | MSE | L1 (recap), L19 (VAE recon) |
-| Binary | Bernoulli | BCE | L1 (recap) |
-| K classes | Categorical | Cross-entropy | L7+ (vision), L13–15 (LLMs) |
-| Pixels | per-pixel Normal | per-pixel MSE | L19 (VAE), L21 (diffusion) |
-| Tokens | Categorical | next-token CE | L13–L15 (LLMs) |
-| Image patch given noise | Normal in pixel/score space | MSE on noise | L21 (diffusion) |
-| Latent variable model | Normal + KL prior | ELBO = recon + KL | L19 (VAE) |
-| Two distributions match | KL minimization | DPO, distillation | L16, L23 |
-
-</div>
-
-The whole course will keep instantiating the same NLL recipe. Each new model just changes **which distribution** is being assumed.
+The whole course keeps instantiating this one recipe — each new model just changes **which distribution** is assumed.
 
 ---
 
@@ -732,7 +749,7 @@ The **same event** carries different surprise depending on the distribution gene
 
 </div>
 
-This is also why log-likelihood works as a model-quality signal · a model that places high probability on the data has *low* per-sample surprise.
+This is why **log-likelihood scores a model** · if the model gives high probability to the data that *actually* happened, each observation is unsurprising under it — a small $-\log p$. A good model = low average surprise on real data = low loss.
 
 ---
 
@@ -772,31 +789,6 @@ So entropy is what you get when you average the per-sample surprise from the pre
 
 ---
 
-# Entropy as code length · the Huffman lens
-
-Imagine you must send samples from $p$ over a wire using a **prefix-free binary code**. Shannon's source-coding theorem says ·
-
-<div class="math-box">
-
-$$\underbrace{H(p)}_{\text{lower bound}} \;\le\; \mathbb{E}_p[\text{bits per symbol}] \;\le\; H(p) + 1$$
-
-</div>
-
-**Concrete** · alphabet $\{A, B, C, D\}$ with $p = (0.5, 0.25, 0.125, 0.125)$ ·
-
-| Symbol | $p$ | Optimal code | Code length |
-|:-:|:-:|:-:|:-:|
-| A | $0.5$ | `0` | 1 |
-| B | $0.25$ | `10` | 2 |
-| C | $0.125$ | `110` | 3 |
-| D | $0.125$ | `111` | 3 |
-
-Average length $= 0.5(1) + 0.25(2) + 0.125(3) + 0.125(3) = 1.75$ bits $= H(p)$ exactly.
-
-**Entropy = the cost of describing samples from $p$ optimally.** That's the right physical interpretation.
-
----
-
 # Entropy · worked numerics in bits
 
 | Distribution | $H$ (bits) | Computation |
@@ -818,15 +810,9 @@ This explains why low-entropy classifier outputs (confident) need fewer bits to 
 
 # Entropy of a Bernoulli · in pictures
 
-![w:680px](figures/lec00/svg/entropy_bernoulli.svg)
+![w:620px](figures/lec00/svg/entropy_bernoulli.svg)
 
-<div class="math-box">
-
-$H(p) = -p \log_2 p - (1 - p) \log_2 (1 - p)$ — concave, symmetric around $p = 0.5$, peaking at $1$ bit.
-
-A *fair* coin needs **one bit** to encode each flip. A coin with $p = 0.99$ is almost deterministic — encoded with arithmetic coding it costs ~$0.08$ bits/flip on average.
-
-</div>
+$H(p) = -p \log_2 p - (1-p)\log_2(1-p)$ — symmetric, **peaks at 1 bit** for a fair coin, and falls to $0$ as the coin becomes deterministic.
 
 ---
 
@@ -849,21 +835,19 @@ The maximum entropy of a $K$-Categorical is $\log_2 K$, achieved by the uniform.
 
 ---
 
-# KL divergence · the definition
+# KL divergence · the intuition first
 
-KL divergence measures how different one distribution $p$ is from another distribution $q$ over the same support.
+Truth is $p$; your model is $q$. On every sample you're surprised by $-\log q(y)$ instead of the best-possible $-\log p(y)$. **KL is the average *extra* surprise you pay for using $q$ instead of $p$.**
 
-<div class="math-box">
+<div class="keypoint">
 
-$$\text{KL}(p \,\Vert\, q) := \mathbb{E}_{Y \sim p}\!\left[\log \frac{p(Y)}{q(Y)}\right] = \sum_y p(y)\,\log\frac{p(y)}{q(y)}$$
-
-(Replace $\sum$ with $\int$ for continuous distributions.)
+Zero if $q = p$ (no extra surprise). Large when $q$ is confident where $p$ has mass. It's a *directed* gap from $p$ to $q$ — not a symmetric distance.
 
 </div>
 
-**Read** · *"the average log-ratio when the data really comes from $p$ but you used $q$ to model it."*
+Now the formula — literally the average of that extra surprise ·
 
-It's the **average extra surprise** you experience by encoding samples-from-$p$ using a code optimized for $q$.
+$$\text{KL}(p \,\Vert\, q) = \mathbb{E}_{Y \sim p}\!\left[\log \frac{p(Y)}{q(Y)}\right] = \sum_y p(y)\,\log\frac{p(y)}{q(y)}$$
 
 ---
 
@@ -921,26 +905,6 @@ $= 0.805 + 0.330 - 0.277 = \mathbf{0.858}$ nats.
 </div>
 
 A roughly-aligned model has KL $\approx 0.03$; a wildly mismatched one has KL $\approx 0.86$. **KL ≈ 0 ⇒ the two distributions agree** ; large KL ⇒ they disagree, especially in directions where $p$ has mass but $q$ doesn't (mode-covering penalty).
-
----
-
-# KL as wasted code length · the Huffman lens
-
-Same alphabet $\{A,B,C,D\}$. **True** $p = (0.5, 0.25, 0.125, 0.125)$ — Huffman code lengths $(1, 2, 3, 3)$ · optimal cost $H(p) = 1.75$ bits.
-
-Suppose we mistakenly built our code for **wrong** $q = (0.125, 0.125, 0.25, 0.5)$ — Huffman lengths $(3, 3, 2, 1)$.
-
-When we encode samples from $p$ with the code for $q$ ·
-
-$$H(p, q) = 0.5(3) + 0.25(3) + 0.125(2) + 0.125(1) = \mathbf{2.625}\text{ bits}$$
-
-<div class="math-box">
-
-$$\text{KL}(p \,\Vert\, q) \;=\; H(p, q) - H(p) \;=\; 2.625 - 1.75 \;=\; \mathbf{0.875}\text{ bits/symbol of waste}$$
-
-</div>
-
-**Reading** · KL is the literal *number of extra bits per sample* you pay for using the wrong code. Modelling = compression · this is why "**better model = better compression**" is not a metaphor.
 
 ---
 
@@ -1237,6 +1201,22 @@ Try these on paper; the notebook has plotting and verification.
 **P6.** A bimodal target has modes at $\pm 2$ with equal mass. You fit a single Gaussian $q$. Sketch the optimum under (a) forward KL, (b) reverse KL. Which one is mode-covering?
 
 </div>
+
+---
+
+# Let's do one · P2 worked (disease test)
+
+Prevalence $0.5\%$, sensitivity $99\%$, specificity $95\%$. You test positive ·
+
+<div class="math-box">
+
+$$P(+) = \underbrace{0.99(0.005)}_{\text{true pos}} + \underbrace{0.05(0.995)}_{\text{false pos}} = 0.00495 + 0.04975 = 0.0547$$
+
+$$P(D \mid +) = \frac{0.99(0.005)}{0.0547} \approx \mathbf{0.09}$$
+
+</div>
+
+Only ~9% — *not* ≥99%. The disease is so rare that false positives from the huge healthy majority swamp the true positives. **Base rates dominate** — the same lesson as the first disease-test slide.
 
 ---
 

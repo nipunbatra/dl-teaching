@@ -39,7 +39,7 @@ website:
 
 format:
   html:
-    theme:
-      light: [cosmo, custom.scss]
-      dark: [darkly, custom.scss]
+    # Single light theme only — the dark (darkly) theme rendered notebook
+    # output (plots, code cells) poorly, so we pin light mode site-wide.
+    theme: [cosmo, custom.scss]
     toc: false

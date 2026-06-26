@@ -39,7 +39,7 @@ By the end of this lecture you will be able to:
 
 <div class="paper">
 
-Today maps to **UDL Ch 9** (Regularization) and the BatchNorm parts of **Ch 11** (Residual Networks). ES 654 covered ridge/LASSO — we skim those and focus on what's new.
+Today maps to **UDL Ch 9** (Regularization) and the BatchNorm parts of **Ch 11** (Residual Networks). ES 335 covered ridge/LASSO — we skim those and focus on what's new.
 
 </div>
 
@@ -109,7 +109,7 @@ Without it · a deep network has more than enough capacity to memorize the train
 <div class="columns">
 <div>
 
-### You already know (ES 654)
+### You already know (ES 335)
 
 - L2 / ridge
 - L1 / LASSO
@@ -137,9 +137,9 @@ We spend time here.
 
 ---
 
-# Bridge from ES 654 · you already know this
+# Bridge from ES 335 · you already know this
 
-| From ES 654 | What changes today |
+| From ES 335 | What changes today |
 |---|---|
 | ridge = L2 penalty = Gaussian prior | weight decay becomes the *least* interesting tool |
 | bias-variance U-curve | double descent — the U-curve has a second act |
@@ -166,7 +166,7 @@ Why don't $10^{11}$ parameters on $10^6$ examples catastrophically overfit?
 
 # The classical textbook picture
 
-From ES 654 you know the U-curve:
+From ES 335 you know the U-curve:
 
 - **Too simple** → underfit (high bias)
 - **Too complex** → overfit (high variance)
@@ -220,7 +220,7 @@ ResNet-50 has 25M params; modern LLMs have 10¹¹. Both generalize well past the
 
 # L2, L1, early stopping
 
-Brisk — you know these from ES 654
+Brisk — you know these from ES 335
 
 ---
 
