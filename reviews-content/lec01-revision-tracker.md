@@ -27,3 +27,15 @@ Status: ⬜ todo · ✅ done
 
 ## Separate: nilmbench design review (answer in chat)
 - ✅ Compare nilmbench Marp design; recommend what (if anything) to adopt.
+
+## Round 2 (2026-06-26)
+- ⬜ R1 · dl_timeline too cramped → widen + add a discussion slide ("discuss more").
+- ⬜ R2 · remove "Why now · concrete numbers" slide.
+- ⬜ R3 · magnifying_glass figure unclear (LHS not a glass, RHS unclear) → redo.
+- ⬜ R4 · stacked_linear_collapses → use NONLINEAR data, show linear still learns a straight line.
+- ⬜ R5 · "Activation functions at a glance" → formulae for each (regenerate SVG grid).
+- ⬜ R6 · "Stacking neurons → MLP" → figure must show node counts per layer.
+- ⬜ R7 · remove "Batched matrix form · the shapes that matter".
+- ⬜ R8 · "MLP in PyTorch" → show Sequential AND non-Sequential (explicit forward), comment on each.
+- ⬜ R9 · Trim Part 3 redundancy with L00/L00c (softmax/CE already derived there) → condense.
+- ⬜ R10 · Add pop-quiz slides between sections; make it shine as the first main DL lecture.

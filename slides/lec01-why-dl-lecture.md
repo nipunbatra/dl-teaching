@@ -137,7 +137,23 @@ The key change is not "more parameters". It is that each layer learns a transfor
 
 # Three eras of deep learning
 
-![w:900px](figures/lec01/svg/dl_timeline.svg)
+![w:1080px](figures/lec01/svg/dl_timeline.svg)
+
+---
+
+# Three eras · what actually changed
+
+<div class="math-box">
+
+| Era | How features were made | What limited it |
+|---|---|---|
+| **Symbolic / perceptrons** (–1986) | hand-written *rules* | brittle; couldn't even do XOR |
+| **Shallow learning** (1986–2012) | humans **engineer** features (SIFT, HOG), model draws the boundary | features cap the ceiling; new domain = new features |
+| **Deep learning** (2012–) | the network **learns** the features end-to-end | needs data + compute — which finally arrived |
+
+</div>
+
+The through-line of this course · we move the human *out* of feature design and let gradient descent do it. Everything after today is *how* to make that learning work at scale.
 
 ---
 
@@ -160,23 +176,7 @@ Human top-5 error: ~5.1%. **AlexNet cut error by ~10 points in one year.**
 
 ![w:900px](figures/lec01/svg/three_ingredients.svg)
 
----
-
-# Why now · concrete numbers
-
-<div class="math-box">
-
-| | 1990 | 2024 | growth |
-|---|---|---|---|
-| **Compute** ($/FLOP best-case) | $\sim$10⁸ FLOPs/\$ | $\sim$10¹⁵ FLOPs/\$ | $10^7\!\times$ |
-| **Datasets** (frontier) | 60k MNIST digits | 5T LLM tokens | $10^8\!\times$ |
-| **SOTA model params** | LeNet (60k) | Llama-3 405B | $7 \times 10^6\!\times$ |
-
-</div>
-
-Three exponential ramps compounding for 30+ years. Algorithms that were "impossible" in 1990 became cheap in 2012 and routine by 2020. **Deep learning didn't get smarter — the world got faster.**
-
-The 2012 ImageNet jump was the moment all three crossed the line at once.
+Three exponential ramps — **compute, data, algorithms** — compounding for 30+ years. **Deep learning didn't get smarter; the world got faster** — and 2012 was when all three crossed the line at once.
 
 ---
 
@@ -295,13 +295,13 @@ $$y = \sigma\big(\underbrace{\mathbf{w}^\top \mathbf{x} + b}_{\text{pre-activati
 
 ---
 
-# Why we need a non-linearity · the magnifying-glass analogy
+# Why we need a non-linearity · linear can stretch but never bend
 
 ![w:880px](figures/lec01/svg/magnifying_glass.svg)
 
 <div class="keypoint">
 
-Two magnifying glasses → a bigger image, still a *linear* version. Two linear layers → same story · their composition is just one linear map. A **non-linearity** is the prism that bends the space, so each layer can learn a new *kind* of feature.
+Stack as many **linear** layers as you like — their composition is still one linear map, so grid lines stay straight and the boundary stays a line. A **non-linearity** bends the space, letting the next linear layer carve curved boundaries. That is why every deep net interleaves linear layers with activations.
 
 </div>
 
@@ -439,14 +439,9 @@ This is what *"deep learning is representation learning"* means · the hidden la
 
 # Activation functions at a glance
 
-![w:900px](figures/lec01/activation_functions.png)
+![w:880px](figures/lec01/svg/activation_grid.svg)
 
-| Name | Formula | Where you see it |
-|------|---------|------------------|
-| Sigmoid | $1/(1+e^{-z})$ | gates |
-| Tanh | $\tanh(z)$ | RNNs |
-| ReLU | $\max(0, z)$ | most CNNs |
-| GELU / SiLU | $z\,\Phi(z)$ / $z\,\sigma(z)$ | Transformers, LLMs |
+Sigmoid → gates · Tanh → RNNs · ReLU → most CNNs · GELU / SiLU → Transformers & LLMs.
 
 ---
 
@@ -485,28 +480,7 @@ A tiny MNIST model has ~270k parameters. GPT-3 has 175 billion — $6 \times 10^
 
 ---
 
-# Batched matrix form · the shapes that matter
-
-For a mini-batch:
-
-$$X \in \mathbb{R}^{B \times d_\text{in}}, \quad W \in \mathbb{R}^{d_\text{in} \times d_\text{out}}, \quad b \in \mathbb{R}^{d_\text{out}}$$
-
-$$Z = XW + b \quad \Rightarrow \quad Z \in \mathbb{R}^{B \times d_\text{out}}$$
-
-MNIST batch of 64:
-
-| Tensor | Shape |
-|--------|-------|
-| flattened input $X$ | $64 \times 784$ |
-| first weight $W_1$ | $784 \times 256$ |
-| hidden activations $H_1$ | $64 \times 256$ |
-| final logits | $64 \times 10$ |
-
-Most PyTorch bugs in early DL are shape bugs. Check the batch dimension first.
-
----
-
-# MLP in PyTorch
+# MLP in PyTorch · the Sequential way
 
 ```python
 import torch.nn as nn
@@ -517,12 +491,32 @@ class MLP(nn.Module):
         self.net = nn.Sequential(
             nn.Linear(d_in, d_h), nn.ReLU(),
             nn.Linear(d_h,  d_h), nn.ReLU(),
-            nn.Linear(d_h,  d_out),     # raw logits — no softmax here
+            nn.Linear(d_h,  d_out),   # raw logits — no softmax
         )
-
     def forward(self, x):
         return self.net(x)
 ```
+
+**Concise** · perfect when the network is one straight pipeline. The catch · you can't easily tap an intermediate activation.
+
+---
+
+# MLP in PyTorch · the explicit way
+
+```python
+class MLP(nn.Module):
+    def __init__(self, d_in=784, d_h=256, d_out=10):
+        super().__init__()
+        self.fc1 = nn.Linear(d_in, d_h)
+        self.fc2 = nn.Linear(d_h,  d_h)
+        self.fc3 = nn.Linear(d_h,  d_out)
+    def forward(self, x):
+        h = torch.relu(self.fc1(x))
+        h = torch.relu(self.fc2(h))
+        return self.fc3(h)            # raw logits
+```
+
+**Flexible** · name each layer, print/grab the intermediate `h`, add skips or branches — the form you need for ResNets, multi-input nets, and debugging. Same math · `nn.ReLU()` (a module) vs `torch.relu` (the function).
 
 **Q.** Why no activation after the last `Linear`?
 
@@ -570,172 +564,52 @@ The math that makes learning possible
 
 ---
 
-# From scores to probabilities · the goal
+# Softmax + cross-entropy · recap from L00 / L00C
 
-The network outputs raw "scores" (logits) for each class · arbitrary real numbers like $[2.0, 1.0, 0.1]$.
-
-For classification, we need a **valid probability distribution** · all values $\ge 0$, summing to 1.
-
-<div class="keypoint">
-
-Two problems to solve:
-1. **Make values positive** · `exp(·)` does this for any real input.
-2. **Make them sum to 1** · divide by the total.
-
-Together · the **softmax** function.
-
-</div>
-
----
-
-# Softmax · worked numeric example
+You already **derived** all of this in the primer lectures — a 60-second recap ·
 
 <div class="math-box">
 
-Logits · $z = [2.0, 1.0, 0.1]$.
-
-**Step 1 · exponentiate** · $e^z = [e^{2.0}, e^{1.0}, e^{0.1}] = [7.39, 2.72, 1.11]$
-**Step 2 · sum** · $7.39 + 2.72 + 1.11 = 11.22$
-**Step 3 · normalize** · $\hat y = [7.39/11.22, 2.72/11.22, 1.11/11.22] = [0.66, 0.24, 0.10]$
+- **Softmax** turns logits into a distribution · $\hat y_k = e^{z_k}/\sum_j e^{z_j}$.
+- **Cross-entropy** is the NLL of the Categorical · $\mathcal{L} = -\log \hat y_c$ (L00) — which is the **KL to the one-hot truth** (L00C).
 
 </div>
 
-Note · the relative ranking is preserved (the largest logit becomes the largest probability) · but the values are now interpretable as probabilities. The softmax is the standard last layer for classification.
+![w:760px](figures/lec01/svg/softmax_visual.svg)
 
 ---
 
-# Softmax · three acts
+# The one gradient you must remember
 
-![w:920px](figures/lec01/svg/softmax_visual.svg)
-
-<div class="realworld">
-
-▶ Interactive: drag the temperature slider, watch the distribution morph — [softmax-temperature](https://nipunbatra.github.io/interactive-articles/softmax-temperature/).
-
-</div>
-
----
-
-# Why exponentiate?
-
-1. Logits can be **negative**; raw ratios misbehave. $e^{z_k}$ is always positive.
-2. Softmax **amplifies** differences — biggest logit dominates smoothly.
-3. It falls out of **maximum likelihood** for categorical outputs (next).
-
----
-
-# Cross-entropy from MLE
-
-One example $(\mathbf{x}, y)$, true class $c$. Maximize data likelihood → minimize negative log-likelihood:
-
-$$\mathcal{L}(\theta) = -\log P(y = c \mid \mathbf{x}; \theta) = -\log \hat{y}_c$$
-
-With one-hot $\mathbf{y}$:
-
-$$\mathcal{L} = -\sum_{k=1}^{K} y_k \log \hat{y}_k$$
+Differentiating softmax + cross-entropy (full step-by-step in L00) gives a strikingly simple result ·
 
 <div class="math-box">
 
-This **is** cross-entropy. MLE hands it to us for free — we did not invent it.
+$$\boxed{\;\frac{\partial \mathcal{L}}{\partial z_k} = \hat y_k - y_k\;}$$
 
 </div>
 
----
-
-# Why cross-entropy is the right score
-
-Accuracy only asks whether the top class is correct. Cross-entropy asks whether the whole probability distribution is honest.
-
-Suppose the true class is class 0:
-
-| Prediction | CE loss |
-|------------|---------|
-| $[0.70, 0.20, 0.10]$ | $-\log 0.70 = 0.36$ |
-| $[0.99, 0.005, 0.005]$ | $-\log 0.99 = 0.01$ |
-
-But if the label is class 1:
-
-| Prediction | CE loss |
-|------------|---------|
-| $[0.70, 0.20, 0.10]$ | $-\log 0.20 = 1.61$ |
-| $[0.99, 0.005, 0.005]$ | $-\log 0.005 = 5.30$ |
-
-<div class="keypoint">
-
-Cross-entropy rewards calibrated confidence and punishes confident wrong answers. That is why it is a proper scoring rule for classification.
-
-</div>
-
----
-
-# Push-pull intuition · the gradient
-
-Logits $z = [z_1, ..., z_K]$. Loss $\mathcal{L}$. We need $\partial \mathcal{L} / \partial z_k$ · "how should we change $z_k$ to lower the loss?"
-
-<div class="keypoint">
-
-- If $k$ is the **correct** class · we want its probability to be 1 · gradient should **push $z_k$ up**.
-- If $k$ is a **wrong** class · we want its probability to be 0 · gradient should **push $z_k$ down**.
-
-</div>
-
-The next slide derives the formula. The result · $\partial \mathcal{L}/\partial z_k = \hat y_k - y_k$ · does exactly the push-pull above.
-
----
-
-# Deriving · softmax + CE gradient · step by step
-
-<div class="math-box">
-
-**Setup** · $\mathcal{L} = -\sum_j y_j \log \hat y_j$ · $\hat y_j = e^{z_j} / \sum_i e^{z_i}$.
-
-Want · $\partial \mathcal{L}/\partial z_k$. Chain rule · $\partial \mathcal{L}/\partial z_k = \sum_j (\partial \mathcal{L}/\partial \hat y_j)(\partial \hat y_j/\partial z_k)$.
-
-**Part 1** · $\partial \mathcal{L}/\partial \hat y_j = -y_j/\hat y_j$.
-
-**Part 2 · case $j = k$** (own logit, quotient rule):
-$\partial \hat y_k/\partial z_k = \hat y_k(1 - \hat y_k)$
-
-**Part 2 · case $j \ne k$**:
-$\partial \hat y_j/\partial z_k = -\hat y_j \hat y_k$
-
-**Combine** · $\partial \mathcal{L}/\partial z_k = -y_k(1-\hat y_k) + \sum_{j \ne k} y_j \hat y_k = -y_k + \hat y_k \sum_j y_j$
-
-Since $\sum_j y_j = 1$ for one-hot · $\boxed{\partial \mathcal{L}/\partial z_k = \hat y_k - y_k}$
-
-</div>
-
----
-
-# Worked numeric · the gradient
-
-<div class="math-box">
-
-Logits $z = [2.0, 1.0, 0.1]$. Softmax · $\hat y = [0.66, 0.24, 0.10]$. True label · class 0, $y = [1, 0, 0]$.
-
-$$\partial \mathcal{L}/\partial z = \hat y - y = [0.66 - 1, 0.24 - 0, 0.10 - 0] = [-0.34, 0.24, 0.10]$$
-
-**SGD step** · $z \leftarrow z - \eta \cdot (\hat y - y)$
-- $z_0$ has negative gradient · SGD pushes it **up** (good, correct class).
-- $z_1, z_2$ have positive gradient · SGD pushes them **down** (good, wrong classes).
-
-</div>
-
-The gradient is bounded between -1 and 1 per logit · stable. No exploding gradients from the loss itself.
-
----
-
-# The elegant softmax + CE gradient
-
-$$\boxed{\dfrac{\partial \mathcal{L}}{\partial z_k} = \hat{y}_k - y_k}$$
-
-**Prediction minus target.** Same form as logistic regression — no accident.
+**Prediction minus target** — the same form as linear and logistic regression. The true-class logit is pushed up, the rest down; the gradient is bounded in $[-1,1]$ so the loss never explodes. *Now the L01 question · how does this signal reach every weight?* → backprop.
 
 ---
 
 # What that gradient actually looks like
 
 ![w:920px](figures/lec01/svg/ce_gradient_visual.svg)
+
+---
+
+# Pop quiz · whose fault is the error?
+
+We have $\partial \mathcal{L}/\partial z$ for the **last** layer. But the loss depends on *every* weight, many layers back.
+
+<div class="popquiz">
+
+How does a weight in **layer 1** find out how much it contributed to the final loss — without recomputing the whole network for each weight?
+
+Guess the mechanism before the next slide.
+
+</div>
 
 ---
 
