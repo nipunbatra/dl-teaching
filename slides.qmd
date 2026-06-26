@@ -11,3 +11,5 @@ See the [Home page](index.qmd) for the full schedule with links.
 | # | Topic | HTML | PDF |
 |:-:|-------|:----:|:---:|
 | 0 | Probability, MLE &amp; NLL | [HTML](html/lec00-probability-mle-recap-lecture.html) | [PDF](pdf/lec00-probability-mle-recap-lecture.pdf) |
+| 0B | Bayes, MAP, Regularization &amp; KL | [HTML](html/lec00b-bayes-map-kl-lecture.html) | [PDF](pdf/lec00b-bayes-map-kl-lecture.pdf) |
+| 0C | Information Theory for ML | [HTML](html/lec00c-information-theory-lecture.html) | [PDF](pdf/lec00c-information-theory-lecture.pdf) |

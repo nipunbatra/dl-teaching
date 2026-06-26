@@ -700,6 +700,8 @@ This is the same regularization story as L1/L2 on weights — just with a differ
 
 What is the right *distance* between two distributions — and why is every loss ahead "fit + don't drift"?
 
+*A condensed tour — the full intuition-first treatment (surprise → coding → cross-entropy → KL) is **Lecture 0C**.*
+
 ---
 
 # Every loss is an NLL — the master picture
