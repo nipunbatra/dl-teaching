@@ -1,16 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .axis  { stroke:#1F1F1E; stroke-width:1.1; fill:none; }
+      .axis  { stroke:#161513; stroke-width:1.1; fill:none; }
       .grid  { stroke:#C9C4B5; stroke-width:0.4; opacity:0.5; }
       .adag  { stroke:#A8324B; stroke-width:2.4; fill:none; }
       .adag-lr{ stroke:#A8324B; stroke-width:2.4; fill:none; stroke-dasharray:4 3; }
-      .rms   { stroke:#7B9E89; stroke-width:2.4; fill:none; }
-      .rms-lr{ stroke:#7B9E89; stroke-width:2.4; fill:none; stroke-dasharray:4 3; }
-      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .rms   { stroke:#5F8573; stroke-width:2.4; fill:none; }
+      .rms-lr{ stroke:#5F8573; stroke-width:2.4; fill:none; stroke-dasharray:4 3; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut   { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
   </defs>
 
@@ -19,7 +19,7 @@
   <!-- LEFT: G_t accumulates forever -->
   <g transform="translate(60, 70)">
     <text x="200" y="-8" text-anchor="middle" class="tag" fill="#A8324B">ADAGRAD — G_t = Σ g²</text>
-    <rect x="0" y="0" width="400" height="220" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <rect x="0" y="0" width="400" height="220" fill="#F7F3E9" stroke="#C9C4B5"/>
 
     <g class="grid">
       <line x1="0" y1="55"  x2="400" y2="55"/>
@@ -45,8 +45,8 @@
 
   <!-- RIGHT: RMSProp with EMA -->
   <g transform="translate(500, 70)">
-    <text x="200" y="-8" text-anchor="middle" class="tag" fill="#7B9E89">RMSPROP — v_t = β·v + (1−β)·g²</text>
-    <rect x="0" y="0" width="400" height="220" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <text x="200" y="-8" text-anchor="middle" class="tag" fill="#5F8573">RMSPROP — v_t = β·v + (1−β)·g²</text>
+    <rect x="0" y="0" width="400" height="220" fill="#F7F3E9" stroke="#C9C4B5"/>
 
     <g class="grid">
       <line x1="0" y1="55"  x2="400" y2="55"/>
@@ -61,19 +61,19 @@
 
     <!-- v_t settles to a steady value (leaky EMA) -->
     <path class="rms" d="M 5 218 Q 60 110 120 100 Q 240 108 395 110"/>
-    <text x="240" y="85" class="mono" fill="#7B9E89">v_t (bounded EMA)</text>
+    <text x="240" y="85" class="mono" fill="#5F8573">v_t (bounded EMA)</text>
 
     <!-- effective LR stays near a constant, slowly adapting -->
     <path class="rms-lr" d="M 5 20 Q 60 90 120 110 Q 240 115 395 115"/>
-    <text x="50" y="18" class="mono" fill="#7B9E89">η/√v (stays finite)</text>
+    <text x="50" y="18" class="mono" fill="#5F8573">η/√v (stays finite)</text>
 
-    <text x="200" y="245" text-anchor="middle" class="mut">training step →  LR <tspan fill="#7B9E89" font-weight="600">lives</tspan> as long as gradient keeps flowing</text>
+    <text x="200" y="245" text-anchor="middle" class="mut">training step →  LR <tspan fill="#5F8573" font-weight="600">lives</tspan> as long as gradient keeps flowing</text>
   </g>
 
   <!-- Bottom -->
   <g transform="translate(60, 340)">
     <text x="420" y="0" text-anchor="middle" class="mut" font-style="italic">
-      Hinton's insight · replace the sum with a <tspan fill="#7B9E89" font-weight="600">leaky EMA</tspan> — old squared gradients fade out.
+      Hinton's insight · replace the sum with a <tspan fill="#5F8573" font-weight="600">leaky EMA</tspan> — old squared gradients fade out.
     </text>
   </g>
 </svg>

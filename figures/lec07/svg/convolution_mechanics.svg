@@ -1,17 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .cell    { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:0.8; }
-      .cell-h  { fill:#EAD3C5; stroke:#D97757; stroke-width:1.5; }
-      .kernel  { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1; }
-      .out-h   { fill:#F6F0DF; stroke:#C9A961; stroke-width:1.5; }
-      .out     { fill:#F0EEE5; stroke:#C9A961; stroke-width:0.8; }
-      .mono    { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut     { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl     { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag     { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .cell    { fill:#F7F3E9; stroke:#161513; stroke-width:0.8; }
+      .cell-h  { fill:#EAD3C5; stroke:#B85A3E; stroke-width:1.5; }
+      .kernel  { fill:#D8E3DE; stroke:#5F8573; stroke-width:1; }
+      .out-h   { fill:#F6F0DF; stroke:#C9A14A; stroke-width:1.5; }
+      .out     { fill:#F7F3E9; stroke:#C9A14A; stroke-width:0.8; }
+      .mono    { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut     { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl     { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag     { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
-    <marker id="cv-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/></marker>
+    <marker id="cv-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#161513"/></marker>
   </defs>
 
   <text x="480" y="28" text-anchor="middle" class="ttl">Convolution — slide a kernel, take dot products, build a feature map</text>
@@ -59,13 +59,13 @@
       <rect class="cell" x="150" y="150" width="30" height="30"/>
     </g>
     <!-- bracket for highlighted 3x3 window -->
-    <rect x="30" y="30" width="90" height="90" fill="none" stroke="#D97757" stroke-width="2.5"/>
-    <text x="95" y="16" class="mono" fill="#D97757" text-anchor="middle">window</text>
+    <rect x="30" y="30" width="90" height="90" fill="none" stroke="#B85A3E" stroke-width="2.5"/>
+    <text x="95" y="16" class="mono" fill="#B85A3E" text-anchor="middle">window</text>
   </g>
 
   <!-- Kernel 3x3 -->
   <g transform="translate(320, 130)">
-    <text x="45" y="-10" text-anchor="middle" class="tag" fill="#7B9E89">KERNEL  3 × 3</text>
+    <text x="45" y="-10" text-anchor="middle" class="tag" fill="#5F8573">KERNEL  3 × 3</text>
     <rect class="kernel" x="0"  y="0"  width="30" height="30"/>
     <text x="15" y="20" text-anchor="middle" class="mono">w₁₁</text>
     <rect class="kernel" x="30" y="0"  width="30" height="30"/>
@@ -91,10 +91,10 @@
 
   <!-- OUTPUT 4x4 -->
   <g transform="translate(480, 100)">
-    <text x="80" y="-10" text-anchor="middle" class="tag" fill="#C9A961">OUTPUT  4 × 4</text>
+    <text x="80" y="-10" text-anchor="middle" class="tag" fill="#C9A14A">OUTPUT  4 × 4</text>
     <g>
       <rect class="out-h" x="0"   y="0"  width="35" height="35"/>
-      <text x="17" y="22" text-anchor="middle" class="mono" fill="#C9A961">y₁₁</text>
+      <text x="17" y="22" text-anchor="middle" class="mono" fill="#C9A14A">y₁₁</text>
       <rect class="out" x="35"  y="0"  width="35" height="35"/>
       <rect class="out" x="70"  y="0"  width="35" height="35"/>
       <rect class="out" x="105" y="0"  width="35" height="35"/>
@@ -117,7 +117,7 @@
   </g>
 
   <!-- Arrow from window → output cell with formula -->
-  <g class="mono" stroke="#1F1F1E" fill="none">
+  <g class="mono" stroke="#161513" fill="none">
     <line x1="215" y1="200" x2="285" y2="200" stroke-width="1.2" marker-end="url(#cv-a)"/>
     <line x1="385" y1="200" x2="478" y2="117" stroke-width="1.2" marker-end="url(#cv-a)"/>
   </g>
@@ -135,10 +135,10 @@
 
   <!-- Footer -->
   <g transform="translate(60, 370)">
-    <rect x="0" y="0" width="840" height="36" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <rect x="0" y="0" width="840" height="36" fill="#F7F3E9" stroke="#C9C4B5"/>
     <text x="14" y="22" class="mut" font-style="italic">
       Convolution slides the SAME 9-weight kernel across the whole image —
-      <tspan fill="#D97757" font-weight="600">parameter sharing</tspan> + <tspan fill="#D97757" font-weight="600">sparse connectivity</tspan> + <tspan fill="#D97757" font-weight="600">translation equivariance</tspan>.
+      <tspan fill="#B85A3E" font-weight="600">parameter sharing</tspan> + <tspan fill="#B85A3E" font-weight="600">sparse connectivity</tspan> + <tspan fill="#B85A3E" font-weight="600">translation equivariance</tspan>.
     </text>
   </g>
 </svg>

@@ -102,7 +102,7 @@ The buffet is concatenated along the channel axis · the next layer sees all ker
 
 ---
 
-# Why 1×1 convolutions matter · derivation
+# ⭐⭐⭐ Optional · why 1×1 convolutions matter (derivation)
 
 Conv-layer cost formula: $(K_h \cdot K_w \cdot C_\text{in}) \cdot C_\text{out}$.
 
@@ -163,7 +163,7 @@ A skip connection is a **gradient superhighway** — a direct, uninterrupted pat
 
 ---
 
-# Skip connections · derive the gradient
+# ⭐⭐⭐ Optional · skip connections — derive the gradient
 
 **Plain layer.** $h_\text{out} = F(h_\text{in})$. Chain rule:
 $$\frac{\partial \mathcal{L}}{\partial h_\text{in}} = \frac{\partial \mathcal{L}}{\partial h_\text{out}} \cdot F'(h_\text{in})$$

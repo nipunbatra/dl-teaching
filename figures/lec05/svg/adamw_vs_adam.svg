@@ -1,14 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 340" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 340" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .box   { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.2; rx:4; ry:4; }
-      .box-a { fill:#EAD3C5; stroke:#D97757; stroke-width:1.2; rx:4; ry:4; }
+      .box   { fill:#F7F3E9; stroke:#161513; stroke-width:1.2; rx:4; ry:4; }
+      .box-a { fill:#EAD3C5; stroke:#B85A3E; stroke-width:1.2; rx:4; ry:4; }
       .box-r { fill:#F6D4CC; stroke:#A8324B; stroke-width:1.2; rx:4; ry:4; }
-      .mono  { font-family:'JetBrains Mono', monospace; font-size:12px; fill:#1F1F1E; }
-      .lbl   { fill:#1F1F1E; font-size:13px; font-weight:600; }
-      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:12px; fill:#161513; }
+      .lbl   { fill:#161513; font-size:13px; font-weight:600; }
+      .mut   { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#5F5C54; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
   </defs>
 
@@ -39,7 +39,7 @@
 
   <!-- RIGHT: AdamW (decoupled) -->
   <g transform="translate(500, 70)">
-    <text x="210" y="-6" text-anchor="middle" class="tag" fill="#D97757">ADAMW  (Loshchilov & Hutter 2017)</text>
+    <text x="210" y="-6" text-anchor="middle" class="tag" fill="#B85A3E">ADAMW  (Loshchilov & Hutter 2017)</text>
     <rect class="box-a" x="0" y="0" width="420" height="200"/>
 
     <text x="15" y="28" class="lbl">① Gradient — no L2 added</text>
@@ -50,17 +50,17 @@
     <text x="15" y="134" class="mono">v̂_t = v_t / (1 − β₂^t)</text>
 
     <text x="15" y="170" class="lbl">③ Decoupled weight decay</text>
-    <text x="15" y="190" class="mono" fill="#D97757">θ ← θ − η·(m̂_t / (√v̂_t + ε)  +  λθ)</text>
+    <text x="15" y="190" class="mono" fill="#B85A3E">θ ← θ − η·(m̂_t / (√v̂_t + ε)  +  λθ)</text>
 
-    <text x="210" y="230" text-anchor="middle" class="mut" fill="#D97757" font-style="italic">
+    <text x="210" y="230" text-anchor="middle" class="mut" fill="#B85A3E" font-style="italic">
       the λθ term is applied <tspan font-weight="600">directly</tspan> — not inside the adaptive scaling
     </text>
-    <text x="210" y="246" text-anchor="middle" class="mut" fill="#D97757" font-style="italic">
+    <text x="210" y="246" text-anchor="middle" class="mut" fill="#B85A3E" font-style="italic">
       every parameter gets the same decay
     </text>
   </g>
 
   <text x="480" y="320" text-anchor="middle" class="mut">
-    Rule · use <tspan font-family="'JetBrains Mono'" fill="#D97757" font-weight="600">AdamW</tspan> for everything. It is what modern LLMs use (Llama, Claude, GPT).
+    Rule · use <tspan font-family="'JetBrains Mono'" fill="#B85A3E" font-weight="600">AdamW</tspan> for everything. It is what modern LLMs use (Llama, Claude, GPT).
   </text>
 </svg>

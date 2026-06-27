@@ -1,15 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Work Sans, system-ui, sans-serif">
   <style>
-    .bg { fill: #F0EEE5; }
-    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
-    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
-    .body { font-size: 12px; fill: #1F1F1E; }
+    .bg { fill: #F7F3E9; }
+    .title { font-size: 17px; font-weight: 600; fill: #161513; }
+    .head { font-size: 13px; font-weight: 600; fill: #161513; }
+    .body { font-size: 12px; fill: #161513; }
     .mono { font-family: "IBM Plex Mono", monospace; font-size: 12px; }
-    .caption { font-size: 11px; fill: #6B6B69; }
-    .gt { fill: none; stroke: #7B9E89; stroke-width: 2.5; }
-    .pred { fill: none; stroke: #D97757; stroke-width: 2.5; stroke-dasharray: 5 3; }
+    .caption { font-size: 11px; fill: #5F5C54; }
+    .gt { fill: none; stroke: #5F8573; stroke-width: 2.5; }
+    .pred { fill: none; stroke: #B85A3E; stroke-width: 2.5; stroke-dasharray: 5 3; }
     .inter { fill: #A8324B; opacity: 0.15; stroke: #A8324B; stroke-width: 1; }
-    .box { fill: white; stroke: #4A6670; stroke-width: 1; rx: 4; }
+    .box { fill: white; stroke: #37535F; stroke-width: 1; rx: 4; }
     .imgbg { fill: #E8EDEF; }
   </style>
   <rect class="bg" width="960" height="400"/>
@@ -56,16 +56,16 @@
 
   <!-- Legend -->
   <g transform="translate(40, 280)">
-    <rect fill="none" stroke="#7B9E89" stroke-width="2.5" x="0" y="0" width="30" height="16"/>
+    <rect fill="none" stroke="#5F8573" stroke-width="2.5" x="0" y="0" width="30" height="16"/>
     <text x="40" y="12" class="caption">ground truth</text>
-    <rect fill="none" stroke="#D97757" stroke-width="2.5" stroke-dasharray="4 3" x="130" y="0" width="30" height="16"/>
+    <rect fill="none" stroke="#B85A3E" stroke-width="2.5" stroke-dasharray="4 3" x="130" y="0" width="30" height="16"/>
     <text x="170" y="12" class="caption">prediction</text>
     <rect class="inter" x="260" y="0" width="30" height="16"/>
     <text x="300" y="12" class="caption">overlap</text>
   </g>
 
   <!-- Formula + calc -->
-  <rect x="40" y="315" width="880" height="70" fill="#FFF3EE" stroke="#D97757" stroke-width="1" rx="6"/>
+  <rect x="40" y="315" width="880" height="70" fill="#FFF3EE" stroke="#B85A3E" stroke-width="1" rx="6"/>
   <text x="60" y="338" class="head">IoU = |A ∩ B| / |A ∪ B|</text>
   <text x="60" y="358" class="mono">GT = (30, 30, 100, 100), Pred = (50, 50, 120, 120)</text>
   <text x="60" y="375" class="mono">Intersection 50·50 = 2500 · Union 4900 + 4900 − 2500 = 7300 · IoU = 2500 / 7300 = 0.342</text>

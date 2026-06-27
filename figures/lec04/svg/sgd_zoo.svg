@@ -1,16 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .axis  { stroke:#1F1F1E; stroke-width:1.1; fill:none; }
-      .con   { stroke:#6B6A65; stroke-width:0.9; fill:none; opacity:0.5; }
+      .axis  { stroke:#161513; stroke-width:1.1; fill:none; }
+      .con   { stroke:#5F5C54; stroke-width:0.9; fill:none; opacity:0.5; }
       .sgd   { stroke:#A8324B; stroke-width:2.2; fill:none; }
-      .mom   { stroke:#4A6670; stroke-width:2.2; fill:none; }
-      .nov   { stroke:#D97757; stroke-width:2.2; fill:none; }
-      .dot   { fill:#1F1F1E; stroke:#1F1F1E; stroke-width:1; }
-      .star  { fill:#7B9E89; stroke:#1F1F1E; stroke-width:1; }
-      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .mom   { stroke:#37535F; stroke-width:2.2; fill:none; }
+      .nov   { stroke:#B85A3E; stroke-width:2.2; fill:none; }
+      .dot   { fill:#161513; stroke:#161513; stroke-width:1; }
+      .star  { fill:#5F8573; stroke:#161513; stroke-width:1; }
+      .mut   { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#5F5C54; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
       .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; }
     </style>
   </defs>
@@ -19,7 +19,7 @@
 
   <!-- Unified contour -->
   <g transform="translate(180, 60)">
-    <rect x="0" y="0" width="600" height="260" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <rect x="0" y="0" width="600" height="260" fill="#F7F3E9" stroke="#C9C4B5"/>
 
     <g class="con">
       <ellipse cx="480" cy="130" rx="200" ry="50"/>
@@ -30,7 +30,7 @@
     </g>
 
     <circle cx="480" cy="130" r="5" class="star"/>
-    <text x="490" y="128" class="mut" fill="#7B9E89">min</text>
+    <text x="490" y="128" class="mut" fill="#5F8573">min</text>
 
     <!-- start -->
     <circle cx="40" cy="70" r="5" class="dot"/>
@@ -50,9 +50,9 @@
       <line x1="0" y1="0" x2="30" y2="0" class="sgd"/>
       <text x="36" y="4" class="mono" fill="#A8324B">SGD</text>
       <line x1="80" y1="0" x2="110" y2="0" class="mom"/>
-      <text x="116" y="4" class="mono" fill="#4A6670">Momentum</text>
+      <text x="116" y="4" class="mono" fill="#37535F">Momentum</text>
       <line x1="200" y1="0" x2="230" y2="0" class="nov"/>
-      <text x="236" y="4" class="mono" fill="#D97757">Nesterov</text>
+      <text x="236" y="4" class="mono" fill="#B85A3E">Nesterov</text>
     </g>
   </g>
 

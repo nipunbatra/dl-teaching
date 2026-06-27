@@ -192,7 +192,7 @@ To classify a critical point, look at **curvature** in every direction. The **He
 
 ---
 
-# Why saddles dominate in high dimensions
+# ⭐⭐⭐ Optional · why saddles dominate in high dimensions
 
 In $D$ dimensions there are $D$ curvature directions:
 
@@ -445,7 +445,7 @@ In practice on deep nets, the gain is modest but free.
 
 ---
 
-# A geometric way to see Nesterov
+# ⭐⭐⭐ Optional · a geometric way to see Nesterov
 
 <div class="columns">
 <div>
@@ -549,7 +549,7 @@ Let's derive **how big** that compounding gets.
 
 ---
 
-# Deriving the effective learning rate
+# ⭐⭐⭐ Optional · deriving the effective learning rate
 
 Assume gradient $\mathbf{g}$ is constant for many steps. Use the simpler form $\mathbf{v}_t = \beta\,\mathbf{v}_{t-1} + \mathbf{g}$ (same steady-state behaviour). Unroll, with $\mathbf{v}_0 = 0$:
 

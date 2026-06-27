@@ -1,15 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .axis  { stroke:#1F1F1E; stroke-width:1; fill:none; }
+      .axis  { stroke:#161513; stroke-width:1; fill:none; }
       .bar-h { fill:#A8324B; }
-      .bar-s { fill:#D97757; }
-      .bar-e { fill:#7B9E89; opacity:0.35; }
-      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
-      .big   { fill:#1F1F1E; font-size:28px; font-family:Fraunces; font-weight:600; }
+      .bar-s { fill:#B85A3E; }
+      .bar-e { fill:#5F8573; opacity:0.35; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut   { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .big   { fill:#161513; font-size:28px; font-family:EB Garamond; font-weight:600; }
     </style>
   </defs>
 
@@ -18,7 +18,7 @@
   <!-- LEFT: hard one-hot -->
   <g transform="translate(40, 80)">
     <text x="150" y="-10" text-anchor="middle" class="tag" fill="#A8324B">HARD LABEL (one-hot)</text>
-    <rect x="0" y="0" width="300" height="200" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <rect x="0" y="0" width="300" height="200" fill="#F7F3E9" stroke="#C9C4B5"/>
     <line x1="0" y1="190" x2="300" y2="190" class="axis"/>
 
     <!-- 5 classes: cat = 1.0, rest = 0 -->
@@ -45,12 +45,12 @@
 
   <!-- arrow -->
   <text x="370" y="180" text-anchor="middle" class="big">→</text>
-  <text x="370" y="200" text-anchor="middle" class="mono" fill="#D97757" font-size="10">smooth α=0.1</text>
+  <text x="370" y="200" text-anchor="middle" class="mono" fill="#B85A3E" font-size="10">smooth α=0.1</text>
 
   <!-- RIGHT: smoothed -->
   <g transform="translate(400, 80)">
-    <text x="150" y="-10" text-anchor="middle" class="tag" fill="#D97757">SMOOTHED  ·  α = 0.1</text>
-    <rect x="0" y="0" width="300" height="200" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <text x="150" y="-10" text-anchor="middle" class="tag" fill="#B85A3E">SMOOTHED  ·  α = 0.1</text>
+    <rect x="0" y="0" width="300" height="200" fill="#F7F3E9" stroke="#C9C4B5"/>
     <line x1="0" y1="190" x2="300" y2="190" class="axis"/>
 
     <!-- cat = 0.92, others = 0.02 each -->

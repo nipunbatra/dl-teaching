@@ -1,28 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .box   { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.2; }
-      .cat   { fill:#D97757; }
+      .box   { fill:#F7F3E9; stroke:#161513; stroke-width:1.2; }
+      .cat   { fill:#B85A3E; }
       .ear   { fill:#A8324B; }
-      .eye   { fill:#1F1F1E; }
+      .eye   { fill:#161513; }
       .nose  { fill:#A8324B; }
-      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut   { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
   </defs>
 
   <!-- Re-usable cat symbol -->
   <defs>
     <symbol id="cat" viewBox="0 0 100 100">
-      <path d="M 20 80 L 30 40 L 40 50 L 50 35 L 60 50 L 70 40 L 80 80 L 70 90 L 30 90 Z" fill="#D97757"/>
+      <path d="M 20 80 L 30 40 L 40 50 L 50 35 L 60 50 L 70 40 L 80 80 L 70 90 L 30 90 Z" fill="#B85A3E"/>
       <path d="M 30 40 L 32 25 L 38 45 Z" fill="#A8324B"/>
       <path d="M 70 40 L 68 25 L 62 45 Z" fill="#A8324B"/>
-      <circle cx="40" cy="55" r="3" fill="#1F1F1E"/>
-      <circle cx="60" cy="55" r="3" fill="#1F1F1E"/>
+      <circle cx="40" cy="55" r="3" fill="#161513"/>
+      <circle cx="60" cy="55" r="3" fill="#161513"/>
       <circle cx="50" cy="67" r="2" fill="#A8324B"/>
-      <path d="M 48 70 Q 50 74 52 70" stroke="#1F1F1E" fill="none" stroke-width="1"/>
+      <path d="M 48 70 Q 50 74 52 70" stroke="#161513" fill="none" stroke-width="1"/>
     </symbol>
   </defs>
 
@@ -52,7 +52,7 @@
     <g transform="translate(-5, -15) scale(1.25)">
       <use href="#cat" x="10" y="10" width="100" height="100"/>
     </g>
-    <rect x="0" y="0" width="120" height="120" fill="none" stroke="#D97757" stroke-dasharray="3 2"/>
+    <rect x="0" y="0" width="120" height="120" fill="none" stroke="#B85A3E" stroke-dasharray="3 2"/>
     <text x="60" y="138" text-anchor="middle" class="mono">random crop</text>
     <text x="60" y="154" text-anchor="middle" class="mut">scale + translate</text>
   </g>
@@ -71,11 +71,11 @@
   <g transform="translate(600, 60)">
     <rect class="box" x="0" y="0" width="120" height="120"/>
     <g opacity="0.7" transform="translate(10, 10)">
-      <path d="M 20 80 L 30 40 L 40 50 L 50 35 L 60 50 L 70 40 L 80 80 L 70 90 L 30 90 Z" fill="#C9A961"/>
-      <path d="M 30 40 L 32 25 L 38 45 Z" fill="#7B9E89"/>
-      <path d="M 70 40 L 68 25 L 62 45 Z" fill="#7B9E89"/>
-      <circle cx="40" cy="55" r="3" fill="#1F1F1E"/>
-      <circle cx="60" cy="55" r="3" fill="#1F1F1E"/>
+      <path d="M 20 80 L 30 40 L 40 50 L 50 35 L 60 50 L 70 40 L 80 80 L 70 90 L 30 90 Z" fill="#C9A14A"/>
+      <path d="M 30 40 L 32 25 L 38 45 Z" fill="#5F8573"/>
+      <path d="M 70 40 L 68 25 L 62 45 Z" fill="#5F8573"/>
+      <circle cx="40" cy="55" r="3" fill="#161513"/>
+      <circle cx="60" cy="55" r="3" fill="#161513"/>
     </g>
     <text x="60" y="138" text-anchor="middle" class="mono">color jitter</text>
     <text x="60" y="154" text-anchor="middle" class="mut">hue · brightness · saturation</text>
@@ -85,7 +85,7 @@
   <g transform="translate(740, 60)">
     <rect class="box" x="0" y="0" width="120" height="120"/>
     <use href="#cat" x="10" y="10" width="100" height="100"/>
-    <rect x="40" y="45" width="40" height="35" fill="#1F1F1E"/>
+    <rect x="40" y="45" width="40" height="35" fill="#161513"/>
     <text x="60" y="138" text-anchor="middle" class="mono">cutout</text>
     <text x="60" y="154" text-anchor="middle" class="mut">force reliance on partial info</text>
   </g>
@@ -103,7 +103,7 @@
   </g>
 
   <text x="480" y="360" text-anchor="middle" class="mut" font-style="italic">
-    Key idea · every augmentation should <tspan fill="#D97757" font-weight="600">preserve the label</tspan>.
+    Key idea · every augmentation should <tspan fill="#B85A3E" font-weight="600">preserve the label</tspan>.
     A flipped cat is still a cat; a flipped "6" is a "9" (so don't flip MNIST).
   </text>
 </svg>

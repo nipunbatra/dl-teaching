@@ -1,15 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Work Sans, system-ui, sans-serif">
   <style>
-    .bg { fill: #F0EEE5; }
-    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
-    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
-    .body { font-size: 12px; fill: #1F1F1E; }
-    .caption { font-size: 11px; fill: #6B6B69; }
-    .pix { fill: #FFF3EE; stroke: #D97757; stroke-width: 0.5; }
-    .rf1 { fill: #D97757; opacity: 0.15; stroke: #D97757; stroke-width: 1.2; }
-    .rf2 { fill: #D97757; opacity: 0.25; stroke: #D97757; stroke-width: 1.2; }
-    .rf3 { fill: #D97757; opacity: 0.45; stroke: #D97757; stroke-width: 1.5; }
-    .rf5 { fill: #D97757; opacity: 0.7; stroke: #D97757; stroke-width: 1.8; }
+    .bg { fill: #F7F3E9; }
+    .title { font-size: 17px; font-weight: 600; fill: #161513; }
+    .head { font-size: 13px; font-weight: 600; fill: #161513; }
+    .body { font-size: 12px; fill: #161513; }
+    .caption { font-size: 11px; fill: #5F5C54; }
+    .pix { fill: #FFF3EE; stroke: #B85A3E; stroke-width: 0.5; }
+    .rf1 { fill: #B85A3E; opacity: 0.15; stroke: #B85A3E; stroke-width: 1.2; }
+    .rf2 { fill: #B85A3E; opacity: 0.25; stroke: #B85A3E; stroke-width: 1.2; }
+    .rf3 { fill: #B85A3E; opacity: 0.45; stroke: #B85A3E; stroke-width: 1.5; }
+    .rf5 { fill: #B85A3E; opacity: 0.7; stroke: #B85A3E; stroke-width: 1.8; }
     .focus { fill: #A8324B; stroke: #A8324B; stroke-width: 1.8; }
   </style>
   <rect class="bg" width="960" height="400"/>
@@ -65,7 +65,7 @@
   </g>
 
   <!-- Footer formula -->
-  <rect x="40" y="340" width="880" height="50" fill="#FFF3EE" stroke="#D97757" stroke-width="1" rx="6"/>
+  <rect x="40" y="340" width="880" height="50" fill="#FFF3EE" stroke="#B85A3E" stroke-width="1" rx="6"/>
   <text x="480" y="362" class="body" text-anchor="middle" font-family="IBM Plex Mono, monospace">RF_L = 1 + L · (K − 1) · S_cum  →  for 3×3 stride-1, each layer adds 2 to RF</text>
   <text x="480" y="380" class="caption" text-anchor="middle">Add a stride-2 conv anywhere and downstream RF doubles. ResNet-50 final block RF ≈ 500 · sees full image.</text>
 </svg>

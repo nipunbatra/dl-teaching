@@ -1,17 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .axis  { stroke:#1F1F1E; stroke-width:1.1; fill:none; }
+      .axis  { stroke:#161513; stroke-width:1.1; fill:none; }
       .grid  { stroke:#C9C4B5; stroke-width:0.4; opacity:0.5; }
       .nowarm{ stroke:#A8324B; stroke-width:2.4; fill:none; }
-      .warm  { stroke:#7B9E89; stroke-width:2.4; fill:none; }
+      .warm  { stroke:#5F8573; stroke-width:2.4; fill:none; }
       .lr-no { stroke:#A8324B; stroke-width:1.6; fill:none; stroke-dasharray:4 3; }
-      .lr-w  { stroke:#7B9E89; stroke-width:1.6; fill:none; stroke-dasharray:4 3; }
+      .lr-w  { stroke:#5F8573; stroke-width:1.6; fill:none; stroke-dasharray:4 3; }
       .nan   { fill:#A8324B; }
-      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut   { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
   </defs>
 
@@ -20,7 +20,7 @@
   <!-- LEFT: without warmup -->
   <g transform="translate(40, 70)">
     <text x="200" y="-8" text-anchor="middle" class="tag" fill="#A8324B">WITHOUT WARMUP · full LR from step 0</text>
-    <rect x="0" y="0" width="400" height="220" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <rect x="0" y="0" width="400" height="220" fill="#F7F3E9" stroke="#C9C4B5"/>
 
     <g class="grid">
       <line x1="0" y1="55"  x2="400" y2="55"/>
@@ -51,8 +51,8 @@
 
   <!-- RIGHT: with warmup -->
   <g transform="translate(500, 70)">
-    <text x="200" y="-8" text-anchor="middle" class="tag" fill="#7B9E89">WITH WARMUP · linear ramp · then cosine</text>
-    <rect x="0" y="0" width="400" height="220" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <text x="200" y="-8" text-anchor="middle" class="tag" fill="#5F8573">WITH WARMUP · linear ramp · then cosine</text>
+    <rect x="0" y="0" width="400" height="220" fill="#F7F3E9" stroke="#C9C4B5"/>
 
     <g class="grid">
       <line x1="0" y1="55"  x2="400" y2="55"/>
@@ -67,13 +67,13 @@
 
     <!-- LR: ramp up for first 50 then cosine down -->
     <path class="lr-w" d="M 0 120 L 50 20 C 150 25 150 115 395 115"/>
-    <text x="15" y="22" class="mono" fill="#7B9E89">η (ramp)</text>
-    <text x="100" y="22" class="mono" fill="#7B9E89">peak</text>
-    <text x="300" y="108" class="mono" fill="#7B9E89">cosine decay</text>
+    <text x="15" y="22" class="mono" fill="#5F8573">η (ramp)</text>
+    <text x="100" y="22" class="mono" fill="#5F8573">peak</text>
+    <text x="300" y="108" class="mono" fill="#5F8573">cosine decay</text>
 
     <!-- Loss: decreases smoothly -->
     <path class="warm" d="M 5 60 Q 60 110 150 160 Q 250 190 395 205"/>
-    <text x="200" y="118" text-anchor="middle" class="mono" fill="#7B9E89" font-weight="600">smooth descent</text>
+    <text x="200" y="118" text-anchor="middle" class="mono" fill="#5F8573" font-weight="600">smooth descent</text>
 
     <text x="200" y="248" text-anchor="middle" class="mut">steps →</text>
   </g>

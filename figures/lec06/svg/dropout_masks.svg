@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Work Sans, system-ui, sans-serif">
   <style>
-    .bg { fill: #F0EEE5; }
-    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
-    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
-    .body { font-size: 12px; fill: #1F1F1E; }
-    .caption { font-size: 11px; fill: #6B6B69; }
-    .on { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.2; rx: 4; }
+    .bg { fill: #F7F3E9; }
+    .title { font-size: 17px; font-weight: 600; fill: #161513; }
+    .head { font-size: 13px; font-weight: 600; fill: #161513; }
+    .body { font-size: 12px; fill: #161513; }
+    .caption { font-size: 11px; fill: #5F5C54; }
+    .on { fill: #FFF3EE; stroke: #B85A3E; stroke-width: 1.2; rx: 4; }
     .off { fill: #E8EDEF; stroke: #C9C4B5; stroke-width: 0.8; rx: 4; opacity: 0.4; }
-    .line { stroke: #4A6670; stroke-width: 0.8; }
+    .line { stroke: #37535F; stroke-width: 0.8; }
     .line-off { stroke: #C9C4B5; stroke-width: 0.5; opacity: 0.4; }
   </style>
   <rect class="bg" width="960" height="380"/>
@@ -126,7 +126,7 @@
   </g>
 
   <!-- Footer -->
-  <rect x="40" y="320" width="880" height="50" fill="#FFF3EE" stroke="#D97757" stroke-width="1" rx="6"/>
+  <rect x="40" y="320" width="880" height="50" fill="#FFF3EE" stroke="#B85A3E" stroke-width="1" rx="6"/>
   <text x="480" y="342" class="body" text-anchor="middle"><tspan font-weight="600">Each forward pass</tspan> trains a different sub-network · ensemble of 2^n models averaged at inference.</text>
   <text x="480" y="360" class="caption" text-anchor="middle">Inverted-dropout · at train, divide by (1−p); at test, use full network as-is. Implemented in one line.</text>
 </svg>

@@ -352,7 +352,7 @@ The EMA is **10× smaller** than the true gradient — purely because it started
 
 ---
 
-# Deriving the bias-correction factor
+# ⭐⭐⭐ Optional · deriving the bias-correction factor
 
 Unroll the EMA from $m_0 = 0$, assuming the gradient is approximately constant $g_k = g$:
 
@@ -534,7 +534,7 @@ sched = LambdaLR(opt, lr_lambda)
 
 ---
 
-# Why are early gradients so chaotic?
+# ⭐⭐⭐ Optional · why are early gradients so chaotic?
 
 A randomly-initialized network knows **nothing** — and Transformers make it worse: attention can accidentally focus everything on one irrelevant token, producing enormous gradients on that head.
 

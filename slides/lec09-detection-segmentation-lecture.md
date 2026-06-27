@@ -234,7 +234,7 @@ Pool now `[E]`.
 
 ---
 
-# NMS · pseudocode
+# ⭐⭐⭐ Optional · NMS pseudocode
 
 ```python
 def nms(boxes, scores, iou_threshold=0.5):
@@ -429,7 +429,7 @@ As of this writing, for any real-time detection task, start with `ultralytics` Y
 
 ---
 
-# DETR · ditch the post-processing
+# ⭐⭐⭐ Optional · DETR — ditch the post-processing
 
 YOLO and Faster R-CNN are conceptually two-step: predict **densely** (thousands of boxes), then **clean up** with NMS.
 

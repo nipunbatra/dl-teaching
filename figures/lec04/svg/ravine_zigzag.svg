@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Work Sans, system-ui, sans-serif">
   <style>
-    .bg { fill: #F0EEE5; }
-    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
-    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
-    .body { font-size: 12px; fill: #1F1F1E; }
-    .caption { font-size: 11px; fill: #6B6B69; }
+    .bg { fill: #F7F3E9; }
+    .title { font-size: 17px; font-weight: 600; fill: #161513; }
+    .head { font-size: 13px; font-weight: 600; fill: #161513; }
+    .body { font-size: 12px; fill: #161513; }
+    .caption { font-size: 11px; fill: #5F5C54; }
     .contour { fill: none; stroke: #CFCBBE; stroke-width: 0.9; }
     .sgd { stroke: #A8324B; stroke-width: 2; fill: none; }
-    .mom { stroke: #7B9E89; stroke-width: 2; fill: none; }
-    .star { fill: #1F1F1E; }
+    .mom { stroke: #5F8573; stroke-width: 2; fill: none; }
+    .star { fill: #161513; }
   </style>
   <rect class="bg" width="960" height="400"/>
   <text x="480" y="30" class="title" text-anchor="middle">Ravine · SGD zig-zags · momentum glides</text>
@@ -16,7 +16,7 @@
   <!-- Left: SGD -->
   <g transform="translate(40, 60)">
     <text x="200" y="0" class="head" text-anchor="middle">Vanilla SGD · 80 steps</text>
-    <rect x="0" y="20" width="400" height="300" fill="white" stroke="#4A6670" stroke-width="1"/>
+    <rect x="0" y="20" width="400" height="300" fill="white" stroke="#37535F" stroke-width="1"/>
     <!-- Contours · elongated ellipses -->
     <g class="contour">
       <ellipse cx="200" cy="170" rx="180" ry="40"/>
@@ -36,7 +36,7 @@
   <!-- Right: Momentum -->
   <g transform="translate(520, 60)">
     <text x="200" y="0" class="head" text-anchor="middle">SGD + momentum · 20 steps</text>
-    <rect x="0" y="20" width="400" height="300" fill="white" stroke="#4A6670" stroke-width="1"/>
+    <rect x="0" y="20" width="400" height="300" fill="white" stroke="#37535F" stroke-width="1"/>
     <g class="contour">
       <ellipse cx="200" cy="170" rx="180" ry="40"/>
       <ellipse cx="200" cy="170" rx="150" ry="32"/>
@@ -53,6 +53,6 @@
   </g>
 
   <!-- Footer insight -->
-  <rect x="40" y="355" width="880" height="35" fill="#FFF3EE" stroke="#D97757" stroke-width="1" rx="6"/>
+  <rect x="40" y="355" width="880" height="35" fill="#FFF3EE" stroke="#B85A3E" stroke-width="1" rx="6"/>
   <text x="480" y="377" class="body" text-anchor="middle"><tspan font-weight="600">Why</tspan> · EMA of gradients averages out oscillation, preserves consistent signal. Free 4× speedup on ill-conditioned problems.</text>
 </svg>

@@ -350,7 +350,7 @@ Saving: **~1.5 million parameters per block**, plus 2 extra non-linearities. Rep
 
 ---
 
-# Receptive field · the chain-reaction view
+# ⭐⭐⭐ Optional · receptive field, the chain-reaction view
 
 <div class="insight">
 
@@ -398,7 +398,7 @@ Each layer learns to use this growing context — edges → textures → parts �
 
 ---
 
-# Effective receptive field
+# ⭐⭐⭐ Optional · effective receptive field
 
 <div class="insight">
 

@@ -1,19 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .box-enc { fill:#DCE3E6; stroke:#4A6670; stroke-width:1.4; rx:2; ry:2; }
-      .box-dec { fill:#EAD3C5; stroke:#D97757; stroke-width:1.4; rx:2; ry:2; }
-      .bridge  { fill:#F6F0DF; stroke:#C9A961; stroke-width:1.4; rx:2; ry:2; }
-      .skip    { stroke:#7B9E89; stroke-width:2; fill:none; stroke-dasharray:4 3; }
-      .down    { stroke:#1F1F1E; fill:none; stroke-width:1.4; }
-      .up      { stroke:#1F1F1E; fill:none; stroke-width:1.4; }
-      .mono    { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut     { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl     { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag     { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .box-enc { fill:#DCE3E6; stroke:#37535F; stroke-width:1.4; rx:2; ry:2; }
+      .box-dec { fill:#EAD3C5; stroke:#B85A3E; stroke-width:1.4; rx:2; ry:2; }
+      .bridge  { fill:#F6F0DF; stroke:#C9A14A; stroke-width:1.4; rx:2; ry:2; }
+      .skip    { stroke:#5F8573; stroke-width:2; fill:none; stroke-dasharray:4 3; }
+      .down    { stroke:#161513; fill:none; stroke-width:1.4; }
+      .up      { stroke:#161513; fill:none; stroke-width:1.4; }
+      .mono    { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut     { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl     { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag     { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
-    <marker id="un-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/></marker>
-    <marker id="un-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7B9E89"/></marker>
+    <marker id="un-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#161513"/></marker>
+    <marker id="un-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5F8573"/></marker>
   </defs>
 
   <text x="480" y="28" text-anchor="middle" class="ttl">U-Net — encoder-decoder with skip connections · the standard for segmentation</text>
@@ -47,12 +47,12 @@
   </g>
 
   <!-- Input -->
-  <rect x="10" y="92" width="40" height="16" fill="#EAE7DC" stroke="#6B6A65"/>
+  <rect x="10" y="92" width="40" height="16" fill="#EAE7DC" stroke="#5F5C54"/>
   <text x="30" y="104" text-anchor="middle" class="mono">x</text>
   <text x="30" y="124" text-anchor="middle" class="mut">image</text>
 
   <!-- Output -->
-  <rect x="910" y="92" width="40" height="16" fill="#D8E3DE" stroke="#7B9E89"/>
+  <rect x="910" y="92" width="40" height="16" fill="#D8E3DE" stroke="#5F8573"/>
   <text x="930" y="104" text-anchor="middle" class="mono">ŷ</text>
   <text x="930" y="124" text-anchor="middle" class="mut">mask</text>
 
@@ -96,13 +96,13 @@
     <rect class="box-dec" x="140" y="0" width="18" height="12"/>
     <text x="164" y="10" class="mono" font-size="10">decoder (upsample)</text>
     <line x1="300" y1="6" x2="320" y2="6" class="skip"/>
-    <text x="326" y="10" class="mono" font-size="10" fill="#7B9E89">skip (concat)</text>
+    <text x="326" y="10" class="mono" font-size="10" fill="#5F8573">skip (concat)</text>
   </g>
 
   <!-- Footer -->
   <g transform="translate(60, 385)">
     <text x="420" y="0" text-anchor="middle" class="mut" font-style="italic">
-      Ronneberger 2015 · skip connections <tspan fill="#7B9E89" font-weight="600">bring back fine spatial detail</tspan> that downsampling lost.
+      Ronneberger 2015 · skip connections <tspan fill="#5F8573" font-weight="600">bring back fine spatial detail</tspan> that downsampling lost.
       Still the default for medical, satellite, and diffusion U-Nets (L21–22).
     </text>
   </g>

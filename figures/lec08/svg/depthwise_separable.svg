@@ -1,19 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .box    { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.3; rx:4; ry:4; }
-      .box-a  { fill:#EAD3C5; stroke:#D97757; stroke-width:1.3; rx:4; ry:4; }
-      .box-s  { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.3; rx:4; ry:4; }
-      .channel{ fill:#F0EEE5; stroke:#1F1F1E; stroke-width:0.8; }
-      .channel-a{ fill:#EAD3C5; stroke:#D97757; stroke-width:1.2; }
-      .channel-s{ fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.2; }
-      .ink    { stroke:#1F1F1E; fill:none; stroke-width:1.2; }
-      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .box    { fill:#F7F3E9; stroke:#161513; stroke-width:1.3; rx:4; ry:4; }
+      .box-a  { fill:#EAD3C5; stroke:#B85A3E; stroke-width:1.3; rx:4; ry:4; }
+      .box-s  { fill:#D8E3DE; stroke:#5F8573; stroke-width:1.3; rx:4; ry:4; }
+      .channel{ fill:#F7F3E9; stroke:#161513; stroke-width:0.8; }
+      .channel-a{ fill:#EAD3C5; stroke:#B85A3E; stroke-width:1.2; }
+      .channel-s{ fill:#D8E3DE; stroke:#5F8573; stroke-width:1.2; }
+      .ink    { stroke:#161513; fill:none; stroke-width:1.2; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut    { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
-    <marker id="ds-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/></marker>
+    <marker id="ds-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#161513"/></marker>
   </defs>
 
   <text x="480" y="28" text-anchor="middle" class="ttl">Depthwise separable — split spatial mixing from channel mixing</text>
@@ -57,7 +57,7 @@
 
   <!-- BOTTOM ROW: depthwise separable (TWO steps) -->
   <g transform="translate(60, 180)">
-    <text x="0" y="-8" class="tag" fill="#7B9E89">DEPTHWISE SEPARABLE  ·  spatial first, THEN channels</text>
+    <text x="0" y="-8" class="tag" fill="#5F8573">DEPTHWISE SEPARABLE  ·  spatial first, THEN channels</text>
 
     <!-- Input -->
     <rect class="channel"   x="0"  y="10" width="40" height="40"/>
@@ -69,10 +69,10 @@
 
     <!-- Step 1: depthwise -->
     <g transform="translate(140, 20)">
-      <rect x="0" y="0" width="120" height="60" fill="#D8E3DE" stroke="#7B9E89" rx="4"/>
-      <text x="60" y="20" text-anchor="middle" class="mono" fill="#7B9E89" font-weight="600">depthwise</text>
-      <text x="60" y="38" text-anchor="middle" class="mono" fill="#7B9E89">3×3 per channel</text>
-      <text x="60" y="52" text-anchor="middle" class="mut" fill="#7B9E89">(no channel mix)</text>
+      <rect x="0" y="0" width="120" height="60" fill="#D8E3DE" stroke="#5F8573" rx="4"/>
+      <text x="60" y="20" text-anchor="middle" class="mono" fill="#5F8573" font-weight="600">depthwise</text>
+      <text x="60" y="38" text-anchor="middle" class="mono" fill="#5F8573">3×3 per channel</text>
+      <text x="60" y="52" text-anchor="middle" class="mut" fill="#5F8573">(no channel mix)</text>
     </g>
 
     <line x1="270" y1="50" x2="310" y2="50" class="ink" marker-end="url(#ds-a)"/>
@@ -86,10 +86,10 @@
 
     <!-- Step 2: pointwise 1x1 -->
     <g transform="translate(450, 20)">
-      <rect x="0" y="0" width="120" height="60" fill="#EAD3C5" stroke="#D97757" rx="4"/>
-      <text x="60" y="20" text-anchor="middle" class="mono" fill="#D97757" font-weight="600">pointwise</text>
-      <text x="60" y="38" text-anchor="middle" class="mono" fill="#D97757">1×1 conv</text>
-      <text x="60" y="52" text-anchor="middle" class="mut" fill="#D97757">(mixes channels)</text>
+      <rect x="0" y="0" width="120" height="60" fill="#EAD3C5" stroke="#B85A3E" rx="4"/>
+      <text x="60" y="20" text-anchor="middle" class="mono" fill="#B85A3E" font-weight="600">pointwise</text>
+      <text x="60" y="38" text-anchor="middle" class="mono" fill="#B85A3E">1×1 conv</text>
+      <text x="60" y="52" text-anchor="middle" class="mut" fill="#B85A3E">(mixes channels)</text>
     </g>
 
     <line x1="580" y1="50" x2="620" y2="50" class="ink" marker-end="url(#ds-a)"/>
@@ -101,8 +101,8 @@
 
     <!-- Param count -->
     <g transform="translate(730, 25)">
-      <rect x="0" y="0" width="180" height="50" fill="#D8E3DE" stroke="#7B9E89"/>
-      <text x="14" y="20" class="tag" fill="#7B9E89">PARAMS</text>
+      <rect x="0" y="0" width="180" height="50" fill="#D8E3DE" stroke="#5F8573"/>
+      <text x="14" y="20" class="tag" fill="#5F8573">PARAMS</text>
       <text x="14" y="40" class="mono">9C  +  C²  ≈  C² (for large C)</text>
     </g>
   </g>
@@ -115,9 +115,9 @@
       <text x="14"  y="48">Standard 3×3</text>
       <text x="200" y="48" fill="#A8324B">9 · 128² ≈ 147 K params</text>
       <text x="14"  y="68">Depthwise separable</text>
-      <text x="200" y="68" fill="#7B9E89">9·128 + 128² ≈ 17 K params</text>
+      <text x="200" y="68" fill="#5F8573">9·128 + 128² ≈ 17 K params</text>
       <text x="460" y="48" fill="#A8324B" font-weight="600">→ 9× cheaper</text>
-      <text x="460" y="68" fill="#1F1F1E">almost no accuracy loss</text>
+      <text x="460" y="68" fill="#161513">almost no accuracy loss</text>
     </g>
   </g>
 </svg>

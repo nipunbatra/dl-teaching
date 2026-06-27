@@ -1,23 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .con   { stroke:#6B6A65; stroke-width:1; fill:none; opacity:0.5; }
+      .con   { stroke:#5F5C54; stroke-width:1; fill:none; opacity:0.5; }
       .path  { stroke:#A8324B; stroke-width:2.4; fill:none; }
-      .arrow { stroke:#D97757; stroke-width:1.8; fill:none; }
-      .dot   { fill:#1F1F1E; stroke:#1F1F1E; stroke-width:1; }
-      .star  { fill:#7B9E89; stroke:#1F1F1E; stroke-width:1; }
-      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .arrow { stroke:#B85A3E; stroke-width:1.8; fill:none; }
+      .dot   { fill:#161513; stroke:#161513; stroke-width:1; }
+      .star  { fill:#5F8573; stroke:#161513; stroke-width:1; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut   { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
-    <marker id="gd-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#D97757"/></marker>
+    <marker id="gd-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#B85A3E"/></marker>
   </defs>
 
   <text x="480" y="28" text-anchor="middle" class="ttl">Gradient descent — each step goes against the gradient, step size = η · ∥∇∥</text>
 
   <g transform="translate(80, 60)">
-    <rect x="0" y="0" width="800" height="280" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <rect x="0" y="0" width="800" height="280" fill="#F7F3E9" stroke="#C9C4B5"/>
 
     <!-- concentric ellipses around minimum at (600, 180) -->
     <g class="con">
@@ -29,7 +29,7 @@
       <ellipse cx="600" cy="180" rx="30"  ry="14"/>
     </g>
     <circle cx="600" cy="180" r="6" class="star"/>
-    <text x="615" y="177" class="mono" fill="#7B9E89">min</text>
+    <text x="615" y="177" class="mono" fill="#5F8573">min</text>
 
     <!-- descent path -->
     <polyline class="path" points="80,60 180,100 270,135 345,160 410,173 465,178 515,180 555,180 580,180 595,180 600,180"/>
@@ -42,12 +42,12 @@
     <g transform="translate(80, 60)" class="arrow" marker-end="url(#gd-a)">
       <line x1="0" y1="0" x2="55" y2="22"/>
     </g>
-    <text x="40" y="45" class="mono" fill="#D97757">−η·∇L</text>
+    <text x="40" y="45" class="mono" fill="#B85A3E">−η·∇L</text>
 
     <g transform="translate(270, 135)" class="arrow" marker-end="url(#gd-a)">
       <line x1="0" y1="0" x2="40" y2="15"/>
     </g>
-    <text x="280" y="122" class="mono" fill="#D97757">−η·∇L</text>
+    <text x="280" y="122" class="mono" fill="#B85A3E">−η·∇L</text>
 
     <g transform="translate(465, 178)" class="arrow" marker-end="url(#gd-a)">
       <line x1="0" y1="0" x2="20" y2="1"/>

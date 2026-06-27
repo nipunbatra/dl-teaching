@@ -1,23 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .axis  { stroke:#1F1F1E; stroke-width:1; fill:none; }
+      .axis  { stroke:#161513; stroke-width:1; fill:none; }
       .grid  { stroke:#C9C4B5; stroke-width:0.4; opacity:0.5; }
       .bar-g { fill:#A8324B; opacity:0.6; }
-      .bar-g2{ fill:#4A6670; opacity:0.6; }
-      .ema   { stroke:#D97757; stroke-width:2.4; fill:none; }
-      .true  { stroke:#7B9E89; stroke-width:1.6; fill:none; stroke-dasharray:4 3; }
-      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .bar-g2{ fill:#37535F; opacity:0.6; }
+      .ema   { stroke:#B85A3E; stroke-width:2.4; fill:none; }
+      .true  { stroke:#5F8573; stroke-width:1.6; fill:none; stroke-dasharray:4 3; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut   { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
   </defs>
 
   <text x="480" y="28" text-anchor="middle" class="ttl">Momentum = exponential moving average of gradients — averaging out noise</text>
 
   <g transform="translate(80, 70)">
-    <rect x="0" y="0" width="800" height="240" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <rect x="0" y="0" width="800" height="240" fill="#F7F3E9" stroke="#C9C4B5"/>
 
     <g class="grid">
       <line x1="0" y1="60"  x2="800" y2="60"/>
@@ -32,11 +32,11 @@
       <line x1="700" y1="0" x2="700" y2="240"/>
     </g>
     <line x1="0" y1="120" x2="800" y2="120" class="axis"/>
-    <text x="5" y="117" class="mono" fill="#6B6A65" font-size="10">0</text>
+    <text x="5" y="117" class="mono" fill="#5F5C54" font-size="10">0</text>
 
     <!-- true gradient as dashed horizontal -->
     <line x1="0" y1="85" x2="800" y2="85" class="true"/>
-    <text x="790" y="82" text-anchor="end" class="mut" fill="#7B9E89">true gradient</text>
+    <text x="790" y="82" text-anchor="end" class="mut" fill="#5F8573">true gradient</text>
 
     <!-- Noisy per-batch gradients as bars (alternating direction) -->
     <g>
@@ -100,7 +100,7 @@
     "/>
 
     <!-- Labels -->
-    <text x="790" y="95" text-anchor="end" class="mono" fill="#D97757" font-weight="600">m_t (EMA) — smooth</text>
+    <text x="790" y="95" text-anchor="end" class="mono" fill="#B85A3E" font-weight="600">m_t (EMA) — smooth</text>
 
     <text x="100" y="230" class="mono" fill="#A8324B">raw per-batch gradient</text>
     <line x1="270" y1="225" x2="290" y2="225" class="bar-g" stroke-width="6"/>

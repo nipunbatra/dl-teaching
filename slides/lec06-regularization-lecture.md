@@ -526,7 +526,7 @@ Label smoothing is the good professor for your neural network.
 
 ---
 
-# Label smoothing · derive the formula
+# ⭐⭐⭐ Optional · label smoothing — derive the formula
 
 Goal · take a tiny fraction $\alpha$ of confidence away from the correct class and spread it evenly across all $K$ classes.
 
@@ -856,7 +856,7 @@ This vector is what the next layer sees. At **eval** time · use the running mea
 
 ---
 
-# The ICS debate
+# ⭐⭐⭐ Optional · the ICS debate
 
 Ioffe &amp; Szegedy 2015 · BN helps by reducing **internal covariate shift** (ICS) — the changing distribution of layer inputs during training.
 
@@ -979,7 +979,7 @@ Pre-norm vs post-norm
 
 ---
 
-# Why pre-norm won · the gradient path
+# ⭐⭐⭐ Optional · why pre-norm won — the gradient path
 
 Residual update: $\text{out} = x + \text{Sub}(x)$. The $x$ term is the **gradient highway**.
 

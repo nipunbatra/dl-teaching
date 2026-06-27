@@ -1,14 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .node   { fill:#EAD3C5; stroke:#D97757; stroke-width:1.2; }
-      .dead   { fill:#C9C4B5; stroke:#6B6A65; stroke-width:1.2; opacity:0.4; }
-      .ink    { stroke:#6B6A65; fill:none; stroke-width:0.7; opacity:0.5; }
-      .ink-d  { stroke:#6B6A65; fill:none; stroke-width:0.7; opacity:0.1; stroke-dasharray:2 2; }
-      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .node   { fill:#EAD3C5; stroke:#B85A3E; stroke-width:1.2; }
+      .dead   { fill:#C9C4B5; stroke:#5F5C54; stroke-width:1.2; opacity:0.4; }
+      .ink    { stroke:#5F5C54; fill:none; stroke-width:0.7; opacity:0.5; }
+      .ink-d  { stroke:#5F5C54; fill:none; stroke-width:0.7; opacity:0.1; stroke-dasharray:2 2; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut    { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
   </defs>
 
@@ -67,7 +67,7 @@
 
   <!-- RIGHT: dropout mask -->
   <g transform="translate(540, 70)">
-    <text x="150" y="-10" text-anchor="middle" class="tag" fill="#D97757">WITH DROPOUT · p = 0.5 · random batch mask</text>
+    <text x="150" y="-10" text-anchor="middle" class="tag" fill="#B85A3E">WITH DROPOUT · p = 0.5 · random batch mask</text>
 
     <g>
       <!-- mix live / dead -->

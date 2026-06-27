@@ -1,20 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .box   { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.3; rx:4; ry:4; }
-      .box-m { fill:#DCE3E6; stroke:#4A6670; stroke-width:1.4; rx:4; ry:4; }
-      .box-v { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.4; rx:4; ry:4; }
-      .box-u { fill:#EAD3C5; stroke:#D97757; stroke-width:1.4; rx:4; ry:4; }
-      .ink   { stroke:#1F1F1E; fill:none; stroke-width:1.2; }
-      .acc   { stroke:#D97757; fill:none; stroke-width:1.4; }
-      .mono  { font-family:'JetBrains Mono', monospace; font-size:12px; fill:#1F1F1E; }
-      .mono-b{ font-family:'JetBrains Mono', monospace; font-size:12px; fill:#1F1F1E; font-weight:600; }
-      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .box   { fill:#F7F3E9; stroke:#161513; stroke-width:1.3; rx:4; ry:4; }
+      .box-m { fill:#DCE3E6; stroke:#37535F; stroke-width:1.4; rx:4; ry:4; }
+      .box-v { fill:#D8E3DE; stroke:#5F8573; stroke-width:1.4; rx:4; ry:4; }
+      .box-u { fill:#EAD3C5; stroke:#B85A3E; stroke-width:1.4; rx:4; ry:4; }
+      .ink   { stroke:#161513; fill:none; stroke-width:1.2; }
+      .acc   { stroke:#B85A3E; fill:none; stroke-width:1.4; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:12px; fill:#161513; }
+      .mono-b{ font-family:'JetBrains Mono', monospace; font-size:12px; fill:#161513; font-weight:600; }
+      .mut   { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
-    <marker id="ac-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/></marker>
-    <marker id="ac-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#D97757"/></marker>
+    <marker id="ac-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#161513"/></marker>
+    <marker id="ac-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#B85A3E"/></marker>
   </defs>
 
   <text x="480" y="28" text-anchor="middle" class="ttl">Adam — four pieces wired together</text>
@@ -40,18 +40,18 @@
 
   <!-- 1st moment m_t -->
   <g transform="translate(220, 80)">
-    <text x="0" y="-8" class="tag" fill="#4A6670">1ST MOMENT</text>
+    <text x="0" y="-8" class="tag" fill="#37535F">1ST MOMENT</text>
     <rect class="box-m" x="0" y="0" width="180" height="50"/>
-    <text x="90" y="22" text-anchor="middle" class="mono-b" fill="#4A6670">m_t = β₁·m + (1−β₁)·g_t</text>
-    <text x="90" y="40" text-anchor="middle" class="mut" fill="#4A6670">EMA of gradient (momentum)</text>
+    <text x="90" y="22" text-anchor="middle" class="mono-b" fill="#37535F">m_t = β₁·m + (1−β₁)·g_t</text>
+    <text x="90" y="40" text-anchor="middle" class="mut" fill="#37535F">EMA of gradient (momentum)</text>
   </g>
 
   <!-- 2nd moment v_t -->
   <g transform="translate(220, 180)">
-    <text x="0" y="-8" class="tag" fill="#7B9E89">2ND MOMENT</text>
+    <text x="0" y="-8" class="tag" fill="#5F8573">2ND MOMENT</text>
     <rect class="box-v" x="0" y="0" width="180" height="50"/>
-    <text x="90" y="22" text-anchor="middle" class="mono-b" fill="#7B9E89">v_t = β₂·v + (1−β₂)·g_t²</text>
-    <text x="90" y="40" text-anchor="middle" class="mut" fill="#7B9E89">EMA of squared gradient</text>
+    <text x="90" y="22" text-anchor="middle" class="mono-b" fill="#5F8573">v_t = β₂·v + (1−β₂)·g_t²</text>
+    <text x="90" y="40" text-anchor="middle" class="mut" fill="#5F8573">EMA of squared gradient</text>
   </g>
 
   <!-- Arrows from inputs -->
@@ -62,15 +62,15 @@
   <g transform="translate(470, 80)">
     <text x="0" y="-8" class="tag">BIAS CORRECT</text>
     <rect class="box-m" x="0" y="0" width="180" height="50"/>
-    <text x="90" y="22" text-anchor="middle" class="mono-b" fill="#4A6670">m̂_t = m_t / (1 − β₁^t)</text>
-    <text x="90" y="40" text-anchor="middle" class="mut" fill="#4A6670">unbiased 1st moment</text>
+    <text x="90" y="22" text-anchor="middle" class="mono-b" fill="#37535F">m̂_t = m_t / (1 − β₁^t)</text>
+    <text x="90" y="40" text-anchor="middle" class="mut" fill="#37535F">unbiased 1st moment</text>
   </g>
 
   <g transform="translate(470, 180)">
     <text x="0" y="-8" class="tag">BIAS CORRECT</text>
     <rect class="box-v" x="0" y="0" width="180" height="50"/>
-    <text x="90" y="22" text-anchor="middle" class="mono-b" fill="#7B9E89">v̂_t = v_t / (1 − β₂^t)</text>
-    <text x="90" y="40" text-anchor="middle" class="mut" fill="#7B9E89">unbiased 2nd moment</text>
+    <text x="90" y="22" text-anchor="middle" class="mono-b" fill="#5F8573">v̂_t = v_t / (1 − β₂^t)</text>
+    <text x="90" y="40" text-anchor="middle" class="mut" fill="#5F8573">unbiased 2nd moment</text>
   </g>
 
   <!-- Arrows m→m̂, v→v̂ -->
@@ -79,11 +79,11 @@
 
   <!-- Update -->
   <g transform="translate(720, 130)">
-    <text x="0" y="-10" class="tag" fill="#D97757">UPDATE</text>
+    <text x="0" y="-10" class="tag" fill="#B85A3E">UPDATE</text>
     <rect class="box-u" x="0" y="0" width="200" height="80"/>
-    <text x="100" y="26" text-anchor="middle" class="mono-b" fill="#D97757">θ ← θ − η ·</text>
-    <text x="100" y="52" text-anchor="middle" class="mono-b" fill="#D97757">m̂_t / (√v̂_t + ε)</text>
-    <text x="100" y="70" text-anchor="middle" class="mut" fill="#D97757">per-parameter step</text>
+    <text x="100" y="26" text-anchor="middle" class="mono-b" fill="#B85A3E">θ ← θ − η ·</text>
+    <text x="100" y="52" text-anchor="middle" class="mono-b" fill="#B85A3E">m̂_t / (√v̂_t + ε)</text>
+    <text x="100" y="70" text-anchor="middle" class="mut" fill="#B85A3E">per-parameter step</text>
   </g>
 
   <!-- Arrows m̂, v̂ → update -->
