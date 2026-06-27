@@ -357,20 +357,20 @@ def logistic_mle_picture():
 # ---- 9. log is monotonic: likelihood vs log-likelihood, same peak -----------
 def log_monotonic():
     p = np.linspace(1e-3, 1 - 1e-3, 400)
-    L = p**6 * (1 - p)**4
-    logL = 6 * np.log(p) + 4 * np.log(1 - p)
-    pk = 0.6
+    L = p**4 * (1 - p)**6
+    logL = 4 * np.log(p) + 6 * np.log(1 - p)
+    pk = 0.4
 
     fig, (a1, a2) = plt.subplots(1, 2, figsize=(10, 3.8), layout="constrained")
     a1.plot(p, L, color=RUST, lw=2.6)
     a1.axvline(pk, color=MUTED, ls=":", lw=1.3)
-    a1.scatter([pk], [pk**6 * (1 - pk)**4], color=RUST, s=55, zorder=5)
-    a1.set_title(r"likelihood  $\mathcal{L}(p)=p^6(1-p)^4$", fontsize=12, color=INK)
+    a1.scatter([pk], [pk**4 * (1 - pk)**6], color=RUST, s=55, zorder=5)
+    a1.set_title(r"likelihood  $\mathcal{L}(p)=p^4(1-p)^6$", fontsize=12, color=INK)
     a1.set_xlabel("p"); a1.set_ylabel(r"$\mathcal{L}(p)$")
 
     a2.plot(p, logL, color=SLATE, lw=2.6)
     a2.axvline(pk, color=MUTED, ls=":", lw=1.3)
-    a2.scatter([pk], [6*np.log(pk) + 4*np.log(1-pk)], color=SLATE, s=55, zorder=5)
+    a2.scatter([pk], [4*np.log(pk) + 6*np.log(1-pk)], color=SLATE, s=55, zorder=5)
     a2.set_title(r"log-likelihood  $\ell(p)=\log\mathcal{L}(p)$", fontsize=12, color=INK)
     a2.set_xlabel("p"); a2.set_ylabel(r"$\ell(p)$")
 
@@ -381,9 +381,30 @@ def log_monotonic():
     save(fig, "log_monotonic.svg", tight=False)
 
 
+# ---- 10. coin likelihood curve (ES 335 coin: 4 heads in 10 flips) -----------
+def coin_likelihood():
+    p = np.linspace(0, 1, 400)
+    L = p**4 * (1 - p)**6
+    pk = 0.4
+
+    fig, ax = plt.subplots(figsize=(6.4, 3.5))
+    ax.plot(p, L, color=RUST, lw=2.6)
+    ax.fill_between(p, L, color=RUST, alpha=0.12)
+    ax.axvline(pk, color=SLATE, ls="--", lw=1.4, label=r"$\hat p_{MLE} = 0.4$")
+    ax.set_title(r"Likelihood of $p$ given 4 heads in 10 flips", fontsize=13, color=INK)
+    ax.set_xlabel(r"coin bias $p$")
+    ax.set_ylabel(r"$\mathcal{L}(p) = p^4(1-p)^6$")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, None)
+    ax.legend(frameon=False, fontsize=11)
+    _clean(ax)
+    save(fig, "coin_likelihood.svg")
+
+
 if __name__ == "__main__":
     print("Generating lec00 figures...")
     log_monotonic()
+    coin_likelihood()
     linreg_frequentist()
     random_variable_map()
     iid_matrix()

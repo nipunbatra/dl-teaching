@@ -476,7 +476,7 @@ $$P(\mathcal{D} \mid p) = p^{\,n_h}\,(1-p)^{\,n_t} = 0.7^{4}\cdot 0.3^{6} = \mat
 
 </div>
 
-The **product over independent observations** is the heart of likelihood. Maximizing it over $p$ returns the ES 335 answer $\hat p = n_h/(n_h+n_t) = 4/10$. Part 3 builds that maximization machinery in full — then applies the *same recipe* to a fresh coin, linear, and logistic models.
+The **product over independent observations** is the heart of likelihood. Maximizing it over $p$ returns the ES 335 answer $\hat p = n_h/(n_h+n_t) = 4/10$. Part 3 builds that maximization machinery in full — then applies the *same recipe* to linear and logistic models.
 
 ---
 
@@ -734,9 +734,9 @@ The probability of the data, viewed as a function of $\theta$
 
 You're handed a coin with **unknown** bias $p$. You flip it $N = 10$ times and observe ·
 
-$$\mathcal{D} = \texttt{H, H, T, H, T, T, H, H, T, H}$$
+$$\mathcal{D} = \texttt{H, H, T, T, T, H, H, T, T, T}$$
 
-Six heads, four tails.
+Four heads, six tails — the exact coin you saw in ES 335.
 
 <div class="keypoint">
 
@@ -744,7 +744,7 @@ Question · what value of $p$ is *most consistent* with this data?
 
 </div>
 
-Intuition says $p \approx 0.6$. We'll make that intuition rigorous and, in doing so, write down the entire framework for everything that follows.
+Intuition says $p \approx 0.4$ — four heads in ten. We'll make that intuition rigorous and, in doing so, write down the entire framework for everything that follows.
 
 ---
 
@@ -763,7 +763,7 @@ It is **not** a probability over $\theta$ — that would be the *posterior*, fro
 For the coin, IID assumption gives ·
 $$\mathcal{L}(p) = \prod_{i=1}^{N} P(y_i \mid p) = \prod_{i=1}^{N} p^{y_i}(1 - p)^{1 - y_i} = p^{\#H}\,(1 - p)^{\#T}$$
 
-For our data · $\mathcal{L}(p) = p^6 (1 - p)^4$.
+For our data · $\mathcal{L}(p) = p^4 (1 - p)^6$.
 
 ---
 
@@ -773,9 +773,9 @@ For our data · $\mathcal{L}(p) = p^6 (1 - p)^4$.
 
 <div class="math-box">
 
-$\mathcal{L}(p) = p^6 (1-p)^4$, plotted on $p \in [0, 1]$.
+$\mathcal{L}(p) = p^4 (1-p)^6$, plotted on $p \in [0, 1]$.
 
-Maximum at $p = 0.6$ — which matches our intuition (6 heads out of 10).
+Maximum at $p = 0.4$ — which matches our intuition (4 heads out of 10).
 
 </div>
 
@@ -827,7 +827,7 @@ $\log$ is **monotonic increasing** · if $a > b$ then $\log a > \log b$. So what
 
 ![w:880px](figures/lec00/svg/log_monotonic.svg)
 
-Both curves peak at the same $p = 0.6$. We optimize the friendlier (log) curve and get the identical answer.
+Both curves peak at the same $p = 0.4$. We optimize the friendlier (log) curve and get the identical answer.
 
 ---
 
@@ -901,7 +901,7 @@ This is the entire idea. Everything below is just doing it carefully.
 
 # MLE for the coin · setup
 
-Data · $\#H = h = 6$ heads out of $N = 10$ flips. Likelihood ·
+Data · $\#H = h = 4$ heads out of $N = 10$ flips. Likelihood ·
 $\mathcal{L}(p) = p^h (1 - p)^{N - h}$
 
 Take the log ·
@@ -929,7 +929,7 @@ $$\boxed{\;\hat p_{\text{MLE}} = \frac{h}{N} = \frac{\#H}{\#H + \#T} = \frac{n_h
 
 </div>
 
-This is **the exact ES 335 formula** $\theta_{\text{MLE}} = n_h/(n_h+n_t)$ — there your $(H,H,T,T,T,H,H,T,T,T)$ gave $4/10$; for this slide's $h = 6, N = 10$ it gives $\hat p = 0.6$. Same recipe, any counts.
+This is **the exact ES 335 formula** $\theta_{\text{MLE}} = n_h/(n_h+n_t)$ — your coin $(H,H,T,T,T,H,H,T,T,T)$ gives $\hat p = 4/10 = 0.4$, exactly the ES 335 answer. The *same recipe* now extends to linear, logistic, and every model after.
 
 **Step 3 · confirm it's a maximum (second-derivative test).**
 $$\frac{d^2\ell}{dp^2} = -\frac{h}{p^2} - \frac{N-h}{(1-p)^2} < 0 \quad\text{for all } p$$
