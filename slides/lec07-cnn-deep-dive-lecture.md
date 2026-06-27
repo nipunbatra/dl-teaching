@@ -87,9 +87,9 @@ Stop and think. The answer is the central insight of CNNs — and we'll unpack i
 | LeNet on MNIST | the LeNet → AlexNet → VGG arms race |
 | MLPs: one weight per connection | weight sharing as a ~350,000× compression |
 
-<div class="keypoint">
+<div class="insight">
 
-You did convolution + pooling mechanics in ES 335. Today is *why* those choices win, not *what* they are.
+**The L01 problem, made concrete.** A fully-connected net on a 150k-pixel image has *no spatial prior* — it must learn one weight per pixel, so the parameter count explodes and an edge learned in the corner is useless in the centre. **The fix · convolution shares one filter across every position** — translation equivariance for free, and ~350,000× fewer parameters. You did convolution + pooling mechanics in ES 335; today is *why* those choices win.
 
 </div>
 

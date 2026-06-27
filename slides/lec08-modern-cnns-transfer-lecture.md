@@ -47,6 +47,22 @@ Two halves today:
 
 ---
 
+# Bridge from ES 335 / L01 · the second half of today
+
+| From ES 335 / L01 | What changes today |
+|---|---|
+| basis $\phi(x)=[1,x,x^2,\dots]$ — *you* hand-picked it | a deep CNN's layers **learn** $\phi$ (L01) |
+| learning $\phi$ from scratch needs lots of data | **reuse** a $\phi$ already learned on 1.2M ImageNet images |
+| every new task = train from random init | swap the head, keep the backbone — fine-tune |
+
+<div class="insight">
+
+**Transfer learning = reuse the learned features $\phi$.** L01's whole point was that a network *learns* its own basis $\phi$ instead of you guessing it. That learned $\phi$ — edges, textures, parts — is **generic**. So why pay to relearn it on every new task? **The fix · take a big pretrained net's $\phi$, freeze most of it, and train only a fresh head.** A 1000-image problem becomes solvable because the hard part (learning $\phi$) is already done.
+
+</div>
+
+---
+
 ▶ **Interactives for L08** · [resnet](https://nipunbatra.github.io/interactive-articles/resnet/) (block + skip animated) · [knowledge-distillation](https://nipunbatra.github.io/interactive-articles/knowledge-distillation/) (transfer story preview).
 
 ---

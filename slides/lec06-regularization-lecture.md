@@ -141,14 +141,14 @@ We spend time here.
 
 | From ES 335 | What changes today |
 |---|---|
-| ridge = L2 penalty = Gaussian prior | weight decay becomes the *least* interesting tool |
+| ridge = L2 penalty = Gaussian prior (derived in L00B) | **same** tool — now called **weight decay** in `AdamW` |
+| lasso = L1 penalty = Laplace prior (derived in L00B) | nearly absent in DL — sparsity breaks distributed features |
 | bias-variance U-curve | double descent — the U-curve has a second act |
-| regularize the **model** (shrink $\theta$) | regularize the **data** (aug, Mixup) and the **architecture** (dropout, norms) |
-| lasso for sparsity | nearly absent in DL — sparsity breaks distributed features |
+| regularize the **model** (shrink $\boldsymbol\theta$) | regularize the **data** (aug, Mixup) and the **architecture** (dropout, norms) |
 
-<div class="keypoint">
+<div class="insight">
 
-Ridge = Gaussian prior — you saw L2 as a penalty term. Now meet the regularizers that have no penalty term at all.
+**ES 335's ridge and lasso *are* deep learning's weight decay** — in L00B you *derived* L2 as a Gaussian prior and L1 as a Laplace prior on $\boldsymbol\theta$ (MAP = MLE + log-prior). So the penalty-term regularizers are **done**. Today's new tools — **dropout, early stopping, data augmentation, batchnorm** — are the surprise · they regularize without ever adding a $\lambda\lVert\boldsymbol\theta\rVert$ term, and they win.
 
 </div>
 

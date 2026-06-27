@@ -47,6 +47,22 @@ Today's jump: **one label per pixel, per object, per region.**
 
 ---
 
+# Bridge from ES 335 / L07 · one label is not enough
+
+| From ES 335 / L07 | What changes today |
+|---|---|
+| classify a **whole image** → one label "cat" | **localize** · *where* is it? → a box |
+| one object per image | many objects, **variable count** per image |
+| CNN backbone → softmax over $K$ classes | same backbone → **new heads** for boxes and pixels |
+
+<div class="insight">
+
+**ES 335 and L07 answer "*what* is in this image?" with one label.** A self-driving frame breaks that immediately — it has *seven* pedestrians and *three* cars, and you need to know **where each one is**. **The fix is a ladder · classification → detection (boxes) → segmentation (a label on every pixel)** — and the backbone you already trained does all three; we just bolt new heads onto it.
+
+</div>
+
+---
+
 # Four questions
 
 1. How do we go from classification to **bounding boxes**?
