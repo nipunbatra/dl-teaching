@@ -181,7 +181,7 @@ Q: John has 5 apples. He gives 2 to Mary and buys 4 more. How many?
 A: He starts with 5. Gives 2 → 3. Buys 4 → 7. Final: 7.
 ```
 
-CoT emerges at scale (~60B params). Below that, adding "think step by step" doesn't help.
+CoT emerges at scale · in the original prompting work the gains showed up mainly above ~tens of billions of params. (Not a hard cutoff — smaller models can still learn it via distillation / fine-tuning.)
 
 ---
 
@@ -204,7 +204,7 @@ Same idea for LLMs. 2024's big idea · don't just prompt for CoT — **train** f
 **o1** (OpenAI 2024), **Claude extended thinking**, **DeepSeek R1** (2025):
 
 1. **Generate** many candidate chains of thought for a hard question.
-2. **Reward** each chain · outcome (final answer correct?) and process (each step logical?).
+2. **Reward** each chain · primarily **outcome** (final answer correct? format valid?) — some systems also explore **process** rewards (is each step sound?). Exact recipes are mostly proprietary.
 3. **Fine-tune via RL** to make high-reward chains more likely.
 4. **At inference** · spend 10×–100× more compute, let the model "think."
 
@@ -252,7 +252,7 @@ Reasoning models (o1, Claude thinking) are exactly this · same base capability 
 
 # A new scaling axis
 
-Until 2024, the only scaling axis was **training compute**. In 2024+ we added **test-time compute**.
+Until 2024, the headline scaling axis was **training compute**; in 2024 **test-time compute** became a first-class one too. (Inference-time search — self-consistency, tree-of-thoughts — existed earlier; o1 productized it.)
 
 <div class="keypoint">
 
@@ -274,7 +274,7 @@ Both pay off. OpenAI reported that o1's performance on math benchmarks scales sm
 
 | Model | AIME 2024 (math) | Codeforces |
 |-------|------------------|------------|
-| GPT-4 | 12% | ~800 Elo |
+| GPT-4o | 12% | ~800 Elo |
 | o1 | 74% | ~1800 Elo |
 | o3 | 97% | ~2700 Elo (grandmaster) |
 
@@ -587,7 +587,7 @@ Same $\hat y$, same $J(\theta)$, same $\theta$. **Only the scale changed.**
 
 <div class="insight">
 
-**Every loss in this course is an NLL.** Every architecture is a wiring of attention, convolution, and MLP. Every regularizer is a prior. Every generative model is "learn a distribution, then sample from it."
+**Most losses reduce to an NLL or a KL / divergence bound.** Every architecture is a wiring of attention, convolution, and MLP. Penalty regularizers (L1/L2) are priors. Every generative model is "learn a distribution, then sample from it."
 
 </div>
 

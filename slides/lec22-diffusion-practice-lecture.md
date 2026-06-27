@@ -341,7 +341,7 @@ Stable Diffusion's VAE compresses to 64×64×4 = $64 \cdot 64 \cdot 4 = \mathbf{
 
 **Saving · $786{,}432 / 16{,}384 = \mathbf{48\times}$ fewer dimensions** for the expensive U-Net to process.
 
-The diffusion loop runs in latent space; the VAE encoder runs once at the start, decoder once at the end. Single biggest reason Stable Diffusion is shippable on consumer GPUs.
+The diffusion loop runs in latent space, **starting from latent noise**; the VAE **decoder** runs once at the end to render the image. (The encoder is used in *training* and for img2img — not for text-to-image sampling, where there's no input image to encode.) Single biggest reason Stable Diffusion is shippable on consumer GPUs.
 
 ---
 
@@ -519,7 +519,7 @@ All diffusion-based. All descendants of the 2020 DDPM paper.
 |:-:|:-:|:-:|
 | Images 1024² | SD3 · Flux | ~0.5 images/s (20 steps) |
 | Video 720p · 16s | Sora · VEO | minutes per clip |
-| Audio music | AudioGen · MusicLM | real-time (8 DDIM steps) |
+| Audio music | Stable Audio · AudioLDM | seconds per clip |
 | 3D meshes | Diffusion-SDF · ShapE | ~30s per mesh |
 | Molecules | RFdiffusion (Baker lab — Baker shared the 2024 Chemistry Nobel for protein design) | ~10s per protein |
 | Robot policies | Diffusion Policy (Chi 2023) | 50 Hz control loop |

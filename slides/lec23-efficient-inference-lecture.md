@@ -64,7 +64,7 @@ You're serving Llama-3-70B on an A100. Throughput is 8 tokens/sec. Pick **the si
 (c) Add speculative decoding with a 7B draft model.
 (d) Move to a bigger GPU (H100).
 
-Stop and rank. The correct rank is **a > c > b > d** for typical chat workloads · INT4 alone often gives ~$3\times$ throughput by halving memory bandwidth · speculative adds another $2\times$ · FlashAttention is best at long contexts. **Memory bandwidth is the bottleneck**, not FLOPs.
+Stop and rank. The correct rank is **a > c > b > d** for typical chat workloads · INT4 alone often gives ~$3\times$ throughput by cutting weight memory bandwidth ~$4\times$ (FP16→INT4) · speculative adds another $2\times$ · FlashAttention is best at long contexts. **Memory bandwidth is the bottleneck**, not FLOPs.
 
 </div>
 
@@ -234,7 +234,7 @@ $$M = 2 \cdot L \cdot H_\text{kv} \cdot d_h \cdot T \cdot B \cdot \text{bytes}$$
 
 $$M = 2 \cdot 80 \cdot 8 \cdot 128 \cdot 32{,}000 \cdot 1 \cdot 2 \approx 10.5 \text{ GB}$$
 
-With MHA (64 heads, no GQA) that would be 84 GB — **larger than the weights themselves.**
+With MHA (64 heads, no GQA) that would be 84 GB — **over half the BF16 weights (140 GB), and well past any single 80 GB GPU.**
 
 ---
 
@@ -307,7 +307,7 @@ Quantization · find scale $s$ to map FP32 weights into the small range $[-127, 
 
 # INT8 · derive the formula step by step
 
-Goal · convert FP32 weights to 8-bit integers in $[-128, 127]$.
+Goal · convert FP32 weights to 8-bit integers in $[-127, 127]$ (symmetric — the formula maps $\pm\max|w|$ to $\pm127$).
 
 **Step 1.** Find max absolute value in the channel: $\max(|w|)$.
 **Step 2.** Map the largest weight to the largest integer (127):
