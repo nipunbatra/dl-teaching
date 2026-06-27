@@ -20,6 +20,8 @@ math: mathjax
 
 # Why this lecture
 
+In ES 335 you found $\theta_{\text{MLE}} = n_h/(n_h+n_t)$ for a coin **and** for logistic regression — two separate derivations. Today we make MLE the **one general recipe** behind every model, writing the objective as $J(\boldsymbol\theta) = \text{NLL}$ and predictions as $\hat y$.
+
 You already know how to solve regression and classification. You wrote down a loss, took a gradient, ran SGD. It works.
 
 But two questions you may never have asked ·
@@ -64,7 +66,7 @@ L00B (next lecture) takes this and adds priors → MAP → L1/L2 → KL.
 
 <div class="keypoint">
 
-In ES 335 cross-entropy was handed to you as "the classification loss" — *stated*, never derived. Today you derive it from a Bernoulli model, and that one derivation becomes the organizing principle of the whole course.
+In ES 335 the cost $J(\boldsymbol\theta) = -\sum_i[y_i\log\hat y_i + (1-y_i)\log(1-\hat y_i)]$ was handed to you as "the classification loss" — *stated*, never derived. Today you derive that exact $J(\boldsymbol\theta)$ from a Bernoulli model, and that one derivation becomes the organizing principle of the whole course.
 
 </div>
 
@@ -464,19 +466,17 @@ This will be reused when we derive **logistic regression's gradient** — it has
 
 # Bernoulli · IID worked example
 
-**Setup** · coin with $p = 0.7$. Three flips give $H, T, H$ (i.e. $Y_1, Y_2, Y_3 = 1, 0, 1$).
+**The exact ES 335 coin.** You saw the sequence $(H, H, T, T, T, H, H, T, T, T)$ — 4 heads, 6 tails — and derived $\theta_{\text{MLE}} = n_h/(n_h+n_t) = 4/10$. Let's re-read it through the IID product, with a candidate $p = 0.7$.
 
 <div class="math-box">
 
-Under the IID assumption ·
+Under the IID assumption the data's probability is the product of per-flip terms ·
 
-$$P(\mathcal{D} \mid p) = P(Y_1 = 1) \cdot P(Y_2 = 0) \cdot P(Y_3 = 1)$$
-
-$$= 0.7 \cdot 0.3 \cdot 0.7 = \mathbf{0.147}$$
+$$P(\mathcal{D} \mid p) = p^{\,n_h}\,(1-p)^{\,n_t} = 0.7^{4}\cdot 0.3^{6} = \mathbf{1.75 \times 10^{-4}}$$
 
 </div>
 
-The **product over independent observations** is the heart of likelihood — coming up in Part 2 when we ask *"which $p$ makes the observed data most likely?"*
+The **product over independent observations** is the heart of likelihood. Maximizing it over $p$ returns the ES 335 answer $\hat p = n_h/(n_h+n_t) = 4/10$. Part 3 builds that maximization machinery in full — then applies the *same recipe* to a fresh coin, linear, and logistic models.
 
 ---
 
@@ -925,11 +925,11 @@ Expand · $h - hp = Np - hp \Longrightarrow h = Np$.
 
 <div class="math-box">
 
-$$\boxed{\;\hat p_{\text{MLE}} = \frac{h}{N} = \frac{\#H}{\#H + \#T}\;}$$
+$$\boxed{\;\hat p_{\text{MLE}} = \frac{h}{N} = \frac{\#H}{\#H + \#T} = \frac{n_h}{n_h + n_t}\;}$$
 
 </div>
 
-For our data $h = 6, N = 10$ · $\hat p = 0.6$. **Exactly** the empirical frequency.
+This is **the exact ES 335 formula** $\theta_{\text{MLE}} = n_h/(n_h+n_t)$ — there your $(H,H,T,T,T,H,H,T,T,T)$ gave $4/10$; for this slide's $h = 6, N = 10$ it gives $\hat p = 0.6$. Same recipe, any counts.
 
 **Step 3 · confirm it's a maximum (second-derivative test).**
 $$\frac{d^2\ell}{dp^2} = -\frac{h}{p^2} - \frac{N-h}{(1-p)^2} < 0 \quad\text{for all } p$$
