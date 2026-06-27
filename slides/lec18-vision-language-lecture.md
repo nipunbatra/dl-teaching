@@ -342,12 +342,13 @@ with torch.no_grad():
     img_emb  = model.encode_image(image)
     txt_embs = model.encode_text(text_tokens)
 
-# Cosine similarity → pick the closest text
+# embeddings are L2-normalized → the dot product IS cosine similarity
+# (CLIP also multiplies by a learned logit_scale before softmax)
 sims = (img_emb @ txt_embs.T).softmax(dim=-1)
 # sims = [[0.89, 0.08, 0.03]]  → "cat"
 ```
 
-**No training on cats.** CLIP has never seen an ImageNet label. Yet it beats ResNet-50 on zero-shot ImageNet classification.
+**No ImageNet supervised training.** CLIP never saw an ImageNet *label* (its web data surely contains cats — just not labeled for this task). Yet it beats ResNet-50 on zero-shot ImageNet classification.
 
 ---
 
@@ -407,7 +408,7 @@ CLIP is still the **default general-purpose vision-language model** as of this w
 
 Zero-shot CLIP is sensitive to how you phrase the class label. Changing the prompt template affects accuracy by **~10% absolute on ImageNet.**
 
-| Template | ImageNet zero-shot |
+| Template | Zero-shot accuracy |
 |:-:|:-:|
 | `"{label}"` (bare word) | 63% |
 | `"a photo of a {label}"` | 68% |
@@ -491,7 +492,7 @@ $$[\text{img}_1, \ldots, \text{img}_{256}, \text{text}_1, \text{text}_2, \ldots]
 
 <div class="realworld">
 
-New params · ~10M in the projection. A 7B LLM becomes multimodal with **< 0.15% extra weights** — the bolt-on bargain.
+New params · ~4M for a single linear projection (**0.06%** of 7B) — or ~21M (**0.3%**) for LLaVA-1.5's 2-layer MLP. Either way, a tiny bolt-on.
 
 </div>
 
@@ -592,7 +593,7 @@ As of this writing, the frontier leans **native**. Bolt-on dominates open-source
 |-------|--------------|--------------|
 | **GPT-4V / GPT-5** | image, video | general reasoning + tool use |
 | **Claude 4 (Anthropic)** | image, PDF, video frames | general reasoning + computer use |
-| **Gemini 2 Ultra (Google)** | image, audio, video | natively multimodal from pretraining |
+| **Gemini (Google)** | image, audio, video | natively multimodal from pretraining |
 | **LLaVA / Qwen-VL (open)** | image | open-source equivalent of GPT-4V |
 
 **Key trend**: the input side is increasingly "anything", the output is still mostly text. True any-to-any (text→image→video→audio) is the current frontier.
@@ -608,7 +609,7 @@ from anthropic import Anthropic
 client = Anthropic()
 
 response = client.messages.create(
-    model="claude-4",
+    model="claude-sonnet-4-6",
     max_tokens=1024,
     messages=[
         {
@@ -641,7 +642,7 @@ Three lines in; a paragraph of reasoning out. The API abstracts away all the CLI
 
 </div>
 
-As of this writing, Claude / GPT-4o / Gemini all push 85%+ on VQAv2. MMMU remains hard (50-60%) · genuine multi-modal reasoning is the frontier.
+As of this writing, frontier models push 85%+ on VQAv2. Older VLMs scored 50-60% on MMMU; the current frontier is ~70%+ — still not solved · genuine multi-modal reasoning remains the frontier.
 
 ---
 

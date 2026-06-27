@@ -53,7 +53,7 @@ That missing loss is exactly what GANs solve today.
 
 - **VAE** (L19) · probabilistic encoder, latent-space structure, blurry samples.
 
-Today: **GANs**. Completely different philosophy — no label, no likelihood, no prior, two networks duking it out.
+Today: **GANs**. Completely different philosophy — no label, no *explicit likelihood* (just a simple latent prior $z\sim\mathcal{N}(0,I)$), two networks duking it out.
 
 <div class="paper">
 
@@ -159,7 +159,7 @@ Training question · how do we make $G$'s output distribution match $p_\text{dat
 
 # The 2014 insight · use a classifier
 
-Goodfellow's idea · even if we can't compute $p_G$ directly, we *can* train a **classifier D** to tell real samples from generated ones. If D is perfect, its gradient tells G exactly where to move fakes to fool it.
+Goodfellow's idea · even if we can't compute $p_G$ directly, we *can* train a **classifier D** to tell real samples from generated ones. As D learns, its gradient tells G which way to move fakes to fool it. (Careful · a *too-perfect* D saturates and that gradient vanishes — we fix this with the non-saturating loss.)
 
 <div class="keypoint">
 
@@ -614,7 +614,7 @@ Picture · instead of p_G covering p_data, p_G is a point mass (or thin ridge) s
 - **Minibatch discrimination** · let D see samples as a batch, not one-by-one. If G gives 64 near-identical fakes, D instantly spots it.
 - **Feature matching** · G optimizes to match mean feature activations of real batch, not just fool D.
 - **Unrolled GANs** · let G see D's *next-few-step* updates when computing its loss; makes G consider D's response.
-- **WGAN (next section)** · Wasserstein distance naturally doesn't mode-collapse.
+- **WGAN (next section)** · Wasserstein distance **mitigates** mode collapse (it doesn't fully eliminate it).
 - **Two Time-Scale Update Rule (TTUR)** · different learning rates for D and G.
 
 <div class="realworld">
@@ -629,7 +629,7 @@ As of this writing, if you need a GAN you almost always use a WGAN-GP or StyleGA
 
 Standard diagnostics:
 
-- **D loss** · should hover ~0.5 (balanced). If D loss → 0, D is winning too much.
+- **D loss** · should hover around $\ln 2 \approx 0.69$ — D *outputs* ~0.5, i.e. can't tell real from fake. If D loss → 0, D is winning too much.
 - **G loss** · should plateau, not grow.
 - **Samples** · visually check for diversity. Do you see the same face repeatedly? Mode collapse.
 - **Inception Score (IS)** · diversity + quality metric for image GANs.
@@ -695,7 +695,7 @@ where $\gamma$ is a "transport plan" — how much mass moves from $x$ to $y$. Mi
 
 </div>
 
-Unlike JS, $W$ is **smooth** even when supports don't overlap. Move the pile 1 meter → $W = 1$. Move it 10 meters → $W = 10$. Always differentiable.
+Unlike JS, $W$ varies **smoothly** even when supports don't overlap. Move the pile 1 meter → $W = 1$. Move it 10 meters → $W = 10$. So it keeps giving a useful gradient exactly where JS saturates to a flat 0.
 
 ---
 
@@ -712,7 +712,7 @@ Vanilla GAN's classifier draws an infinitely steep cliff between real/fake. When
 **1-Lipschitz check.** $D(x) = 5x$? With $a=2, b=3$: $\lvert D(a)-D(b)\rvert = 5 > 1 = \lvert a-b\rvert$. **Not** 1-Lipschitz.
 $D(x) = 0.5x$? $\lvert D(a)-D(b)\rvert = 0.5 \le 1$. **Yes.**
 
-**Loss numeric.** Say $D(\text{real}) = 5$, $D(\text{fake}) = -2$. Critic *maximizes* $D(\text{real}) - D(\text{fake}) = 7$ (pull real up, fake down). G *minimizes* $D(\text{fake})$, i.e. pushes its score up. No logs, no sigmoids — just raw scores.
+**Loss numeric.** Say $D(\text{real}) = 5$, $D(\text{fake}) = -2$. Critic *maximizes* $D(\text{real}) - D(\text{fake}) = 7$ (pull real up, fake down). G *maximizes* $D(\text{fake})$, pushing its score up toward real. No logs, no sigmoids — just raw scores.
 
 ---
 
@@ -727,7 +727,7 @@ $$W(p_\text{data}, p_G) = \sup_{\|D\|_L \le 1}\,\mathbb{E}_{p_\text{data}}[D(x)]
 </div>
 
 - **D's job** · **maximize** the score difference (high on real, low on fake).
-- **G's job** · **minimize** $\mathbb{E}_{p_G}[D(G(z))]$.
+- **G's job** · **maximize** $\mathbb{E}_{p_G}[D(G(z))]$ (push fake scores up toward real).
 
 No sigmoid, no log, just raw scores. One question remains · how do we *enforce* the 1-Lipschitz constraint on a neural network?
 
@@ -737,7 +737,7 @@ No sigmoid, no log, just raw scores. One question remains · how do we *enforce*
 
 <div class="insight">
 
-We want D's slope to be 1 everywhere — but checking *everywhere* is impossible. Highway patrol can't put a camera on every metre, so it places **random** ones. WGAN-GP picks **random points $\hat x$** on the line between real and fake, and penalizes any slope $\ne 1$ there. Spot checks at random points turn out to be enough.
+We want D's gradient norm to be **≤ 1** everywhere (the 1-Lipschitz condition) — but checking *everywhere* is impossible. Highway patrol can't put a camera on every metre, so it places **random** ones. WGAN-GP picks **random points $\hat x$** on the line between real and fake, and penalizes any slope $\ne 1$ there. Spot checks at random points turn out to be enough.
 
 </div>
 
@@ -880,7 +880,7 @@ As of this writing · **diffusion dominates** text-to-image / video. GANs surviv
 
 1. **Stable training** · diffusion's regression loss (MSE on noise) has a unique global optimum; no adversarial game.
 2. **Mode coverage** · diffusion naturally covers the whole distribution — no equilibrium to collapse.
-3. **Scales to massive data** · GANs plateau around CelebA scale; diffusion keeps improving with more data/compute.
+3. **Scales to massive data** · GANs scaled *less smoothly* to broad web-scale generation (StyleGAN/BigGAN pushed narrow domains far, but conditional web-scale was hard); diffusion scaled more reliably with data/compute.
 4. **Text conditioning cleaner** · cross-attention at every denoising step beats GAN's class-conditioning hacks.
 5. **Likelihood-like metrics** · ELBO bounds let you measure progress properly.
 

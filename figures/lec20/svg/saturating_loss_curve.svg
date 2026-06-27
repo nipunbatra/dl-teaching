@@ -61,7 +61,7 @@
     <line x1="50" y1="270" x2="50" y2="20" stroke="#161513" stroke-width="0.8" stroke-dasharray="3 2"/>
     <text x="55" y="220" class="caption">at D=0.05</text>
     <text x="55" y="240" class="caption">sat: ~0.05</text>
-    <text x="55" y="256" class="caption">non-sat: ~9.5</text>
+    <text x="55" y="256" class="caption">non-sat: ~0.95 (~19×)</text>
   </g>
 
   <text x="480" y="370" class="caption" text-anchor="middle">100× difference in gradient magnitude when G is bad · why we use the non-saturating form.</text>
