@@ -195,7 +195,7 @@ How do you *score* which source word matters?
 
 ---
 
-# A 3×3 worked example · before the math
+# Attention by hand · 3 source words · before the math
 
 Source · "the cat slept"      Target step · decoding French for "cat" → *"chat"*
 

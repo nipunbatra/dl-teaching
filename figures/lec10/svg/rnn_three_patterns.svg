@@ -11,7 +11,7 @@
     .arrow { stroke: #161513; stroke-width: 1.3; fill: none; }
   </style>
   <rect class="bg" width="960" height="380"/>
-  <text x="480" y="32" class="title" text-anchor="middle">Three RNN I/O patterns · one cell, different connections</text>
+  <text x="480" y="32" class="title" text-anchor="middle">Four RNN I/O patterns · one cell, different connections</text>
 
   <!-- many-to-one -->
   <g transform="translate(40,80)">

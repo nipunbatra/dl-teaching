@@ -133,7 +133,7 @@ An MLP has **no inductive bias for time** — it would need to relearn what each
 Tiny model · input dim $d_\text{in} = 2$, hidden dim $d_h = 3$. $h_0 = [0, 0, 0]^\top$. Embeddings (toy):
 $x_1 = [1, 0]^\top$ (I), $x_2 = [0, 1]^\top$ (love), $x_3 = [1, 1]^\top$ (deep), $x_4 = [0, 0]^\top$ (learning).
 
-Weights:
+Weights ($W$ is the input matrix $W_{xh}$, $U$ is the recurrent matrix $W_{hh}$ from the bridge slide):
 $$W = \begin{pmatrix} 0.1 & 0.2 \\ 0.3 & 0.4 \\ 0.5 & 0.6 \end{pmatrix},\quad U = \begin{pmatrix} 0.1 & 0.2 & 0.3 \\ 0.4 & 0.5 & 0.6 \\ 0.7 & 0.8 & 0.9 \end{pmatrix}$$
 
 **Step 1 · "I".** $h_0 = 0$, so $h_1 = \tanh(Wx_1) = \tanh([0.1, 0.3, 0.5]^\top) \approx [0.099, 0.291, 0.462]^\top$. This vector summarizes the sequence so far.
@@ -157,13 +157,13 @@ $W, U$ are **shared** across steps — unlike an MLP that would learn a differen
 
 ---
 
-# RNN I/O patterns · three shapes
+# RNN I/O patterns · four shapes
 
 ![w:920px](figures/lec10/svg/rnn_three_patterns.svg)
 
 ---
 
-# The three RNN use-patterns
+# The four RNN use-patterns
 
 <div class="columns">
 <div>
