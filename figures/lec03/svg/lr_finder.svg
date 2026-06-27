@@ -1,25 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .axis  { stroke:#1F1F1E; stroke-width:1.1; }
+      .axis  { stroke:#161513; stroke-width:1.1; }
       .grid  { stroke:#C9C4B5; stroke-width:0.5; }
-      .curve { stroke:#1F1F1E; stroke-width:2.2; fill:none; }
+      .curve { stroke:#161513; stroke-width:2.2; fill:none; }
       .band-l{ fill:#DCE3E6; }
       .band-g{ fill:#EAD3C5; opacity:0.7; }
       .band-r{ fill:#F6D4CC; opacity:0.8; }
-      .marker{ fill:#D97757; stroke:#1F1F1E; stroke-width:1.2; }
-      .lbl   { fill:#1F1F1E; font-size:12px; }
-      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
-      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#4A6670; }
+      .marker{ fill:#B85A3E; stroke:#161513; stroke-width:1.2; }
+      .lbl   { fill:#161513; font-size:12px; }
+      .mut   { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#5F5C54; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#37535F; }
     </style>
   </defs>
 
   <text x="480" y="28" text-anchor="middle" class="ttl">The LR finder — sweep from tiny to huge, watch where loss falls fastest</text>
 
   <g transform="translate(100, 80)">
-    <rect x="0" y="0" width="760" height="220" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <rect x="0" y="0" width="760" height="220" fill="#F7F3E9" stroke="#C9C4B5"/>
 
     <!-- three colored regions -->
     <rect class="band-l" x="0"   y="0" width="200" height="220"/>
@@ -39,16 +39,16 @@
 
     <!-- marker at the steepest-descent point -->
     <circle class="marker" cx="380" cy="175" r="8"/>
-    <line x1="380" y1="175" x2="380" y2="255" stroke="#D97757" stroke-dasharray="4 3" stroke-width="1.2"/>
-    <text x="380" y="273" class="lbl" fill="#D97757" font-weight="600" text-anchor="middle">pick this LR</text>
-    <text x="380" y="288" class="mut" fill="#D97757" text-anchor="middle">~1 decade before the minimum</text>
+    <line x1="380" y1="175" x2="380" y2="255" stroke="#B85A3E" stroke-dasharray="4 3" stroke-width="1.2"/>
+    <text x="380" y="273" class="lbl" fill="#B85A3E" font-weight="600" text-anchor="middle">pick this LR</text>
+    <text x="380" y="288" class="mut" fill="#B85A3E" text-anchor="middle">~1 decade before the minimum</text>
 
     <!-- region labels -->
-    <text x="100" y="24" class="tag" fill="#4A6670" text-anchor="middle">TOO SMALL</text>
-    <text x="100" y="40" class="mut"  fill="#4A6670" text-anchor="middle">no progress</text>
+    <text x="100" y="24" class="tag" fill="#37535F" text-anchor="middle">TOO SMALL</text>
+    <text x="100" y="40" class="mut"  fill="#37535F" text-anchor="middle">no progress</text>
 
-    <text x="325" y="24" class="tag" fill="#D97757" text-anchor="middle">SWEET SPOT</text>
-    <text x="325" y="40" class="mut"  fill="#D97757" text-anchor="middle">loss plummets</text>
+    <text x="325" y="24" class="tag" fill="#B85A3E" text-anchor="middle">SWEET SPOT</text>
+    <text x="325" y="40" class="mut"  fill="#B85A3E" text-anchor="middle">loss plummets</text>
 
     <text x="605" y="24" class="tag" fill="#A8324B" text-anchor="middle">EXPLODES</text>
     <text x="605" y="40" class="mut"  fill="#A8324B" text-anchor="middle">NaN or divergence</text>

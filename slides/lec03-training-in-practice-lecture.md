@@ -268,8 +268,8 @@ Before the model sees a batch, the batch should satisfy a contract.
 | `x.shape` | `[B, C, H, W]` for images or `[B, d]` for vectors | missing batch dimension |
 | `x.dtype` | `float32` / `bfloat16` after transforms | raw `uint8` pixels |
 | `x.range` | normalized, often roughly centered | values still in `[0, 255]` |
-| `y.shape` | `[B]` for class indices | one-hot when loss expects indices |
-| `y.dtype` | `torch.long` for `CrossEntropyLoss` | float labels |
+| `y.shape` | `[B]` for hard labels (`[B,C]` float = soft targets) | one-hot ints for a hard label |
+| `y.dtype` | `torch.long` for hard labels | float where you meant a class index |
 
 ```python
 assert x.ndim == 4
@@ -414,8 +414,8 @@ For deep learning, **range matters far more than ultra-fine precision**. BF16 al
 
 - Range · ±10³⁸ (same as FP32)
 - Precision · 2-3 decimal digits
-- Never overflows
-- **No loss scaling needed**
+- Overflow **rare** (FP32-like range), not impossible
+- **No loss scaling** (FP16 needs it to avoid *underflow*)
 
 </div>
 </div>
@@ -428,9 +428,9 @@ BF16 · trades precision for range. Same memory as FP16. Available on NVIDIA A10
 
 ```python
 with torch.autocast(device_type='cuda', dtype=torch.bfloat16):
-    output = model(input)   # most ops in BF16
+    output = model(input)   # most ops autocast to BF16
     loss = criterion(output, target)
-loss.backward()            # grads in BF16 too
+loss.backward()            # params & grads stay FP32; backward runs outside autocast
 ```
 
 ---
@@ -767,17 +767,13 @@ The LR finder does this with your learning rate.
 
 A short fake training session (≈100 steps) sweeps over LRs.
 
-1. Start at LR = $10^{-7}$.
+1. Start at LR $= 10^{-7}$; pick an end LR (e.g. $10$) and $n \approx 100$ steps.
 2. Each mini-batch → forward, backward, step.
-3. After each step, **multiply LR by ~1.05**.
-4. Record loss at each step.
+3. After each step, **multiply LR by a constant** $r = (\text{end}/\text{start})^{1/(n-1)}$ — here $r \approx 1.2$, a geometric sweep ($1.05$ would barely move).
+4. Record the (smoothed) loss; **stop early on NaN / blow-up**. Afterwards **restore** the original weights + optimizer state.
 5. Plot loss vs. LR (log-x).
 
-**How to read the plot:**
-
-- Find the region where loss **drops fastest** (the steepest downward slope).
-- Loss eventually shoots back up — that's where training is unstable.
-- **Pick an LR one order of magnitude before the minimum**, in the steep-descent zone.
+**How to read it** · pick an LR in the **steepest-descent** region — typically **3–10× below** where the loss bottoms out (the minimum itself is already on the edge of diverging).
 
 ---
 
@@ -795,7 +791,7 @@ Suppose the LR finder gives:
 |----|-----------|-----------|-----------|-----------|-------|
 | Loss | 3.2 | 2.5 | **1.1** (steepest drop) | 0.9 (minimum) | 2.8 (diverging) |
 
-**Analysis.** Minimum loss is at LR $= 0.1$ — **don't pick this**, it's already on the edge of diverging. The steepest descent is at LR $\approx 10^{-2}$. Rule of thumb: pick **one order of magnitude before the minimum**.
+**Analysis.** Minimum loss is at LR $= 0.1$ — **don't pick this**, it's on the edge of diverging. The steepest descent is at LR $\approx 10^{-2}$. Rule of thumb: pick in the steep-descent region, **~3–10× below the minimum**.
 
 **Good starting LR · $10^{-2}$.** Use this as `max_lr` for one-cycle training.
 
@@ -935,15 +931,17 @@ def set_seed(seed=42):
     torch.cuda.manual_seed_all(seed)
 
 # Only if bit-exact reproduction matters (slower):
+torch.use_deterministic_algorithms(True)   # errors on nondeterministic ops
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark     = False
+# also seed each DataLoader worker (worker_init_fn + a torch.Generator)
 ```
 
 Seed set at the start; every experiment records its seed in the config.
 
 <div class="keypoint">
 
-**Bitwise determinism ≠ statistical reproducibility.** The cudnn flags buy bit-exact reruns (slower). What you usually want is the *conclusion* to survive a seed change — run 3 seeds and report the spread.
+**Bitwise determinism ≠ statistical reproducibility.** The flags above buy bit-exact reruns (slower) — and *even then* not across PyTorch/CUDA versions or different GPUs. What you usually want is the *conclusion* to survive a seed change — run 3 seeds and report the spread.
 
 </div>
 

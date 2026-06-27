@@ -1,15 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 340" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 340" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .axis  { stroke:#1F1F1E; stroke-width:1.1; }
+      .axis  { stroke:#161513; stroke-width:1.1; }
       .grid  { stroke:#C9C4B5; stroke-width:0.5; }
-      .good  { stroke:#7B9E89; stroke-width:2.4; fill:none; }
+      .good  { stroke:#5F8573; stroke-width:2.4; fill:none; }
       .bad   { stroke:#A8324B; stroke-width:2.4; fill:none; stroke-dasharray:5 3; }
-      .okp   { stroke:#4A6670; stroke-width:2; fill:none; }
-      .lbl   { fill:#1F1F1E; font-size:12px; }
-      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .okp   { stroke:#37535F; stroke-width:2; fill:none; }
+      .lbl   { fill:#161513; font-size:12px; }
+      .mut   { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#5F5C54; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
       .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; }
     </style>
   </defs>
@@ -19,7 +19,7 @@
 
   <!-- Plot -->
   <g transform="translate(120, 80)">
-    <rect x="0" y="0" width="500" height="220" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <rect x="0" y="0" width="500" height="220" fill="#F7F3E9" stroke="#C9C4B5"/>
     <g class="grid">
       <line x1="0" y1="55"  x2="500" y2="55"/>
       <line x1="0" y1="110" x2="500" y2="110"/>
@@ -34,7 +34,7 @@
 
     <!-- healthy: rapid drop to near-zero -->
     <path class="good" d="M 5 20 Q 50 30 100 80 Q 150 140 250 195 Q 400 215 495 218"/>
-    <text x="300" y="205" class="lbl" fill="#7B9E89" font-weight="600">healthy · loss → ≈ 0</text>
+    <text x="300" y="205" class="lbl" fill="#5F8573" font-weight="600">healthy · loss → ≈ 0</text>
 
     <!-- broken: plateau -->
     <path class="bad" d="M 5 20 L 100 60 L 200 75 L 300 78 L 400 79 L 495 79"/>
@@ -42,16 +42,16 @@
 
     <!-- constant -->
     <path class="okp" d="M 5 20 L 495 20"/>
-    <text x="300" y="17" class="lbl" fill="#4A6670" font-weight="600">bug · no update at all</text>
+    <text x="300" y="17" class="lbl" fill="#37535F" font-weight="600">bug · no update at all</text>
 
-    <text x="250" y="240" text-anchor="middle" class="mut">training steps on a <tspan font-family="'JetBrains Mono'" fill="#1F1F1E">single batch of 8 examples</tspan></text>
+    <text x="250" y="240" text-anchor="middle" class="mut">training steps on a <tspan font-family="'JetBrains Mono'" fill="#161513">single batch of 8 examples</tspan></text>
     <text x="-10" y="110" transform="rotate(-90 -10 110)" text-anchor="middle" class="mut">loss →</text>
   </g>
 
   <!-- Right: decision tree -->
   <g transform="translate(660, 90)">
     <text x="0" y="0" class="tag">IF IT PLATEAUS, CHECK:</text>
-    <g class="mono" font-size="11" fill="#1F1F1E">
+    <g class="mono" font-size="11" fill="#161513">
       <text x="0" y="26">☐ lr too small / too large</text>
       <text x="0" y="48">☐ softmax + CE double-applied</text>
       <text x="0" y="70">☐ forgot optimizer.zero_grad()</text>

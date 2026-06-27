@@ -1,18 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .box-32 { fill:#DCE3E6; stroke:#4A6670; stroke-width:1.4; rx:4; ry:4; }
-      .box-16 { fill:#EAD3C5; stroke:#D97757; stroke-width:1.4; rx:4; ry:4; }
-      .box-bf { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.4; rx:4; ry:4; }
-      .cell   { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:0.8; }
-      .cell-s { fill:#D97757; opacity:0.6; }
-      .cell-e { fill:#4A6670; opacity:0.5; }
-      .cell-m { fill:#C9A961; opacity:0.5; }
-      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
-      .hdr    { fill:#1F1F1E; font-size:13px; font-weight:600; }
+      .box-32 { fill:#DCE3E6; stroke:#37535F; stroke-width:1.4; rx:4; ry:4; }
+      .box-16 { fill:#EAD3C5; stroke:#B85A3E; stroke-width:1.4; rx:4; ry:4; }
+      .box-bf { fill:#D8E3DE; stroke:#5F8573; stroke-width:1.4; rx:4; ry:4; }
+      .cell   { fill:#F7F3E9; stroke:#161513; stroke-width:0.8; }
+      .cell-s { fill:#B85A3E; opacity:0.6; }
+      .cell-e { fill:#37535F; opacity:0.5; }
+      .cell-m { fill:#C9A14A; opacity:0.5; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut    { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .hdr    { fill:#161513; font-size:13px; font-weight:600; }
     </style>
   </defs>
 
@@ -64,7 +64,7 @@
 
   <!-- FP16 -->
   <g transform="translate(340, 70)">
-    <text x="0" y="0" class="tag" fill="#D97757">FP16 · 16 bits  (IEEE half)</text>
+    <text x="0" y="0" class="tag" fill="#B85A3E">FP16 · 16 bits  (IEEE half)</text>
     <rect class="box-16" x="0" y="10" width="260" height="70"/>
 
     <rect class="cell cell-s" x="60" y="20" width="8" height="50"/>
@@ -94,7 +94,7 @@
 
   <!-- BF16 -->
   <g transform="translate(40, 170)">
-    <text x="0" y="0" class="tag" fill="#7B9E89">BF16 · 16 bits (brain float, Ampere+ default)</text>
+    <text x="0" y="0" class="tag" fill="#5F8573">BF16 · 16 bits (brain float, Ampere+ default)</text>
     <rect class="box-bf" x="0" y="10" width="260" height="70"/>
 
     <rect class="cell cell-s" x="30" y="20" width="8" height="50"/>
@@ -130,8 +130,8 @@
       <text x="14" y="34">scaler = torch.amp.GradScaler()          # only needed for fp16</text>
       <text x="14" y="58">with torch.amp.autocast('cuda',</text>
       <text x="14" y="74">                         dtype=torch.bfloat16):</text>
-      <text x="14" y="90" fill="#D97757">    logits = model(x)                    # runs in bf16</text>
-      <text x="14" y="106" fill="#D97757">    loss   = criterion(logits, y)</text>
+      <text x="14" y="90" fill="#B85A3E">    logits = model(x)                    # runs in bf16</text>
+      <text x="14" y="106" fill="#B85A3E">    loss   = criterion(logits, y)</text>
       <text x="14" y="130">loss.backward(); opt.step(); opt.zero_grad()</text>
     </g>
   </g>
@@ -139,7 +139,7 @@
   <!-- Footer -->
   <g transform="translate(40, 320)">
     <text x="440" y="0" text-anchor="middle" class="mut" font-style="italic">
-      Default in 2026 · use <tspan fill="#7B9E89" font-weight="600">BF16 autocast</tspan> on Ampere+ / TPU.
+      Default in 2026 · use <tspan fill="#5F8573" font-weight="600">BF16 autocast</tspan> on Ampere+ / TPU.
       2× speedup, half the memory, no GradScaler needed.
     </text>
   </g>

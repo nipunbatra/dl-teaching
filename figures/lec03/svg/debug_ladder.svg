@@ -1,18 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .rung  { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.2; rx:3; ry:3; }
-      .rung-ok { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.2; rx:3; ry:3; }
+      .rung  { fill:#F7F3E9; stroke:#161513; stroke-width:1.2; rx:3; ry:3; }
+      .rung-ok { fill:#D8E3DE; stroke:#5F8573; stroke-width:1.2; rx:3; ry:3; }
       .rung-fail{ fill:#F6D4CC; stroke:#A8324B; stroke-width:1.2; rx:3; ry:3; }
-      .rail  { stroke:#6B6A65; stroke-width:1.4; }
-      .lbl   { fill:#1F1F1E; font-size:13px; }
-      .mono  { font-family:'JetBrains Mono', monospace; font-size:12px; fill:#1F1F1E; }
-      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .rail  { stroke:#5F5C54; stroke-width:1.4; }
+      .lbl   { fill:#161513; font-size:13px; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:12px; fill:#161513; }
+      .mut   { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#5F5C54; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
     <marker id="arrD" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-      <path d="M0,0 L10,5 L0,10 z" fill="#6B6A65"/>
+      <path d="M0,0 L10,5 L0,10 z" fill="#5F5C54"/>
     </marker>
   </defs>
 
@@ -39,7 +39,7 @@
 
     <!-- 3 -->
     <rect x="320" y="180" width="320" height="40" class="rung-ok"/>
-    <text x="340" y="205" class="mono" font-weight="600" fill="#7B9E89">3 · overfit ONE batch</text>
+    <text x="340" y="205" class="mono" font-weight="600" fill="#5F8573">3 · overfit ONE batch</text>
     <text x="660" y="195" class="mut">loss should reach ≈ 0.</text>
     <text x="660" y="212" class="mut">If not: bug in model / loss / backprop.</text>
 
@@ -74,7 +74,7 @@
   </g>
 
   <!-- climbing path -->
-  <g stroke="#D97757" stroke-width="2" fill="none" opacity="0.4">
+  <g stroke="#B85A3E" stroke-width="2" fill="none" opacity="0.4">
     <path d="M 300 100 L 310 100 L 310 150 L 300 150 L 300 200 L 310 200 L 310 250 L 300 250 L 300 300 L 310 300 L 310 350 L 300 350 L 300 400"/>
   </g>
 </svg>

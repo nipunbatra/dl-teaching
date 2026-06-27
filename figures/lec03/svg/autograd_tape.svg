@@ -1,21 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .box   { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.2; rx:4; ry:4; }
-      .box-a { fill:#EAD3C5; stroke:#D97757; stroke-width:1.2; rx:4; ry:4; }
-      .leaf  { fill:#EAE7DC; stroke:#6B6A65; stroke-width:1; rx:18; ry:18; }
-      .ink   { stroke:#1F1F1E; fill:none; stroke-width:1.3; }
-      .mut   { stroke:#6B6A65; fill:none; stroke-width:1; stroke-dasharray:4 3; }
-      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .acc   { fill:#D97757; font-family:'JetBrains Mono', monospace; font-size:11px; }
-      .slate { fill:#4A6670; font-family:'JetBrains Mono', monospace; font-size:11px; }
-      .lbl   { fill:#1F1F1E; font-size:13px; }
-      .mutx  { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .box   { fill:#F7F3E9; stroke:#161513; stroke-width:1.2; rx:4; ry:4; }
+      .box-a { fill:#EAD3C5; stroke:#B85A3E; stroke-width:1.2; rx:4; ry:4; }
+      .leaf  { fill:#EAE7DC; stroke:#5F5C54; stroke-width:1; rx:18; ry:18; }
+      .ink   { stroke:#161513; fill:none; stroke-width:1.3; }
+      .mut   { stroke:#5F5C54; fill:none; stroke-width:1; stroke-dasharray:4 3; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .acc   { fill:#B85A3E; font-family:'JetBrains Mono', monospace; font-size:11px; }
+      .slate { fill:#37535F; font-family:'JetBrains Mono', monospace; font-size:11px; }
+      .lbl   { fill:#161513; font-size:13px; }
+      .mutx  { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#5F5C54; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
-    <marker id="at1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/></marker>
-    <marker id="at2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#D97757"/></marker>
+    <marker id="at1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#161513"/></marker>
+    <marker id="at2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#B85A3E"/></marker>
   </defs>
 
   <text x="480" y="28" text-anchor="middle" class="ttl">PyTorch autograd — every tensor op silently records how to undo itself</text>
@@ -28,11 +28,11 @@
       <text x="14" y="48">x = torch.tensor(2.0, requires_grad=True)</text>
       <text x="14" y="72">w = torch.tensor(3.0, requires_grad=True)</text>
       <text x="14" y="96">b = torch.tensor(1.0, requires_grad=True)</text>
-      <text x="14" y="126" fill="#4A6670">z = w * x          # MulBackward</text>
-      <text x="14" y="150" fill="#4A6670">h = z + b          # AddBackward</text>
-      <text x="14" y="174" fill="#4A6670">L = h ** 2         # PowBackward</text>
-      <text x="14" y="210" fill="#D97757">L.backward()</text>
-      <text x="14" y="230" fill="#6B6A65" font-style="italic">#  → w.grad = 28, x.grad = 42, b.grad = 14</text>
+      <text x="14" y="126" fill="#37535F">z = w * x          # MulBackward</text>
+      <text x="14" y="150" fill="#37535F">h = z + b          # AddBackward</text>
+      <text x="14" y="174" fill="#37535F">L = h ** 2         # PowBackward</text>
+      <text x="14" y="210" fill="#B85A3E">L.backward()</text>
+      <text x="14" y="230" fill="#5F5C54" font-style="italic">#  → w.grad = 28, x.grad = 42, b.grad = 14</text>
     </g>
   </g>
 
@@ -72,7 +72,7 @@
     </g>
 
     <!-- backward dashes (rust) -->
-    <g class="mut" stroke="#D97757" stroke-dasharray="5 3" stroke-width="1.4">
+    <g class="mut" stroke="#B85A3E" stroke-dasharray="5 3" stroke-width="1.4">
       <path d="M 340 155 Q 330 155 310 140" marker-end="url(#at2)"/>
       <path d="M 220 160 Q 210 160 195 100" marker-end="url(#at2)"/>
       <path d="M 220 160 Q 120 160 80 105"  marker-end="url(#at2)"/>
@@ -81,15 +81,15 @@
     </g>
 
     <text x="300" y="220" class="mutx" font-style="italic">
-      The tape is built <tspan font-weight="600" fill="#1F1F1E">at runtime</tspan> (dynamic graph)
+      The tape is built <tspan font-weight="600" fill="#161513">at runtime</tspan> (dynamic graph)
     </text>
     <text x="300" y="238" class="mutx">Each node stores <tspan font-family="'JetBrains Mono'">grad_fn</tspan> pointing to the backward op.</text>
 
     <!-- sub-callout: no_grad -->
-    <rect x="0" y="260" width="450" height="80" fill="#F6F0DF" stroke="#C9A961"/>
-    <text x="14" y="280" class="tag" fill="#C9A961">WATCH</text>
+    <rect x="0" y="260" width="450" height="80" fill="#F6F0DF" stroke="#C9A14A"/>
+    <text x="14" y="280" class="tag" fill="#C9A14A">WATCH</text>
     <text x="14" y="300" class="mutx">
-      Wrap eval / inference in <tspan font-family="'JetBrains Mono'" fill="#1F1F1E">with torch.no_grad():</tspan> —
+      Wrap eval / inference in <tspan font-family="'JetBrains Mono'" fill="#161513">with torch.no_grad():</tspan> —
     </text>
     <text x="14" y="318" class="mutx">
       skips tape construction → faster, less memory, no accidental leaks.
