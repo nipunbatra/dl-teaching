@@ -1074,7 +1074,7 @@ Adding all four at once tells you nothing about *what* fixed it. **Change one kn
 
 <div class="math-box">
 
-**P1.** Show that L2 regularization with strength $\lambda$ is equivalent to MAP under a Gaussian prior $\mathcal{N}(0, 1/(2\lambda))$ on every weight. (You did this in L00 — redo it here for a vector $\boldsymbol\theta$.)
+**P1.** Show that the L2 penalty $\frac{\lambda}{2}\lVert\boldsymbol\theta\rVert_2^2$ (the convention on the "derive the gradient" slide) is the negative log of a Gaussian prior $\mathcal{N}(0, \sigma_p^2)$ on every weight, and read off the relation $\lambda = 1/\sigma_p^2$. (You did this in L00B — redo it here for a vector $\boldsymbol\theta$; watch the factor of $\tfrac12$.)
 
 **P2.** A 2-layer MLP with dropout $p = 0.5$ at training. What is the expected output magnitude relative to inference? Which scaling does PyTorch use to fix this — *inverted* dropout or *standard*?
 

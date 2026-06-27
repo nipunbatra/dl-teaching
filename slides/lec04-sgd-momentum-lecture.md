@@ -567,17 +567,14 @@ Let's derive **how big** that compounding gets.
 
 # ⭐⭐⭐ Optional · deriving the effective learning rate
 
-Assume gradient $\mathbf{g}$ is constant for many steps. Use the simpler form $\mathbf{v}_t = \beta\,\mathbf{v}_{t-1} + \mathbf{g}$ (same steady-state behaviour). Unroll, with $\mathbf{v}_0 = 0$:
+Assume gradient $\mathbf{g}$ is constant. We use the **classical / PyTorch** momentum form $\mathbf{v}_t = \beta\,\mathbf{v}_{t-1} + \mathbf{g}$ — **no** $(1-\beta)$ on the gradient, which is what lets velocity build past $\mathbf{g}$ (the EMA form caps it *at* $\mathbf{g}$; they differ by exactly the $1/(1-\beta)$ below). Unroll, with $\mathbf{v}_0 = 0$:
 
 - $t=1$: $\mathbf{v}_1 = \mathbf{g}$
 - $t=2$: $\mathbf{v}_2 = \beta\,\mathbf{g} + \mathbf{g}$
 - $t=3$: $\mathbf{v}_3 = \beta^2\,\mathbf{g} + \beta\,\mathbf{g} + \mathbf{g}$
 - $t=\infty$: $\mathbf{v}_\infty = (1 + \beta + \beta^2 + \cdots)\,\mathbf{g}$
 
-A **geometric series** with $\beta < 1$:
-$$\sum_{i=0}^{\infty} \beta^i = \frac{1}{1-\beta} \;\;\Rightarrow\;\; \mathbf{v}_\infty = \frac{1}{1-\beta}\,\mathbf{g}$$
-
-So the parameter update at terminal velocity is:
+The bracket is a **geometric series** ($\beta<1$), so $\sum_{i\ge 0}\beta^i = \frac{1}{1-\beta}$ and the update at terminal velocity becomes:
 $$\theta_t = \theta_{t-1} - \eta\,\mathbf{v}_\infty = \theta_{t-1} - \underbrace{\frac{\eta}{1-\beta}}_{\eta_\text{eff}}\,\mathbf{g}$$
 
 ---
