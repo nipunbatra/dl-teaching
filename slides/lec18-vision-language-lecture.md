@@ -304,7 +304,7 @@ $S = \begin{pmatrix} i_1 \cdot t_1 & i_1 \cdot t_2 & i_1 \cdot t_3 \\ i_2 \cdot 
 
 # Worked numeric · CLIP loss for one row
 
-$N = 2$. Normalized embeddings:
+$N = 2$. Embeddings (unit-normalized, values rounded):
 - $i_1 = [0.8, 0.6]$, $t_1 = [0.7, 0.7]$ (good match)
 - $i_2 = [-0.9, 0.44]$, $t_2 = [-0.8, 0.6]$ (good match)
 - $\tau = 0.1$.
@@ -373,11 +373,11 @@ Toy CLIP space with $d = 3$. Image embedding (normalized) · $i = [0.8,\ 0.6,\ 0
 |:-:|:-:|:-:|:-:|:-:|
 | "a photo of a **dog**" | $[0.6, 0.8, 0]$ | $0.48 + 0.48 = \mathbf{0.96}$ | 9.6 | **0.83** |
 | "a photo of a **cat**" | $[1, 0, 0]$ | $0.80$ | 8.0 | 0.17 |
-| "a photo of a **car**" | $[0, 0, 1]$ | $0.00$ | 0 | 0.0001 |
+| "a photo of a **car**" | $[0, 0, 1]$ | $0.00$ | 0 | $\approx 0$ |
 
 <div class="math-box">
 
-$\text{softmax} = \dfrac{[e^{9.6},\ e^{8.0},\ e^{0}]}{e^{9.6} + e^{8.0} + e^{0}} = \dfrac{[14765,\ 2981,\ 1]}{17747} \approx [0.83,\ 0.17,\ 0.0001]$
+$\text{softmax} = \dfrac{[e^{9.6},\ e^{8.0},\ e^{0}]}{e^{9.6} + e^{8.0} + e^{0}} = \dfrac{[14765,\ 2981,\ 1]}{17747} \approx [0.83,\ 0.17,\ 0.00006]$
 
 </div>
 

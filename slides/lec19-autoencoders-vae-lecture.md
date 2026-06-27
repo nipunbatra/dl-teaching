@@ -719,7 +719,7 @@ The interpolation is the magic · it produces *valid* intermediate images becaus
 |--|---------------|---------------------|-----------|----------------|
 | **VAE** | ✗ often blurry | ✓ stable | ✓ ELBO | ✓✓ one pass |
 | **GAN** | ✓✓ sharp | ✗ brittle | ✗ no | ✓✓ one pass |
-| **Diffusion** | ✓✓✓ best (2026) | ✓ stable | ≈ | ✗ many passes |
+| **Diffusion** | ✓✓✓ best (as of writing) | ✓ stable | ≈ | ✗ many passes |
 
 <div class="insight">
 
