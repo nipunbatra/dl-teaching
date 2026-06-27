@@ -638,7 +638,7 @@ Llama 3 70B · reportedly ~$80M including experiments. GPT-4 class · ~$100M+ pe
 | Year | Model | Params | Tokens | Notable |
 |:-:|:-:|:-:|:-:|:-:|
 | 2018 | BERT-base | 110M | 3.3B | first pretrained Transformer in production |
-| 2019 | GPT-2 | 1.5B | 40B | "too dangerous to release" |
+| 2019 | GPT-2 | 1.5B | ~10B | "too dangerous to release" |
 | 2020 | GPT-3 | 175B | 300B | first few-shot emergence |
 | 2022 | Chinchilla | 70B | 1.4T | train-compute optimal |
 | 2023 | Llama 2 70B | 70B | 2T | open weights, Chinchilla-ish |
