@@ -205,7 +205,7 @@ We won't write a full proof — but the structure is short and worth knowing.
 
 **Move 1 · continuous $f$ → step function.** Any continuous $f$ on $[0,1]^d$ is *uniformly continuous* (Heine–Cantor). Partition the cube into cells small enough that $f$ varies by $<\epsilon/2$ inside each; replace $f$ by its average on each cell → a step function within $\epsilon/2$ of $f$.
 
-**Move 2 · step function → sum of sigmoids.** A sigmoid $\sigma(w(x-b))$ with large $w$ is essentially a step at $b$; a *bump* is a difference of two near-steps. Each cell ⇒ one bump · $N$ cells → $2N$ hidden units.
+**Move 2 · step function → sum of sigmoids.** A sigmoid $\sigma(w(x-b))$ with large $w$ is essentially a step at $b$; a *bump* is a difference of two near-steps. Each cell ⇒ one bump · $N$ cells → $2N$ hidden units. *(This clean count is the **1-D** picture; in $d$ dimensions one layer needs many more units per cell — the curse of dimensionality, ahead.)*
 
 </div>
 
@@ -233,7 +233,7 @@ We won't write a full proof — but the structure is short and worth knowing.
 
 <div class="math-box">
 
-Pick 4 ReLU bumps at $x = 0.0, 0.25, 0.5, 0.75$ on $[0, 1]$. Each is `relu(w·(x − b))` for slope $w = 1$.
+Pick 4 ReLU **ramps** (one-sided hinges) at $x = 0.0, 0.25, 0.5, 0.75$ on $[0, 1]$. Each is `relu(w·(x − b))` for slope $w = 1$.
 
 | ReLU $i$ | $b_i$ | $\alpha_i$ | turns on at $x =$ |
 |:-:|:-:|:-:|:-:|
@@ -244,9 +244,9 @@ Pick 4 ReLU bumps at $x = 0.0, 0.25, 0.5, 0.75$ on $[0, 1]$. Each is `relu(w·(x
 
 </div>
 
-Each $\alpha_i$ adds to the running slope, so the segments have slopes $0.25, 0.75, 1.25, 1.75$ — and the piecewise-linear output **matches $x^2$ exactly at every knot** ($f(0.5) = 0.25$, $f(1) = 1$ ✓). With more ReLUs, the fit gets finer · the error $\epsilon \to 0$.
+Each $\alpha_i$ adds to the running slope ($0.25, 0.75, 1.25, 1.75$), so the output **matches $x^2$ exactly at every knot**. Between knots the interpolation error is at most $\tfrac{h^2}{8}\max|f''| = \tfrac{0.25^2}{8}\cdot 2 = \tfrac{1}{64} \approx 0.016$ — and shrinks as you add ramps.
 
-**That's UAT in numbers.** A weighted sum of ReLU bumps approximates any 1D continuous function.
+**That's UAT in numbers.** A weighted sum of ReLU ramps approximates any 1D continuous function.
 
 ---
 
@@ -295,7 +295,7 @@ Piecewise-linear approximation of $f$ to error $\epsilon$ — for *generic* (wor
 - 1D: $N \approx O(1 / \sqrt{\epsilon})$
 - $d$D: $N \approx O(1 / \epsilon^{d/2})$ *(illustrative — exact rate depends on the function class)*
 
-| $d$ | neurons needed for $\epsilon = 0.01$ |
+| $d$ | linear pieces (grid cells) for $\epsilon = 0.01$ |
 |:-:|:-:|
 | 1   | ~10 |
 | 10  | $10^{10}$ |
@@ -726,7 +726,7 @@ Same 5-layer net. Each layer's $\partial \mathcal{F}/\partial \mathbf{x}$ has ti
 
 </div>
 
-The plain net's signal vanishes · ResNet keeps the full unit signal **plus** a small contribution from each block. **Hundred-layer ResNets train; 100-layer plain nets don't.**
+The plain net's signal vanishes; the ResNet's $+\mathbf{I}$ keeps a **direct path** open, so the gradient still flows even when each block's Jacobian is tiny. (Real blocks add matrices, ReLUs and projections — a strong *help*, not a literal guarantee.) **Hundred-layer ResNets train; 100-layer plain nets don't.**
 
 ---
 
@@ -889,11 +889,11 @@ Same product, going backwards. A single bad scale → all early layers train at 
 
 <div class="warning">
 
-**Symptom · loss is NaN at step 1**, or loss flat with all weights stuck. Always-and-only an init problem if the loop is otherwise correct.
+**Symptom · loss is NaN at step 1**, or loss flat with all weights stuck. Often an init problem — but first rule out a too-high LR, unnormalized inputs, a logits/loss mismatch, or AMP overflow.
 
 </div>
 
-The variance argument on the next slide gives a one-line fix · scale init by $1/\sqrt{n_\text{in}}$.
+The variance argument on the next slide gives a one-line fix · scale init so activation RMS is preserved — $\sqrt{1/n_\text{in}}$ (Xavier, for tanh) or $\sqrt{2/n_\text{in}}$ (He, for ReLU).
 
 ---
 
@@ -980,7 +980,8 @@ This is **why initialization is not optional**. Bad init → loss is NaN at step
 # Initialization in PyTorch
 
 ```python
-# Default for nn.Linear — Kaiming uniform (sensible for ReLU)
+# nn.Linear's default is Kaiming-uniform with a=sqrt(5) — a legacy choice,
+# NOT textbook He-for-ReLU. For deep ReLU nets, set it explicitly:
 model = nn.Linear(784, 256)
 
 # Explicit He init
