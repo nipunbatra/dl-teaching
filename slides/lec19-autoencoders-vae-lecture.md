@@ -30,9 +30,15 @@ By the end of this lecture you will be able to:
 
 ---
 
-# Where we are
+# Where we are · PCA was a linear autoencoder
 
-Module 9 opens · **generative models**. Until now every model *classified* or *predicted* — labels, tokens, pixels-given-labels. Today we switch to: **given a dataset, can I sample new examples that look like it?**
+In **ES 335** you used **PCA** to compress data · project $\mathbf{x}$ down to a few coordinates $z$ (encode), then reconstruct $\hat{\mathbf{x}}$ from them (decode) — choosing the projection to minimize $\|\mathbf{x} - \hat{\mathbf{x}}\|^2$. That **is** an autoencoder · encode → bottleneck → decode. PCA's catch · both maps are forced to be **linear**, so it can only fit a flat subspace.
+
+<div class="insight">
+
+So here is the generalization · **replace PCA's two linear maps with nonlinear layers**, and you get a *learned, nonlinear* compressor — an **autoencoder** — that can fold curved data a flat subspace never could. Then one more twist (encode to a *distribution*, not a point) turns it **generative** · the **VAE**. This is also where Module 9 opens · *can we sample brand-new examples that look like the data?*
+
+</div>
 
 <div class="paper">
 

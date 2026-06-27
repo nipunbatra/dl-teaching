@@ -29,13 +29,17 @@ By the end of this lecture you will be able to:
 
 ---
 
-# Where we are
+# Where we are · from L17, a second view across modalities
 
-- **CNNs** (L7–L9) · vision-specific inductive bias.
-- **Transformers** (L13–L14) · originally for text.
-- **Self-supervised** (L17) · contrastive and masked pretraining.
+In **L17** SimCLR's contrastive loss pulled together two augmentations *of the same image* and pushed everything else apart. The "label" was free · two views of one thing belong together.
 
-Today: what if one model handled **both** text AND vision?
+<div class="insight">
+
+Here is the leap · what if the second view of an image is not a crop — but its **caption**? Run the *identical* contrastive recipe across **two modalities** instead of two augmentations, and image and text land in **one shared space**. That single idea — **CLIP** — is what lets you classify a photo just by *naming* the classes, no labels, no retraining.
+
+</div>
+
+Building blocks · **CNNs** (L7–L9), **Transformers** (L13–L14), **contrastive SSL** (L17). Today they compose into one model that handles text *and* vision.
 
 <div class="paper">
 

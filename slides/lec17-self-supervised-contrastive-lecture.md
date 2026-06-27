@@ -30,11 +30,15 @@ By the end of this lecture you will be able to:
 
 ---
 
-# Where we are
+# Where we are · ES 335 already learned without labels
 
-Everything we've seen used labels — classification, MT, LLM pretraining on curated corpora. But labels are **expensive, finite, biased.**
+Almost every model in this course needed labels — $y$ for each $\mathbf{x}$. But back in **ES 335** you did learn *without* any $y$ · **PCA** found the directions of greatest variance, and **k-means** grouped points into clusters. That was **unsupervised learning** — finding structure in $\mathbf{X}$ alone.
 
-Meanwhile, the internet has **unlimited unlabeled data**. Can we learn from it?
+<div class="insight">
+
+ES 335 unsupervised learning found structure in small, hand-curated tables. Today's question · can we **scale that same idea** — *learn features from raw, unlabeled data* — to 14M internet images, with deep nets doing the work PCA once did? That is **self-supervised learning**: labels are expensive and finite, unlabeled data is essentially free, and it is how every LLM was pretrained.
+
+</div>
 
 <div class="paper">
 

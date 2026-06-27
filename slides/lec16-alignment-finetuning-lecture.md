@@ -29,10 +29,15 @@ By the end of this lecture you will be able to:
 
 ---
 
-# Where we are
+# Where we are · from L15, capability ≠ helpfulness
 
-- **Pretrained LLMs** (L15) · Chinchilla-optimal, RoPE, GQA — raw capability.
-- But raw pretrained models are **not** chat assistants. Raw GPT-3 will complete your prompt with plausible internet text, not with a useful answer.
+In **L15** you scaled a decoder-only Transformer until it had real *capability* — it can complete almost any text. But its only objective was the next-token $J(\theta)$, so it has learned exactly one skill · **continue internet text.** Ask it a question and it may give you *more questions*, because that is what its training data looked like.
+
+<div class="insight">
+
+A pretrained LLM **predicts text**; it does not yet **help you.** Today we close that gap — turn a completer into a helpful, safe assistant — *without* retraining 70B weights from scratch. The objective never leaves the NLL family; only *what we count as a good answer* changes.
+
+</div>
 
 <div class="paper">
 

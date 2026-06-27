@@ -29,12 +29,15 @@ By the end of this lecture you will be able to:
 
 ---
 
-# Where we are
+# Where we are · from L14, one knob left
 
-- **Transformer block** (L13) · stack of attention + FFN.
-- **Tokenization + pretraining** (L14) · BPE, BERT / GPT / T5.
+In **L14** you built the *recipe* for a language model · BPE tokens in, a **decoder-only Transformer** (L13) predicting the next token, trained by the same cross-entropy $J(\theta)$ you have used since ES 335. That recipe is **finished** — GPT-2 and Llama-3 run the *identical* code path.
 
-The **Transformer** stack is the architecture. The tokenizer is the input. Now let's scale.
+<div class="insight">
+
+So if the architecture is solved, why was GPT-2 (2019) a curiosity and GPT-4 (2023) a phenomenon? **One knob changed · scale.** This entire lecture is about turning that one knob *well* — how big a model, on how much data, and the few engineering tricks that make it fit.
+
+</div>
 
 <div class="paper">
 
