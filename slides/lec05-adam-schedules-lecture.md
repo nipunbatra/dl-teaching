@@ -391,7 +391,7 @@ Suppose the true gradient is $g = 1.0$ at every step. With $\beta_1 = 0.9$, star
 
 </div>
 
-Without correction, the first step would use $m_1 = 0.1$ — ten times too small. Adam's step would therefore be **10× smaller than the optimal at t=1**, wasting the early training phase. The $(1 - \beta_1^t)$ denominator fixes it exactly.
+Without correction $m_1 = (1-\beta_1)g = 0.1g$ (10× too small) — **but** $v_1 = (1-\beta_2)g^2 = 0.001g^2$ makes $\sqrt{v_1}$ ~32× too small too. They **partly cancel**: the raw first step $m_1/\sqrt{v_1} \approx 3.2\,\mathrm{sign}(g)$ is about **3× too large**, not small. Correcting *both* moments by $(1-\beta^t)$ gives the clean unit step $\hat m_1/\sqrt{\hat v_1} = \mathrm{sign}(g)$.
 
 ---
 
@@ -505,7 +505,7 @@ Cosine and warmup+cosine need `total_steps` **up front** — the curve is stretc
 </div>
 
 - Budget unknown / exploratory → constant, or constant-with-decay-on-plateau.
-- Fixed budget, one shot → warmup + cosine (decay to ~peak/10 by the end).
+- Fixed budget, one shot → warmup + cosine (decay to ~0 by the end, or a small floor like peak/10 if you set one).
 - Comparing two runs? Match their schedules *relative to budget*, not in absolute steps.
 
 ---

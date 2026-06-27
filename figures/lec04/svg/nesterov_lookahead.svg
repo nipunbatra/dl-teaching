@@ -90,8 +90,8 @@
   </g>
 
   <text x="480" y="325" text-anchor="middle" class="mut">
-    <tspan class="mono">Classical · θ_t = θ_{t−1} − ηv_t − η∇f(θ_{t−1})</tspan>
+    <tspan class="mono">Classical · gradient at θ_{t−1}, then θ_t = θ_{t−1} − ηv_t</tspan>
     &nbsp;&nbsp;vs&nbsp;&nbsp;
-    <tspan class="mono" fill="#B85A3E">Nesterov · θ_t = θ_{t−1} − ηv_t − η∇f(θ_{t−1} − ηβv_{t−1})</tspan>
+    <tspan class="mono" fill="#B85A3E">Nesterov · gradient at look-ahead θ_{t−1} − ηβv_{t−1}</tspan>
   </text>
 </svg>

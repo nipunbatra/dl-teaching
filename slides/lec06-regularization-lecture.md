@@ -148,7 +148,7 @@ We spend time here.
 
 <div class="insight">
 
-**ES 335's ridge and lasso *are* deep learning's weight decay** — in L00B you *derived* L2 as a Gaussian prior and L1 as a Laplace prior on $\boldsymbol\theta$ (MAP = MLE + log-prior). So the penalty-term regularizers are **done**. Today's new tools — **dropout, early stopping, data augmentation, batchnorm** — are the surprise · they regularize without ever adding a $\lambda\lVert\boldsymbol\theta\rVert$ term, and they win.
+**ES 335's ridge (L2) *is* exactly deep learning's weight decay** — in L00B you *derived* L2 as a Gaussian prior and L1 (lasso) as a Laplace prior on $\boldsymbol\theta$ (MAP = MLE + log-prior). So the penalty-term regularizers are **done** (DL leans on L2/weight-decay; L1 is rare here). Today's new tools — **dropout, early stopping, data augmentation, batchnorm** — are the surprise · they regularize without ever adding a $\lambda\lVert\boldsymbol\theta\rVert$ term, and they win.
 
 </div>
 
@@ -384,7 +384,7 @@ A flipped cat is still a cat. A color-jittered cat is still a cat. By training o
 Instead of hand-picking augmentations:
 
 - **AutoAugment** (2018) — learn the augmentation policy from data.
-- **RandAugment** (2020) — pick $N$ augmentations uniformly; pick magnitude $M$ uniformly. Two knobs.
+- **RandAugment** (2020) — pick $N$ augmentations at random and apply a single fixed magnitude $M$. Two knobs.
 
 In `torchvision`:
 
@@ -1060,7 +1060,7 @@ The 100M-param overfitting model? The right ordering is ·
 <div class="keypoint">
 
 1. **First** · Mixup + RandAugment (data is the cheapest, biggest win).
-2. **Then** · turn weight decay up to ~0.1 (architectural friction).
+2. **Then** · turn weight decay up to ~0.1 (a cheap classical penalty).
 3. **Then** · dropout 0.1–0.2 in MLP-heavy layers.
 4. **Last** · longer training with a schedule.
 

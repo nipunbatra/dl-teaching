@@ -279,7 +279,7 @@ $$\theta_t = \theta_{t-1} - \eta\, \mathbf{v}_t$$
 
 This is an **Exponential Moving Average (EMA)**. With $\beta = 0.9$: keep 90% of the old velocity, mix in 10% of the new gradient. Effective memory $\frac{1}{1-\beta} = 10$ steps.
 
-PyTorch's `SGD(..., momentum=0.9)` uses an equivalent form.
+PyTorch's `SGD(..., momentum=0.9)` uses the *plus* form $v_t = \beta v_{t-1} + g_t$ (no $1-\beta$) — same direction, but the velocity (hence effective LR) runs ~$1/(1-\beta)$ larger, so tune $\eta$ accordingly.
 
 ---
 

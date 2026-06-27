@@ -62,8 +62,8 @@
     <text x="14" y="88" class="tag">WHY THIS MATTERS</text>
 
     <g class="mut">
-      <text x="14" y="110">• Adam scales steps by 1/√v̂ — a single g² spike</text>
-      <text x="14" y="126">  briefly produces a huge step.</text>
+      <text x="14" y="110">• Adam scales by 1/√v̂ — a large RAW gradient can</text>
+      <text x="14" y="126">  overshoot before v̂ catches up.</text>
       <text x="14" y="150">• RNNs / Transformers often see gradient spikes</text>
       <text x="14" y="166">  from rare tokens or long contexts.</text>
       <text x="14" y="190">• Clipping is <tspan fill="#5F8573" font-weight="600">cheap insurance</tspan> — costs nothing when</text>
