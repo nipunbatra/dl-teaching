@@ -30,7 +30,7 @@ A standalone, intuition-first tour of the information theory that every loss in 
 
 # Why a whole lecture on this
 
-You have been minimizing **cross-entropy** since ES 335. But ·
+In ES 335 you **minimized** the cross-entropy cost $J(\boldsymbol\theta) = -\sum_i[y_i\log\hat y_i + (1-y_i)\log(1-\hat y_i)]$ for logistic regression — oranges vs tomatoes. Today we ask what entropy, cross-entropy, and KL actually *mean* — and why that loss was **inevitable**. Four questions you never had to answer ·
 
 <div class="math-box">
 

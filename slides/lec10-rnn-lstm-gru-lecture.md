@@ -46,6 +46,22 @@ Today maps to **Bishop Ch 12** (RNNs). UDL skips RNNs and jumps to Transformers 
 
 ---
 
+# Bridge from ES 335 · you already met the RNN
+
+| From ES 335 | What we do today |
+|---|---|
+| The recurrence $h_t = \tanh(W_{hh}\,h_{t-1} + W_{xh}\,x_t + b_h)$ | **unroll** it in time and run BPTT through every step |
+| *Conceptually* · repeated $W_{hh}$ makes signals **explode** ($\|W_{hh}\|>1$) or **vanish** ($\|W_{hh}\|<1$) | **derive** that exponential blow-up / decay from the chain rule |
+| You heard the LSTM has **3 gates** (forget, input, output) | write the **gate math** and show *why* it rescues the gradient |
+
+<div class="insight">
+
+In ES 335 you saw simple RNNs vanish/explode via repeated $W_{hh}$ — as a picture. Today we unroll the net, **derive** exactly how BPTT fails, then **derive the LSTM gate math** that fixes it. Problem → failure → fix.
+
+</div>
+
+---
+
 # Four questions
 
 1. Why can't we just use an MLP for sequences?

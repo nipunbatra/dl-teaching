@@ -31,9 +31,13 @@ By the end of this lecture you will be able to:
 
 # Recap · where we are
 
-Last lecture: **attention** fixed Seq2Seq's bottleneck. Q, K, V scaled dot product, softmax, weighted values.
+Last lecture (L12): **attention** fixed Seq2Seq's bottleneck — Q, K, V scaled dot product, softmax, weighted values. But in L11–L12 attention was *bolted onto an RNN* · the encoder still steps through tokens **one at a time**.
 
-**Today we stack it all together.**
+<div class="insight">
+
+Attention works — but the RNN underneath is **inherently sequential**: token $t$ waits for token $t{-}1$, so it can't use a GPU's parallelism, and long-range info still crawls through many steps. The 2017 move · attention already lets any token see any other token directly, so **drop recurrence entirely** and keep only attention. "Attention Is All You Need." Today we stack that into the Transformer.
+
+</div>
 
 <div class="paper">
 

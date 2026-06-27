@@ -31,7 +31,7 @@ By the end of this lecture you will be able to:
 
 # Where we are
 
-Last lecture: the **Transformer block**. Stack it, add positional encoding, mask if autoregressive.
+Last lecture (L13): the **Transformer block**. Stack it, add positional encoding, mask if autoregressive.
 
 But stacking requires *inputs*. And inputs are **discrete symbols** (characters, subwords, words), not vectors.
 
@@ -44,6 +44,18 @@ But stacking requires *inputs*. And inputs are **discrete symbols** (characters,
 - **UDL (Prince) · Ch 12 (pretraining)**.
 
 Tokenization is the part of LLMs everyone wants to skip — don't.
+
+</div>
+
+---
+
+# Bridge from ES 335 · you already know the objective
+
+In ES 335 you built a **next-token-prediction** model · given the words so far, predict the next one by minimizing cross-entropy — the same cost $J(\theta)=-\sum_t \log \hat y_{t}$ where $\hat y_t = P_\theta(x_t \mid x_{<t})$.
+
+<div class="insight">
+
+The *objective* hasn't changed since ES 335 — it's still next-token cross-entropy $J(\theta)$. What changes today is everything *around* it · (1) **how raw text becomes the discrete tokens** $x_t$ in the first place (tokenization / BPE), and (2) **what happens when you scale** that one objective to a trillion tokens (pretraining: BERT vs GPT vs T5).
 
 </div>
 

@@ -31,13 +31,13 @@ By the end of this lecture you will be able to:
 
 # Recap · where we are
 
-Module 6 opens. The previous lecture ended on a cliff-hanger:
+Module 6 opens. L11 ended on a cliff-hanger — the **fixed-size context vector** $\mathbf{c}$:
 
 - **Seq2Seq** works for short sentences.
-- The **fixed-size context vector** can't hold everything for long ones.
+- One vector $\mathbf{c}$ can't hold everything for long ones.
 - **BLEU collapses** past ~30 tokens.
 
-Today we fix it.
+The fix in one line · one fixed vector can't hold a long sentence, so **let the decoder look back** at every encoder state. Today we build that.
 
 <div class="paper">
 

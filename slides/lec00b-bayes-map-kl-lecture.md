@@ -92,7 +92,7 @@ By the end of this lecture you will be able to ·
 
 <div class="keypoint">
 
-Ridge = Gaussian prior · Lasso = Laplace prior. In ES 335 you used these as penalties; today you see *why* they're priors.
+The **weight-decay / ridge** you ran in ES 335 **= a Gaussian prior** on $\boldsymbol\theta$; the **lasso = a Laplace prior**. You used them as penalty knobs; today you *derive* them — and MAP turns out to be just **MLE + a prior**.
 
 </div>
 

@@ -31,14 +31,20 @@ By the end of this lecture you will be able to:
 
 # Recap · where we are
 
-Last lecture: **LSTMs** solve the vanishing-gradient problem in RNNs via gated cell states.
+Last lecture (L10): **LSTM gates** fixed the vanishing gradient, so a single RNN can now read a long sequence and emit one label or one continuation.
 
-But solving depth is not enough. Many tasks need to map **an input sequence** to **a different output sequence**:
+But that's still **one sequence in, same-length stream out**. Many tasks map **an input sequence** to a *different* output sequence — different length, different order:
 
 - Machine translation — English to French
 - Summarization — article to abstract
 - Speech recognition — audio to text
 - Program synthesis — comment to code
+
+<div class="insight">
+
+L10 made the RNN *remember*. Today we wire two of them — encoder + decoder — and hit a new wall · the encoder must cram the whole source into **one fixed vector**. That bottleneck is today's flagship failure, and it's exactly what makes attention (L12) inevitable.
+
+</div>
 
 <div class="paper">
 
