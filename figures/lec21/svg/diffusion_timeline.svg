@@ -49,7 +49,7 @@
         </g>
       </g>
       <text x="70" y="120" class="head" text-anchor="middle">t = 250</text>
-      <text x="70" y="135" class="caption" text-anchor="middle">α̅ = 0.82 (cosine)</text>
+      <text x="70" y="135" class="caption" text-anchor="middle">α̅ = 0.85 (cosine)</text>
     </g>
 
     <!-- t=500 -->
@@ -68,7 +68,7 @@
         </g>
       </g>
       <text x="70" y="120" class="head" text-anchor="middle">t = 500</text>
-      <text x="70" y="135" class="caption" text-anchor="middle">α̅ = 0.50</text>
+      <text x="70" y="135" class="caption" text-anchor="middle">α̅ = 0.49 (cosine)</text>
     </g>
 
     <!-- t=750 -->
@@ -89,7 +89,7 @@
         </g>
       </g>
       <text x="70" y="120" class="head" text-anchor="middle">t = 750</text>
-      <text x="70" y="135" class="caption" text-anchor="middle">α̅ = 0.18</text>
+      <text x="70" y="135" class="caption" text-anchor="middle">α̅ = 0.14 (cosine)</text>
     </g>
 
     <!-- t=1000 pure noise -->

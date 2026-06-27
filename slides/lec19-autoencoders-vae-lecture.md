@@ -713,7 +713,7 @@ The interpolation is the magic · it produces *valid* intermediate images becaus
 
 **Decoder stochasticity.** If decoder outputs a Gaussian $p(x|z) = \mathcal{N}(g(z), \sigma_x^2 I)$, add $\sigma_x \cdot \epsilon_x$ to the mean for a single sample. If you only decode means you get the "mode"; adding variance makes samples diverse.
 
-**VAE blur.** The KL pulls posteriors toward a simple prior · posteriors overlap significantly. The decoder averages over possible $z$ given $x$ → samples are blurry means. This is the fundamental VAE limitation diffusion (L21) fixes.
+**VAE blur.** The KL pulls posteriors toward a simple prior · posteriors overlap significantly. Because those posteriors overlap, one latent $z$ can come from several different $x$'s; a Gaussian/MSE decoder must emit a single image, so it predicts their **average** → blurry means. This is the fundamental VAE limitation diffusion (L21) fixes.
 
 </div>
 

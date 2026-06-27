@@ -488,9 +488,9 @@ With data gradient $g \approx 0$ (an idle weight), $\eta = 0.1$ ·
 
 | per step | **no decay** ($\lambda=0$) | **with decay** ($\lambda=0.01$) |
 |---|---|---|
-| shrink factor | $\times 1.000$ | $\times 0.998$ |
-| $\theta=[3,-4]$ after 1 step | $[3,\,-4]$ | $[2.994,\,-3.992]$ |
-| after 100 steps | $[3,\,-4]$ | $[2.46,\,-3.27]$ |
+| shrink factor | $\times 1.000$ | $\times 0.999$ |
+| $\theta=[3,-4]$ after 1 step | $[3,\,-4]$ | $[2.997,\,-3.996]$ |
+| after 100 steps | $[3,\,-4]$ | $[2.71,\,-3.62]$ |
 
 Without decay an idle weight stays put; with decay it **drifts toward 0** every step — the Gaussian prior quietly pulling it in.
 
@@ -558,7 +558,7 @@ Swap the Gaussian for a **Laplace** prior · $p(\theta_j) = \dfrac{1}{2b}\exp\!\
 
 ![w:660px](figures/lec00/svg/laplace_vs_gaussian.svg)
 
-That spike at zero is the whole story · it puts real prior mass *right at* 0, so MAP parks weak weights *exactly* there.
+That sharp cusp at zero is the whole story · unlike the Gaussian's smooth bowl, the Laplace peak is **non-differentiable** at 0 — that kink (not any literal point-mass, which a continuous density can't have) is what lets MAP park weak weights *exactly* there.
 
 ---
 
@@ -1162,7 +1162,7 @@ Read · "average the log-ratio over the **model** $q_\theta$."
 
 **Consequence · mode-seeking.** $q_\theta$ concentrates on a single high-density region. Two-mode target → $q_\theta$ picks one mode and ignores the other.
 
-**This is what reverse-KL variational inference, GAN-style training, and RL policy distillation optimize.** Sharper, more confident output — but mode collapse is a real risk. (Whole-model VAE samples are *blurry*, not sharp — that comes from the forward-KL reconstruction term, two slides on; the reverse KL here is the VAE's *latent* term $\text{KL}(q_\phi\|p(z))$.)
+**This is what reverse-KL variational inference and RL policy distillation optimize.** Sharper, more confident output. The same mode-seeking pressure shows up *empirically* in GAN training (hence mode collapse) — though a vanilla GAN's optimum is technically a **JS** divergence, not reverse KL (L20). (Whole-model VAE samples are *blurry*, not sharp — that comes from the forward-KL reconstruction term, two slides on; the reverse KL here is the VAE's *latent* term $\text{KL}(q_\phi\|p(z))$.)
 
 ---
 
@@ -1258,7 +1258,7 @@ Every advanced model in this course uses MLE (or MAP) under a specific distribut
 
 </div>
 
-You now know what *all* of these losses are. They're NLLs.
+You now know where *almost all* of these losses come from — an NLL or a variational/KL bound. (GANs are the exception · an adversarial divergence, L20.)
 
 ---
 
@@ -1294,7 +1294,7 @@ Same code skeleton; three lines change between MLE and MAP.
 
 </div>
 
-Every regularizer in this course is a prior. Every generative-model loss is a KL.
+Every *penalty* regularizer (L1/L2) is a prior; most generative-model losses are an NLL or KL bound (GANs excepted). One probabilistic lens, nearly the whole way down.
 
 ---
 

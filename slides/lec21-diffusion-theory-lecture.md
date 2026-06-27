@@ -53,7 +53,7 @@ By the end of this lecture you will be able to:
 - **VAE** (L19) · probabilistic encoder-decoder; good structure, blurry samples.
 - **GAN** (L20) · sharp samples, unstable training, mode collapse.
 
-Today · **diffusion**. Sharp samples + stable training + tractable likelihood. SOTA since 2021 for image, video, audio, 3D generation.
+Today · **diffusion**. Sharp samples + stable training + a tractable likelihood **bound** (the ELBO — unlike GANs, which give none). SOTA since 2021 for image, video, audio, 3D generation.
 
 <div class="paper">
 
@@ -318,7 +318,7 @@ Batch of 128 in **one step** · microseconds. Hours instead of days.
 
 <div class="keypoint">
 
-This closed-form is the single biggest practical advantage over continuous-time score-SDE approaches. Without it, DDPM training would cost 500× more.
+This closed-form — jump straight to any $t$ in one shot — is the single biggest practical advantage **over running the forward chain step by step**. Without it, DDPM training would cost 500× more.
 
 </div>
 
@@ -372,7 +372,7 @@ Two common schedules:
 
 **Linear** (original DDPM) · $\beta_t$ grows linearly from $10^{-4}$ to $0.02$ over $T = 1000$ steps.
 
-**Cosine** (Nichol &amp; Dhariwal 2021) · $\bar{\alpha}_t = \cos^2\!\left(\frac{t/T + s}{1 + s} \cdot \frac{\pi}{2}\right)$ — smoother, better for smaller $T$.
+**Cosine** (Nichol &amp; Dhariwal 2021) · $\bar{\alpha}_t = f(t)/f(0)$ with $f(t)=\cos^2\!\left(\frac{t/T + s}{1 + s} \cdot \frac{\pi}{2}\right)$ (the $/f(0)$ normalizes $\bar\alpha_0 = 1$) — smoother, better for smaller $T$.
 
 <div class="insight">
 
@@ -714,7 +714,7 @@ $\nabla_{x_t}\log q = -\dfrac{1}{1 - \bar\alpha_t}(x_t - \sqrt{\bar\alpha_t}\,x_
 But the forward equation rearranges to $\epsilon = (x_t - \sqrt{\bar\alpha_t}\,x_0)/\sqrt{1 - \bar\alpha_t}$. Substitute:
 $$\nabla_{x_t}\log q(x_t \mid x_0) = -\frac{\epsilon}{\sqrt{1 - \bar\alpha_t}}$$
 
-The true score is just… the noise, negated and rescaled.
+So the **conditional** score is just the noise, negated and rescaled. (The score the sampler actually needs is the *marginal* $\nabla_{x_t}\log q_t(x_t)$; minimizing this MSE makes the network predict $\mathbb{E}[\epsilon \mid x_t]$ — which *is* that marginal score.)
 
 ---
 
@@ -795,7 +795,7 @@ Diffusion's big cost · slow sampling. This is what L22 will focus on — classi
 # Why diffusion beat GANs on image quality
 
 1. **Training signal is always strong** · MSE on noise has a meaningful gradient at every step and every $x_t$. GAN's adversarial loss often gives near-zero gradient early.
-2. **No mode collapse** · every training example teaches the model to denoise independently. The model can't "cheat" by producing one output.
+2. **Much lower mode-collapse risk** · every training example teaches the model to denoise independently (not a guarantee — guidance or limited capacity can still drop modes). The model can't easily "cheat" by producing one output.
 3. **Iterative refinement** · generation is 50-1000 tiny corrections. Errors at each step are small; the chain self-corrects. GANs must produce the final output in one forward pass.
 4. **Infinite data augmentation** · every (x₀, t, ε) triple is a new training example. A dataset of 10k images gives you a virtually infinite training stream.
 
