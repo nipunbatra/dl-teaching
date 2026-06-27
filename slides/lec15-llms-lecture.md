@@ -389,7 +389,7 @@ Two rotations, one dot product — and only the **offset** survives. That's the 
 
 <div class="math-box">
 
-1. **Relative positions encoded naturally** · inner product after rotation depends only on $m - n$ (query-minus-key position), not absolute positions.
+1. **Relative positions encoded naturally** · inner product after rotation depends only on the offset $n - m$ (key position minus query position), not absolute positions.
 
 2. **Extrapolates beyond training length** · rotation frequencies are fixed; a model trained at 4k context can extend to 32k without re-training (with minor fixes).
 

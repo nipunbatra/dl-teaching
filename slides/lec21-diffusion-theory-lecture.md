@@ -272,7 +272,7 @@ After 5 steps the signal is barely disturbed. After 1000 steps with growing β, 
 
 # The closed form · compounding fades
 
-After 1 step, signal is faded by $\sqrt{\alpha_1}$. After 2 steps · $\sqrt{\alpha_2 \alpha_1}$. After $t$ steps · $\sqrt{\bar\alpha_t} = \sqrt{\prod_{s=1}^t \alpha_s}$.
+Write $\alpha_t \equiv 1 - \beta_t$ (the per-step *signal retention*), so one step is $x_t = \sqrt{\alpha_t}\,x_{t-1} + \sqrt{1-\alpha_t}\,\epsilon$. After 1 step, signal is faded by $\sqrt{\alpha_1}$. After 2 steps · $\sqrt{\alpha_2 \alpha_1}$. After $t$ steps · $\sqrt{\bar\alpha_t} = \sqrt{\prod_{s=1}^t \alpha_s}$.
 
 All the per-step noise additions also "pool together" into one big Gaussian:
 $$\boxed{x_t = \sqrt{\bar\alpha_t}\,x_0 + \sqrt{1 - \bar\alpha_t}\,\epsilon,\quad \epsilon \sim \mathcal{N}(0, I)}$$

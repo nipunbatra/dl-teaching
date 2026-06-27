@@ -65,7 +65,7 @@
   <g transform="translate(40, 340)">
     <rect x="0" y="0" width="880" height="50" fill="#EEEBDF" stroke="#C9C4B5"/>
     <text x="440" y="22" text-anchor="middle" class="mono" font-size="14">
-      ⟨R_m q, R_n k⟩ = f(q, k, <tspan fill="#B85A3E" font-weight="600">m − n</tspan>) · only the <tspan fill="#B85A3E" font-weight="600">relative position</tspan> affects attention
+      ⟨R_m q, R_n k⟩ = f(q, k, <tspan fill="#B85A3E" font-weight="600">n − m</tspan>) · only the <tspan fill="#B85A3E" font-weight="600">relative position</tspan> affects attention
     </text>
     <text x="440" y="42" text-anchor="middle" class="mut" font-style="italic">
       Different dimensions rotate at different frequencies · multi-scale position encoding baked directly into Q, K.
