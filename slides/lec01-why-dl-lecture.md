@@ -26,18 +26,18 @@ This lecture mirrors UDL **Ch 1** (introduction) and **Ch 3** (shallow networks)
 
 ---
 
-# Bridge from ES 335 · you already know this
+# Bridge from ES 335 · you already know most of this
 
 | From ES 335 | What changes today |
 |---|---|
-| Logistic regression on hand-picked features (apples vs oranges) | same classifier — but the **features are learned** |
-| You engineered features; the model only drew the boundary | layers learn the representation end-to-end |
-| MLE → cross-entropy for logistic regression | identical loss · only $p_\theta(y \mid \mathbf{x})$ gets deeper |
-| Gradient descent derived from Taylor series | the same update — pushed through a stack of layers by backprop |
+| Logistic regression on **oranges vs tomatoes** (by radius) | same classifier head — but the **features are learned**, not picked |
+| Basis expansion: *you* wrote $\phi(x)=[1,x,x^2]$ to bend the boundary | a hidden layer **learns** $\phi$ for you |
+| Cross-entropy $J(\theta)=-\sum_i[y_i\log\hat y_i+(1-y_i)\log(1-\hat y_i)]$ | **identical** loss · only $p_\theta(y \mid \mathbf{x})$ gets deeper |
+| Gradient descent on $J(\theta)$ | the same update — pushed through a stack of layers by **backprop** |
 
 <div class="keypoint">
 
-In ES 335 you built classifiers on engineered features. Today's question · what if the features themselves are learned?
+In ES 335 you built classifiers on features *you* engineered. Today's question · what if the features themselves are **learned**?
 
 </div>
 
@@ -58,6 +58,22 @@ What is deep learning, and why now?
 You built logistic regression, SVMs, and decision trees in ES 335. On the right data they work beautifully — but a straight boundary fails the moment the classes curve.
 
 ![w:880px](figures/lec01/svg/linear_vs_nonlinear_data.svg)
+
+---
+
+# How ES 335 bent the boundary · basis expansion
+
+The curved data above broke a straight boundary. In ES 335 your fix was **basis expansion** — hand-design richer features:
+
+$$\phi(x) = [\,1,\; x,\; x^2,\; x_1x_2,\; \dots\,] \qquad \hat y = \sigma\big(\theta^\top \phi(x)\big)$$
+
+It works — *if you can guess the right $\phi$.* For radius-vs-colour, easy. For a **150,000-pixel** photo, hopeless.
+
+<div class="insight">
+
+A neural network's hidden layer **is** $\phi$ — but **learned** from data, not guessed by you. That single move is "Why Deep Learning."
+
+</div>
 
 ---
 
