@@ -755,7 +755,7 @@ Loss in hand. Now · who's to blame, and by how much?
 - $\delta_1 = \partial L/\partial h \cdot \sigma'(z_1) = -0.2510 \cdot 0.5498 \cdot 0.4502 \approx -0.0621$
 - $\partial L/\partial w_1 = \delta_1 \cdot x = -0.0621 \cdot 0.5 \approx -0.0311$
 
-**Update** · $w_1 \to 0.4156,\ w_2 \to 0.7150$.
+**Update** · $w_1 \to 0.4155,\ w_2 \to 0.7150$.
 
 **Forward at step 1** · $\hat y \approx 0.5974$, $L \approx 0.5152$ — **loss dropped** ✓
 

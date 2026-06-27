@@ -96,7 +96,7 @@ You have ~$15\,000$ parameters to spend on a regression task with 1-D input.
 
 Which one would you bet on for fitting a *complex* function like $\sin(50 x)$ on $[0, 1]$?
 
-Stop and decide. We'll come back to this exact question when we hit Telgarsky's separation — your gut answer should change once you've seen the proof.
+Stop and decide. We'll come back to this exact question when we hit Telgarsky's separation — your gut answer should change once you've seen the result.
 
 </div>
 
