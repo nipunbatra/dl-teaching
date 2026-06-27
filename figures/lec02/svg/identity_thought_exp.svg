@@ -1,20 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .box    { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.3; rx:4; ry:4; }
-      .box-a  { fill:#EAD3C5; stroke:#D97757; stroke-width:1.3; rx:4; ry:4; }
-      .box-s  { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.3; rx:4; ry:4; }
-      .box-i  { fill:#F6F0DF; stroke:#C9A961; stroke-width:1.2; rx:4; ry:4; stroke-dasharray:4 2; }
-      .ink    { stroke:#1F1F1E; fill:none; stroke-width:1.3; }
-      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .lbl    { fill:#1F1F1E; font-size:13px; font-weight:600; }
-      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
-      .score  { fill:#A8324B; font-size:14px; font-family:Fraunces; font-weight:600; }
-      .scoreok{ fill:#7B9E89; font-size:14px; font-family:Fraunces; font-weight:600; }
+      .box    { fill:#F7F3E9; stroke:#161513; stroke-width:1.3; rx:4; ry:4; }
+      .box-a  { fill:#EAD3C5; stroke:#B85A3E; stroke-width:1.3; rx:4; ry:4; }
+      .box-s  { fill:#D8E3DE; stroke:#5F8573; stroke-width:1.3; rx:4; ry:4; }
+      .box-i  { fill:#F6F0DF; stroke:#C9A14A; stroke-width:1.2; rx:4; ry:4; stroke-dasharray:4 2; }
+      .ink    { stroke:#161513; fill:none; stroke-width:1.3; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .lbl    { fill:#161513; font-size:13px; font-weight:600; }
+      .mut    { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .score  { fill:#A8324B; font-size:14px; font-family:EB Garamond; font-weight:600; }
+      .scoreok{ fill:#5F8573; font-size:14px; font-family:EB Garamond; font-weight:600; }
     </style>
-    <marker id="ite-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/></marker>
+    <marker id="ite-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#161513"/></marker>
   </defs>
 
   <text x="480" y="28" text-anchor="middle" class="ttl">Thought experiment · why the degradation problem should be impossible</text>
@@ -36,7 +36,7 @@
     <rect class="box-s" x="210" y="5" width="40" height="40"/>
     <text x="230" y="30" text-anchor="middle" class="mono">L₄</text>
 
-    <text x="275" y="30" class="mono" fill="#6B6A65">…</text>
+    <text x="275" y="30" class="mono" fill="#5F5C54">…</text>
 
     <rect class="box-s" x="310" y="5" width="40" height="40"/>
     <text x="330" y="30" text-anchor="middle" class="mono">L₁₈</text>
@@ -57,14 +57,14 @@
 
     <!-- Score -->
     <g transform="translate(560, 15)">
-      <rect x="0" y="0" width="210" height="30" fill="#F0EEE5" stroke="#7B9E89"/>
+      <rect x="0" y="0" width="210" height="30" fill="#F7F3E9" stroke="#5F8573"/>
       <text x="105" y="20" text-anchor="middle" class="scoreok">achieves 5% test error</text>
     </g>
   </g>
 
   <!-- MIDDLE: 56-layer built from 20 + 36 IDENTITY -->
   <g transform="translate(60, 160)">
-    <text x="0" y="-8" class="tag" fill="#C9A961">CASE B · SAME 20 LAYERS + 36 IDENTITY LAYERS</text>
+    <text x="0" y="-8" class="tag" fill="#C9A14A">CASE B · SAME 20 LAYERS + 36 IDENTITY LAYERS</text>
 
     <rect class="box" x="0" y="10" width="40" height="30"/>
     <text x="20" y="30" text-anchor="middle" class="mono">x</text>
@@ -76,8 +76,8 @@
 
     <!-- 36 identity layers -->
     <rect class="box-i" x="280" y="5" width="280" height="40"/>
-    <text x="420" y="22" text-anchor="middle" class="mono" fill="#C9A961">36 identity layers</text>
-    <text x="420" y="38" text-anchor="middle" class="mut" fill="#C9A961">h_{l+1} = h_l  (just pass through)</text>
+    <text x="420" y="22" text-anchor="middle" class="mono" fill="#C9A14A">36 identity layers</text>
+    <text x="420" y="38" text-anchor="middle" class="mut" fill="#C9A14A">h_{l+1} = h_l  (just pass through)</text>
 
     <rect class="box" x="590" y="10" width="40" height="30"/>
     <text x="610" y="30" text-anchor="middle" class="mono">ŷ</text>
@@ -89,7 +89,7 @@
     </g>
 
     <g transform="translate(680, 15)">
-      <rect x="0" y="0" width="210" height="30" fill="#F0EEE5" stroke="#7B9E89"/>
+      <rect x="0" y="0" width="210" height="30" fill="#F7F3E9" stroke="#5F8573"/>
       <text x="105" y="20" text-anchor="middle" class="scoreok">must also achieve 5%</text>
     </g>
 
@@ -107,8 +107,8 @@
     <text x="20" y="30" text-anchor="middle" class="mono">x</text>
 
     <rect class="box-a" x="60" y="5" width="520" height="40"/>
-    <text x="320" y="22" text-anchor="middle" class="mono" fill="#D97757">56 real layers, random init, trained end-to-end</text>
-    <text x="320" y="38" text-anchor="middle" class="mut" fill="#D97757">SGD does not find the "identity solution"; it finds something worse</text>
+    <text x="320" y="22" text-anchor="middle" class="mono" fill="#B85A3E">56 real layers, random init, trained end-to-end</text>
+    <text x="320" y="38" text-anchor="middle" class="mut" fill="#B85A3E">SGD does not find the "identity solution"; it finds something worse</text>
 
     <rect class="box" x="610" y="10" width="40" height="30"/>
     <text x="630" y="30" text-anchor="middle" class="mono">ŷ</text>

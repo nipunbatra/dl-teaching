@@ -1,16 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .axis  { stroke:#1F1F1E; stroke-width:1; }
-      .bar-p { fill:#D97757; }
-      .bar-t { fill:#7B9E89; }
+      .axis  { stroke:#161513; stroke-width:1; }
+      .bar-p { fill:#B85A3E; }
+      .bar-t { fill:#5F8573; }
       .bar-g-pos { fill:#A8324B; }
-      .bar-g-neg { fill:#4A6670; }
-      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
-      .big   { fill:#1F1F1E; font-size:30px; font-family:Fraunces; font-weight:600; }
+      .bar-g-neg { fill:#37535F; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut   { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .big   { fill:#161513; font-size:30px; font-family:EB Garamond; font-weight:600; }
     </style>
   </defs>
 
@@ -18,8 +18,8 @@
 
   <!-- ŷ (prediction) -->
   <g transform="translate(40, 80)">
-    <text x="130" y="-6" text-anchor="middle" class="tag" fill="#D97757">PREDICTION  ŷ</text>
-    <rect x="0" y="0" width="260" height="200" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <text x="130" y="-6" text-anchor="middle" class="tag" fill="#B85A3E">PREDICTION  ŷ</text>
+    <rect x="0" y="0" width="260" height="200" fill="#F7F3E9" stroke="#C9C4B5"/>
     <line x1="0" y1="190" x2="260" y2="190" class="axis"/>
 
     <!-- 4 classes: cat 0.78, dog 0.17, car 0.04, bird 0.01 -->
@@ -45,8 +45,8 @@
 
   <!-- y (one-hot target, correct class = cat) -->
   <g transform="translate(350, 80)">
-    <text x="130" y="-6" text-anchor="middle" class="tag" fill="#7B9E89">TARGET  y  (one-hot)</text>
-    <rect x="0" y="0" width="260" height="200" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <text x="130" y="-6" text-anchor="middle" class="tag" fill="#5F8573">TARGET  y  (one-hot)</text>
+    <rect x="0" y="0" width="260" height="200" fill="#F7F3E9" stroke="#C9C4B5"/>
     <line x1="0" y1="190" x2="260" y2="190" class="axis"/>
 
     <rect class="bar-t" x="20"  y="10" width="40" height="180"/>
@@ -72,13 +72,13 @@
   <!-- gradient ŷ - y -->
   <g transform="translate(660, 80)">
     <text x="130" y="-6" text-anchor="middle" class="tag" fill="#A8324B">GRADIENT  ∂L/∂z = ŷ − y</text>
-    <rect x="0" y="0" width="260" height="200" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <rect x="0" y="0" width="260" height="200" fill="#F7F3E9" stroke="#C9C4B5"/>
     <line x1="0" y1="110" x2="260" y2="110" class="axis"/>
-    <text x="5" y="107" class="mono" fill="#6B6A65" font-size="10">0</text>
+    <text x="5" y="107" class="mono" fill="#5F5C54" font-size="10">0</text>
 
     <!-- cat: 0.78 - 1 = -0.22  → bar goes DOWN (push up) -->
     <rect class="bar-g-neg" x="20" y="110" width="40" height="40"/>
-    <text x="40"  y="165" text-anchor="middle" class="mono" fill="#4A6670">−0.22</text>
+    <text x="40"  y="165" text-anchor="middle" class="mono" fill="#37535F">−0.22</text>
     <text x="40"  y="195" text-anchor="middle" class="mut">cat</text>
 
     <!-- dog: 0.17 → bar goes UP (push down) -->
@@ -101,7 +101,7 @@
   <g transform="translate(40, 310)">
     <rect x="0" y="0" width="880" height="50" fill="#EEEBDF" stroke="#C9C4B5"/>
     <text x="440" y="22" text-anchor="middle" class="mono" font-size="13">
-      <tspan fill="#4A6670">negative gradient at correct class →  push logit UP</tspan>
+      <tspan fill="#37535F">negative gradient at correct class →  push logit UP</tspan>
       &nbsp;&nbsp;·&nbsp;&nbsp;
       <tspan fill="#A8324B">positive gradient at wrong classes → push logits DOWN</tspan>
     </text>

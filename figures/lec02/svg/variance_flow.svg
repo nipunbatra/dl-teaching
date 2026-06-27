@@ -5,7 +5,7 @@
     .head { font-size: 13px; font-weight: 600; fill: #161513; }
     .body { font-size: 12px; fill: #161513; }
     .caption { font-size: 11px; fill: #5F5C54; font-style: italic; }
-    .layer { fill: white; stroke: #4A6670; stroke-width: 1.4; rx: 6; }
+    .layer { fill: white; stroke: #37535F; stroke-width: 1.4; rx: 6; }
     .axis { stroke: #161513; stroke-width: 1; fill: none; }
     .vanish { stroke: #8E2A3B; stroke-width: 2.4; fill: none; }
     .stable { stroke: #5F8573; stroke-width: 2.4; fill: none; }

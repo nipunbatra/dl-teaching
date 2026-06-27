@@ -1,24 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .ink   { stroke:#1F1F1E; fill:none; stroke-width:1.3; }
-      .mut   { stroke:#6B6A65; fill:none; stroke-width:1.1; }
-      .acc   { stroke:#D97757; fill:none; stroke-width:1.8; }
-      .box   { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.3; rx:6; ry:6; }
-      .box-a { fill:#EAD3C5; stroke:#D97757; stroke-width:1.3; rx:6; ry:6; }
-      .leaf  { fill:#EAE7DC; stroke:#6B6A65; stroke-width:1; rx:18; ry:18; }
+      .ink   { stroke:#161513; fill:none; stroke-width:1.3; }
+      .mut   { stroke:#5F5C54; fill:none; stroke-width:1.1; }
+      .acc   { stroke:#B85A3E; fill:none; stroke-width:1.8; }
+      .box   { fill:#F7F3E9; stroke:#161513; stroke-width:1.3; rx:6; ry:6; }
+      .box-a { fill:#EAD3C5; stroke:#B85A3E; stroke-width:1.3; rx:6; ry:6; }
+      .leaf  { fill:#EAE7DC; stroke:#5F5C54; stroke-width:1; rx:18; ry:18; }
       .loss  { fill:#A8324B; }
-      .lbl   { fill:#1F1F1E; font-size:13px; }
-      .mono  { font-family:'JetBrains Mono', ui-monospace, monospace; fill:#1F1F1E; font-size:12px; }
-      .op    { font-family:'JetBrains Mono', ui-monospace, monospace; fill:#4A6670; font-size:11px; }
-      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
-      .grad  { fill:#D97757; font-size:11px; font-style:italic; font-family:'JetBrains Mono', monospace; }
+      .lbl   { fill:#161513; font-size:13px; }
+      .mono  { font-family:'JetBrains Mono', ui-monospace, monospace; fill:#161513; font-size:12px; }
+      .op    { font-family:'JetBrains Mono', ui-monospace, monospace; fill:#37535F; font-size:11px; }
+      .tag   { fill:#5F5C54; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .grad  { fill:#B85A3E; font-size:11px; font-style:italic; font-family:'JetBrains Mono', monospace; }
     </style>
     <marker id="arr-i" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-      <path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/>
+      <path d="M0,0 L10,5 L0,10 z" fill="#161513"/>
     </marker>
     <marker id="arr-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-      <path d="M0,0 L10,5 L0,10 z" fill="#D97757"/>
+      <path d="M0,0 L10,5 L0,10 z" fill="#B85A3E"/>
     </marker>
   </defs>
 
@@ -52,7 +52,7 @@
   <!-- h = σ(z') -->
   <rect class="box-a" x="460" y="125" width="90" height="50"/>
   <text x="505" y="147" class="mono" text-anchor="middle">σ(·)</text>
-  <text x="505" y="163" class="op"  text-anchor="middle" fill="#D97757">ReLU</text>
+  <text x="505" y="163" class="op"  text-anchor="middle" fill="#B85A3E">ReLU</text>
 
   <!-- ŷ = ... (output / logits) -->
   <rect class="box" x="610" y="125" width="90" height="50"/>
@@ -61,8 +61,8 @@
 
   <!-- loss -->
   <circle cx="800" cy="150" r="28" fill="#A8324B"/>
-  <text x="800" y="146" text-anchor="middle" fill="#F0EEE5" font-size="13" font-family="Fraunces, Georgia, serif" font-style="italic">ℒ</text>
-  <text x="800" y="162" text-anchor="middle" fill="#F0EEE5" font-size="10" font-family="Inter, sans-serif">CE</text>
+  <text x="800" y="146" text-anchor="middle" fill="#F7F3E9" font-size="13" font-family="EB Garamond, Georgia, serif" font-style="italic">ℒ</text>
+  <text x="800" y="162" text-anchor="middle" fill="#F7F3E9" font-size="10" font-family="Inter, sans-serif">CE</text>
 
   <!-- forward edges -->
   <g class="ink" marker-end="url(#arr-i)">
@@ -90,10 +90,10 @@
   <text x="500" y="215" class="grad">∂ℒ/∂h</text>
   <text x="355" y="220" class="grad">∂ℒ/∂z = δ</text>
   <text x="155" y="175" class="grad">∂ℒ/∂W = δx⊤</text>
-  <text x="110" y="280" class="grad" fill="#6B6A65">(propagate)</text>
+  <text x="110" y="280" class="grad" fill="#5F5C54">(propagate)</text>
 
   <!-- baseline caption -->
-  <text x="480" y="360" class="tag" text-anchor="middle" fill="#6B6A65">
+  <text x="480" y="360" class="tag" text-anchor="middle" fill="#5F5C54">
     Every node = differentiable op. Chain rule runs the dashed path right→left.
   </text>
 </svg>

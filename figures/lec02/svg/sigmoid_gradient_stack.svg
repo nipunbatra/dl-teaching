@@ -1,15 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .axis  { stroke:#1F1F1E; stroke-width:1; fill:none; }
-      .sig   { stroke:#4A6670; stroke-width:2; fill:none; }
-      .sigd  { stroke:#D97757; stroke-width:2; fill:none; }
+      .axis  { stroke:#161513; stroke-width:1; fill:none; }
+      .sig   { stroke:#37535F; stroke-width:2; fill:none; }
+      .sigd  { stroke:#B85A3E; stroke-width:2; fill:none; }
       .bar   { fill:#A8324B; }
-      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
-      .big   { fill:#A8324B; font-size:28px; font-family:Fraunces; font-weight:600; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut   { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .big   { fill:#A8324B; font-size:28px; font-family:EB Garamond; font-weight:600; }
     </style>
   </defs>
 
@@ -18,7 +18,7 @@
   <!-- LEFT: sigmoid and its derivative -->
   <g transform="translate(40, 70)">
     <text x="150" y="-8" text-anchor="middle" class="tag">SIGMOID &amp; ITS DERIVATIVE</text>
-    <rect x="0" y="0" width="300" height="200" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <rect x="0" y="0" width="300" height="200" fill="#F7F3E9" stroke="#C9C4B5"/>
     <!-- axes -->
     <line x1="0" y1="100" x2="300" y2="100" class="axis"/>
     <line x1="150" y1="0" x2="150" y2="200" class="axis"/>
@@ -27,15 +27,15 @@
 
     <!-- sigmoid S-curve -->
     <path class="sig" d="M 0 190 C 100 188 135 110 150 100 C 165 90 200 12 300 10"/>
-    <text x="40" y="40" class="mono" fill="#4A6670">σ(z)</text>
+    <text x="40" y="40" class="mono" fill="#37535F">σ(z)</text>
 
     <!-- derivative bell -->
     <path class="sigd" d="M 0 190 C 60 188 120 105 150 105 C 180 105 240 188 300 190"/>
     <!-- peak at z=0: σ'(0) = 0.25, so 25% of the way up -->
-    <circle cx="150" cy="155" r="4" fill="#D97757"/>
-    <line x1="150" y1="155" x2="25" y2="155" stroke="#D97757" stroke-dasharray="3 2" stroke-width="0.8"/>
-    <text x="18" y="158" text-anchor="end" class="mono" fill="#D97757">0.25</text>
-    <text x="45" y="180" class="mono" fill="#D97757">σ'(z)</text>
+    <circle cx="150" cy="155" r="4" fill="#B85A3E"/>
+    <line x1="150" y1="155" x2="25" y2="155" stroke="#B85A3E" stroke-dasharray="3 2" stroke-width="0.8"/>
+    <text x="18" y="158" text-anchor="end" class="mono" fill="#B85A3E">0.25</text>
+    <text x="45" y="180" class="mono" fill="#B85A3E">σ'(z)</text>
 
     <text x="150" y="222" text-anchor="middle" class="mut">z</text>
   </g>
@@ -49,13 +49,13 @@
     <text x="140" y="52" text-anchor="middle" class="mut">each factor ≤ 0.25</text>
 
     <g transform="translate(20, 75)">
-      <text x="0" y="0" class="mono" fill="#1F1F1E">0.25</text>
-      <text x="42" y="0" class="mono" fill="#6B6A65">×</text>
-      <text x="56" y="0" class="mono" fill="#1F1F1E">0.25</text>
-      <text x="98" y="0" class="mono" fill="#6B6A65">×</text>
-      <text x="112" y="0" class="mono" fill="#1F1F1E">0.25</text>
-      <text x="154" y="0" class="mono" fill="#6B6A65">× ...</text>
-      <text x="198" y="0" class="mono" fill="#1F1F1E">×</text>
+      <text x="0" y="0" class="mono" fill="#161513">0.25</text>
+      <text x="42" y="0" class="mono" fill="#5F5C54">×</text>
+      <text x="56" y="0" class="mono" fill="#161513">0.25</text>
+      <text x="98" y="0" class="mono" fill="#5F5C54">×</text>
+      <text x="112" y="0" class="mono" fill="#161513">0.25</text>
+      <text x="154" y="0" class="mono" fill="#5F5C54">× ...</text>
+      <text x="198" y="0" class="mono" fill="#161513">×</text>
       <text x="212" y="0" class="mono" fill="#A8324B" font-weight="600">0.25</text>
     </g>
 
@@ -67,7 +67,7 @@
   <!-- RIGHT: bar chart of gradient at each depth -->
   <g transform="translate(700, 70)">
     <text x="105" y="-8" text-anchor="middle" class="tag">GRADIENT MAGNITUDE</text>
-    <rect x="0" y="0" width="220" height="200" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <rect x="0" y="0" width="220" height="200" fill="#F7F3E9" stroke="#C9C4B5"/>
     <line x1="0" y1="195" x2="220" y2="195" class="axis"/>
 
     <!-- L=1 full height, L=5 tiny, etc. log scale conceptual -->

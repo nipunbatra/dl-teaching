@@ -1,21 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .box   { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.4; rx:6; ry:6; }
-      .box-a { fill:#EAD3C5; stroke:#D97757; stroke-width:1.4; rx:6; ry:6; }
-      .box-s { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.4; rx:6; ry:6; }
-      .box-b { fill:#DCE3E6; stroke:#4A6670; stroke-width:1.4; rx:6; ry:6; }
+      .box   { fill:#F7F3E9; stroke:#161513; stroke-width:1.4; rx:6; ry:6; }
+      .box-a { fill:#EAD3C5; stroke:#B85A3E; stroke-width:1.4; rx:6; ry:6; }
+      .box-s { fill:#D8E3DE; stroke:#5F8573; stroke-width:1.4; rx:6; ry:6; }
+      .box-b { fill:#DCE3E6; stroke:#37535F; stroke-width:1.4; rx:6; ry:6; }
       .box-r { fill:#F6D4CC; stroke:#A8324B; stroke-width:1.4; rx:6; ry:6; }
-      .ink   { stroke:#1F1F1E; fill:none; stroke-width:1.5; }
-      .loop  { stroke:#D97757; fill:none; stroke-width:2; stroke-dasharray:5 3; }
-      .mono  { font-family:'JetBrains Mono', monospace; fill:#1F1F1E; font-size:13px; font-weight:600; }
-      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl   { fill:#1F1F1E; font-size:16px; font-weight:600; font-style:italic; }
-      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
-      .num   { fill:#D97757; font-size:20px; font-family:Fraunces; font-weight:600; font-style:italic; }
+      .ink   { stroke:#161513; fill:none; stroke-width:1.5; }
+      .loop  { stroke:#B85A3E; fill:none; stroke-width:2; stroke-dasharray:5 3; }
+      .mono  { font-family:'JetBrains Mono', monospace; fill:#161513; font-size:13px; font-weight:600; }
+      .mut   { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#161513; font-size:16px; font-weight:600; font-style:italic; }
+      .tag   { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .num   { fill:#B85A3E; font-size:20px; font-family:EB Garamond; font-weight:600; font-style:italic; }
     </style>
     <marker id="tc-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
-      <path d="M0,0 L10,5 L0,10 z" fill="#D97757"/>
+      <path d="M0,0 L10,5 L0,10 z" fill="#B85A3E"/>
     </marker>
   </defs>
 
@@ -23,8 +23,8 @@
 
   <!-- Center label -->
   <g transform="translate(480, 240)">
-    <circle cx="0" cy="0" r="52" fill="#F0EEE5" stroke="#D97757" stroke-width="1.5" stroke-dasharray="3 3"/>
-    <text x="0" y="-4" text-anchor="middle" class="tag" fill="#D97757">FOR EACH BATCH</text>
+    <circle cx="0" cy="0" r="52" fill="#F7F3E9" stroke="#B85A3E" stroke-width="1.5" stroke-dasharray="3 3"/>
+    <text x="0" y="-4" text-anchor="middle" class="tag" fill="#B85A3E">FOR EACH BATCH</text>
     <text x="0" y="18" text-anchor="middle" class="mut" font-style="italic">for each epoch</text>
   </g>
 

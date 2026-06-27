@@ -1,21 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 340" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 340" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .box   { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.3; rx:4; ry:4; }
-      .box-a { fill:#EAD3C5; stroke:#D97757; stroke-width:1.3; rx:4; ry:4; }
-      .box-s { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.3; rx:4; ry:4; }
-      .ink   { stroke:#1F1F1E; fill:none; stroke-width:1.3; }
-      .acc   { stroke:#D97757; fill:none; stroke-width:1.6; }
-      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
-      .mono  { font-family:'JetBrains Mono', monospace; font-size:12px; fill:#1F1F1E; }
-      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
+      .box   { fill:#F7F3E9; stroke:#161513; stroke-width:1.3; rx:4; ry:4; }
+      .box-a { fill:#EAD3C5; stroke:#B85A3E; stroke-width:1.3; rx:4; ry:4; }
+      .box-s { fill:#D8E3DE; stroke:#5F8573; stroke-width:1.3; rx:4; ry:4; }
+      .ink   { stroke:#161513; fill:none; stroke-width:1.3; }
+      .acc   { stroke:#B85A3E; fill:none; stroke-width:1.6; }
+      .ttl   { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:12px; fill:#161513; }
+      .mut   { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
     </style>
     <marker id="arr-l" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-      <path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/>
+      <path d="M0,0 L10,5 L0,10 z" fill="#161513"/>
     </marker>
     <marker id="arr-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-      <path d="M0,0 L10,5 L0,10 z" fill="#D97757"/>
+      <path d="M0,0 L10,5 L0,10 z" fill="#B85A3E"/>
     </marker>
   </defs>
 
@@ -54,24 +54,24 @@
 
   <!-- loop back arrow -->
   <path class="acc" stroke-dasharray="5 3" d="M 870 140 Q 870 200 450 200 Q 40 200 40 140" marker-end="url(#arr-acc)"/>
-  <text x="455" y="195" text-anchor="middle" class="tag" fill="#D97757">repeat for each minibatch · for each epoch</text>
+  <text x="455" y="195" text-anchor="middle" class="tag" fill="#B85A3E">repeat for each minibatch · for each epoch</text>
 
   <!-- common gotchas -->
   <g transform="translate(60, 235)">
     <text x="0" y="0" class="tag">COMMON GOTCHAS</text>
 
-    <rect x="0" y="12" width="270" height="78" fill="#F6F0DF" stroke="#C9A961" stroke-width="1"/>
-    <text x="14" y="32" class="mut" font-weight="600" fill="#1F1F1E">Forgot zero_grad()?</text>
+    <rect x="0" y="12" width="270" height="78" fill="#F6F0DF" stroke="#C9A14A" stroke-width="1"/>
+    <text x="14" y="32" class="mut" font-weight="600" fill="#161513">Forgot zero_grad()?</text>
     <text x="14" y="52" class="mut">PyTorch <tspan font-style="italic">accumulates</tspan> gradients.</text>
     <text x="14" y="70" class="mut">Updates explode silently.</text>
 
-    <rect x="290" y="12" width="270" height="78" fill="#F6F0DF" stroke="#C9A961" stroke-width="1"/>
-    <text x="304" y="32" class="mut" font-weight="600" fill="#1F1F1E">Applied softmax AND CrossEntropyLoss?</text>
+    <rect x="290" y="12" width="270" height="78" fill="#F6F0DF" stroke="#C9A14A" stroke-width="1"/>
+    <text x="304" y="32" class="mut" font-weight="600" fill="#161513">Applied softmax AND CrossEntropyLoss?</text>
     <text x="304" y="52" class="mut">CE already takes raw logits.</text>
     <text x="304" y="70" class="mut">Double-softmax → frozen loss.</text>
 
-    <rect x="580" y="12" width="270" height="78" fill="#F6F0DF" stroke="#C9A961" stroke-width="1"/>
-    <text x="594" y="32" class="mut" font-weight="600" fill="#1F1F1E">model.eval() / torch.no_grad()?</text>
+    <rect x="580" y="12" width="270" height="78" fill="#F6F0DF" stroke="#C9A14A" stroke-width="1"/>
+    <text x="594" y="32" class="mut" font-weight="600" fill="#161513">model.eval() / torch.no_grad()?</text>
     <text x="594" y="52" class="mut">BatchNorm/Dropout misbehave.</text>
     <text x="594" y="70" class="mut">Graph is built needlessly.</text>
   </g>

@@ -1,17 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 430" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 430" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .box    { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.2; rx:4; ry:4; }
-      .box-a  { fill:#EAD3C5; stroke:#D97757; stroke-width:1.2; rx:4; ry:4; }
-      .box-s  { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.2; rx:4; ry:4; }
-      .node   { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.2; }
-      .ink    { stroke:#1F1F1E; fill:none; stroke-width:1; }
-      .ink-s  { stroke:#6B6A65; fill:none; stroke-width:0.7; opacity:0.5; }
-      .lbl    { fill:#1F1F1E; font-size:12px; }
-      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
-      .good   { fill:#7B9E89; font-weight:600; }
+      .box    { fill:#F7F3E9; stroke:#161513; stroke-width:1.2; rx:4; ry:4; }
+      .box-a  { fill:#EAD3C5; stroke:#B85A3E; stroke-width:1.2; rx:4; ry:4; }
+      .box-s  { fill:#D8E3DE; stroke:#5F8573; stroke-width:1.2; rx:4; ry:4; }
+      .node   { fill:#F7F3E9; stroke:#161513; stroke-width:1.2; }
+      .ink    { stroke:#161513; fill:none; stroke-width:1; }
+      .ink-s  { stroke:#5F5C54; fill:none; stroke-width:0.7; opacity:0.5; }
+      .lbl    { fill:#161513; font-size:12px; }
+      .mut    { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#5F5C54; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .good   { fill:#5F8573; font-weight:600; }
       .bad    { fill:#A8324B; font-weight:600; }
     </style>
   </defs>
@@ -20,7 +20,7 @@
 
   <!-- LEFT: deep network -->
   <g transform="translate(30, 70)">
-    <text x="220" y="-6" text-anchor="middle" class="tag" fill="#7B9E89">DEEP · compositional</text>
+    <text x="220" y="-6" text-anchor="middle" class="tag" fill="#5F8573">DEEP · compositional</text>
 
     <!-- edges (layer 1) -->
     <g>
@@ -74,7 +74,7 @@
       <line x1="170" y1="125" x2="320" y2="180"/>
     </g>
     <text x="220" y="255" text-anchor="middle" class="mut">
-      Add a <tspan font-weight="600" fill="#1F1F1E">new class</tspan> "fox"? Reuse existing edges/eyes/fur — one new top-level node.
+      Add a <tspan font-weight="600" fill="#161513">new class</tspan> "fox"? Reuse existing edges/eyes/fur — one new top-level node.
     </text>
     <text x="220" y="275" text-anchor="middle" class="good" font-size="13">Grows linearly in classes</text>
   </g>
@@ -126,7 +126,7 @@
     <rect class="box" x="160" y="195" width="120" height="34"/>
     <text x="220" y="217" text-anchor="middle" class="lbl" font-weight="600">label</text>
     <text x="220" y="255" text-anchor="middle" class="mut">
-      Add a new class "fox"? Needs its <tspan font-weight="600" fill="#1F1F1E">own</tspan> bank of pose detectors from scratch.
+      Add a new class "fox"? Needs its <tspan font-weight="600" fill="#161513">own</tspan> bank of pose detectors from scratch.
     </text>
     <text x="220" y="275" text-anchor="middle" class="bad" font-size="13">Grows exponentially (parity ⇒ 2ⁿ)</text>
   </g>

@@ -1,18 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .axis  { stroke:#1F1F1E; stroke-width:1; fill:none; }
+      .axis  { stroke:#161513; stroke-width:1; fill:none; }
       .grid  { stroke:#C9C4B5; stroke-width:0.4; }
-      .bar-n { fill:#4A6670; }
-      .bar-e { fill:#D97757; }
-      .bar-p { fill:#7B9E89; }
+      .bar-n { fill:#37535F; }
+      .bar-e { fill:#B85A3E; }
+      .bar-p { fill:#5F8573; }
       .bar-t { fill:#A8324B; }
-      .lbl   { fill:#1F1F1E; font-size:12px; }
-      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
-      .big   { fill:#D97757; font-size:22px; font-family:Fraunces; font-weight:600; }
+      .lbl   { fill:#161513; font-size:12px; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut   { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .big   { fill:#B85A3E; font-size:22px; font-family:EB Garamond; font-weight:600; }
     </style>
   </defs>
 
@@ -20,12 +20,12 @@
 
   <!-- Panel 1: raw logits (can be negative) -->
   <g transform="translate(40, 80)">
-    <text x="130" y="-8" text-anchor="middle" class="tag" fill="#4A6670">1 · RAW LOGITS z</text>
-    <rect x="0" y="0" width="260" height="200" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <text x="130" y="-8" text-anchor="middle" class="tag" fill="#37535F">1 · RAW LOGITS z</text>
+    <rect x="0" y="0" width="260" height="200" fill="#F7F3E9" stroke="#C9C4B5"/>
 
     <!-- zero line -->
-    <line x1="0" y1="110" x2="260" y2="110" stroke="#1F1F1E" stroke-width="0.8" stroke-dasharray="3 2"/>
-    <text x="5" y="107" class="mono" fill="#6B6A65" font-size="10">0</text>
+    <line x1="0" y1="110" x2="260" y2="110" stroke="#161513" stroke-width="0.8" stroke-dasharray="3 2"/>
+    <text x="5" y="107" class="mono" fill="#5F5C54" font-size="10">0</text>
 
     <!-- bars: cat +2.5, dog +1.0, car -0.5, bird -1.5 -->
     <g>
@@ -51,12 +51,12 @@
 
   <!-- arrow 1 -->
   <text x="325" y="190" text-anchor="middle" class="big">→</text>
-  <text x="325" y="215" text-anchor="middle" class="mono" fill="#D97757" font-size="10">exp(·)</text>
+  <text x="325" y="215" text-anchor="middle" class="mono" fill="#B85A3E" font-size="10">exp(·)</text>
 
   <!-- Panel 2: exponentials (all positive) -->
   <g transform="translate(350, 80)">
-    <text x="130" y="-8" text-anchor="middle" class="tag" fill="#D97757">2 · EXPONENTIALS e^z</text>
-    <rect x="0" y="0" width="260" height="200" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <text x="130" y="-8" text-anchor="middle" class="tag" fill="#B85A3E">2 · EXPONENTIALS e^z</text>
+    <rect x="0" y="0" width="260" height="200" fill="#F7F3E9" stroke="#C9C4B5"/>
 
     <line x1="0" y1="190" x2="260" y2="190" class="axis"/>
 
@@ -84,12 +84,12 @@
 
   <!-- arrow 2 -->
   <text x="635" y="190" text-anchor="middle" class="big">→</text>
-  <text x="635" y="215" text-anchor="middle" class="mono" fill="#7B9E89" font-size="10">÷ sum</text>
+  <text x="635" y="215" text-anchor="middle" class="mono" fill="#5F8573" font-size="10">÷ sum</text>
 
   <!-- Panel 3: probabilities -->
   <g transform="translate(660, 80)">
-    <text x="130" y="-8" text-anchor="middle" class="tag" fill="#7B9E89">3 · PROBABILITIES p</text>
-    <rect x="0" y="0" width="260" height="200" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <text x="130" y="-8" text-anchor="middle" class="tag" fill="#5F8573">3 · PROBABILITIES p</text>
+    <rect x="0" y="0" width="260" height="200" fill="#F7F3E9" stroke="#C9C4B5"/>
 
     <line x1="0" y1="190" x2="260" y2="190" class="axis"/>
 
@@ -117,7 +117,7 @@
   </g>
 
   <!-- Footer formula -->
-  <text x="480" y="330" text-anchor="middle" class="mono" font-size="14" fill="#1F1F1E">
+  <text x="480" y="330" text-anchor="middle" class="mono" font-size="14" fill="#161513">
     softmax(z)ₖ  =  e^{zₖ}  /  Σⱼ e^{zⱼ}
   </text>
   <text x="480" y="355" text-anchor="middle" class="mut" font-style="italic">
