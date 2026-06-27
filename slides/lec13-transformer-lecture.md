@@ -155,7 +155,7 @@ Stack 100 of these → shrinking factors compound → gradient dies.
 $$\frac{\partial x_\text{out}}{\partial x_\text{in}} = \mathbf{1} + \frac{\partial \text{Sub}(\text{LN}(x_\text{in}))}{\partial x_\text{in}}$$
 The $\mathbf{1}$ is a clean identity — gradient has a direct path back. **Stable at any depth.**
 
-Xiong et al. 2020 · pre-norm trains without warmup and scales to 100+ layers. Post-norm breaks past ~24. **Use pre-norm.**
+Xiong et al. 2020 · pre-norm trains without warmup and scales to 100+ layers. Post-norm gets unstable past ~24 layers without careful LR warmup. **Use pre-norm.**
 
 ---
 
@@ -393,7 +393,7 @@ $$PE_{(pos, 2i)} = \sin(\theta_i \cdot pos),\quad PE_{(pos, 2i+1)} = \cos(\theta
 
 ---
 
-# Why sinusoidal · derive the rotation property
+# ⭐⭐⭐ Optional · Why sinusoidal · derive the rotation property
 
 For one pair of dimensions $(2i, 2i+1)$, the encoding at position $pos$ is $[\sin(\theta\,pos), \cos(\theta\,pos)]$.
 
@@ -408,7 +408,7 @@ $$\begin{pmatrix} \sin\theta(pos+k) \\ \cos\theta(pos+k) \end{pmatrix} = \underb
 
 ---
 
-# Rotation property · worked numeric
+# ⭐⭐⭐ Optional · Rotation property · worked numeric
 
 $pos = 5$, $k = 2$, $\theta = 0.1$.
 - $PE_5 = [\sin 0.5, \cos 0.5] = [0.479, 0.878]$
@@ -569,25 +569,42 @@ GPT and Llama drop the encoder and cross-attention entirely — decoder-only. T5
 
 ---
 
-# Common variations you will meet
+# Variations you will meet · structure & norm
 
 <div class="math-box">
 
 | Variation | Change | Seen in |
 |:-:|:-:|:-:|
 | **Pre-norm** (vs post-norm) | normalize before sublayer | GPT-2+, Llama, Claude |
-| **SwiGLU FFN** (vs ReLU) | SiLU + gating | Llama 2+ |
-| **RoPE** (vs sinusoidal PE) | rotate Q, K per position | Llama, Mistral, PaLM |
-| **GQA** (vs MHA) | fewer KV heads than Q heads | Llama 2 70B+ |
 | **RMSNorm** (vs LayerNorm) | drop mean centering | Llama, Mistral |
 | **Parallel attention + FFN** | attn and FFN run in parallel, not sequentially | GPT-J, PaLM |
-| **FlashAttention** | tile the $n\times n$ computation, never materialize it | every 2024+ training stack |
 
 </div>
 
 <div class="insight">
 
 Each tweak is small (0.1-1% win). Stacked, they define the current default Transformer — quite different from Vaswani 2017 in details, identical in structure.
+
+</div>
+
+---
+
+# Variations · component upgrades
+
+<div class="math-box">
+
+| Variation | Change | Seen in |
+|:-:|:-:|:-:|
+| **SwiGLU FFN** (vs ReLU) | SiLU + gating | Llama 2+ |
+| **RoPE** (vs sinusoidal PE) | rotate Q, K per position | Llama, Mistral, PaLM |
+| **GQA** (vs MHA) | fewer KV heads than Q heads | Llama 2 70B+ |
+| **FlashAttention** | tile the $n\times n$ computation, never materialize it | every 2024+ training stack |
+
+</div>
+
+<div class="realworld">
+
+RoPE, GQA, and FlashAttention all return in **L15** — they are what let modern LLMs scale to million-token contexts.
 
 </div>
 
@@ -625,7 +642,7 @@ Karpathy's "most common deep-learning bug" list puts attention-mask bugs at the 
 
 <div class="math-box">
 
-**A Transformer block = self-attention + FFN, each wrapped in residual + LayerNorm.** Stack 12 of those, add positional encodings + token embeddings, ship a final linear-to-vocab head. That's GPT. **The architecture has not changed since 2017** — only its scale has.
+**A Transformer block = self-attention + FFN, each wrapped in residual + LayerNorm.** Stack 12 of those, add positional encodings + token embeddings, ship a final linear-to-vocab head. That's GPT. **The block *structure* has been stable since 2017** — the details (norm, PE, FFN) evolved, but mostly its scale changed.
 
 </div>
 

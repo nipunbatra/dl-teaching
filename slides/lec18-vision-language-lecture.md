@@ -113,7 +113,7 @@ The 2020 bet · *what if we hand a generic Transformer the whole image at once a
 
 </div>
 
-The wager · with enough data, a model that has **fewer prior assumptions** but **more capacity** will outlearn a hand-engineered architecture. By 2021 (ViT-Huge on 300M images) the bet paid off · ViT matched ResNet on ImageNet.
+The wager · with enough data, a model that has **fewer prior assumptions** but **more capacity** will outlearn a hand-engineered architecture. By 2021 (ViT-Huge pretrained on JFT-300M) the bet paid off · ViT **surpassed** the best ResNets on ImageNet.
 
 ---
 
@@ -212,7 +212,7 @@ $\text{embedding} = \mathbf{[6.0,\ 6.0,\ 7.0]}$ — the first "token" the Transf
 
 <!-- _class: code-heavy -->
 
-# ViT in PyTorch · 30 lines
+# ⭐⭐⭐ Optional · ViT in PyTorch · 30 lines
 
 ```python
 class ViT(nn.Module):
@@ -477,10 +477,19 @@ Per patch: `llm_token = patch @ W + b`. Shape check · `[1, 1024] @ [1024, 4096]
 Do this for all 256 patches → 256 vectors that "look like" tokens to the LLM. Prepend them to the user's text:
 $$[\text{img}_1, \ldots, \text{img}_{256}, \text{text}_1, \text{text}_2, \ldots] \to \text{LLM}$$
 
-**Stage 1** · freeze CLIP and LLM, train only $W$, $b$ on caption data.
-**Stage 2** · unfreeze the LLM, fine-tune on instruction data.
+---
 
-New params · ~10M in the projection. A 7B LLM becomes multimodal with < 0.15% extra weights.
+# LLaVA · two-stage training
+
+**Stage 1 · align.** Freeze CLIP and the LLM, train **only** $W, b$ on image-caption data. The projection learns to map image vectors into the LLM's word space.
+
+**Stage 2 · instruction-tune.** Unfreeze the LLM, fine-tune on `(image, question, answer)` triples so the model learns to *converse* about images.
+
+<div class="realworld">
+
+New params · ~10M in the projection. A 7B LLM becomes multimodal with **< 0.15% extra weights** — the bolt-on bargain.
+
+</div>
 
 ---
 
@@ -502,7 +511,7 @@ The LLM treats this just like the embedding for the word "cat".
 
 ---
 
-# Flamingo · cross-attention bridge
+# ⭐⭐⭐ Optional · Flamingo · cross-attention bridge
 
 Alayrac et al. 2022 · an alternative approach:
 

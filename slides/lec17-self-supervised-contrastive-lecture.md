@@ -173,19 +173,26 @@ That's contrastive learning. It pulls **same-image augmentations together** in f
 
 ---
 
-# How SimCLR works, step-by-step
+# How SimCLR works · build the batch
 
 1. Sample a minibatch of $N$ images.
 2. Apply **two different augmentations** to each → $2N$ views.
 3. The $(i, j)$ pair from the same image = **positive**. All $2N - 2$ others = **negatives**.
-4. Pass all through a **shared encoder** (ResNet / ViT).
-5. Pass through a small **projection head** (2-layer MLP).
-6. Compute similarity (cosine) in projection space.
-7. Apply **NT-Xent loss** — pull positive together, push negatives apart.
+
+Each image has supplied its *own* label · "these two crops belong together." No human ever touched the data.
 
 ---
 
-# InfoNCE · derive the loss step by step
+# How SimCLR works · encode and contrast
+
+4. Pass all $2N$ views through a **shared encoder** (ResNet / ViT) → features $h$.
+5. Pass through a small **projection head** (2-layer MLP) → $z$.
+6. Compute similarity (cosine) between every pair in projection space.
+7. Apply **NT-Xent loss** — pull each positive pair together, push all negatives apart.
+
+---
+
+# ⭐⭐⭐ Optional · InfoNCE · derive the loss step by step
 
 For one anchor $z_i$ with positive partner $z_j$ in a batch with negatives $z_k$:
 
@@ -663,6 +670,14 @@ Self-supervision created the **foundation model** era. Every modality now has it
 
 </div>
 
+These features feed directly into L18 (CLIP, multimodal) and **even underpin diffusion's pretraining** (L21).
+
+---
+
+<!-- _class: summary-slide -->
+
+# The SSL family · one table
+
 | Method | Signal | Key trick |
 |:-:|:-:|:-:|
 | SimCLR | augmentation pairs | InfoNCE with negatives |
@@ -671,7 +686,7 @@ Self-supervision created the **foundation model** era. Every modality now has it
 | DINO | no negatives | self-distillation + centering |
 | MAE | reconstruction | mask 75% patches |
 
-These features feed directly into L18 (CLIP, multimodal) and **even underpin diffusion's pretraining** (L21).
+Every row writes a *free* supervised signal out of the data itself — that is the whole lecture.
 
 ---
 
@@ -681,7 +696,7 @@ These features feed directly into L18 (CLIP, multimodal) and **even underpin dif
 
 **P1.** SimCLR's InfoNCE loss with batch size $B = 256$. Each image has 1 positive and $2B - 2$ negatives. Write the loss for one anchor and explain why **bigger batches help**.
 
-**P2.** Show that the InfoNCE objective is a **lower bound on mutual information** between the two augmented views. (Hint · log of the softmax denominator.)
+**P2.** ⭐⭐⭐ *(optional, hard)* Show that the InfoNCE objective is a **lower bound on mutual information** between the two augmented views. (Hint · log of the softmax denominator.)
 
 **P3.** BYOL has no negatives. **Why doesn't it collapse** to the trivial solution where the encoder maps everything to a constant? Name the two architectural ingredients that prevent collapse.
 

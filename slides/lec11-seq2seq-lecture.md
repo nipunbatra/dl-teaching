@@ -446,7 +446,7 @@ When output is bad, ask which error you have · **search error** — a high-prob
 
 ---
 
-# Beam search · worked example with $k=2$
+# ⭐⭐⭐ Optional · beam search · worked example with $k=2$
 
 Vocab · {The, A, cat, dog, sat, ran}. Decoding "The cat sat".
 

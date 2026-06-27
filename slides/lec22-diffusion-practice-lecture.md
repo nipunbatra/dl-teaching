@@ -190,7 +190,7 @@ The **difference vector** $\epsilon_c - \epsilon_\emptyset$ is the **pure influe
 
 ---
 
-# CFG · derive the formula step by step
+# ⭐⭐⭐ Optional · CFG · derive the formula step by step
 
 1. **Generic direction.** $\epsilon_\text{uncond} = \epsilon_\theta(x_t, \emptyset)$ (null prompt).
 2. **Prompt direction.** $\epsilon_\text{cond} = \epsilon_\theta(x_t, c)$.
@@ -438,7 +438,7 @@ The same trained model gets used · DDIM just chooses which subset of timesteps 
 
 ---
 
-# DDIM · deterministic sampling in 20–50 steps
+# ⭐⭐⭐ Optional · DDIM · deterministic sampling in 20–50 steps
 
 <div class="paper">
 
@@ -515,7 +515,7 @@ All diffusion-based. All descendants of the 2020 DDPM paper.
 | Video 720p · 16s | Sora · VEO | minutes per clip |
 | Audio music | AudioGen · MusicLM | real-time (8 DDIM steps) |
 | 3D meshes | Diffusion-SDF · ShapE | ~30s per mesh |
-| Molecules | RFdiffusion (Baker lab — 2024 Chemistry Nobel) | ~10s per protein |
+| Molecules | RFdiffusion (Baker lab — Baker shared the 2024 Chemistry Nobel for protein design) | ~10s per protein |
 | Robot policies | Diffusion Policy (Chi 2023) | 50 Hz control loop |
 
 </div>
@@ -599,6 +599,12 @@ Stable Diffusion 3, Flux, and many 2024+ models use flow-matching instead of pur
 
 </div>
 
+Stable Diffusion 2022, SD3 / FLUX 2024, Sora 2024 — all run this same recipe with bigger backbones.
+
+---
+
+# The four tricks · cost vs benefit
+
 | Trick | What it costs | What it buys |
 |:-:|:-:|:-:|
 | Cross-attn conditioning | a frozen text encoder | text → image |
@@ -606,11 +612,9 @@ Stable Diffusion 3, Flux, and many 2024+ models use flow-matching instead of pur
 | Latent diffusion (VAE) | a pretrained VAE | $48\times$ fewer dimensions to diffuse |
 | DDIM | smarter sampling, no retrain | $20\times$ fewer steps |
 
-Stable Diffusion 2022, SD3 / FLUX 2024, Sora 2024 — all run this same recipe with bigger backbones.
-
 ---
 
-# Practice problems
+# Practice problems · 1
 
 <div class="math-box">
 
@@ -620,7 +624,15 @@ Stable Diffusion 2022, SD3 / FLUX 2024, Sora 2024 — all run this same recipe w
 
 **P3.** Stable Diffusion's VAE compresses $3 \times 512 \times 512 = 786{,}432$ pixels into $4 \times 64 \times 64 = 16{,}384$ latents. Compute the compression ratio. Why doesn't this destroy image quality?
 
-**P4.** **DDIM** is a deterministic sampler (no extra noise per step). State the DDIM update rule and explain why it allows skipping steps.
+</div>
+
+---
+
+# Practice problems · 2
+
+<div class="math-box">
+
+**P4.** **DDIM** lets you sample in 20–50 steps instead of 1000 using the *same* trained model. In one sentence, why is no retraining needed?
 
 **P5.** Why does **DiT** (Transformer backbone) scale better than U-Net? Tie back to the L13 master sentence about Transformer scaling.
 

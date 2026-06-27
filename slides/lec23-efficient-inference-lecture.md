@@ -457,6 +457,8 @@ Autoregressive generation is **one token per forward pass**. For a 70B model thi
 2. The big **verifier model** (70B) does ONE forward pass on all $k$ in parallel.
 3. Accept the longest prefix where draft and verifier agree; rewind if they diverge.
 
+**Concrete trace** ($k = 4$) · draft proposes `the cat sat on`. The 70B verifies all four in one pass and agrees with `the cat sat` but would have said `the cat sat **down**`. Accept the 3-token prefix `the cat sat`, take the verifier's `down` as the 4th — **4 tokens for the cost of one big forward pass.**
+
 ---
 
 # Why speculative works
@@ -505,7 +507,7 @@ Distillation = method 2.
 
 ---
 
-# Distillation · the loss, term by term
+# ⭐⭐⭐ Optional · Distillation · the loss, term by term
 
 Two losses:
 
@@ -604,13 +606,13 @@ Choose by hardware + quality needs. For teaching, **vLLM** or **llama.cpp** are 
 | + INT8 quantization | 1.5× |
 | + speculative decoding | 2.5× |
 | + batching + paged attention | 4× |
-| **Total (compounded)** | **~900×** |
+| **Naive product (over-counts)** | ~900× |
 
 </div>
 
 <div class="keypoint">
 
-Real production serving · ~30-100× over naive PyTorch. The rest is latency engineering (batching, KV-cache reuse across requests, model sharding).
+Those factors **don't multiply cleanly** — they overlap and compete for the same bottleneck. Real production serving lands at **~30–100× over naive PyTorch**. The rest is latency engineering (batching, KV-cache reuse across requests, model sharding).
 
 </div>
 
@@ -648,6 +650,12 @@ Prices move fast — treat these as orders of magnitude, not quotes. Reasoning m
 
 </div>
 
+This is the production toolkit as of this writing — every commercial LLM endpoint uses 3–5 of these.
+
+---
+
+# The toolkit · saves vs cost
+
 | Trick | Saves | Cost |
 |:-:|:-:|:-:|
 | INT4 quantization | $4\times$ memory bandwidth | small accuracy drop |
@@ -656,11 +664,9 @@ Prices move fast — treat these as orders of magnitude, not quotes. Reasoning m
 | Speculative decoding | latency on chat | extra draft model |
 | Distillation | size + cost | training run |
 
-This is the production toolkit as of this writing — every commercial LLM endpoint uses 3–5 of these.
-
 ---
 
-# Practice problems
+# Practice problems · 1
 
 <div class="math-box">
 
@@ -670,11 +676,19 @@ This is the production toolkit as of this writing — every commercial LLM endpo
 
 **P3.** **FlashAttention** keeps Q, K, V tiles in SRAM and recomputes softmax in chunks. Why does this avoid materializing the $O(N^2)$ attention matrix?
 
-**P4.** Speculative decoding · draft model proposes $k = 5$ tokens · target verifies in one pass · accepts the longest matching prefix. If acceptance rate is $p$, expected speed-up is $(1 + p + p^2 + \ldots + p^k)$. Compute for $p = 0.7$, $k = 5$.
+</div>
+
+---
+
+# Practice problems · 2
+
+<div class="math-box">
+
+**P4.** **Distillation** trains a small student to match a large teacher's softmax with temperature $T$. Why is $T > 1$ used during training? What does that do to the loss surface?
 
 **P5.** **INT4 weight quantization with FP16 activations** · sketch the dequant-on-the-fly inner loop. Why don't we quantize activations to INT4 too?
 
-**P6.** **Distillation** trains a small student to match a large teacher's softmax with temperature $T$. Why is $T > 1$ used during training? What does that do to the loss surface?
+**P6.** ⭐⭐⭐ *(stretch)* Speculative decoding · draft proposes $k = 5$ tokens · target verifies in one pass · accepts the longest matching prefix. If acceptance rate is $p$, expected tokens per pass is $1 + p + p^2 + \ldots + p^k$. Compute for $p = 0.7$, $k = 5$.
 
 </div>
 

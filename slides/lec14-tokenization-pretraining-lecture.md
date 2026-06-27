@@ -69,7 +69,7 @@ Take · **"GPT-4 is great!"**
 (c) 7 tokens · `"G", "PT", "-", "4", " is", " great", "!"`.
 (d) Different number depending on the model.
 
-Stop and guess — and hold that guess. By the end of Part 2 you'll be able to *derive* the answer, and it explains why "how many r's in strawberry?" stumped LLMs until 2024.
+Stop and guess — and hold that guess. By the end of Part 2 you'll be able to *derive* the answer, and it explains why "how many r's in strawberry?" was a well-known failure mode for years.
 
 </div>
 
@@ -270,7 +270,7 @@ Result · a 50k-token vocab that covers English, code, Japanese, emoji, and anyt
 
 </div>
 
-Llama, GPT-*, Mistral, Claude all use byte-level BPE with minor tweaks. SentencePiece is the same idea packaged for cross-language training.
+Most modern LLMs — Llama, GPT-*, Mistral — use byte-level BPE with minor tweaks. SentencePiece is the same idea packaged for cross-language training.
 
 **Trade-off** · a vocab trained mostly on English splits other languages into far more tokens (higher *fertility*) — non-English users pay more context and more cost per word.
 
@@ -499,7 +499,7 @@ Survives in some translation pipelines. But for pure generation, decoder-only (G
 | 2020 | GPT-3 | scale unlocked few-shot learning |
 | 2022 | GPT-3.5 / InstructGPT | alignment via instruction tuning + RLHF |
 | 2023 | GPT-4, Llama 2 | decoder-only becomes the dominant paradigm |
-| 2026 | decoder-only + tool use + reasoning | everyone converges here |
+| 2026 | decoder-only + tool use + reasoning | the current trajectory |
 
 <div class="realworld">
 
@@ -561,11 +561,19 @@ Next-token prediction is so rich a task that a model good at it ends up learning
 </div>
 </div>
 
+The headline number (15T) is dominated by filtered web text; everything else is seasoning.
+
+---
+
+# Pretraining data · the legal question
+
 <div class="warning">
 
-**Copyright issues** · training on copyrighted text without license is legally contested. NY Times v. OpenAI (2023) · unresolved. The data pipeline is as much a legal project as a technical one.
+**Copyright issues** · training on copyrighted text without a license is legally contested. *NY Times v. OpenAI* (filed 2023) · still unresolved. The data pipeline is as much a legal project as a technical one.
 
 </div>
+
+Practical fallout · several labs now disclose data sources, license corpora, or lean harder on **synthetic** and **licensed** data to reduce exposure.
 
 ---
 
@@ -591,7 +599,7 @@ Phi-3 (2024) · trained on **3T** "textbook-quality" tokens (heavily filtered + 
 
 ---
 
-# Compute economics · where the 6 comes from
+# ⭐⭐⭐ Optional · Compute economics · where the 6 comes from
 
 The famous LLM rule of thumb: **training FLOPs $\approx 6 \cdot N \cdot D$** where $N$ = parameters, $D$ = training tokens.
 

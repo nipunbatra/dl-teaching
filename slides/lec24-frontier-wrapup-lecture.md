@@ -278,7 +278,9 @@ Both pay off. OpenAI reported that o1's performance on math benchmarks scales sm
 | o1 | 74% | ~1800 Elo |
 | o3 | 97% | ~2700 Elo (grandmaster) |
 
-Comparable gains on HumanEval, MATH, GPQA — an entirely new capability curve. (Numbers are OpenAI's reported results; treat as indicative, not gospel.)
+Codeforces Elo is a competitive-programming rating, like a chess rating — higher is better; ~2700 ranks among top human competitors.
+
+Comparable gains on HumanEval, MATH, GPQA — an entirely new capability curve. (Numbers are OpenAI's reported results, as of this writing; treat as indicative, not gospel.)
 
 <div class="realworld">
 
@@ -382,7 +384,7 @@ A **sparse autoencoder (SAE)** · *inverted* bottleneck. *"Have a 100,000-word d
 
 ---
 
-# SAE · how it disentangles superposition
+# ⭐⭐⭐ Optional · SAE · how it disentangles superposition
 
 **Problem · superposition.** A single neuron in the residual stream might fire for *"Golden Gate Bridge"*, *"the colour red"*, AND *"Python syntax errors"*. Confusing.
 

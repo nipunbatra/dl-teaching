@@ -69,7 +69,7 @@ You can train a Transformer LM with $C \approx 1.2 \times 10^{23}$ FLOPs. Which 
 (b) A **20B-parameter** model on **1T tokens**.
 (c) A **7B-parameter** model on **3T tokens**.
 
-Stop and pick · this is the exact question Chinchilla answered. **Answer · (b)** — its $D/N = 50$ is the closest to the compute-optimal rule "$D \approx 20\,N$" (the others sit at 4.3 and 429). Most pre-2022 models were heavily under-trained. The whole modern era is about getting *this knob* right.
+Stop and pick · this is the exact question Chinchilla answered. **Answer · (b)** — at $D/N = 50$ it is the only option in the right *ballpark* of the compute-optimal rule "$D \approx 20\,N$"; (a) sits at 4.3 (way too few tokens, like GPT-3) and (c) at 429 (heavily over-trained). Most pre-2022 models were under-trained. The whole modern era is about getting *this knob* right.
 
 </div>
 
@@ -86,7 +86,7 @@ Stop and pick · this is the exact question Chinchilla answered. **Answer · (b)
 
 ### Architecture
 
-**Unchanged.** Still a decoder-only Transformer. A student from 2018 who squinted at GPT-1 would recognize Llama-3.
+**Unchanged.** Still a decoder-only Transformer. A student from 2018 would recognize Llama-3's *high-level* shape — though the norm, PE, and attention details were all revamped.
 
 </div>
 <div>
@@ -233,7 +233,7 @@ Chinchilla optimizes *training compute*. But **inference** is where models earn 
 
 ---
 
-# Compute budget · derivation from two rules
+# ⭐⭐⭐ Optional · Compute budget · derivation from two rules
 
 Two rules from Chinchilla:
 1. Budget · $C = 6\,N\,D$.
@@ -319,7 +319,7 @@ The model learns about **relative positions directly**.
 
 ---
 
-# RoPE · derivation in 2D
+# ⭐⭐⭐ Optional · RoPE · derivation in 2D
 
 For position $m$, define angle $\theta_m = m \cdot \Theta$ for some base $\Theta$. Rotation matrix:
 $$R_\theta = \begin{pmatrix} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta \end{pmatrix}$$
@@ -334,7 +334,7 @@ $(q'_m)^\top k'_n = q^\top R_{\theta_m}^\top R_{\theta_n}\,k$
 
 ---
 
-# RoPE · derivation, the punchline
+# ⭐⭐⭐ Optional · RoPE · derivation, the punchline
 
 Two properties of rotation matrices:
 - $R_\theta^\top = R_{-\theta}$
@@ -349,7 +349,7 @@ In high-dim, group dimensions into pairs; rotate each pair with a different freq
 
 ---
 
-# Worked numeric · RoPE in 2D
+# ⭐⭐⭐ Optional · Worked numeric · RoPE in 2D
 
 $\Theta = 1$ rad. $q = [1, 2]$ at $m = 2$, $k = [3, 0]$ at $n = 3$.
 
@@ -366,7 +366,7 @@ $k'_n = R_3 k \approx [-2.97,\ 0.42]^\top$
 
 ---
 
-# Worked numeric · verify the relative-position claim
+# ⭐⭐⭐ Optional · Worked numeric · verify the relative-position claim
 
 The relative offset is $n - m = 1$, so the derivation predicts the score equals $q^\top R_1 k$:
 

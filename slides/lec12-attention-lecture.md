@@ -468,7 +468,7 @@ Unscaled dot products behave like the second case as $d_k$ grows. Scaling factor
 
 ---
 
-# Variance of unscaled dot products
+# ⭐⭐⭐ Optional · variance of unscaled dot products
 
 For $Q_i, K_j$ with i.i.d. $\mathcal{N}(0, 1)$ entries:
 $$S = Q_i^\top K_j = \sum_{k=1}^{d_k} q_k k_k$$

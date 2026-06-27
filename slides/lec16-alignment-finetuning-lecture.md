@@ -24,7 +24,7 @@ By the end of this lecture you will be able to:
 2. Write the **instruction-tuning** recipe (SFT on demo data).
 3. Explain the **LoRA** low-rank update and wire it up with `peft`.
 4. Compute **LoRA parameter count** and memory savings for a 70B model.
-5. Derive the **DPO loss** from the RLHF optimal-policy closed-form.
+5. Read the **DPO loss** and explain how it replaces the RLHF reward model (derivation optional).
 6. Pick **SFT / LoRA / QLoRA / RLHF / DPO** for a given alignment task.
 
 ---
@@ -199,11 +199,11 @@ That's why a 70B-param fine-tune can ship as a 100MB adapter file · the brushst
 Pretrained $W_0$ is $4 \times 4$ (16 params, frozen). Full update $\Delta W$ would also have 16 params.
 
 LoRA's idea · construct $\Delta W$ from two rank-1 matrices.
-- $A \in \mathbb{R}^{4 \times 1}$ · 4 trainable params.
-- $B \in \mathbb{R}^{1 \times 4}$ · 4 trainable params.
+- $B \in \mathbb{R}^{4 \times 1}$ (column) · 4 trainable params.
+- $A \in \mathbb{R}^{1 \times 4}$ (row) · 4 trainable params.
 - $\Delta W = B A$ is $4 \times 4$ but generated from only **8** numbers.
 
-$$\Delta W = \begin{pmatrix} a_1 \\ a_2 \\ a_3 \\ a_4 \end{pmatrix}\begin{pmatrix} b_1 & b_2 & b_3 & b_4 \end{pmatrix} = \begin{pmatrix} a_1 b_1 & a_1 b_2 & a_1 b_3 & a_1 b_4 \\ a_2 b_1 & a_2 b_2 & a_2 b_3 & a_2 b_4 \\ a_3 b_1 & a_3 b_2 & a_3 b_3 & a_3 b_4 \\ a_4 b_1 & a_4 b_2 & a_4 b_3 & a_4 b_4 \end{pmatrix}$$
+$$\Delta W = \begin{pmatrix} b_1 \\ b_2 \\ b_3 \\ b_4 \end{pmatrix}\begin{pmatrix} a_1 & a_2 & a_3 & a_4 \end{pmatrix} = \begin{pmatrix} b_1 a_1 & b_1 a_2 & b_1 a_3 & b_1 a_4 \\ b_2 a_1 & b_2 a_2 & b_2 a_3 & b_2 a_4 \\ b_3 a_1 & b_3 a_2 & b_3 a_3 & b_3 a_4 \\ b_4 a_1 & b_4 a_2 & b_4 a_3 & b_4 a_4 \end{pmatrix}$$
 
 Train only $A, B$; keep $W_0$ frozen:
 $$W = W_0 + \frac{\alpha}{r}\,BA$$
@@ -367,19 +367,24 @@ RLHF balances both · max reward, but stay near the SFT model.
 
 ---
 
-# RLHF objective · term by term
+# ⭐⭐⭐ Optional · RLHF objective · the equation
 
 $$\max_\theta\, \underbrace{\mathbb{E}_{x \sim D}[\, r_\phi(x, \pi_\theta(x)) \,]}_{\text{Part 1: maximize reward}} \;-\; \underbrace{\beta\, D_\text{KL}(\pi_\theta \Vert \pi_\text{ref})}_{\text{Part 2: stay near SFT}}$$
 
-Symbols:
+**Part 1** drives the model to produce high-reward answers. **Part 2** keeps the policy close to its SFT initialization → prevents the dog from tearing up the garden.
+
+The two terms are exactly the two goals from the dog analogy · *maximize treats* (reward) while *staying on the leash* (KL penalty to the SFT model).
+
+---
+
+# ⭐⭐⭐ Optional · RLHF objective · the symbols
+
 - $\pi_\theta$ · trainable model ("policy"); takes prompt $x$, generates response $y$.
 - $\pi_\text{ref}$ · frozen SFT model.
 - $r_\phi(x, y)$ · reward model; scores responses (e.g. 0.85).
 - $\mathbb{E}_{x \sim D}[\cdot]$ · average over prompts in dataset $D$.
 - $D_\text{KL}(\pi_\theta \,\|\, \pi_\text{ref})$ · KL divergence; high when $\pi_\theta$ diverges from $\pi_\text{ref}$.
 - $\beta$ · leash strength.
-
-**Part 1** drives the model to produce high-reward answers. **Part 2** keeps the policy close to its SFT initialization → prevents the dog from tearing up the garden.
 
 ---
 
@@ -451,9 +456,9 @@ DPO writes a loss that says · *"directly increase prob of the winner $y_w$, dec
 
 ---
 
-# DPO loss · inside-out
+# ⭐⭐⭐ Optional · DPO loss · inside-out
 
-$$\mathcal{L}_\text{DPO} = -\log \sigma\!\left( \underbrace{\beta \log \tfrac{\pi_\theta(y_w | x)}{\pi_\text{ref}(y_w | x)}}_{\text{winner score}} - \underbrace{\beta \log \tfrac{\pi_\theta(y_l | x)}{\pi_\text{ref}(y_l | x)}}_{\text{loser score}} \right)$$
+$$\mathcal{L}_\text{DPO} = -\log \sigma\!\left( \underbrace{\beta \log \tfrac{\pi_\theta(y_w \mid x)}{\pi_\text{ref}(y_w \mid x)}}_{\text{winner score}} - \underbrace{\beta \log \tfrac{\pi_\theta(y_l \mid x)}{\pi_\text{ref}(y_l \mid x)}}_{\text{loser score}} \right)$$
 
 Build it from inside:
 1. **Ratio** $\pi_\theta / \pi_\text{ref}$ · how much more likely is the new model to produce $y$ than the SFT model? Want $> 1$ for $y_w$.
@@ -593,7 +598,7 @@ Scaling laws in training compute produced pretrained capability. A new axis — 
 
 ---
 
-# Process rewards · what "reasoning training" looks like
+# ⭐⭐⭐ Optional · Process rewards · what "reasoning training" looks like
 
 Traditional RL reward · "was the final answer correct?" · sparse, late signal.
 
@@ -674,6 +679,14 @@ As of this writing, in open source · QLoRA + DPO is the dominant recipe for ins
 
 </div>
 
+**Same NLL framework as L00** — the only thing that changes is *what counts as good $y$*.
+
+---
+
+<!-- _class: summary-slide -->
+
+# The L16 pipeline · at a glance
+
 | Step | What it optimizes | Loss type |
 |:-:|:-:|:-:|
 | SFT | $-\log p(y_\text{good} \mid x)$ | NLL (L00) |
@@ -681,7 +694,7 @@ As of this writing, in open source · QLoRA + DPO is the dominant recipe for ins
 | RLHF (PPO) | $\mathbb{E}[r(x, y)] - \beta \,\text{KL}(\pi \,\Vert\, \pi_\text{SFT})$ | RL + KL |
 | DPO | closed-form simplification of RLHF | direct preference |
 
-**Same NLL framework as L00** — the only thing that changes is *what counts as good $y$*.
+Read each row as the *same* "make good $y$ more likely" objective, written for a different kind of supervision signal.
 
 ---
 

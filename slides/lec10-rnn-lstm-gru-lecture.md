@@ -222,7 +222,7 @@ The gradient is that secret. It travels backward from the loss to the start of t
 
 ---
 
-# BPTT · derive the gradient product
+# ⭐⭐⭐ Optional · bptt · derive the gradient product
 
 Start with the simplest possible RNN: $h_t = W h_{t-1}$ (no input, no $\tanh$). Unroll 3 steps:
 - $h_1 = W h_0$
@@ -583,7 +583,7 @@ But RNNs are still the right choice for:
 
 ---
 
-# RWKV and Mamba · the RNN comeback
+# ⭐⭐⭐ Optional · rwkv and mamba · the rnn comeback
 
 Starting in 2023, a new class of models has re-emerged · **state-space models** and **linear RNNs** that match Transformer quality with **O(1) inference per token**.
 
@@ -691,7 +691,7 @@ The same need shows up in stock prices, audio, video. Anything ordered.
 | Symptom | Suspect | Fastest test |
 |---|---|---|
 | Loss explodes to NaN after ~50 steps | exploding gradients through time | clip grad norm at 1.0, plot grad norms per step |
-| Model nails recent tokens, blind beyond ~20 steps | vanishing gradients in the vanilla RNN | plot $\|\partial\mathcal{L}/\partial h_t\|$ vs $t$ · swap in LSTM/GRU |
+| Model nails recent tokens, blind beyond ~20 steps | vanishing gradients in the vanilla RNN | plot $\lVert\partial\mathcal{L}/\partial h_t\rVert$ vs $t$ · swap in LSTM/GRU |
 | LSTM forgets everything early in training | forget gate starts near 0 | init $b_f = 1$ · log mean $f_t$ over a batch |
 | Great teacher-forced loss, gibberish when sampling | exposure bias — train/inference mismatch | decode autoregressively on *training* sentences |
 | Loss plateaus on long-range tasks despite LSTM | TBPTT window $K$ shorter than the dependency | increase $K$ · check where `h.detach()` cuts the graph |
