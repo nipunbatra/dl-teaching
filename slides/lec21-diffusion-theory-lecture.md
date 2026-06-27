@@ -30,6 +30,24 @@ By the end of this lecture you will be able to:
 
 ---
 
+# Bridge from L20 · escaping the fragile game
+
+**L20 left us with a problem.** GANs make sharp samples, but training is a **fragile minimax game** · two networks chasing a moving target — unstable, prone to mode collapse.
+
+<div class="insight">
+
+**The fix that starts this lecture.** What if generation were not a fragile *game* against an adversary, but a **stable, step-by-step denoising** against a fixed target? No second network, no equilibrium to balance — just one network learning to undo noise, one tiny step at a time. That single idea is **diffusion**.
+
+</div>
+
+| GAN (L20) | Diffusion (today) |
+|---|---|
+| Two networks, adversarial | **One** network, no adversary |
+| Target *moves* as D learns | Target is **fixed** (the noise added) |
+| Mode collapse, instability | Stable; covers the full distribution |
+
+---
+
 # Where we are
 
 - **VAE** (L19) · probabilistic encoder-decoder; good structure, blurry samples.

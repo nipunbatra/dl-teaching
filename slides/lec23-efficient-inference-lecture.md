@@ -29,9 +29,15 @@ By the end of this lecture you will be able to:
 
 ---
 
-# Where we are
+# Where we are · we built it, now we must serve it
 
-Training a 70B LLM costs ~$100M. But that's done *once*. **Inference** runs every request, every user, every day — and it's where models earn their keep.
+We built the **Transformer** (L13), scaled it into **LLMs** (L15), aligned it (L16). Every lecture so far asked *"can the model learn the function?"* Today asks a new question · **"can we afford to run it?"**
+
+<div class="insight">
+
+**The shift.** Training a 70B LLM costs ~\$100M — but that's paid *once*. **Inference** runs on every request, every user, every day. And the surprise that drives this whole lecture · serving a Transformer is **memory-bound, not compute-bound** — the GPU sits idle, waiting for weights and the KV-cache to stream in.
+
+</div>
 
 <div class="paper">
 

@@ -561,6 +561,28 @@ You now have **the full vocabulary** to read any new paper and place it.
 
 ---
 
+# Full circle · back to oranges vs tomatoes
+
+In **ES 335**, your very first classifier was logistic regression on **oranges vs tomatoes** · predict $\hat y = \sigma(\theta^\top \mathbf{x})$, fit $\theta$ by minimizing cross-entropy
+
+$$J(\theta) = -\sum_i\big[\,y_i \log \hat y_i + (1 - y_i)\log(1 - \hat y_i)\,\big].$$
+
+<div class="insight">
+
+**The whole course is that one idea, scaled.** A frontier LLM predicts the next token $\hat y = p_\theta(\text{token} \mid \text{context})$ and is trained by minimizing the *exact same* cross-entropy $J(\theta)$ — now over a trillion tokens and a trillion parameters. **24 lectures did not replace logistic regression · they grew it up.**
+
+</div>
+
+| ES 335 · Lecture 1 | ES 667 · the frontier |
+|---|---|
+| $\hat y = \sigma(\theta^\top \mathbf{x})$ · 2 features | $\hat y = p_\theta(\text{token} \mid \text{context})$ · billions of params |
+| Minimize $J(\theta)$ = cross-entropy | Minimize $J(\theta)$ = **same** cross-entropy |
+| Gradient descent on $\theta$ | Adam + backprop on $\theta$, at scale |
+
+Same $\hat y$, same $J(\theta)$, same $\theta$. **Only the scale changed.**
+
+---
+
 # The ideas that lasted · one coherent story
 
 <div class="insight">

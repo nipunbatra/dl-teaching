@@ -29,11 +29,31 @@ By the end of this lecture you will be able to:
 
 ---
 
+# Bridge from ES 335 · from *predicting* to *modelling*
+
+Every model since ES 335 has been **discriminative** · logistic regression on oranges vs tomatoes, every CNN, every Transformer — all learn $p(y \mid \mathbf{x})$, a **label given an input**.
+
+<div class="insight">
+
+**The new question.** What if there is no $y$ to predict? We want to *model the data itself* — learn $p(\mathbf{x})$ and **sample brand-new $\mathbf{x}$** (faces, cats) that never existed. That is **generative** modelling — the whole final arc of this course.
+
+</div>
+
+| From ES 335 | Today |
+|---|---|
+| Predict $\hat y = p(y \mid \mathbf{x})$ | Generate $\mathbf{x} \sim p(\mathbf{x})$ |
+| One right answer per input | Every plausible sample is "right" |
+| Loss = compare $\hat y$ to label $y$ | Loss = ??? (no label exists) |
+
+That missing loss is exactly what GANs solve today.
+
+---
+
 # Where we are
 
 - **VAE** (L19) · probabilistic encoder, latent-space structure, blurry samples.
 
-Today: **GANs**. Completely different philosophy — no likelihood, no prior, two networks duking it out.
+Today: **GANs**. Completely different philosophy — no label, no likelihood, no prior, two networks duking it out.
 
 <div class="paper">
 

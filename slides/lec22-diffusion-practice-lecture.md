@@ -29,9 +29,15 @@ By the end of this lecture you will be able to:
 
 ---
 
-# Where we are
+# Where we are · from toy DDPM to Stable Diffusion
 
-Last lecture · **DDPM** — forward noise, learn reverse, predict ε. Works on MNIST, toy 2D. But how do we get from there to **Stable Diffusion** and **Sora**?
+Last lecture · **DDPM** — forward noise, learn reverse, predict ε. Works on MNIST, toy 2D.
+
+<div class="insight">
+
+**The gap L21 left open.** That recipe generates *whatever* it likes, slowly, in full pixel space. To get **Stable Diffusion** and **Sora** we must answer three practical questions · (1) how do we *steer* it with a text prompt? (2) how do we make the prompt actually *stick*? (3) how do we make it *cheap* enough to run? Today fills exactly those three gaps.
+
+</div>
 
 <div class="paper">
 
