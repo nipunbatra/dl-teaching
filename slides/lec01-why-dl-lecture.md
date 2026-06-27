@@ -852,7 +852,7 @@ $\sigma'(z) = \dfrac{e^{-z}}{(1+e^{-z})^2} = \sigma(z) \cdot (1 - \sigma(z))$
 
 Maximum value · at $z = 0$, $\sigma(0) = 0.5$, so $\sigma'(0) = 0.5 \cdot 0.5 = \mathbf{0.25}$.
 
-For $|z| \ge 3$ · $\sigma'(z) \le 0.045$ (saturated regions).
+For $|z| \ge 3$ · $\sigma'(z) \lesssim 0.045$ (saturated regions).
 
 </div>
 
@@ -1121,7 +1121,7 @@ Try these on paper; verify with the notebooks.
 # Lecture 1 — summary
 
 - **Deep learning = representation learning.** Layers learn transformations that preserve task signal and suppress nuisance variation.
-- **Why now:** data + compute + algorithms compounded 2009–2017.
+- **Why now:** data + compute + algorithms compounded for decades and crossed the threshold around 2012 (AlexNet).
 - **Neuron = sum + squash.** Stack them and non-linearity keeps depth meaningful.
 - **Softmax + CE from MLE:** $\partial \mathcal{L} / \partial \mathbf{z} = \hat{\mathbf{y}} - \mathbf{y}$.
 - **Backprop** = local gradient rules plus matrix multiplication, repeated layer by layer.

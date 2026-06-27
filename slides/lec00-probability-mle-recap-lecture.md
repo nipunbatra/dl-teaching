@@ -460,7 +460,7 @@ The compact form turned a branching PMF into a single, differentiable expression
 
 Variance is largest at $p = 0.5$ (most uncertain) and zero at $p \in \{0, 1\}$ (deterministic).
 
-This will be reused when we derive **logistic regression's gradient** — it has a $\hat p (1 - \hat p)$ term that is exactly the Bernoulli variance at the predicted probability.
+This $\hat p(1-\hat p)$ resurfaces in logistic regression — it is the **curvature** (the Hessian / the IRLS reweighting you saw in ES 335), largest where the model is most uncertain. (The *gradient* itself is the clean $(\hat p - y)\mathbf{x}$ on a later slide — this variance factor cancels there but governs the second-order behaviour.)
 
 ---
 

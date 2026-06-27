@@ -240,20 +240,13 @@ The gradient is that secret. It travels backward from the loss to the start of t
 
 # ⭐⭐⭐ Optional · bptt · derive the gradient product
 
-Start with the simplest possible RNN: $h_t = W h_{t-1}$ (no input, no $\tanh$). Unroll 3 steps:
-- $h_1 = W h_0$
-- $h_2 = W^2 h_0$
-- $h_3 = W^3 h_0$
+Simplest possible RNN: $h_t = W_{hh}\, h_{t-1}$ (no input, no $\tanh$), so $h_t = W_{hh}^{\,t}\, h_0$. Chain rule over 3 steps:
+$$\frac{\partial h_3}{\partial h_0} = \underbrace{\frac{\partial h_3}{\partial h_2}}_{W_{hh}} \cdot \underbrace{\frac{\partial h_2}{\partial h_1}}_{W_{hh}} \cdot \underbrace{\frac{\partial h_1}{\partial h_0}}_{W_{hh}} = W_{hh}^{\,3} \;\Longrightarrow\; \frac{\partial h_T}{\partial h_0} = W_{hh}^{\,T}$$
 
-Chain rule:
-$$\frac{\partial h_3}{\partial h_0} = \underbrace{\frac{\partial h_3}{\partial h_2}}_{= W} \cdot \underbrace{\frac{\partial h_2}{\partial h_1}}_{= W} \cdot \underbrace{\frac{\partial h_1}{\partial h_0}}_{= W} = W^3$$
+Add $\tanh$ back ($h_t = \tanh(W_{hh} h_{t-1})$): each Jacobian becomes $W_{hh}^\top \cdot \text{diag}(\tanh'(\cdot))$ with $\tanh' \in (0,1)$, so
+$$\frac{\partial \mathcal{L}}{\partial h_1} = \frac{\partial \mathcal{L}}{\partial h_T} \cdot \prod_{t=2}^T \frac{\partial h_t}{\partial h_{t-1}} \;=\; \text{product of } T \text{ scaled-down matrices.}$$
 
-For sequence length $T$, gradient $\propto W^T$.
-
-Add $\tanh$ back: $h_t = \tanh(Wh_{t-1})$. Each Jacobian is $W^\top \cdot \text{diag}(\tanh'(\cdot))$. Since $\tanh' \in (0, 1)$:
-$$\frac{\partial \mathcal{L}}{\partial h_1} = \frac{\partial \mathcal{L}}{\partial h_T} \cdot \prod_{t=2}^T \frac{\partial h_t}{\partial h_{t-1}}$$
-
-A product of $T$ scaled-down matrices · vanishing if $\|W\| < 1$, exploding if $\|W\| > 1$.
+Vanishing if $\|W_{hh}\| < 1$, exploding if $\|W_{hh}\| > 1$ — exponential in $T$ either way.
 
 ---
 

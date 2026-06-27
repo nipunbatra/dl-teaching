@@ -758,7 +758,7 @@ This is the same idea as ridge regression in ES335 · constraints on parameters 
 
 # Lecture 7 — summary
 
-- **Convolution** = sliding window with shared weights · translation-equivariant · 3 biases (sparse, shared, local).
+- **Convolution** = sliding window with shared weights · 3 inductive biases (locality, translation equivariance, hierarchy of scales).
 - **Output size** · $O = (W − K + 2P)/S + 1$; pad to preserve, stride to downsample.
 - **Receptive field** grows with depth — 3 stacked $3 \times 3$ convs ≈ one $7 \times 7$ with fewer params.
 - **Stacked 3×3 (VGG)** beat single $7 \times 7$ — fewer params, more non-linearities.

@@ -1013,7 +1013,7 @@ This is the single most important habit in this lecture.
 
 **P5.** Why does `model.eval()` differ from `torch.no_grad()`? Give a concrete example where you need both.
 
-**P6.** A grad-clip of `max_norm=1.0` is applied to a 100M-parameter model. Show that this is **not** the same as clipping per-parameter. Which version do you want when sigmoid layers are blowing up only in early layers?
+**P6.** A grad-clip of `max_norm=1.0` is applied to a 100M-parameter model. Show that global-norm clipping is **not** the same as clipping each parameter's gradient separately. Which version preserves the overall update *direction* when one layer's gradient suddenly dominates the global norm?
 
 </div>
 

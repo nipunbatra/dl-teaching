@@ -1162,7 +1162,7 @@ Read · "average the log-ratio over the **model** $q_\theta$."
 
 **Consequence · mode-seeking.** $q_\theta$ concentrates on a single high-density region. Two-mode target → $q_\theta$ picks one mode and ignores the other.
 
-**This is approximately what VAE encoders, GAN training, and policy distillation optimize.** Sharper samples, but mode collapse is a real risk.
+**This is what reverse-KL variational inference, GAN-style training, and RL policy distillation optimize.** Sharper, more confident output — but mode collapse is a real risk. (Whole-model VAE samples are *blurry*, not sharp — that comes from the forward-KL reconstruction term, two slides on; the reverse KL here is the VAE's *latent* term $\text{KL}(q_\phi\|p(z))$.)
 
 ---
 
