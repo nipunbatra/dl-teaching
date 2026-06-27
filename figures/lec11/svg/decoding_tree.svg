@@ -1,17 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Work Sans, system-ui, sans-serif">
   <style>
-    .bg { fill: #F0EEE5; }
-    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
-    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
-    .body { font-size: 12px; fill: #1F1F1E; }
-    .caption { font-size: 11px; fill: #6B6B69; }
-    .node { fill: white; stroke: #4A6670; stroke-width: 1; rx: 3; }
-    .greedy { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.8; rx: 3; }
-    .beam { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.5; rx: 3; }
+    .bg { fill: #F7F3E9; }
+    .title { font-size: 17px; font-weight: 600; fill: #161513; }
+    .head { font-size: 13px; font-weight: 600; fill: #161513; }
+    .body { font-size: 12px; fill: #161513; }
+    .caption { font-size: 11px; fill: #5F5C54; }
+    .node { fill: white; stroke: #37535F; stroke-width: 1; rx: 3; }
+    .greedy { fill: #FFF3EE; stroke: #B85A3E; stroke-width: 1.8; rx: 3; }
+    .beam { fill: #F0F5EF; stroke: #5F8573; stroke-width: 1.5; rx: 3; }
     .pruned { fill: white; stroke: #C9C4B5; stroke-width: 0.8; rx: 3; opacity: 0.5; }
-    .edge { stroke: #6B6B69; stroke-width: 1; fill: none; }
-    .greedy-edge { stroke: #D97757; stroke-width: 2; fill: none; }
-    .beam-edge { stroke: #7B9E89; stroke-width: 1.6; fill: none; }
+    .edge { stroke: #5F5C54; stroke-width: 1; fill: none; }
+    .greedy-edge { stroke: #B85A3E; stroke-width: 2; fill: none; }
+    .beam-edge { stroke: #5F8573; stroke-width: 1.6; fill: none; }
     .mono { font-family: "IBM Plex Mono", monospace; font-size: 11px; }
   </style>
   <rect class="bg" width="960" height="420"/>
@@ -78,16 +78,16 @@
   <g transform="translate(660, 310)">
     <rect fill="#FDF2F6" stroke="#A8324B" stroke-width="1.4" x="0" y="0" width="250" height="90" rx="6"/>
     <text x="125" y="22" class="head" text-anchor="middle">Winner · "The cat sat"</text>
-    <text x="125" y="42" class="body" text-anchor="middle" fill="#7B9E89">beam search score: -1.3</text>
-    <text x="125" y="60" class="body" text-anchor="middle" fill="#D97757">greedy score: -1.8</text>
+    <text x="125" y="42" class="body" text-anchor="middle" fill="#5F8573">beam search score: -1.3</text>
+    <text x="125" y="60" class="body" text-anchor="middle" fill="#B85A3E">greedy score: -1.8</text>
     <text x="125" y="80" class="caption" text-anchor="middle">greedy missed the better path · beam found it</text>
   </g>
 
   <!-- Legend -->
   <g transform="translate(40, 380)">
-    <line x1="0" y1="0" x2="20" y2="0" stroke="#D97757" stroke-width="2"/>
+    <line x1="0" y1="0" x2="20" y2="0" stroke="#B85A3E" stroke-width="2"/>
     <text x="28" y="4" class="caption">greedy path</text>
-    <line x1="120" y1="0" x2="140" y2="0" stroke="#7B9E89" stroke-width="1.6"/>
+    <line x1="120" y1="0" x2="140" y2="0" stroke="#5F8573" stroke-width="1.6"/>
     <text x="148" y="4" class="caption">beam-2 paths</text>
     <rect class="pruned" x="250" y="-8" width="16" height="16"/>
     <text x="272" y="4" class="caption">pruned</text>

@@ -1,11 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 480" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 480" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .cell   { stroke:#6B6A65; stroke-width:0.5; }
-      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .cell   { stroke:#5F5C54; stroke-width:0.5; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut    { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
   </defs>
 
@@ -170,8 +170,8 @@
 
   <!-- Caption -->
   <g transform="translate(60, 430)">
-    <rect x="0" y="0" width="840" height="40" fill="#F6F0DF" stroke="#C9A961"/>
-    <text x="14" y="20" class="mut" fill="#C9A961">Notice the <tspan fill="#1F1F1E" font-weight="600">off-diagonal entry</tspan> · "qu'il" attends to BOTH "it" AND "animal"</text>
-    <text x="14" y="34" class="mut" fill="#C9A961" font-style="italic">— the model learned to resolve coreference on its own.</text>
+    <rect x="0" y="0" width="840" height="40" fill="#F6F0DF" stroke="#C9A14A"/>
+    <text x="14" y="20" class="mut" fill="#C9A14A">Notice the <tspan fill="#161513" font-weight="600">off-diagonal entry</tspan> · "qu'il" attends to BOTH "it" AND "animal"</text>
+    <text x="14" y="34" class="mut" fill="#C9A14A" font-style="italic">— the model learned to resolve coreference on its own.</text>
   </g>
 </svg>

@@ -1,23 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Work Sans, system-ui, sans-serif">
   <style>
-    .bg { fill: #F0EEE5; }
-    .ink { fill: #1F1F1E; }
-    .muted { fill: #6B6B69; }
-    .rust { fill: #D97757; stroke: #D97757; }
-    .sage { fill: #7B9E89; stroke: #7B9E89; }
-    .slate { fill: #4A6670; stroke: #4A6670; }
+    .bg { fill: #F7F3E9; }
+    .ink { fill: #161513; }
+    .muted { fill: #5F5C54; }
+    .rust { fill: #B85A3E; stroke: #B85A3E; }
+    .sage { fill: #5F8573; stroke: #5F8573; }
+    .slate { fill: #37535F; stroke: #37535F; }
     .wine { fill: #A8324B; stroke: #A8324B; }
-    .thin { stroke: #4A6670; stroke-width: 1.2; fill: none; opacity: 0.4; }
+    .thin { stroke: #37535F; stroke-width: 1.2; fill: none; opacity: 0.4; }
     .title { font-size: 18px; font-weight: 600; }
     .label { font-size: 13px; }
-    .caption { font-size: 12px; fill: #6B6B69; }
-    .arrow { stroke: #1F1F1E; stroke-width: 1.5; fill: none; }
+    .caption { font-size: 12px; fill: #5F5C54; }
+    .arrow { stroke: #161513; stroke-width: 1.5; fill: none; }
   </style>
   <rect class="bg" width="960" height="380"/>
 
   <!-- Left: before training (features random) -->
   <text x="200" y="40" class="ink title" text-anchor="middle">Before training · features scattered</text>
-  <circle cx="200" cy="190" r="120" fill="none" stroke="#4A6670" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.5"/>
+  <circle cx="200" cy="190" r="120" fill="none" stroke="#37535F" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.5"/>
   <text x="200" y="320" class="caption" text-anchor="middle">unit hypersphere</text>
 
   <!-- Scattered points, different colors mixed -->
@@ -43,7 +43,7 @@
 
   <!-- Right: after training (clustered) -->
   <text x="760" y="40" class="ink title" text-anchor="middle">After InfoNCE · same-class clumps</text>
-  <circle cx="760" cy="190" r="120" fill="none" stroke="#4A6670" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.5"/>
+  <circle cx="760" cy="190" r="120" fill="none" stroke="#37535F" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.5"/>
   <text x="760" y="320" class="caption" text-anchor="middle">unit hypersphere</text>
 
   <!-- Clustered: rust top-left, sage top-right, wine bottom -->
@@ -67,7 +67,7 @@
   </g>
 
   <!-- Pull arrow (green, same cluster) -->
-  <path d="M 695 130 Q 700 120 715 125" stroke="#7B9E89" stroke-width="1.8" fill="none" marker-end="url(#greenarrow)"/>
+  <path d="M 695 130 Q 700 120 715 125" stroke="#5F8573" stroke-width="1.8" fill="none" marker-end="url(#greenarrow)"/>
   <!-- Push arrow (red, different clusters) -->
   <path d="M 710 140 L 810 145" stroke="#A8324B" stroke-width="1.5" fill="none" stroke-dasharray="4 3" opacity="0.5"/>
 
@@ -81,10 +81,10 @@
 
   <defs>
     <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+      <polygon points="0 0, 8 4, 0 8" fill="#161513"/>
     </marker>
     <marker id="greenarrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-      <polygon points="0 0, 8 4, 0 8" fill="#7B9E89"/>
+      <polygon points="0 0, 8 4, 0 8" fill="#5F8573"/>
     </marker>
   </defs>
 </svg>

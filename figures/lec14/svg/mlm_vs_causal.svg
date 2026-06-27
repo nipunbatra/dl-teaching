@@ -1,14 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .cell   { fill:#F0EEE5; stroke:#6B6A65; stroke-width:0.5; }
-      .cell-a { fill:#EAD3C5; stroke:#D97757; stroke-width:1; }
-      .cell-b { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1; }
-      .mask   { fill:#1F1F1E; stroke:none; }
-      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .cell   { fill:#F7F3E9; stroke:#5F5C54; stroke-width:0.5; }
+      .cell-a { fill:#EAD3C5; stroke:#B85A3E; stroke-width:1; }
+      .cell-b { fill:#D8E3DE; stroke:#5F8573; stroke-width:1; }
+      .mask   { fill:#161513; stroke:none; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut    { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
   </defs>
 
@@ -16,8 +16,8 @@
 
   <!-- BERT (encoder-only, MLM) -->
   <g transform="translate(80, 80)">
-    <text x="140" y="-10" text-anchor="middle" class="tag" fill="#7B9E89">BERT · bidirectional · MLM</text>
-    <rect x="0" y="0" width="280" height="250" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <text x="140" y="-10" text-anchor="middle" class="tag" fill="#5F8573">BERT · bidirectional · MLM</text>
+    <rect x="0" y="0" width="280" height="250" fill="#F7F3E9" stroke="#C9C4B5"/>
 
     <!-- 8x8 grid all filled (no mask) -->
     <g transform="translate(40, 20)">
@@ -60,7 +60,7 @@
         <text x="-15" y="193" text-anchor="end" class="mono" font-size="9">y₈</text>
 
         <!-- Grid lines inside -->
-        <g stroke="#6B6A65" stroke-width="0.5" fill="none">
+        <g stroke="#5F5C54" stroke-width="0.5" fill="none">
           <line x1="0" y1="0" x2="200" y2="0"/>
           <line x1="0" y1="25" x2="200" y2="25"/>
           <line x1="0" y1="50" x2="200" y2="50"/>
@@ -88,8 +88,8 @@
 
   <!-- GPT (decoder-only, causal) -->
   <g transform="translate(520, 80)">
-    <text x="140" y="-10" text-anchor="middle" class="tag" fill="#D97757">GPT · causal · CLM</text>
-    <rect x="0" y="0" width="280" height="250" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <text x="140" y="-10" text-anchor="middle" class="tag" fill="#B85A3E">GPT · causal · CLM</text>
+    <rect x="0" y="0" width="280" height="250" fill="#F7F3E9" stroke="#C9C4B5"/>
 
     <g transform="translate(40, 20)">
       <!-- Column headers -->
@@ -136,7 +136,7 @@
       <text x="-15" y="193" text-anchor="end" class="mono" font-size="9">y₈</text>
 
       <!-- Grid lines -->
-      <g stroke="#6B6A65" stroke-width="0.5" fill="none">
+      <g stroke="#5F5C54" stroke-width="0.5" fill="none">
         <line x1="0" y1="0" x2="200" y2="0"/>
         <line x1="0" y1="25" x2="200" y2="25"/>
         <line x1="0" y1="50" x2="200" y2="50"/>
@@ -164,8 +164,8 @@
   <!-- Bottom -->
   <g transform="translate(60, 360)">
     <text x="420" y="0" text-anchor="middle" class="mut" font-style="italic">
-      <tspan fill="#7B9E89" font-weight="600">BERT</tspan> predicts masked-out tokens with full context (MLM).
-      <tspan fill="#D97757" font-weight="600">GPT</tspan> predicts the next token given only the past (CLM).
+      <tspan fill="#5F8573" font-weight="600">BERT</tspan> predicts masked-out tokens with full context (MLM).
+      <tspan fill="#B85A3E" font-weight="600">GPT</tspan> predicts the next token given only the past (CLM).
       Same Transformer; different masks → different objectives.
     </text>
   </g>

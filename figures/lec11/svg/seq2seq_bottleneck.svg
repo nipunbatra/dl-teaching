@@ -1,16 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .enc    { fill:#DCE3E6; stroke:#4A6670; stroke-width:1.3; rx:3; ry:3; }
-      .dec    { fill:#EAD3C5; stroke:#D97757; stroke-width:1.3; rx:3; ry:3; }
+      .enc    { fill:#DCE3E6; stroke:#37535F; stroke-width:1.3; rx:3; ry:3; }
+      .dec    { fill:#EAD3C5; stroke:#B85A3E; stroke-width:1.3; rx:3; ry:3; }
       .context{ fill:#F6D4CC; stroke:#A8324B; stroke-width:1.6; rx:4; ry:4; }
-      .ink    { stroke:#1F1F1E; fill:none; stroke-width:1.2; }
-      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .ink    { stroke:#161513; fill:none; stroke-width:1.2; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut    { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
-    <marker id="sb-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/></marker>
+    <marker id="sb-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#161513"/></marker>
   </defs>
 
   <text x="480" y="28" text-anchor="middle" class="ttl">Seq2Seq — encoder compresses everything into one vector; decoder generates from it</text>
@@ -53,7 +53,7 @@
     </g>
 
     <!-- hidden state chain -->
-    <g stroke="#4A6670" fill="none" stroke-width="1.6" marker-end="url(#sb-a)">
+    <g stroke="#37535F" fill="none" stroke-width="1.6" marker-end="url(#sb-a)">
       <line x1="60"  y1="60" x2="90"  y2="60"/>
       <line x1="130" y1="60" x2="160" y2="60"/>
       <line x1="200" y1="60" x2="230" y2="60"/>
@@ -78,7 +78,7 @@
 
   <!-- DECODER -->
   <g transform="translate(560, 80)">
-    <text x="0" y="-8" class="tag" fill="#D97757">DECODER · generates target one token at a time</text>
+    <text x="0" y="-8" class="tag" fill="#B85A3E">DECODER · generates target one token at a time</text>
 
     <!-- decoder cells -->
     <g>
@@ -109,7 +109,7 @@
       <line x1="320" y1="80" x2="320" y2="95"/>
     </g>
 
-    <g stroke="#D97757" fill="none" stroke-width="1.6" marker-end="url(#sb-a)">
+    <g stroke="#B85A3E" fill="none" stroke-width="1.6" marker-end="url(#sb-a)">
       <line x1="60"  y1="60" x2="90"  y2="60"/>
       <line x1="130" y1="60" x2="160" y2="60"/>
       <line x1="200" y1="60" x2="230" y2="60"/>
@@ -121,7 +121,7 @@
   <g transform="translate(60, 300)">
     <rect x="0" y="0" width="840" height="80" fill="#F6D4CC" stroke="#A8324B"/>
     <text x="14" y="22" class="tag" fill="#A8324B">THE BOTTLENECK PROBLEM</text>
-    <text x="14" y="42" class="mut">Every word of the source must be encoded into a <tspan class="mono" fill="#1F1F1E">512-dim vector c</tspan>.</text>
+    <text x="14" y="42" class="mut">Every word of the source must be encoded into a <tspan class="mono" fill="#161513">512-dim vector c</tspan>.</text>
     <text x="14" y="60" class="mut">Short sentences — fine. 50-word sentences — you lose detail. 500-word paragraphs — forget it.</text>
     <text x="14" y="78" class="mut" font-style="italic" fill="#A8324B">Performance of Seq2Seq degrades roughly linearly with source length.</text>
   </g>

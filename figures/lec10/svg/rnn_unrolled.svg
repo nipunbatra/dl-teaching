@@ -1,16 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .cell    { fill:#EAD3C5; stroke:#D97757; stroke-width:1.4; rx:4; ry:4; }
-      .inp     { fill:#EAE7DC; stroke:#6B6A65; stroke-width:1; rx:18; ry:18; }
-      .out     { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.2; rx:18; ry:18; }
-      .ink     { stroke:#1F1F1E; fill:none; stroke-width:1.3; }
-      .mono    { font-family:'JetBrains Mono', monospace; font-size:12px; fill:#1F1F1E; }
-      .mut     { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl     { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag     { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .cell    { fill:#EAD3C5; stroke:#B85A3E; stroke-width:1.4; rx:4; ry:4; }
+      .inp     { fill:#EAE7DC; stroke:#5F5C54; stroke-width:1; rx:18; ry:18; }
+      .out     { fill:#D8E3DE; stroke:#5F8573; stroke-width:1.2; rx:18; ry:18; }
+      .ink     { stroke:#161513; fill:none; stroke-width:1.3; }
+      .mono    { font-family:'JetBrains Mono', monospace; font-size:12px; fill:#161513; }
+      .mut     { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl     { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag     { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
-    <marker id="ru-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/></marker>
+    <marker id="ru-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#161513"/></marker>
   </defs>
 
   <text x="480" y="28" text-anchor="middle" class="ttl">RNN unrolled in time — same cell, same weights, different timestep</text>
@@ -23,8 +23,8 @@
     <text x="80" y="86" text-anchor="middle" class="mono">cell</text>
 
     <!-- self-loop -->
-    <path d="M 120 50 Q 170 30 170 70 Q 170 110 120 90" fill="none" stroke="#D97757" stroke-width="1.6" marker-end="url(#ru-a)"/>
-    <text x="180" y="70" class="mono" fill="#D97757">h</text>
+    <path d="M 120 50 Q 170 30 170 70 Q 170 110 120 90" fill="none" stroke="#B85A3E" stroke-width="1.6" marker-end="url(#ru-a)"/>
+    <text x="180" y="70" class="mono" fill="#B85A3E">h</text>
 
     <!-- input and output arrows -->
     <circle class="inp" cx="20" cy="70" r="18"/>
@@ -37,7 +37,7 @@
   </g>
 
   <!-- arrow to unrolled -->
-  <text x="270" y="150" class="mono" font-size="20" fill="#D97757">→</text>
+  <text x="270" y="150" class="mono" font-size="20" fill="#B85A3E">→</text>
   <text x="270" y="168" class="mut" text-anchor="middle">unroll</text>
 
   <!-- Unrolled view (right) -->
@@ -98,15 +98,15 @@
       <line x1="535" y1="120" x2="535" y2="68"/>
     </g>
     <!-- Hidden-state arrows (horizontal, orange) -->
-    <g stroke="#D97757" stroke-width="1.8" fill="none" marker-end="url(#ru-a)">
+    <g stroke="#B85A3E" stroke-width="1.8" fill="none" marker-end="url(#ru-a)">
       <line x1="120" y1="150" x2="200" y2="150"/>
       <line x1="270" y1="150" x2="350" y2="150"/>
       <line x1="420" y1="150" x2="500" y2="150"/>
     </g>
     <!-- h labels -->
-    <text x="160" y="142" class="mono" fill="#D97757">h₁</text>
-    <text x="310" y="142" class="mono" fill="#D97757">h₂</text>
-    <text x="460" y="142" class="mono" fill="#D97757">h₃</text>
+    <text x="160" y="142" class="mono" fill="#B85A3E">h₁</text>
+    <text x="310" y="142" class="mono" fill="#B85A3E">h₂</text>
+    <text x="460" y="142" class="mono" fill="#B85A3E">h₃</text>
   </g>
 
   <!-- Formula strip -->

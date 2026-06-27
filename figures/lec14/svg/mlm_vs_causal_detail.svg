@@ -1,16 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Work Sans, system-ui, sans-serif">
   <style>
-    .bg { fill: #F0EEE5; }
-    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
-    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
-    .body { font-size: 12px; fill: #1F1F1E; }
-    .caption { font-size: 11px; fill: #6B6B69; }
+    .bg { fill: #F7F3E9; }
+    .title { font-size: 17px; font-weight: 600; fill: #161513; }
+    .head { font-size: 13px; font-weight: 600; fill: #161513; }
+    .body { font-size: 12px; fill: #161513; }
+    .caption { font-size: 11px; fill: #5F5C54; }
     .mono { font-family: "IBM Plex Mono", monospace; font-size: 12px; }
-    .tok { fill: #FFF3EE; stroke: #D97757; stroke-width: 1; rx: 3; }
-    .mask { fill: #4A6670; fill-opacity: 0.7; stroke: #4A6670; stroke-width: 1; rx: 3; }
-    .pred { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.3; rx: 3; }
+    .tok { fill: #FFF3EE; stroke: #B85A3E; stroke-width: 1; rx: 3; }
+    .mask { fill: #37535F; fill-opacity: 0.7; stroke: #37535F; stroke-width: 1; rx: 3; }
+    .pred { fill: #F0F5EF; stroke: #5F8573; stroke-width: 1.3; rx: 3; }
     .target { fill: #FDF2F6; stroke: #A8324B; stroke-width: 1.3; rx: 3; }
-    .arrow { stroke: #1F1F1E; stroke-width: 1.2; fill: none; }
+    .arrow { stroke: #161513; stroke-width: 1.2; fill: none; }
   </style>
   <rect class="bg" width="960" height="400"/>
   <text x="480" y="28" class="title" text-anchor="middle">MLM (BERT) vs Causal LM (GPT) · same architecture, different training task</text>
@@ -37,7 +37,7 @@
     </g>
 
     <!-- Transformer encoder -->
-    <rect fill="#F0F5EF" stroke="#7B9E89" stroke-width="1.4" x="50" y="95" width="300" height="40" rx="6"/>
+    <rect fill="#F0F5EF" stroke="#5F8573" stroke-width="1.4" x="50" y="95" width="300" height="40" rx="6"/>
     <text x="200" y="120" class="body" text-anchor="middle">Transformer encoder (bidirectional)</text>
 
     <path class="arrow" d="M200 70 L200 95" marker-end="url(#arr)"/>
@@ -79,7 +79,7 @@
       <text x="335" y="20" class="mono" text-anchor="middle">mat</text>
     </g>
 
-    <rect fill="#FFF3EE" stroke="#D97757" stroke-width="1.4" x="30" y="95" width="340" height="40" rx="6"/>
+    <rect fill="#FFF3EE" stroke="#B85A3E" stroke-width="1.4" x="30" y="95" width="340" height="40" rx="6"/>
     <text x="200" y="120" class="body" text-anchor="middle">Transformer decoder (causal mask)</text>
     <path class="arrow" d="M200 70 L200 95" marker-end="url(#arr)"/>
     <path class="arrow" d="M200 135 L200 150" marker-end="url(#arr)"/>
@@ -112,7 +112,7 @@
 
   <defs>
     <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+      <polygon points="0 0, 8 4, 0 8" fill="#161513"/>
     </marker>
   </defs>
 </svg>

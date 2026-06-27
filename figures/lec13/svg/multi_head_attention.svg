@@ -1,17 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .box     { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1.3; rx:4; ry:4; }
-      .head    { fill:#EAD3C5; stroke:#D97757; stroke-width:1.2; rx:3; ry:3; }
-      .proj    { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.2; rx:3; ry:3; }
-      .concat  { fill:#F6F0DF; stroke:#C9A961; stroke-width:1.4; rx:4; ry:4; }
-      .ink     { stroke:#1F1F1E; fill:none; stroke-width:1.2; }
-      .mono    { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut     { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl     { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag     { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .box     { fill:#F7F3E9; stroke:#161513; stroke-width:1.3; rx:4; ry:4; }
+      .head    { fill:#EAD3C5; stroke:#B85A3E; stroke-width:1.2; rx:3; ry:3; }
+      .proj    { fill:#D8E3DE; stroke:#5F8573; stroke-width:1.2; rx:3; ry:3; }
+      .concat  { fill:#F6F0DF; stroke:#C9A14A; stroke-width:1.4; rx:4; ry:4; }
+      .ink     { stroke:#161513; fill:none; stroke-width:1.2; }
+      .mono    { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut     { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl     { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag     { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
-    <marker id="mh-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/></marker>
+    <marker id="mh-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#161513"/></marker>
   </defs>
 
   <text x="480" y="28" text-anchor="middle" class="ttl">Multi-head attention — h parallel heads attend to different subspaces</text>
@@ -53,7 +53,7 @@
 
     <!-- Each head runs scaled dot-product attention -->
     <g transform="translate(0, 80)">
-      <text x="400" y="-2" text-anchor="middle" class="tag" fill="#D97757">run scaled dot-product attention in each head</text>
+      <text x="400" y="-2" text-anchor="middle" class="tag" fill="#B85A3E">run scaled dot-product attention in each head</text>
     </g>
 
     <!-- Per-head outputs -->
@@ -81,7 +81,7 @@
   <!-- Concat -->
   <g transform="translate(240, 290)">
     <rect class="concat" x="0" y="0" width="480" height="34"/>
-    <text x="240" y="22" text-anchor="middle" class="mono" fill="#C9A961" font-weight="600">concat(head₁, ..., head₈) · dim = h · d_k = 512</text>
+    <text x="240" y="22" text-anchor="middle" class="mono" fill="#C9A14A" font-weight="600">concat(head₁, ..., head₈) · dim = h · d_k = 512</text>
   </g>
   <g class="ink" marker-end="url(#mh-a)">
     <line x1="115" y1="265" x2="320" y2="290"/>
@@ -93,7 +93,7 @@
   <!-- Output projection -->
   <g transform="translate(380, 350)">
     <rect class="proj" x="0" y="0" width="200" height="36"/>
-    <text x="100" y="22" text-anchor="middle" class="mono" fill="#7B9E89" font-weight="600">W_O · output projection</text>
+    <text x="100" y="22" text-anchor="middle" class="mono" fill="#5F8573" font-weight="600">W_O · output projection</text>
   </g>
   <line x1="480" y1="324" x2="480" y2="350" class="ink" marker-end="url(#mh-a)"/>
 

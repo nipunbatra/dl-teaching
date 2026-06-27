@@ -1,28 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .axis  { stroke:#1F1F1E; stroke-width:1; fill:none; }
-      .data  { fill:#7B9E89; opacity:0.6; }
-      .arrow { stroke:#D97757; fill:none; stroke-width:1.2; }
-      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .axis  { stroke:#161513; stroke-width:1; fill:none; }
+      .data  { fill:#5F8573; opacity:0.6; }
+      .arrow { stroke:#B85A3E; fill:none; stroke-width:1.2; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut   { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
-    <marker id="sf-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#D97757"/></marker>
+    <marker id="sf-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#B85A3E"/></marker>
   </defs>
 
   <text x="480" y="28" text-anchor="middle" class="ttl">Score field · ∇_x log p(x) points toward high-density regions (the data)</text>
 
   <g transform="translate(80, 70)">
-    <rect x="0" y="0" width="800" height="280" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <rect x="0" y="0" width="800" height="280" fill="#F7F3E9" stroke="#C9C4B5"/>
 
     <!-- "data manifold" — two Gaussian blobs representing data distribution -->
     <ellipse class="data" cx="250" cy="140" rx="60" ry="40"/>
     <ellipse class="data" cx="550" cy="140" rx="60" ry="40"/>
 
-    <text x="250" y="88" text-anchor="middle" class="mono" fill="#7B9E89">p(x) mode 1</text>
-    <text x="550" y="88" text-anchor="middle" class="mono" fill="#7B9E89">p(x) mode 2</text>
+    <text x="250" y="88" text-anchor="middle" class="mono" fill="#5F8573">p(x) mode 1</text>
+    <text x="550" y="88" text-anchor="middle" class="mono" fill="#5F8573">p(x) mode 2</text>
 
     <!-- Score vector field: arrows point toward nearest mode -->
     <!-- Left of mode 1: arrows point right -->
@@ -88,7 +88,7 @@
   <!-- Bottom caption -->
   <g transform="translate(80, 335)">
     <text x="400" y="0" text-anchor="middle" class="mut" font-style="italic">
-      A diffusion model <tspan fill="#D97757" font-weight="600">learns this vector field</tspan>. Langevin sampling = take small steps along it + a little noise → arrive at a mode = sample from p(x).
+      A diffusion model <tspan fill="#B85A3E" font-weight="600">learns this vector field</tspan>. Langevin sampling = take small steps along it + a little noise → arrive at a mode = sample from p(x).
     </text>
   </g>
 </svg>

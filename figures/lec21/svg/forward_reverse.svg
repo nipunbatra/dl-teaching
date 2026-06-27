@@ -1,32 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .img    { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1; rx:3; ry:3; }
+      .img    { fill:#F7F3E9; stroke:#161513; stroke-width:1; rx:3; ry:3; }
       .fwd    { stroke:#A8324B; fill:none; stroke-width:1.8; }
-      .rev    { stroke:#7B9E89; fill:none; stroke-width:1.8; }
-      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .rev    { stroke:#5F8573; fill:none; stroke-width:1.8; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut    { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
     <marker id="fr-f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#A8324B"/></marker>
-    <marker id="fr-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7B9E89"/></marker>
+    <marker id="fr-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5F8573"/></marker>
     <pattern id="noise-mid" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">
-      <rect x="0" y="0" width="4" height="4" fill="#F0EEE5"/>
-      <circle cx="1" cy="1" r="0.5" fill="#1F1F1E" opacity="0.3"/>
-      <circle cx="3" cy="3" r="0.5" fill="#1F1F1E" opacity="0.5"/>
+      <rect x="0" y="0" width="4" height="4" fill="#F7F3E9"/>
+      <circle cx="1" cy="1" r="0.5" fill="#161513" opacity="0.3"/>
+      <circle cx="3" cy="3" r="0.5" fill="#161513" opacity="0.5"/>
     </pattern>
     <pattern id="noise-heavy" x="0" y="0" width="3" height="3" patternUnits="userSpaceOnUse">
-      <rect x="0" y="0" width="3" height="3" fill="#F0EEE5"/>
-      <circle cx="0.5" cy="0.5" r="0.5" fill="#1F1F1E" opacity="0.7"/>
-      <circle cx="2" cy="2" r="0.5" fill="#1F1F1E" opacity="0.6"/>
-      <circle cx="1.5" cy="0.5" r="0.5" fill="#1F1F1E" opacity="0.5"/>
+      <rect x="0" y="0" width="3" height="3" fill="#F7F3E9"/>
+      <circle cx="0.5" cy="0.5" r="0.5" fill="#161513" opacity="0.7"/>
+      <circle cx="2" cy="2" r="0.5" fill="#161513" opacity="0.6"/>
+      <circle cx="1.5" cy="0.5" r="0.5" fill="#161513" opacity="0.5"/>
     </pattern>
     <pattern id="noise-full" x="0" y="0" width="3" height="3" patternUnits="userSpaceOnUse">
-      <rect x="0" y="0" width="3" height="3" fill="#6B6A65"/>
-      <circle cx="0.5" cy="0.5" r="0.5" fill="#F0EEE5"/>
-      <circle cx="2" cy="2" r="0.5" fill="#F0EEE5"/>
-      <circle cx="1.5" cy="0.5" r="0.3" fill="#1F1F1E"/>
+      <rect x="0" y="0" width="3" height="3" fill="#5F5C54"/>
+      <circle cx="0.5" cy="0.5" r="0.5" fill="#F7F3E9"/>
+      <circle cx="2" cy="2" r="0.5" fill="#F7F3E9"/>
+      <circle cx="1.5" cy="0.5" r="0.3" fill="#161513"/>
     </pattern>
   </defs>
 
@@ -40,10 +40,10 @@
     <g transform="translate(0, 20)">
       <rect class="img" x="0" y="0" width="80" height="80"/>
       <g transform="translate(10, 10)">
-        <ellipse cx="30" cy="25" rx="22" ry="16" fill="#D97757" opacity="0.8"/>
-        <circle cx="22" cy="22" r="2.5" fill="#1F1F1E"/>
-        <circle cx="38" cy="22" r="2.5" fill="#1F1F1E"/>
-        <path d="M 25 40 Q 30 45 35 40" stroke="#1F1F1E" fill="none" stroke-width="1.2"/>
+        <ellipse cx="30" cy="25" rx="22" ry="16" fill="#B85A3E" opacity="0.8"/>
+        <circle cx="22" cy="22" r="2.5" fill="#161513"/>
+        <circle cx="38" cy="22" r="2.5" fill="#161513"/>
+        <path d="M 25 40 Q 30 45 35 40" stroke="#161513" fill="none" stroke-width="1.2"/>
       </g>
       <text x="40" y="98" text-anchor="middle" class="mono">x₀</text>
       <text x="40" y="112" text-anchor="middle" class="mut">clean</text>
@@ -53,9 +53,9 @@
     <g transform="translate(140, 20)">
       <rect class="img" x="0" y="0" width="80" height="80"/>
       <g transform="translate(10, 10)">
-        <ellipse cx="30" cy="25" rx="22" ry="16" fill="#D97757" opacity="0.65"/>
-        <circle cx="22" cy="22" r="2.5" fill="#1F1F1E"/>
-        <circle cx="38" cy="22" r="2.5" fill="#1F1F1E"/>
+        <ellipse cx="30" cy="25" rx="22" ry="16" fill="#B85A3E" opacity="0.65"/>
+        <circle cx="22" cy="22" r="2.5" fill="#161513"/>
+        <circle cx="38" cy="22" r="2.5" fill="#161513"/>
       </g>
       <rect class="img" x="0" y="0" width="80" height="80" fill="url(#noise-mid)" opacity="0.3"/>
       <text x="40" y="98" text-anchor="middle" class="mono">x_{t=200}</text>
@@ -66,7 +66,7 @@
     <g transform="translate(280, 20)">
       <rect class="img" x="0" y="0" width="80" height="80"/>
       <g transform="translate(10, 10)">
-        <ellipse cx="30" cy="25" rx="22" ry="16" fill="#D97757" opacity="0.4"/>
+        <ellipse cx="30" cy="25" rx="22" ry="16" fill="#B85A3E" opacity="0.4"/>
       </g>
       <rect class="img" x="0" y="0" width="80" height="80" fill="url(#noise-heavy)" opacity="0.6"/>
       <text x="40" y="98" text-anchor="middle" class="mono">x_{t=500}</text>
@@ -99,27 +99,27 @@
 
   <!-- Bottom row: reverse process (right to left) -->
   <g transform="translate(40, 240)">
-    <text x="0" y="-10" class="tag" fill="#7B9E89">REVERSE · LEARN TO DENOISE · p_θ(x_{t-1} | x_t)</text>
+    <text x="0" y="-10" class="tag" fill="#5F8573">REVERSE · LEARN TO DENOISE · p_θ(x_{t-1} | x_t)</text>
 
     <!-- Repeat the same squares, but arrows go the other way -->
     <g transform="translate(0, 20)">
       <rect class="img" x="0" y="0" width="80" height="80"/>
       <g transform="translate(10, 10)">
-        <ellipse cx="30" cy="25" rx="22" ry="16" fill="#D97757" opacity="0.8"/>
-        <circle cx="22" cy="22" r="2.5" fill="#1F1F1E"/>
-        <circle cx="38" cy="22" r="2.5" fill="#1F1F1E"/>
-        <path d="M 25 40 Q 30 45 35 40" stroke="#1F1F1E" fill="none" stroke-width="1.2"/>
+        <ellipse cx="30" cy="25" rx="22" ry="16" fill="#B85A3E" opacity="0.8"/>
+        <circle cx="22" cy="22" r="2.5" fill="#161513"/>
+        <circle cx="38" cy="22" r="2.5" fill="#161513"/>
+        <path d="M 25 40 Q 30 45 35 40" stroke="#161513" fill="none" stroke-width="1.2"/>
       </g>
       <text x="40" y="98" text-anchor="middle" class="mono">x₀</text>
-      <text x="40" y="112" text-anchor="middle" class="mut" fill="#7B9E89">generated!</text>
+      <text x="40" y="112" text-anchor="middle" class="mut" fill="#5F8573">generated!</text>
     </g>
 
     <g transform="translate(140, 20)">
       <rect class="img" x="0" y="0" width="80" height="80"/>
       <g transform="translate(10, 10)">
-        <ellipse cx="30" cy="25" rx="22" ry="16" fill="#D97757" opacity="0.65"/>
-        <circle cx="22" cy="22" r="2.5" fill="#1F1F1E"/>
-        <circle cx="38" cy="22" r="2.5" fill="#1F1F1E"/>
+        <ellipse cx="30" cy="25" rx="22" ry="16" fill="#B85A3E" opacity="0.65"/>
+        <circle cx="22" cy="22" r="2.5" fill="#161513"/>
+        <circle cx="38" cy="22" r="2.5" fill="#161513"/>
       </g>
       <rect class="img" x="0" y="0" width="80" height="80" fill="url(#noise-mid)" opacity="0.3"/>
       <text x="40" y="98" text-anchor="middle" class="mono">x_{t=200}</text>
@@ -128,7 +128,7 @@
     <g transform="translate(280, 20)">
       <rect class="img" x="0" y="0" width="80" height="80"/>
       <g transform="translate(10, 10)">
-        <ellipse cx="30" cy="25" rx="22" ry="16" fill="#D97757" opacity="0.4"/>
+        <ellipse cx="30" cy="25" rx="22" ry="16" fill="#B85A3E" opacity="0.4"/>
       </g>
       <rect class="img" x="0" y="0" width="80" height="80" fill="url(#noise-heavy)" opacity="0.6"/>
       <text x="40" y="98" text-anchor="middle" class="mono">x_{t=500}</text>
@@ -142,7 +142,7 @@
     <g transform="translate(560, 20)">
       <rect class="img" x="0" y="0" width="80" height="80" fill="url(#noise-full)"/>
       <text x="40" y="98" text-anchor="middle" class="mono">x_T</text>
-      <text x="40" y="112" text-anchor="middle" class="mut" fill="#7B9E89">start here</text>
+      <text x="40" y="112" text-anchor="middle" class="mut" fill="#5F8573">start here</text>
     </g>
 
     <g class="rev" marker-end="url(#fr-r)">
@@ -151,13 +151,13 @@
       <line x1="415" y1="70" x2="365" y2="70"/>
       <line x1="555" y1="70" x2="505" y2="70"/>
     </g>
-    <text x="345" y="60" text-anchor="middle" class="mono" fill="#7B9E89">ε_θ(x_t, t) predicts noise · subtract · repeat T times</text>
+    <text x="345" y="60" text-anchor="middle" class="mono" fill="#5F8573">ε_θ(x_t, t) predicts noise · subtract · repeat T times</text>
   </g>
 
   <!-- Bottom text -->
   <g transform="translate(60, 395)">
     <text x="420" y="0" text-anchor="middle" class="mut" font-style="italic">
-      Forward process is <tspan fill="#A8324B" font-weight="600">fixed</tspan> · reverse is <tspan fill="#7B9E89" font-weight="600">learned</tspan> · neural network ε_θ predicts the noise at each step.
+      Forward process is <tspan fill="#A8324B" font-weight="600">fixed</tspan> · reverse is <tspan fill="#5F8573" font-weight="600">learned</tspan> · neural network ε_θ predicts the noise at each step.
     </text>
   </g>
 </svg>

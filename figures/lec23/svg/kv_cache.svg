@@ -1,15 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .tok-old   { fill:#DCE3E6; stroke:#4A6670; stroke-width:1.2; rx:2; ry:2; }
-      .tok-cur   { fill:#EAD3C5; stroke:#D97757; stroke-width:1.5; rx:2; ry:2; }
-      .kvcache   { fill:#F6F0DF; stroke:#C9A961; stroke-width:1.4; rx:3; ry:3; }
+      .tok-old   { fill:#DCE3E6; stroke:#37535F; stroke-width:1.2; rx:2; ry:2; }
+      .tok-cur   { fill:#EAD3C5; stroke:#B85A3E; stroke-width:1.5; rx:2; ry:2; }
+      .kvcache   { fill:#F6F0DF; stroke:#C9A14A; stroke-width:1.4; rx:3; ry:3; }
       .recompute { fill:#F6D4CC; stroke:#A8324B; stroke-width:1.2; rx:3; ry:3; }
-      .ink       { stroke:#1F1F1E; fill:none; stroke-width:1.2; }
-      .mono      { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut       { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl       { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag       { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .ink       { stroke:#161513; fill:none; stroke-width:1.2; }
+      .mono      { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut       { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl       { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag       { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
   </defs>
 
@@ -43,57 +43,57 @@
 
   <!-- WITH KV cache (bottom) -->
   <g transform="translate(30, 170)">
-    <text x="0" y="-6" class="tag" fill="#7B9E89">WITH CACHE · store past K, V; only compute the new one</text>
+    <text x="0" y="-6" class="tag" fill="#5F8573">WITH CACHE · store past K, V; only compute the new one</text>
 
     <!-- Step 1 -->
     <g transform="translate(0, 10)">
       <text x="0" y="10" class="mono">step 1:</text>
       <rect class="tok-cur" x="70" y="0" width="50" height="30"/>
-      <text x="95" y="18" text-anchor="middle" class="mono" fill="#D97757">K₁, V₁</text>
+      <text x="95" y="18" text-anchor="middle" class="mono" fill="#B85A3E">K₁, V₁</text>
       <rect class="kvcache" x="180" y="0" width="140" height="30"/>
-      <text x="250" y="20" text-anchor="middle" class="mono" fill="#C9A961">cache: [K₁, V₁]</text>
+      <text x="250" y="20" text-anchor="middle" class="mono" fill="#C9A14A">cache: [K₁, V₁]</text>
     </g>
 
     <!-- Step 2 -->
     <g transform="translate(0, 50)">
       <text x="0" y="10" class="mono">step 2:</text>
       <rect class="tok-old" x="70"  y="0" width="50" height="30"/>
-      <text x="95"  y="18" text-anchor="middle" class="mono" fill="#4A6670">reuse K₁</text>
+      <text x="95"  y="18" text-anchor="middle" class="mono" fill="#37535F">reuse K₁</text>
       <rect class="tok-cur" x="130" y="0" width="50" height="30"/>
-      <text x="155" y="18" text-anchor="middle" class="mono" fill="#D97757">new K₂</text>
+      <text x="155" y="18" text-anchor="middle" class="mono" fill="#B85A3E">new K₂</text>
       <rect class="kvcache" x="200" y="0" width="160" height="30"/>
-      <text x="280" y="20" text-anchor="middle" class="mono" fill="#C9A961">cache: [K₁, K₂]</text>
+      <text x="280" y="20" text-anchor="middle" class="mono" fill="#C9A14A">cache: [K₁, K₂]</text>
     </g>
 
     <!-- Step 3 -->
     <g transform="translate(0, 90)">
       <text x="0" y="10" class="mono">step 3:</text>
       <rect class="tok-old" x="70"  y="0" width="50" height="30"/>
-      <text x="95"  y="18" text-anchor="middle" class="mono" fill="#4A6670">reuse K₁</text>
+      <text x="95"  y="18" text-anchor="middle" class="mono" fill="#37535F">reuse K₁</text>
       <rect class="tok-old" x="130" y="0" width="50" height="30"/>
-      <text x="155" y="18" text-anchor="middle" class="mono" fill="#4A6670">reuse K₂</text>
+      <text x="155" y="18" text-anchor="middle" class="mono" fill="#37535F">reuse K₂</text>
       <rect class="tok-cur" x="190" y="0" width="50" height="30"/>
-      <text x="215" y="18" text-anchor="middle" class="mono" fill="#D97757">new K₃</text>
+      <text x="215" y="18" text-anchor="middle" class="mono" fill="#B85A3E">new K₃</text>
       <rect class="kvcache" x="260" y="0" width="180" height="30"/>
-      <text x="350" y="20" text-anchor="middle" class="mono" fill="#C9A961">cache: [K₁, K₂, K₃]</text>
+      <text x="350" y="20" text-anchor="middle" class="mono" fill="#C9A14A">cache: [K₁, K₂, K₃]</text>
     </g>
 
     <!-- Step 4 -->
     <g transform="translate(0, 130)">
       <text x="0" y="10" class="mono">step 4:</text>
       <rect class="tok-old" x="70"  y="0" width="50" height="30"/>
-      <text x="95"  y="18" text-anchor="middle" class="mono" fill="#4A6670">reuse K₁</text>
+      <text x="95"  y="18" text-anchor="middle" class="mono" fill="#37535F">reuse K₁</text>
       <rect class="tok-old" x="130" y="0" width="50" height="30"/>
-      <text x="155" y="18" text-anchor="middle" class="mono" fill="#4A6670">reuse K₂</text>
+      <text x="155" y="18" text-anchor="middle" class="mono" fill="#37535F">reuse K₂</text>
       <rect class="tok-old" x="190" y="0" width="50" height="30"/>
-      <text x="215" y="18" text-anchor="middle" class="mono" fill="#4A6670">reuse K₃</text>
+      <text x="215" y="18" text-anchor="middle" class="mono" fill="#37535F">reuse K₃</text>
       <rect class="tok-cur" x="250" y="0" width="50" height="30"/>
-      <text x="275" y="18" text-anchor="middle" class="mono" fill="#D97757">new K₄</text>
+      <text x="275" y="18" text-anchor="middle" class="mono" fill="#B85A3E">new K₄</text>
       <rect class="kvcache" x="320" y="0" width="200" height="30"/>
-      <text x="420" y="20" text-anchor="middle" class="mono" fill="#C9A961">cache: [K₁, K₂, K₃, K₄]</text>
+      <text x="420" y="20" text-anchor="middle" class="mono" fill="#C9A14A">cache: [K₁, K₂, K₃, K₄]</text>
     </g>
 
-    <text x="0" y="180" class="mut">Cost is <tspan font-family="'JetBrains Mono'" fill="#7B9E89" font-weight="600">O(N)</tspan> · compute one new K, V per step. Attention still attends to all N.</text>
+    <text x="0" y="180" class="mut">Cost is <tspan font-family="'JetBrains Mono'" fill="#5F8573" font-weight="600">O(N)</tspan> · compute one new K, V per step. Attention still attends to all N.</text>
   </g>
 
   <!-- Right side: memory math -->
@@ -112,9 +112,9 @@
 
   <!-- Footer -->
   <g transform="translate(40, 370)">
-    <rect x="0" y="0" width="880" height="40" fill="#D8E3DE" stroke="#7B9E89"/>
-    <text x="440" y="24" text-anchor="middle" class="mut" fill="#7B9E89" font-style="italic">
-      Modern LLM inference is <tspan fill="#1F1F1E" font-weight="600">memory-bound on the KV-cache</tspan> — not compute-bound. GQA/MQA (L15), quantization, and paged attention all exist to shrink it.
+    <rect x="0" y="0" width="880" height="40" fill="#D8E3DE" stroke="#5F8573"/>
+    <text x="440" y="24" text-anchor="middle" class="mut" fill="#5F8573" font-style="italic">
+      Modern LLM inference is <tspan fill="#161513" font-weight="600">memory-bound on the KV-cache</tspan> — not compute-bound. GQA/MQA (L15), quantization, and paged attention all exist to shrink it.
     </text>
   </g>
 </svg>

@@ -1,15 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" font-family="Work Sans, system-ui, sans-serif">
   <style>
-    .bg { fill: #F0EEE5; }
-    .ink { fill: #1F1F1E; }
-    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
-    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
-    .body { font-family: "IBM Plex Mono", monospace; font-size: 12px; fill: #1F1F1E; }
-    .caption { font-size: 12px; fill: #6B6B69; }
-    .merged { fill: #D97757; font-weight: 600; }
-    .box { fill: white; stroke: #4A6670; stroke-width: 1; rx: 4; }
-    .rustbox { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.4; rx: 4; }
-    .arrow { stroke: #1F1F1E; stroke-width: 1.4; fill: none; }
+    .bg { fill: #F7F3E9; }
+    .ink { fill: #161513; }
+    .title { font-size: 17px; font-weight: 600; fill: #161513; }
+    .head { font-size: 13px; font-weight: 600; fill: #161513; }
+    .body { font-family: "IBM Plex Mono", monospace; font-size: 12px; fill: #161513; }
+    .caption { font-size: 12px; fill: #5F5C54; }
+    .merged { fill: #B85A3E; font-weight: 600; }
+    .box { fill: white; stroke: #37535F; stroke-width: 1; rx: 4; }
+    .rustbox { fill: #FFF3EE; stroke: #B85A3E; stroke-width: 1.4; rx: 4; }
+    .arrow { stroke: #161513; stroke-width: 1.4; fill: none; }
   </style>
   <rect class="bg" width="960" height="460"/>
   <text x="480" y="32" class="title" text-anchor="middle">BPE merge trace · "low lower newest widest"</text>
@@ -59,7 +59,7 @@
   </g>
 
   <!-- Final vocabulary -->
-  <rect x="40" y="360" width="880" height="70" fill="#FFF3EE" stroke="#D97757" stroke-width="1.5" rx="6"/>
+  <rect x="40" y="360" width="880" height="70" fill="#FFF3EE" stroke="#B85A3E" stroke-width="1.5" rx="6"/>
   <text x="55" y="382" class="head">Learned vocabulary (5 merges applied)</text>
   <text x="55" y="404" class="body">l · o · w · e · r · n · s · t · i · d · es · est · lo · low · we</text>
   <text x="55" y="422" class="caption">Common words like "low" are now single tokens. Rare words still split into subwords. No &lt;unk&gt; needed.</text>

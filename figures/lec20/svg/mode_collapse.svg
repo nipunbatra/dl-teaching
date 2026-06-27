@@ -1,14 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .box    { fill:#F0EEE5; stroke:#C9C4B5; stroke-width:1; }
-      .real   { fill:#7B9E89; fill-opacity:0.35; stroke:#7B9E89; stroke-width:1.2; }
-      .fake   { fill:#D97757; fill-opacity:0.75; }
+      .box    { fill:#F7F3E9; stroke:#C9C4B5; stroke-width:1; }
+      .real   { fill:#5F8573; fill-opacity:0.35; stroke:#5F8573; stroke-width:1.2; }
+      .fake   { fill:#B85A3E; fill-opacity:0.75; }
       .fake-c { fill:#A8324B; fill-opacity:0.9; }
-      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut    { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
   </defs>
 
@@ -16,7 +16,7 @@
 
   <!-- Healthy GAN (left) -->
   <g transform="translate(40, 80)">
-    <text x="180" y="-10" text-anchor="middle" class="tag" fill="#7B9E89">HEALTHY GAN</text>
+    <text x="180" y="-10" text-anchor="middle" class="tag" fill="#5F8573">HEALTHY GAN</text>
     <rect class="box" x="0" y="0" width="360" height="240"/>
 
     <!-- Real data: 8 Gaussian blobs in a ring -->

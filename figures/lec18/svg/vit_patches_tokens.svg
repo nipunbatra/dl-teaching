@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Work Sans, system-ui, sans-serif">
   <style>
-    .bg { fill: #F0EEE5; }
-    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
-    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
-    .body { font-size: 12px; fill: #1F1F1E; }
-    .caption { font-size: 11px; fill: #6B6B69; }
-    .patch { fill: #FFF3EE; stroke: #D97757; stroke-width: 0.8; rx: 2; }
-    .token { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1; rx: 3; }
+    .bg { fill: #F7F3E9; }
+    .title { font-size: 17px; font-weight: 600; fill: #161513; }
+    .head { font-size: 13px; font-weight: 600; fill: #161513; }
+    .body { font-size: 12px; fill: #161513; }
+    .caption { font-size: 11px; fill: #5F5C54; }
+    .patch { fill: #FFF3EE; stroke: #B85A3E; stroke-width: 0.8; rx: 2; }
+    .token { fill: #F0F5EF; stroke: #5F8573; stroke-width: 1; rx: 3; }
     .cls { fill: #FDF2F6; stroke: #A8324B; stroke-width: 1.4; rx: 3; }
-    .arrow { stroke: #1F1F1E; stroke-width: 1.3; fill: none; }
+    .arrow { stroke: #161513; stroke-width: 1.3; fill: none; }
     .dash { stroke-dasharray: 2 2; opacity: 0.4; }
   </style>
   <rect class="bg" width="960" height="380"/>
@@ -18,7 +18,7 @@
   <g transform="translate(40, 60)">
     <text x="140" y="0" class="head" text-anchor="middle">Image · 224×224</text>
     <text x="140" y="18" class="caption" text-anchor="middle">split into 14×14 grid of patches</text>
-    <rect x="0" y="30" width="280" height="280" fill="url(#imgtex)" stroke="#4A6670" stroke-width="1"/>
+    <rect x="0" y="30" width="280" height="280" fill="url(#imgtex)" stroke="#37535F" stroke-width="1"/>
     <!-- Grid of patches -->
     <g>
       <!-- highlight 9 example patches with color gradation -->
@@ -99,7 +99,7 @@
 
     <!-- positional encoding row -->
     <g transform="translate(0, 100)">
-      <rect fill="#F7EED6" stroke="#C9A961" stroke-width="1" x="0" y="0" width="365" height="20" rx="3"/>
+      <rect fill="#F7EED6" stroke="#C9A14A" stroke-width="1" x="0" y="0" width="365" height="20" rx="3"/>
       <text x="182" y="14" class="caption" text-anchor="middle">+ learned positional embeddings (0..196)</text>
     </g>
 
@@ -107,7 +107,7 @@
     <path class="arrow" d="M180 130 L180 150" marker-end="url(#arr)"/>
 
     <!-- Transformer blocks -->
-    <rect fill="#FFF3EE" stroke="#D97757" stroke-width="1.4" x="0" y="150" width="365" height="66" rx="6"/>
+    <rect fill="#FFF3EE" stroke="#B85A3E" stroke-width="1.4" x="0" y="150" width="365" height="66" rx="6"/>
     <text x="182" y="172" class="head" text-anchor="middle">Standard Transformer × 12 blocks</text>
     <text x="182" y="192" class="caption" text-anchor="middle">MultiHeadAttention · FFN · LayerNorm</text>
     <text x="182" y="208" class="caption" text-anchor="middle">same as L13, no convs anywhere</text>
@@ -121,7 +121,7 @@
 
   <defs>
     <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+      <polygon points="0 0, 8 4, 0 8" fill="#161513"/>
     </marker>
   </defs>
 </svg>

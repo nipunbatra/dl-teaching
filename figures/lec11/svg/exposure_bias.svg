@@ -1,14 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .good   { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.3; rx:3; ry:3; }
+      .good   { fill:#D8E3DE; stroke:#5F8573; stroke-width:1.3; rx:3; ry:3; }
       .bad    { fill:#F6D4CC; stroke:#A8324B; stroke-width:1.3; rx:3; ry:3; }
-      .ink    { stroke:#6B6A65; fill:none; stroke-width:1; }
+      .ink    { stroke:#5F5C54; fill:none; stroke-width:1; }
       .err    { stroke:#A8324B; fill:none; stroke-width:2; }
-      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut    { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
     <marker id="eb-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#A8324B"/></marker>
   </defs>
@@ -17,7 +17,7 @@
 
   <!-- Inference trajectories: good (top) vs cascading errors (bottom) -->
   <g transform="translate(40, 80)">
-    <text x="0" y="-6" class="tag" fill="#7B9E89">GOOD ROLLOUT · every step stays on the data manifold</text>
+    <text x="0" y="-6" class="tag" fill="#5F8573">GOOD ROLLOUT · every step stays on the data manifold</text>
 
     <rect class="good" x="0"   y="10" width="100" height="30"/>
     <text x="50" y="30" text-anchor="middle" class="mono">"The"</text>
@@ -37,7 +37,7 @@
     <rect class="good" x="600" y="10" width="100" height="30"/>
     <text x="650" y="30" text-anchor="middle" class="mono">"mat."</text>
 
-    <g class="ink" marker-end="url(#eb-a)" stroke="#7B9E89">
+    <g class="ink" marker-end="url(#eb-a)" stroke="#5F8573">
       <line x1="100" y1="25" x2="120" y2="25"/>
       <line x1="220" y1="25" x2="240" y2="25"/>
       <line x1="340" y1="25" x2="360" y2="25"/>
@@ -82,8 +82,8 @@
 
   <!-- Mitigations box -->
   <g transform="translate(40, 300)">
-    <rect x="0" y="0" width="880" height="60" fill="#F6F0DF" stroke="#C9A961"/>
-    <text x="14" y="22" class="tag" fill="#C9A961">MITIGATIONS</text>
+    <rect x="0" y="0" width="880" height="60" fill="#F6F0DF" stroke="#C9A14A"/>
+    <text x="14" y="22" class="tag" fill="#C9A14A">MITIGATIONS</text>
     <text x="14" y="42" class="mut">• Scheduled sampling · probabilistically feed model's own predictions during late training (Bengio 2015)</text>
     <text x="14" y="58" class="mut">• Large-scale pretraining · GPT-3+ rarely exhibits exposure bias because the training distribution is that broad</text>
   </g>

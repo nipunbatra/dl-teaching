@@ -1,19 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" font-family="Work Sans, system-ui, sans-serif">
   <style>
-    .bg { fill: #F0EEE5; }
-    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
-    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
-    .body { font-size: 12px; fill: #1F1F1E; }
+    .bg { fill: #F7F3E9; }
+    .title { font-size: 17px; font-weight: 600; fill: #161513; }
+    .head { font-size: 13px; font-weight: 600; fill: #161513; }
+    .body { font-size: 12px; fill: #161513; }
     .mono { font-family: "IBM Plex Mono", monospace; font-size: 11px; }
-    .caption { font-size: 11px; fill: #6B6B69; }
-    .cell { fill: white; stroke: #4A6670; stroke-width: 1.2; rx: 6; }
-    .gate { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.3; rx: 4; }
-    .candidate { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.3; rx: 4; }
+    .caption { font-size: 11px; fill: #5F5C54; }
+    .cell { fill: white; stroke: #37535F; stroke-width: 1.2; rx: 6; }
+    .gate { fill: #F0F5EF; stroke: #5F8573; stroke-width: 1.3; rx: 4; }
+    .candidate { fill: #FFF3EE; stroke: #B85A3E; stroke-width: 1.3; rx: 4; }
     .state { fill: #FDF2F6; stroke: #A8324B; stroke-width: 1.4; rx: 4; }
-    .op { fill: white; stroke: #1F1F1E; stroke-width: 1.2; }
-    .arrow { stroke: #1F1F1E; stroke-width: 1.2; fill: none; }
+    .op { fill: white; stroke: #161513; stroke-width: 1.2; }
+    .arrow { stroke: #161513; stroke-width: 1.2; fill: none; }
     .cflow { stroke: #A8324B; stroke-width: 2; fill: none; }
-    .hflow { stroke: #4A6670; stroke-width: 1.5; fill: none; }
+    .hflow { stroke: #37535F; stroke-width: 1.5; fill: none; }
   </style>
   <rect class="bg" width="960" height="440"/>
   <text x="480" y="28" class="title" text-anchor="middle">LSTM cell · cell state c_t is the "conveyor belt" · gates protect it</text>
@@ -101,13 +101,13 @@
 
   <defs>
     <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+      <polygon points="0 0, 8 4, 0 8" fill="#161513"/>
     </marker>
     <marker id="wine" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
       <polygon points="0 0, 10 5, 0 10" fill="#A8324B"/>
     </marker>
     <marker id="slate" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
-      <polygon points="0 0, 10 5, 0 10" fill="#4A6670"/>
+      <polygon points="0 0, 10 5, 0 10" fill="#37535F"/>
     </marker>
   </defs>
 </svg>

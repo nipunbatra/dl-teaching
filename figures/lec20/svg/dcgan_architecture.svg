@@ -1,15 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Work Sans, system-ui, sans-serif">
   <style>
-    .bg { fill: #F0EEE5; }
-    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
-    .head { font-size: 12px; font-weight: 600; fill: #1F1F1E; }
-    .body { font-size: 11px; fill: #1F1F1E; }
-    .caption { font-size: 10px; fill: #6B6B69; }
-    .layer { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.2; rx: 4; }
-    .dlayer { fill: #E8EDEF; stroke: #4A6670; stroke-width: 1.2; rx: 4; }
-    .z { fill: #F7EED6; stroke: #C9A961; stroke-width: 1.3; rx: 4; }
+    .bg { fill: #F7F3E9; }
+    .title { font-size: 17px; font-weight: 600; fill: #161513; }
+    .head { font-size: 12px; font-weight: 600; fill: #161513; }
+    .body { font-size: 11px; fill: #161513; }
+    .caption { font-size: 10px; fill: #5F5C54; }
+    .layer { fill: #FFF3EE; stroke: #B85A3E; stroke-width: 1.2; rx: 4; }
+    .dlayer { fill: #E8EDEF; stroke: #37535F; stroke-width: 1.2; rx: 4; }
+    .z { fill: #F7EED6; stroke: #C9A14A; stroke-width: 1.3; rx: 4; }
     .out { fill: #FDF2F6; stroke: #A8324B; stroke-width: 1.3; rx: 4; }
-    .arrow { stroke: #1F1F1E; stroke-width: 1.2; fill: none; }
+    .arrow { stroke: #161513; stroke-width: 1.2; fill: none; }
   </style>
   <rect class="bg" width="960" height="400"/>
   <text x="480" y="28" class="title" text-anchor="middle">DCGAN · generator upsamples noise · discriminator downsamples image</text>
@@ -90,13 +90,13 @@
   </g>
 
   <!-- footer -->
-  <rect x="40" y="340" width="880" height="42" fill="#FFF3EE" stroke="#D97757" stroke-width="1" rx="6"/>
+  <rect x="40" y="340" width="880" height="42" fill="#FFF3EE" stroke="#B85A3E" stroke-width="1" rx="6"/>
   <text x="480" y="360" class="body" text-anchor="middle"><tspan font-weight="600">DCGAN cookbook</tspan> · strided / transposed convs · BN everywhere (not on G-out or D-in) · ReLU in G · LeakyReLU(0.2) in D · Tanh on G output.</text>
   <text x="480" y="376" class="caption" text-anchor="middle">Adam β₁=0.5 · lr=2e-4 · batch 64-128 · noise dim 100.</text>
 
   <defs>
     <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+      <polygon points="0 0, 8 4, 0 8" fill="#161513"/>
     </marker>
   </defs>
 </svg>

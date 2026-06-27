@@ -1,16 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Work Sans, system-ui, sans-serif">
   <style>
-    .bg { fill: #F0EEE5; }
-    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
-    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
-    .body { font-size: 12px; fill: #1F1F1E; }
-    .caption { font-size: 11px; fill: #6B6B69; }
+    .bg { fill: #F7F3E9; }
+    .title { font-size: 17px; font-weight: 600; fill: #161513; }
+    .head { font-size: 13px; font-weight: 600; fill: #161513; }
+    .body { font-size: 12px; fill: #161513; }
+    .caption { font-size: 11px; fill: #5F5C54; }
     .mono { font-family: "IBM Plex Mono", monospace; font-size: 11px; }
-    .tok { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.2; rx: 4; }
-    .head-box { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.4; rx: 4; }
-    .mlp { fill: #E8EDEF; stroke: #4A6670; stroke-width: 1.2; rx: 4; }
-    .stream { fill: #F7EED6; stroke: #C9A961; stroke-width: 1.4; rx: 4; }
-    .arrow { stroke: #1F1F1E; stroke-width: 1.2; fill: none; }
+    .tok { fill: #FFF3EE; stroke: #B85A3E; stroke-width: 1.2; rx: 4; }
+    .head-box { fill: #F0F5EF; stroke: #5F8573; stroke-width: 1.4; rx: 4; }
+    .mlp { fill: #E8EDEF; stroke: #37535F; stroke-width: 1.2; rx: 4; }
+    .stream { fill: #F7EED6; stroke: #C9A14A; stroke-width: 1.4; rx: 4; }
+    .arrow { stroke: #161513; stroke-width: 1.2; fill: none; }
     .accent { stroke: #A8324B; stroke-width: 1.8; fill: none; }
   </style>
   <rect class="bg" width="960" height="420"/>
@@ -50,23 +50,23 @@
   <g transform="translate(400, 135)">
     <text x="80" y="-6" class="caption" text-anchor="middle">attention pattern</text>
     <g transform="translate(20, 0)">
-      <rect class="tok" x="0" y="0" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
-      <rect class="tok" x="22" y="0" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
-      <rect class="tok" x="44" y="0" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
-      <rect class="tok" x="66" y="0" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
-      <rect class="tok" x="88" y="0" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
+      <rect class="tok" x="0" y="0" width="18" height="18" fill="#5F8573" fill-opacity="0.15"/>
+      <rect class="tok" x="22" y="0" width="18" height="18" fill="#5F8573" fill-opacity="0.15"/>
+      <rect class="tok" x="44" y="0" width="18" height="18" fill="#5F8573" fill-opacity="0.15"/>
+      <rect class="tok" x="66" y="0" width="18" height="18" fill="#5F8573" fill-opacity="0.15"/>
+      <rect class="tok" x="88" y="0" width="18" height="18" fill="#5F8573" fill-opacity="0.15"/>
 
-      <rect class="tok" x="0" y="22" width="18" height="18" fill="#7B9E89" fill-opacity="0.95"/>
-      <rect class="tok" x="22" y="22" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
-      <rect class="tok" x="44" y="22" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
-      <rect class="tok" x="66" y="22" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
-      <rect class="tok" x="88" y="22" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
+      <rect class="tok" x="0" y="22" width="18" height="18" fill="#5F8573" fill-opacity="0.95"/>
+      <rect class="tok" x="22" y="22" width="18" height="18" fill="#5F8573" fill-opacity="0.15"/>
+      <rect class="tok" x="44" y="22" width="18" height="18" fill="#5F8573" fill-opacity="0.15"/>
+      <rect class="tok" x="66" y="22" width="18" height="18" fill="#5F8573" fill-opacity="0.15"/>
+      <rect class="tok" x="88" y="22" width="18" height="18" fill="#5F8573" fill-opacity="0.15"/>
 
-      <rect class="tok" x="0" y="44" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
-      <rect class="tok" x="22" y="44" width="18" height="18" fill="#7B9E89" fill-opacity="0.95"/>
-      <rect class="tok" x="44" y="44" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
-      <rect class="tok" x="66" y="44" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
-      <rect class="tok" x="88" y="44" width="18" height="18" fill="#7B9E89" fill-opacity="0.15"/>
+      <rect class="tok" x="0" y="44" width="18" height="18" fill="#5F8573" fill-opacity="0.15"/>
+      <rect class="tok" x="22" y="44" width="18" height="18" fill="#5F8573" fill-opacity="0.95"/>
+      <rect class="tok" x="44" y="44" width="18" height="18" fill="#5F8573" fill-opacity="0.15"/>
+      <rect class="tok" x="66" y="44" width="18" height="18" fill="#5F8573" fill-opacity="0.15"/>
+      <rect class="tok" x="88" y="44" width="18" height="18" fill="#5F8573" fill-opacity="0.15"/>
     </g>
     <text x="160" y="35" class="caption">strong diagonal-below (i attends i−1)</text>
   </g>

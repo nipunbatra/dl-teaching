@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" font-family="Work Sans, system-ui, sans-serif">
   <style>
-    .bg { fill: #F0EEE5; }
-    .title { font-size: 17px; font-weight: 600; fill: #1F1F1E; }
-    .head { font-size: 13px; font-weight: 600; fill: #1F1F1E; }
-    .body { font-size: 12px; fill: #1F1F1E; }
-    .caption { font-size: 11px; fill: #6B6B69; }
-    .gpu { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.2; rx: 4; }
-    .slice { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1; rx: 3; }
-    .layer { fill: #E8EDEF; stroke: #4A6670; stroke-width: 1; rx: 3; }
+    .bg { fill: #F7F3E9; }
+    .title { font-size: 17px; font-weight: 600; fill: #161513; }
+    .head { font-size: 13px; font-weight: 600; fill: #161513; }
+    .body { font-size: 12px; fill: #161513; }
+    .caption { font-size: 11px; fill: #5F5C54; }
+    .gpu { fill: #FFF3EE; stroke: #B85A3E; stroke-width: 1.2; rx: 4; }
+    .slice { fill: #F0F5EF; stroke: #5F8573; stroke-width: 1; rx: 3; }
+    .layer { fill: #E8EDEF; stroke: #37535F; stroke-width: 1; rx: 3; }
     .comm { stroke: #A8324B; stroke-width: 1.2; fill: none; stroke-dasharray: 3 2; }
   </style>
   <rect class="bg" width="960" height="440"/>
@@ -124,13 +124,13 @@
   </g>
 
   <!-- Combined 3D -->
-  <rect x="40" y="265" width="880" height="140" fill="#FFF3EE" stroke="#D97757" stroke-width="1.2" rx="8"/>
+  <rect x="40" y="265" width="880" height="140" fill="#FFF3EE" stroke="#B85A3E" stroke-width="1.2" rx="8"/>
   <text x="480" y="288" class="head" text-anchor="middle">3D parallelism · combine all three (standard for frontier training)</text>
   <text x="480" y="310" class="body" text-anchor="middle">Llama-3 70B training · 16 nodes × 8 GPUs = 128 GPUs</text>
   <text x="480" y="328" class="caption" text-anchor="middle">→ DP across 8 nodes · TP within nodes · PP across layer groups</text>
 
   <g transform="translate(150, 340)">
-    <rect fill="#F0F5EF" stroke="#7B9E89" stroke-width="1" x="0" y="0" width="180" height="55" rx="4"/>
+    <rect fill="#F0F5EF" stroke="#5F8573" stroke-width="1" x="0" y="0" width="180" height="55" rx="4"/>
     <text x="90" y="22" class="body" text-anchor="middle" font-weight="600">+ ZeRO stages 1/2/3</text>
     <text x="90" y="42" class="caption" text-anchor="middle">shard optimizer, gradients, weights</text>
   </g>
@@ -140,7 +140,7 @@
     <text x="90" y="42" class="caption" text-anchor="middle">recompute activations to save memory</text>
   </g>
   <g transform="translate(610, 340)">
-    <rect fill="#F7EED6" stroke="#C9A961" stroke-width="1" x="0" y="0" width="180" height="55" rx="4"/>
+    <rect fill="#F7EED6" stroke="#C9A14A" stroke-width="1" x="0" y="0" width="180" height="55" rx="4"/>
     <text x="90" y="22" class="body" text-anchor="middle" font-weight="600">+ bf16 / fp8 training</text>
     <text x="90" y="42" class="caption" text-anchor="middle">2× compute, 2× memory savings</text>
   </g>

@@ -1,17 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .patch    { fill:#EAD3C5; stroke:#D97757; stroke-width:0.8; }
-      .patch-m  { fill:#1F1F1E; stroke:none; }
-      .enc      { fill:#DCE3E6; stroke:#4A6670; stroke-width:1.4; rx:4; ry:4; }
-      .dec      { fill:#D8E3DE; stroke:#7B9E89; stroke-width:1.4; rx:4; ry:4; }
-      .ink      { stroke:#1F1F1E; fill:none; stroke-width:1.2; }
-      .mono     { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut      { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl      { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag      { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .patch    { fill:#EAD3C5; stroke:#B85A3E; stroke-width:0.8; }
+      .patch-m  { fill:#161513; stroke:none; }
+      .enc      { fill:#DCE3E6; stroke:#37535F; stroke-width:1.4; rx:4; ry:4; }
+      .dec      { fill:#D8E3DE; stroke:#5F8573; stroke-width:1.4; rx:4; ry:4; }
+      .ink      { stroke:#161513; fill:none; stroke-width:1.2; }
+      .mono     { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut      { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl      { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag      { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
-    <marker id="ma-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1F1F1E"/></marker>
+    <marker id="ma-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#161513"/></marker>
   </defs>
 
   <text x="480" y="28" text-anchor="middle" class="ttl">Masked Autoencoder (MAE) — mask 75% of patches, reconstruct from 25%</text>
@@ -56,7 +56,7 @@
 
   <!-- Masked (75% black) -->
   <g transform="translate(200, 80)">
-    <text x="60" y="-10" text-anchor="middle" class="tag" fill="#D97757">MASK 75% RANDOMLY</text>
+    <text x="60" y="-10" text-anchor="middle" class="tag" fill="#B85A3E">MASK 75% RANDOMLY</text>
     <g>
       <!-- Same 8x8 grid, ~75% masked -->
       <g transform="translate(0, 0)">
@@ -145,27 +145,27 @@
   <!-- Encoder: sees ONLY visible patches -->
   <g transform="translate(380, 120)">
     <rect class="enc" x="0" y="0" width="130" height="60"/>
-    <text x="65" y="22" text-anchor="middle" class="mono" fill="#4A6670" font-weight="600">Encoder (ViT)</text>
-    <text x="65" y="40" text-anchor="middle" class="mut" fill="#4A6670">only 25% visible</text>
-    <text x="65" y="56" text-anchor="middle" class="mut" fill="#4A6670">(fast!)</text>
+    <text x="65" y="22" text-anchor="middle" class="mono" fill="#37535F" font-weight="600">Encoder (ViT)</text>
+    <text x="65" y="40" text-anchor="middle" class="mut" fill="#37535F">only 25% visible</text>
+    <text x="65" y="56" text-anchor="middle" class="mut" fill="#37535F">(fast!)</text>
   </g>
 
   <!-- Decoder: sees encoded + mask tokens -->
   <g transform="translate(560, 120)">
     <rect class="dec" x="0" y="0" width="130" height="60"/>
-    <text x="65" y="22" text-anchor="middle" class="mono" fill="#7B9E89" font-weight="600">Decoder</text>
-    <text x="65" y="40" text-anchor="middle" class="mut" fill="#7B9E89">lightweight</text>
-    <text x="65" y="56" text-anchor="middle" class="mut" fill="#7B9E89">+ mask tokens</text>
+    <text x="65" y="22" text-anchor="middle" class="mono" fill="#5F8573" font-weight="600">Decoder</text>
+    <text x="65" y="40" text-anchor="middle" class="mut" fill="#5F8573">lightweight</text>
+    <text x="65" y="56" text-anchor="middle" class="mut" fill="#5F8573">+ mask tokens</text>
   </g>
 
   <!-- Reconstruction -->
   <g transform="translate(760, 80)">
-    <text x="60" y="-10" text-anchor="middle" class="tag" fill="#7B9E89">RECONSTRUCTION</text>
+    <text x="60" y="-10" text-anchor="middle" class="tag" fill="#5F8573">RECONSTRUCTION</text>
     <g opacity="0.85">
       <rect class="patch" x="0" y="0" width="120" height="120" fill="#EAD3C5" opacity="0.4"/>
-      <ellipse cx="60" cy="60" rx="36" ry="24" fill="#D97757" opacity="0.6"/>
-      <circle cx="50" cy="55" r="3" fill="#1F1F1E"/>
-      <circle cx="70" cy="55" r="3" fill="#1F1F1E"/>
+      <ellipse cx="60" cy="60" rx="36" ry="24" fill="#B85A3E" opacity="0.6"/>
+      <circle cx="50" cy="55" r="3" fill="#161513"/>
+      <circle cx="70" cy="55" r="3" fill="#161513"/>
     </g>
     <text x="60" y="138" text-anchor="middle" class="mono">ŷ</text>
     <text x="60" y="155" text-anchor="middle" class="mut">MSE loss on masked patches only</text>
@@ -183,7 +183,7 @@
     <rect x="0" y="0" width="840" height="60" fill="#EEEBDF" stroke="#C9C4B5"/>
     <text x="14" y="22" class="tag">KEY INSIGHT</text>
     <text x="14" y="42" class="mut">
-      Masking 75% (aggressive!) forces the encoder to learn <tspan fill="#1F1F1E" font-weight="600">semantic</tspan> features, not pixel-level cues.
+      Masking 75% (aggressive!) forces the encoder to learn <tspan fill="#161513" font-weight="600">semantic</tspan> features, not pixel-level cues.
     </text>
     <text x="14" y="58" class="mut" font-style="italic">
       He et al. 2021 · ViT-Huge MAE pretraining matches supervised ImageNet on downstream tasks. Used in DINOv2, video understanding.

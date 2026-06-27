@@ -1,25 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .axis  { stroke:#1F1F1E; stroke-width:1.2; fill:none; }
+      .axis  { stroke:#161513; stroke-width:1.2; fill:none; }
       .grid  { stroke:#C9C4B5; stroke-width:0.5; opacity:0.5; }
       .arith { stroke:#A8324B; stroke-width:2.4; fill:none; }
-      .code  { stroke:#D97757; stroke-width:2.4; fill:none; }
-      .ctx   { stroke:#7B9E89; stroke-width:2.4; fill:none; }
-      .cot   { stroke:#4A6670; stroke-width:2.4; fill:none; }
-      .tool  { stroke:#C9A961; stroke-width:2.4; fill:none; }
-      .thresh{ stroke:#6B6A65; stroke-dasharray:3 2; stroke-width:1; }
-      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .code  { stroke:#B85A3E; stroke-width:2.4; fill:none; }
+      .ctx   { stroke:#5F8573; stroke-width:2.4; fill:none; }
+      .cot   { stroke:#37535F; stroke-width:2.4; fill:none; }
+      .tool  { stroke:#C9A14A; stroke-width:2.4; fill:none; }
+      .thresh{ stroke:#5F5C54; stroke-dasharray:3 2; stroke-width:1; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut   { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
   </defs>
 
   <text x="480" y="28" text-anchor="middle" class="ttl">Emergent abilities · capabilities appear sharply at scale, not gradually</text>
 
   <g transform="translate(80, 70)">
-    <rect x="0" y="0" width="720" height="240" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <rect x="0" y="0" width="720" height="240" fill="#F7F3E9" stroke="#C9C4B5"/>
 
     <g class="grid">
       <line x1="0" y1="60"  x2="720" y2="60"/>
@@ -41,9 +41,9 @@
     <text x="360" y="278" text-anchor="middle" class="mut">log model parameters →</text>
 
     <!-- Y axis -->
-    <text x="-8" y="5"   text-anchor="end" class="mono" fill="#6B6A65">100%</text>
-    <text x="-8" y="125" text-anchor="end" class="mono" fill="#6B6A65">50%</text>
-    <text x="-8" y="242" text-anchor="end" class="mono" fill="#6B6A65">0%</text>
+    <text x="-8" y="5"   text-anchor="end" class="mono" fill="#5F5C54">100%</text>
+    <text x="-8" y="125" text-anchor="end" class="mono" fill="#5F5C54">50%</text>
+    <text x="-8" y="242" text-anchor="end" class="mono" fill="#5F5C54">0%</text>
     <text x="-30" y="125" transform="rotate(-90 -30 125)" text-anchor="middle" class="mut">task accuracy →</text>
 
     <!-- Arithmetic emerges ~13B -->
@@ -52,25 +52,25 @@
 
     <!-- Code generation ~13B -->
     <path class="code" d="M 0 239 L 144 237 L 220 230 L 270 215 L 320 170 L 380 80 L 450 40 L 720 18"/>
-    <text x="450" y="60" class="mono" fill="#D97757">code gen</text>
+    <text x="450" y="60" class="mono" fill="#B85A3E">code gen</text>
 
     <!-- In-context learning ~50B -->
     <path class="ctx" d="M 0 238 L 144 237 L 200 233 L 260 225 L 330 205 L 400 165 L 450 110 L 510 50 L 720 20"/>
-    <text x="510" y="75" class="mono" fill="#7B9E89">few-shot ICL</text>
+    <text x="510" y="75" class="mono" fill="#5F8573">few-shot ICL</text>
 
     <!-- Chain of thought ~60B -->
     <path class="cot" d="M 0 239 L 144 238 L 200 235 L 290 227 L 360 215 L 420 190 L 470 140 L 540 70 L 720 25"/>
-    <text x="560" y="105" class="mono" fill="#4A6670">chain-of-thought</text>
+    <text x="560" y="105" class="mono" fill="#37535F">chain-of-thought</text>
 
     <!-- Tool use ~70B+ -->
     <path class="tool" d="M 0 239 L 144 238 L 200 237 L 310 232 L 400 220 L 470 200 L 520 150 L 580 80 L 720 30"/>
-    <text x="620" y="140" class="mono" fill="#C9A961">tool use</text>
+    <text x="620" y="140" class="mono" fill="#C9A14A">tool use</text>
   </g>
 
   <!-- Caption -->
   <g transform="translate(80, 345)">
     <text x="360" y="0" text-anchor="middle" class="mut" font-style="italic">
-      Below ~10B params · all abilities at near-random. Above ~50B · each ability <tspan fill="#D97757" font-weight="600">"turns on"</tspan> over ~2× in scale.
+      Below ~10B params · all abilities at near-random. Above ~50B · each ability <tspan fill="#B85A3E" font-weight="600">"turns on"</tspan> over ~2× in scale.
     </text>
   </g>
 </svg>

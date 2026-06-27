@@ -1,19 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Work Sans, system-ui, sans-serif">
   <style>
-    .bg { fill: #F0EEE5; }
-    .ink { fill: #1F1F1E; }
-    .muted { fill: #6B6B69; }
-    .rust { fill: #D97757; stroke: #D97757; }
-    .sage { fill: #7B9E89; stroke: #7B9E89; }
-    .slate { fill: #4A6670; stroke: #4A6670; }
+    .bg { fill: #F7F3E9; }
+    .ink { fill: #161513; }
+    .muted { fill: #5F5C54; }
+    .rust { fill: #B85A3E; stroke: #B85A3E; }
+    .sage { fill: #5F8573; stroke: #5F8573; }
+    .slate { fill: #37535F; stroke: #37535F; }
     .title { font-size: 17px; font-weight: 600; }
     .subtitle { font-size: 13px; font-weight: 500; }
     .body { font-size: 12px; }
-    .caption { font-size: 11px; fill: #6B6B69; }
-    .box { fill: white; stroke: #4A6670; stroke-width: 1.3; }
-    .rustbox { fill: #FFF3EE; stroke: #D97757; stroke-width: 1.5; }
-    .sagebox { fill: #F0F5EF; stroke: #7B9E89; stroke-width: 1.5; }
-    .arrow { stroke: #1F1F1E; stroke-width: 1.5; fill: none; }
+    .caption { font-size: 11px; fill: #5F5C54; }
+    .box { fill: white; stroke: #37535F; stroke-width: 1.3; }
+    .rustbox { fill: #FFF3EE; stroke: #B85A3E; stroke-width: 1.5; }
+    .sagebox { fill: #F0F5EF; stroke: #5F8573; stroke-width: 1.5; }
+    .arrow { stroke: #161513; stroke-width: 1.5; fill: none; }
   </style>
   <rect class="bg" width="960" height="400"/>
 
@@ -36,9 +36,9 @@
   <!-- Middle arena -->
   <rect class="box" x="300" y="75" width="360" height="130" rx="8" fill="white" opacity="0.95"/>
   <text x="480" y="105" class="ink subtitle" text-anchor="middle">Game arena</text>
-  <text x="480" y="130" class="body" text-anchor="middle" fill="#4A6670">D sees batch of {real, fake}</text>
-  <text x="480" y="150" class="body" text-anchor="middle" fill="#4A6670">assigns probabilities</text>
-  <text x="480" y="180" class="body" text-anchor="middle" font-style="italic" fill="#1F1F1E">
+  <text x="480" y="130" class="body" text-anchor="middle" fill="#37535F">D sees batch of {real, fake}</text>
+  <text x="480" y="150" class="body" text-anchor="middle" fill="#37535F">assigns probabilities</text>
+  <text x="480" y="180" class="body" text-anchor="middle" font-style="italic" fill="#161513">
     min<tspan baseline-shift="sub" font-size="9">G</tspan> max<tspan baseline-shift="sub" font-size="9">D</tspan>  V(G, D)
   </text>
 
@@ -65,7 +65,7 @@
 
   <defs>
     <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-      <polygon points="0 0, 8 4, 0 8" fill="#1F1F1E"/>
+      <polygon points="0 0, 8 4, 0 8" fill="#161513"/>
     </marker>
     <marker id="wine" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
       <polygon points="0 0, 8 4, 0 8" fill="#A8324B"/>

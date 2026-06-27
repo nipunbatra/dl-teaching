@@ -1,23 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .axis   { stroke:#1F1F1E; stroke-width:1.2; fill:none; }
+      .axis   { stroke:#161513; stroke-width:1.2; fill:none; }
       .grid   { stroke:#C9C4B5; stroke-width:0.5; opacity:0.5; }
       .linear { stroke:#A8324B; stroke-width:2.4; fill:none; }
-      .cosine { stroke:#7B9E89; stroke-width:2.4; fill:none; }
+      .cosine { stroke:#5F8573; stroke-width:2.4; fill:none; }
       .fill-l { fill:#F6D4CC; opacity:0.3; }
       .fill-c { fill:#D8E3DE; opacity:0.35; }
-      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut    { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
   </defs>
 
   <text x="480" y="28" text-anchor="middle" class="ttl">Noise schedules · linear corrupts too fast early; cosine spreads it evenly</text>
 
   <g transform="translate(80, 70)">
-    <rect x="0" y="0" width="800" height="240" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <rect x="0" y="0" width="800" height="240" fill="#F7F3E9" stroke="#C9C4B5"/>
 
     <g class="grid">
       <line x1="0" y1="60"  x2="800" y2="60"/>
@@ -32,9 +32,9 @@
     <line x1="0" y1="0" x2="0" y2="240" class="axis"/>
 
     <!-- Y-axis labels -->
-    <text x="-8" y="5"   text-anchor="end" class="mono" fill="#6B6A65">1.0</text>
-    <text x="-8" y="125" text-anchor="end" class="mono" fill="#6B6A65">0.5</text>
-    <text x="-8" y="243" text-anchor="end" class="mono" fill="#6B6A65">0.0</text>
+    <text x="-8" y="5"   text-anchor="end" class="mono" fill="#5F5C54">1.0</text>
+    <text x="-8" y="125" text-anchor="end" class="mono" fill="#5F5C54">0.5</text>
+    <text x="-8" y="243" text-anchor="end" class="mono" fill="#5F5C54">0.0</text>
 
     <!-- Linear schedule α̅_t: drops off fast early then levels -->
     <!-- formula: cumulative product of (1-beta_t) with linear beta 1e-4 to 0.02 -->
@@ -45,7 +45,7 @@
 
     <!-- Legends -->
     <text x="170" y="150" class="mono" fill="#A8324B" font-weight="600">linear</text>
-    <text x="250" y="60"  class="mono" fill="#7B9E89" font-weight="600">cosine</text>
+    <text x="250" y="60"  class="mono" fill="#5F8573" font-weight="600">cosine</text>
 
     <!-- axis labels -->
     <text x="400" y="268" text-anchor="middle" class="mut">timestep t →  (0 to 1000)</text>
@@ -58,9 +58,9 @@
     <text x="14" y="22" class="tag">KEY VALUES</text>
     <text x="14" y="44" class="mono" font-size="10">t=0    · α̅=1.000 (clean)</text>
     <text x="14" y="60" class="mono" font-size="10" fill="#A8324B">t=250  · linear 0.62</text>
-    <text x="14" y="72" class="mono" font-size="10" fill="#7B9E89">       · cosine 0.82</text>
+    <text x="14" y="72" class="mono" font-size="10" fill="#5F8573">       · cosine 0.82</text>
     <text x="14" y="92" class="mono" font-size="10" fill="#A8324B">t=500  · linear 0.17</text>
-    <text x="14" y="104" class="mono" font-size="10" fill="#7B9E89">       · cosine 0.50</text>
+    <text x="14" y="104" class="mono" font-size="10" fill="#5F8573">       · cosine 0.50</text>
   </g>
 
   <!-- Bottom caption -->

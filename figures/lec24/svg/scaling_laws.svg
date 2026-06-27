@@ -1,17 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Work Sans, system-ui, sans-serif">
   <style>
-    .bg { fill: #F0EEE5; }
-    .ink { fill: #1F1F1E; }
-    .muted { fill: #6B6B69; }
-    .rust { stroke: #D97757; fill: none; stroke-width: 2.2; }
-    .sage { stroke: #7B9E89; fill: none; stroke-width: 2.2; }
-    .slate { stroke: #4A6670; fill: none; stroke-width: 2.2; }
+    .bg { fill: #F7F3E9; }
+    .ink { fill: #161513; }
+    .muted { fill: #5F5C54; }
+    .rust { stroke: #B85A3E; fill: none; stroke-width: 2.2; }
+    .sage { stroke: #5F8573; fill: none; stroke-width: 2.2; }
+    .slate { stroke: #37535F; fill: none; stroke-width: 2.2; }
     .title { font-size: 17px; font-weight: 600; }
     .subtitle { font-size: 13px; }
     .label { font-size: 12px; }
-    .tick { font-size: 11px; fill: #6B6B69; }
-    .caption { font-size: 12px; fill: #6B6B69; }
-    .axis { stroke: #1F1F1E; stroke-width: 1.2; fill: none; }
+    .tick { font-size: 11px; fill: #5F5C54; }
+    .caption { font-size: 12px; fill: #5F5C54; }
+    .axis { stroke: #161513; stroke-width: 1.2; fill: none; }
     .grid { stroke: #CFCBBE; stroke-width: 0.5; fill: none; }
   </style>
   <rect class="bg" width="960" height="400"/>
@@ -27,11 +27,11 @@
       <line x1="0" y1="200" x2="260" y2="200"/>
     </g>
     <text x="130" y="-5" class="ink subtitle" text-anchor="middle">Compute</text>
-    <text x="130" y="275" class="label" text-anchor="middle" fill="#6B6B69">log FLOPs →</text>
-    <text x="-15" y="130" class="label" transform="rotate(-90, -15, 130)" text-anchor="middle" fill="#6B6B69">log loss</text>
+    <text x="130" y="275" class="label" text-anchor="middle" fill="#5F5C54">log FLOPs →</text>
+    <text x="-15" y="130" class="label" transform="rotate(-90, -15, 130)" text-anchor="middle" fill="#5F5C54">log loss</text>
     <!-- power law curve -->
     <path class="rust" d="M 10 30 Q 80 90 160 150 T 250 210"/>
-    <text x="145" y="50" class="caption" fill="#D97757">L ∝ C^-0.05</text>
+    <text x="145" y="50" class="caption" fill="#B85A3E">L ∝ C^-0.05</text>
   </g>
 
   <!-- Panel 2: data -->
@@ -44,9 +44,9 @@
       <line x1="0" y1="200" x2="260" y2="200"/>
     </g>
     <text x="130" y="-5" class="ink subtitle" text-anchor="middle">Data</text>
-    <text x="130" y="275" class="label" text-anchor="middle" fill="#6B6B69">log tokens →</text>
+    <text x="130" y="275" class="label" text-anchor="middle" fill="#5F5C54">log tokens →</text>
     <path class="sage" d="M 10 30 Q 80 95 160 155 T 250 215"/>
-    <text x="145" y="50" class="caption" fill="#7B9E89">L ∝ D^-0.10</text>
+    <text x="145" y="50" class="caption" fill="#5F8573">L ∝ D^-0.10</text>
   </g>
 
   <!-- Panel 3: params -->
@@ -59,13 +59,13 @@
       <line x1="0" y1="200" x2="260" y2="200"/>
     </g>
     <text x="130" y="-5" class="ink subtitle" text-anchor="middle">Parameters</text>
-    <text x="130" y="275" class="label" text-anchor="middle" fill="#6B6B69">log params →</text>
+    <text x="130" y="275" class="label" text-anchor="middle" fill="#5F5C54">log params →</text>
     <path class="slate" d="M 10 30 Q 80 100 160 160 T 250 220"/>
-    <text x="145" y="50" class="caption" fill="#4A6670">L ∝ N^-0.08</text>
+    <text x="145" y="50" class="caption" fill="#37535F">L ∝ N^-0.08</text>
   </g>
 
   <!-- Takeaway at bottom -->
-  <rect x="60" y="345" width="840" height="42" rx="6" fill="#FFF3EE" stroke="#D97757" stroke-width="1"/>
+  <rect x="60" y="345" width="840" height="42" rx="6" fill="#FFF3EE" stroke="#B85A3E" stroke-width="1"/>
   <text x="480" y="372" class="ink label" text-anchor="middle">
     Three straight lines on a log-log plot · loss is <tspan font-style="italic">predictable</tspan> from compute budget alone (Kaplan 2020, Chinchilla 2022)
   </text>

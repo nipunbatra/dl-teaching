@@ -1,13 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .box    { fill:#F0EEE5; stroke:#1F1F1E; stroke-width:1; }
-      .axis   { stroke:#1F1F1E; stroke-width:1; fill:none; }
-      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut    { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl    { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag    { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
-      .digit  { stroke:#1F1F1E; fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+      .box    { fill:#F7F3E9; stroke:#161513; stroke-width:1; }
+      .axis   { stroke:#161513; stroke-width:1; fill:none; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut    { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl    { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag    { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .digit  { stroke:#161513; fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
     </style>
   </defs>
 
@@ -63,7 +63,7 @@
 
   <!-- Latent space view (bottom) -->
   <g transform="translate(40, 250)">
-    <rect x="0" y="0" width="880" height="100" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <rect x="0" y="0" width="880" height="100" fill="#F7F3E9" stroke="#C9C4B5"/>
 
     <text x="14" y="22" class="tag">LATENT SPACE (2D projection)</text>
 
@@ -71,23 +71,23 @@
     <line x1="40" y1="70" x2="840" y2="70" class="axis"/>
 
     <!-- z_7 marker -->
-    <circle cx="120" cy="70" r="8" fill="#D97757"/>
-    <text x="120" y="95" text-anchor="middle" class="mono" fill="#D97757">z₇</text>
+    <circle cx="120" cy="70" r="8" fill="#B85A3E"/>
+    <text x="120" y="95" text-anchor="middle" class="mono" fill="#B85A3E">z₇</text>
 
     <!-- z_2 marker -->
-    <circle cx="760" cy="70" r="8" fill="#7B9E89"/>
-    <text x="760" y="95" text-anchor="middle" class="mono" fill="#7B9E89">z₂</text>
+    <circle cx="760" cy="70" r="8" fill="#5F8573"/>
+    <text x="760" y="95" text-anchor="middle" class="mono" fill="#5F8573">z₂</text>
 
     <!-- interpolation path -->
-    <line x1="128" y1="70" x2="752" y2="70" stroke="#4A6670" stroke-width="1.5" stroke-dasharray="5 3"/>
+    <line x1="128" y1="70" x2="752" y2="70" stroke="#37535F" stroke-width="1.5" stroke-dasharray="5 3"/>
 
     <!-- intermediate sample points -->
-    <circle cx="220" cy="70" r="4" fill="#4A6670"/>
-    <circle cx="320" cy="70" r="4" fill="#4A6670"/>
-    <circle cx="420" cy="70" r="4" fill="#4A6670"/>
-    <circle cx="520" cy="70" r="4" fill="#4A6670"/>
-    <circle cx="620" cy="70" r="4" fill="#4A6670"/>
-    <circle cx="720" cy="70" r="4" fill="#4A6670"/>
+    <circle cx="220" cy="70" r="4" fill="#37535F"/>
+    <circle cx="320" cy="70" r="4" fill="#37535F"/>
+    <circle cx="420" cy="70" r="4" fill="#37535F"/>
+    <circle cx="520" cy="70" r="4" fill="#37535F"/>
+    <circle cx="620" cy="70" r="4" fill="#37535F"/>
+    <circle cx="720" cy="70" r="4" fill="#37535F"/>
 
     <text x="440" y="50" text-anchor="middle" class="mut" font-style="italic">smooth, continuous latent space · every α gives a valid decoded digit</text>
   </g>

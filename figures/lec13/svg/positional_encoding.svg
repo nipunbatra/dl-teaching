@@ -1,12 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="Fraunces, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
-      .axis  { stroke:#1F1F1E; stroke-width:1; fill:none; }
+      .axis  { stroke:#161513; stroke-width:1; fill:none; }
       .cell  { stroke:none; }
-      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#1F1F1E; }
-      .mut   { fill:#6B6A65; font-size:11px; font-family:Inter, sans-serif; }
-      .ttl   { fill:#1F1F1E; font-size:15px; font-weight:600; font-style:italic; }
-      .tag   { fill:#6B6A65; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .mono  { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
+      .mut   { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .ttl   { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
+      .tag   { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
   </defs>
 
@@ -15,7 +15,7 @@
   <!-- LEFT: heatmap of PE matrix (pos x dim) -->
   <g transform="translate(60, 80)">
     <text x="200" y="-10" text-anchor="middle" class="tag">PE[pos, 2i] = sin(pos / 10000^{2i/d})</text>
-    <rect x="0" y="0" width="400" height="240" fill="#F0EEE5" stroke="#C9C4B5"/>
+    <rect x="0" y="0" width="400" height="240" fill="#F7F3E9" stroke="#C9C4B5"/>
 
     <!-- Simulate: rows=pos (20), cols=dim (16). Render with sin/cos coloring.
          For each cell, opacity based on sin(pos / 10000^{2i/d}) mapping to shade -->
@@ -126,7 +126,7 @@
   <g transform="translate(60, 360)">
     <text x="420" y="0" text-anchor="middle" class="mut" font-style="italic">
       Low-index dims (left) oscillate fast; high-index dims (right) are almost constant. Think of it as a
-      <tspan fill="#D97757" font-weight="600">multi-resolution clock</tspan> — minute hand, hour hand, day-of-week, week-of-year.
+      <tspan fill="#B85A3E" font-weight="600">multi-resolution clock</tspan> — minute hand, hour hand, day-of-week, week-of-year.
     </text>
   </g>
 </svg>
