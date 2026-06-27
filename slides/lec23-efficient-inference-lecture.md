@@ -533,10 +533,10 @@ Image of a cat. Classes [Cat, Dog, Car].
 **$T = 1$.** softmax($z_t$) = $[0.999, 0.0003, 0.0001]$. **Almost no dark knowledge** — student barely learns relative class structure.
 
 **$T = 4$.** Soften logits: $z_t/4 = [2.5, 0.5, 0.25]$, $z_s/4 = [1.25, 0.375, 0.25]$.
-- Soft teacher · softmax($z_t/4$) ≈ $[0.88, 0.08, 0.04]$
-- Soft student · softmax($z_s/4$) ≈ $[0.68, 0.17, 0.15]$
+- Soft teacher · softmax($z_t/4$) ≈ $[0.81, 0.11, 0.08]$
+- Soft student · softmax($z_s/4$) ≈ $[0.56, 0.23, 0.21]$
 
-Now the student learns: increase Cat, decrease Dog and Car, **but keep Dog about 2× Car**. Rich nuanced signal that pure hard-labels would miss.
+Now the student learns: increase Cat, decrease Dog and Car, **but keep Dog slightly above Car**. Rich nuanced signal that pure hard-labels would miss.
 
 ---
 
