@@ -367,7 +367,7 @@ Cell holds a **dog** (class index 2).
 **Prediction.** $\hat{\mathbf{b}} = [0.6, 0.4, 0.25, 0.31]$. Objectness 0.85. Probs $[0.1, 0.2, 0.6, 0.1, \ldots]$.
 
 **Components.**
-- $\mathcal{L}_\text{box} = (0.6-0.5)^2 + (0.4-0.5)^2 + (0.25-0.2)^2 + (0.31-0.3)^2 = 0.01 + 0.01 + 0.0025 + 0.0001 \approx 0.023$
+- $\mathcal{L}_\text{box} = (0.6-0.5)^2 + (0.4-0.5)^2 + (\sqrt{0.25}-\sqrt{0.2})^2 + (\sqrt{0.31}-\sqrt{0.3})^2 = 0.01 + 0.01 + 0.0028 + 0.0001 \approx 0.023$ (the $\sqrt{\cdot}$ on $w,h$ matches the formula above)
 - $\mathcal{L}_\text{obj} = -\log(0.85) \approx 0.16$
 - $\mathcal{L}_\text{class} = -\log(0.6) \approx 0.51$
 
@@ -414,14 +414,14 @@ $b_w = w_a \cdot \exp(t_w),\quad b_h = h_a \cdot \exp(t_h)$
 
 | Detector | mAP (COCO) | FPS (V100) | Notes |
 |:-:|:-:|:-:|:-:|
-| Faster R-CNN | 42 | ~5 | accuracy king, slow |
+| Faster R-CNN | 42 | ~5 | classic two-stage baseline, slow |
 | YOLOv8-m | 50 | ~250 | production default |
 | DETR | 44 | ~30 | elegant, data-hungry |
 | RT-DETR | 53 | ~100 | real-time Transformer-based |
 
 <div class="insight">
 
-Choose by constraint · real-time camera feed → YOLO. Labeled-data poor → DETR with good augmentations. Highest accuracy → large backbone + Faster R-CNN variant. There is no universally-best detector.
+Choose by constraint · real-time camera feed → YOLO. Labeled-data poor → a **pretrained** YOLO / Faster R-CNN (DETR is data-hungry). Highest accuracy → a large-backbone detector (e.g. RT-DETR, top of this table at 53). There is no universally-best detector.
 
 </div>
 
@@ -435,7 +435,7 @@ Choose by constraint · real-time camera feed → YOLO. Labeled-data poor → DE
 | YOLOv3 | 2018 | multi-scale predictions, anchor clustering |
 | YOLOv5 | 2020 | mosaic augmentation, practical toolkit |
 | YOLOv8 | 2023 | anchor-free, efficient |
-| **YOLOv11** | **2024** | current production default |
+| **YOLOv11** | **2024** | widely-used production default |
 
 <div class="realworld">
 
@@ -644,7 +644,7 @@ SAM changed segmentation the way CLIP changed classification — you don't need 
 
 <div class="realworld">
 
-Current practice: for most segmentation tasks, start with SAM-2 and fine-tune only if the domain is truly specialized (medical, satellite). Two caveats · SAM returns **masks, not labels** (pair it with CLIP or a classifier for semantics), and mask quality is **prompt-sensitive** on niche domains.
+Current practice: for most segmentation tasks, start with the latest **Segment Anything (SAM)** model and fine-tune only if the domain is truly specialized (medical, satellite). Two caveats · SAM returns **masks, not labels** (pair it with CLIP or a classifier for semantics), and mask quality is **prompt-sensitive** on niche domains.
 
 </div>
 
@@ -671,7 +671,7 @@ The open-vocabulary goal · build a **universal translator** that understands co
 **How open-vocab detectors use this:**
 1. User provides a text prompt — e.g. "a red bicycle".
 2. Model computes the **text embedding** via CLIP's text encoder.
-3. Model processes the image with a CNN → spatial features.
+3. Model processes the image with a **vision backbone (CNN or ViT)** → spatial features.
 4. **Search** the image for regions whose embeddings are close to the text embedding.
 5. Match → draw a box.
 

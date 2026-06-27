@@ -133,7 +133,7 @@ $(3 \cdot 3 \cdot 256) \cdot 256 = 2304 \cdot 256 = \mathbf{589{,}824}$ params.
 
 Total: $16{,}384 + 36{,}864 + 16{,}384 = \mathbf{69{,}632}$ params.
 
-Ratio: $589{,}824 / 69{,}632 \approx 8.47$ → **~8.5× cheaper.** Same input/output shape, three quarters less computation.
+Ratio: $589{,}824 / 69{,}632 \approx 8.47$ → **~8.5× cheaper.** Same input/output shape, ~88% less computation.
 
 ---
 
@@ -217,7 +217,7 @@ When a new block isn't useful yet, residual = 0 is the easiest thing to learn �
 
 <div class="insight">
 
-**Adding blocks can only improve or at worst no-op**, never hurt. Before ResNet, adding layers to a working network often made it worse (degradation problem). After ResNet, deeper ≥ shallower — you just keep adding.
+**Adding blocks can represent identity easily**, so deeper networks stopped getting *worse* (the pre-ResNet degradation problem) — though deeper isn't *guaranteed* better. Before ResNet, adding layers to a working network often made it worse. After ResNet, the optimizer can at least fall back to a no-op, so you can keep adding depth without the collapse.
 
 </div>
 
@@ -368,7 +368,7 @@ Input `(14, 14, 16)` → Output `(14, 14, 32)`, kernel 3×3.
 
 # Why edge models care about FLOPs
 
-A phone has ~10 W total power; a datacenter GPU draws 300 W just to idle. Efficient nets let you run:
+A phone has ~10 W total power; a datacenter GPU draws hundreds of watts under load. Efficient nets let you run:
 
 | Model | FLOPs | iPhone inference |
 |:-:|:-:|:-:|
@@ -390,7 +390,7 @@ Real-time on-device tasks (camera AR, live caption, wake-word) need ≤30 ms bud
 |-------|------|----------|
 | MobileNet v1 | 2017 | Depthwise separable + width multiplier |
 | MobileNet v2 | 2018 | Inverted residuals + linear bottlenecks |
-| MobileNet v3 | 2019 | Neural-architecture-search + SiLU |
+| MobileNet v3 | 2019 | Neural-architecture-search + hard-swish + SE |
 | EfficientNet-B0 | 2019 | Compound scaling foundation |
 
 ---
@@ -438,7 +438,7 @@ EfficientNet's insight · the same is true of neural networks. Depth, width, and
 Define a single scaling knob $\phi$. Choose constants $\alpha, \beta, \gamma$ once via grid search.
 
 $$\text{depth } d = \alpha^\phi,\quad \text{width } w = \beta^\phi,\quad \text{resolution } r = \gamma^\phi$$
-subject to $\alpha \cdot \beta^2 \cdot \gamma^2 \approx 2$ (so doubling $\phi$ doubles compute).
+subject to $\alpha \cdot \beta^2 \cdot \gamma^2 \approx 2$ (so each $+1$ in $\phi$ doubles compute).
 
 For EfficientNet-B0..B7, the paper found roughly $\alpha = 1.2,\ \beta = 1.1,\ \gamma = 1.15$.
 
