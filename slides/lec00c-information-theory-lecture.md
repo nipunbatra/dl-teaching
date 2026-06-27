@@ -342,7 +342,7 @@ $$H(P,Q) = -\sum_y p(y)\,\log q(y)$$
 
 </div>
 
-You pay $-\log q(y)$ per symbol (your code's length), but symbols *arrive* with frequency $p(y)$.
+You pay $-\log q(y)$ per symbol (your code's length), but symbols *arrive* with frequency $p(y)$. Here $p$ = the **true** real-world probability, $q$ = your **model's predicted** probability for the same event.
 
 ---
 
@@ -490,6 +490,8 @@ Which direction you minimize is a **modelling choice** with different behaviour 
 
 Same bimodal target. Forward KL spreads across both modes (why **VAE samples blur**); reverse KL locks onto one (why **GANs mode-collapse**). Knowing your loss's KL direction predicts its failure mode.
 
+*These ideas carry over unchanged to the continuous distributions in VAEs/GANs (L19–L20) — sums become integrals, the mode-covering vs mode-seeking behaviour is identical.*
+
 ---
 
 <!-- _class: section-divider -->
@@ -542,9 +544,31 @@ So the classification **cross-entropy loss IS** the KL to the true label, which 
 
 ---
 
+# Classification loss · worked over 5 examples
+
+A 3-class problem (cat / dog / fish). Each label is one-hot, so its entropy is 0 and **per-example loss = surprise at the truth = $-\log_2 Q(\text{true})$** ·
+
+<div class="math-box">
+
+| true | model $Q$ (cat, dog, fish) | $-\log_2 Q(\text{true})$ |
+|:-:|:-:|:-:|
+| cat | $(0.7,\ 0.2,\ 0.1)$ | $0.51$ bits |
+| dog | $(0.3,\ 0.4,\ 0.3)$ | $1.32$ bits |
+| cat | $(0.6,\ 0.3,\ 0.1)$ | $0.74$ bits |
+| fish | $(0.1,\ 0.1,\ 0.8)$ | $0.32$ bits |
+| dog | $(0.1,\ 0.8,\ 0.1)$ | $0.32$ bits |
+
+**Training loss = average** $= \dfrac{0.51+1.32+0.74+0.32+0.32}{5} = \mathbf{0.64}$ bits.
+
+</div>
+
+That single number is the cross-entropy loss your optimizer minimizes — and it is the average KL from each one-hot truth to the model. The confident-wrong row (dog at $Q=0.4$) dominates.
+
+---
+
 # MLE = minimizing KL to the data
 
-Treat the training set as the **empirical distribution** $\hat p_{\text{data}}$ (a histogram). Then ·
+Treat the training set as the **empirical distribution** $\hat p_{\text{data}}$ (a histogram). Maximum likelihood pulls the model onto it ·
 
 <div class="math-box">
 
@@ -552,7 +576,9 @@ $$\arg\max_\theta \tfrac1N\sum_i \log p_\theta(y_i) = \arg\min_\theta\, \text{KL
 
 </div>
 
-**Maximum likelihood = make the model as KL-close as possible to the data distribution.** Every classifier you have trained with cross-entropy has been silently minimizing this KL.
+![w:720px](figures/lec00c/svg/mle_kl_fit.svg)
+
+**Make the model as KL-close as possible to the data.** Every classifier you've trained with cross-entropy has been silently doing this.
 
 ---
 

@@ -191,6 +191,31 @@ def naive_vs_optimal_code():
     save(fig, "naive_vs_optimal_code.svg")
 
 
+# ---- 7. MLE = fit the model distribution to the data (minimize KL) ----------
+def mle_kl_fit():
+    rng = np.random.default_rng(11)
+    data = np.concatenate([rng.normal(-1.2, 0.6, 320), rng.normal(1.4, 0.7, 220)])
+    x = np.linspace(-4, 4, 300)
+    mu, sd = data.mean(), data.std()
+    good = np.exp(-(x - mu)**2 / (2 * sd**2)) / (sd * np.sqrt(2 * np.pi))
+    bad = np.exp(-(x + 2.5)**2 / (2 * 0.7**2)) / (0.7 * np.sqrt(2 * np.pi))
+
+    fig, ax = plt.subplots(figsize=(8.6, 4.4))
+    ax.hist(data, bins=30, density=True, color=SAGE_FILL, edgecolor=MUTED, lw=0.4,
+            alpha=0.85, label=r"data histogram  $\hat p_{\mathrm{data}}$")
+    ax.plot(x, bad, color=SLATE, lw=2.0, ls="--", label=r"$p_\theta$ before training (big KL)")
+    ax.plot(x, good, color=RUST, lw=2.6, label=r"$p_\theta$ after training (small KL)")
+    ax.annotate(r"training shapes $p_\theta$ to" "\n" r"minimize KL$(\hat p_{\mathrm{data}}\,\|\,p_\theta)$",
+                xy=(mu, good.max() * 0.55), xytext=(1.5, 0.34), color=INK, fontsize=10.5,
+                arrowprops=dict(arrowstyle="-|>", color=RUST, lw=1.2))
+    ax.set_xlabel("y"); ax.set_ylabel("density")
+    ax.legend(frameon=False, fontsize=10, loc="upper left")
+    ax.set_title("MLE = fit the model distribution to the data distribution",
+                 fontsize=13, loc="left", color=INK, pad=10)
+    _clean(ax)
+    save(fig, "mle_kl_fit.svg")
+
+
 if __name__ == "__main__":
     print("Generating lec00c figures...")
     info_content()
@@ -199,4 +224,5 @@ if __name__ == "__main__":
     dice_scoring()
     entropy_samples()
     naive_vs_optimal_code()
+    mle_kl_fit()
     print("Done.")
