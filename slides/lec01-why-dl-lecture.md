@@ -546,7 +546,7 @@ For classification the output should be $K$ **raw logits**. `nn.CrossEntropyLoss
 
 <div class="warning">
 
-Symptom to memorize · training loss stuck near **2.30** and refusing to move.
+Symptom to memorize · training loss stuck high near **2.30**, unable to approach 0 (the double softmax caps how confident the model can get).
 **Why 2.30?** A model that has learned nothing predicts uniform $\tfrac{1}{10}$ over 10 classes, so the loss is $-\ln\tfrac{1}{10} = \ln 10 \approx 2.30$ (CE uses natural log).
 
 ✗ wrong · `nn.Softmax()` in `forward` **and** `CrossEntropyLoss`  ·  ✓ right · last layer outputs **raw logits**, loss applies log-softmax itself.
@@ -755,7 +755,7 @@ Loss in hand. Now · who's to blame, and by how much?
 - $\delta_1 = \partial L/\partial h \cdot \sigma'(z_1) = -0.2510 \cdot 0.5498 \cdot 0.4502 \approx -0.0621$
 - $\partial L/\partial w_1 = \delta_1 \cdot x = -0.0621 \cdot 0.5 \approx -0.0311$
 
-**Update** · $w_1 \to 0.4155,\ w_2 \to 0.7150$.
+**Update** (biases held fixed for this trace) · $w_1 \to 0.4155,\ w_2 \to 0.7150$.
 
 **Forward at step 1** · $\hat y \approx 0.5974$, $L \approx 0.5152$ — **loss dropped** ✓
 

@@ -962,7 +962,7 @@ Factor of 2 compensates the ReLU halving.
 
 **Naive init** $W \sim \mathcal{N}(0, 1)$ (no scaling) ·
 - Each layer · $\text{Var}(z) = n_\text{in} \cdot \text{Var}(W) \cdot \text{Var}(x) = 512 \cdot 1 \cdot 1 = 512$.
-- After ReLU · $\approx 256$.
+- After ReLU · second moment $E[x^2] \approx 256$ (ReLU zeros the negative half → halves it; this is what propagates).
 - Pass through layer 2 · $\text{Var}(z) = 512 \cdot 1 \cdot 256 = 131{,}072$. **Explodes.**
 - After 10 layers · $(256)^{10} \approx 10^{24}$. NaN at step 1.
 

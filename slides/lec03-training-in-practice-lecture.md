@@ -389,7 +389,7 @@ For deep learning, **range matters far more than ultra-fine precision**. BF16 al
 
 ---
 
-# Mixed precision · BF16 is the 2026 default
+# Mixed precision · BF16, the modern standard for large models
 
 ![w:920px](figures/lec03/svg/mixed_precision.svg)
 
@@ -405,7 +405,7 @@ For deep learning, **range matters far more than ultra-fine precision**. BF16 al
 - Range · ±65,504
 - Precision · 3-4 decimal digits
 - Easy to **overflow** during loss computation
-- Needs **loss scaling** to keep gradients in range
+- Needs **loss scaling** · small gradients underflow to 0 in FP16, so you scale the loss up before `backward`
 
 </div>
 <div>
@@ -517,7 +517,7 @@ Some batches — especially in RNNs and Transformers — produce **ridiculously 
 
 **Gradient clipping** is a safety rule:
 
-> *"No matter what gradient is computed, never let the step be larger than `max_norm`."*
+> *"No matter what gradient is computed, never let its **global norm** exceed `max_norm`."* (It rescales the gradient; for SGD that bounds the step by `lr · max_norm`.)
 
 It prevents one bad batch from wrecking the entire run.
 
@@ -733,7 +733,7 @@ If you can't even overfit a single batch, something is fundamentally broken.
 
 - **Dead ReLUs** → input to a ReLU is always negative → output 0, gradient 0; the unit can never learn. **Fix:** LeakyReLU, lower LR, or He init.
 - **Frozen parameters** → a layer has `requires_grad=False`. It will never update. **Fix:** assert `param.requires_grad` for each layer you intend to train.
-- **Wrong label shape / dtype** → `CrossEntropyLoss` wants class **indices** (e.g. `[3, 0, 1]`, dtype `torch.long`). One-hot floats break it. **Fix:** check `.shape` and `.dtype` of the label tensor.
+- **Wrong label shape / dtype** → for *hard* labels `CrossEntropyLoss` wants class **indices** (`[3, 0, 1]`, dtype `torch.long`); the wrong shape/dtype errors. (It *does* also accept `[B,C]` float targets as **soft** labels.) **Fix:** check `.shape` and `.dtype` of the label tensor.
 - **Data not normalized** → raw pixels in $[0, 255]$ → unstable training. **Fix:** apply `ToTensor` + `Normalize`.
 
 <div class="realworld">
@@ -1003,7 +1003,7 @@ This is the single most important habit in this lecture.
 
 <div class="math-box">
 
-**P1.** You change `batch_size` from 32 to 256 but keep the LR fixed. Training diverges. Why? Name the standard rule for scaling LR with batch size.
+**P1.** You increase `batch_size` 32→256 but keep the LR fixed. Training is stable but converges *slower per epoch* than expected. State the standard **linear-scaling rule**, and explain why a larger (less noisy) batch lets you safely *raise* the LR.
 
 **P2.** A `DataLoader` with `num_workers=0` and `pin_memory=False` is feeding a GPU running at 30% utilization. Name two changes that should help and the order in which you'd test them.
 
@@ -1026,7 +1026,7 @@ This is the single most important habit in this lecture.
 - **`nn.Module`** auto-registers parameters; use `nn.Parameter` / `register_buffer` explicitly.
 - **Autograd** is a dynamic tape built every forward; wrap eval in `torch.no_grad()`.
 - **DataLoader tuning** — `num_workers`, `pin_memory`, `persistent_workers`.
-- **Mixed precision (BF16)** — 2× speed, half memory. Default on Ampere+.
+- **Mixed precision (BF16)** — 2× speed, half memory. The go-to on Ampere+ (request `dtype=torch.bfloat16`).
 - **Loss ≠ metric** — pick the metric that matches the real objective.
 - **Debug ladder** — never skip a rung. Overfit one batch first.
 - **Validation discipline** — prevent leakage and check distribution shift.
