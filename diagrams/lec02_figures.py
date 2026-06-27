@@ -5,27 +5,35 @@ import matplotlib.pyplot as plt
 import matplotlib
 from pathlib import Path
 
+# Anthropic cream palette — matches lec00/lec00c/lec01 figures and the slide bg.
 matplotlib.rcParams.update({
-    'font.family': 'sans-serif',
-    'font.sans-serif': ['Inter', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+    'font.family': 'serif',
+    'font.serif': ['EB Garamond', 'Georgia', 'DejaVu Serif'],
     'font.size': 14,
     'axes.titlesize': 16,
     'axes.labelsize': 14,
-    'figure.facecolor': 'white',
-    'savefig.facecolor': 'white',
+    'text.color': '#161513',
+    'axes.edgecolor': '#5F5C54',
+    'axes.labelcolor': '#161513',
+    'xtick.color': '#5F5C54',
+    'ytick.color': '#5F5C54',
+    'figure.facecolor': '#F7F3E9',
+    'savefig.facecolor': '#F7F3E9',
     'savefig.bbox': 'tight',
     'savefig.dpi': 200,
+    'mathtext.fontset': 'cm',
 })
 
 OUT = Path(__file__).resolve().parent.parent / "figures" / "lec02"
 OUT.mkdir(parents=True, exist_ok=True)
 
-PRIMARY = "#1e3a5f"
-PRIMARY_LIGHT = "#2e5a8f"
-ACCENT = "#e85a4f"
-SUCCESS = "#2a9d8f"
-WARNING = "#e9c46a"
-PURPLE = "#7c3aed"
+# remap old names → anthropic palette (keeps existing figure code unchanged)
+PRIMARY = "#37535F"        # slate
+PRIMARY_LIGHT = "#5F8573"  # sage
+ACCENT = "#B85A3E"         # rust
+SUCCESS = "#5F8573"        # sage
+WARNING = "#C9A14A"        # warm ochre
+PURPLE = "#7B6E8F"         # muted plum
 
 
 def fig_uat_step_functions():

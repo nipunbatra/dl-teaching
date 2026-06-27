@@ -79,6 +79,8 @@ Think before the next slide: *why* would that fail?
 
 ![w:900px](figures/lec01/svg/pixel_shift_fail.svg)
 
+Two reasons compound · **no translation prior** (above) *and* the **curse of dimensionality** — $224{\times}224{\times}3 \approx 150{,}000$ raw features, so a linear model needs enormous data to fit one weight per pixel.
+
 ---
 
 # Pop quiz · which model would *you* pick?
@@ -529,7 +531,9 @@ For classification the output should be $K$ **raw logits**. `nn.CrossEntropyLoss
 <div class="warning">
 
 Symptom to memorize · training loss stuck near **2.30** and refusing to move.
-**Why 2.30?** A model that has learned nothing predicts uniform $\tfrac{1}{10}$ over 10 classes, so the loss is $-\ln\tfrac{1}{10} = \ln 10 \approx 2.30$ (CE uses natural log). Fix · remove the extra softmax.
+**Why 2.30?** A model that has learned nothing predicts uniform $\tfrac{1}{10}$ over 10 classes, so the loss is $-\ln\tfrac{1}{10} = \ln 10 \approx 2.30$ (CE uses natural log).
+
+✗ wrong · `nn.Softmax()` in `forward` **and** `CrossEntropyLoss`  ·  ✓ right · last layer outputs **raw logits**, loss applies log-softmax itself.
 
 </div>
 

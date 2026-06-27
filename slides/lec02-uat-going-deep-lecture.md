@@ -135,6 +135,8 @@ What a single hidden layer can — and can't — do
 
 ![w:900px](figures/lec02/svg/uat_bump_construction.svg)
 
+One bump = $\text{relu}(x-a) - 2\,\text{relu}(x-b) + \text{relu}(x-c)$ · stack many, weight by $\alpha_i$, approximate any curve.
+
 <div class="realworld">
 
 ▶ Interactive: grow a 1-hidden-layer net and watch it fit a target curve — [universal-approximation](https://nipunbatra.github.io/interactive-articles/universal-approximation/).
@@ -195,21 +197,29 @@ One hidden layer suffices. The catch hides in one word: **exist.**
 
 ---
 
-# ⭐⭐⭐ Optional · UAT · the proof in three moves
+# ⭐⭐⭐ Optional · UAT · the proof in three moves (1/2)
 
 We won't write a full proof — but the structure is short and worth knowing.
 
 <div class="math-box">
 
-**Move 1 · Approximate continuous functions by step functions.** Any continuous $f$ on $[0, 1]^d$ is *uniformly continuous* (Heine–Cantor). So for any $\epsilon$ we can partition $[0, 1]^d$ into small enough cells that $f$ varies by less than $\epsilon/2$ inside each cell. Replace $f$ by its average value on each cell · we get a step function within $\epsilon/2$ of $f$.
+**Move 1 · continuous $f$ → step function.** Any continuous $f$ on $[0,1]^d$ is *uniformly continuous* (Heine–Cantor). Partition the cube into cells small enough that $f$ varies by $<\epsilon/2$ inside each; replace $f$ by its average on each cell → a step function within $\epsilon/2$ of $f$.
 
-**Move 2 · Approximate step functions by sums of sigmoids.** A sigmoid $\sigma(w(x - b))$ with large $w$ is essentially a step at $x = b$. A *bump* on $[a, b]$ is a difference of two such "near-steps." Each cell of the step function ⇒ one bump in the network. $N$ cells → $2N$ hidden units.
-
-**Move 3 · Density via Stone-Weierstrass / Hahn-Banach.** The space of finite sums $\sum \alpha_i \sigma(\mathbf{w}_i^\top \mathbf{x} + b_i)$ is **dense** in $C([0,1]^d)$ — a non-trivial functional-analysis theorem. Combined with Moves 1 and 2, this gives the bound $\|f - \hat f\|_\infty < \epsilon$.
+**Move 2 · step function → sum of sigmoids.** A sigmoid $\sigma(w(x-b))$ with large $w$ is essentially a step at $b$; a *bump* is a difference of two near-steps. Each cell ⇒ one bump · $N$ cells → $2N$ hidden units.
 
 </div>
 
-**Bottom line** · UAT is *not* a constructive recipe — it's a density theorem. It says good weights *exist*; it says nothing about $N$, generalization, or whether SGD finds them.
+---
+
+# ⭐⭐⭐ Optional · UAT · the proof in three moves (2/2)
+
+<div class="math-box">
+
+**Move 3 · density.** The space of finite sums $\sum_i \alpha_i\,\sigma(\mathbf{w}_i^\top \mathbf{x} + b_i)$ is **dense** in $C([0,1]^d)$ — a functional-analysis theorem (Stone–Weierstrass / Hahn–Banach). With Moves 1–2 this gives $\|f - \hat f\|_\infty < \epsilon$.
+
+</div>
+
+**Bottom line** · UAT is *not* a constructive recipe — it is a density theorem. It says good weights *exist*; it says nothing about $N$, generalization, or whether SGD finds them.
 
 ---
 
@@ -280,10 +290,10 @@ A perfect triangular bump centred at $x=2$. Tile the axis with such bumps, weigh
 
 # The price of width — curse of dimensionality
 
-Piecewise-linear approximation of $f$ to error $\epsilon$:
+Piecewise-linear approximation of $f$ to error $\epsilon$ — for *generic* (worst-case-smooth) functions the neuron count can grow **exponentially** in dimension:
 
 - 1D: $N \approx O(1 / \sqrt{\epsilon})$
-- $d$D: $N \approx O(1 / \epsilon^{d/2})$
+- $d$D: $N \approx O(1 / \epsilon^{d/2})$ *(illustrative — exact rate depends on the function class)*
 
 | $d$ | neurons needed for $\epsilon = 0.01$ |
 |:-:|:-:|

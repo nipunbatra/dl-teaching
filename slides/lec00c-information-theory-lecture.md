@@ -431,9 +431,11 @@ $$\text{KL}(P\,\Vert\,Q) = H(P,Q) - H(P)$$
 
 Serrano's framing · a sequence of rolls comes from the **true die** $P$. Score each candidate die by the surprise it assigns the data ·
 
-![w:920px](figures/lec00c/svg/dice_scoring.svg)
+![w:880px](figures/lec00c/svg/dice_scoring.svg)
 
-Best score = $H(P)$. A wrong die scores higher (worse). **The excess over $H(P)$ is its KL** — $Q_1$ (close) pays little, $Q_2$ (far) pays a lot.
+Best possible score = $H(P)$ — the true die's own surprise; no model can beat it.
+
+**The excess over $H(P)$ is the KL** · $Q_1$ (close) pays little, $Q_2$ (far) pays a lot.
 
 ---
 
