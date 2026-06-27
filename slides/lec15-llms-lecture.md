@@ -257,7 +257,7 @@ $N = 10^{11}$ → **100 billion parameters**.
 2. **Solve for D.**
 $D = 20 \cdot 10^{11} = 2 \times 10^{12}$ → **2 trillion tokens**.
 
-For 10× more compute · $N$ grows by $\sqrt{10} \approx 3.16$, $D$ grows by $\sqrt{10}$ too. **Both scale as $\sqrt{C}$.** This is why GPT-4 (~1.8T) isn't 10× GPT-3 (175B) — Chinchilla's recipe says spread the budget across both axes.
+For 10× more compute · $N$ grows by $\sqrt{10} \approx 3.16$, $D$ grows by $\sqrt{10}$ too. **Both scale as $\sqrt{C}$.** This is why a next-gen model (GPT-4's exact size is undisclosed) isn't simply 10× GPT-3's 175B parameters — Chinchilla's recipe says spread the budget across both axes.
 
 ---
 
@@ -272,7 +272,7 @@ For 10× more compute · $N$ grows by $\sqrt{10} \approx 3.16$, $D$ grows by $\s
 
 <div class="warning">
 
-**The undertrained regime is more wasteful than the overtrained.** GPT-3 used 10× Chinchilla's compute for similar final loss. Modern LLMs carefully size $N, D$ together.
+**The undertrained regime is wasteful.** GPT-3 (175B params, only ~300B tokens) was badly *undertrained* — Chinchilla showed a model ~4× smaller, trained on far more data, matches its loss for *less* compute. It spent its budget on parameters instead of tokens. Modern LLMs size $N, D$ together.
 
 </div>
 
@@ -453,7 +453,7 @@ $$\text{KV-cache memory} = 2 \cdot L \cdot H \cdot d_h \cdot T \cdot B \cdot 2 \
 
 ---
 
-# Worked numeric · KV-cache for Llama 70B
+# Worked numeric · KV-cache · 70B model with vanilla MHA
 
 Setup: $L = 80,\ H = 64,\ d_h = 128,\ T = 32{,}000,\ B = 1$, fp16 (2 bytes).
 
@@ -537,7 +537,7 @@ Frontier training combines **all three** · 3D parallelism. Each axis trades off
 Training a 70B from scratch, as of this writing · ~10k H100-class GPUs for ~2 months.
 
 - Data center cost: ~$100M
-- Energy: ~1 GWh
+- Energy: ~10 GWh (10k GPUs × ~0.7 kW × ~1,440 h; more with cooling overhead)
 - Engineering team: 50+
 
 <div class="realworld">
@@ -649,7 +649,7 @@ banana → banane
 carrot → ???
 ```
 
-The model has never seen the word "carrot" in its French dictionary. But given three examples, it figures out the task and produces "carotte".
+The model was never *told* the task. But given three examples, it infers the pattern (English→French) and produces "carotte" — with **no weight updates**. That is in-context learning.
 
 <div class="keypoint">
 
@@ -724,7 +724,7 @@ This is where frontier LLMs are as of this writing. We'll see alignment + RLHF i
 
 **P3.** **GQA** with 8 query heads sharing 2 KV heads · how many values does the KV-cache hold per token, vs vanilla MHA? Estimate the memory savings for a 70B model with context 32k.
 
-**P4.** Sketch the **scaling-law power curve** $L(N, D, C) \approx (a/N^\alpha + b/D^\beta + c/C^\gamma)$. What does each term capture?
+**P4.** Sketch the **scaling-law power curve** $L(N, D) \approx E + A/N^\alpha + B/D^\beta$ (compute is fixed by $C \approx 6ND$, so it isn't a third free axis). What does each term capture?
 
 **P5.** Define an **emergent ability**. Pick one (e.g. multi-digit arithmetic, in-context learning, chain-of-thought) and describe how it appeared with scale.
 

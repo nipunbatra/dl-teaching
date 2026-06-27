@@ -126,7 +126,7 @@
   <!-- Combined 3D -->
   <rect x="40" y="265" width="880" height="140" fill="#FFF3EE" stroke="#B85A3E" stroke-width="1.2" rx="8"/>
   <text x="480" y="288" class="head" text-anchor="middle">3D parallelism · combine all three (standard for frontier training)</text>
-  <text x="480" y="310" class="body" text-anchor="middle">Llama-3 70B training · 16 nodes × 8 GPUs = 128 GPUs</text>
+  <text x="480" y="310" class="body" text-anchor="middle">Illustrative layout · 16 nodes × 8 GPUs = 128 GPUs (real 70B runs: ~10k)</text>
   <text x="480" y="328" class="caption" text-anchor="middle">→ DP across 8 nodes · TP within nodes · PP across layer groups</text>
 
   <g transform="translate(150, 340)">

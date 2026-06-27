@@ -731,9 +731,9 @@ And the model never sees the letters *inside* those chunks — which is exactly 
 
 **P4.** A masked LM masks 15% of tokens, replaces 80% of those with `[MASK]`, 10% with random tokens, 10% leaves them unchanged. Why this 80/10/10 split?
 
-**P5.** Token "**ing**" appears in `running`, `singing`, `meeting`. Why is BPE *certain* to learn `ing` as one token? Estimate after how many merges.
+**P5.** Token "**ing**" appears in `running`, `singing`, `meeting`. Under what corpus statistics would BPE merge `ing` into one token, and roughly after how many merges? (BPE greedily merges the most frequent adjacent pair each step.)
 
-**P6.** A tokenizer assigns a separate token to every digit 0–9. Why is this a poor design for arithmetic? What does Llama-3's tokenizer do differently?
+**P6.** A tokenizer encodes `2024` as one token but `2025` as two — *inconsistent* number chunks. Why does this hurt arithmetic, and how does splitting numbers into **individual digits** (as Llama-3's tokenizer does) help?
 
 </div>
 
