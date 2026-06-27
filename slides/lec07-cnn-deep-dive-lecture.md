@@ -572,7 +572,7 @@ Stacking convs builds larger receptive fields. Deep networks *compose* features 
 - **MLP** · no idea where they could be. Check **every square inch** of the house — ceiling, inside the toaster, under the rug. Forever.
 - **CNN** · apply assumptions:
   1. **Locality** · "they're near other things." → check surfaces.
-  2. **Translation invariance** · "the concept *keys-on-a-table* is the same in every room." → use the same search pattern.
+  2. **Translation equivariance** · "the concept *keys-on-a-table* is the same in every room." → use the same search pattern.
 
 The right assumptions shrink the search space *enormously*.
 

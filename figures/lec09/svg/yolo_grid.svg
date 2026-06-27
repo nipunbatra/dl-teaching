@@ -86,7 +86,7 @@
   <!-- Footer -->
   <g transform="translate(60, 370)">
     <text x="420" y="0" text-anchor="middle" class="mut" font-style="italic">
-      YOLO · "you only look once" — reshape detection into a single regression problem on a grid. Real-time inference, all modern versions (v3–v11).
+      YOLO · "you only look once" — reshape detection into a single regression problem on a grid. The original v1 grid is shown; the idea runs through v11.
     </text>
   </g>
 </svg>

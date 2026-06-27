@@ -100,8 +100,8 @@
     <rect class="channel-s" x="650" y="30" width="40" height="40"/>
 
     <!-- Param count -->
-    <g transform="translate(730, 25)">
-      <rect x="0" y="0" width="180" height="50" fill="#D8E3DE" stroke="#5F8573"/>
+    <g transform="translate(700, 25)">
+      <rect x="0" y="0" width="232" height="50" fill="#D8E3DE" stroke="#5F8573"/>
       <text x="14" y="20" class="tag" fill="#5F8573">PARAMS</text>
       <text x="14" y="40" class="mono">9C  +  C²  ≈  C² (for large C)</text>
     </g>
