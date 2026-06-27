@@ -385,7 +385,7 @@ $\text{softmax} = \dfrac{[e^{9.6},\ e^{8.0},\ e^{0}]}{e^{9.6} + e^{8.0} + e^{0}}
 
 </div>
 
-`argmax` → **"dog"**, 83% confident. Cost · 1 image-encoder call + 3 text-encoder calls. 100 classes? Just 100 caption embeddings — no training, ever.
+`argmax` → **"dog"**, 83% confident. **Key efficiency** · the 3 caption embeddings are computed **once** for the label set and **cached** — they are *not* re-run per image. Each new image is then **one** image-encoder call plus 3 cheap dot products. 100 classes? Encode 100 captions once, reuse forever — no training, ever. (This is why P3 says the text encoder isn't needed at inference: it has already been "baked" into a fixed classifier weight matrix.)
 
 ---
 
@@ -446,7 +446,7 @@ The full stack on the previous slide, as a recipe:
 **LLaVA recipe** (Liu et al. 2023):
 
 1. Pretrained CLIP ViT-L extracts 256 image features.
-2. Simple MLP projects them into the LLM's token embedding space.
+2. A small **projection** maps them into the LLM's token embedding space (LLaVA-1 · a single linear layer; LLaVA-1.5 · a 2-layer MLP).
 3. Concatenate `[image_tokens, text_tokens]` and feed to an LLM.
 4. Fine-tune with instruction data: `(image, question, answer)` triples.
 
@@ -735,7 +735,7 @@ The contrastive idea (L17) plus the Transformer (L13) plus the LLM (L15) **compo
 
 **P3.** Why is CLIP's text encoder *not* needed at inference time for image classification? What replaces it?
 
-**P4.** **LLaVA** projects CLIP image features through an MLP to the LLM's input embedding space. Why an MLP and not a linear layer? Why is the LLM kept frozen in v1?
+**P4.** **LLaVA** projects CLIP image features into the LLM's input embedding space. LLaVA-1 used a single *linear* layer; LLaVA-1.5 swapped in a 2-layer *MLP*. What does the extra nonlinearity buy? Why is the LLM kept frozen in alignment stage 1?
 
 **P5.** Hallucination in VLMs · the model says "the cat is sleeping" when the image has a dog. State two failure modes and how RLHF/DPO mitigates each.
 

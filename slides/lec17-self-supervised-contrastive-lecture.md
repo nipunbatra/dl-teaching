@@ -327,14 +327,14 @@ In SSL, "hard negatives" are the most informative. Low $\tau$ makes the model **
 Same scores $[0.9, 0.2, -0.1]$, computed with two temperatures.
 
 **$\tau = 1.0$.** Logits = scores.
-- $\exp$: $[2.46, 1.22, 0.90]$. Sum $= 4.58$.
-- Probs: $[0.54,\ 0.27,\ 0.19]$. Negatives still pull weight.
+- $\exp$: $[2.46, 1.22, 0.90]$. Sum $= 4.59$.
+- Probs: $[0.54,\ 0.27,\ 0.20]$. Negatives still pull weight.
 
 **$\tau = 0.1$ (SimCLR's choice).** Logits = scores × 10.
 - $\exp([9, 2, -1])$: $[8103, 7.4, 0.4]$. Sum $\approx 8111$.
 - Probs: $[0.999,\ 0.001,\ 0.00005]$. The positive **completely dominates** → model is forced to make positive-similarity *much* higher than any negative.
 
-Small $\tau$ ⇒ sharper distribution ⇒ hard negatives dominate the gradient. Used in SimCLR (~0.07) and as a learnable scalar in CLIP (L18).
+Small $\tau$ ⇒ sharper distribution ⇒ hard negatives dominate the gradient. SimCLR's default is $\tau \approx 0.1$ (used in the examples above); CLIP (L18) instead **learns** $\tau$ as a scalar.
 
 ---
 

@@ -761,11 +761,11 @@ A. No — the *true* posterior is arbitrary. The Gaussian parameterization is an
 | Piece | What it does | Where it came from |
 |:-:|:-:|:-:|
 | Encoder | $x \to (\mu, \sigma)$ | learned parameters of a Gaussian |
-| Reparam | $z = \mu + \sigma \epsilon$ | L00's affine trick |
+| Reparam | $z = \mu + \sigma \epsilon$ | new here · affine push of $\mathcal{N}(0,1)$ noise |
 | Decoder | $z \to \hat x$ | NLL of pixel distribution |
-| KL term | shape latent | derived in L00 |
+| KL term | shape latent | KL from L00; Gaussian closed form derived here |
 
-**Pure L00 toolkit** · NLL + Gaussians + KL · only the *factorization* of the model is new.
+**Mostly the L00 toolkit** · NLL + Gaussians + KL · the genuinely new pieces are the *reparameterization trick* and the *latent factorization* $p(x,z)=p(x\mid z)p(z)$.
 
 ---
 
@@ -775,7 +775,7 @@ A. No — the *true* posterior is arbitrary. The Gaussian parameterization is an
 
 **P1.** Derive the ELBO from $\log p(x) = \log \int p(x, z)\,dz$ via Jensen's inequality. Identify which term is reconstruction and which is the KL.
 
-**P2.** Compute the **closed-form KL** between $\mathcal{N}(\mu, \sigma^2)$ and $\mathcal{N}(0, 1)$. (You did this in L00 — re-derive.)
+**P2.** Compute the **closed-form KL** between $\mathcal{N}(\mu, \sigma^2)$ and $\mathcal{N}(0, 1)$. (KL itself is from L00; derive the Gaussian-vs-standard-normal case here and confirm it matches the $\tfrac12(\mu^2+\sigma^2-1-\log\sigma^2)$ used in the slides.)
 
 **P3.** Why does a deterministic encoder **not** get the same job done? Sketch the failure (no continuity, holes in latent space).
 

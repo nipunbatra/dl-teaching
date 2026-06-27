@@ -299,7 +299,7 @@ Per parameter:
 $70 \times 10^9 \cdot 2 = 1.4 \times 10^{11}$ bytes = **140 GB** → needs 2× A100 80 GB.
 
 **QLoRA (4-bit base).**
-$70 \times 10^9 \cdot 0.5 = 3.5 \times 10^{10}$ bytes = **35 GB** → fits on a single 48 GB GPU (the QLoRA paper's setting), with room left for activations. LoRA adapters add < 100 MB.
+$70 \times 10^9 \cdot 0.5 = 3.5 \times 10^{10}$ bytes = **35 GB** → fits on a single 48 GB GPU, with room left for activations. LoRA adapters add < 100 MB. (The QLoRA paper's headline result was fine-tuning a 65B model on one 48 GB GPU.)
 
 ---
 
@@ -374,7 +374,7 @@ RLHF balances both · max reward, but stay near the SFT model.
 
 # ⭐⭐⭐ Optional · RLHF objective · the equation
 
-$$\max_\theta\, \underbrace{\mathbb{E}_{x \sim D}[\, r_\phi(x, \pi_\theta(x)) \,]}_{\text{Part 1: maximize reward}} \;-\; \underbrace{\beta\, D_\text{KL}(\pi_\theta \Vert \pi_\text{ref})}_{\text{Part 2: stay near SFT}}$$
+$$\max_\theta\, \underbrace{\mathbb{E}_{x \sim D,\; y \sim \pi_\theta(\cdot\,\mid x)}[\, r_\phi(x, y) \,]}_{\text{Part 1: maximize reward}} \;-\; \underbrace{\beta\, D_\text{KL}(\pi_\theta \Vert \pi_\text{ref})}_{\text{Part 2: stay near SFT}}$$
 
 **Part 1** drives the model to produce high-reward answers. **Part 2** keeps the policy close to its SFT initialization → prevents the dog from tearing up the garden.
 
