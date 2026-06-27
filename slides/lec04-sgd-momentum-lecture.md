@@ -45,6 +45,22 @@ One piece we glossed over: **the optimizer**. Today we open that box.
 
 ---
 
+# Bridge from ES 335 · why the gradient went *stochastic*
+
+In ES 335 you trained logistic regression (oranges vs tomatoes) with **full-batch** gradient descent — every step summed over **all** $N$ examples:
+
+$$\frac{\partial J(\theta)}{\partial \theta} = \sum_{i=1}^{N} \big(\sigma(\mathbf{x}_i^\top \theta) - y_i\big)\,\mathbf{x}_i$$
+
+That was fine for a few hundred fruit. On **millions** of examples, one such step is too slow to even finish.
+
+<div class="insight">
+
+**Problem** · the full-batch gradient touches every example *before a single update*. **Fix** · estimate it from a small random **minibatch** — a noisy but unbiased gradient, one cheap step at a time. **Reveal** · that noise turns out to be a *feature*, not just a cost — it helps escape the saddles we meet today. That swap, full-batch → minibatch, is **Stochastic Gradient Descent**.
+
+</div>
+
+---
+
 # Four questions for today
 
 1. What does the loss landscape *look like*, really?
@@ -73,7 +89,7 @@ This is **the most common failure mode** of vanilla SGD on real loss surfaces. B
 
 ---
 
-# Bridge from ES 335 · you already know this
+# From vanilla SGD · what today adds on top
 
 | From ES 335 | What changes today |
 |---|---|

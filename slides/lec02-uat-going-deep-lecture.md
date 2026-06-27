@@ -108,14 +108,14 @@ This is L02's central tension · **width** is universal but expensive, **depth**
 
 | From ES 335 | What changes today |
 |---|---|
+| You hand-picked the basis $\phi(x)=[1,x,x^2,\dots]$ to bend a boundary | **one wide hidden layer** of ReLUs *learns* a basis rich enough for **any** function (UAT) |
 | Gradient descent derived from first-order Taylor expansion | that same gradient must now survive a **product of 50 Jacobians** |
-| More capacity ⇒ overfitting risk (bias-variance) | **degradation** · deeper nets can fail to even fit *train* |
 | Weight init = "small random numbers" | init **derived** from variance preservation (Xavier / He) |
 | One model = one function class | depth vs width · same budget, exponentially different reach |
 
-<div class="keypoint">
+<div class="insight">
 
-You proved gradient descent from Taylor series in ES 335. Now · what happens to that gradient through 50 layers?
+In ES 335 you bent the boundary by **writing $\phi(x)=[1,x,x^2]$ by hand**. A wide hidden layer makes that automatic — it can approximate **any** function (UAT). The catch · matching a hard function this way needs **exponentially many** units. The fix that buys the same reach cheaply is **depth** — and that is the whole lecture.
 
 </div>
 
