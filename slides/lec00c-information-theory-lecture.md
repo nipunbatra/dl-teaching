@@ -564,7 +564,7 @@ A 3-class problem (cat / dog / fish). Each label is one-hot, so its entropy is 0
 
 </div>
 
-That single number is the cross-entropy loss your optimizer minimizes — and it is the average KL from each one-hot truth to the model. The confident-wrong row (dog at $Q=0.4$) dominates.
+That single number is the cross-entropy loss your optimizer minimizes — and it is the average KL from each one-hot truth to the model. The **least-confident** row (dog, only $0.4$ on the true class) dominates — an unsure prediction costs the most bits.
 
 ---
 

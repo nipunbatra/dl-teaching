@@ -422,7 +422,7 @@ $$f(y) = p y + (1-p)(1-y)$$
 
 Evaluate · $f(1) = p$ ✓, $f(0) = 1-p$ ✓.
 
-But this form **fails the third requirement** · the product over $N$ samples doesn't collapse to a clean expression in $p$ and the counts of heads / tails. The exponential form $p^y (1-p)^{1-y}$ does ·
+On $y \in \{0,1\}$ this is **identical** to $p^y(1-p)^{1-y}$, so its product collapses just the same. We keep the exponential form for two reasons it makes obvious · it takes a clean **log** ($y\log p + (1-y)\log(1-p)$) and **generalizes to categorical** (one-hot exponents). With it ·
 
 $$\prod_{i=1}^N p^{y_i}(1-p)^{1 - y_i} = p^{\sum y_i}\,(1-p)^{N - \sum y_i} = p^{\#H}\,(1-p)^{\#T}$$
 
@@ -695,7 +695,7 @@ Every supervised learning setup we'll see in this course shares the same plate d
 
 </div>
 
-Whether you are doing logistic regression, an MLP, a Transformer, or a diffusion model — the *outermost* graphical model is **always this**. Only the conditional distribution $p(y \mid \mathbf{x}, \theta)$ inside the plate changes.
+Whether you are doing logistic regression, an MLP, or a Transformer — for any **supervised** model the *outermost* graphical model is **always this**. Only the conditional distribution $p(y \mid \mathbf{x}, \theta)$ inside the plate changes. (Purely *generative* models — VAEs, diffusion — replace the plate itself with generated data instead of labels; that's a different story, L19/L21.)
 
 ---
 
@@ -845,7 +845,7 @@ We will *always* work with log-likelihood from this point onward.
 
 <div class="keypoint">
 
-**Every loss in this course is an NLL.** MSE, BCE, cross-entropy, ELBO, diffusion loss — all are just NLLs of carefully chosen distributions.
+**Almost every loss in this course is an NLL.** MSE, BCE, and cross-entropy are *exact* NLLs of carefully chosen distributions; ELBO and the diffusion loss are likelihood-based **variational/KL surrogates** (close cousins, L19/L21). One probabilistic family throughout.
 
 </div>
 

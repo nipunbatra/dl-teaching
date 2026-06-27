@@ -223,8 +223,8 @@ Typical layer · $d = 4096$, weight $4096 \times 4096$.
 **Full fine-tune.** Trainable = $4096^2 = \mathbf{16{,}777{,}216}$ per layer.
 
 **LoRA at rank $r = 8$.**
-- $A$: $4096 \times 8 = 32{,}768$ params.
-- $B$: $8 \times 4096 = 32{,}768$ params.
+- $B$: $4096 \times 8 = 32{,}768$ params.
+- $A$: $8 \times 4096 = 32{,}768$ params.
 - Total · $32{,}768 + 32{,}768 = \mathbf{65{,}536}$.
 
 **Savings · $16{,}777{,}216 / 65{,}536 = \mathbf{256\times}$ fewer params per layer.** That's why a 70B fine-tune can ship as a 100 MB adapter — only $A$ and $B$ for each adapted layer, not the base.
@@ -397,12 +397,12 @@ The two terms are exactly the two goals from the dog analogy · *maximize treats
 
 **Prompt.** "Explain gravity to a 5-year-old."
 
-- $\pi_\text{ref}$ would say *"Gravity is a fundamental interaction…"* — assigns this prob 0.001 (technical, not for kids).
-- $\pi_\theta$ generates *"Imagine the earth is a big magnet and you have tiny magnets in your shoes…"* — assigns prob 0.2.
+- $\pi_\theta$ (after RLHF) generates the kid-friendly answer $y$ · *"The earth is a giant ball that gently pulls everything toward its middle — that's why things fall down."* It assigns $y$ probability **0.2**.
+- The SFT reference $\pi_\text{ref}$ would rarely phrase it that way · it assigns the **same** response $y$ only **0.001**.
 
 **Reward.** $r_\phi \approx 0.95$ — friendly, age-appropriate.
 
-**KL penalty.** Contribution from this example $\propto \log(0.2/0.001) = \log 200 \approx 5.3$ — sizeable.
+**KL penalty.** Contribution $\propto \log\dfrac{\pi_\theta(y)}{\pi_\text{ref}(y)} = \log\dfrac{0.2}{0.001} = \log 200 \approx 5.3$ — sizeable (same response $y$ in both).
 
 **Total objective.** $0.95 - \beta \cdot 5.3$.
 
@@ -585,7 +585,7 @@ What happens if you let the model *think longer* before it answers?
 
 # Reasoning models
 
-The latest generation as of this writing · **o1, o3, Claude extended thinking, DeepSeek R1.**
+The 2024–25 wave that popularized this · **o1, o3, Claude extended thinking, DeepSeek R1** (the technique now ships in every frontier model).
 
 The core idea:
 
