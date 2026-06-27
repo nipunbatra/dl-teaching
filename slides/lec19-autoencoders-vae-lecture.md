@@ -116,7 +116,7 @@ Hidden variable $z$ generates $x$: $x \sim p(x|z), z \sim p(z)$.
 
 - **VAE**, GAN (implicit).
 - Compact latent, rich samples.
-- Likelihood tractable only via ELBO.
+- VAE: likelihood via ELBO. GAN: no likelihood at all.
 
 </div>
 </div>
@@ -216,7 +216,7 @@ PCA is **the** linear autoencoder with orthogonal weights. What does nonlinearit
 
 </div>
 
-Concretely · PCA on MNIST reaches ~85% explained variance with 32 dims; a deep AE matches the full-data reconstruction at ~16 dims. Curved manifold vs linear subspace · nonlinearity buys 2× compression.
+Roughly · on MNIST a deep AE reaches a given reconstruction quality at noticeably fewer latent dims than PCA needs (curved manifold vs linear subspace). Exact numbers depend on architecture and training — the point is *nonlinearity buys you compression*, not a magic constant.
 
 ---
 
@@ -252,7 +252,7 @@ Input · `28 × 28 = 784` pixels. Encode to latent `z` of size 16. Decode back t
 
 </div>
 
-Total · ~440k params. Reconstruction MSE on MNIST test · ~0.003 after 10 epochs. Compare PCA with 16 components · ~0.015. **5× better with nonlinearities.**
+Total · ~440k params. Illustrative reconstruction MSE on MNIST test · ~0.003 for the AE vs ~0.015 for PCA at the same 16 latent dims — a several-fold gain from nonlinearity (exact numbers vary with training).
 
 ---
 
@@ -267,7 +267,7 @@ Suppose you train an AE on MNIST. To *generate* a new digit, you'd:
 
 <div class="warning">
 
-The latent space is **irregular**. The encoder only learned to map *actual training images* to latent points. Random z values likely fall into "nothing-mapped-here" regions where the decoder is undefined.
+The latent space is **irregular**. The encoder only learned to map *actual training images* to latent points. Random z values likely fall into "nothing-mapped-here" regions — the decoder is still *defined* there (it's just a function), but it was never trained on those points, so its output is unreliable garbage.
 
 </div>
 
@@ -454,7 +454,7 @@ This is the trade-off the VAE balances at every sample.
 
 ---
 
-# Posterior collapse · what to watch for
+# ⭐⭐⭐ Optional · Posterior collapse · what to watch for
 
 If the decoder is too powerful, the KL term will drive $q(z|x) \to p(z) = \mathcal{N}(0, I)$ · every image encodes to the same latent, $z$ carries no information about $x$.
 
@@ -592,7 +592,7 @@ Tuning `BETA`:
 
 # Disentanglement · what β-VAE buys you
 
-With $\beta = 4$ on a faces dataset (Higgins 2017), each latent dimension starts to control ONE semantic factor:
+With $\beta = 4$ on a faces dataset (Higgins 2017), individual latent dimensions often *start* to line up with single semantic factors (not guaranteed — see caveat below):
 
 <div class="math-box">
 
@@ -610,11 +610,11 @@ No supervision — the structure emerges from the KL regularization plus the rec
 
 </div>
 
-The trade-off · stronger KL forces shared structure, but loses reconstruction detail. β = 1 is the theoretical sweet spot; higher β sacrifices quality for interpretability. **Caveat** · β-VAE does not *guarantee* semantic disentanglement (Locatello et al. 2019) — which factors separate varies across runs and datasets.
+The trade-off · stronger KL forces shared structure, but loses reconstruction detail. β = 1 recovers the exact ELBO; higher β (4–10 typical) trades reconstruction quality for more interpretable, often-disentangled factors. **Caveat** · β-VAE does not *guarantee* semantic disentanglement (Locatello et al. 2019) — which factors separate, and whether they separate at all, varies across runs and datasets.
 
 ---
 
-# Conditional VAE · putting labels into the game
+# ⭐⭐⭐ Optional · Conditional VAE · putting labels into the game
 
 If you have class labels $y$, a **Conditional VAE** extends the game:
 
@@ -660,7 +660,7 @@ $z = \mu + \sigma \odot \epsilon = [0.4 + 0.5 \cdot 0.6, -0.3 + 0.37 \cdot (-0.2
 **Step 3 · decode.** Suppose decoder outputs $\hat x = [0.92, 0.45, 0.25, 0.81]$.
 
 **Step 4 · loss.**
-- Reconstruction MSE · $\|\hat x - x\|^2 = 0.08^2 + 0.05^2 + 0.05^2 + 0.01^2 \approx 0.012$
+- Reconstruction (summed squared error, matching the training loop's `.sum(-1)`) · $\|\hat x - x\|^2 = 0.08^2 + 0.05^2 + 0.05^2 + 0.01^2 \approx 0.012$
 - KL · $\frac{1}{2} \sum (\sigma^2 + \mu^2 - 1 - \log \sigma^2)$
   - $z_1$: $0.25 + 0.16 - 1 + 1.4 = 0.81$
   - $z_2$: $0.135 + 0.09 - 1 + 2.0 = 1.23$
@@ -703,7 +703,7 @@ The interpolation is the magic · it produces *valid* intermediate images becaus
 
 <div class="warning">
 
-**Truncated sampling.** Sampling $z \sim \mathcal{N}(0, I)$ occasionally gives large-$\|z\|$ points where training coverage was sparse. Truncate · sample $z$ from $\mathcal{N}(0, I)$ and **reject** if $\|z\| > \tau$ (e.g., $\tau = 2.5$). Samples look cleaner.
+**Truncated sampling.** Sampling $z \sim \mathcal{N}(0, I)$ occasionally gives large-$\|z\|$ points where training coverage was sparse. Truncate · resample (or scale down) any $z$ that is too far out. The right threshold is *dimension-dependent* — in $d$ dims, $\|z\|$ concentrates near $\sqrt{d}$, so set $\tau$ relative to $\sqrt{d}$ (a flat $\tau = 2.5$ only makes sense for tiny $d$). Truncated samples look cleaner but less diverse.
 
 **Decoder stochasticity.** If decoder outputs a Gaussian $p(x|z) = \mathcal{N}(g(z), \sigma_x^2 I)$, add $\sigma_x \cdot \epsilon_x$ to the mean for a single sample. If you only decode means you get the "mode"; adding variance makes samples diverse.
 
@@ -719,7 +719,7 @@ The interpolation is the magic · it produces *valid* intermediate images becaus
 |--|---------------|---------------------|-----------|----------------|
 | **VAE** | ✗ often blurry | ✓ stable | ✓ ELBO | ✓✓ one pass |
 | **GAN** | ✓✓ sharp | ✗ brittle | ✗ no | ✓✓ one pass |
-| **Diffusion** | ✓✓✓ SOTA | ✓ stable | ≈ | ✗ many passes |
+| **Diffusion** | ✓✓✓ best (2026) | ✓ stable | ≈ | ✗ many passes |
 
 <div class="insight">
 
@@ -735,7 +735,7 @@ VAEs remain useful for **latent-space exploration** and **pre-compression** — 
 A. VAE's loss is MSE on pixels, which is the mean of possible reconstructions. When multiple outputs are possible (e.g., any detailed face), the mean is a smoothed average of those — blurry. GANs don't average; they commit.
 
 **Q. Can I use a perceptual loss (feature-space MSE) instead of pixel MSE?**
-A. Yes — produces sharper reconstructions. VQ-VAE (Van den Oord 2017) combines VAE-like structure with discrete latents and perceptual losses. Stable Diffusion's VAE uses this trick.
+A. Yes — produces sharper reconstructions. Stable Diffusion's VAE (an *AutoencoderKL* with a **continuous** latent) is trained with a perceptual + patch-adversarial loss for exactly this reason. VQ-VAE (Van den Oord 2017) is a related but distinct idea: it uses *discrete* latents.
 
 **Q. Is the posterior truly Gaussian?**
 A. No — the *true* posterior is arbitrary. The Gaussian parameterization is an **approximation** (the "amortized variational" part). Normalizing flow encoders and hierarchical VAEs address this; vanilla VAE trades approximation quality for simplicity.

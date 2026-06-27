@@ -252,7 +252,7 @@ Each step both networks adjust → an equilibrium dance.
 
 ---
 
-# ⚠️ optional · deriving the optimal D
+# ⭐⭐⭐ Optional · deriving the optimal D
 
 Fix G. Maximize over $D$ pointwise · for each $x$, maximize $a\log D + b\log(1-D)$ with $a = p_\text{data}(x)$, $b = p_G(x)$.
 
@@ -266,7 +266,7 @@ $$D^*(x) = \frac{p_\text{data}(x)}{p_\text{data}(x) + p_G(x)}$$
 
 ---
 
-# ⚠️ optional · what is G really minimizing?
+# ⭐⭐⭐ Optional · what is G really minimizing?
 
 Plug $D^*$ back into the GAN objective and simplify · the outer min becomes
 
@@ -436,7 +436,7 @@ Each rule is a small wedge that prevents a known failure mode. Combined, they ma
 
 # Transposed convolution · upsampling primitive
 
-G needs to go from `(batch, noise_dim)` to `(batch, 3, 64, 64)` — *upsampling*. Use `ConvTranspose2d`:
+G needs to go from `(batch, noise_dim)` to an image, e.g. `(batch, 3, 32, 32)` — *upsampling*. Use `ConvTranspose2d`:
 
 <div class="math-box">
 
@@ -444,7 +444,7 @@ A normal conv shrinks (or preserves) spatial size. A transposed conv *inflates* 
 
 **Dimension formula** (inverse of conv) · $O = (W - 1) \cdot S - 2P + K$
 
-For $W=1, S=1, P=0, K=4$ · output is $4 \times 4$. Then stride-2 blocks double the size each time · $4 \to 8 \to 16 \to 32 \to 64$.
+For $W=1, S=1, P=0, K=4$ · output is $4 \times 4$. Then stride-2 blocks double the size each time · $4 \to 8 \to 16 \to 32$ (add one more block for $\to 64$).
 
 </div>
 
@@ -689,12 +689,14 @@ Vanilla GAN's classifier draws an infinitely steep cliff between real/fake. When
 
 </div>
 
-**1-Lipschitz check.** $D(x) = 5x$? With $a=2, b=3$: $|D(a)-D(b)| = 5 > 1 = |a-b|$. **Not** 1-Lipschitz.
-$D(x) = 0.5x$? $|D(a)-D(b)| = 0.5 \le 1$. **Yes.**
+**1-Lipschitz check.** $D(x) = 5x$? With $a=2, b=3$: $\lvert D(a)-D(b)\rvert = 5 > 1 = \lvert a-b\rvert$. **Not** 1-Lipschitz.
+$D(x) = 0.5x$? $\lvert D(a)-D(b)\rvert = 0.5 \le 1$. **Yes.**
+
+**Loss numeric.** Say $D(\text{real}) = 5$, $D(\text{fake}) = -2$. Critic *maximizes* $D(\text{real}) - D(\text{fake}) = 7$ (pull real up, fake down). G *minimizes* $D(\text{fake})$, i.e. pushes its score up. No logs, no sigmoids — just raw scores.
 
 ---
 
-# The WGAN objective · duality in one line
+# ⭐⭐⭐ Optional · The WGAN objective · duality in one line
 
 How do you *compute* an infimum over all transport plans? You don't. Kantorovich–Rubinstein duality turns it into a maximization over 1-Lipschitz critics:
 
@@ -721,7 +723,7 @@ We want D's slope to be 1 everywhere — but checking *everywhere* is impossible
 
 ---
 
-# WGAN-GP · the gradient penalty, term by term
+# ⭐⭐⭐ Optional · WGAN-GP · the gradient penalty, term by term
 
 $$\mathcal{L}_\text{GP} = \lambda\,\mathbb{E}_{\hat x}\bigl[(\,\underbrace{\|\nabla_{\hat x}D(\hat x)\|_2}_{\text{slope at }\hat x}\,-\,1)^2\bigr]$$
 
@@ -783,7 +785,7 @@ Result · 1024×1024 face generation indistinguishable from photographs.
 
 ---
 
-# StyleGAN · the latent hierarchy
+# ⭐⭐⭐ Optional · StyleGAN · the latent hierarchy
 
 Each resolution block receives a separate injection from $w$. This creates a **semantic hierarchy**:
 

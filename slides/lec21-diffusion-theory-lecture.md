@@ -219,13 +219,15 @@ Shrinking keeps the **total variance bounded**. If you only add noise, the varia
 
 <div class="math-box">
 
-Variance check · if $x_{t-1} \sim \mathcal{N}(0, I)$, then $x_t = \sqrt{1 - \beta_t}\, x_{t-1} + \sqrt{\beta_t}\, \epsilon$.
+Variance check · *if* $\text{Var}(x_{t-1}) = 1$, then for $x_t = \sqrt{1 - \beta_t}\, x_{t-1} + \sqrt{\beta_t}\, \epsilon$:
 
-Variance of $x_t$ = $(1 - \beta_t) + \beta_t$ = **1**. Always.
+$\text{Var}(x_t) = (1 - \beta_t)\cdot 1 + \beta_t = 1$.
+
+So unit variance in → unit variance out, at every step.
 
 </div>
 
-This is why the forward process preserves unit variance — it's a **variance-preserving SDE**.
+The process doesn't *create* unit variance, it **preserves** it: start the data normalized to variance 1, and the chain keeps it there all the way to $x_T \approx \mathcal{N}(0, I)$. This is the **variance-preserving** schedule.
 
 ---
 
@@ -631,7 +633,7 @@ That's score-based generation. Mathematically equivalent to DDPM · just a diffe
 
 ---
 
-# The score function · math
+# ⭐⭐⭐ Optional · The score function · math (Langevin)
 
 Define $s(x) = \nabla_x \log p(x)$ — gradient of log density.
 - $p(x)$ · density (high for real data, low elsewhere).
@@ -680,7 +682,7 @@ Modeling the score sidesteps the normalizer problem — and the score is exactly
 
 ---
 
-# Diffusion ≈ score matching · derivation
+# ⭐⭐⭐ Optional · Diffusion ≈ score matching · derivation
 
 The noisy distribution is Gaussian:
 $x_t \sim \mathcal{N}(\mu = \sqrt{\bar\alpha_t}\,x_0,\ \sigma^2 = 1 - \bar\alpha_t)$
