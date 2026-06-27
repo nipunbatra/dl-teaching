@@ -713,7 +713,7 @@ These three lines are the **entire** backward pass of a linear layer. Everything
 
 # End-to-end worked numeric · forward pass
 
-Tiny 2-1-1 net with sigmoid hidden, sigmoid output. Input $x = 0.5$, target $y = 1$ (binary). Initial weights $w_1 = 0.4,\ b_1 = 0,\ w_2 = 0.6,\ b_2 = 0$. LR $\eta = 0.5$.
+Tiny 1-1-1 net with sigmoid hidden, sigmoid output. Input $x = 0.5$, target $y = 1$ (binary). Initial weights $w_1 = 0.4,\ b_1 = 0,\ w_2 = 0.6,\ b_2 = 0$. LR $\eta = 0.5$.
 
 <div class="math-box">
 

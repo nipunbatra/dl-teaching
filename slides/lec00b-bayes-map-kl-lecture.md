@@ -1104,10 +1104,10 @@ The same "fit + don't drift in KL" pattern appears in many places ·
 
 | Method | Loss structure | Reading |
 |:-:|:-:|:-:|
-| **L2 regularization** | NLL $+ \lambda \|\theta\|^2$ | don't drift from prior |
-| **VAE (L19)** | reconstruction $+ \text{KL}(q_\phi(z\|x) \| p(z))$ | encoder posterior close to standard normal |
-| **DPO / RLHF (L16)** | reward $- \beta\,\text{KL}(\pi_\theta \| \pi_{\text{ref}})$ | policy close to base model |
-| **Distillation (L23)** | $\text{KL}(p_{\text{teacher}} \| p_{\text{student}})$ | student matches teacher |
+| **L2 regularization** | NLL $+ \lambda \lVert\theta\rVert^2$ | don't drift from prior |
+| **VAE (L19)** | reconstruction $+ \text{KL}(q_\phi(z\mid x) \Vert p(z))$ | encoder posterior close to standard normal |
+| **DPO / RLHF (L16)** | reward $- \beta\,\text{KL}(\pi_\theta \Vert \pi_{\text{ref}})$ | policy close to base model |
+| **Distillation (L23)** | $\text{KL}(p_{\text{teacher}} \Vert p_{\text{student}})$ | student matches teacher |
 
 </div>
 
@@ -1191,12 +1191,12 @@ Once you see KL as the underlying object, every advanced model becomes a **speci
 
 | Model | KL it minimizes | Lecture |
 |:-:|:-:|:-:|
-| Classifier (CE loss) | $\text{KL}(\hat p_{\text{data}} \| p_\theta)$ | L1, every classifier |
-| **VAE** | recon-NLL $+ \text{KL}(q_\phi(z\|x) \,\|\, p(z))$ | L19 |
-| **Diffusion (variational view)** | $\sum_t \text{KL}(q(x_{t-1}\|x_t, x_0) \,\|\, p_\theta(x_{t-1}\|x_t))$ | L21 |
+| Classifier (CE loss) | $\text{KL}(\hat p_{\text{data}} \Vert p_\theta)$ | L1, every classifier |
+| **VAE** | recon-NLL $+ \text{KL}(q_\phi(z\mid x) \,\Vert\, p(z))$ | L19 |
+| **Diffusion (variational view)** | $\sum_t \text{KL}(q(x_{t-1}\mid x_t, x_0) \,\Vert\, p_\theta(x_{t-1}\mid x_t))$ | L21 |
 | **GAN** | (approximately) Jensen-Shannon — symmetrized KL | L20 |
-| **DPO / RLHF KL term** | $\text{KL}(\pi_\theta \,\|\, \pi_{\text{ref}})$ | L16 |
-| **Knowledge distillation** | $\text{KL}(p_{\text{teacher}} \,\|\, p_{\text{student}})$ | L23 |
+| **DPO / RLHF KL term** | $\text{KL}(\pi_\theta \,\Vert\, \pi_{\text{ref}})$ | L16 |
+| **Knowledge distillation** | $\text{KL}(p_{\text{teacher}} \,\Vert\, p_{\text{student}})$ | L23 |
 
 </div>
 

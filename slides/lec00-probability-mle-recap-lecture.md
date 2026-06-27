@@ -787,11 +787,11 @@ The raw likelihood $\mathcal{L}(\theta) = \prod_{i=1}^N P(y_i \mid \theta)$ is a
 
 <div class="warning">
 
-**Problem 1 · numerical underflow.** With $N = 1000$ and each factor $\sim 0.5$ ·
+**Problem 1 · numerical underflow.** With $N = 2000$ and each factor $\sim 0.5$ ·
 
-$$\mathcal{L} \approx 0.5^{1000} \approx 10^{-301}$$
+$$\mathcal{L} \approx 0.5^{2000} \approx 10^{-602}$$
 
-This is *below* the smallest representable double-precision float ($\approx 10^{-308}$). On a computer, $\mathcal{L}$ becomes literally zero.
+This is *far below* the smallest representable double-precision float ($\approx 10^{-308}$). On a computer, $\mathcal{L}$ becomes literally zero.
 
 **Problem 2 · hard to differentiate.** The product rule on $N$ factors produces $N$ terms — algebraically and computationally messy.
 
@@ -801,7 +801,7 @@ We need the same answer in a form that doesn't underflow and is easy to differen
 
 <div class="notebook">
 
-▶ **Notebook · [`lec00-mle-map.ipynb`](../notebooks/lec00-mle-map.ipynb)** — watch $0.5^{1000}$ underflow to exactly `0.0` in float64 while the log-likelihood stays finite.
+▶ **Notebook · [`lec00-mle-map.ipynb`](../notebooks/lec00-mle-map.ipynb)** — watch $0.5^{2000}$ underflow to exactly `0.0` in float64 while the log-likelihood stays finite.
 
 </div>
 
