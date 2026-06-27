@@ -270,7 +270,7 @@ $$\frac{\partial h_3}{\partial h_0} = \underbrace{w \tanh'(\cdot)}_{\le 0.5} \cd
 
 </div>
 
-**That's why vanilla RNNs can't learn dependencies across more than ~20 timesteps.** Every step in the product pulls the gradient toward zero if $|w \tanh'| < 1$, or toward infinity if $> 1$. LSTMs (next) sidestep this via additive gated updates.
+**That's why vanilla RNNs typically struggle to learn dependencies beyond a few tens of timesteps.** Every step in the product pulls the gradient toward zero if $|w \tanh'| < 1$, or toward infinity if $> 1$. LSTMs (next) sidestep this via additive gated updates.
 
 ---
 
@@ -282,7 +282,7 @@ For long sequences (thousands of steps), full BPTT is expensive.
 
 ```python
 for chunk in sequence.split(K, dim=1):
-    h_detached = h.detach()             # cut gradient here
+    h = h.detach()                      # cut gradient here — truncate BPTT
     for t in range(chunk.size(1)):
         h = cell(chunk[:, t], h)
     loss = criterion(h, target)
@@ -396,10 +396,10 @@ $$\mathbf{o}_t = \sigma(W_o [\mathbf{h}_{t-1}, \mathbf{x}_t] + b_o),\quad \mathb
 Network has learned (for this input):
 - **Forget** $f_t = 0.1$ — sees "was" → forget the plural memory.
 - **Input** $i_t = 0.9$ — write new info aggressively.
-- **Candidate** $\tilde c_t = -2.0$ — encodes "subject is singular".
+- **Candidate** $\tilde c_t = -1.0$ — a $\tanh$ output (so in $[-1,1]$), encoding "subject is singular".
 
 **Compute new cell state:**
-$$c_t = f_t \cdot c_{t-1} + i_t \cdot \tilde c_t = 0.1 \cdot 5.0 + 0.9 \cdot (-2.0) = 0.5 - 1.8 = \mathbf{-1.3}$$
+$$c_t = f_t \cdot c_{t-1} + i_t \cdot \tilde c_t = 0.1 \cdot 5.0 + 0.9 \cdot (-1.0) = 0.5 - 0.9 = \mathbf{-0.4}$$
 
 The memory **flipped** from large positive (plural) to negative (singular) in one step — exactly because the forget gate was small *and* the input gate was large.
 

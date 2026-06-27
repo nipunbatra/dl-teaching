@@ -107,7 +107,7 @@
       <line x1="480" y1="60" x2="480" y2="78"/>
     </g>
 
-    <text x="280" y="140" class="mut" fill="#5F8573">every step conditioned on correct prefix · stable parallel training · the standard</text>
+    <text x="280" y="140" class="mut" fill="#5F8573">every step conditioned on correct prefix · stable, efficient training · the standard</text>
   </g>
 
   <!-- Right-side panel: trade-off -->

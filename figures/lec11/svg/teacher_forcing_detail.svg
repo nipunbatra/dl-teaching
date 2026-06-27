@@ -76,7 +76,7 @@
       <path class="arrow" d="M500 60 L500 47" marker-end="url(#arr)"/>
       <path class="arrow" d="M615 60 L615 47" marker-end="url(#arr)"/>
 
-      <text x="750" y="80" class="caption" font-weight="600" fill="#5F8573">✓ all steps parallelizable</text>
+      <text x="750" y="80" class="caption" font-weight="600" fill="#5F8573">✓ no per-token sampling loop</text>
       <text x="750" y="96" class="caption">✓ stable gradients</text>
       <text x="750" y="112" class="caption" fill="#A8324B">✗ mismatch with inference</text>
     </g>

@@ -138,7 +138,7 @@ Two design choices:
 
 <div class="realworld">
 
-Modern multilingual models (mT5, NLLB, Whisper) share vocab via SentencePiece — a single token stream covers 100+ languages. Today's LLMs do the same.
+Modern multilingual models share **one subword vocabulary** covering 100+ languages — mT5 and NLLB use SentencePiece; Whisper and most LLMs use BPE. One token stream, many languages.
 
 </div>
 
@@ -274,12 +274,12 @@ The decoder sees the **ground-truth** previous token. Every step is a clean, ind
 
 # Why teacher forcing? · speed
 
-The biggest reason for teacher forcing isn't safety — it's **parallelism**.
+The biggest reason for teacher forcing isn't safety — it's **training efficiency**.
 
-- **Autoregressive** · compute step 1 → step 2 → step 3 → … sequential.
-- **Teacher forcing** · all decoder inputs `<s>, "The", "cat", …` are known up-front → feed them in **all at once** → one big matrix multiply.
+- **Free-running (generate)** · sample step 1 → embed → step 2 → … a slow loop with a *sampling* step at every token.
+- **Teacher forcing** · the decoder inputs `<s>, "The", "cat", …` are *known*, so you skip the per-token sampling and run the whole sequence through one optimized RNN kernel, scoring all steps in a single backward.
 
-A slow sequential loop becomes a fast parallel computation — **10–100× speedup** on training. (The unrolled graph still stores activations for every timestep, so memory grows with sequence length either way.)
+That removes the generate-one-token-at-a-time sampling loop — a big training speedup. But the RNN recurrence is **still sequential in $t$** ($h_t$ needs $h_{t-1}$); true *timestep* parallelism arrives only when we drop recurrence entirely (Transformers, L13). (Activations are still stored per timestep, so memory grows with length.)
 
 ---
 
@@ -467,7 +467,7 @@ Vocab · {The, A, cat, dog, sat, ran}. Decoding "The cat sat".
 | `<s> The cat` | −0.7 + −0.6 = **−1.3** |
 | `<s> The dog` | −0.7 + −1.3 = −2.0 |
 | `<s> A dog` | −0.5 + −0.9 = −1.4 |
-| `<s> A feline` | −0.5 + −1.1 = −1.6 |
+| `<s> A ran` | −0.5 + −1.1 = −1.6 |
 
 Keep the top 2 · `<s> The cat` (−1.3), `<s> A dog` (−1.4). **Step 3** · continue, then divide each final score by $T^{0.6}$ to compare lengths fairly.
 
@@ -607,7 +607,7 @@ The Seq2Seq **pattern** (encoder → context → decoder) is everywhere. Only th
 | Teacher forcing | feed true previous token | "read along while learning" |
 | Beam search | top-$k$ partial hypotheses | "keep $k$ best drafts" |
 
-This is **literally how Google Translate worked from 2014 to 2016** — and what made attention so urgent.
+This is the **pre-attention Seq2Seq idea** (Sutskever 2014) that drove neural MT — Google's 2016 GNMT used exactly this LSTM encoder–decoder *plus* attention, which is what made attention so urgent.
 
 ---
 
