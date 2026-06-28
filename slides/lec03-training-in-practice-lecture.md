@@ -1026,26 +1026,21 @@ This is the single most important habit in this lecture.
 - **`nn.Module`** auto-registers parameters; use `nn.Parameter` / `register_buffer` explicitly.
 - **Autograd** is a dynamic tape built every forward; wrap eval in `torch.no_grad()`.
 - **DataLoader tuning** — `num_workers`, `pin_memory`, `persistent_workers`.
-- **Mixed precision (BF16)** — 2× speed, half memory. The go-to on Ampere+ (request `dtype=torch.bfloat16`).
+- **Mixed precision (BF16)** — 2× speed, half memory; the go-to on Ampere+.
 - **Loss ≠ metric** — pick the metric that matches the real objective.
 - **Debug ladder** — never skip a rung. Overfit one batch first.
 - **Validation discipline** — prevent leakage and check distribution shift.
 - **Ablations** — change one thing at a time and log the comparison.
 - **Error analysis (Ng)** — categorize failures *before* scaling up.
-- **Reproducibility** — code + config + data + seed + env. Weeks saved.
+- **Reproducibility** — code + config + data + seed + env saves weeks.
 
 ### Read before Lecture 4
 
-**Prince** — Ch 6 (fitting models), Ch 8 (measuring performance). Free at [udlbook.github.io](https://udlbook.github.io/udlbook/).
-
-### Next lecture
-
-Optimization properly — loss landscapes, momentum, Nesterov.
+**Prince** — Ch 6 (fitting models), Ch 8 (measuring performance). Free at [udlbook.github.io](https://udlbook.github.io/udlbook/). **Next:** optimization proper — loss landscapes, momentum, Nesterov.
 
 <div class="notebook">
 
-**Notebook 3a** · `03a-training-recipe.ipynb` — full training loop with checkpointing, LR finder.
-**Notebook 3b** · `03b-debug-ladder.ipynb` — all seven rungs applied to a small task.
+**3a** · `03a-training-recipe.ipynb` — training loop, checkpointing, LR finder. · **3b** · `03b-debug-ladder.ipynb` — all seven rungs on a small task.
 
 </div>
 

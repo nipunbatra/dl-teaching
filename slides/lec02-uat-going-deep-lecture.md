@@ -1083,10 +1083,9 @@ The single insight underneath all three fixes · **make every layer easy to leav
 
 - **UAT** is an existence theorem. Width can be exponential; depth is the practical knob.
 - **Compositionality** (and parity) shows depth can replace exponential width.
-- **Vanishing gradients** come from products of sub-1 Jacobians; ReLU unlocks depth by giving gradient 1 on the active side.
-- **Degradation problem** — plain deep nets *train* worse.
-- **ResNets** — $\mathbf{y} = \mathcal{F}(\mathbf{x}) + \mathbf{x}$. Identity-in-the-Jacobian gradient highway + smoother landscape.
-- **ResNet practice** — BatchNorm, projection shortcuts, and pre-activation blocks keep the identity path usable.
+- **Vanishing gradients** come from products of sub-1 Jacobians; ReLU gives gradient 1 on the active side.
+- **Degradation problem** — plain deep nets *train* worse (optimization, not capacity).
+- **ResNets** — $\mathbf{y} = \mathcal{F}(\mathbf{x}) + \mathbf{x}$. The $+\mathbf{I}$ is a gradient highway; BatchNorm, projection shortcuts, and pre-activation keep it usable.
 - **Xavier / He** — both derived from variance preservation.
 - **Always separate axes:** expressivity, optimization, and generalization are different claims.
 
@@ -1100,7 +1099,7 @@ Tensors, autograd, `nn.Module`, `DataLoader`, the full training recipe, debuggin
 
 <div class="notebook">
 
-**Notebook 2** · `02-depth-and-resnets.ipynb` — shallow-wide vs deep-narrow on spirals; build a residual block; visualize gradient norms across depth.
+**Notebook 2** · `02-depth-and-resnets.ipynb` — shallow-wide vs deep-narrow on spirals; build a residual block; plot gradient norms vs depth.
 
 </div>
 

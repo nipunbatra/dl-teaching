@@ -39,9 +39,9 @@
 
     <!-- marker at the steepest-descent point -->
     <circle class="marker" cx="380" cy="175" r="8"/>
-    <line x1="380" y1="175" x2="380" y2="255" stroke="#B85A3E" stroke-dasharray="4 3" stroke-width="1.2"/>
-    <text x="380" y="273" class="lbl" fill="#B85A3E" font-weight="600" text-anchor="middle">pick this LR</text>
-    <text x="380" y="288" class="mut" fill="#B85A3E" text-anchor="middle">~1 decade before the minimum</text>
+    <line x1="380" y1="120" x2="380" y2="220" stroke="#B85A3E" stroke-dasharray="4 3" stroke-width="1.2"/>
+    <text x="392" y="110" class="lbl" fill="#B85A3E" font-weight="600" text-anchor="start">← pick this LR</text>
+    <text x="392" y="125" class="mut" fill="#B85A3E" text-anchor="start">~1 decade before the minimum</text>
 
     <!-- region labels -->
     <text x="100" y="24" class="tag" fill="#37535F" text-anchor="middle">TOO SMALL</text>
@@ -54,11 +54,11 @@
     <text x="605" y="40" class="mut"  fill="#A8324B" text-anchor="middle">NaN or divergence</text>
 
     <!-- x axis -->
-    <text x="380" y="245" class="mono" text-anchor="middle">log₁₀(learning rate) · 1e-7 → 1e+1</text>
+    <text x="380" y="242" class="mono" text-anchor="middle">log₁₀(learning rate) · 1e-7 → 1e+1</text>
     <text x="-10" y="110" transform="rotate(-90 -10 110)" text-anchor="middle" class="mut">smoothed loss →</text>
   </g>
 
-  <text x="480" y="330" text-anchor="middle" class="mut" font-style="italic">
+  <text x="480" y="345" text-anchor="middle" class="mut" font-style="italic">
     Smith 2017 · run for one epoch increasing LR geometrically · plot loss · pick ~10× below the minimum
   </text>
 </svg>

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" font-family="EB Garamond, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="EB Garamond, Georgia, serif">
   <defs>
     <style>
       .box-32 { fill:#DCE3E6; stroke:#37535F; stroke-width:1.4; rx:4; ry:4; }
@@ -93,8 +93,8 @@
   </g>
 
   <!-- BF16 -->
-  <g transform="translate(40, 170)">
-    <text x="0" y="0" class="tag" fill="#5F8573">BF16 · 16 bits (brain float, Ampere+ default)</text>
+  <g transform="translate(40, 205)">
+    <text x="0" y="0" class="tag" fill="#5F8573">BF16 · 16 bits (brain float)</text>
     <rect class="box-bf" x="0" y="10" width="260" height="70"/>
 
     <rect class="cell cell-s" x="30" y="20" width="8" height="50"/>
@@ -123,7 +123,7 @@
   </g>
 
   <!-- Right: the practical PyTorch recipe -->
-  <g transform="translate(340, 170)">
+  <g transform="translate(340, 205)">
     <text x="0" y="0" class="tag">PYTORCH · THE ACTUAL RECIPE</text>
     <rect x="0" y="10" width="560" height="130" fill="#EEEBDF" stroke="#C9C4B5"/>
     <g class="mono" font-size="12">
@@ -137,7 +137,7 @@
   </g>
 
   <!-- Footer -->
-  <g transform="translate(40, 320)">
+  <g transform="translate(40, 378)">
     <text x="440" y="0" text-anchor="middle" class="mut" font-style="italic">
       Default in 2026 · use <tspan fill="#5F8573" font-weight="600">BF16 autocast</tspan> on Ampere+ / TPU.
       2× speedup, half the memory, no GradScaler needed.

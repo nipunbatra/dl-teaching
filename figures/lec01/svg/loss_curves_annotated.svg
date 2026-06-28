@@ -61,12 +61,12 @@
     <text x="770" y="208" class="mono" fill="#37535F" text-anchor="end">train loss</text>
 
     <!-- Axis labels -->
-    <text x="390" y="250" text-anchor="middle" class="mut">epoch →</text>
+    <text x="390" y="240" text-anchor="middle" class="mut">epoch →</text>
     <text x="-10" y="110" transform="rotate(-90 -10 110)" text-anchor="middle" class="mut">loss →</text>
   </g>
 
   <!-- Bottom insight -->
-  <g transform="translate(90, 320)">
+  <g transform="translate(90, 335)">
     <text x="390" y="0" text-anchor="middle" class="mut" font-style="italic" font-size="13">
       <tspan fill="#37535F">train loss</tspan> monotonically drops ·
       <tspan fill="#A8324B">val loss</tspan> drops then rises ·
