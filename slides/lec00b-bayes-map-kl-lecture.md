@@ -444,19 +444,12 @@ The constant drops out of any $\arg\min$. **Keep $-\dfrac{1}{2\sigma_p^2}\|\bold
 **Start** · MAP objective ·
 $$\hat{\boldsymbol\theta}_{\text{MAP}} = \arg\min_{\boldsymbol\theta} \bigl[\,L_{\text{NLL}}(\boldsymbol\theta) - \log p(\boldsymbol\theta)\,\bigr]$$
 
-**Substitute** the Gaussian log-prior we just derived ·
-$$= \arg\min_{\boldsymbol\theta} \bigl[\,L_{\text{NLL}}(\boldsymbol\theta) - \bigl(-\tfrac{1}{2\sigma_p^2}\|\boldsymbol\theta\|_2^2 + \text{const}\bigr)\,\bigr]$$
-
-**Distribute the minus** and drop the constant ·
-$$= \arg\min_{\boldsymbol\theta} \bigl[\,L_{\text{NLL}}(\boldsymbol\theta) + \tfrac{1}{2\sigma_p^2}\|\boldsymbol\theta\|_2^2\,\bigr]$$
+**Substitute** the Gaussian log-prior, distribute the minus, and drop the constant ·
+$$= \arg\min_{\boldsymbol\theta} \bigl[\,L_{\text{NLL}}(\boldsymbol\theta) - \bigl(-\tfrac{1}{2\sigma_p^2}\|\boldsymbol\theta\|_2^2 + \text{const}\bigr)\,\bigr] = \arg\min_{\boldsymbol\theta} \bigl[\,L_{\text{NLL}}(\boldsymbol\theta) + \tfrac{1}{2\sigma_p^2}\|\boldsymbol\theta\|_2^2\,\bigr]$$
 
 **Rename** $\lambda := \dfrac{1}{2\sigma_p^2}$ to match standard ML notation ·
 
-<div class="math-box">
-
 $$\boxed{\;\hat{\boldsymbol\theta}_{\text{MAP}} = \arg\min_{\boldsymbol\theta} \bigl[\,L_{\text{NLL}}(\boldsymbol\theta) + \lambda\,\|\boldsymbol\theta\|_2^2\,\bigr]\;}$$
-
-</div>
 
 **This is exactly L2 regularization (a.k.a. ridge / weight decay).**
 
@@ -556,9 +549,9 @@ If you've trained with `weight_decay` and never realized it was a **Gaussian pri
 
 Swap the Gaussian for a **Laplace** prior · $p(\theta_j) = \dfrac{1}{2b}\exp\!\left(-\dfrac{|\theta_j|}{b}\right)$ — same "weights are small" idea, but a **sharp peak at 0** and **heavier tails**.
 
-![w:660px](figures/lec00/svg/laplace_vs_gaussian.svg)
+![w:560px](figures/lec00/svg/laplace_vs_gaussian.svg)
 
-That sharp cusp at zero is the whole story · unlike the Gaussian's smooth bowl, the Laplace peak is **non-differentiable** at 0 — that kink (not any literal point-mass, which a continuous density can't have) is what lets MAP park weak weights *exactly* there.
+That sharp cusp at zero is the whole story · the Laplace peak is **non-differentiable** at 0, and that kink (not a literal point-mass) is what lets MAP park weak weights *exactly* there.
 
 ---
 
@@ -603,19 +596,12 @@ Same structural moves as the Gaussian case · only the *form* of the per-weight 
 **Start** · MAP objective ·
 $$\hat{\boldsymbol\theta}_{\text{MAP}} = \arg\min_{\boldsymbol\theta} \bigl[\,L_{\text{NLL}}(\boldsymbol\theta) - \log p(\boldsymbol\theta)\,\bigr]$$
 
-**Substitute** Laplace log-prior ·
-$$= \arg\min_{\boldsymbol\theta} \bigl[\,L_{\text{NLL}}(\boldsymbol\theta) - \bigl(-\tfrac{1}{b}\|\boldsymbol\theta\|_1 + \text{const}\bigr)\,\bigr]$$
-
-**Distribute minus**, drop constant ·
-$$= \arg\min_{\boldsymbol\theta} \bigl[\,L_{\text{NLL}}(\boldsymbol\theta) + \tfrac{1}{b}\|\boldsymbol\theta\|_1\,\bigr]$$
+**Substitute** the Laplace log-prior, distribute the minus, and drop the constant ·
+$$= \arg\min_{\boldsymbol\theta} \bigl[\,L_{\text{NLL}}(\boldsymbol\theta) - \bigl(-\tfrac{1}{b}\|\boldsymbol\theta\|_1 + \text{const}\bigr)\,\bigr] = \arg\min_{\boldsymbol\theta} \bigl[\,L_{\text{NLL}}(\boldsymbol\theta) + \tfrac{1}{b}\|\boldsymbol\theta\|_1\,\bigr]$$
 
 **Rename** $\lambda := 1/b$ ·
 
-<div class="math-box">
-
 $$\boxed{\;\hat{\boldsymbol\theta}_{\text{MAP}} = \arg\min_{\boldsymbol\theta} \bigl[\,L_{\text{NLL}}(\boldsymbol\theta) + \lambda\,\|\boldsymbol\theta\|_1\,\bigr]\;}$$
-
-</div>
 
 **This is exactly L1 regularization (a.k.a. lasso).**
 
@@ -1168,16 +1154,16 @@ Read · "average the log-ratio over the **model** $q_\theta$."
 
 # Forward vs reverse KL · the picture
 
-![w:920px](figures/lec00/svg/forward_reverse_kl.svg)
+![w:820px](figures/lec00/svg/forward_reverse_kl.svg)
 
 <div class="math-box">
 
-Same bimodal target $p$ (grey shaded). Fit a single Gaussian by minimizing each direction of KL ·
+Same bimodal target $p$ (grey shaded), fit by a single Gaussian under each KL direction ·
 
-- **Forward KL** spreads the Gaussian across both modes — covers all data, but spends mass on the gap between modes (blurry samples). Why **VAE samples are blurry**.
-- **Reverse KL** concentrates on one mode — sharp samples but ignores the other half of the distribution. Why **GANs mode-collapse**.
+- **Forward KL** spreads across both modes — covers all data but blurs the gap. Why **VAE samples are blurry**.
+- **Reverse KL** concentrates on one mode — sharp but ignores the rest. Why **GANs mode-collapse**.
 
-The two errors are *opposite failure modes*. Knowing which KL direction your loss optimizes tells you which failure mode to expect.
+Two *opposite* failure modes — your loss's KL direction predicts which one you get.
 
 </div>
 
@@ -1286,7 +1272,7 @@ Same code skeleton; three lines change between MLE and MAP.
 <div class="math-box">
 
 1. **Bayes' rule** lets us flip likelihood + prior → posterior.
-2. **MAP** = $\arg\max_\theta \log P(\mathcal{D} \mid \theta) + \log P(\theta) = $ MLE + log-prior.
+2. **MAP** = $\arg\max_\theta \bigl[\log P(\mathcal{D} \mid \theta) + \log P(\theta)\bigr]$ = MLE + log-prior.
 3. **L2 (ridge)** = MAP with **Gaussian** prior $\mathcal{N}(0, \sigma_p^2)$ on weights.
 4. **L1 (lasso)** = MAP with **Laplace** prior on weights — *kink at 0* drives sparsity.
 5. **KL divergence** = expected extra surprise from using $q$ when truth is $p$. Always $\ge 0$, zero iff $p = q$.

@@ -570,7 +570,7 @@ That single number is the cross-entropy loss your optimizer minimizes — and it
 
 # MLE = minimizing KL to the data
 
-Treat the training set as the **empirical distribution** $\hat p_{\text{data}}$ (a histogram). Maximum likelihood pulls the model onto it ·
+Treat the training set as the **empirical distribution** $\hat p_{\text{data}}$ (a histogram); MLE pulls the model onto it ·
 
 <div class="math-box">
 
@@ -578,9 +578,9 @@ $$\arg\max_\theta \tfrac1N\sum_i \log p_\theta(y_i) = \arg\min_\theta\, \text{KL
 
 </div>
 
-![w:720px](figures/lec00c/svg/mle_kl_fit.svg)
+![w:560px](figures/lec00c/svg/mle_kl_fit.svg)
 
-**Make the model as KL-close as possible to the data.** Every classifier you've trained with cross-entropy has been silently doing this.
+**Make the model as KL-close as possible to the data** — every cross-entropy classifier has been silently doing this.
 
 ---
 

@@ -86,7 +86,7 @@ The loss functions we used without asking why
 
 Given $\{(\mathbf{x}_i, y_i)\}_{i=1}^N$ with targets $y_i \in \mathbb{R}$, fit a line and **read off a prediction** — no probability anywhere in sight yet.
 
-$$\hat y_i = \boldsymbol\theta^\top \mathbf{x}_i \qquad\text{— a single number, a *point estimate*}$$
+$$\hat y_i = \boldsymbol\theta^\top \mathbf{x}_i \qquad\text{— a single number, a \textit{point estimate}}$$
 
 ![w:660px](figures/lec00/svg/linreg_frequentist.svg)
 
@@ -684,7 +684,7 @@ Training asks · *under these distributions, how likely are the labels we actual
 
 Every supervised learning setup we'll see in this course shares the same plate diagram ·
 
-![w:560px](figures/lec00/svg/plate_supervised.svg)
+![w:500px](figures/lec00/svg/plate_supervised.svg)
 
 <div class="math-box">
 
@@ -695,7 +695,7 @@ Every supervised learning setup we'll see in this course shares the same plate d
 
 </div>
 
-Whether you are doing logistic regression, an MLP, or a Transformer — for any **supervised** model the *outermost* graphical model is **always this**. Only the conditional distribution $p(y \mid \mathbf{x}, \theta)$ inside the plate changes. (Purely *generative* models — VAEs, diffusion — replace the plate itself with generated data instead of labels; that's a different story, L19/L21.)
+For *any* **supervised** model — logistic regression, an MLP, a Transformer — this *outermost* picture is **always the same**; only the conditional $p(y \mid \mathbf{x}, \theta)$ inside the plate changes. (*Generative* models swap the plate for generated data — a different story, L19/L21.)
 
 ---
 
