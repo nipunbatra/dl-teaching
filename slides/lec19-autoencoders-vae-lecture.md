@@ -387,17 +387,12 @@ The next two slides *derive* this from first principles (Jensen's inequality). *
 **Step 1.** Multiply and divide by $q(z|x)$:
 $$\log p(x) = \log \int q(z|x) \cdot \frac{p(x, z)}{q(z|x)}\,dz = \log\,\mathbb{E}_{q}\!\left[\frac{p(x, z)}{q(z|x)}\right]$$
 
-**Step 2 · Jensen's inequality.** $\log$ is concave → $\log\mathbb{E}[X] \ge \mathbb{E}[\log X]$. (For two values: $\log\!\frac{a+b}{2} \ge \frac{\log a + \log b}{2}$.) Move log inside expectation:
+**Step 2 · Jensen's inequality.** $\log$ is concave, so $\log\mathbb{E}[X] \ge \mathbb{E}[\log X]$ — move log inside:
 $$\log p(x) \ge \mathbb{E}_q\!\left[\log\tfrac{p(x, z)}{q(z|x)}\right] \quad \text{(ELBO)}$$
 
-**Step 3 · expand.** Using $p(x, z) = p(x|z)\,p(z)$:
+**Step 3 · expand** with $p(x, z) = p(x|z)\,p(z)$ — the second bracket is $-D_\text{KL}(q\,\|\,p(z))$:
 $$\text{ELBO} = \mathbb{E}_q[\log p(x|z)] + \mathbb{E}_q[\log p(z) - \log q(z|x)]$$
-
-The second bracket is exactly $-D_\text{KL}(q(z|x)\,\|\,p(z))$:
-$$\boxed{\log p(x) \ge \mathbb{E}_{q(z|x)}[\log p(x|z)] - D_\text{KL}(q(z|x)\,\|\,p(z))}$$
-
-- **First term** · reconstruction (maximize).
-- **Second term** · regularizer (minimize).
+$$\boxed{\log p(x) \ge \underbrace{\mathbb{E}_{q(z|x)}[\log p(x|z)]}_{\text{reconstruction · max}} - \underbrace{D_\text{KL}(q(z|x)\,\|\,p(z))}_{\text{regularizer · min}}}$$
 
 ---
 
@@ -666,16 +661,11 @@ $z = \mu + \sigma \odot \epsilon = [0.4 + 0.5 \cdot 0.6, -0.3 + 0.37 \cdot (-0.2
 **Step 3 · decode.** Suppose decoder outputs $\hat x = [0.92, 0.45, 0.25, 0.81]$.
 
 **Step 4 · loss.**
-- Reconstruction (summed squared error, matching the training loop's `.sum(-1)`) · $\|\hat x - x\|^2 = 0.08^2 + 0.05^2 + 0.05^2 + 0.01^2 \approx 0.012$
-- KL · $\frac{1}{2} \sum (\sigma^2 + \mu^2 - 1 - \log \sigma^2)$
-  - $z_1$: $0.25 + 0.16 - 1 + 1.4 = 0.81$
-  - $z_2$: $0.135 + 0.09 - 1 + 2.0 = 1.23$
-  - sum / 2 = **1.02**
-- Total loss = 0.012 + 1.02 = **1.03**
+- Reconstruction (SSE, matching `.sum(-1)`) · $\|\hat x - x\|^2 = 0.08^2 + 0.05^2 + 0.05^2 + 0.01^2 \approx 0.012$
+- KL · $\frac{1}{2} \sum (\sigma^2 + \mu^2 - 1 - \log \sigma^2)$: $z_1 = 0.25 + 0.16 - 1 + 1.4 = 0.81$; $z_2 = 0.135 + 0.09 - 1 + 2.0 = 1.23$; sum/2 = **1.02**
+- **Total loss** = 0.012 + 1.02 = **1.03** → backprop, update params, repeat.
 
 </div>
-
-Backprop through this. Update params. Repeat.
 
 ---
 

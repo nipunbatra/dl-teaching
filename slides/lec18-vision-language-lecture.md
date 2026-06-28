@@ -35,7 +35,7 @@ In **L17** SimCLR's contrastive loss pulled together two augmentations *of the s
 
 <div class="insight">
 
-Here is the leap · what if the second view of an image is not a crop — but its **caption**? Run the *identical* contrastive recipe across **two modalities** instead of two augmentations, and image and text land in **one shared space**. That single idea — **CLIP** — is what lets you classify a photo just by *naming* the classes, no labels, no retraining.
+Here is the leap · what if the second view of an image is not a crop — but its **caption**? Run the *identical* contrastive recipe across **two modalities**, and image and text land in **one shared space**. That single idea — **CLIP** — lets you classify a photo just by *naming* the classes, no labels, no retraining.
 
 </div>
 
@@ -43,12 +43,7 @@ Building blocks · **CNNs** (L7–L9), **Transformers** (L13–L14), **contrasti
 
 <div class="paper">
 
-**Reading & inspiration** ·
-- **Dosovitskiy et al. 2020 · *ViT*** — *"An image is worth 16×16 words."*
-- **Radford et al. 2021 · *CLIP***  + Lilian Weng · *Generalized Visual Language Models*.
-- **Liu et al. 2023 · *LLaVA*** + **Alayrac et al. 2022 · *Flamingo***.
-- **UDL (Prince) · Ch 12 §12.5**.
-- **Chip Huyen · *MLLM blog post***  for the 2025 frontier.
+**Reading** · Dosovitskiy 2020 *ViT* · Radford 2021 *CLIP* · Liu 2023 *LLaVA* · Alayrac 2022 *Flamingo* · Lilian Weng *Generalized VLMs* · Chip Huyen *MLLM* blog · **UDL Ch 12 §12.5**.
 
 </div>
 
