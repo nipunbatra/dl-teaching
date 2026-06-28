@@ -366,8 +366,10 @@ Cell holds a **dog** (class index 2).
 
 **Prediction.** $\hat{\mathbf{b}} = [0.6, 0.4, 0.25, 0.31]$. Objectness 0.85. Probs $[0.1, 0.2, 0.6, 0.1, \ldots]$.
 
-**Components.**
-- $\mathcal{L}_\text{box} = (0.6-0.5)^2 + (0.4-0.5)^2 + (\sqrt{0.25}-\sqrt{0.2})^2 + (\sqrt{0.31}-\sqrt{0.3})^2 = 0.01 + 0.01 + 0.0028 + 0.0001 \approx 0.023$ (the $\sqrt{\cdot}$ on $w,h$ matches the formula above)
+**Components.** (the $\sqrt{\cdot}$ on $w, h$ matches the formula on the previous slide)
+$$\mathcal{L}_\text{box} = (0.6{-}0.5)^2 + (0.4{-}0.5)^2 + (\sqrt{0.25}{-}\sqrt{0.2})^2 + (\sqrt{0.31}{-}\sqrt{0.3})^2$$
+$$= 0.01 + 0.01 + 0.0028 + 0.0001 \approx \mathbf{0.023}$$
+
 - $\mathcal{L}_\text{obj} = -\log(0.85) \approx 0.16$
 - $\mathcal{L}_\text{class} = -\log(0.6) \approx 0.51$
 
