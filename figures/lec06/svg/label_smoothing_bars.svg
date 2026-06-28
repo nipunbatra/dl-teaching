@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" font-family="EB Garamond, Georgia, serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="EB Garamond, Georgia, serif">
   <style>
     .bg { fill: #F7F3E9; }
     .title { font-size: 17px; font-weight: 600; fill: #161513; }
@@ -10,7 +10,7 @@
     .bar-hard { fill: #B85A3E; }
     .bar-soft { fill: #5F8573; }
   </style>
-  <rect class="bg" width="960" height="360"/>
+  <rect class="bg" width="960" height="400"/>
   <text x="480" y="28" class="title" text-anchor="middle">Label smoothing · soften the one-hot target so the model can't get overconfident</text>
 
   <!-- Panel 1: Hard target -->
@@ -58,5 +58,5 @@
     <text x="180" y="295" class="caption" text-anchor="middle">model stays calibrated · 1-α + α/K = 0.925</text>
   </g>
 
-  <text x="480" y="345" class="caption" text-anchor="middle">In the loss · soft target penalizes "very low" logits for wrong classes too · prevents model from being too sharp.</text>
+  <text x="480" y="388" class="caption" text-anchor="middle">In the loss · soft target penalizes "very low" logits for wrong classes too · prevents model from being too sharp.</text>
 </svg>

@@ -371,7 +371,7 @@ A flipped cat is still a cat. A color-jittered cat is still a cat. By training o
 |--------|--------|-------|
 | Natural images | flip · crop · color jitter · rotate | vertical flip (changes sky/ground) |
 | Medical imaging | small rotations · mild intensity | flips (mirrors anatomy) |
-| MNIST / digits | small rotations · elastic | flip (6 ↔ 9) |
+| MNIST / digits | small rotations · elastic | flip (turns 6 into 9) |
 | Satellite imagery | all rotations (no "up") · flip | color jitter (semantic) |
 | Text | synonym · back-translation · mask | random char shuffle |
 
@@ -530,17 +530,14 @@ Label smoothing is the good professor for your neural network.
 
 Goal · take a tiny fraction $\alpha$ of confidence away from the correct class and spread it evenly across all $K$ classes.
 
-1. **Hard one-hot label** for class 3 ($K = 10$):
-$y_\text{hard} = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0]$
-2. **Uniform label** (complete uncertainty):
-$y_\text{uniform} = [0.1, 0.1, \ldots, 0.1]$ (each $= 1/K$)
+1. **Hard one-hot label**, class 3 ($K = 10$): $\;y_\text{hard} = [0, 0, 1, 0, \ldots, 0]$.
+2. **Uniform label** (complete uncertainty): $\;y_\text{uniform} = [0.1, \ldots, 0.1]$, each $= 1/K$.
 3. **Mix them** with weight $\alpha = 0.1$:
-$y_\text{smooth} = (1-\alpha)\,y_\text{hard} + \alpha\,y_\text{uniform}$
-$\quad\quad\;\; = 0.9\,y_\text{hard} + 0.1\,y_\text{uniform}$
-4. **Compute** entry-by-entry:
+$y_\text{smooth} = (1-\alpha)\,y_\text{hard} + \alpha\,y_\text{uniform} = 0.9\,y_\text{hard} + 0.1\,y_\text{uniform}$
+4. **Compute** entry-by-entry — sum is still 1:
 $y_\text{smooth} = [0.01, 0.01, \mathbf{0.91}, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]$
 
-Sum is still 1. The compact form:
+Compact form · take $1-\alpha$ of the one-hot, add $\alpha/K$ everywhere:
 $$y_\text{smooth} = (1-\alpha)\,y_\text{hard} + \frac{\alpha}{K}$$
 
 ---
@@ -748,7 +745,7 @@ def forward(self, x):
 
 PyTorch's `nn.Dropout(p)` uses $p$ as the **drop** probability.
 
-Keep-prob 0.8 ↔ `nn.Dropout(p=0.2)`. Always double-check which convention your code and your paper are using.
+Keep-prob 0.8 is `nn.Dropout(p=0.2)`. Always double-check which convention your code and your paper are using.
 
 </div>
 
@@ -1098,7 +1095,7 @@ Adding all four at once tells you nothing about *what* fixed it. **Change one kn
 | Val accuracy drops the moment you call `model.eval()` | stale BatchNorm running stats (tiny batches, short run) | eval the same val set in train vs eval mode; large gap → BN stats |
 | Great in training, garbage in deployment | dropout still on — `model.eval()` never called | `assert not model.training` at inference entry |
 | Added dropout `p=0.5`, everything got *worse* | dropout stacked on a CNN already regularized by BN + aug | remove it (or `p ≤ 0.1`); CNNs rarely want 0.5 |
-| Accuracy *fell* after adding flips on digit data | label-destroying augmentation (6 ↔ 9) | eyeball augmented samples next to their labels |
+| Accuracy *fell* after adding flips on digit data | label-destroying augmentation (a flipped 6 reads as 9) | eyeball augmented samples next to their labels |
 
 ---
 
