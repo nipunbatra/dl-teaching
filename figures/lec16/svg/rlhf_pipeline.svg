@@ -50,7 +50,7 @@
       <line x1="350" y1="35" x2="400" y2="35"/>
       <line x1="600" y1="35" x2="650" y2="35"/>
     </g>
-    <text x="900" y="35" class="mono" fill="#A8324B" font-weight="600">→ aligned</text>
+    <text x="900" y="90" text-anchor="end" class="mono" fill="#A8324B" font-weight="600">→ aligned model</text>
   </g>
 
   <!-- Divider -->
@@ -81,7 +81,7 @@
       <line x1="150" y1="35" x2="200" y2="35"/>
       <line x1="350" y1="35" x2="400" y2="35"/>
     </g>
-    <text x="920" y="35" class="mono" fill="#5F8573" font-weight="600">→ aligned</text>
+    <text x="900" y="90" text-anchor="end" class="mono" fill="#5F8573" font-weight="600">→ aligned model</text>
   </g>
 
   <!-- Comparison table -->

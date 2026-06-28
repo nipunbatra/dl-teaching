@@ -43,7 +43,7 @@
 
     <!-- Large FLOPs -->
     <path class="iso" d="M 140 40 Q 220 60 310 90 Q 400 120 480 155 Q 560 200 620 230"/>
-    <text x="560" y="205" class="mono" fill="#37535F">1e24 FLOPs</text>
+    <text x="372" y="108" class="mono" fill="#37535F">1e24 FLOPs</text>
 
     <!-- Optimal compute-frontier (connects the minima of each iso-FLOP curve) -->
     <path class="opt" d="M 90 115 Q 200 130 310 145 Q 420 160 560 175"/>
@@ -59,8 +59,8 @@
     <text x="95" y="55" text-anchor="middle" class="mut" fill="#A8324B">175B · 300B tokens · "oversized"</text>
 
     <circle cx="520" cy="195" r="5" fill="#5F8573" stroke="#161513"/>
-    <text x="530" y="193" class="mono" fill="#5F8573">Llama 3 · 8B · 15T</text>
-    <text x="530" y="205" class="mut" fill="#5F8573">"overtrained" by Chinchilla</text>
+    <text x="514" y="187" text-anchor="end" class="mono" fill="#5F8573">Llama 3 · 8B · 15T</text>
+    <text x="514" y="199" text-anchor="end" class="mut" fill="#5F8573">"overtrained" by Chinchilla</text>
 
     <!-- Axis labels -->
     <text x="310" y="282" text-anchor="middle" class="mut">log model parameters (N) →</text>
@@ -80,8 +80,8 @@
     <text x="14" y="162" class="mono" fill="#B85A3E">D / N ≈ 20</text>
     <text x="14" y="180" class="mut">(Chinchilla, 2022)</text>
 
-    <text x="14" y="216" class="mut" font-style="italic" font-size="10">Llama 3 deliberately</text>
-    <text x="14" y="230" class="mut" font-style="italic" font-size="10">overtrains — better</text>
-    <text x="14" y="244" class="mut" font-style="italic" font-size="10">for inference cost.</text>
+    <text x="14" y="210" class="mut" font-style="italic" font-size="10">Llama 3 deliberately</text>
+    <text x="14" y="224" class="mut" font-style="italic" font-size="10">overtrains — better</text>
+    <text x="14" y="238" class="mut" font-style="italic" font-size="10">for inference cost.</text>
   </g>
 </svg>

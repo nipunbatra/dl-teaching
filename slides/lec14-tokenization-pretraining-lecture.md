@@ -216,7 +216,7 @@ At inference, apply the same merge rules in order → tokenize any new string.
 
 <div class="insight">
 
-Like a basic file compressor. If "ABCABCABC" appears a lot, define a new symbol $Z = $ "ABC" and rewrite as "ZZZ". BPE does the same for language · find the most common adjacent pair (like `th`), compress it into a single new token, repeat.
+Like a basic file compressor. If "ABCABCABC" appears a lot, define a new symbol $Z =$ "ABC" and rewrite as "ZZZ". BPE does the same for language · find the most common adjacent pair (like `th`), compress it into a single new token, repeat.
 
 </div>
 

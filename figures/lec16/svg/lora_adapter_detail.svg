@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" font-family="Work Sans, system-ui, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 474" font-family="Work Sans, system-ui, sans-serif">
   <style>
     .bg { fill: #F7F3E9; }
     .title { font-size: 17px; font-weight: 600; fill: #161513; }
@@ -11,7 +11,7 @@
     .arrow { stroke: #161513; stroke-width: 1.3; fill: none; }
     .add { fill: white; stroke: #A8324B; stroke-width: 1.4; }
   </style>
-  <rect class="bg" width="960" height="420"/>
+  <rect class="bg" width="960" height="474"/>
   <text x="480" y="28" class="title" text-anchor="middle">LoRA · low-rank adapter · 99.9% fewer trainable params</text>
 
   <!-- Full fine-tuning (left) -->
@@ -80,9 +80,9 @@
   </g>
 
   <!-- bottom note -->
-  <rect x="40" y="370" width="880" height="40" fill="#FFF3EE" stroke="#B85A3E" stroke-width="1" rx="6"/>
-  <text x="480" y="392" class="body" text-anchor="middle"><tspan font-weight="600">Key insight</tspan> · fine-tuning updates are intrinsically low-rank · B·A (rank 8) captures 95%+ of benefit.</text>
-  <text x="480" y="405" class="caption" text-anchor="middle">Train on consumer GPU · ship per-task adapters as tiny deltas · swap in/out at runtime.</text>
+  <rect x="40" y="426" width="880" height="42" fill="#FFF3EE" stroke="#B85A3E" stroke-width="1" rx="6"/>
+  <text x="480" y="449" class="body" text-anchor="middle"><tspan font-weight="600">Key insight</tspan> · fine-tuning updates are intrinsically low-rank · B·A (rank 8) captures 95%+ of benefit.</text>
+  <text x="480" y="462" class="caption" text-anchor="middle">Train on consumer GPU · ship per-task adapters as tiny deltas · swap in/out at runtime.</text>
 
   <defs>
     <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">

@@ -196,23 +196,32 @@ Each image has supplied its *own* label · "these two crops belong together." No
 
 ---
 
-# ⭐⭐⭐ Optional · InfoNCE · derive the loss step by step
+# ⭐⭐⭐ Optional · InfoNCE · set up the probability
 
 For one anchor $z_i$ with positive partner $z_j$ in a batch with negatives $z_k$:
 
 1. **Score function** · cosine similarity. Higher = more similar.
-$\text{sim}(z_i, z_k) = (z_i \cdot z_k) / (\|z_i\| \,\|z_k\|)$
+$$\text{sim}(z_i, z_k) = (z_i \cdot z_k) / (\|z_i\| \,\|z_k\|)$$
 
 2. **Make it a probability problem.** "Which $z_k$ is the true partner of $z_i$?" Use softmax over scores, with **temperature** $\tau$:
-$P(\text{partner} = k) = \dfrac{\exp(\text{sim}(z_i, z_k)/\tau)}{\sum_{k' \ne i}\exp(\text{sim}(z_i, z_{k'})/\tau)}$
+$$P(\text{partner} = k) = \dfrac{\exp(\text{sim}(z_i, z_k)/\tau)}{\sum_{k' \ne i}\exp(\text{sim}(z_i, z_{k'})/\tau)}$$
 
 3. **Cross-entropy** with the true partner $j$:
-$\mathcal{L}_{i,j} = -\log P(\text{partner} = j)$
+$$\mathcal{L}_{i,j} = -\log P(\text{partner} = j)$$
 
-4. **Substitute** to get the full form:
+---
+
+# ⭐⭐⭐ Optional · InfoNCE · the full loss
+
+**Substitute** the softmax probability (step 2) into the cross-entropy (step 3):
+
 $$\mathcal{L}_{i,j} = -\log \frac{\exp(\text{sim}(z_i, z_j)/\tau)}{\sum_{k \ne i}\exp(\text{sim}(z_i, z_k)/\tau)}$$
 
-It's standard softmax cross-entropy where the "classes" are batch positions and the label is the positive pair. No human labels needed.
+<div class="insight">
+
+It's standard softmax cross-entropy where the "classes" are **batch positions** and the label is the positive pair $j$. No human labels needed — the supervision comes entirely from "which view is the other augmentation of me?"
+
+</div>
 
 ---
 

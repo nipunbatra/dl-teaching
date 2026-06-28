@@ -193,7 +193,7 @@ Now hold GPT-3 up against the same rule:
 | | Params $N$ | Tokens $D$ | $D/N$ | Rule says $D$ should be |
 |:-:|:-:|:-:|:-:|:-:|
 | Chinchilla rule | 1B | 20B | 20 | — |
-| **GPT-3 (2020)** | 175B | 300B | **≈ 1.7** | $20 \times 175\text{B} = $ **3.5T** |
+| **GPT-3 (2020)** | 175B | 300B | **≈ 1.7** | $20 \times 175\text{B} =$ **3.5T** |
 
 <div class="insight">
 

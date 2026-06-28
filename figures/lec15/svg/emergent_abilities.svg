@@ -68,7 +68,7 @@
   </g>
 
   <!-- Caption -->
-  <g transform="translate(80, 345)">
+  <g transform="translate(80, 372)">
     <text x="360" y="0" text-anchor="middle" class="mut" font-style="italic">
       Below ~10B params · all abilities at near-random. Above ~50B · each ability <tspan fill="#B85A3E" font-weight="600">"turns on"</tspan> over ~2× in scale.
     </text>
