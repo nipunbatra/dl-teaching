@@ -149,17 +149,16 @@ The genius was **gluing them together** into one block you can safely stack.
 
 # ⭐⭐⭐ Optional · Pre-norm vs post-norm · derive the gradient
 
-Block output `x_out = x_in + Sublayer(...)`. Goal · derivative $\partial x_\text{out} / \partial x_\text{in}$.
+Goal · the block's input-to-output derivative $\partial x_\text{out} / \partial x_\text{in}$.
 
-**Post-norm** · `x_out = LayerNorm(x_in + Sublayer(x_in))`. Gradient must pass *through* LN:
-$$\frac{\partial x_\text{out}}{\partial x_\text{in}} = \underbrace{\frac{\partial \text{LN}}{\partial(\cdot)}}_{\text{complex, < 1 typically}} \cdot \left(1 + \frac{\partial \text{Sub}}{\partial x_\text{in}}\right)$$
-Stack 100 of these → shrinking factors compound → gradient dies.
+**Post-norm** · `x_out = LayerNorm(x_in + Sublayer(x_in))`. Gradient passes *through* LN:
+$$\frac{\partial x_\text{out}}{\partial x_\text{in}} = \underbrace{\frac{\partial \text{LN}}{\partial(\cdot)}}_{\text{complex, < 1 typically}} \cdot \left(1 + \frac{\partial \text{Sub}}{\partial x_\text{in}}\right) \;\Rightarrow\; \text{shrink factors compound} \to \text{dies}$$
 
 **Pre-norm** · `x_out = x_in + Sublayer(LayerNorm(x_in))`:
 $$\frac{\partial x_\text{out}}{\partial x_\text{in}} = \mathbf{1} + \frac{\partial \text{Sub}(\text{LN}(x_\text{in}))}{\partial x_\text{in}}$$
-The $\mathbf{1}$ is a clean identity — gradient has a direct path back. **Stable at any depth.**
+The $\mathbf{1}$ is a clean identity — a direct path back. **Stable at any depth.**
 
-Xiong et al. 2020 · pre-norm trains without warmup and scales to 100+ layers. Post-norm gets unstable past ~24 layers without careful LR warmup. **Use pre-norm.**
+Xiong et al. 2020 · pre-norm trains without warmup, scales to 100+ layers; post-norm needs careful LR warmup past ~24. **Use pre-norm.**
 
 ---
 

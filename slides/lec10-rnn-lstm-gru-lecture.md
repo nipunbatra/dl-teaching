@@ -139,7 +139,9 @@ $$W = \begin{pmatrix} 0.1 & 0.2 \\ 0.3 & 0.4 \\ 0.5 & 0.6 \end{pmatrix},\quad U 
 **Step 1 · "I".** $h_0 = 0$, so $h_1 = \tanh(Wx_1) = \tanh([0.1, 0.3, 0.5]^\top) \approx [0.099, 0.291, 0.462]^\top$. This vector summarizes the sequence so far.
 
 **Step 2 · "love".** Use the **same** $W, U$ with new input $x_2$ and previous state $h_1$:
-$h_2 = \tanh(Wx_2 + Uh_1)$.
+$$h_2 = \tanh(\underbrace{Wx_2}_{[0.2,\,0.4,\,0.6]^\top} + \underbrace{Uh_1}_{[0.21,\,0.46,\,0.72]^\top}) = \tanh([0.41,\,0.86,\,1.32]^\top) \approx [0.39,\,0.70,\,0.87]^\top$$
+
+Same weights, but now the state carries information from **both** words. That reuse — one $W, U$ for every step — is the whole RNN idea.
 
 ---
 

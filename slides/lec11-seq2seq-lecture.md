@@ -469,11 +469,11 @@ Vocab · {The, A, cat, dog, sat, ran}. Decoding "The cat sat".
 | `<s> A dog` | −0.5 + −0.9 = −1.4 |
 | `<s> A ran` | −0.5 + −1.1 = −1.6 |
 
-Keep the top 2 · `<s> The cat` (−1.3), `<s> A dog` (−1.4). **Step 3** · continue, then divide each final score by $T^{0.6}$ to compare lengths fairly.
-
-</div>
+Keep top 2 · `<s> The cat` (−1.3), `<s> A dog` (−1.4). **Step 3** · continue, then divide each score by $T^{0.6}$ for fair length comparison.
 
 Greedy locks onto "A" and dead-ends; the beam keeps "The…" alive and reaches **"The cat sat."**
+
+</div>
 
 ---
 

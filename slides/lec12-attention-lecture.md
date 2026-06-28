@@ -473,17 +473,14 @@ Unscaled dot products behave like the second case as $d_k$ grows. Scaling factor
 For $Q_i, K_j$ with i.i.d. $\mathcal{N}(0, 1)$ entries:
 $$S = Q_i^\top K_j = \sum_{k=1}^{d_k} q_k k_k$$
 
-Variance of a sum of independent terms = sum of variances:
-$$\text{Var}(S) = \sum_{k=1}^{d_k} \text{Var}(q_k k_k) = d_k$$
-(For two independent zero-mean unit-variance variables, $\text{Var}(qk) = 1$.)
+Variance of a sum of independents = sum of variances (each $\text{Var}(q_k k_k) = 1$):
+$$\text{Var}(S) = \sum_{k=1}^{d_k} \text{Var}(q_k k_k) = d_k \;\Rightarrow\; \text{std} = \sqrt{d_k}$$
 
-Standard deviation $\sqrt{d_k}$ → typical magnitudes scale **like $\sqrt{d_k}$**.
-
-With $d_k = 512$ raw scores are $\sim \pm 22$. Softmax of $[22, -22, 22, \ldots]$ → nearly one-hot. Scale by $1/\sqrt{d_k}$ → variance back to 1.
+So scores scale **like $\sqrt{d_k}$**. At $d_k = 512$ they reach $\sim \pm 22$ → softmax nearly one-hot. Dividing by $\sqrt{d_k}$ restores variance 1.
 
 <div class="keypoint">
 
-The scaling is **dimension-invariant by construction** — the same attention block works at $d_k = 64$ or $d_k = 4096$ without retuning any temperature.
+This is **dimension-invariant** — one block works at $d_k = 64$ or $4096$, no temperature retuning.
 
 </div>
 
@@ -685,7 +682,7 @@ $$S' = \begin{pmatrix} 2.1 & -\infty & -\infty \\ 0.8 & 3.1 & -\infty \\ 1.4 & 0
 - Row 2: $\text{softmax}([0.8, 3.1, -\infty]) \approx [0.09,\ 0.91,\ 0]$
 - Row 3: $\text{softmax}([1.4, 0.7, 2.5]) \approx [0.22,\ 0.11,\ 0.67]$
 
-The $-\infty$ guarantees future tokens get **exact zero** weight after softmax. Token 1 sees only itself; token 2 sees 1–2; token 3 sees all.
+The $-\infty$ forces future tokens to **exact zero** weight. Token 1 sees itself; token 2 sees 1–2; token 3 sees all.
 
 ---
 
@@ -848,9 +845,9 @@ The intuition you had before any math is literally the formula. That's why atten
 
 # Lecture 12 — summary
 
-- **Attention** = soft retrieval · each query selects a weighted combination of values based on similarity to keys.
-- **Bahdanau** (additive, 2014) and **Luong** (multiplicative, 2015) are two parameterizations — we use Luong's dot-product form in Transformers.
-- **QKV abstraction** · $Q, K, V$ are learned projections of the same input; the network decides what each role should be.
+- **Attention** = soft retrieval · each query takes a weighted blend of values by similarity to keys.
+- **Bahdanau** (additive, 2014) and **Luong** (multiplicative, 2015) — Transformers use Luong's dot-product form.
+- **QKV abstraction** · $Q, K, V$ are learned projections of the same input; the network learns each role.
 - **$\sqrt{d_k}$ scaling** — without it, softmax collapses to one-hot at large $d_k$ and gradients die.
 - **Self-attention** · Q, K, V from the same sequence; parallel, long-range, interpretable.
 - **This unlocked the Transformer** — next lecture.
