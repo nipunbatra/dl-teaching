@@ -711,10 +711,10 @@ $\log q(x_t \mid x_0) = -\dfrac{1}{2\sigma^2}(x_t - \mu)^2 + C$
 Differentiate w.r.t. $x_t$:
 $\nabla_{x_t}\log q = -\dfrac{1}{1 - \bar\alpha_t}(x_t - \sqrt{\bar\alpha_t}\,x_0)$
 
-But the forward equation rearranges to $\epsilon = (x_t - \sqrt{\bar\alpha_t}\,x_0)/\sqrt{1 - \bar\alpha_t}$. Substitute:
+Forward equation rearranges to $\epsilon = (x_t - \sqrt{\bar\alpha_t}\,x_0)/\sqrt{1 - \bar\alpha_t}$. Substitute:
 $$\nabla_{x_t}\log q(x_t \mid x_0) = -\frac{\epsilon}{\sqrt{1 - \bar\alpha_t}}$$
 
-So the **conditional** score is just the noise, negated and rescaled. (The score the sampler actually needs is the *marginal* $\nabla_{x_t}\log q_t(x_t)$; minimizing this MSE makes the network predict $\mathbb{E}[\epsilon \mid x_t]$ — which *is* that marginal score.)
+So the **conditional** score is just the noise, negated and rescaled. (The sampler needs the *marginal* score $\nabla_{x_t}\log q_t(x_t)$ — and minimizing this MSE makes the net predict $\mathbb{E}[\epsilon \mid x_t]$, which *is* that marginal score.)
 
 ---
 

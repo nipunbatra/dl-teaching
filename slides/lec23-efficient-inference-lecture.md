@@ -463,7 +463,7 @@ Autoregressive generation is **one token per forward pass**. For a 70B model thi
 2. The big **verifier model** (70B) does ONE forward pass on all $k$ in parallel.
 3. Accept the longest prefix where draft and verifier agree; rewind if they diverge.
 
-**Concrete trace** ($k = 4$) · draft proposes `the cat sat on`. The 70B verifies all four in one pass and agrees with `the cat sat` but would have said `the cat sat **down**`. Accept the 3-token prefix `the cat sat`, take the verifier's `down` as the 4th — **4 tokens for the cost of one big forward pass.**
+**Concrete trace** ($k = 4$) · draft proposes `the cat sat on`. The 70B verifies all four in one pass and agrees with `the cat sat` — but its own 4th token would have been `down`, not `on`. So accept the matching 3-token prefix `the cat sat`, then take the verifier's `down` as the 4th — **4 tokens for the cost of one big forward pass.**
 
 ---
 
