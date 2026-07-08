@@ -3,8 +3,8 @@
     .bg { fill: #F7F3E9; }
     .title { font-size: 17px; font-weight: 600; fill: #161513; }
     .head { font-size: 13px; font-weight: 600; fill: #161513; }
-    .body { font-size: 12px; fill: #161513; }
-    .caption { font-size: 11px; fill: #5F5C54; }
+    .body { font-size: 12.5px; fill: #161513; }
+    .caption { font-size: 12.5px; fill: #5F5C54; }
     .mono { font-family: "IBM Plex Mono", monospace; font-size: 11px; }
     .tok { fill: #FFF3EE; stroke: #B85A3E; stroke-width: 1.2; rx: 4; }
     .head-box { fill: #F0F5EF; stroke: #5F8573; stroke-width: 1.4; rx: 4; }

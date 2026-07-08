@@ -9,9 +9,9 @@
       .loop     { stroke:#B85A3E; fill:none; stroke-width:2; stroke-dasharray:5 3; }
       .ink      { stroke:#161513; fill:none; stroke-width:1.2; }
       .mono     { font-family:'JetBrains Mono', monospace; font-size:11px; fill:#161513; }
-      .mut      { fill:#5F5C54; font-size:11px; font-family:Inter, sans-serif; }
+      .mut      { fill:#5F5C54; font-size:12.5px; font-family:Inter, sans-serif; }
       .ttl      { fill:#161513; font-size:15px; font-weight:600; font-style:italic; }
-      .tag      { fill:#5F5C54; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
+      .tag      { fill:#5F5C54; font-size:12.5px; letter-spacing:0.1em; text-transform:uppercase; font-family:Inter, sans-serif; }
     </style>
     <marker id="re-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#161513"/></marker>
     <marker id="re-l" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#B85A3E"/></marker>
