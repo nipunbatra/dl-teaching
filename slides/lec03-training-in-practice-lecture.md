@@ -174,7 +174,9 @@ PyTorch builds the graph **as we compute**.
 
 ---
 
-# Worked numeric · a 2-layer backward step
+# ⭐⭐⭐ Optional · a 2-layer backward step by hand
+
+*Gist: `.backward()` just chains local derivatives — this does one by hand so the tape isn't magic. Safe to skip on a first pass.*
 
 Compute $\partial L / \partial w_1$ for $L = (\mathrm{relu}(w_2 h) - y)^2$ where $h = \mathrm{relu}(w_1 x)$.
 Let $x = 2,\ y = 1,\ w_1 = w_2 = 0.5$.
@@ -569,9 +571,19 @@ From zero to a trained model
 
 ---
 
-# Training curves · the diagnostic language
+# Diagnose the gap first · bias vs variance
 
-![w:920px](figures/lec03/svg/training_curves_annotated.svg)
+**Big idea (2 sentences).** The gap between training and validation loss *is* your diagnosis. Both high → **high bias** (underfitting); a big train–val gap → **high variance** (overfitting) — and each points to a *different* fix.
+
+![w:930px](figures/lec03/svg/learning_curve_diagnosis.svg)
+
+---
+
+# One run over time · underfit → sweet spot → overfit
+
+A *single* training run sweeps through all three states as epochs pass. The move: **stop at best-val** (early stopping) — just before the val curve turns back up.
+
+![w:870px](figures/lec03/svg/training_curves_annotated.svg)
 
 ---
 
@@ -720,7 +732,7 @@ The question is not "did validation improve?" The question is "does validation m
 
 # Debug checklist · why won't loss go down? · part 1
 
-If you can't even overfit a single batch, something is fundamentally broken.
+If you can't even overfit a single batch, something is fundamentally broken. Read each line the same way: **symptom → what it means → the fix.**
 
 - **LR too large** → loss explodes to `NaN`. **Fix:** divide LR by 10.
 - **LR too small** → loss barely moves. **Fix:** multiply LR by 10.
@@ -846,26 +858,20 @@ After training — what next?
 
 ---
 
-# You have a model. Val accuracy is 82%.
+# Val accuracy is 82% · what's the highest-value next move?
 
 <div class="popquiz">
 
-**Q.** Which of these is most useful?
-
-(a) Try a bigger model.
-(b) Train for more epochs.
-(c) Sample 100 val mistakes and categorize them.
-(d) Tune the learning rate.
+(a) Try a bigger model.  (b) Train for more epochs.
+(c) Sample 100 val mistakes and categorize them.  (d) Tune the learning rate.
 
 </div>
 
----
-
-# Answer · (c)
+**Answer · (c) — look before you scale.**
 
 <div class="insight">
 
-**Ng's rule.** Before adding complexity, *look at the errors*. Nearly always you will find a dominant failure category — fixing it moves val accuracy far more than architectural churn.
+**Ng's rule.** Before adding complexity, *look at the errors*. Nearly always one dominant failure category shows up — fixing it moves val accuracy far more than architectural churn.
 
 </div>
 
@@ -969,7 +975,7 @@ If you cannot compare two runs later, the experiment did not really happen.
 
 <div class="math-box">
 
-**Training a deep net is 10% picking an architecture and 90% running a disciplined loop.** PyTorch is just an engine; the wins come from the **data pipeline**, the **debugging ladder**, and **error analysis** — none of which require new theory.
+**Training a deep net is 10% picking an architecture and 90% running a disciplined loop.** PyTorch is just an engine; the wins come from the **data pipeline**, the **debugging ladder**, and **error analysis** — none of which require new theory. Every hard case reduces to the same move: **read the signal (a curve, a number, a NaN), apply the matching fix — a checklist, not magic.**
 
 </div>
 
