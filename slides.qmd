@@ -2,14 +2,88 @@
 title: "Slides"
 ---
 
-All lecture slides are available in HTML (for browser) and PDF (for download).
+All 27 lecture decks, in **HTML** (browser) and **PDF** (download). Each deck opens with a teaching-guide overview marking ⭐ Core / ⭐⭐ Should-cover / ⭐⭐⭐ Optional. The chapter-by-chapter reading map is on the [Syllabus](syllabus.qmd).
 
-See the [Home page](index.qmd) for the full schedule with links.
+## Module 0 · A Probabilistic View of ML (primer)
 
-## Primer
+The spine that explains every loss and regularizer — recommended pre-reading for anyone whose probability is rusty.
 
-| # | Topic | HTML | PDF |
-|:-:|-------|:----:|:---:|
-| 0 | Probability, MLE &amp; NLL | [HTML](html/lec00-probability-mle-recap-lecture.html) | [PDF](pdf/lec00-probability-mle-recap-lecture.pdf) |
-| 0B | Bayes, MAP, Regularization &amp; KL | [HTML](html/lec00b-bayes-map-kl-lecture.html) | [PDF](pdf/lec00b-bayes-map-kl-lecture.pdf) |
-| 0C | Information Theory for ML | [HTML](html/lec00c-information-theory-lecture.html) | [PDF](pdf/lec00c-information-theory-lecture.pdf) |
+| # | Topic | Slides | Notebook |
+|:---:|------|:------:|:--------:|
+| 0 | Distributions, Sampling, Likelihood, MLE | [HTML](html/lec00-probability-mle-recap-lecture.html) · [PDF](pdf/lec00-probability-mle-recap-lecture.pdf) | [iid-demo](notebooks/lec00-iid-demo.ipynb) · [bernoulli](notebooks/lec00-bernoulli-playground.ipynb) |
+| 0B | Bayes, MAP & Regularization | [HTML](html/lec00b-bayes-map-kl-lecture.html) · [PDF](pdf/lec00b-bayes-map-kl-lecture.pdf) | [mle-map](notebooks/lec00-mle-map.ipynb) |
+| 0C | Information Theory for ML | [HTML](html/lec00c-information-theory-lecture.html) · [PDF](pdf/lec00c-information-theory-lecture.pdf) | |
+
+## Module 1 · Foundations & Deep Networks (L1–L3)
+
+| # | Topic | Slides | Notebook |
+|:---:|------|:------:|:--------:|
+| 1 | Why Deep Learning + MLP Recap | [HTML](html/lec01-why-dl-lecture.html) · [PDF](pdf/lec01-why-dl-lecture.pdf) | |
+| 2 | Universal Approximation & Going Deep | [HTML](html/lec02-uat-going-deep-lecture.html) · [PDF](pdf/lec02-uat-going-deep-lecture.pdf) | |
+| 3 | Training Deep Networks in Practice | [HTML](html/lec03-training-in-practice-lecture.html) · [PDF](pdf/lec03-training-in-practice-lecture.pdf) | |
+
+## Module 2 · Optimization (L4–L5)
+
+| # | Topic | Slides | Notebook |
+|:---:|------|:------:|:--------:|
+| 4 | SGD, Momentum, Nesterov | [HTML](html/lec04-sgd-momentum-lecture.html) · [PDF](pdf/lec04-sgd-momentum-lecture.pdf) | |
+| 5 | Adam, AdamW, LR Schedules | [HTML](html/lec05-adam-schedules-lecture.html) · [PDF](pdf/lec05-adam-schedules-lecture.pdf) | |
+
+## Module 3 · Regularization (L6) — spans two sessions
+
+| # | Topic | Slides | Notebook |
+|:---:|------|:------:|:--------:|
+| 6 | Regularization (classical + dropout + normalization) | [HTML](html/lec06-regularization-lecture.html) · [PDF](pdf/lec06-regularization-lecture.pdf) | |
+
+## Module 4 · CNNs & Visual Recognition (L7–L9)
+
+| # | Topic | Slides | Notebook |
+|:---:|------|:------:|:--------:|
+| 7 | CNN Deep Dive + Classic Architectures | [HTML](html/lec07-cnn-deep-dive-lecture.html) · [PDF](pdf/lec07-cnn-deep-dive-lecture.pdf) | |
+| 8 | Modern Architectures & Transfer Learning | [HTML](html/lec08-modern-cnns-transfer-lecture.html) · [PDF](pdf/lec08-modern-cnns-transfer-lecture.pdf) | |
+| 9 | Object Detection, Localization & Segmentation | [HTML](html/lec09-detection-segmentation-lecture.html) · [PDF](pdf/lec09-detection-segmentation-lecture.pdf) | |
+
+## Module 5 · Sequence Models (L10–L11)
+
+| # | Topic | Slides | Notebook |
+|:---:|------|:------:|:--------:|
+| 10 | RNNs, LSTMs, GRUs | [HTML](html/lec10-rnn-lstm-gru-lecture.html) · [PDF](pdf/lec10-rnn-lstm-gru-lecture.pdf) | |
+| 11 | Seq2Seq & Motivation for Attention | [HTML](html/lec11-seq2seq-lecture.html) · [PDF](pdf/lec11-seq2seq-lecture.pdf) | |
+
+## Module 6 · Attention & Transformers (L12–L14)
+
+| # | Topic | Slides | Notebook |
+|:---:|------|:------:|:--------:|
+| 12 | Attention Mechanism | [HTML](html/lec12-attention-lecture.html) · [PDF](pdf/lec12-attention-lecture.pdf) | |
+| 13 | The Transformer — Built Live | [HTML](html/lec13-transformer-lecture.html) · [PDF](pdf/lec13-transformer-lecture.pdf) | |
+| 14 | Tokenization & Pretraining Paradigms | [HTML](html/lec14-tokenization-pretraining-lecture.html) · [PDF](pdf/lec14-tokenization-pretraining-lecture.pdf) | |
+
+## Module 7 · LLMs (L15–L16)
+
+| # | Topic | Slides | Notebook |
+|:---:|------|:------:|:--------:|
+| 15 | Large Language Models | [HTML](html/lec15-llms-lecture.html) · [PDF](pdf/lec15-llms-lecture.pdf) | |
+| 16 | Alignment & Fine-tuning | [HTML](html/lec16-alignment-finetuning-lecture.html) · [PDF](pdf/lec16-alignment-finetuning-lecture.pdf) | |
+
+## Module 8 · Self-Supervised & Vision-Language (L17–L18)
+
+| # | Topic | Slides | Notebook |
+|:---:|------|:------:|:--------:|
+| 17 | Self-Supervised & Contrastive Learning | [HTML](html/lec17-self-supervised-contrastive-lecture.html) · [PDF](pdf/lec17-self-supervised-contrastive-lecture.pdf) | |
+| 18 | Vision-Language Models | [HTML](html/lec18-vision-language-lecture.html) · [PDF](pdf/lec18-vision-language-lecture.pdf) | |
+
+## Module 9 · Generative Models (L19–L22)
+
+| # | Topic | Slides | Notebook |
+|:---:|------|:------:|:--------:|
+| 19 | Autoencoders & VAEs | [HTML](html/lec19-autoencoders-vae-lecture.html) · [PDF](pdf/lec19-autoencoders-vae-lecture.pdf) | |
+| 20 | GANs | [HTML](html/lec20-gans-lecture.html) · [PDF](pdf/lec20-gans-lecture.pdf) | |
+| 21 | Diffusion Models — Theory | [HTML](html/lec21-diffusion-theory-lecture.html) · [PDF](pdf/lec21-diffusion-theory-lecture.pdf) | |
+| 22 | Diffusion Models — Practice | [HTML](html/lec22-diffusion-practice-lecture.html) · [PDF](pdf/lec22-diffusion-practice-lecture.pdf) | |
+
+## Module 10 · Wrap-up (L23–L24)
+
+| # | Topic | Slides | Notebook |
+|:---:|------|:------:|:--------:|
+| 23 | Efficient Inference (KV-cache, quantization, FlashAttention) | [HTML](html/lec23-efficient-inference-lecture.html) · [PDF](pdf/lec23-efficient-inference-lecture.pdf) | |
+| 24 | Frontier · Agents, Reasoning, Interpretability | [HTML](html/lec24-frontier-wrapup-lecture.html) · [PDF](pdf/lec24-frontier-wrapup-lecture.pdf) | |

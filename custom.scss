@@ -99,6 +99,47 @@ h2 {
   border-left-color: #e07a6b;
 }
 
+/* Landing-page entry cards */
+.entry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0 2.5rem 0;
+}
+
+.entry-card {
+  display: block;
+  padding: 1.2rem 1.35rem;
+  border: 1px solid rgba(26, 26, 46, 0.12);
+  border-radius: 10px;
+  background: #fff;
+  text-decoration: none !important;
+  color: inherit;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.entry-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(196, 69, 54, 0.13);
+  border-color: #c44536;
+}
+
+.entry-card .entry-title {
+  display: block;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #c44536;
+  margin-bottom: 0.35rem;
+}
+
+.entry-card .entry-desc {
+  display: block;
+  font-size: 0.9rem;
+  color: #5a6070;
+  line-height: 1.5;
+}
+
 /* Module-card style headings (h2 with a left accent stripe) */
 h2 {
   padding-left: 1rem;

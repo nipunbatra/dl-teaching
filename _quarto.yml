@@ -27,10 +27,6 @@ website:
         href: resources.qmd
       - text: "Interactives"
         href: https://nipunbatra.github.io/interactive-articles/
-      - text: "UDL Book"
-        href: https://udlbook.github.io/udlbook/
-      - text: "L00 Primer"
-        href: html/lec00-probability-mle-recap-lecture.html
   page-footer:
     left: "Course materials by Prof. Nipun Batra, IIT Gandhinagar"
     right:
