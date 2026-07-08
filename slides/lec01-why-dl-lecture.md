@@ -771,8 +771,6 @@ This is the entire training loop on one example, by hand. SGD does this for ever
 
 **Gist** · same three rules, now with a batch dimension $B$ — each gradient just gains a sum or a transpose.
 
-For a batch:
-
 $$Z = XW + b$$
 
 $$X \in \mathbb{R}^{B \times d_\text{in}}, \quad W \in \mathbb{R}^{d_\text{in} \times d_\text{out}}, \quad \Delta = \frac{\partial \mathcal{L}}{\partial Z} \in \mathbb{R}^{B \times d_\text{out}}$$
@@ -785,7 +783,7 @@ $$\frac{\partial \mathcal{L}}{\partial W} = X^\top \Delta, \quad
 
 <div class="keypoint">
 
-Backprop is mostly matrix multiplication. PyTorch is not doing magic here; it is applying these local rules through the computation graph.
+Backprop is mostly matrix multiplication — PyTorch just applies these local rules across the computation graph.
 
 </div>
 
