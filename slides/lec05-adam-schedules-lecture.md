@@ -45,20 +45,50 @@ Today maps to **UDL Ch 6** (Adam) and **Ch 7** (gradients + initialization revis
 
 ---
 
-# Not always — here's why
+# Not always — one global LR is a compromise
 
-Imagine training a model where:
+Loss surfaces are **lopsided**. In some directions the loss is a **steep canyon**; in others a nearly-**flat plain**.
 
-- word-embedding parameters are updated by rare tokens → gradients are **large and sparse**
-- hidden-layer weights are updated every step → gradients are **small but constant**
+- **Steep direction** · gradients are large → a big step *overshoots* and bounces.
+- **Flat direction** · gradients are tiny → a small step *crawls* and wastes time.
 
-A single LR that is right for one is wrong for the other.
+One global $\eta$ can't win both — big enough for the plain overshoots the canyon; small enough for the canyon crawls on the plain. **SGD uses the same $\eta$ everywhere and ignores this.**
+
+*(Same story with sparse vs dense parameters: rare-token embeddings get large, occasional gradients; hidden weights get small, constant ones.)*
 
 <div class="keypoint">
 
-Today · **per-parameter adaptive learning rates** — AdaGrad → RMSProp → Adam → AdamW — plus the schedule we wrap around them.
+The fix · give **every parameter its own step size**. That is what today is about.
 
 </div>
+
+---
+
+# The fix in one slide · a per-parameter step size
+
+<div class="insight">
+
+**Big idea (2 sentences).** An *adaptive* optimizer gives every weight its own step size — small in steep directions, large in flat ones. **Adam** does this by keeping **two running averages per weight** and dividing one by the square root of the other.
+
+</div>
+
+Two averages, kept **per weight** (EMA = exponential moving average = a "recent average"):
+
+- $m_t$ — **mean gradient**. This is just **momentum** from L4 · smooths *which way* to step.
+- $v_t$ — **mean squared gradient**. Measures *how big / how noisy* gradients have been · the per-parameter scale.
+
+The update — before any fine print:
+$$\theta_t = \theta_{t-1} - \eta\,\frac{m_t}{\sqrt{v_t}+\epsilon}$$
+
+Read it aloud · *smoothed gradient, divided by how big gradients have been.* Big/noisy direction → **damped**; small/quiet direction → **amplified**. Everything else today just **earns, fixes, or schedules these two averages.**
+
+---
+
+# One picture · big gradient → small step
+
+![w:840px](figures/lec05/svg/per_coordinate_stepsize.svg)
+
+Dividing by $\sqrt{v}$ **inverts** the gradient sizes · the steep direction (big $g$) gets a small step, the flat direction (small $g$) gets a big step — automatically, one scale per coordinate.
 
 ---
 
@@ -119,7 +149,7 @@ You tuned one learning rate by hand. What if every parameter chose its own?
 
 # The family tree
 
-How did one global learning rate become a million per-parameter ones? SGD → AdaGrad → RMSProp → Adam
+You've seen *what* Adam outputs ($m_t$, $v_t$, and $\eta\, m_t/\sqrt{v_t}$). Now let's **earn each piece** · SGD → AdaGrad → RMSProp → Adam.
 
 ---
 
@@ -279,6 +309,8 @@ Combine the best of both worlds:
 
 # Adam · the full update
 
+Same $m_t$, $v_t$, and update you saw up front — now with the **bias-correction fine print** ($\hat{m}_t,\hat{v}_t$) added (Part 2 explains why).
+
 <div class="math-box">
 
 $$m_t = \beta_1 m_{t-1} + (1-\beta_1)\, g_t   \qquad \text{(1st moment)}$$
@@ -356,22 +388,18 @@ The EMA is **10× smaller** than the true gradient — purely because it started
 
 # ⭐⭐⭐ Optional · deriving the bias-correction factor
 
-Unroll the EMA from $m_0 = 0$, assuming the gradient is approximately constant $g_k = g$:
+**Gist ·** unroll the EMA from zero → $m_t = g\,(1-\beta^t)$, so dividing by $(1-\beta^t)$ recovers $g$.
+
+Unroll from $m_0 = 0$ with a roughly constant gradient $g_k = g$:
 
 - $m_1 = (1-\beta_1)\,g$
 - $m_2 = \beta_1(1-\beta_1)\,g + (1-\beta_1)\,g$
 - $m_3 = \beta_1^2(1-\beta_1)\,g + \beta_1(1-\beta_1)\,g + (1-\beta_1)\,g$
 
-In general:
-$$m_t = (1-\beta_1)\,g\,\bigl(\beta_1^{t-1} + \beta_1^{t-2} + \cdots + 1\bigr)$$
+The pattern is a **geometric series** with $t$ terms:
+$$m_t = (1-\beta_1)\,g\sum_{i=0}^{t-1}\beta_1^i = (1-\beta_1)\,g\cdot\frac{1 - \beta_1^t}{1 - \beta_1} = g\,(1 - \beta_1^t)$$
 
-The bracketed sum is a **geometric series** with $t$ terms:
-$$\sum_{i=0}^{t-1}\beta_1^i = \frac{1 - \beta_1^t}{1 - \beta_1}$$
-
-So $m_t = g\,(1 - \beta_1^t)$. To recover $g$, divide:
-$$\boxed{\hat{m}_t = \frac{m_t}{1 - \beta_1^t}}$$
-
-Same logic gives $\hat{v}_t = v_t / (1 - \beta_2^t)$.
+Divide to recover $g$ ·  $\boxed{\hat{m}_t = \dfrac{m_t}{1 - \beta_1^t}}$  — same for $\hat{v}_t = v_t/(1-\beta_2^t)$.
 
 ---
 
@@ -431,6 +459,12 @@ For SGD these are the same. **Not so for Adam.**
 # AdamW · the fix
 
 ![w:920px](figures/lec05/svg/adamw_vs_adam.svg)
+
+<div class="insight">
+
+**Big idea (2 sentences).** In Adam, the L2 penalty rides *through* the $1/\sqrt{\hat v}$ scaling, so heavily-updated weights barely get decayed. **AdamW** applies decay **directly to the weights**, uniformly — so it regularizes the way you intended.
+
+</div>
 
 ---
 
@@ -537,6 +571,8 @@ sched = LambdaLR(opt, lr_lambda)
 ---
 
 # ⭐⭐⭐ Optional · why are early gradients so chaotic?
+
+**Gist ·** at step 1 a random net makes huge, wrong-way gradients *and* Adam's $\sqrt{\hat v_t}$ estimate is still garbage — large ÷ tiny = explosion. Warmup starts $\eta$ near 0 to survive it.
 
 A randomly-initialized network knows **nothing** — and Transformers make it worse: attention can accidentally focus everything on one irrelevant token, producing enormous gradients on that head.
 
