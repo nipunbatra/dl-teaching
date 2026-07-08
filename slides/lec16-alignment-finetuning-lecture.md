@@ -82,6 +82,14 @@ Stop and predict. The real answer is **(b)** — pretraining only knows *complet
 
 ---
 
+# The plan · from completer to helper, in order
+
+![w:940px](figures/lec16/svg/alignment_pipeline.svg)
+
+Keep this picture in mind all lecture — each part below fills in **one box**, and each step exists to fix what the previous one couldn't.
+
+---
+
 <!-- _class: section-divider -->
 
 ### PART 1
@@ -169,7 +177,9 @@ Total: **~1 TB**. Needs an H100 cluster. Most people don't have that.
 
 # LoRA · the 2021 fix
 
-![w:920px](figures/lec16/svg/lora_adapter.svg)
+**Big idea in two sentences.** Leave the giant weight $W_0$ frozen; learn a *tiny* add-on $\Delta W = BA$ (two skinny matrices) and run $W_0 + \Delta W$. That add-on is all you train and all you ship — a 70B fine-tune becomes a ~100 MB file.
+
+![w:860px](figures/lec16/svg/lora_adapter.svg)
 
 ---
 
@@ -338,6 +348,20 @@ SFT would weight all three equally if all are in the dataset. **RLHF** adds pref
 
 ---
 
+# First, the object · what does a reward model output?
+
+Before any RL loop, build one thing · a model that reads a `(prompt, response)` and returns **a single number** — how much a human would prefer it.
+
+![w:680px](figures/lec16/svg/reward_model_io.svg)
+
+<div class="keypoint">
+
+**Big idea.** The reward model is just a *scorer* (bigger = more preferred). Once you have it, RLHF/DPO is simply "make the model produce higher-scoring answers."
+
+</div>
+
+---
+
 # SFT vs RLHF · dog-training analogy
 
 <div class="keypoint">
@@ -374,6 +398,8 @@ RLHF balances both · max reward, but stay near the SFT model.
 
 # ⭐⭐⭐ Optional · RLHF objective · the equation
 
+> **Skip the algebra?** In words · *maximize the reward, but a KL "leash" keeps you close to the SFT model.* That one sentence is the whole equation — the symbols below just make it precise.
+
 $$\max_\theta\, \underbrace{\mathbb{E}_{x \sim D,\; y \sim \pi_\theta(\cdot\,\mid x)}[\, r_\phi(x, y) \,]}_{\text{Part 1: maximize reward}} \;-\; \underbrace{\beta\, D_\text{KL}(\pi_\theta \Vert \pi_\text{ref})}_{\text{Part 2: stay near SFT}}$$
 
 **Part 1** drives the model to produce high-reward answers. **Part 2** keeps the policy close to its SFT initialization → prevents the dog from tearing up the garden.
@@ -383,6 +409,8 @@ The two terms are exactly the two goals from the dog analogy · *maximize treats
 ---
 
 # ⭐⭐⭐ Optional · RLHF objective · the symbols
+
+> *Reference glossary for the previous slide — read only if you want the symbols spelled out.*
 
 - $\pi_\theta$ · trainable model ("policy"); takes prompt $x$, generates response $y$.
 - $\pi_\text{ref}$ · frozen SFT model.
@@ -463,14 +491,16 @@ DPO writes a loss that says · *"directly increase prob of the winner $y_w$, dec
 
 # ⭐⭐⭐ Optional · DPO loss · inside-out
 
+> **Skip it?** In words · *one supervised loss that raises the winner's probability and lowers the loser's, relative to SFT.* No reward model, no RL loop.
+
 $$\mathcal{L}_\text{DPO} = -\log \sigma\!\left( \underbrace{\beta \log \tfrac{\pi_\theta(y_w \mid x)}{\pi_\text{ref}(y_w \mid x)}}_{\text{winner score}} - \underbrace{\beta \log \tfrac{\pi_\theta(y_l \mid x)}{\pi_\text{ref}(y_l \mid x)}}_{\text{loser score}} \right)$$
 
 Build it from inside:
-1. **Ratio** $\pi_\theta / \pi_\text{ref}$ · how much more likely is the new model to produce $y$ than the SFT model? Want $> 1$ for $y_w$.
-2. **Log ratio** · "improvement score." Positive = improved over SFT.
-3. **Difference** · winner score − loser score. Want **large positive**.
-4. **Sigmoid** · squash to $(0,1)$. Large positive diff → $\sigma \approx 1$.
-5. **$-\log \sigma(\cdot)$** · standard CE loss. $\sigma \to 1 \Rightarrow$ loss $\to 0$. $\sigma \to 0 \Rightarrow$ huge loss → big gradient kicks in.
+1. **Ratio** $\pi_\theta/\pi_\text{ref}$ · is the new model likelier to say $y$ than SFT? Want $>1$ for $y_w$.
+2. **Log ratio** · "improvement score" · positive = better than SFT.
+3. **Difference** · winner − loser · want **large positive**.
+4. **Sigmoid** · squash to $(0,1)$ · big positive diff → $\sigma\approx1$.
+5. **$-\log\sigma$** · CE loss · $\sigma\to1$ ⇒ loss$\to0$; $\sigma\to0$ ⇒ big loss + gradient.
 
 ---
 

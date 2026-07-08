@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 340" font-family="EB Garamond, Georgia, serif">
+  <defs>
+    <style>
+      .stage-b  { fill:#DCE3E6; stroke:#37535F; stroke-width:1.5; rx:5; ry:5; }
+      .stage-a  { fill:#EAD3C5; stroke:#B85A3E; stroke-width:1.5; rx:5; ry:5; }
+      .stage-s  { fill:#D8E3DE; stroke:#5F8573; stroke-width:1.5; rx:5; ry:5; }
+      .goal     { fill:#C3D8CC; stroke:#3F6B57; stroke-width:2.0; rx:5; ry:5; }
+      .ink      { stroke:#161513; fill:none; stroke-width:1.5; }
+      .name     { font-size:14px; font-weight:600; }
+      .mut      { fill:#5F5C54; font-size:10.5px; font-family:Inter, sans-serif; }
+      .ttl      { fill:#161513; font-size:16px; font-weight:600; font-style:italic; }
+      .sub      { fill:#5F5C54; font-size:12px; font-style:italic; }
+      .tag      { fill:#5F5C54; font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase; font-family:Inter, sans-serif; }
+    </style>
+    <marker id="ap-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#161513"/></marker>
+    <marker id="ap-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5F8573"/></marker>
+  </defs>
+
+  <text x="480" y="26" text-anchor="middle" class="ttl">The whole journey · from text-completer to helpful assistant</text>
+  <text x="480" y="47" text-anchor="middle" class="sub">one narrative — each step fixes what the previous one can't</text>
+
+  <!-- DPO shortcut arc: skips the reward-model box -->
+  <path d="M 285 118 Q 470 66 655 118" fill="none" stroke="#5F8573" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#ap-d)"/>
+  <text x="470" y="78" text-anchor="middle" class="tag" fill="#5F8573">DPO shortcut · skip the reward model</text>
+
+  <!-- Stage boxes -->
+  <!-- 1 base -->
+  <rect class="stage-b" x="20" y="118" width="160" height="94"/>
+  <text x="100" y="146" text-anchor="middle" class="name" fill="#37535F">Pretrained LLM</text>
+  <text x="100" y="168" text-anchor="middle" class="mut" fill="#37535F">the "completer"</text>
+  <text x="100" y="188" text-anchor="middle" class="mut" fill="#37535F">predicts next token,</text>
+  <text x="100" y="202" text-anchor="middle" class="mut" fill="#37535F">not helpful yet</text>
+
+  <!-- 2 SFT -->
+  <rect class="stage-a" x="205" y="118" width="160" height="94"/>
+  <text x="285" y="146" text-anchor="middle" class="name" fill="#B85A3E">SFT</text>
+  <text x="285" y="168" text-anchor="middle" class="mut" fill="#B85A3E">clone good demos</text>
+  <text x="285" y="188" text-anchor="middle" class="mut" fill="#B85A3E">(prompt → response),</text>
+  <text x="285" y="202" text-anchor="middle" class="mut" fill="#B85A3E">so it answers</text>
+
+  <!-- 3 reward model -->
+  <rect class="stage-s" x="390" y="118" width="160" height="94"/>
+  <text x="470" y="146" text-anchor="middle" class="name" fill="#5F8573">Reward model</text>
+  <text x="470" y="168" text-anchor="middle" class="mut" fill="#5F8573">scores a response,</text>
+  <text x="470" y="188" text-anchor="middle" class="mut" fill="#5F8573">= what humans</text>
+  <text x="470" y="202" text-anchor="middle" class="mut" fill="#5F8573">prefer</text>
+
+  <!-- 4 RLHF / DPO -->
+  <rect class="stage-a" x="575" y="118" width="160" height="94"/>
+  <text x="655" y="146" text-anchor="middle" class="name" fill="#B85A3E">RLHF &#160;or&#160; DPO</text>
+  <text x="655" y="168" text-anchor="middle" class="mut" fill="#B85A3E">push the policy</text>
+  <text x="655" y="188" text-anchor="middle" class="mut" fill="#B85A3E">toward preferred</text>
+  <text x="655" y="202" text-anchor="middle" class="mut" fill="#B85A3E">answers</text>
+
+  <!-- 5 aligned -->
+  <rect class="goal" x="760" y="118" width="160" height="94"/>
+  <text x="840" y="146" text-anchor="middle" class="name" fill="#2F5344">Aligned assistant</text>
+  <text x="840" y="168" text-anchor="middle" class="mut" fill="#2F5344">the "helper"</text>
+  <text x="840" y="188" text-anchor="middle" class="mut" fill="#2F5344">helpful + safe,</text>
+  <text x="840" y="202" text-anchor="middle" class="mut" fill="#2F5344">answers your question</text>
+
+  <!-- forward arrows -->
+  <g class="ink" marker-end="url(#ap-a)">
+    <line x1="180" y1="165" x2="205" y2="165"/>
+    <line x1="365" y1="165" x2="390" y2="165"/>
+    <line x1="550" y1="165" x2="575" y2="165"/>
+    <line x1="735" y1="165" x2="760" y2="165"/>
+  </g>
+
+  <!-- bracket under SFT..RLHF/DPO with NLL note -->
+  <path d="M 205 228 L 205 236 L 735 236 L 735 228" fill="none" stroke="#C9C4B5" stroke-width="1.4"/>
+  <text x="470" y="256" text-anchor="middle" class="sub">objective stays in the same NLL family — only <tspan font-weight="600" fill="#161513">what counts as a good answer</tspan> changes</text>
+
+  <!-- LoRA band -->
+  <rect x="20" y="274" width="900" height="52" fill="#EEEBDF" stroke="#C9C4B5" rx="5"/>
+  <text x="34" y="296" class="tag">HOW TO TRAIN EACH STEP CHEAPLY</text>
+  <text x="34" y="316" class="mut" font-size="12"><tspan font-weight="600" fill="#B85A3E">LoRA / QLoRA</tspan> — instead of retraining all 70B weights, train a tiny low-rank update <tspan font-style="italic">ΔW = BA</tspan> and freeze the rest. Applies to every step above.</text>
+</svg>
