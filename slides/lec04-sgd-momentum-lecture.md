@@ -55,9 +55,45 @@ That was fine for a few hundred fruit. On **millions** of examples, one such ste
 
 <div class="insight">
 
-**Problem** · the full-batch gradient touches every example *before a single update*. **Fix** · estimate it from a small random **minibatch** — a noisy but unbiased gradient, one cheap step at a time. **Reveal** · that noise turns out to be a *feature*, not just a cost — it helps escape the saddles we meet today. That swap, full-batch → minibatch, is **Stochastic Gradient Descent**.
+**The problem, plainly.** Full-batch GD touches *every* example before it can take a *single* step. On millions of examples that one step may not finish in a day.
+
+**The fix has a name — Stochastic Gradient Descent.** Don't wait for all $N$: estimate the gradient from a small random **minibatch** and step *now*. The next three slides build that idea up, one piece at a time.
 
 </div>
+
+---
+
+# The problem, in one picture
+
+Full-batch spends an **entire pass** over the data to take **one** step. SGD spends that same pass taking **hundreds** of cheap steps — and is already far down the loss before full-batch has moved once.
+
+![w:780px](figures/lec04/svg/sgd_vs_fullbatch_progress.svg)
+
+---
+
+# So what *is* one SGD step?
+
+<div class="keypoint">
+
+**The whole idea in two sentences.** One SGD step grabs a small random **minibatch** (say 32 examples), computes the gradient on *just those*, and steps. That minibatch gradient is a **noisy estimate** of the true full-batch gradient — but it's cheap, so you take thousands of steps instead of a handful.
+
+</div>
+
+![w:680px](figures/lec04/svg/minibatch_noise.svg)
+
+---
+
+# Is the noise a problem? No — it's *unbiased*
+
+<div class="keypoint">
+
+**Big idea.** On average the minibatch gradient points the **same way** as the true gradient: $\mathbb{E}[g_\text{batch}] = g_\text{full}$. Each step is a little off, but the errors are *random, not systematic* — over many steps they wash out.
+
+</div>
+
+![w:800px](figures/lec04/svg/gradient_variance.svg)
+
+A bigger batch shrinks the noise (variance $\propto 1/B$) but never changes the aim. And that leftover noise isn't only a cost — it can help us jump off flat spots and shallow traps, as we'll see once we meet **saddles** in Part 1.
 
 ---
 
@@ -210,6 +246,8 @@ To classify a critical point, look at **curvature** in every direction. The **He
 
 # ⭐⭐⭐ Optional · why saddles dominate in high dimensions
 
+> **Gist in one line:** in a million dimensions, "*every* direction curves up" almost never happens — so nearly every flat point is a saddle, not a true minimum.
+
 In $D$ dimensions there are $D$ curvature directions:
 
 - **Local min** — all eigenvalues $> 0$ (curvature UP everywhere).
@@ -221,11 +259,7 @@ $$\Pr[\text{all } D \text{ positive}] = 0.5^D$$
 
 For $D = 10^6$ parameters: probability of a *true* local minimum is $0.5^{1{,}000{,}000}$ — essentially zero.
 
-<div class="keypoint">
-
-**Almost every critical point in a deep net is a saddle, not a minimum.** The challenge isn't escaping valleys — it's navigating vast, flat saddle regions. Momentum's memory saves you here: it keeps you moving in a consistent direction through the flat plateau.
-
-</div>
+So the challenge isn't *escaping valleys* — it's *crossing* flat saddle plateaus. **Momentum's memory is what carries you across**, in one consistent direction.
 
 ---
 
@@ -463,6 +497,8 @@ In practice on deep nets, the gain is modest but free.
 
 # ⭐⭐⭐ Optional · a geometric way to see Nesterov
 
+> **Gist in one line:** look where you're *about to land*, measure the slope *there*, and step with that — same update, smarter vantage point.
+
 <div class="columns">
 <div>
 
@@ -567,7 +603,9 @@ Let's derive **how big** that compounding gets.
 
 # ⭐⭐⭐ Optional · deriving the effective learning rate
 
-Assume gradient $\mathbf{g}$ is constant. We use the **classical / PyTorch** momentum form $\mathbf{v}_t = \beta\,\mathbf{v}_{t-1} + \mathbf{g}$ — **no** $(1-\beta)$ on the gradient, which is what lets velocity build past $\mathbf{g}$ (the EMA form caps it *at* $\mathbf{g}$; they differ by exactly the $1/(1-\beta)$ below). Unroll, with $\mathbf{v}_0 = 0$:
+> **Gist in one line:** a steady gradient keeps topping up the velocity until your real step is $\tfrac{1}{1-\beta}$ times bigger than one raw $\eta\mathbf{g}$.
+
+Assume gradient $\mathbf{g}$ is constant. Use the **classical / PyTorch** form $\mathbf{v}_t = \beta\,\mathbf{v}_{t-1} + \mathbf{g}$ — **no** $(1-\beta)$ on the gradient, which lets velocity build *past* $\mathbf{g}$ (the EMA form would cap it *at* $\mathbf{g}$). Unroll, with $\mathbf{v}_0 = 0$:
 
 - $t=1$: $\mathbf{v}_1 = \mathbf{g}$
 - $t=2$: $\mathbf{v}_2 = \beta\,\mathbf{g} + \mathbf{g}$
