@@ -97,50 +97,52 @@ How do you map 14 words to 12 — in a different order?
 
 ---
 
-# Seq2Seq · the 2014 breakthrough
+# Encoder → context → decoder · the whole object, in plain words
 
-<div class="paper">
+Before a single equation, here is the entire mechanism:
 
-Sutskever, Vinyals, Le 2014 · *"Sequence to Sequence Learning with Neural Networks"* — achieved BLEU 34 on English→French, within striking distance of phrase-based MT.
+- The **encoder** reads the *whole* source sentence, word by word, and boils it down to **one fixed-size vector** $\mathbf{c}$ — the *context*.
+- The **decoder** starts from $\mathbf{c}$ and writes the target sentence **one token at a time**.
 
-*(BLEU · n-gram overlap between system output and reference translations, 0–100, higher better. The standard MT score.)*
+Two RNNs, back to back:
+
+1. **Encoder** · reads $(x_1, \ldots, x_{T})$, updates its hidden state.
+2. **Context** $\mathbf{c}$ · the encoder's *final* hidden state — a compressed summary of the whole source.
+3. **Decoder** · starts from $\mathbf{c}$, generates $(y_1, y_2, \ldots)$ one token at a time.
+
+<div class="insight">
+
+**Elegant** · no grammar rules, no alignment tables — just two RNNs trained end-to-end on parallel text. **Fragile** · the *entire* sentence, 5 words or 500, must squeeze through that one vector $\mathbf{c}$. Hold that thought — that squeeze is the **bottleneck** the whole lecture builds toward.
 
 </div>
 
-Two separate RNNs:
+---
 
-1. **Encoder** · reads the source sequence $(x_1, \ldots, x_{T})$, updates its hidden state.
-2. **Context vector** $\mathbf{c}$ · encoder's final hidden state — a compressed summary of the whole source.
-3. **Decoder** · starts from $\mathbf{c}$, generates target tokens $(y_1, y_2, \ldots)$ one at a time.
+# The architecture
+
+![w:920px](figures/lec11/svg/seq2seq_bottleneck.svg)
+
+<div class="realworld">
+
+▶ Interactive: see BLEU curves fall as source length grows — [seq2seq-bottleneck](https://nipunbatra.github.io/interactive-articles/seq2seq-bottleneck/).
+
+</div>
 
 ---
 
 # The whole idea in one sentence
 
-**Compress source into a vector · decompress into target.**
+**Compress the source into a vector · decompress it into the target.**
 
-<div class="keypoint">
+<div class="paper">
 
-Two unrolled RNNs, back to back, trained end-to-end. No grammar rules, no alignment dictionaries, no phrase tables — the representations are learned from parallel corpus data alone. This was radically new in 2014; by 2016 it was state-of-the-art in production MT.
+Sutskever, Vinyals, Le 2014 · *"Sequence to Sequence Learning with Neural Networks"* — this exact recipe hit BLEU 34 on English→French, within striking distance of the hand-engineered phrase-based systems it soon overtook.
 
-</div>
-
-The same encoder-decoder pattern returns in T5 (L14), Stable Diffusion (L22), and every modular ML system that maps between domains.
-
----
-
-# Shared vs separate vocabularies
-
-Two design choices:
-
-- **Separate vocab** · source is 40k English tokens, target is 40k French tokens, each with its own embedding matrix. Clean; embeddings can specialize.
-- **Shared vocab** · one vocabulary for both, one embedding matrix. Saves parameters; lets the model see "Paris" as the same token in both languages.
-
-<div class="realworld">
-
-Modern multilingual models share **one subword vocabulary** covering 100+ languages — mT5 and NLLB use SentencePiece; Whisper and most LLMs use BPE. One token stream, many languages.
+*(BLEU · n-gram overlap between output and reference translations, 0–100, higher better — the standard MT score.)*
 
 </div>
+
+The same encoder-decoder pattern returns in T5 (L14), Stable Diffusion (L22), and every modular ML system that maps between domains — only the *implementation of "context"* changes.
 
 ---
 
@@ -155,18 +157,6 @@ Seq2Seq does exactly this · the encoder reads, builds a context vector (the "me
 </div>
 
 The problem · for *long* sentences, even a great human's mental summary fails. So does Seq2Seq · this is why we'll add attention in L12.
-
----
-
-# The architecture
-
-![w:920px](figures/lec11/svg/seq2seq_bottleneck.svg)
-
-<div class="realworld">
-
-▶ Interactive: see BLEU curves fall as source length grows — [seq2seq-bottleneck](https://nipunbatra.github.io/interactive-articles/seq2seq-bottleneck/).
-
-</div>
 
 ---
 
@@ -200,6 +190,21 @@ class Seq2Seq(nn.Module):
         dec_out, _ = self.decoder(self.tgt_emb(tgt), (h, c))
         return self.output(dec_out)
 ```
+
+---
+
+# Shared vs separate vocabularies
+
+The skeleton above gave the encoder and decoder **separate** embeddings (`src_emb`, `tgt_emb`). That is one of two choices:
+
+- **Separate vocab** · source is 40k English tokens, target is 40k French tokens, each with its own embedding matrix. Clean; embeddings can specialize.
+- **Shared vocab** · one vocabulary for both, one embedding matrix. Saves parameters; lets the model see "Paris" as the same token in both languages.
+
+<div class="realworld">
+
+Modern multilingual models share **one subword vocabulary** covering 100+ languages — mT5 and NLLB use SentencePiece; Whisper and most LLMs use BPE. One token stream, many languages.
+
+</div>
 
 ---
 
@@ -452,7 +457,11 @@ When output is bad, ask which error you have · **search error** — a high-prob
 
 ---
 
+<!-- _class: compact -->
+
 # ⭐⭐⭐ Optional · beam search · worked example with $k=2$
+
+**Gist (skip the table if you like)** · keeping the 2 best prefixes alive lets the beam recover the sentence that greedy throws away at step 1.
 
 Vocab · {The, A, cat, dog, sat, ran}. Decoding "The cat sat".
 
@@ -469,9 +478,7 @@ Vocab · {The, A, cat, dog, sat, ran}. Decoding "The cat sat".
 | `<s> A dog` | −0.5 + −0.9 = −1.4 |
 | `<s> A ran` | −0.5 + −1.1 = −1.6 |
 
-Keep top 2 · `<s> The cat` (−1.3), `<s> A dog` (−1.4). **Step 3** · continue, then divide each score by $T^{0.6}$ for fair length comparison.
-
-Greedy locks onto "A" and dead-ends; the beam keeps "The…" alive and reaches **"The cat sat."**
+Keep top 2 · `<s> The cat` (−1.3), `<s> A dog` (−1.4). **Step 3** · continue, then length-normalize by $T^{0.6}$ before comparing. Greedy dead-ends on "A"; the beam reaches **"The cat sat."**
 
 </div>
 
@@ -533,6 +540,8 @@ The entire source — 5 words or 500 — must compress into one fixed-size conte
 
 For short sentences, fine. For long sentences, the encoder **forgets** the beginning by the time it reaches the end. The decoder has no way to recover what was lost.
 
+This is the "fragile" half of the object we met at the very start — now it has a name: the **bottleneck**.
+
 ---
 
 # Sutskever's own fix · reverse the input
@@ -560,7 +569,7 @@ Instead, let the decoder *look at* all the encoder hidden states — and decide 
 
 <div class="keypoint">
 
-That is **attention**. Bahdanau et al. 2014 — the paper that launched a decade of NLP. Next lecture.
+Now it clicks · the bottleneck we teased on the very first architecture slide is *exactly* what **attention** removes — not by shifting the leak (like reversing the input), but by deleting the single-vector squeeze entirely. That is **attention** · Bahdanau et al. 2014, the paper that launched a decade of NLP. Next lecture.
 
 </div>
 
