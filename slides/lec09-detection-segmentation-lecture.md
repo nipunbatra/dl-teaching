@@ -119,6 +119,14 @@ Today we cover the last four.
 
 ---
 
+# The ladder of outputs — the through-line for today
+
+**Same backbone every time — only the *output shape* changes.** So for each new task we ask one question **first**: *what does the network emit, number by number?* Once you can name every number, the loss almost writes itself.
+
+![w:900px](figures/lec09/svg/output_ladder.svg)
+
+---
+
 # Training for two goals at once
 
 <div class="insight">
@@ -131,25 +139,23 @@ If the drawing is more important: $\text{score} = \text{MCQ} + 2.0 \cdot \text{d
 
 ---
 
-# Classification + localization · the multi-task loss
+# Classification + localization · output first, then loss
 
-Keep the CNN. Add **two heads**:
+**The output — name every number.** Keep the CNN, add **two heads**. For one object the network emits exactly **$K + 4$ numbers**: $K$ class scores, then 4 box numbers $[x, y, w, h]$. Nothing else.
 
 ```python
 class ClsLocHead(nn.Module):
     def __init__(self, feat_dim, n_classes):
         super().__init__()
-        self.cls = nn.Linear(feat_dim, n_classes)   # class scores
-        self.box = nn.Linear(feat_dim, 4)           # (x, y, w, h)
+        self.cls = nn.Linear(feat_dim, n_classes)   # K class scores
+        self.box = nn.Linear(feat_dim, 4)           # x, y, w, h
 ```
 
-For one image:
-- True class $y$, model predicts class logits.
-- True box $\mathbf{b} = [x, y, w, h]$, model predicts $\hat{\mathbf{b}}$.
+**Now the loss is obvious** — one term per head, added up (true class $y$, true box $\mathbf{b}$):
 
-$$\mathcal{L} = \underbrace{\mathcal{L}_\text{class}(\text{logits}, y)}_{\text{cross-entropy}} + \lambda \cdot \underbrace{\mathcal{L}_\text{box}(\hat{\mathbf{b}}, \mathbf{b})}_{\text{Smooth L1 / MSE}}$$
+$$\mathcal{L} = \underbrace{\mathcal{L}_\text{class}(\text{logits}, y)}_{\text{cross-entropy on the } K \text{ scores}} + \lambda \cdot \underbrace{\mathcal{L}_\text{box}(\hat{\mathbf{b}}, \mathbf{b})}_{\text{Smooth L1 on the 4 numbers}}$$
 
-$\lambda$ is the balancing knob (the "2.0 · drawing" from the exam analogy); typical $\mathcal{L}_\text{box}$ is **Smooth L1** — L2 near 0, L1 far, robust to outlier boxes.
+$\lambda$ balances the two (the "2.0 · drawing" from the exam analogy); $\mathcal{L}_\text{box}$ is **Smooth L1** — L2 near 0, L1 far, robust to outlier boxes.
 
 ---
 
@@ -252,6 +258,8 @@ Pool now `[E]`.
 
 # ⭐⭐⭐ Optional · NMS pseudocode
 
+**Gist:** sort boxes by confidence, keep the top one, delete everything that overlaps it too much, repeat. The code below is just that loop.
+
 ```python
 def nms(boxes, scores, iou_threshold=0.5):
     idx = scores.argsort(descending=True)
@@ -337,24 +345,37 @@ Two-stage detectors still win on accuracy for small objects. They are slower and
 
 # YOLO · you only look once
 
-![w:920px](figures/lec09/svg/yolo_grid.svg)
+**Big idea (2 sentences).** Instead of *propose regions, then classify*, YOLO lays a grid on the image and makes **every cell predict its boxes and classes in one forward pass**. One look, one output tensor, done.
+
+![w:880px](figures/lec09/svg/yolo_grid.svg)
 
 ---
 
-# YOLO · the grid-of-responsibilities idea
+# A detector's output, number by number
 
-Divide the image into a 7×7 grid. Each cell fills out a **form** with three questions:
+**Before any loss, ask the Ng question: what does one cell actually emit?** Each grid cell (per anchor) outputs **one vector** — **1** objectness + **4** box numbers + **K** class scores:
 
-1. **Is there an object centred here?** (yes/no + confidence) → **objectness loss** ($\mathcal{L}_\text{obj}$)
-2. **If yes, where exactly?** (4 numbers $x, y, w, h$) → **box loss** ($\mathcal{L}_\text{box}$)
-3. **If yes, what class?** (cat / dog / car…) → **class loss** ($\mathcal{L}_\text{class}$)
+![w:880px](figures/lec09/svg/detector_output.svg)
 
-YOLO's total loss = sum of all three across every cell:
+Three groups in, three loss terms out. That mapping *is* the whole YOLO loss — next slide.
+
+---
+
+# YOLO loss · one term per output group
+
+The output vector has three groups, so the loss has **three matching terms**, summed over every cell:
+
 $$\mathcal{L} = \lambda_\text{coord}\sum\mathcal{L}_\text{box} + \sum\mathcal{L}_\text{obj} + \sum\mathcal{L}_\text{class}$$
 
-- **Box** active **only** if a cell contains an object. MSE on $(x, y, \sqrt{w}, \sqrt{h})$ (sqrt so small boxes matter).
-- **Objectness** active **always** — BCE pushes toward 1 if object, 0 if not.
-- **Class** active **only** if cell contains an object — cross-entropy.
+- **$p_\text{obj}$ → objectness loss** · active **always** — BCE pushes toward 1 if an object is centred here, 0 if not.
+- **$x, y, w, h$ → box loss** · active **only** if the cell holds an object. MSE on $(x, y, \sqrt{w}, \sqrt{h})$ (sqrt so small boxes matter as much as large ones).
+- **$c_1..c_K$ → class loss** · active **only** if the cell holds an object — cross-entropy.
+
+<div class="insight">
+
+**Now it clicks.** Every number in the output vector is graded by exactly one term. Objectness is checked in *every* cell (most are empty); box and class only where an object lives.
+
+</div>
 
 ---
 
@@ -391,24 +412,11 @@ Anchor boxes are starting corners. Conv layers are translation-equivariant — t
 
 ---
 
-# Decoding the box prediction · with example
+# ⭐⭐⭐ Optional · decoding the box, with example
 
-Anchor $(x_a, y_a, w_a, h_a)$ is known per cell. Network predicts deltas $(t_x, t_y, t_w, t_h)$.
+**Gist (skip the algebra if you just want the idea):** the predicted box is the **anchor, gently corrected** — a small shift for the centre, a log-space stretch for the size (so width/height stay positive). The network only learns *small corrections*; the anchor does the heavy lifting.
 
-**Centre** — small shift, scaled by anchor size:
-$b_x = x_a + t_x \cdot w_a,\quad b_y = y_a + t_y \cdot h_a$
-
-**Size** — log-space correction; exp keeps width/height positive:
-$b_w = w_a \cdot \exp(t_w),\quad b_h = h_a \cdot \exp(t_h)$
-(If $t_w = 0$, $\exp(0) = 1$ → width unchanged.)
-
-**Worked numeric.** Anchor $(120, 240, 80, 100)$, deltas $(0.1, -0.2, 0.3, -0.1)$.
-- $b_x = 120 + 0.1 \cdot 80 = 128$
-- $b_y = 240 - 0.2 \cdot 100 = 220$
-- $b_w = 80 \cdot e^{0.3} \approx 80 \cdot 1.35 = 108$
-- $b_h = 100 \cdot e^{-0.1} \approx 100 \cdot 0.90 = 90$
-
-**Final box · $(128, 220, 108, 90)$.** Network only had to learn small corrections, anchor did the heavy lifting.
+![w:940px](figures/lec09/svg/anchor_delta_decode.svg)
 
 ---
 
@@ -477,13 +485,14 @@ What if *every pixel* needs a label?
 
 ---
 
-# From detection to segmentation
+# From detection to segmentation · the output, pixel by pixel
 
-Detection gives boxes around objects. Segmentation gives a **label per pixel**.
+**The Ng question again — what does the network emit?** Now the output is **one class label per pixel**: an $H \times W \times C$ tensor where *every* pixel carries its own softmax over $C$ classes — a tiny classifier at each location.
 
-Key architectural change: we need to go *back up* in spatial resolution — the feature map shrinks through convs/pooling, but the output must match the input size.
+- Detection output = a few boxes. Segmentation output = a full **label map** the size of the image.
+- Concrete: for a $2\times2$ patch the network emits 4 per-pixel labels — say *top-left = organ, other three = background* (we grade exactly this patch with Dice shortly).
 
-**Solution**: encoder-decoder with upsampling.
+To emit a full-resolution map, the feature map (shrunk by pooling) must climb **back up** in resolution — an **encoder-decoder with upsampling**: the U-Net.
 
 ---
 
@@ -543,6 +552,8 @@ Every modern segmentation net (DeepLab, SegFormer) uses this pattern.
 ---
 
 # Segmentation loss · IoU to Dice
+
+**Output first, loss second:** the output is a per-pixel mask $P$; the loss just scores how well $P$ overlaps the true mask $T$.
 
 For boxes we used **IoU**. For masks we can do the same:
 $$\text{IoU} = \frac{|P \cap T|}{|P \cup T|}$$
