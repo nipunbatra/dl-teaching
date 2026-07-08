@@ -151,15 +151,29 @@ If humans won't provide the labels, can *augmentations* play that role?
 
 ---
 
-# The SimCLR framework
+# SimCLR · the big idea in two sentences
 
-![w:920px](figures/lec17/svg/simclr_framework.svg)
+The encoder turns each image into an **embedding** — a single vector. Training **pulls the two augmented views of the *same* image together** in that vector space, and **pushes *different* images apart**.
+
+Three words to know — *before* any formula:
+
+- **Positive pair** · two augmentations (crop, colour-jitter) of the **same** image. We want them **close**.
+- **Negatives** · every **other** image in the batch. We want them **far**.
+- **Temperature** $\tau$ · one knob that sets how hard we push the *closest* negatives away.
+
+<div class="keypoint">
+
+**Why we care.** A good embedding space is *reusable*: freeze the encoder, train a **one-layer** classifier on top (a "**linear probe**") from a handful of labels — and it works, because similar images already sit together. **Pretrain once, reuse everywhere.**
+
+</div>
 
 ---
 
-# SimCLR · batch as an 8×8 matrix
+# From one image to a positive pair
 
-![w:920px](figures/lec17/svg/simclr_batch_matrix.svg)
+![w:800px](figures/lec17/svg/positive_pairs.svg)
+
+**The whole supervision signal.** Augment one image twice → a **positive pair** (pull together). Views from *different* images → **negatives** (push apart). The augmentations *manufacture the labels* — nobody tagged a thing.
 
 ---
 
@@ -177,6 +191,12 @@ That's contrastive learning. It pulls **same-image augmentations together** in f
 
 ---
 
+# The SimCLR framework
+
+![w:920px](figures/lec17/svg/simclr_framework.svg)
+
+---
+
 # How SimCLR works · build the batch
 
 1. Sample a minibatch of $N$ images.
@@ -184,6 +204,12 @@ That's contrastive learning. It pulls **same-image augmentations together** in f
 3. The $(i, j)$ pair from the same image = **positive**. All $2N - 2$ others = **negatives**.
 
 Each image has supplied its *own* label · "these two crops belong together." No human ever touched the data.
+
+---
+
+# SimCLR · batch as an 8×8 matrix
+
+![w:920px](figures/lec17/svg/simclr_batch_matrix.svg)
 
 ---
 
@@ -197,6 +223,8 @@ Each image has supplied its *own* label · "these two crops belong together." No
 ---
 
 # ⭐⭐⭐ Optional · InfoNCE · set up the probability
+
+*Gist (skip-safe) · InfoNCE is just **softmax cross-entropy** answering "which item in the batch is my positive?" The three steps below are the derivation — the intuition above is enough.*
 
 For one anchor $z_i$ with positive partner $z_j$ in a batch with negatives $z_k$:
 
