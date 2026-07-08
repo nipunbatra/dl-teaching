@@ -104,36 +104,11 @@ Without it · a deep network has more than enough capacity to memorize the train
 
 ---
 
-# What's new in DL regularization vs classical ML
+# The regularization menu · three families
 
-<div class="columns">
-<div>
+![w:960px](figures/lec06/svg/reg_menu.svg)
 
-### You already know (ES 335)
-
-- L2 / ridge
-- L1 / LASSO
-- Cross-validation
-- Bias-variance tradeoff
-
-We **skim** these.
-
-</div>
-<div>
-
-### New for DL
-
-- Double descent
-- Data augmentation (images, text)
-- Mixup / CutMix
-- Label smoothing
-- Early stopping as regularization
-- Dropout, BatchNorm, LayerNorm, RMSNorm
-
-We spend time here.
-
-</div>
-</div>
+**One spine for the whole lecture.** You already own the **classical** family (ES 335 — we skim it). The two *new* families — reshape the **data**, rewire the **architecture** — are where deep learning wins, and where we spend today.
 
 ---
 
@@ -184,21 +159,23 @@ For 50 years ML chose "the middle" via cross-validation. Done.
 
 ---
 
-# What's actually happening
-
-Three regimes:
-
-1. **Classical underparameterized** (params ≪ data): U-curve as expected.
-2. **Interpolation threshold** (params ≈ data): test error **spikes**.
-3. **Modern overparameterized** (params ≫ data): test error **drops again**.
+# What's actually happening · three regimes
 
 <div class="keypoint">
 
-Past the threshold, more parameters *can* help — when data, augmentation, and SGD's implicit regularization keep up. This is **not** "bigger is always better": the spike at the threshold is sharpest with label noise and no regularization, and explicit regularization can wash the bump out entirely.
+**Big idea (2 sentences).** As you add parameters, test error first follows the classic U-curve, spikes right where the model can *just barely* fit the data, then — surprisingly — falls again as you keep growing. So a model with far more parameters than data can still generalize.
 
 </div>
 
-This is one of the big open questions in DL theory. Prince Ch 20 — *"Why does deep learning work?"*
+1. **Underparameterized** (params ≪ data): U-curve, as expected.
+2. **Interpolation threshold** (params ≈ data): test error **spikes**.
+3. **Overparameterized** (params ≫ data): test error **drops again**.
+
+<div class="insight">
+
+**⭐⭐⭐ Optional · the theory (skip on first pass).** *Why* the second descent happens is still open. The spike is sharpest with label noise and no regularization; explicit regularization can wash it out — so this is **not** "bigger is always better." (Prince Ch 20 · *"Why does deep learning work?"*)
+
+</div>
 
 ---
 
@@ -590,15 +567,21 @@ What happens if we randomly silence neurons during training?
 
 ---
 
-# The idea (Hinton 2012)
+# Dropout · what it does (effect-first)
 
-Every forward pass during training:
+<div class="keypoint">
 
-1. Sample a random binary mask $\mathbf{m}_i \sim \text{Bernoulli}(p)$ for each hidden unit $i$.
-2. Multiply: $\mathbf{h}_\text{drop} = \mathbf{h} \odot \mathbf{m}$.
-3. Scale surviving units by $1/p$ to keep expected activation the same.
+**Big idea (2 sentences).** At **train** time each layer outputs a *randomly-masked, rescaled* copy of its activations — some units zeroed, the survivors amplified by $1/p$. At **eval** time the layer outputs its activations *unchanged* — dropout is off.
 
-At eval time, **turn dropout off** — use all units.
+</div>
+
+The training-time recipe (Hinton 2012), every forward pass:
+
+1. Sample a binary mask $\mathbf{m}_i \sim \text{Bernoulli}(p)$ per hidden unit $i$.
+2. **Mask** · $\mathbf{h} \odot \mathbf{m}$ — zero the dropped units.
+3. **Rescale** survivors by $1/p$ so expected activation is unchanged.
+
+*Why does silencing units help? — next two slides.*
 
 ---
 
@@ -701,17 +684,11 @@ The training-time scaling-up by $1/p$ is what lets us drop the mask at eval time
 
 ---
 
-# Dropout · the basketball-team analogy
+# Dropout · what the layer outputs (train vs eval)
 
-<div class="keypoint">
+![w:1000px](figures/lec06/svg/dropout_effect.svg)
 
-Imagine training a basketball team where, in any given practice drill, some players randomly sit out. No one can rely too much on the star player · she might not be there.
-
-Result · everyone becomes more versatile. The team performs more reliably with any subset on the court.
-
-</div>
-
-That's what dropout does to neurons · it prevents them from **co-adapting** (relying too heavily on a few specific neighbors). Each neuron has to become individually useful.
+Same numbers as the worked example · `h = [2, 1.5, 0.5, 3]`, mask `[1,0,1,0]`, `p = 0.5`. Survivors are amplified so the *expected* train output equals the eval output — which is exactly why we can drop the mask at test time.
 
 ---
 
@@ -797,7 +774,13 @@ Concretely · BN/LN keep activations centered and unit-scale, which means the lo
 
 # Why normalize at all?
 
-Two problems that normalization fixes:
+<div class="keypoint">
+
+**Effect-first.** A norm layer outputs a *re-centred, re-scaled* version of each activation (mean ≈ 0, unit variance) — then a learned $\gamma,\beta$ lets the network pick the scale it actually wants back.
+
+</div>
+
+Two problems this fixes:
 
 1. **Scale drift across layers.** Activations grow or shrink with depth. He init addresses this at *init*; normalization does it at *every step*.
 2. **Internal covariate shift (original claim).** Distribution of layer inputs changes during training. This explanation turned out to be partly wrong — see next slide.
@@ -978,21 +961,21 @@ Pre-norm vs post-norm
 
 # ⭐⭐⭐ Optional · why pre-norm won — the gradient path
 
+*Gist (1 line) · pre-norm keeps a clean $+1$ gradient highway through the skip; post-norm routes that gradient through LayerNorm, where it can vanish or explode at depth.*
+
 Residual update: $\text{out} = x + \text{Sub}(x)$. The $x$ term is the **gradient highway**.
 
-**Post-norm.** Forward: $\text{out} = \text{LN}(x + \text{Sub}(x))$.
-- Backward to $x$ goes **through** LN.
-- LN's gradient is a complicated, scale-dependent term in the input statistics.
-- Gradient on the skip is modulated → can vanish or explode at depth → needs aggressive warmup.
+**Post-norm** · $\text{out} = \text{LN}(x + \text{Sub}(x))$.
+- Backward to $x$ goes **through** LN — a scale-dependent term in the input statistics.
+- The skip's gradient is modulated → can vanish/explode at depth → needs warmup.
 
-**Pre-norm.** Forward: $\text{out} = x + \text{Sub}(\text{LN}(x))$.
+**Pre-norm** · $\text{out} = x + \text{Sub}(\text{LN}(x))$.
 - $\partial\,\text{out}/\partial x$ has a **direct $+1$ term** from the skip.
-- LN sits on the side branch; its complicated gradient affects only the sub-layer.
-- Highway is **clean** → trains stable at depth.
+- LN sits on the side branch → highway stays **clean** → trains stable at depth.
 
 <div class="realworld">
 
-Pre-norm is the default for every modern Transformer (GPT-2 onwards). If you're building a new Transformer in 2026, use pre-norm.
+Pre-norm is the default for every modern Transformer (GPT-2 onwards). Building a new Transformer in 2026? Use pre-norm.
 
 </div>
 
