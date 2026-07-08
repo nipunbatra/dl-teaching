@@ -105,11 +105,10 @@
   </g>
 
   <!-- Footer -->
-  <g transform="translate(60, 340)">
-    <rect x="0" y="0" width="840" height="50" fill="#EEEBDF" stroke="#C9C4B5"/>
-    <text x="14" y="22" class="tag">KEY INSIGHT</text>
-    <text x="14" y="42" class="mut">
-      No convolutions at all. ViT works only at <tspan fill="#161513" font-weight="600">scale</tspan> — needs 300M+ images of pretraining (JFT-300M) to beat ResNet. With self-supervised pretraining (DINO, MAE), smaller data works too.
-    </text>
+  <g transform="translate(60, 322)">
+    <rect x="0" y="0" width="840" height="66" fill="#EEEBDF" stroke="#C9C4B5"/>
+    <text x="14" y="20" class="tag">KEY INSIGHT</text>
+    <text x="14" y="40" class="mut">No convolutions at all. ViT works only at <tspan fill="#161513" font-weight="600">scale</tspan> — needs 300M+ images (JFT-300M) to beat ResNet.</text>
+    <text x="14" y="58" class="mut">With self-supervised pretraining (DINO, MAE), far smaller datasets work too.</text>
   </g>
 </svg>

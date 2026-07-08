@@ -49,12 +49,21 @@ Building blocks · **CNNs** (L7–L9), **Transformers** (L13–L14), **contrasti
 
 ---
 
-# Four questions
+# The problem · make vision and language talk
 
-1. How do Transformers process images (no convolutions)?
-2. What did **CLIP** unlock?
-3. How does **LLaVA** give an LLM eyes?
-4. What's the current multimodal state?
+We already have two great tools. **Image encoders** (CNNs L7–L9, or ViT today) turn a photo into a vector. **Language models** (L15) read and write text fluently. They just don't speak to each other yet.
+
+<div class="keypoint">
+
+**Goal** · *one* model that can **caption** a photo or **answer a question** about it. We get there by building **three pieces in succession** ·
+
+1. **ViT** — turn an image into tokens (so vision *looks like* language).
+2. **CLIP** — put image tokens and text in **one shared space** (so we can compare them).
+3. **LLaVA** — feed image tokens into an **LLM** (so it can talk about what it sees).
+
+</div>
+
+The payoff at the end · *vision becomes just more tokens for the language model.* And it is the **same attention machinery from L13** the whole way through.
 
 ---
 
@@ -88,31 +97,23 @@ Can a Transformer *see* — with no convolutions at all?
 
 ---
 
-# The 2020 bet
-
-<div class="paper">
-
-Dosovitskiy et al. 2020 · *"An Image is Worth 16×16 Words"* — split image into patches, treat them as tokens, apply vanilla Transformer. Drop convolutions entirely.
-
-</div>
-
-Controversial at the time — CNNs had reigned for 8 years. The bet: if you have enough data and compute, the right architecture is the one with the fewest inductive biases.
-
-It worked. ViT-Huge pretrained on 300M images beat CNN SOTA on ImageNet by 2021.
-
----
-
-# Why throw away CNNs · the bet of 2020
+# ViT in one sentence
 
 <div class="keypoint">
 
-CNNs have vision **baked in** · they are forced to look at local pixels first, then build up to objects.
-
-The 2020 bet · *what if we hand a generic Transformer the whole image at once and let it figure out what's important?*
+**Big idea (2 sentences).** A Vision Transformer **outputs a sequence of patch embeddings**: cut the image into 16×16 patches and linearly embed each patch into one token. After that it is *just a Transformer* — the exact attention stack from L13, with **no convolutions at all**.
 
 </div>
 
-The wager · with enough data, a model that has **fewer prior assumptions** but **more capacity** will outlearn a hand-engineered architecture. By 2021 (ViT-Huge pretrained on JFT-300M) the bet paid off · ViT **surpassed** the best ResNets on ImageNet.
+The whole trick is the first step · **patches → tokens.** Once an image is a sequence of tokens, everything you learned about attention in L12–L13 applies unchanged.
+
+---
+
+# ViT · the object, in a picture
+
+![w:920px](figures/lec18/svg/vit_patches_tokens.svg)
+
+Cut into patches → flatten + linearly project each → prepend `[CLS]`, add position embeddings → **197 tokens** into a standard Transformer.
 
 ---
 
@@ -123,6 +124,24 @@ The wager · with enough data, a model that has **fewer prior assumptions** but 
 **Analogy · describing a photo over the phone.** You don't list every pixel. You break it into chunks: *"top-left, blue sky · below that, a green tree…"* We teach the model to do the same · chop the image into a grid of **patches** ("image words").
 
 </div>
+
+---
+
+# Why throw away CNNs · the 2020 bet
+
+<div class="paper">
+
+Dosovitskiy et al. 2020 · *"An Image is Worth 16×16 Words"* — split the image into patches, treat them as tokens, apply a vanilla Transformer. Drop convolutions entirely.
+
+</div>
+
+<div class="keypoint">
+
+CNNs have vision **baked in** · forced to look at local pixels first, then build up to objects. The bet · hand a generic Transformer the whole image at once and let it learn what matters.
+
+</div>
+
+With enough data, **fewer prior assumptions + more capacity** beats a hand-engineered architecture. By 2021 (ViT-Huge, pretrained on JFT-300M) the bet paid off · ViT **surpassed** the best ResNets on ImageNet.
 
 ---
 
@@ -166,15 +185,11 @@ $\text{embedding} = \mathbf{[6.0,\ 6.0,\ 7.0]}$ — the first "token" the Transf
 
 ---
 
-# From image to sequence · picture
-
-![w:920px](figures/lec18/svg/vit_patches_tokens.svg)
-
----
-
-# How ViT works
+# How ViT works · the full read-out
 
 ![w:920px](figures/lec18/svg/vit_patches.svg)
+
+The `[CLS]` token summarizes the whole image → a linear head turns it into class logits.
 
 ---
 
@@ -247,25 +262,37 @@ What happens if you train *one* embedding space for images and their captions?
 
 ---
 
-# CLIP · training as contrast matrix
+# CLIP in one sentence
 
-![w:920px](figures/lec18/svg/clip_training_matrix.svg)
+<div class="keypoint">
+
+**Big idea (2 sentences).** CLIP has **two encoders** — one for images, one for text — that output vectors into **one shared space**. Training **pulls matched image–caption pairs together and pushes mismatched pairs apart**, so afterwards *cosine similarity answers "do this image and this caption match?"*
+
+</div>
+
+**This is exactly L17's contrastive idea, across two modalities.** In L17 the two "views" were two crops of the *same image*; here the second view is the image's **caption**. Same pull-together / push-apart loss — image-vs-text instead of image-vs-image. And both encoders are Transformers (L13): under the hood it is still attention.
 
 ---
 
-# CLIP · dual encoder
+# CLIP · dual encoder · the object
 
 ![w:920px](figures/lec18/svg/clip_dual_encoder.svg)
 
 ---
 
-# CLIP · the core idea
+# CLIP · training as a contrast matrix
 
-Train on (image, caption) pairs scraped from the web. Push matching pairs close in embedding space, push mismatched pairs far apart.
+![w:920px](figures/lec18/svg/clip_training_matrix.svg)
+
+One batch → an N×N similarity matrix. **Diagonal = correct pairs (pull up); off-diagonal = mismatches (push down).**
+
+---
+
+# What the shared space buys you
+
+Train on (image, caption) pairs scraped from the web · matched pairs close, mismatched far apart. Once that shared space exists, you can:
 
 <div class="keypoint">
-
-Build a **shared space** where images and captions live together. Once it exists, you can:
 
 - **Retrieve images** from a text query (nearest caption embedding).
 - **Classify zero-shot** · pick the closest *caption template* to the image.
@@ -427,28 +454,23 @@ Can an LLM read image features as if they were just more tokens?
 
 ---
 
-# LLaVA · full stack
+# LLaVA in one sentence
 
-![w:920px](figures/lec18/svg/llava_stack.svg)
+<div class="keypoint">
 
----
-
-# LLaVA · the architecture
-
-The full stack on the previous slide, as a recipe:
-
-<div class="math-box">
-
-**LLaVA recipe** (Liu et al. 2023):
-
-1. Pretrained CLIP ViT-L extracts 256 image features.
-2. A small **projection** maps them into the LLM's token embedding space (LLaVA-1 · a single linear layer; LLaVA-1.5 · a 2-layer MLP).
-3. Concatenate `[image_tokens, text_tokens]` and feed to an LLM.
-4. Fine-tune with instruction data: `(image, question, answer)` triples.
+**Big idea (2 sentences).** A small **projection layer** maps CLIP's image tokens into the **LLM's token space**, so the LLM reads image tokens *exactly like word tokens* — and outputs text. That one bridge turns a text-only LLM into a model that can **see and talk**.
 
 </div>
 
-Surprisingly good. The LLM brings reasoning; CLIP brings vision understanding; the projection layer glues them.
+The pieces are already built · **ViT/CLIP** gives image tokens (Parts 1–2), the **LLM** (L15) generates text. LLaVA only has to learn the **glue** between them.
+
+---
+
+# LLaVA · full stack · the object
+
+![w:920px](figures/lec18/svg/llava_stack.svg)
+
+CLIP (frozen) → **linear projection** → image tokens sit right next to the text tokens → LLM decodes an answer.
 
 ---
 
@@ -476,6 +498,23 @@ Per patch: `llm_token = patch @ W + b`. Shape check · `[1, 1024] @ [1024, 4096]
 
 Do this for all 256 patches → 256 vectors that "look like" tokens to the LLM. Prepend them to the user's text:
 $$[\text{img}_1, \ldots, \text{img}_{256}, \text{text}_1, \text{text}_2, \ldots] \to \text{LLM}$$
+
+---
+
+# LLaVA · the full recipe
+
+<div class="math-box">
+
+**LLaVA recipe** (Liu et al. 2023):
+
+1. Pretrained CLIP ViT-L extracts 256 image features.
+2. A small **projection** maps them into the LLM's token embedding space (LLaVA-1 · a single linear layer; LLaVA-1.5 · a 2-layer MLP).
+3. Concatenate `[image_tokens, text_tokens]` and feed to an LLM.
+4. Fine-tune with instruction data: `(image, question, answer)` triples.
+
+</div>
+
+The LLM brings reasoning; CLIP brings vision; the projection glues them. **Now it clicks · vision became just more tokens for the language model.**
 
 ---
 
