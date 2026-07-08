@@ -101,6 +101,20 @@ Spoiler · there's no good answer
 
 ---
 
+# The problem, precisely · text in, integers out
+
+A Transformer's first layer is an **embedding table** — a fixed grid with **one row per vocabulary entry**, looked up by an **integer ID**. So before any math can happen, raw text must become a sequence of integers drawn from a **fixed, finite vocabulary**.
+
+But language is **open-ended** — new words, typos, emojis, URLs, code, dozens of scripts. No fixed word list can ever cover it.
+
+<div class="keypoint">
+
+**Big idea (2 sentences)** · The tokenizer's whole job is to turn *any* string into a sequence of integer IDs from a fixed vocabulary — and never choke on something it has never seen. The rest of Part 1 just rules out the obvious ways to do this.
+
+</div>
+
+---
+
 # Three failed alternatives
 
 | Unit | Problem |
@@ -164,6 +178,28 @@ The winning algorithm: **Byte-Pair Encoding** (BPE), re-purposed from 1994 data 
 # BPE step-by-step
 
 One merge rule at a time
+
+---
+
+# BPE in two sentences · what it makes, what it does
+
+<div class="keypoint">
+
+**What it outputs** · a sequence of **integer token IDs** — each ID is a row in the vocabulary.
+
+**How it builds that vocabulary** · start from the raw characters, then repeatedly find the **most frequent adjacent pair** of tokens and **merge** it into one new token. Frequent stuff (`th`, `ing`, whole common words) collapses to a single token; rare stuff stays split into a few subwords — so nothing is ever out-of-vocabulary.
+
+</div>
+
+That is the entire idea. The next slides just make it precise · the merge loop, a worked example by hand, then how you encode a brand-new word.
+
+---
+
+# The tokenizer's output · text → tokens → integer IDs
+
+![w:1000px](figures/lec14/svg/tokenizer_pipeline.svg)
+
+The model never sees the text — only the **integer IDs**, each one an index into the embedding table.
 
 ---
 
@@ -269,22 +305,15 @@ The algorithm has discovered the reusable suffix `ug` and the morphologically me
 
 ---
 
-# Why byte-level BPE is the default
+# ⭐⭐⭐ Optional · byte-level BPE, the production default
 
-Two breakthroughs GPT-2 introduced:
+**Gist (2 sentences)** · Modern LLMs (GPT-\*, Llama, Mistral) run BPE over raw **bytes** (0–255) rather than characters, so *every* possible string — emoji, any script, code, binary junk — is tokenizable with **no `<unk>` token ever**. A regex pre-split first keeps merges from crossing word boundaries ("New York" stays two chains); SentencePiece packages the same idea for multilingual training.
 
-1. **Start from bytes (0–255), not Unicode characters.** Every possible string becomes tokenizable, including emojis, foreign scripts, binary garbage.
-2. **Pretokenize by regex** before BPE, to avoid crossing word boundaries ("New York" stays as two separate merge chains).
+<div class="warning">
 
-<div class="keypoint">
-
-Result · a 50k-token vocab that covers English, code, Japanese, emoji, and anything else users throw at it. No `<unk>` token needed.
+**One consequence worth keeping** · a vocab trained mostly on English splits other languages into far more tokens (higher *fertility*) — non-English users pay more context and more money per word.
 
 </div>
-
-Most modern LLMs — Llama, GPT-*, Mistral — use byte-level BPE with minor tweaks. SentencePiece is the same idea packaged for cross-language training.
-
-**Trade-off** · a vocab trained mostly on English splits other languages into far more tokens (higher *fertility*) — non-English users pay more context and more cost per word.
 
 ---
 
@@ -332,6 +361,22 @@ Byte-level BPE (GPT-2) is now the default · handles any unicode, any language, 
 # Three pretraining paradigms
 
 Same Transformer · different objectives
+
+---
+
+# Pretraining in one lens · what does the model predict?
+
+Every objective here is the **same** move · hide part of the text, make the model put a **probability distribution over the missing token(s)**, then score it with cross-entropy. They differ only in *what is hidden* and *what context is allowed*.
+
+<div class="keypoint">
+
+**Causal LM (GPT)** · outputs a distribution over the **NEXT** token, seeing only the **left** context → built for *generating*.
+**Masked LM (BERT)** · outputs a distribution over a **MASKED** token, seeing **both sides** → built for *understanding*.
+**Span corruption (T5)** · outputs a whole **masked span** with an encoder–decoder → a blend of the two.
+
+</div>
+
+Tokens in, a distribution over a token out. Everything below is just this idea, in detail.
 
 ---
 
@@ -678,6 +723,8 @@ The pretrained model is the brain. Fine-tuning is how you train it to do what yo
 ---
 
 # Putting it all together · the L14 master sentence
+
+Now it clicks · **text → tokens → integer IDs (tokenization), then a distribution over the next token (pretraining)**. Two moving parts, one idea.
 
 <div class="math-box">
 
