@@ -20,12 +20,14 @@ math: mathjax
 
 By the end of this lecture you will be able to:
 
-1. State the three **scaling laws** (compute, data, params) as power-law exponents.
-2. Derive the **Chinchilla** D/N ≈ 20 optimum and explain why over-training is OK.
-3. Describe **RoPE** (rotary position embedding) geometrically.
-4. Explain **GQA** · fewer KV heads, near-same quality, far smaller cache.
-5. Contrast **DP / TP / PP** and know when to combine them.
-6. Articulate **emergent abilities** · what they are and why they're contested.
+1. Explain why **scaling** — more parameters + more data + more compute, kept in balance — keeps making LLMs better.
+2. Use the **Chinchilla** rule of thumb (**≈ 20 tokens per parameter**) and say why modern models deliberately over-train.
+3. Give the one-sentence intuition for **RoPE** · rotate Q and K by position so attention sees *relative* distance.
+4. Explain **GQA** · share K/V across heads to shrink the memory cache, at almost no quality cost.
+5. Say what **data / tensor / pipeline** parallelism each splits — and why a 70B model needs all three.
+6. Describe **emergent abilities** · what they are and why they are debated.
+
+*The starred **⭐⭐⭐ Optional** slides hold the algebra behind these ideas. Skip them on a first pass — the intuition above is the exam-relevant part.*
 
 ---
 
@@ -48,6 +50,18 @@ So if the architecture is solved, why was GPT-2 (2019) a curiosity and GPT-4 (20
 - **Hugging Face course · Ch 1** — high-level LLM walk-through.
 - **Anthropic · *Predictability of LM behavior on novel tasks***  — emergent-ability discussion.
 - **Llama-3 / Mistral / Qwen technical reports** — concrete 2024-era recipes.
+
+</div>
+
+---
+
+# The whole object · a next-token predictor
+
+![w:870px](figures/lec15/svg/next_token_pipeline.svg)
+
+<div class="keypoint">
+
+**Big idea (2 sentences).** An LLM is *one* thing — a function that reads the tokens so far and outputs a probability for every possible next token; you sample one, glue it on, and repeat. Everything else in this lecture — scaling, RoPE, GQA, distributed training — is about making *this exact object* bigger and cheaper. The object never changes; only its size does.
 
 </div>
 
@@ -121,6 +135,35 @@ Context · 512 → 1M+ tokens
 # Scaling laws
 
 Given a fixed compute budget, how big a model should you train — and on how much data?
+
+---
+
+# The knobs · what you actually choose
+
+<div class="keypoint">
+
+Start from the object, before any math. You have a **fixed compute budget** $C$ — the FLOPs you can afford. You spend it on exactly **two knobs**:
+
+- **N** — number of **parameters** (how big the model is)
+- **D** — number of **training tokens** (how much data it sees)
+
+One accounting fact ties them together: $C \approx 6\,N\,D$. Turn $N$ up and you can afford fewer tokens $D$; turn $N$ down and you can pour in more data.
+
+</div>
+
+**That single trade-off — how to split a fixed $C$ between $N$ and $D$ — is the entire scaling-laws question.** The rest of Part 1 is just finding the best split.
+
+---
+
+# The scaling law · in one picture
+
+![w:780px](figures/lec15/svg/loss_vs_compute.svg)
+
+<div class="insight">
+
+**Big idea (2 sentences).** Pour in more compute and the loss falls along a near-straight line on a log-log plot — so you can *predict* how good a model will be **before** you train it. That predictability is what turned scaling from a gamble into an engineering plan.
+
+</div>
 
 ---
 
@@ -236,28 +279,18 @@ Chinchilla optimizes *training compute*. But **inference** is where models earn 
 
 ---
 
-# ⭐⭐⭐ Optional · Compute budget · derivation from two rules
+# ⭐⭐⭐ Optional · why both N and D grow as √C
 
-Two rules from Chinchilla:
-1. Budget · $C = 6\,N\,D$.
-2. Recipe · $D = 20\,N$.
+<div class="insight">
 
-Substitute (2) into (1) to solve for $N$ given a budget $C$:
-$$C = 6\,N \cdot (20\,N) = 120\,N^2 \;\Longrightarrow\; N = \sqrt{\dfrac{C}{120}}$$
+**Gist (the one thing to remember).** When your compute budget goes up 10×, you make the model about $\sqrt{10}\approx 3.2\times$ bigger **and** train on $\sqrt{10}\times$ more data — *not* 10× bigger. Spread new budget across **both** axes.
 
-Then $D = 20\,N$.
+</div>
 
----
+Where it comes from: combine budget $C = 6ND$ with recipe $D = 20N$ →
+$$C = 120\,N^2 \;\Longrightarrow\; N = \sqrt{C/120},\qquad D = 20\,N.$$
 
-# Worked example · spending $C = 1.2 \times 10^{24}$ FLOPs
-
-1. **Solve for N.**
-$N^2 = (1.2 \times 10^{24}) / 120 = 10^{22}$
-$N = 10^{11}$ → **100 billion parameters**.
-2. **Solve for D.**
-$D = 20 \cdot 10^{11} = 2 \times 10^{12}$ → **2 trillion tokens**.
-
-For 10× more compute · $N$ grows by $\sqrt{10} \approx 3.16$, $D$ grows by $\sqrt{10}$ too. **Both scale as $\sqrt{C}$.** This is why a next-gen model (GPT-4's exact size is undisclosed) isn't simply 10× GPT-3's 175B parameters — Chinchilla's recipe says spread the budget across both axes.
+*Worked:* $C = 1.2\times10^{24}$ → $N^2 = 10^{22}$ → $N = 10^{11}$ (**100B params**), $D = 2\times10^{12}$ (**2T tokens**). This is why a next-gen model isn't simply 10× GPT-3's 175B — the recipe spreads the budget across both axes.
 
 ---
 
@@ -322,64 +355,28 @@ The model learns about **relative positions directly**.
 
 ---
 
-# ⭐⭐⭐ Optional · RoPE · derivation in 2D
+# ⭐⭐⭐ Optional · RoPE · the algebra in one place
 
-For position $m$, define angle $\theta_m = m \cdot \Theta$ for some base $\Theta$. Rotation matrix:
-$$R_\theta = \begin{pmatrix} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta \end{pmatrix}$$
+Rotate the query at position $m$ and the key at position $n$ by angles $\theta_m = m\Theta,\ \theta_n = n\Theta$, using $R_\theta = \begin{pmatrix} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta \end{pmatrix}$. So $q'_m = R_{\theta_m} q$ and $k'_n = R_{\theta_n} k$.
 
-Apply to query (at position $m$) and key (at position $n$):
-$q'_m = R_{\theta_m} q,\quad k'_n = R_{\theta_n} k$
+Two facts about rotations — $R_\theta^\top = R_{-\theta}$ and $R_{-\theta_m}R_{\theta_n} = R_{\theta_n-\theta_m}$ — collapse the score:
+$$(q'_m)^\top k'_n = q^\top R_{\theta_m}^\top R_{\theta_n}\,k = q^\top R_{(n-m)\Theta}\,k$$
 
-Attention score:
-$(q'_m)^\top k'_n = q^\top R_{\theta_m}^\top R_{\theta_n}\,k$
-
-*Can the product $R_{\theta_m}^\top R_{\theta_n}$ be simplified? What do rotations compose to?*
+**The score depends only on the offset $n - m$, never on absolute positions.** In high dimensions, group coordinates into pairs and rotate each pair at its own frequency $\Theta_i$ (block-diagonal).
 
 ---
 
-# ⭐⭐⭐ Optional · RoPE · derivation, the punchline
+# ⭐⭐⭐ Optional · RoPE · worked numeric (2D)
 
-Two properties of rotation matrices:
-- $R_\theta^\top = R_{-\theta}$
-- $R_{-\theta_m} R_{\theta_n} = R_{\theta_n - \theta_m}$
+$\Theta = 1$ rad, $q = [1, 2]$ at $m = 2$, $k = [3, 0]$ at $n = 3$.
 
-Substitute:
-$(q'_m)^\top k'_n = q^\top R_{(n-m)\Theta}\,k$
+**Absolute form** — rotate, then dot: $q'_m = R_2 q \approx [-2.24,\ 0.07]$, $k'_n = R_3 k \approx [-2.97,\ 0.42]$, so $q'_m \cdot k'_n \approx \mathbf{6.68}$.
 
-**The score depends only on the relative position $n - m$, not on absolutes.**
-
-In high-dim, group dimensions into pairs; rotate each pair with a different frequency $\Theta_i$. That's "block-diagonal."
-
----
-
-# ⭐⭐⭐ Optional · Worked numeric · RoPE in 2D
-
-$\Theta = 1$ rad. $q = [1, 2]$ at $m = 2$, $k = [3, 0]$ at $n = 3$.
-
-**Rotation matrices.** $\theta_m = 2$, $\theta_n = 3$.
-$R_2 \approx \begin{pmatrix} -0.42 & -0.91 \\ 0.91 & -0.42 \end{pmatrix},\quad R_3 \approx \begin{pmatrix} -0.99 & -0.14 \\ 0.14 & -0.99 \end{pmatrix}$
-
-**Rotate.**
-$q'_m = R_2 q \approx [-2.24,\ 0.07]^\top$
-$k'_n = R_3 k \approx [-2.97,\ 0.42]^\top$
-
-**Dot product.** $(-2.24)(-2.97) + (0.07)(0.42) \approx 6.65 + 0.03 = \mathbf{6.68}$.
-
-*The derivation claims this should equal the relative-position form. Does it?*
-
----
-
-# ⭐⭐⭐ Optional · Worked numeric · verify the relative-position claim
-
-The relative offset is $n - m = 1$, so the derivation predicts the score equals $q^\top R_1 k$:
-
-$$R_1 \approx \begin{pmatrix} 0.54 & -0.84 \\ 0.84 & 0.54 \end{pmatrix},\quad R_1 k = [1.62,\ 2.52]$$
-
-$$q \cdot [1.62,\ 2.52] = 1.62 + 5.04 = \mathbf{6.66}\ \checkmark \text{ (matches 6.68 up to rounding)}$$
+**Relative form** — offset $n - m = 1$, so the score should equal $q^\top R_1 k$: $R_1 k \approx [1.62,\ 2.52]$, giving $q \cdot [1.62,\ 2.52] = 1.62 + 5.04 = \mathbf{6.66}\ \checkmark$ (matches, up to rounding).
 
 <div class="insight">
 
-Two rotations, one dot product — and only the **offset** survives. That's the whole trick: relative position for free, with zero extra parameters.
+Two rotations, one dot product — and only the **offset** survives. Relative position for free, with zero extra parameters.
 
 </div>
 
@@ -434,7 +431,19 @@ Why does generation run out of *memory* before it runs out of compute?
 
 ---
 
-# KV-cache · derivation, piece by piece
+# The KV-cache · what generation actually stores
+
+<div class="keypoint">
+
+**Big idea (2 sentences).** To generate token #1001 the model must attend to the 1000 tokens before it — so rather than recompute their keys and values every step, it **stores them in a table called the KV-cache**. That table keeps one $K$ and one $V$ vector for **every past token × every layer × every head**, and it grows until *it*, not compute, is what fills the GPU.
+
+</div>
+
+State the object first, then the numbers. For a 70B model at 32k context that table is **≈ 84 GB** — more than half the size of the model's own weights, for a *single* sequence. **That 84 GB is exactly what GQA (two slides on) exists to shrink.**
+
+---
+
+# ⭐⭐⭐ Optional · KV-cache · derivation, piece by piece
 
 During autoregressive decoding we attend to **all previous tokens**. Recomputing $K, V$ each step is wasteful → **cache** them.
 
@@ -453,7 +462,7 @@ $$\text{KV-cache memory} = 2 \cdot L \cdot H \cdot d_h \cdot T \cdot B \cdot 2 \
 
 ---
 
-# Worked numeric · KV-cache · 70B model with vanilla MHA
+# ⭐⭐⭐ Optional · Worked numeric · KV-cache · 70B, vanilla MHA
 
 Setup: $L = 80,\ H = 64,\ d_h = 128,\ T = 32{,}000,\ B = 1$, fp16 (2 bytes).
 
@@ -475,11 +484,13 @@ $$= 32{,}000 \cdot 80 \cdot 64 \cdot 128 \cdot 4 \approx 8.4 \times 10^{10} \tex
 <div class="insight">
 
 The KV-cache is the model's **notebook**.
-- **MHA** · 64 students each keep a private 100-page notebook → 6400 pages.
-- **GQA** · 8 study groups of 8 students share one notebook each → 800 pages. Huge saving, almost no quality drop.
-- **MQA** · all 64 share one notebook → 100 pages. Maximum saving, but students may overwrite each other (quality drop).
+- **MHA** · 64 students each keep a private notebook → biggest cache.
+- **GQA** · 8 study groups share one notebook each → 8× smaller, almost no quality drop.
+- **MQA** · all 64 share one notebook → smallest, but students overwrite each other (quality drop).
 
 </div>
+
+![w:720px](figures/lec15/svg/kv_cache_bars.svg)
 
 ---
 
