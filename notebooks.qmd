@@ -2,6 +2,33 @@
 title: "Notebooks"
 ---
 
-Interactive Jupyter notebooks for hands-on practice. All notebooks use **PyTorch**.
+Hands-on **PyTorch** notebooks — each grows out of a lecture. Every one is sized in *hours, not days*; most run on a free Colab GPU and several need no GPU at all. Download to run locally, or open in Colab. These are also the seeds of the [homeworks](labs/index.qmd) — each assignment takes one you've already run and pushes it further.
 
-*Notebooks will be added as the course progresses.*
+## Primer · Probability & MLE
+
+| Notebook | Lecture | What you do |
+|---|:---:|---|
+| [iid-demo](notebooks/lec00-iid-demo.ipynb) | L00 | IID vs non-IID — sequences, histograms, lag-1 scatter; why `sum(log p)` is blind to autocorrelation |
+| [bernoulli-playground](notebooks/lec00-bernoulli-playground.ipynb) | L00 | The three operations on a Bernoulli — sample, PMF, log-prob — and MLE by hand |
+| [mle-map](notebooks/lec00-mle-map.ipynb) | L00B | MLE → MAP in PyTorch: ridge and lasso emerge from Gaussian / Laplace priors |
+
+## Spine · Foundations → Transformers
+
+| Notebook | Lecture | What you do |
+|---|:---:|---|
+| [micrograd-mlp](notebooks/01-micrograd-mlp.ipynb) | L01 · L03 | Build the micrograd autodiff engine and train an MLP with it |
+| [uat-demo](notebooks/02-uat-demo.ipynb) | L02 | Universal approximation — fit a curve by stacking ReLU bumps |
+| [debug-ladder](notebooks/03-debug-ladder.ipynb) | L03 | Work the training debug ladder against planted bugs |
+| [optimizers](notebooks/05-optimizers.ipynb) | L04 · L05 | Race SGD vs momentum vs Adam and read the curves |
+| [cnn-shape-tour](notebooks/07-cnn-shape-tour.ipynb) | L07 | CNN tensor shapes and receptive fields, by hand |
+| [rnn-by-hand](notebooks/10-rnn-by-hand.ipynb) | L10 | An RNN cell from scratch, unrolled over a sequence |
+| [attention-by-hand](notebooks/12-attention-by-hand.ipynb) | L12 | Attention from raw matmuls — then verify it |
+| [nanogpt](notebooks/13-nanogpt.ipynb) | L13 · L14 | Train a tiny GPT on Tiny Shakespeare |
+
+## Landscape · Self-supervision & Generative
+
+| Notebook | Lecture | What you do |
+|---|:---:|---|
+| [contrastive-toy](notebooks/17-contrastive-toy.ipynb) | L17 | Contrastive learning on a toy dataset |
+| [vae-mnist](notebooks/19-vae-mnist.ipynb) | L19 | A VAE on MNIST — ablate the KL term and watch samples blur |
+| [ddpm-2d](notebooks/21-ddpm-2d.ipynb) | L21 · L22 | A 2-D DDPM: watch it denoise step by step |
