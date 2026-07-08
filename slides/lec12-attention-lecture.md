@@ -114,6 +114,29 @@ Attention is the mechanism for the *pull* — a differentiable version of "look 
 
 ---
 
+# The whole idea — stated before any algebra
+
+<div class="keypoint">
+
+**Attention outputs a weighted sum of value vectors** — the weights are a softmax over compatibility scores between one **query** and every **key**. A soft, differentiable look-up.
+
+</div>
+
+| Piece | In one phrase |
+|:--|:--|
+| **Query** $q$ | what this position is looking for |
+| **Keys** $k_i$ | what each input advertises it offers |
+| **Values** $v_i$ | the content each input carries |
+| **Scores** | $q\cdot k_i$ — how well each key matches the query |
+| **Weights** | $\text{softmax}(\text{scores})$ — a distribution summing to 1 |
+| **Output** | $\sum_i \text{weight}_i\, v_i$ — the weighted blend of values |
+
+$$\text{output} \;=\; \sum_i \underbrace{\text{softmax}_i(q\cdot k_i)}_{\text{weights}}\; v_i$$
+
+*Q/K/V projections, the $\sqrt{d_k}$, and masks are all detail on top of this one line — built over the next four parts.*
+
+---
+
 # Four questions
 
 1. What does attention look like — literally, as a heatmap?
@@ -230,7 +253,9 @@ $$e_{t,i} = \mathbf{v}^\top \tanh(W_1 h_i + W_2 s_t),\quad \alpha_{t,i} = \text{
 
 ---
 
-# Bahdanau · worked numeric, term-by-term
+# ⭐⭐⭐ Optional · Bahdanau worked numeric, term-by-term
+
+**Gist ·** the additive score is just *one number* per (query, key) pair from a tiny tanh-MLP.
 
 Toy 2-d. $h_i = [2, 1]^\top$, $s_t = [1, 3]^\top$.
 
@@ -241,13 +266,10 @@ $$W_1 = \begin{pmatrix} 0.1 & 0.2 \\ 0.3 & 0.4 \end{pmatrix},\quad W_2 = \begin{
 - $W_2 s_t = [0.5 + 1.8,\ 0.7 + 2.4]^\top = [2.3, 3.1]^\top$
 
 **Step 2 · add + non-linearity.**
-$U = [0.4 + 2.3,\ 1.0 + 3.1]^\top = [2.7, 4.1]^\top$
-$\tanh U \approx [0.99, 1.00]^\top$
+$U = [0.4 + 2.3,\ 1.0 + 3.1]^\top = [2.7, 4.1]^\top,\quad \tanh U \approx [0.99, 1.00]^\top$
 
 **Step 3 · final dot product with $\mathbf{v}$.**
-$e_{t,i} = 0.9 \cdot 0.99 + 0.1 \cdot 1.00 = 0.891 + 0.100 = \mathbf{0.991}$
-
-This single number is the alignment score for **one** $(s_t, h_i)$ pair. Compute for all $i$, then softmax.
+$e_{t,i} = 0.9 \cdot 0.99 + 0.1 \cdot 1.00 = \mathbf{0.991}$ — one $(s_t, h_i)$ score; repeat over $i$, then softmax.
 
 ---
 
@@ -470,19 +492,15 @@ Unscaled dot products behave like the second case as $d_k$ grows. Scaling factor
 
 # ⭐⭐⭐ Optional · variance of unscaled dot products
 
+**Gist ·** a score sums $d_k$ random products, so its spread grows like $\sqrt{d_k}$ — dividing by $\sqrt{d_k}$ cancels it.
+
 For $Q_i, K_j$ with i.i.d. $\mathcal{N}(0, 1)$ entries:
 $$S = Q_i^\top K_j = \sum_{k=1}^{d_k} q_k k_k$$
 
 Variance of a sum of independents = sum of variances (each $\text{Var}(q_k k_k) = 1$):
 $$\text{Var}(S) = \sum_{k=1}^{d_k} \text{Var}(q_k k_k) = d_k \;\Rightarrow\; \text{std} = \sqrt{d_k}$$
 
-So scores scale **like $\sqrt{d_k}$**. At $d_k = 512$ they reach $\sim \pm 22$ → softmax nearly one-hot. Dividing by $\sqrt{d_k}$ restores variance 1.
-
-<div class="keypoint">
-
-This is **dimension-invariant** — one block works at $d_k = 64$ or $4096$, no temperature retuning.
-
-</div>
+So scores scale **like $\sqrt{d_k}$**. At $d_k = 512$ they reach $\sim \pm 22$ → softmax nearly one-hot. Dividing by $\sqrt{d_k}$ restores variance 1 — and it's **dimension-invariant**: one block works at $d_k = 64$ or $4096$, no temperature retuning.
 
 ---
 
@@ -498,7 +516,9 @@ $\exp \approx [2.64, 0.36, 1.15]$, sum $\approx 4.15$. Softmax $\approx [0.64, 0
 
 ---
 
-# Numeric demo · softmax at different scales
+# ⭐⭐⭐ Optional · softmax at different scales
+
+**Gist ·** same logits, three temperatures — divide → softer, multiply → spikier. A second view of the previous slide's point.
 
 <div class="math-box">
 
@@ -714,6 +734,22 @@ At $n = 8{,}192$, one head's score matrix has $8192^2 \approx 67$M entries — *
 | Masked/local attention | input | input (masked) | Longformer, Reformer, etc. |
 
 Two more ingredients you'll meet in real code · the **padding mask** (ignore `<pad>` tokens when batching unequal lengths) and **attention dropout** (randomly zero some weights during training).
+
+---
+
+# Now it clicks · you built the Transformer's engine
+
+One bottleneck, climbed one rung at a time:
+
+**additive score → dot-product → scaled dot-product → self-attention → causal mask.**
+
+<div class="keypoint">
+
+Give each self-attention layer a few **heads**, stack a handful of layers, wrap each in **residual + LayerNorm**, add **positional encodings** — and that is a **Transformer**. Attention is the engine; next lecture bolts on the chassis.
+
+</div>
+
+**L13 · The Transformer, built live** — this exact machinery, assembled into the architecture behind BERT, GPT, and Claude.
 
 ---
 
