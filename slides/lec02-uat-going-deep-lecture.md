@@ -131,17 +131,13 @@ What a single hidden layer can — and can't — do
 
 ---
 
-# Build a bump from ReLU kinks · the intuition
+# One hidden layer can output *any* curve — start here
 
-![w:900px](figures/lec02/svg/uat_bump_construction.svg)
+**The punchline, before any proof.** Make a single hidden layer wide enough and it can output *any* continuous function you like, to *any* accuracy you like. That is the Universal Approximation Theorem — the rest of Part 1 is just *why* and *at what cost*.
 
-One bump = $\text{relu}(x-a) - 2\,\text{relu}(x-b) + \text{relu}(x-c)$ · stack many, weight by $\alpha_i$, approximate any curve.
+![w:1000px](figures/lec02/svg/uat_output_first.svg)
 
-<div class="realworld">
-
-▶ Interactive: grow a 1-hidden-layer net and watch it fit a target curve — [universal-approximation](https://nipunbatra.github.io/interactive-articles/universal-approximation/).
-
-</div>
+More hidden units → finer fit. It is the **same one layer** throughout · we only made it wider.
 
 ---
 
@@ -151,7 +147,21 @@ One bump = $\text{relu}(x-a) - 2\,\text{relu}(x-b) + \text{relu}(x-c)$ · stack 
 
 Imagine an unlimited supply of LEGO bricks. Can you build a sculpture of *anything*? A car, a house, the Eiffel Tower? **Yes** · if your bricks are small enough, you can approximate any shape.
 
-UAT says · a neural network with one hidden layer can do the same for **mathematical functions**. Its "LEGO bricks" are simple functions built from neurons.
+UAT says · a neural network with one hidden layer can do the same for **mathematical functions**. Its "LEGO bricks" are simple functions built from neurons — and the next slide builds one brick.
+
+</div>
+
+---
+
+# Build a bump from ReLU kinks · the mechanism
+
+![w:900px](figures/lec02/svg/uat_bump_construction.svg)
+
+One bump = $\text{relu}(x-a) - 2\,\text{relu}(x-b) + \text{relu}(x-c)$ · stack many, weight by $\alpha_i$, approximate any curve.
+
+<div class="realworld">
+
+▶ Interactive: grow a 1-hidden-layer net and watch it fit a target curve — [universal-approximation](https://nipunbatra.github.io/interactive-articles/universal-approximation/).
 
 </div>
 
@@ -181,6 +191,8 @@ A weighted sum of neuron outputs · each neuron is a "LEGO brick."
 
 # ⭐⭐⭐ Optional · UAT · the formal statement
 
+*Gist · this is the plain-English claim from the last three slides, written formally. Skim it, don't memorize it.*
+
 <div class="math-box">
 
 **Theorem** (Cybenko 1989 · Hornik 1991 · Leshno 1993)
@@ -198,6 +210,8 @@ One hidden layer suffices. The catch hides in one word: **exist.**
 ---
 
 # ⭐⭐⭐ Optional · UAT · the proof in three moves (1/2)
+
+*Gist · step-function → sum-of-bumps → density. Three moves, and that is the whole proof.*
 
 We won't write a full proof — but the structure is short and worth knowing.
 
@@ -435,7 +449,19 @@ Formal proof: Telgarsky, *"Benefits of Depth in Neural Networks,"* COLT 2016. We
 
 ---
 
-# Depth-vs-width · the formal separation
+# Width vs depth · the cost gap in one picture
+
+**Big idea (2 sentences).** For a target with fine, repeated structure, a *shallow* net must spend roughly one unit per feature — so its cost **doubles** each time the function gets one notch harder. A *deep* net reuses each layer's work, so its cost grows only **linearly** — and that gap is the whole reason we go deep.
+
+![w:820px](figures/lec02/svg/width_vs_depth_cost.svg)
+
+At $k = 10$ · a shallow net needs ~1000 units to match what a deep net does with ~30.
+
+---
+
+# ⭐⭐⭐ Optional · Depth-vs-width · the formal separation
+
+*Gist · Telgarsky built one function a deep net computes cheaply, yet any shallow net needs $2^{k}$ units to match. The picture on the previous slide is exactly this theorem.*
 
 <div class="paper">
 
@@ -446,13 +472,7 @@ Formal proof: Telgarsky, *"Benefits of Depth in Neural Networks,"* COLT 2016. We
 The witness function is the $k$-fold composition of the **sawtooth** ·
 $$T(x) = \begin{cases} 2x & x \le 1/2 \\ 2 - 2x & x > 1/2\end{cases}$$
 
-Each composition doubles the number of "teeth" — depth $k$ gives $2^k$ teeth using $O(k)$ ReLUs. A shallow net **must enumerate** every tooth · exponential width.
-
-<div class="keypoint">
-
-**Depth is exponentially more parameter-efficient than width** for problems with compositional / recursive structure. Real-world data (images, language) is richly compositional · so depth pays off in practice.
-
-</div>
+Each composition doubles the number of "teeth" — depth $k$ gives $2^k$ teeth using $O(k)$ ReLUs. A shallow net **must enumerate** every tooth · exponential width. That is the cost gap on the previous slide, now proven: **depth is exponentially more parameter-efficient than width** for compositional / recursive structure.
 
 ---
 
@@ -490,6 +510,8 @@ Before we fix depth, let's see it break
 
 # Backprop · term-by-term, no Jacobians
 
+**Big idea (2 sentences).** On its way back to the early weights, backprop multiplies one factor per layer. If those factors are below 1, their product collapses toward zero — so the first layers get almost no signal and stop learning.
+
 A 4-layer scalar network · `y = w_4 · w_3 · w_2 · w_1 · x` (ignoring activations).
 
 We want gradient of loss $L$ with respect to the **first** weight $w_1$. Chain rule, one link at a time:
@@ -504,11 +526,9 @@ Expand $\partial y/\partial w_1$:
 - $\partial(\text{layer 2 out})/\partial(\text{layer 1 out}) = w_2$
 - $\partial(\text{layer 1 out})/\partial w_1 = x$
 
-So · $\dfrac{\partial L}{\partial w_1} = \dfrac{\partial L}{\partial y} \cdot (w_4 \cdot w_3 \cdot w_2) \cdot x$
+So · $\dfrac{\partial L}{\partial w_1} = \dfrac{\partial L}{\partial y} \cdot (w_4 \cdot w_3 \cdot w_2) \cdot x$ — a **product**; shrinks fast if any factor $< 1$.
 
 </div>
-
-The key is the **product** $w_4 \cdot w_3 \cdot w_2$. If any of these is small (< 1), the product shrinks fast.
 
 ---
 
@@ -830,12 +850,11 @@ From first principles
 
 # The goal
 
-Keep activations — and gradients — at roughly **constant variance** across layers.
+**Big idea (2 sentences).** Every layer scales the signal's size by some factor; if that factor is not about 1, activations and gradients explode or vanish within a few layers. Good initialization simply sets the starting weights so that factor is ≈ 1 — nothing more exotic than that.
 
-- Variance grows → exploding activations.
-- Variance shrinks → vanishing activations.
+Keep activations — and gradients — at roughly **constant variance** across layers · grows → explode, shrinks → vanish.
 
-![w:900px](figures/lec02/svg/init_landscape.svg)
+![w:840px](figures/lec02/svg/init_landscape.svg)
 
 ---
 
@@ -903,7 +922,9 @@ The variance argument on the next slide gives a one-line fix · scale init so ac
 
 ---
 
-# Forward-pass variance
+# ⭐⭐⭐ Optional · Forward-pass variance
+
+*Gist · one line of algebra gives $\text{Var}(y) = n_\text{in}\,\text{Var}(w)\,\text{Var}(x)$. Set $n_\text{in}\,\text{Var}(w) = 1$ and the signal keeps its size — that single condition is where Xavier and He come from.*
 
 Layer: $y = \sum_{i=1}^{n_\text{in}} w_i\, x_i$. Assume $w_i, x_i$ independent, zero-mean.
 
@@ -974,6 +995,14 @@ Factor of 2 compensates the ReLU halving.
 </div>
 
 This is **why initialization is not optional**. Bad init → loss is NaN at step 1, or weights are stuck at $10^{-30}$ scale and never move. Good init keeps signal magnitude constant across depth.
+
+---
+
+# Variance across 10 layers · the same story in one picture
+
+![w:820px](figures/lec02/svg/he_vs_naive_variance.svg)
+
+Naive $\mathcal{N}(0,1)$ multiplies variance by ~256 **every layer** — by layer 10 it is $10^{24}$ and the loss is `NaN`. He init holds each layer at ~1, so the signal survives 10, 100, or 1000 layers.
 
 ---
 

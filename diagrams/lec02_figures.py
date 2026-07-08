@@ -467,6 +467,130 @@ def fig_param_count_depth_width():
     plt.close()
 
 
+# ============================================================================
+#  Ng-style SVG figures (cream palette, EB Garamond) rendered into
+#  figures/lec02/svg/ .  These COMPLEMENT the hand-authored SVGs already there
+#  (bump construction, x^2 worked example, compositionality, variance shapes):
+#    1. uat_output_first    — the "output first" punchline: one wide layer fits any curve
+#    2. width_vs_depth_cost — quantitative cost gap behind Telgarsky's separation
+#    3. he_vs_naive_variance — quantitative variance blow-up behind the init worked-numeric
+#  Follows the lec00_figures.py pattern: _clean + save-as-svg helpers.
+# ============================================================================
+
+OUT_SVG = Path(__file__).resolve().parent.parent / "figures" / "lec02" / "svg"
+OUT_SVG.mkdir(parents=True, exist_ok=True)
+
+PAPER = "#F7F3E9"
+INK = "#161513"
+MUTED = "#5F5C54"
+_RUST = "#B85A3E"
+_SAGE = "#5F8573"
+_SLATE = "#37535F"
+_OCHRE = "#C9A14A"
+
+
+def _clean_svg(ax):
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.tick_params(length=3)
+
+
+def _save_svg(fig, name, tight=True):
+    fig.savefig(OUT_SVG / name, format="svg", bbox_inches="tight" if tight else None)
+    plt.close(fig)
+    print(f"  wrote svg/{name}")
+
+
+def fig_uat_output_first():
+    """OUTPUT-FIRST punchline: one hidden layer, made wider, fits an arbitrary curve."""
+    rng = np.random.default_rng(7)
+    x = np.linspace(0, 1, 400)
+    # an arbitrary, clearly non-trivial target curve (not x^2 — feels like "any function")
+    target = 0.55 * np.sin(3.2 * np.pi * x) + 0.32 * np.cos(6.5 * x) + 0.28 * x
+    target = target - target.mean()
+
+    widths = [4, 12, 64]
+    fig, axes = plt.subplots(1, 3, figsize=(12.6, 3.7), layout="constrained")
+    for ax, n in zip(axes, widths):
+        # random 1-hidden-layer ReLU features; fit output weights by least squares
+        w = rng.uniform(-6, 6, n)
+        b = rng.uniform(-3, 3, n)
+        H = np.maximum(0, np.outer(x, w) + b)
+        H = np.hstack([H, np.ones((x.size, 1))])
+        coef, *_ = np.linalg.lstsq(H, target, rcond=None)
+        approx = H @ coef
+        ax.plot(x, target, color=MUTED, lw=3.4, alpha=0.55,
+                label="target  $f(x)$", solid_capstyle="round")
+        ax.plot(x, approx, color=_RUST, lw=2.4, label=f"{n} hidden units")
+        ax.set_title(f"{n} hidden units", fontsize=13, color=INK)
+        ax.legend(frameon=False, fontsize=9.5, loc="upper right")
+        ax.set_xlim(0, 1)
+        ax.set_ylim(target.min() - 0.35, target.max() + 0.55)
+        ax.set_xticks([0, 0.5, 1])
+        ax.set_yticks([])
+        ax.set_xlabel("x", fontsize=11)
+        _clean_svg(ax)
+    fig.suptitle("One hidden layer, made wider, fits ANY curve — that is UAT",
+                 fontsize=15.5, color=INK)
+    _save_svg(fig, "uat_output_first.svg", tight=False)
+
+
+def fig_width_vs_depth_cost():
+    """Cost to build a function of complexity 2^k: width exponential, depth linear."""
+    k = np.arange(1, 11)
+    width_units = 2.0 ** k       # shallow net must enumerate every tooth: ~2^k units
+    depth_units = 3.0 * k        # deep net: O(k) units (width <= 3, Telgarsky)
+
+    fig, ax = plt.subplots(figsize=(8.6, 4.5))
+    ax.plot(k, width_units, "o-", color=_RUST, lw=2.6, ms=6,
+            label=r"shallow (wide): units $\sim 2^{k}$")
+    ax.plot(k, depth_units, "s-", color=_SAGE, lw=2.6, ms=6,
+            label=r"deep: units $\sim 3k$")
+    ax.fill_between(k, depth_units, width_units, color=_RUST, alpha=0.08)
+    ax.set_yscale("log")
+    ax.set_xlabel(r"target complexity  $k$   (function has $2^{k}$ linear pieces)")
+    ax.set_ylabel("hidden units needed  (log scale)")
+    ax.set_title("Same function — width pays exponentially, depth pays linearly",
+                 fontsize=14, loc="left", color=INK, pad=10)
+    ax.annotate("", xy=(10, width_units[-1]), xytext=(10, depth_units[-1]),
+                arrowprops=dict(arrowstyle="<->", color=MUTED, lw=1.3))
+    ax.text(9.6, np.sqrt(width_units[-1] * depth_units[-1]),
+            f"{int(width_units[-1])} vs {int(depth_units[-1])}\nunits at $k{{=}}10$",
+            ha="right", va="center", color=INK, fontsize=11)
+    ax.set_xticks(range(1, 11))
+    ax.legend(frameon=False, fontsize=11.5, loc="upper left")
+    _clean_svg(ax)
+    _save_svg(fig, "width_vs_depth_cost.svg")
+
+
+def fig_he_vs_naive_variance():
+    """Activation variance across 10 layers: naive N(0,1) explodes, He holds at 1."""
+    layers = np.arange(0, 11)
+    naive = 256.0 ** layers      # from the worked numeric: x256 per layer
+    he = np.ones_like(layers, dtype=float)
+
+    fig, ax = plt.subplots(figsize=(8.6, 4.5))
+    ax.axhspan(0.3, 3, color=_SAGE, alpha=0.12)
+    ax.plot(layers, naive, "o-", color=_RUST, lw=2.6, ms=6,
+            label=r"naive  $W\sim\mathcal{N}(0,\,1)$")
+    ax.plot(layers, he, "s-", color=_SAGE, lw=2.6, ms=6,
+            label=r"He  $W\sim\mathcal{N}(0,\,2/n)$")
+    ax.set_yscale("log")
+    ax.set_ylim(1e-1, 1e26)
+    ax.set_xlabel("layer index")
+    ax.set_ylabel("activation variance  (log scale)")
+    ax.set_title(r"Why init matters · naive explodes to $10^{24}$, He holds at 1",
+                 fontsize=14, loc="left", color=INK, pad=10)
+    ax.annotate("NaN at step 1", xy=(10, naive[-1]), xytext=(5.6, 3e20),
+                color=_RUST, fontsize=11,
+                arrowprops=dict(arrowstyle="->", color=_RUST, lw=1.3))
+    ax.text(0.15, 3.4, "healthy band", color=_SAGE, fontsize=10.5, va="bottom")
+    ax.set_xticks(range(0, 11))
+    ax.legend(frameon=False, fontsize=11.5, loc="upper left",
+              bbox_to_anchor=(0.0, 0.88))
+    _clean_svg(ax)
+    _save_svg(fig, "he_vs_naive_variance.svg")
+
+
 if __name__ == "__main__":
     print("Generating Lecture 2 figures...")
     fig_uat_step_functions()
