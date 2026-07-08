@@ -303,71 +303,76 @@ What single change makes the latent space safe to sample from?
 
 ---
 
-# Why a prior? · two jobs it does
+# The VAE, stated plainly · a distribution, not a point
 
-The prior $p(z) = \mathcal{N}(0, I)$ does two things for us:
+<div class="keypoint">
+
+**Big idea (2 sentences).** A plain AE sends each image to a single **point**; a VAE sends it to a little **Gaussian cloud** — a mean $\mu(x)$ and a spread $\sigma(x)$. We then **sample** a $z$ from that cloud and decode it, which forces *nearby* $z$'s to decode to something sensible too — and that is exactly what plugs the holes.
+
+</div>
+
+So the encoder outputs **parameters of a Gaussian**, not a vector:
+
+$$q_\phi(z \mid x) = \mathcal{N}\big(z;\ \mu_\phi(x),\ \sigma_\phi^2(x)\big)$$
+
+One training step, end to end:
+
+1. Given $x$, read off $\mu(x), \sigma(x)$ (both are network outputs).
+2. **Sample** $z \sim q_\phi(z\mid x)$ — a point inside the cloud.
+3. Decode · $\hat{x} = g_\theta(z)$.
+4. Loss · reconstruction **+** a pull keeping the cloud near $\mathcal{N}(0, I)$.
+
+---
+
+# Why a distribution? · it packs the latent so sampling works
+
+Encoding to a *cloud* — and pulling every cloud toward the same prior $p(z)=\mathcal{N}(0,I)$ — does two jobs:
 
 <div class="columns">
 <div>
 
-### 1. Defines the sampling distribution
+### 1. Fills the space
 
-At generation time we draw $z \sim p(z)$ and decode. The prior is the *rule book* for producing valid z's.
-
-Without a prior, you wouldn't know how to initialize z for generation.
+Neighbouring images' clouds **overlap**, so the region around the origin gets fully covered — no holes. Any $z$ you sample lands *inside* a cloud the decoder has already seen.
 
 </div>
 <div>
 
-### 2. Regularizes the posterior
+### 2. Gives a sampling rule
 
-The KL term pulls $q(z|x)$ toward $p(z)$ for every training example. Every encoded posterior overlaps in the same region → smooth latent.
-
-Without this, training points occupy disjoint clusters.
+To generate, just draw $z \sim \mathcal{N}(0,I)$ and decode. The prior is the *rule book* for valid $z$'s — without it you'd have no idea where to sample.
 
 </div>
 </div>
 
 <div class="keypoint">
 
-A VAE is a plain AE **with a regularizer that makes the latent space match a known distribution**. Everything else follows from making that regularizer principled (the ELBO).
+A VAE is a plain AE **plus a regularizer that makes the latent match a known distribution** $\mathcal{N}(0,I)$. Everything else — the ELBO, the KL formula — is just making that regularizer principled.
 
 </div>
 
 ---
 
-# VAE · the encoder outputs a distribution
-
-The encoder no longer outputs a point $z$. It outputs **parameters of a Gaussian**:
-
-$$q_\phi(z | x) = \mathcal{N}(z; \mu_\phi(x), \sigma_\phi^2(x))$$
-
-Both $\mu$ and $\sigma$ are network outputs. During training:
-
-1. Given $x$, get $\mu(x), \sigma(x)$.
-2. **Sample** $z \sim q_\phi(z|x)$.
-3. Decode · $\hat{x} = g_\theta(z)$.
-4. Loss · reconstruction **+** KL divergence to prior.
-
----
-
-# ELBO geometry
-
-![w:920px](figures/lec19/svg/elbo_geometry.svg)
-
----
-
-# The punchline · you can skip the derivation
+# The punchline · recon + KL is the whole loss
 
 <div class="keypoint">
 
-The VAE loss is just **reconstruction + KL-to-prior**. Train to minimize it. That's all you need to use a VAE.
+The VAE loss is just **reconstruction + KL-to-prior**. Minimize it — that is all you need to *use* a VAE.
 
 $$\mathcal{L} = \underbrace{\|x - \text{decode}(z)\|^2}_\text{reconstruction} + \underbrace{\text{KL}(q(z|x)\,\|\,\mathcal{N}(0,I))}_\text{regularizer}$$
 
 </div>
 
-The next two slides *derive* this from first principles (Jensen's inequality). **If you trust me, you can skip them** · come back to the math later.
+Two loose ends, each on its own slide:
+
+- **Where does it come from?** The math slides that follow *derive* it from $\log p(x)$ via Jensen. ⭐ Optional — **if you trust me, skip them.**
+- **How do you backprop through "sample $z$"?** The **reparameterization trick** (Part 4) — the one genuinely new mechanic.
+
+---
+
+# ELBO geometry · the recon–KL tug-of-war
+
+![w:920px](figures/lec19/svg/elbo_geometry.svg)
 
 ---
 
@@ -384,14 +389,15 @@ The next two slides *derive* this from first principles (Jensen's inequality). *
 
 # ⭐⭐⭐ Optional · Deriving the ELBO · step by step
 
+*Gist · Jensen lower-bounds the intractable $\log p(x)$; the bound splits into **reconstruction $-$ KL**.*
+
 **Step 1.** Multiply and divide by $q(z|x)$:
 $$\log p(x) = \log \int q(z|x) \cdot \frac{p(x, z)}{q(z|x)}\,dz = \log\,\mathbb{E}_{q}\!\left[\frac{p(x, z)}{q(z|x)}\right]$$
 
 **Step 2 · Jensen's inequality.** $\log$ is concave, so $\log\mathbb{E}[X] \ge \mathbb{E}[\log X]$ — move log inside:
 $$\log p(x) \ge \mathbb{E}_q\!\left[\log\tfrac{p(x, z)}{q(z|x)}\right] \quad \text{(ELBO)}$$
 
-**Step 3 · expand** with $p(x, z) = p(x|z)\,p(z)$ — the second bracket is $-D_\text{KL}(q\,\|\,p(z))$:
-$$\text{ELBO} = \mathbb{E}_q[\log p(x|z)] + \mathbb{E}_q[\log p(z) - \log q(z|x)]$$
+**Step 3 · expand** with $p(x, z) = p(x|z)\,p(z)$; the second term is $-D_\text{KL}(q\,\|\,p(z))$, giving:
 $$\boxed{\log p(x) \ge \underbrace{\mathbb{E}_{q(z|x)}[\log p(x|z)]}_{\text{reconstruction · max}} - \underbrace{D_\text{KL}(q(z|x)\,\|\,p(z))}_{\text{regularizer · min}}}$$
 
 ---
@@ -644,6 +650,24 @@ CVAE was used for controllable generation before diffusion + CFG took over. Stil
 # Generating with a VAE
 
 The latent space is smooth now — what does that let us do?
+
+---
+
+# Now it clicks · sampling *is* generating
+
+Every piece we built exists so that this three-line recipe works:
+
+<div class="keypoint">
+
+1. Draw $z \sim \mathcal{N}(0, I)$ — the prior we trained the clouds to match.
+2. Run the **decoder** once · $\hat{x} = g_\theta(z)$.
+3. Out comes a brand-new image the network never saw.
+
+</div>
+
+**Why it works now (and failed for a plain AE):** the KL term packed every training cloud around $\mathcal{N}(0,I)$, so a random $z$ from the prior lands **inside** the region the decoder was trained on. No holes → no garbage.
+
+Notice the encoder isn't even used at generation time — it only *trained* the decoder and shaped the latent.
 
 ---
 
