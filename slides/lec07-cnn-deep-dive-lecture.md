@@ -123,9 +123,37 @@ In a CNN we don't hand-design these kernels · the network *learns* the most use
 
 ---
 
+# What does a conv layer *output*? · the picture first
+
+<div class="keypoint">
+
+**Big idea, in 2 sentences.** A conv layer takes an image and produces a **stack of feature maps** — one map per filter. Each filter is a single feature detector; its map is *bright wherever that feature appears*.
+
+</div>
+
+![w:820px](figures/lec07/svg/feature_maps_stack.svg)
+
+---
+
+# One filter, one number · the actual arithmetic
+
+Before any formula — watch **one filter produce one output value**, with real numbers:
+
+![w:940px](figures/lec07/svg/conv_numeric.svg)
+
+<div class="insight">
+
+Every cell of the feature map is just **one dot product** of the filter with the patch beneath it. No derivation — just multiply-add, repeated at every position.
+
+</div>
+
+---
+
 # Convolution — sliding window, shared weights
 
-![w:920px](figures/lec07/svg/convolution_mechanics.svg)
+The same operation as the last slide, now with symbols and the output-size rule:
+
+![w:900px](figures/lec07/svg/convolution_mechanics.svg)
 
 <div class="realworld">
 
@@ -289,7 +317,9 @@ How deep features "see" far-away pixels
 
 # RF grows with depth
 
-![w:920px](figures/lec07/svg/receptive_field.svg)
+**Big idea, in 2 sentences.** A neuron deep in the network doesn't see one input pixel — it sees a whole *patch*, called its **receptive field**. Stack more layers and that patch grows, so deeper neurons see more of the image at once.
+
+![w:830px](figures/lec07/svg/receptive_field.svg)
 
 <div class="realworld">
 
@@ -352,6 +382,8 @@ Saving: **~1.5 million parameters per block**, plus 2 extra non-linearities. Rep
 
 # ⭐⭐⭐ Optional · receptive field, the chain-reaction view
 
+*Gist · skip the algebra if you like — each 3×3 layer simply adds 2 pixels of reach. That's the whole story.*
+
 <div class="insight">
 
 **Analogy · dominoes.** Push the last domino — how many dominoes were involved? Each conv layer is like one push. A 3×3 kernel "pushes" a 3×3 region; the next layer's 3×3 pushes a region already pushed by the first. The effect propagates.
@@ -399,6 +431,8 @@ Each layer learns to use this growing context — edges → textures → parts �
 ---
 
 # ⭐⭐⭐ Optional · effective receptive field
+
+*Gist · the receptive field isn't a hard-edged square — centre pixels count far more than the edges. Safe to skip on a first pass.*
 
 <div class="insight">
 
@@ -460,7 +494,9 @@ Used everywhere in modern CNNs and Transformers (the "output projection" of atte
 
 ---
 
-# 1×1 conv · the math
+# ⭐⭐⭐ Optional · 1×1 conv, the math
+
+*Gist · a 1×1 conv is just a tiny fully-connected layer run at every pixel. The next slide does it with real numbers — skip this formal version if you prefer.*
 
 A 1×1 conv = a small linear (FC) layer applied **at every pixel independently**.
 
@@ -651,13 +687,11 @@ Every classic CNN is a stack of these (plus pooling or stride-2 for downsampling
 
 # Feature visualization · what each layer learns
 
-| Layer | Typical features (for a trained CNN on natural images) |
-|-------|--------------------------------------------------------|
-| Conv1 | oriented edges, colour blobs (~like Gabor filters) |
-| Conv2 | junctions, simple textures |
-| Conv3 | repeated patterns (fur, grid, stripes) |
-| Conv4 | object parts (eyes, wheels) |
-| Conv5 | whole objects / object arrangements |
+A trained CNN builds features **bottom-up** — each layer composes the one below:
+
+![w:700px](figures/lec07/svg/feature_hierarchy.svg)
+
+Conv1 oriented edges &amp; colour blobs (Gabor-like) → Conv2–3 junctions &amp; textures (fur, grid, stripes) → Conv4 object parts (eyes, wheels) → Conv5 whole objects.
 
 <div class="paper">
 
