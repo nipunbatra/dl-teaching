@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" font-family="EB Garamond, Georgia, serif">
+  <defs>
+    <style>
+      .bg     { fill:#F7F3E9; }
+      .gen    { fill:#EAD3C5; stroke:#B85A3E; stroke-width:1.6; }
+      .disc   { fill:#DCE3E6; stroke:#37535F; stroke-width:1.6; }
+      .noise  { fill:#F6F0DF; stroke:#C9A14A; stroke-width:1.4; }
+      .out    { fill:#FFFFFF; stroke:#161513; stroke-width:1.4; }
+      .band   { fill:#EEEBDF; stroke:#C9C4B5; stroke-width:1; }
+      .ttl    { fill:#161513; font-size:19px; font-weight:600; }
+      .tag    { fill:#5F5C54; font-size:11px; letter-spacing:0.08em; font-family:Inter, sans-serif; }
+      .lbl    { fill:#161513; font-size:14px; font-weight:600; }
+      .mono   { font-family:'JetBrains Mono', monospace; font-size:12px; fill:#161513; }
+      .mut    { fill:#5F5C54; font-size:12px; }
+      .cap    { fill:#161513; font-size:14px; }
+      .ink    { stroke:#161513; fill:none; stroke-width:1.6; }
+    </style>
+    <marker id="io-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#161513"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" width="960" height="440"/>
+  <text x="480" y="30" text-anchor="middle" class="ttl">First, the objects · what do G and D actually output?</text>
+
+  <!-- ============ ROW 1 : GENERATOR ============ -->
+  <text x="30" y="72" class="tag" fill="#B85A3E">① GENERATOR G · A FEW RANDOM NUMBERS → A WHOLE IMAGE</text>
+
+  <!-- noise vector -->
+  <rect class="noise" x="30" y="88" width="160" height="84" rx="5"/>
+  <text x="110" y="110" text-anchor="middle" class="mono" fill="#B08A2E">z ~ N(0, I)</text>
+  <text x="110" y="132" text-anchor="middle" class="mono" fill="#161513">[0.31, −1.2,</text>
+  <text x="110" y="149" text-anchor="middle" class="mono" fill="#161513"> 0.7, …]</text>
+  <text x="110" y="166" text-anchor="middle" class="mut">100 numbers</text>
+
+  <line class="ink" x1="192" y1="130" x2="232" y2="130" marker-end="url(#io-a)"/>
+
+  <!-- G box -->
+  <rect class="gen" x="234" y="98" width="150" height="64" rx="6"/>
+  <text x="309" y="126" text-anchor="middle" class="lbl" fill="#B85A3E">Generator G</text>
+  <text x="309" y="147" text-anchor="middle" class="mut" fill="#B85A3E">a deep net (upsamples)</text>
+
+  <line class="ink" x1="386" y1="130" x2="430" y2="130" marker-end="url(#io-a)"/>
+
+  <!-- fake image (photo icon, rust) -->
+  <g transform="translate(434, 84)">
+    <rect x="0" y="0" width="92" height="92" rx="6" fill="#F6D4CC" stroke="#A8324B" stroke-width="1.4"/>
+    <circle cx="24" cy="26" r="8" fill="#B85A3E"/>
+    <polygon points="8,84 38,46 60,84" fill="#B85A3E" opacity="0.85"/>
+    <polygon points="44,84 68,54 88,84" fill="#A8324B" opacity="0.8"/>
+  </g>
+  <text x="480" y="192" text-anchor="middle" class="mono" fill="#A8324B">G(z)</text>
+  <text x="480" y="208" text-anchor="middle" class="mut">one image · 3×64×64</text>
+
+  <!-- caption row 1 -->
+  <text x="560" y="120" class="cap"><tspan font-weight="600">G takes noise, returns a picture.</tspan></text>
+  <text x="560" y="142" class="cap">Same z always makes the same image;</text>
+  <text x="560" y="162" class="cap">a fresh random z makes a new one.</text>
+  <text x="560" y="182" class="mut">No label anywhere — just images out.</text>
+
+  <!-- divider -->
+  <line x1="30" y1="228" x2="930" y2="228" stroke="#C9C4B5" stroke-width="1" stroke-dasharray="4 4"/>
+
+  <!-- ============ ROW 2 : DISCRIMINATOR ============ -->
+  <text x="30" y="256" class="tag" fill="#37535F">② DISCRIMINATOR D · AN IMAGE → ONE NUMBER (HOW REAL IT LOOKS)</text>
+
+  <!-- input image (photo icon, neutral) -->
+  <g transform="translate(30, 268)">
+    <rect x="0" y="0" width="88" height="88" rx="6" fill="#E7EEE9" stroke="#5F8573" stroke-width="1.4"/>
+    <circle cx="23" cy="25" r="8" fill="#5F8573"/>
+    <polygon points="8,80 36,44 57,80" fill="#5F8573" opacity="0.8"/>
+    <polygon points="42,80 65,52 84,80" fill="#37535F" opacity="0.6"/>
+  </g>
+  <text x="74" y="374" text-anchor="middle" class="mono">any image x</text>
+  <text x="74" y="390" text-anchor="middle" class="mut">(real OR fake)</text>
+
+  <line class="ink" x1="120" y1="312" x2="164" y2="312" marker-end="url(#io-a)"/>
+
+  <!-- D box -->
+  <rect class="disc" x="166" y="280" width="150" height="64" rx="6"/>
+  <text x="241" y="308" text-anchor="middle" class="lbl" fill="#37535F">Discriminator D</text>
+  <text x="241" y="329" text-anchor="middle" class="mut" fill="#37535F">a CNN classifier</text>
+
+  <line class="ink" x1="318" y1="312" x2="362" y2="312" marker-end="url(#io-a)"/>
+
+  <!-- output: one big number -->
+  <rect class="out" x="366" y="278" width="128" height="68" rx="6"/>
+  <text x="430" y="318" text-anchor="middle" fill="#37535F" font-size="30" font-weight="700" font-family="Inter, sans-serif">0.87</text>
+  <text x="430" y="338" text-anchor="middle" class="mut">D(x) = P(real)</text>
+
+  <!-- probability bar -->
+  <rect x="366" y="360" width="128" height="10" rx="5" fill="#EEEBDF" stroke="#C9C4B5"/>
+  <rect x="366" y="360" width="111" height="10" rx="5" fill="#37535F" opacity="0.55"/>
+  <line x1="477" y1="356" x2="477" y2="374" stroke="#37535F" stroke-width="2"/>
+  <text x="366" y="386" class="mut" font-size="10">0 = fake</text>
+  <text x="494" y="386" text-anchor="end" class="mut" font-size="10">1 = real</text>
+
+  <!-- caption row 2 -->
+  <text x="560" y="300" class="cap"><tspan font-weight="600">D takes a picture, returns one score.</tspan></text>
+  <text x="560" y="322" class="cap">A single number in [0, 1]:</text>
+  <text x="560" y="342" class="cap">1 = "surely real", 0 = "surely fake".</text>
+  <text x="560" y="362" class="mut">Here 0.87 → "looks probably real".</text>
+
+  <!-- ============ bottom takeaway band ============ -->
+  <rect class="band" x="30" y="402" width="900" height="34" rx="5"/>
+  <text x="480" y="424" text-anchor="middle" class="cap" font-style="italic">Keep THIS in your head — that is the whole setup. Everything else is just making G and D fight until G's images fool D.</text>
+</svg>

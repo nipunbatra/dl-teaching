@@ -24,7 +24,7 @@ By the end of this lecture you will be able to:
 2. Explain the **non-saturating G loss** and why it matters.
 3. Apply the **DCGAN cookbook** architectural guidelines.
 4. Diagnose **mode collapse** and apply fixes.
-5. Derive why **Wasserstein distance** stabilizes training (JS vs EMD).
+5. Explain (in pictures) why **Wasserstein distance** stabilizes training (JS vs EMD).
 6. Place GANs vs VAE vs Diffusion in today's generative landscape.
 
 ---
@@ -125,6 +125,28 @@ This looks innocent. But $p_\text{data}$ over 256×256 RGB images lives in $\mat
 
 ---
 
+# First · what do G and D actually output?
+
+Before any math, meet the two objects. **G** turns noise into an image. **D** looks at an image and returns one number.
+
+![w:900px](figures/lec20/svg/gd_io.svg)
+
+---
+
+# The two objects, in one breath
+
+<div class="keypoint">
+
+**G · noise → image.** Feed it 100 random numbers $z$; out comes a full picture $G(z)$. That is the *only* thing G does.
+
+**D · image → one number.** Feed it any image; out comes $D(x)\in[0,1]$ = "how real does this look?" (1 = surely real, 0 = surely fake). That is the *only* thing D does.
+
+</div>
+
+Everything else in this lecture — the loss, the tricks, WGAN — is just **how to train these two so G's images fool D**. Hold this picture; the math only makes it precise.
+
+---
+
 # Why not just fit a Gaussian?
 
 Tempting: fit $p_\text{data} \approx \mathcal{N}(\mu, \Sigma)$ from the data, then sample.
@@ -209,21 +231,11 @@ That's the **Nash equilibrium** — and it's what the math below formalizes.
 
 # A 1D toy · watch G learn a bimodal target
 
-Target data · two Gaussians at $x = -2$ and $x = 2$.
+Target · two Gaussians at $x=-2$ and $x=2$ (sage). Watch $p_G$ (rust) march onto them.
 
-<div class="math-box">
+![w:1000px](figures/lec20/svg/gan_1d_toy.svg)
 
-**Step 0** · $G(z) \sim \mathcal{N}(0, 1.5^2)$ — a wide blob centered at zero. D detects it easily (real = ±2, fake near 0).
-
-**Step 100** · G has shifted its mass outward; two bumps emerge, near but not on the modes.
-
-**Step 500** · G matches the two modes closely. D's output is ~0.5 everywhere.
-
-**Step 1000** · p_G = p_data exactly. D is random guessing. Nash equilibrium.
-
-</div>
-
-This trajectory is **animated in the interactive**. The math that follows formalizes each bullet above.
+**Step 0** one wide blob at 0 (D spots fakes easily) · **100** two bumps emerge · **500** nearly on the modes, $D\approx0.5$ · **1000** $p_G=p_\text{data}$, D reduced to guessing. **Nash equilibrium.** This trajectory is **animated in the interactive**; the math below formalizes each step.
 
 ---
 
@@ -674,6 +686,16 @@ Recall · the original GAN minimizes JS divergence. When $p_\text{data}$ and $p_
 Early in training, fake samples are far from real ones — they barely overlap. JS is saturated. G's gradient is zero. This is the fundamental reason vanilla GANs struggle at the start.
 
 </div>
+
+---
+
+# JS goes flat · Wasserstein keeps sloping
+
+Two distributions that don't overlap, pushed apart by a distance $\theta$. How does each "distance" respond?
+
+![w:960px](figures/lec20/svg/js_vs_wasserstein.svg)
+
+**Big idea (2 sentences).** JS jumps to a flat $\log 2$ the instant the supports stop overlapping — flat means *zero gradient*, so G learns nothing. Wasserstein grows *smoothly* as $\theta$, so it always has a slope pointing G toward the data. That single difference is the whole reason WGAN trains better.
 
 ---
 
