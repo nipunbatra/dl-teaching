@@ -35,7 +35,7 @@ We built the **Transformer** (L13), scaled it into **LLMs** (L15), aligned it (L
 
 <div class="insight">
 
-**The shift.** Training a 70B LLM costs ~\$100M — but that's paid *once*. **Inference** runs on every request, every user, every day. And the surprise that drives this whole lecture · serving a Transformer is **memory-bound, not compute-bound** — the GPU sits idle, waiting for weights and the KV-cache to stream in.
+**The concrete problem.** You trained Llama-70B *once* (~\$100M). Now **inference** reruns all **140 GB** of those frozen weights on *every* request, for *every* user — and today's whole game is to serve that **fixed, already-trained** model cheaper and faster, **without retraining anything**. The surprise driving it all · serving a Transformer is **memory-bound, not compute-bound** — the GPU sits idle, waiting for weights and the KV-cache to stream in.
 
 </div>
 
@@ -45,11 +45,7 @@ We built the **Transformer** (L13), scaled it into **LLMs** (L15), aligned it (L
 
 </div>
 
-Four questions:
-1. Why is LLM inference **memory-bound**, not compute-bound?
-2. What is the **KV-cache** and how do we manage it?
-3. What is **quantization** and how low can we go?
-4. What are **FlashAttention** and **speculative decoding**?
+**Four questions today** · (1) why is inference **memory-bound**? · (2) the **KV-cache** — what, and how big? · (3) **quantization** — how low can we go? · (4) **FlashAttention** & **speculative decoding**.
 
 ---
 
@@ -116,16 +112,9 @@ For one token of decode on a 70B model the GPU must:
 2. **Fetch the KV-cache** for the context (>10 GB at 32k context).
 3. **Do the math** · matrix–vector products. **Tiny** compared to the data movement.
 
-NVIDIA A100 · ~1.5 TB/s HBM bandwidth → moving ~150 GB takes ~0.1 s. The math finishes in a fraction of that. **The GPU spends most of its time waiting for data.**
+![w:780px](figures/lec23/svg/memory_bound.svg)
 
-Prefill is different · the whole prompt is processed together as a big **matrix–matrix** product → the GPU's FLOPs are saturated. Compute-bound.
-
-| Phase | Bottleneck |
-|-------|-----------|
-| Prefill | **compute** |
-| Decode | **memory** |
-
-Modern inference servers (vLLM, TGI) optimize the two phases separately.
+A100 · ~1.5 TB/s HBM → moving ~150 GB takes ~0.1 s; the math finishes in a fraction of that. vLLM/TGI optimize **prefill** (compute-bound) and **decode** (memory-bound) separately.
 
 ---
 
@@ -141,7 +130,13 @@ What's actually eating all the GPU memory?
 
 # The KV-cache explained
 
-![w:920px](figures/lec23/svg/kv_cache.svg)
+<div class="insight">
+
+**Big idea (2 sentences).** As you generate, **cache the key/value vectors of every past token** so each new token only computes its *own* K/V and reuses the rest — instead of re-encoding the whole prefix every step. You spend a little memory (the cache grows with context) to erase a huge amount of repeated compute.
+
+</div>
+
+![w:840px](figures/lec23/svg/kv_cache.svg)
 
 ---
 
@@ -280,7 +275,13 @@ How few bits can a weight survive on?
 
 # The quantization ladder
 
-![w:920px](figures/lec23/svg/quantization_ladder.svg)
+<div class="insight">
+
+**Big idea (2 sentences).** Store each weight in **8 or 4 bits instead of 16/32** — same architecture, same trained values, just coarser. The model gets **2–4× smaller and faster to stream from memory**, at a tiny, often unmeasurable accuracy cost.
+
+</div>
+
+![w:720px](figures/lec23/svg/quantization_ladder.svg)
 
 <div class="realworld">
 
@@ -306,6 +307,8 @@ Quantization · find scale $s$ to map FP32 weights into the small range $[-127, 
 ---
 
 # INT8 · derive the formula step by step
+
+*Gist · pick one number — a scale $s$ — that stretches the small integer range onto your weights. That's the whole trick; the four steps below just pin down $s$.*
 
 Goal · convert FP32 weights to 8-bit integers in $[-127, 127]$ (symmetric — the formula maps $\pm\max|w|$ to $\pm127$).
 
@@ -389,7 +392,13 @@ For $N = 8192$ in FP16 · $8192^2 \cdot 2$ bytes ≈ 134 MB *per head* — about
 
 # FlashAttention · tiles in SRAM
 
-![w:920px](figures/lec23/svg/flash_attention_tiles.svg)
+<div class="insight">
+
+**Big idea (2 sentences).** Compute **exact** attention without ever building the full $N\times N$ score matrix — process it in small **tiles that fit in fast on-chip SRAM**. Same answer as naive attention, far fewer trips to slow GPU memory.
+
+</div>
+
+![w:840px](figures/lec23/svg/flash_attention_tiles.svg)
 
 ---
 
@@ -449,7 +458,13 @@ One token per forward pass — or can we do better?
 
 # Speculative decoding · picture
 
-![w:920px](figures/lec23/svg/speculative_decoding.svg)
+<div class="insight">
+
+**Big idea (2 sentences).** A small, fast **draft** model guesses the next few tokens; the big model then **verifies all of them in a single forward pass**. The output is distributed *exactly* as the big model alone would produce — you just spend fewer expensive big-model steps.
+
+</div>
+
+![w:840px](figures/lec23/svg/speculative_decoding.svg)
 
 ---
 
@@ -495,13 +510,17 @@ Can a small student inherit a big teacher's knowledge?
 
 # Distillation · the master-chef analogy
 
+<div class="keypoint">
+
+**Big idea (2 sentences).** Train a **small student** to copy a **big teacher's full output distribution**, not just the final answer. The student ends up far smaller and cheaper to serve while keeping most of the teacher's quality — the shrinking happens **once, at training time**.
+
+</div>
+
 <div class="insight">
 
 How does an apprentice learn from a master?
-- **Hard labels** · master shows finished dish, says "make this." Apprentice knows only the goal.
-- **Soft labels** · master says *"lots of tomato, a little basil, a hint of oregano — and crucially, more basil than oregano."* Apprentice learns relative proportions and "dark knowledge" of *what not to do*.
-
-Distillation = method 2.
+- **Hard labels** · master shows the finished dish, says "make this." Apprentice knows only the goal.
+- **Soft labels** · master says *"lots of tomato, a little basil, a hint of oregano — and more basil than oregano."* Apprentice learns relative proportions and "dark knowledge" of *what not to do*. Distillation = this.
 
 </div>
 
@@ -514,6 +533,8 @@ Distillation = method 2.
 ---
 
 # ⭐⭐⭐ Optional · Distillation · the loss, term by term
+
+*Gist · one loss says "get the answer right," the other says "match the teacher's whole probability distribution." Skip the algebra if you like — the picture on the next slide is the point.*
 
 Two losses:
 
@@ -532,17 +553,11 @@ The $T^2$ corrects for the gradient shrinkage that softening causes (so the two 
 
 # Distillation · worked numeric
 
-Image of a cat. Classes [Cat, Dog, Car].
-- Teacher logits $z_t = [10, 2, 1]$.
-- Student logits $z_s = [5, 1.5, 1]$.
+Image of a cat, classes [Cat, Dog, Car]. Teacher logits $z_t = [10, 2, 1]$; student logits $z_s = [5, 1.5, 1]$.
 
-**$T = 1$.** softmax($z_t$) = $[0.999, 0.0003, 0.0001]$. **Almost no dark knowledge** — student barely learns relative class structure.
+![w:760px](figures/lec23/svg/distillation_soft.svg)
 
-**$T = 4$.** Soften logits: $z_t/4 = [2.5, 0.5, 0.25]$, $z_s/4 = [1.25, 0.375, 0.25]$.
-- Soft teacher · softmax($z_t/4$) ≈ $[0.81, 0.11, 0.08]$
-- Soft student · softmax($z_s/4$) ≈ $[0.56, 0.23, 0.21]$
-
-Now the student learns: increase Cat, decrease Dog and Car, **but keep Dog slightly above Car**. Rich nuanced signal that pure hard-labels would miss.
+At $T=1$ the teacher is a spike — no signal about the wrong classes. At $T=4$ the teacher says *Cat, but Dog looks more like a cat than Car does*. The softened student ($\text{softmax}(z_s/4)\approx[0.56,0.23,0.21]$) is trained to match that **whole shape** — rich nuance pure hard-labels throw away.
 
 ---
 
@@ -567,6 +582,20 @@ Many small-but-good models as of this writing (Phi, Gemma, DistilRoBERTa) are di
 # The full inference stack
 
 How do all these tricks compose in a production server?
+
+---
+
+# Now it clicks · the menu
+
+Six lectures' worth of tricks, and they all answer the *same* question — **how do I move fewer bytes per token, or avoid redoing work?**
+
+![w:920px](figures/lec23/svg/serving_menu.svg)
+
+<div class="keypoint">
+
+Read the menu by its **column headers**, not the individual tricks. Every new serving optimization you meet slots into one of these five buckets.
+
+</div>
 
 ---
 
