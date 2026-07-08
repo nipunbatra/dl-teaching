@@ -35,22 +35,23 @@ Last lecture · **DDPM** — forward noise, learn reverse, predict ε. Works on 
 
 <div class="insight">
 
-**The gap L21 left open.** That recipe generates *whatever* it likes, slowly, in full pixel space. To get **Stable Diffusion** and **Sora** we must answer three practical questions · (1) how do we *steer* it with a text prompt? (2) how do we make the prompt actually *stick*? (3) how do we make it *cheap* enough to run? Today fills exactly those three gaps.
+**The problem with naive pixel-space diffusion.** L21's recipe has two dealbreakers. (1) It draws *whatever* it likes — you **can't steer it to a text prompt**. (2) It denoises all $512\times512\times3 \approx 800\text{k}$ pixels for ~1000 steps — **far too expensive** to run. Fix both and you get Stable Diffusion.
 
 </div>
+
+Today's three fixes — each one a concrete **object you can name**:
+
+1. **Cross-attention conditioning** — the U-Net *reads a text vector*, so a prompt can steer it.
+2. **Classifier-free guidance** — run the model *twice* (prompt / no-prompt) and push along the difference, so the prompt actually **sticks**.
+3. **Latent diffusion** — run the whole loop in a *tiny VAE latent*, not pixels, so it's **cheap**.
+
+Then **DDIM** cuts the 1000 steps → ~50. Snap these together → **Stable Diffusion**.
 
 <div class="paper">
 
 **Reading & inspiration** · **Rombach et al. 2022 *Stable Diffusion (LDM)*** · **Ho & Salimans 2022 *Classifier-Free Guidance*** · **Song et al. 2021 *DDIM*** (fast sampling) · **Hugging Face `diffusers` docs** (code-first) · **Lilian Weng** diffusion blog (later sections) · **UDL (Prince) Ch 18 (later)**.
 
 </div>
-
-Four questions:
-
-1. How do we **condition** on a text prompt?
-2. What is **classifier-free guidance**?
-3. Why does **latent diffusion** matter?
-4. What about **faster** sampling — DDIM and DiT?
 
 ---
 
@@ -83,6 +84,12 @@ How does the prompt actually steer the denoiser?
 # How to condition a diffusion model
 
 We want $\epsilon_\theta(x_t, t, c)$ — predict noise given a **condition** $c$ (class label, text embedding, image).
+
+<div class="keypoint">
+
+**Big idea in one line.** Give the denoiser a *third input* $c$. Everything below is just *how* $c$ gets in — Stable Diffusion picks the last option, cross-attention.
+
+</div>
 
 Three common ways to inject $c$:
 
@@ -176,9 +183,16 @@ Conditioning is in — so why do samples still half-ignore the prompt?
 
 ---
 
-# CFG · the geometry
+# CFG · the big idea, then the geometry
 
-![w:920px](figures/lec22/svg/cfg_guidance_vectors.svg)
+<div class="keypoint">
+
+**Object first.** Each step the model runs **twice** and outputs two noise predictions — $\epsilon_\text{cond}$ (*with* the prompt) and $\epsilon_\text{uncond}$ (*no* prompt). We **extrapolate** along their difference; the guidance scale $w$ is simply *how far* we walk:
+$$\epsilon_\text{cfg} = \epsilon_\text{uncond} + w\,(\epsilon_\text{cond} - \epsilon_\text{uncond})$$
+
+</div>
+
+![w:800px](figures/lec22/svg/cfg_guidance_vectors.svg)
 
 ---
 
@@ -198,22 +212,25 @@ The **difference vector** $\epsilon_c - \epsilon_\emptyset$ is the **pure influe
 
 # ⭐⭐⭐ Optional · CFG · derive the formula step by step
 
+<div class="keypoint">
+
+**Gist (skip the rest if you're happy).** The formula just says *"start at the no-prompt prediction, walk $w$ steps toward the prompt."* Below is what each piece is.
+
+</div>
+
 1. **Generic direction.** $\epsilon_\text{uncond} = \epsilon_\theta(x_t, \emptyset)$ (null prompt).
 2. **Prompt direction.** $\epsilon_\text{cond} = \epsilon_\theta(x_t, c)$.
-3. **Pure prompt influence.**
-$\Delta = \epsilon_\text{cond} - \epsilon_\text{uncond}$
+3. **Pure prompt influence.** $\Delta = \epsilon_\text{cond} - \epsilon_\text{uncond}$.
 4. **Extrapolate** by guidance scale $w$:
 $$\epsilon_\text{CFG} = \epsilon_\text{uncond} + w \cdot \Delta = \epsilon_\theta(x_t, \emptyset) + w\bigl(\epsilon_\theta(x_t, c) - \epsilon_\theta(x_t, \emptyset)\bigr)$$
 
-- $w = 0$ → pure unconditional (ignore prompt).
-- $w = 1$ → exactly the conditional prediction.
-- $w > 1$ → **amplify** prompt adherence by overshooting.
-
-Default $w = 7.5$ in Stable Diffusion.
+**Read the dial** · $w = 0$ ignore prompt · $w = 1$ exact conditional · $w > 1$ overshoot to **amplify** adherence. **Default $w = 7.5$** in Stable Diffusion.
 
 ---
 
-# CFG in pictures
+# CFG in pictures · same prompt, only $w$ changes
+
+Same prompt, same seed — we only turn the $w$ dial. Adherence rises, then colors over-saturate.
 
 ![w:920px](figures/lec22/svg/cfg_scale.svg)
 
@@ -246,12 +263,6 @@ def training_step(x0, prompt):
 ```
 
 Same network learns both modes. At inference, you run it twice and extrapolate. Cost · 2× compute per step. Benefit · any w at generation time.
-
----
-
-# CFG · vectors in 2D
-
-![w:920px](figures/lec22/svg/cfg_arithmetic.svg)
 
 ---
 
@@ -308,6 +319,12 @@ What made Stable Diffusion cheap enough to ship?
 ---
 
 # Why diffuse in latent space · the intuition
+
+<div class="keypoint">
+
+**Object first.** Run the *entire* diffusion loop inside a VAE's **$64\times64\times4$ latent**, not on pixels. The U-Net denoises the latent; a VAE **decoder** turns the final latent into the $512\times512$ image — once, at the very end.
+
+</div>
 
 Most pixels in an image are *correlated*. A patch of blue sky has hundreds of near-identical pixel values. Diffusing each one independently is wasteful.
 
@@ -387,6 +404,12 @@ This is the only thing you train.
 </div>
 </div>
 
+<div class="insight">
+
+**Now it clicks — that's Stable Diffusion.** CLIP text encoder → U-Net that cross-attends to the prompt (with CFG each step), diffusing in the VAE latent → VAE decoder renders the image. Three fixes, one pipeline.
+
+</div>
+
 ---
 
 <!-- _class: section-divider -->
@@ -400,6 +423,12 @@ This is the only thing you train.
 ---
 
 # Why 1000 steps · the quick math
+
+<div class="keypoint">
+
+**Object first · what's a sampler?** Just the *rule for how big a denoising step to take*. **DDPM** takes 1000 tiny random steps; **DDIM** takes ~50 big **deterministic** steps from the *same* trained model. First, why does DDPM need so many?
+
+</div>
 
 DDPM's forward process adds tiny Gaussian noise at each of $T$ steps. To keep the final distribution close to $\mathcal{N}(0, I)$ and each step's noise increment small (so the reverse can be Gaussian too), $T$ has to be large — 1000 is the typical choice.
 
@@ -445,6 +474,12 @@ The same trained model gets used · DDIM just chooses which subset of timesteps 
 ---
 
 # ⭐⭐⭐ Optional · DDIM · deterministic sampling in 20–50 steps
+
+<div class="keypoint">
+
+**Gist.** DDPM's 1000 steps assume each step is *random* (Markovian). DDIM notices you can make the steps **deterministic** and then *jump over* most of them — ~50 steps, same quality, same weights.
+
+</div>
 
 <div class="paper">
 

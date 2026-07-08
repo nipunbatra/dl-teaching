@@ -90,7 +90,7 @@
     <rect x="0" y="0" width="880" height="80" fill="#EEEBDF" stroke="#C9C4B5"/>
     <text x="14" y="22" class="tag">CLASSIFIER-FREE GUIDANCE</text>
     <text x="440" y="48" text-anchor="middle" class="mono" font-size="14">
-      ε_CFG = ε_θ(x_t, ∅) &nbsp;+&nbsp; w · (ε_θ(x_t, c) − ε_θ(x_t, ∅))
+      ε_CFG = ε_θ(x_t, ∅) &#160;+&#160; w · (ε_θ(x_t, c) − ε_θ(x_t, ∅))
     </text>
     <text x="440" y="68" text-anchor="middle" class="mut" font-style="italic">
       unconditional noise  +  w × (conditional − unconditional)  ·  w=7 is the Stable Diffusion default
