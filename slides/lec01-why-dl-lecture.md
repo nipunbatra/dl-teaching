@@ -67,11 +67,11 @@ The curved data above broke a straight boundary. In ES 335 your fix was **basis 
 
 $$\phi(x) = [\,1,\; x,\; x^2,\; x_1x_2,\; \dots\,] \qquad \hat y = \sigma\big(\theta^\top \phi(x)\big)$$
 
-It works — *if you can guess the right $\phi$.* For radius-vs-colour, easy. For a **150,000-pixel** photo, hopeless.
+It works — *if you can guess the right $\phi$.* For **oranges-vs-tomatoes** (radius, colour) — easy. For a **150,000-pixel** photo — hopeless.
 
 <div class="insight">
 
-A neural network's hidden layer **is** $\phi$ — but **learned** from data, not guessed by you. That single move is "Why Deep Learning."
+**The through-line of this whole course.** A hidden layer **is** $\phi(x)$ — but **learned** from data, not hand-picked by you. Each layer outputs a new, learned representation of the input; everything after today is *how* to make that learning work.
 
 </div>
 
@@ -127,11 +127,11 @@ There is no trick · we want you to feel where each option helps and hurts. The 
 
 <div class="insight">
 
-**Deep learning = representation learning** with differentiable, composable modules, trained end-to-end by gradient descent.
+**Deep learning = representation learning.** Instead of *you* engineering the features $\phi(x)$, the network **learns** them — each layer outputs a new representation of the input.
 
 </div>
 
-Every word matters. We will unpack all of them this semester.
+The precise version — *differentiable, composable modules trained end-to-end by gradient descent* — is what we unpack all semester. Hold the plain sentence first.
 
 ---
 
@@ -272,7 +272,7 @@ A neuron is your ES 335 linear model plus **one** new ingredient — a non-linea
 
 <div class="keypoint">
 
-Stack many of these, learn the weights, and you have a deep network. That is the whole idea.
+Stack many of these and learn the weights · the stack is what computes $\phi(x)$ for you. That is the whole idea.
 
 </div>
 
@@ -449,7 +449,7 @@ A hidden layer **reshapes the data** so the final linear layer's job becomes tri
 
 <div class="keypoint">
 
-This is what *"deep learning is representation learning"* means · the hidden layers learn a coordinate system where the problem is linear. The final softmax is just logistic regression on features the network designed for itself.
+This is what *"deep learning is representation learning"* means · the hidden layers learn a coordinate system where the problem is linear. The final softmax is just logistic regression on the $\phi(x)$ the network designed for itself — the features you hand-crafted in ES 335, now learned.
 
 </div>
 
@@ -676,6 +676,8 @@ The next slide does these one at a time, with full chain rule.
 
 # Deriving · the linear-layer backward pass
 
+**Big idea in one line** · a weight's gradient = (error signal at its output) × (what it multiplied on the way in). The algebra below just makes that precise — don't let the indices scare you.
+
 For one element · $z_i = \sum_j W_{ij} x_j + b_i$.
 
 <div class="math-box">
@@ -765,7 +767,9 @@ This is the entire training loop on one example, by hand. SGD does this for ever
 
 ---
 
-# Same rule with batches
+# ⭐⭐⭐ Optional · same rule with batches
+
+**Gist** · same three rules, now with a batch dimension $B$ — each gradient just gains a sum or a transpose.
 
 For a batch:
 
