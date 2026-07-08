@@ -75,7 +75,7 @@
   </g>
 
   <!-- Winner callout -->
-  <g transform="translate(660, 310)">
+  <g transform="translate(672, 200)">
     <rect fill="#FDF2F6" stroke="#A8324B" stroke-width="1.4" x="0" y="0" width="250" height="90" rx="6"/>
     <text x="125" y="22" class="head" text-anchor="middle">Winner · "The cat sat"</text>
     <text x="125" y="42" class="body" text-anchor="middle" fill="#5F8573">beam search score: -1.3</text>
@@ -83,14 +83,19 @@
     <text x="125" y="80" class="caption" text-anchor="middle">greedy missed the better path · beam found it</text>
   </g>
 
+  <!-- Explanation (under the Winner callout) -->
+  <g transform="translate(797, 308)" text-anchor="middle">
+    <text x="0" y="0" class="caption">beam=2 keeps top-2 prefixes at every step ·</text>
+    <text x="0" y="16" class="caption">more diverse search · finds a higher joint log-prob.</text>
+  </g>
+
   <!-- Legend -->
-  <g transform="translate(40, 380)">
+  <g transform="translate(40, 388)">
     <line x1="0" y1="0" x2="20" y2="0" stroke="#B85A3E" stroke-width="2"/>
     <text x="28" y="4" class="caption">greedy path</text>
     <line x1="120" y1="0" x2="140" y2="0" stroke="#5F8573" stroke-width="1.6"/>
     <text x="148" y="4" class="caption">beam-2 paths</text>
     <rect class="pruned" x="250" y="-8" width="16" height="16"/>
     <text x="272" y="4" class="caption">pruned</text>
-    <text x="560" y="4" class="caption">beam=2 keeps top-2 prefixes at every step · more diverse search · finds a higher joint log-prob.</text>
   </g>
 </svg>

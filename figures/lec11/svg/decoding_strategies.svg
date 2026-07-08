@@ -20,7 +20,7 @@
     <rect x="0" y="0" width="280" height="140" fill="#F7F3E9" stroke="#C9C4B5"/>
 
     <circle class="node" cx="140" cy="20" r="10"/>
-    <text x="140" y="24" text-anchor="middle" class="mono">start</text>
+    <text x="140" y="7" text-anchor="middle" class="mono" fill="#5F5C54">start</text>
 
     <circle class="node-g" cx="70"  cy="70" r="12"/>
     <text x="70" y="74" text-anchor="middle" class="mono">0.6</text>
@@ -39,7 +39,7 @@
     <text x="70" y="124" text-anchor="middle" class="mono">0.7</text>
     <line x1="70" y1="82" x2="70" y2="108" class="ink"/>
 
-    <text x="140" y="160" text-anchor="middle" class="mut">picks top-1 at each step</text>
+    <text x="140" y="152" text-anchor="middle" class="mut">picks top-1 at each step</text>
   </g>
 
   <!-- BEAM SEARCH -->
@@ -79,11 +79,11 @@
       <line x1="140" y1="82" x2="215" y2="109"/>
     </g>
 
-    <text x="140" y="160" text-anchor="middle" class="mut">keeps top-k paths each step</text>
+    <text x="140" y="152" text-anchor="middle" class="mut">keeps top-k paths each step</text>
   </g>
 
   <!-- TOP-K -->
-  <g transform="translate(40, 240)">
+  <g transform="translate(40, 252)">
     <text x="140" y="-8" text-anchor="middle" class="tag" fill="#37535F">TOP-K SAMPLING (k=3)</text>
     <rect x="0" y="0" width="280" height="100" fill="#F7F3E9" stroke="#C9C4B5"/>
 
@@ -107,7 +107,7 @@
   </g>
 
   <!-- NUCLEUS / top-p -->
-  <g transform="translate(340, 240)">
+  <g transform="translate(340, 252)">
     <text x="140" y="-8" text-anchor="middle" class="tag" fill="#A8324B">NUCLEUS (top-p=0.9)</text>
     <rect x="0" y="0" width="280" height="100" fill="#F7F3E9" stroke="#C9C4B5"/>
 
@@ -131,7 +131,7 @@
   </g>
 
   <!-- Bottom -->
-  <g transform="translate(60, 370)">
+  <g transform="translate(60, 394)">
     <text x="420" y="0" text-anchor="middle" class="mut" font-style="italic">
       <tspan fill="#B85A3E" font-weight="600">Greedy</tspan>/<tspan fill="#5F8573" font-weight="600">beam</tspan> — deterministic, safe, can be repetitive.
       <tspan fill="#A8324B" font-weight="600">Top-p</tspan> (nucleus) is the 2026 LLM default.
