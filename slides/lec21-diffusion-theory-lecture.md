@@ -25,8 +25,8 @@ By the end of this lecture you will be able to:
 3. Write the **DDPM training loss** and describe what each term is doing.
 4. Describe the **reverse process** step-by-step.
 5. Understand **noise schedules** (linear vs cosine) and pick one for a task.
-6. Connect **DDPM** to **score matching** via Langevin dynamics.
-7. State why diffusion won over GANs and VAEs for image/video/audio.
+6. State why diffusion won over GANs and VAEs for image/video/audio.
+7. *(optional, for the curious)* Sketch how **DDPM** relates to **score matching** — same model, different lens.
 
 ---
 
@@ -65,7 +65,7 @@ Four questions:
 1. What's the **forward process**?
 2. What's the **closed-form** for $q(x_t \mid x_0)$?
 3. How do we **train** a diffusion model?
-4. What's the connection to **score matching**?
+4. *(optional)* What's the connection to **score matching**?
 
 ---
 

@@ -110,15 +110,16 @@
     <path d="M 240 260 Q 480 260 680 270"/>
   </g>
 
-  <!-- Time injection arrows (rust dashed) into every block -->
+  <!-- Time injection arrows (rust dashed): land on each block's TOP border,
+       well clear of the centred labels below (was overlapping the text). -->
   <g class="tinj" marker-end="url(#uc-t)">
-    <line x1="440" y1="80"  x2="195" y2="150"/>
-    <line x1="440" y1="80"  x2="195" y2="200"/>
-    <line x1="440" y1="80"  x2="195" y2="260"/>
-    <line x1="440" y1="80"  x2="480" y2="290"/>
-    <line x1="440" y1="80"  x2="715" y2="270"/>
-    <line x1="440" y1="80"  x2="720" y2="215"/>
-    <line x1="440" y1="80"  x2="725" y2="150"/>
+    <line x1="440" y1="92" x2="195" y2="140"/>
+    <line x1="440" y1="92" x2="190" y2="200"/>
+    <line x1="440" y1="92" x2="185" y2="260"/>
+    <line x1="440" y1="92" x2="480" y2="270"/>
+    <line x1="440" y1="92" x2="715" y2="260"/>
+    <line x1="440" y1="92" x2="720" y2="200"/>
+    <line x1="440" y1="92" x2="725" y2="140"/>
   </g>
 
   <!-- Caption -->
