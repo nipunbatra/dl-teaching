@@ -87,11 +87,94 @@ Keep your three guesses — each Part of today fixes exactly one of them. We tal
 
 <!-- _class: section-divider -->
 
+### WARM-UP
+
+# One attention head
+
+Start from the **output**, not the formula.
+
+---
+
+# The problem · each word needs context
+
+> "The animal didn't cross the street because **it** was too tired."
+
+To represent the word **it**, the model must pull in meaning from **animal** — several words back. Every token needs to gather relevant context from the other tokens.
+
+<div class="keypoint">
+
+**Attention is the mechanism that does this gathering.** We'll build it output-first: (1) *what one head produces*, then (2) *where those numbers come from*. Formulas last.
+
+</div>
+
+---
+
+# What does one attention head output?
+
+<div class="insight">
+
+**Big idea (2 sentences).** For each token, an attention head produces **one weighted average of the other tokens' value vectors**. The weights say *how much to listen to each token* — nothing more exotic than that.
+
+</div>
+
+Take three tokens **"The cat sat"** and focus on the query token **"sat"**. Suppose its attention weights are $[0.1,\ 0.6,\ 0.3]$ over (The, cat, sat). Then:
+
+$$\text{output}_\text{sat} = 0.1\,v_\text{The} + 0.6\,v_\text{cat} + 0.3\,v_\text{sat}$$
+
+A blend of value vectors, tilted toward whatever it attends to most (here, **cat**). That's the whole output of a head.
+
+---
+
+# One head, in one picture
+
+![w:840px](figures/lec13/svg/attention_weighted_average.svg)
+
+Concretely, if $v_\text{The}=(2.5, 0.5)$, $v_\text{cat}=(1.0, 2.5)$, $v_\text{sat}=(2.0, 1.0)$, the output is $0.1(2.5,0.5)+0.6(1.0,2.5)+0.3(2.0,1.0) = (1.45,\ 1.85)$ — sitting closest to $v_\text{cat}$, the token it weighted most.
+
+---
+
+# Where do the weights come from?
+
+Now the only missing piece · **the weights are just normalized similarities**. Each token emits a **query** $q$ (what it's looking for) and a **key** $k$ (what it offers). Dot them, then softmax:
+
+![w:820px](figures/lec13/svg/qk_to_weights.svg)
+
+A big dot product $q\cdot k$ means "these two match" → a big weight. Softmax turns the raw scores into weights that sum to 1.
+
+---
+
+# The full one-head recipe
+
+$$\text{Attention}(Q,K,V) = \underbrace{\text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)}_{\text{weights (sum to 1)}} \, V$$
+
+<div class="keypoint">
+
+Read it right-to-left, output-first · $V$ are the value vectors; the softmax term is the **weights**; the product is the **weighted average** we just drew. The $\sqrt{d_k}$ is only a scale-fixer (next slide, optional).
+
+</div>
+
+**Now it clicks · attention is just a weighted average — with the weights *learned* from token similarity.** Everything today wraps around this one operation.
+
+---
+
+# ⭐⭐⭐ Optional · why divide by $\sqrt{d_k}$?
+
+**Gist ·** without it, dot products grow with dimension, softmax saturates, and gradients vanish. Dividing by $\sqrt{d_k}$ keeps scores at a healthy size.
+
+If $q, k$ have $d_k$ independent components each with variance $1$, then
+$$q \cdot k = \sum_{i=1}^{d_k} q_i k_i \;\Rightarrow\; \mathrm{Var}(q\cdot k) = d_k .$$
+
+So typical scores scale like $\sqrt{d_k}$. For $d_k=64$ that's $\pm 8$ — big enough that softmax collapses onto one token and its gradient dies. Dividing by $\sqrt{d_k}$ rescales the variance back to $1$, keeping softmax in its responsive range.
+
+---
+
+<!-- _class: section-divider -->
+
 ### PART 1
 
 # The block
 
-What do you wrap around attention so it stacks 100 deep?
+Now wrap that one head so it stacks 100 deep.
 
 ---
 
@@ -148,6 +231,8 @@ The genius was **gluing them together** into one block you can safely stack.
 ---
 
 # ⭐⭐⭐ Optional · Pre-norm vs post-norm · derive the gradient
+
+**Gist ·** pre-norm leaves a clean $+1$ identity path for the gradient; post-norm multiplies by a shrinking factor at every block, so deep stacks starve. The algebra below is just that sentence, made precise.
 
 Goal · the block's input-to-output derivative $\partial x_\text{out} / \partial x_\text{in}$.
 
@@ -233,6 +318,8 @@ Why one head is never enough
 ---
 
 # ⭐⭐⭐ Optional · Multi-head · trace the tensor shapes
+
+**Gist ·** we slice $d_\text{model}$ into $h$ smaller heads, attend inside each, then glue the pieces back — output shape equals input shape, so blocks stack cleanly.
 
 Setup · 1 sentence, 3 tokens, $d_\text{model} = 4$, $h = 2$ heads, so $d_k = 4/2 = 2$.
 
@@ -398,16 +485,14 @@ $$PE_{(pos, 2i)} = \sin(\theta_i \cdot pos),\quad PE_{(pos, 2i+1)} = \cos(\theta
 
 # ⭐⭐⭐ Optional · Why sinusoidal · derive the rotation property
 
+**Gist ·** a shift by $k$ just *rotates* the encoding by a fixed angle — so relative offsets are easy to learn.
+
 For one pair of dimensions $(2i, 2i+1)$, the encoding at position $pos$ is $[\sin(\theta\,pos), \cos(\theta\,pos)]$.
 
-What about $pos + k$? Trig identities:
-- $\sin(a+b) = \sin a \cos b + \cos a \sin b$
-- $\cos(a+b) = \cos a \cos b - \sin a \sin b$
-
-Letting $a = \theta\,pos$, $b = \theta\,k$:
+What about $pos + k$? Use $\sin(a+b) = \sin a \cos b + \cos a \sin b$ and $\cos(a+b) = \cos a \cos b - \sin a \sin b$, with $a = \theta\,pos$, $b = \theta\,k$:
 $$\begin{pmatrix} \sin\theta(pos+k) \\ \cos\theta(pos+k) \end{pmatrix} = \underbrace{\begin{pmatrix} \cos\theta k & \sin\theta k \\ -\sin\theta k & \cos\theta k \end{pmatrix}}_{\text{rotation matrix }R(k)} \begin{pmatrix} \sin\theta\,pos \\ \cos\theta\,pos \end{pmatrix}$$
 
-**A 2D rotation matrix that depends only on $k$, not on $pos$!** The model can learn one linear transformation per relative offset → great at *relative* positions.
+**A 2D rotation matrix depending only on $k$, not $pos$!** So the model learns one transform per offset → great at *relative* positions.
 
 ---
 
@@ -467,6 +552,18 @@ Encoder · decoder · causal mask
 The training objectives differ too · encoder-only predicts **masked tokens** (sees both sides), decoder-only predicts the **next token** (causal). Compared in depth in L14.
 
 Currently, **decoder-only** dominates LLMs. Encoder-only ships in retrieval pipelines. Encoder-decoder survives for translation-style tasks.
+
+---
+
+# Causal masking · one picture
+
+<div class="insight">
+
+**Big idea (2 sentences).** A decoder predicts the next token, so token $i$ may look only at tokens $1\ldots i$ — never ahead. We enforce this by zeroing out the upper triangle of the attention-weight matrix.
+
+</div>
+
+![w:820px](figures/lec13/svg/causal_mask.svg)
 
 ---
 
