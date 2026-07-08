@@ -108,6 +108,7 @@ Why can't an MLP just read the whole sentence?
 Suppose you want to classify "He lives in Gandhinagar." as positive sentiment.
 
 If you feed this to an MLP:
+- **Length varies.** A tweet is 5 words, a review is 500 — but an MLP's input is a *fixed-size* vector. What size do you pick?
 - Words have no inherent order — must one-hot the position: `(token, position)`.
 - Vocabulary is 50k words × max length 100 → input dim = 5,000,000.
 - No reuse: the word "Gandhinagar" at position 5 is a completely different feature from the same word at position 23.
@@ -115,6 +116,20 @@ If you feed this to an MLP:
 <div class="keypoint">
 
 An MLP has **no inductive bias for time** — it would need to relearn what each word means, once per position.
+
+</div>
+
+---
+
+# First, the object · what does one RNN cell output?
+
+Before any equation, fix the **one thing** an RNN produces: a cell reads the **new word** $x_t$ and the **old memory** $h_{t-1}$, and returns a **new memory** $h_t$ — a small vector summarizing the sequence *so far*.
+
+![w:760px](figures/lec10/svg/rnn_cell_output.svg)
+
+<div class="keypoint">
+
+**Big idea (2 sentences).** An RNN cell is a memory-updater · *new state = f(old state, new word)*. Everything else today — unrolling, BPTT, gates — just computes and *protects* that one running summary $h_t$.
 
 </div>
 
@@ -242,6 +257,8 @@ The gradient is that secret. It travels backward from the loss to the start of t
 
 # ⭐⭐⭐ Optional · bptt · derive the gradient product
 
+**Gist ·** the gradient back through $T$ steps is a product of $T$ copies of (roughly) $W_{hh}$ — so it shrinks or blows up **exponentially** in $T$. The algebra below just makes that precise.
+
 Simplest possible RNN: $h_t = W_{hh}\, h_{t-1}$ (no input, no $\tanh$), so $h_t = W_{hh}^{\,t}\, h_0$. Chain rule over 3 steps:
 $$\frac{\partial h_3}{\partial h_0} = \underbrace{\frac{\partial h_3}{\partial h_2}}_{W_{hh}} \cdot \underbrace{\frac{\partial h_2}{\partial h_1}}_{W_{hh}} \cdot \underbrace{\frac{\partial h_1}{\partial h_0}}_{W_{hh}} = W_{hh}^{\,3} \;\Longrightarrow\; \frac{\partial h_T}{\partial h_0} = W_{hh}^{\,T}$$
 
@@ -360,32 +377,53 @@ LSTM adds a separate **memory conveyor belt** · the **cell state $\mathbf{c}_t$
 
 </div>
 
-A protected long-term memory + learned controllers for write / forget / read. Keep the three roles in mind — the equations next are just these roles in symbols.
+A protected long-term memory + learned controllers for write / forget / read. Keep the three roles in mind — next we ask what each gate actually *outputs*.
 
 ---
 
-# LSTM · build the equations step-by-step
+# First, the object · what does each gate output?
 
-Combine inputs into one **control vector** $[\mathbf{h}_{t-1}, \mathbf{x}_t]$. Use it to drive every gate.
+Each gate outputs a **0–1 mask** — one number per memory slot — that decides *keep / write / read*. Same recipe for all three · squash $[\mathbf{h}_{t-1}, \mathbf{x}_t]$ through a sigmoid, so every value lands in $[0,1]$.
 
-**Step 1 · Forget gate** (sigmoid → $[0, 1]$):
-$$\mathbf{f}_t = \sigma(W_f [\mathbf{h}_{t-1}, \mathbf{x}_t] + b_f)$$
-0 → forget · 1 → keep.
+- **Forget gate $\mathbf{f}_t$** · *"what do I erase?"* — 0 = flush old context · 1 = keep it.
+- **Input gate $\mathbf{i}_t$** · *"how much new info do I write?"* — 0 = ignore · 1 = accept fully.
+- **Output gate $\mathbf{o}_t$** · *"what do I expose downstream?"* — 0 = stay silent · 1 = project out.
 
-**Step 2 · Input gate** + **candidate**:
-$$\mathbf{i}_t = \sigma(W_i [\mathbf{h}_{t-1}, \mathbf{x}_t] + b_i),\quad \tilde{\mathbf{c}}_t = \tanh(W_c [\mathbf{h}_{t-1}, \mathbf{x}_t] + b_c)$$
-$\mathbf{i}_t$ controls *how much* of the candidate $\tilde{\mathbf{c}}_t$ to write.
+<div class="keypoint">
+
+**Big idea (2 sentences).** The memory is the cell state $\mathbf{c}_t$; the three gates are learned dials in $[0,1]$ that schedule when to write, keep, or read it. Get the *masks* first — the equations below are just "sigmoid gives the mask, the mask multiplies the memory."
+
+</div>
 
 ---
 
-# LSTM equations · update and output
+# LSTM · the update that saves gradients
 
-**Step 3 · Update the cell state** · throw out old, add new:
+Given the three masks and a **candidate** $\tilde{\mathbf{c}}_t$ ($\tanh$, so in $[-1,1]$) — the new information on offer:
+
+**Update the cell state** · keep some old, add some new:
 $$\mathbf{c}_t = \underbrace{\mathbf{f}_t \odot \mathbf{c}_{t-1}}_{\text{kept}} + \underbrace{\mathbf{i}_t \odot \tilde{\mathbf{c}}_t}_{\text{added}}$$
-The crucial **+** is what makes gradients flow.
 
-**Step 4 · Output gate** + hidden state:
-$$\mathbf{o}_t = \sigma(W_o [\mathbf{h}_{t-1}, \mathbf{x}_t] + b_o),\quad \mathbf{h}_t = \mathbf{o}_t \odot \tanh(\mathbf{c}_t)$$
+**Read out** the hidden state through the output mask:
+$$\mathbf{h}_t = \mathbf{o}_t \odot \tanh(\mathbf{c}_t)$$
+
+<div class="keypoint">
+
+The gates are just knobs. The crucial thing is the **+** in the cell-state update: memory is *added to*, not matrix-multiplied through — and that single **+** is what keeps gradients alive over long sequences (we prove it two slides on).
+
+</div>
+
+---
+
+# ⭐⭐⭐ Optional · LSTM · the gate algebra
+
+**Gist ·** every gate is one sigmoid on $[\mathbf{h}_{t-1}, \mathbf{x}_t]$; the candidate is one $\tanh$. Nothing more.
+
+Stack the previous hidden state and current input into one control vector $[\mathbf{h}_{t-1}, \mathbf{x}_t]$, then:
+$$\mathbf{f}_t = \sigma(W_f [\mathbf{h}_{t-1}, \mathbf{x}_t] + b_f),\qquad \mathbf{i}_t = \sigma(W_i [\mathbf{h}_{t-1}, \mathbf{x}_t] + b_i)$$
+$$\mathbf{o}_t = \sigma(W_o [\mathbf{h}_{t-1}, \mathbf{x}_t] + b_o),\qquad \tilde{\mathbf{c}}_t = \tanh(W_c [\mathbf{h}_{t-1}, \mathbf{x}_t] + b_c)$$
+
+Four little linear layers, four nonlinearities. Three sigmoids make masks in $[0,1]$; one $\tanh$ makes the candidate in $[-1,1]$. That is the entire LSTM parameter set.
 
 ---
 
@@ -407,15 +445,13 @@ The memory **flipped** from large positive (plural) to negative (singular) in on
 
 ---
 
-# Each gate · in plain English
+# The gradient highway · picture first
 
-- **Forget gate $\mathbf{f}_t$** · "what should I erase from the cell state?" — 0 · flush old context · 1 · persistent memory.
-- **Input gate $\mathbf{i}_t$** · "how much of the new candidate should I write?" — 0 · ignore input · 1 · accept fully.
-- **Output gate $\mathbf{o}_t$** · "what of the cell state do I expose downstream?" — 0 · keep silent · 1 · project out.
+![w:860px](figures/lec10/svg/additive_vs_multiplicative.svg)
 
-<div class="keypoint">
+<div class="insight">
 
-The LSTM's "memory" is the cell state $\mathbf{c}_t$; the gates are **learned controllers** that decide when to write, keep, or read. Think of it as a differentiable tiny memory cell plus a learned read/write scheduler.
+The vanilla path **multiplies** the gradient by a matrix at every hop → it shrinks (or explodes) exponentially. The LSTM cell state is **added** to → the gradient rides a clean highway, scaled only by $f_t \approx 1$. Same trick as a ResNet skip, but across *time* instead of depth.
 
 </div>
 
@@ -438,16 +474,24 @@ If the network learns $f_t \approx 1$ ("don't forget"), the gradient flows throu
 
 # Worked numeric · gradient flow over 100 steps
 
-Suppose memory must be preserved → forget gate trained to $f_t = 0.99$ consistently.
+Memory must survive → forget gate trained to $f_t = 0.99$. Vanilla RNN (optimistic factor $0.5$) for contrast:
 
-| | After 100 steps |
-|---|----------------|
-| **LSTM** along cell state | $0.99^{100} \approx \mathbf{0.366}$ — small but nonzero |
-| **Vanilla RNN** (optimistic factor 0.5) | $0.5^{100} \approx 7.9 \times 10^{-31}$ — completely vanished |
+![w:660px](figures/lec10/svg/gradient_survival.svg)
 
-LSTM signal **survives**. RNN signal is below floating-point precision.
+$0.99^{100} \approx \mathbf{0.366}$ (usable) vs $0.5^{100} \approx 7.9\times10^{-31}$ (below precision). LSTM signal **survives** — same idea as a ResNet skip, in the time dimension.
 
-This is the same idea as ResNet skip connections, in the time dimension.
+---
+
+# Now it clicks · the whole arc in one line
+
+<div class="insight">
+
+**Problem → failure → fix.**
+MLPs can't share across time → an **RNN** shares one cell and carries a running memory $h_t$ → but **BPTT** multiplies that memory by $W$ at every step, so gradients **vanish** → the **LSTM** swaps the multiplicative path for an **additive** cell state guarded by 0–1 gates → long-range memory **survives**.
+
+</div>
+
+Every piece we built — unroll, BPTT, the gate masks, the **+** in $\mathbf{c}_t$ — exists to serve that one arc. If the arc makes sense, the equations are just bookkeeping.
 
 ---
 
