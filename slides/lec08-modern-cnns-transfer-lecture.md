@@ -165,7 +165,55 @@ Why did *deeper* plain networks get *worse*?
 
 ---
 
-# Vanishing gradients · the telephone game
+# Deeper got *worse* · the degradation problem
+
+Take a plain CNN that trains fine at 20 layers. Stack it to 56. Common sense says the deeper net should do *at least* as well — it can always ignore the extra layers. Reality (He et al., 2015):
+
+![w:840px](figures/lec08/svg/degradation_curve.svg)
+
+<div class="keypoint">
+
+**Big idea.** The 56-layer net has *higher* error on the **training** set — so this is **not** overfitting, it is an *optimization* failure. The deep net can't even learn to copy the shallow one. That is the exact problem ResNet was built to fix.
+
+</div>
+
+---
+
+# The fix, output-first · what does a residual block *output*?
+
+Don't ask a block to compute the whole mapping. Ask it to output the **input plus a learned correction** $F(x)$:
+
+![w:900px](figures/lec08/svg/residual_block_output.svg)
+
+<div class="keypoint">
+
+**Big idea.** A residual block outputs $x + F(x)$. If the weight layers drive $F(x)\to 0$, the block outputs $x$ **exactly** — a perfect identity, at zero cost. "Do nothing" just became the easiest thing the block can do.
+
+</div>
+
+---
+
+# Why "identity for free" kills degradation
+
+Back to the 56-vs-20-layer puzzle — now with residual blocks:
+
+- The deep net can **reproduce** the shallow net exactly · set the 36 extra blocks to $F = 0$ (identity).
+- So a deeper ResNet can **never be forced below** a shallower one — worst case, it copies it.
+- Training starts from "pass everything through" and only *adds* corrections that actually help.
+
+<div class="keypoint">
+
+**Big idea in two sentences.** Plain deep nets struggled because *every* layer was forced to learn something useful, and hitting "do nothing" was hard. Skip connections make "do nothing" the default — so you can pile on depth and only pay for the layers that earn their keep.
+
+</div>
+
+The same trick returns as the LSTM cell state (L10) and the Transformer residual stream (L13) — the single most load-bearing idea in modern deep learning.
+
+---
+
+# A second win · skips also cure vanishing gradients
+
+That was the *forward*-pass story. The identity path pays off a **second** time — on the *backward* pass.
 
 <div class="insight">
 
@@ -180,6 +228,8 @@ A skip connection is a **gradient superhighway** — a direct, uninterrupted pat
 ---
 
 # ⭐⭐⭐ Optional · skip connections — derive the gradient
+
+**Gist (skip the algebra if you like):** the identity path adds a $+1$ to the gradient at every block, so it can't vanish even when $F'$ is tiny. The two lines below prove it.
 
 **Plain layer.** $h_\text{out} = F(h_\text{in})$. Chain rule:
 $$\frac{\partial \mathcal{L}}{\partial h_\text{in}} = \frac{\partial \mathcal{L}}{\partial h_\text{out}} \cdot F'(h_\text{in})$$
@@ -208,20 +258,6 @@ Upstream gradient $\partial\mathcal{L}/\partial h_\text{out} = 0.5$. Tiny weight
 
 This is why ResNet trains 152 layers easily, while plain 34 layers couldn't even fit the training data. Identity path stops vanishing **at construction time**, not through training luck. Same vector form:
 $$\frac{\partial \mathcal{L}}{\partial h_l} = \frac{\partial \mathcal{L}}{\partial h_{l+1}} \cdot \left(I + \frac{\partial F}{\partial h_l}\right)$$
-
----
-
-# Why skip connections also help forward pass
-
-When a new block isn't useful yet, residual = 0 is the easiest thing to learn — the identity mapping just passes $h_l$ through.
-
-<div class="insight">
-
-**Adding blocks can represent identity easily**, so deeper networks stopped getting *worse* (the pre-ResNet degradation problem) — though deeper isn't *guaranteed* better. Before ResNet, adding layers to a working network often made it worse. After ResNet, the optimizer can at least fall back to a no-op, so you can keep adding depth without the collapse.
-
-</div>
-
-Same idea shows up as LSTM's cell state (L10) and Transformer's residual stream (L13). Skip connections are the single most load-bearing design in modern deep learning.
 
 ---
 
@@ -433,7 +469,9 @@ EfficientNet's insight · the same is true of neural networks. Depth, width, and
 
 ---
 
-# Compound scaling · the rule
+# ⭐⭐⭐ Optional · compound scaling — the rule
+
+**Gist (skip the algebra if you like):** one knob $\phi$; each $+1$ roughly doubles the compute and grows depth, width, and resolution *together* by fixed factors — no per-model guessing.
 
 Define a single scaling knob $\phi$. Choose constants $\alpha, \beta, \gamma$ once via grid search.
 
@@ -485,6 +523,8 @@ EfficientNet set the accuracy/param Pareto frontier for 2019–2021 — until Vi
 ## What transfer learning *is*, in one line
 
 Start from a model that already knows something relevant, adapt it to your new task with a fraction of the data and compute.
+
+![w:800px](figures/lec08/svg/transfer_reuse.svg)
 
 <div class="keypoint">
 
