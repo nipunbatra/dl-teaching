@@ -85,6 +85,24 @@ Capability (it *can* write the email) and helpfulness (it *will*, on request) ar
 
 ---
 
+# Intuition · the assistant is a *role the base model can already play*
+
+A base model has read millions of Q&A pages, tutorials, and chat logs. Buried in its weights is a perfectly good "helpful assistant" — it just isn't the **default** voice. Prompt it raw and you get the *average* of the whole internet: lists, tangents, ads, more questions.
+
+<div class="insight">
+
+SFT doesn't teach the model *new knowledge* — the facts were already there from pretraining. It makes the **assistant persona the default**, and installs the one thing pretraining never showed it: the **chat format** — whose turn it is, and when to stop.
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · in-context learning** — watch a *frozen* base model swing from rambling to on-task as you add a few worked examples to the prompt. The capability is already inside; the prompt (or SFT) only *summons* it. *(Interactive Lab · `interactive/articles/in-context-learning`)*
+
+</div>
+
+---
+
 # The plan · from completer to helper, one box at a time
 
 ![w:940px](figures/lec16/svg/alignment_pipeline.svg)
@@ -132,6 +150,28 @@ Set the label to a sentinel (`-100` in PyTorch) on every system/user token, so i
 <div class="keypoint">
 
 **Without the mask, the model learns to write *questions*, not *answers*** — you would be cloning the wrong half of the conversation. Mask the prompt; keep the response.
+
+</div>
+
+---
+
+# SFT · count the tokens that actually train
+
+Take the France example. Schematically, the tokenized training string splits into a prompt part and a response part:
+
+<div class="math-box">
+
+`[system + user prompt: 14 tokens]` · `[assistant response: 8 tokens]`
+
+$$\text{loss terms} = \underbrace{0}_{\text{14 prompt tokens, label } =-100} \;+\; \underbrace{8}_{\text{response tokens}} = \mathbf{8 \text{ terms}}$$
+
+</div>
+
+Only the **8 response tokens** enter $J_{\text{SFT}}$; the 14 prompt tokens are masked to `-100` and pass through as zeros.
+
+<div class="insight">
+
+The mask decides *what you clone*. Keep it, and every gradient teaches "*given the question, produce this answer.*" Drop it, and $\tfrac{14}{22}\approx 64\%$ of your gradient is spent teaching the model to **generate questions** — the wrong half of the conversation.
 
 </div>
 
@@ -260,6 +300,26 @@ Everyone downloads the public base **once**; each task is a tiny adapter swap. O
 
 ---
 
+# LoRA · where the "~4 M params, 8 MB" comes from
+
+Put the per-layer count from Practice problem 1 to work across a whole model. Llama-7B: **32 layers**; apply LoRA to the query and value projections ($W_q, W_v$) — **2 matrices per layer**, each $4096\times 4096$ at $r=8$:
+
+<div class="math-box">
+
+$$\underbrace{2\cdot 4096 \cdot 8}_{\text{one matrix }=\,65{,}536} \times \underbrace{2}_{q,\,v} \times \underbrace{32}_{\text{layers}} = 4{,}194{,}304 \approx \mathbf{4\ M\ params}$$
+
+$$\text{adapter on disk} = 4{,}194{,}304 \times \underbrace{2\,\text{bytes}}_{\text{bf16}} = 8{,}388{,}608\ \text{B} \approx \mathbf{8\ MB}$$
+
+</div>
+
+<div class="keypoint">
+
+That is the whole shippable fine-tune — **8 MB** against a **14 GB** base, a $\sim$1750× smaller download. The base is public and cached once; the *task* is just this tiny patch. It is exactly the "~4 M / 8 MB" row of the table above, now derived from scratch.
+
+</div>
+
+---
+
 # QLoRA · quantization is image-compression
 
 <div class="insight">
@@ -313,6 +373,37 @@ This is the line that democratized LLM fine-tuning — a frontier-scale model on
 
 ---
 
+# LoRA · at inference you can pay *zero* extra cost
+
+While training, $W_0$ and $BA$ stay separate (only $BA$ gets gradients). But once training is done, $\Delta W = \tfrac{\alpha}{r}BA$ is just a matrix the same shape as $W_0$ — so **fold it in once**:
+
+<div class="math-box">
+
+$$W_{\text{merged}} = W_0 + \tfrac{\alpha}{r}BA \qquad\Rightarrow\qquad \text{one matmul, identical FLOPs to the base}$$
+
+</div>
+
+<div class="columns">
+<div>
+
+**Serve merged** → no adapter branch, no latency tax. The fine-tune is *invisible* at run time.
+
+</div>
+<div>
+
+**Serve unmerged** → keep $W_0$ shared and hot-swap a different $BA$ per request. One base in memory, a thousand tasks.
+
+</div>
+</div>
+
+<div class="insight">
+
+Unlike an old-style "adapter layer" bolted between blocks, LoRA adds **no depth** — it *edits an existing weight*. That is why it displaced earlier adapter methods: the parameter savings of touching a little, with **none** of the inference overhead.
+
+</div>
+
+---
+
 # Try it yourself
 
 <div class="notebook">
@@ -324,6 +415,12 @@ This is the line that democratized LLM fine-tuning — a frontier-scale model on
 <div class="notebook">
 
 **📓 Notebook · ES 667 alignment** — fine-tune a 7B model with LoRA + `peft` on a small instruction set; compare its answers before / after, then re-run at 4-bit with QLoRA. *(ES 667 · `notebooks/18-lora-finetune.ipynb`)*
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · quantize & prune** — snap a weight matrix from 16-bit down to 8 / 4 / 2-bit and watch accuracy hold, then fall off a cliff — so you can *see* why 4-bit (NF4) is the sweet spot QLoRA rides. *(Interactive Lab · `interactive/articles/quantize-prune`)*
 
 </div>
 
@@ -375,6 +472,26 @@ That is just **binary cross-entropy** on the label "$w$ beat $l$" — the L01 NL
 
 ---
 
+# Reward model · the loss is just BCE, numerically
+
+Take a single comparison where the model scores the winner $r_w=2.0$ and the loser $r_l=0.5$. Its loss on that pair is
+
+<div class="math-box">
+
+$$\mathcal L_{\text{RM}} = -\log\sigma(r_w - r_l) = -\log\sigma(1.5) = -\log(0.82) \approx \mathbf{0.20}$$
+
+</div>
+
+Now flip it — a **confidently wrong** ranking $r_w=0.5,\, r_l=2.0$ (gap $-1.5$): $\;-\log\sigma(-1.5) = -\log(0.18) \approx \mathbf{1.72}$. Getting the order backwards, confidently, costs $\sim$8× more.
+
+<div class="insight">
+
+Training the reward model is nothing exotic: **binary cross-entropy on the event "$w$ beat $l$,"** summed over a few hundred thousand human comparisons — the same "confidently wrong costs a lot" curve as cross-entropy in L01. Everything downstream (PPO, DPO) inherits this one scoring rule.
+
+</div>
+
+---
+
 # The RLHF pipeline
 
 ![w:900px](figures/lec16/svg/rlhf_pipeline.svg)
@@ -398,6 +515,24 @@ $$\max_\theta\; \underbrace{\mathbb E_{x\sim D,\, y\sim \pi_\theta}\big[\, r_\ph
 </div>
 
 $\pi_\theta$ = trainable policy · $\pi_{\text{ref}}$ = frozen SFT model · $\beta$ = leash strength. The **same KL from L01 Part 5**, now used as a *tether* rather than a *loss*.
+
+---
+
+# Intuition · why *RL*, and not plain backprop?
+
+The objective averages reward over answers the policy **samples**: $\mathbb E_{y\sim\pi_\theta}\big[r_\phi(x,y)\big]$. Improving it would mean differentiating through the *act of sampling a discrete token* — and sampling / $\arg\max$ has **no useful gradient**. You cannot backprop a single scalar "*this whole answer scored 0.95*" the way you backprop a per-token label.
+
+<div class="keypoint">
+
+So we borrow the move that *made* RL: use the reward to **up-weight the log-probability of answers that scored well** — $\nabla_\theta \log\pi_\theta(y)\cdot r_\phi(x,y)$. The reward model is the **critic** (grades answers); the policy is the **actor** (writes them). PPO is just a stable, clipped way to run that actor–critic loop.
+
+</div>
+
+<div class="insight">
+
+Hold this thought: DPO's entire appeal (Part 5) is that it finds a way to *skip the sampling loop* and get back to an ordinary, differentiable **classification** loss.
+
+</div>
 
 ---
 
@@ -516,6 +651,37 @@ A negative slope at $m=0$ means: **increase the margin.** Chain rule pushes $\lo
 
 ---
 
+# Practice problem 4
+
+The reward model — and DPO's *implicit* reward $\hat r = \beta\log\tfrac{\pi_\theta}{\pi_{\text{ref}}}$ — both turn two scores into a preference through the same Bradley–Terry map $P(y_w\succ y_l)=\sigma\big(r(x,y_w)-r(x,y_l)\big)$.
+
+<div class="popquiz">
+
+**Practice problem 4.** A reward model scores a winner $r_w = 2.0$ and a loser $r_l = 0.5$.
+(a) What preference probability $P(y_w\succ y_l)$ does it express? (b) What would $P$ be if the two scores were *equal*? (c) As the gap $r_w-r_l\to\infty$, where does $P$ head — and what does the loss $-\log\sigma(r_w-r_l)$ do to that gap?
+
+</div>
+
+*Try it before the next slide.* *(Recall $\sigma(x)=\tfrac{1}{1+e^{-x}}$, and $\sigma(1.5)\approx 0.82$.)*
+
+---
+
+# Solution · practice problem 4
+
+**(a)** The gap is $r_w-r_l = 1.5$, so
+
+$$P(y_w\succ y_l)=\sigma(1.5)=\frac{1}{1+e^{-1.5}}\approx \mathbf{0.82}.$$
+
+**(b)** Equal scores → gap $0$ → $\sigma(0)=\tfrac12$: the model is **indifferent** (exactly DPO's state at init, Practice problem 3). **(c)** As the gap grows, $P\to 1$; the loss keeps *widening the gap*, but with a shrinking gradient $\big(1-\sigma\big)$ — it stops caring once the winner is clearly ahead.
+
+<div class="keypoint">
+
+One map, used twice: the **reward model** feeds it $r_\phi$; **DPO** feeds the identical $\sigma$ with $\beta\log\tfrac{\pi_\theta}{\pi_{\text{ref}}}$ — computed *on the policy itself*. "The policy is secretly the reward model" is not a slogan; it is the **same Bradley–Terry equation** with a different symbol inside.
+
+</div>
+
+---
+
 # PPO vs DPO · the two pipelines
 
 ![w:880px](figures/lec16/svg/dpo_vs_ppo.svg)
@@ -537,6 +703,24 @@ RLHF learns a reward model, then runs an RL loop against it. DPO folds both into
 <div class="insight">
 
 Same objective — *make preferred answers more likely, stay near SFT* — written two ways. DPO trades a little peak controllability for a **massive** drop in engineering cost, which is why it dominates open source.
+
+</div>
+
+---
+
+# DPO · the subtlety hiding in that loss
+
+DPO only ever sees the **margin** $\hat r_w - \hat r_l$. Nothing in the loss says the winner's likelihood must go *up* — only that it must beat the loser's. So the optimizer can grow the margin the lazy way:
+
+<div class="math-box">
+
+$$\log\pi_\theta(y_w)\!\downarrow \text{ a little}, \quad \log\pi_\theta(y_l)\!\downarrow \text{ a lot} \;\;\Longrightarrow\;\; (\hat r_w-\hat r_l)\!\uparrow \ \text{ while } \ \pi_\theta(y_w)\!\downarrow$$
+
+</div>
+
+<div class="insight">
+
+A DPO run can push **both** answers' probabilities down and still report a falling loss — the model gets better at *ranking* while getting worse at *generating*. This is the real reason practitioners (i) keep an SFT / NLL term alongside DPO, or (ii) reach for variants (IPO, KTO) — and why the $\beta$ leash to $\pi_{\text{ref}}$ still earns its keep even with no explicit RL loop.
 
 </div>
 
@@ -601,6 +785,31 @@ The 2024–25 wave — **o1, o3, DeepSeek-R1, Claude extended thinking** — pus
 <div class="insight">
 
 L17 scaled **training** compute (bigger $N$, more data $D$). This scales **inference** compute. Both curves are still climbing — and the RL that trains the reasoning traces is *exactly* the alignment machinery you just learned.
+
+</div>
+
+---
+
+# Reasoning · put a number on "think longer"
+
+Inference cost is roughly linear in the tokens generated (each token costs $\approx 2N$ FLOPs for an $N$-parameter model). A terse answer and a long reasoning trace differ only by *how much text the model writes before it stops*:
+
+<div class="math-box">
+
+$$\text{direct answer} \approx 200 \text{ tokens} \qquad\text{vs}\qquad \text{reasoning trace} \approx 8{,}000 \text{ tokens}$$
+$$\frac{8{,}000}{200} = \mathbf{40\times}\ \text{ the generation compute — per query}$$
+
+</div>
+
+<div class="insight">
+
+Same weights, same forward pass — the model simply **spends more tokens thinking** before it answers. That is the whole test-time-compute lever: no bigger model, no extra training data, just a longer (RL-trained) chain of thought. The AIME jump from GPT-4 to o1/o3 rides largely on this axis.
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · softmax & temperature** — reasoning traces are *sampled*; slide the temperature to feel how it trades a single greedy path for the diverse chains a model can later select among. *(Interactive Lab · `interactive/articles/softmax-temperature`)*
 
 </div>
 

@@ -122,6 +122,33 @@ These are **pretext tasks** — the answer is derivable from the raw data, so th
 
 ---
 
+# Intuition · the label was hiding inside the input
+
+Supervised learning needs a human to *attach* a $y$ from outside. Self-supervision notices the input already **contains** its own answer — cover part of it, then ask for it back.
+
+<div class="columns">
+<div>
+
+**Supervised**
+A human writes $y=\text{“cat”}$ next to the image. The label lives *outside* the data — and someone has to pay for every one.
+
+</div>
+<div>
+
+**Self-supervised**
+The other crop, the masked word, the next token. The label lives *inside* the data — free, and there are billions of them.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+Every method today is the same move: **split one input into “what the model sees” and “what it must predict.”** The supervision was there all along — we just stopped throwing half of each example away.
+
+</div>
+
+---
+
 # What we're really after: reusable features
 
 The point of pretraining is a *frozen* encoder whose feature space is already organized — so a downstream task needs almost no labels.
@@ -221,6 +248,39 @@ On the unit hypersphere: the anchor pulls its positive **closer** (numerator up)
 
 ---
 
+# Intuition · the whole loss is attract & repel
+
+Strip away the notation and InfoNCE is just two forces acting on points on a sphere:
+
+<div class="columns">
+<div>
+
+**Attract.**
+The one positive — the other crop of *me* — is pulled **in**. That is the numerator climbing.
+
+</div>
+<div>
+
+**Repel.**
+Every other image is pushed **away**. That is the denominator shrinking.
+
+</div>
+</div>
+
+<div class="insight">
+
+There is no third term. *Pull two views of the same image together, push different images apart* **is** the loss — and because it is written as a softmax, it is **literally the L1 cross-entropy** with batch position as the label. Temperature $\tau$ only sets how hard you push the closest distractors.
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · softmax & temperature** — InfoNCE *is* a softmax over cosine similarities. Slide $\tau$ from peaky to uniform and watch which negatives dominate the gradient — the same knob you tune in SimCLR (and that CLIP learns for itself next lecture). *(Interactive Lab · `interactive/articles/softmax-temperature`)*
+
+</div>
+
+---
+
 # Why more negatives help
 
 The InfoNCE denominator sums over **every** negative in the batch. More negatives = "find my partner among more distractors" = a harder task = a stronger signal and a more uniformly-spread embedding space.
@@ -230,6 +290,28 @@ That is why SimCLR needed **batch 8192**, and why **MoCo** added a FIFO **queue*
 <div class="keypoint">
 
 More negatives → tighter contrast → better features, up to a saturating point (Appendix: exactly the $\log N$ term in the mutual-information bound). This batch-size hunger is precisely what **BYOL and MAE escape** — Part 3 drops negatives entirely.
+
+</div>
+
+---
+
+# Worked example · more negatives = a harder, richer task
+
+Fix the positive at $\text{sim}=0.8$ and every negative at $\text{sim}=0.3$, temperature $\tau=0.2$ — so logits are $4.0$ and $1.5$, giving $e^{4.0}=54.6$ and $e^{1.5}=4.48$. Watch the loss as the batch grows:
+
+<div class="math-box">
+
+**2 negatives:** denominator $=54.6 + 2(4.48)=63.6$
+$$\mathcal L = -\log\tfrac{54.6}{63.6}=-\log(0.859)\approx 0.15$$
+
+**10 negatives:** denominator $=54.6 + 10(4.48)=99.4$
+$$\mathcal L = -\log\tfrac{54.6}{99.4}=-\log(0.549)\approx 0.60$$
+
+</div>
+
+<div class="keypoint">
+
+Same positive, same $\tau$ — yet **4× the loss** once there are more distractors. To drive it back down, the encoder must push the positive *even further* ahead of every negative, so more negatives = a **stronger gradient** and a more uniformly spread sphere. (The Appendix makes this exact: the ceiling on shared information is $\log N$.)
 
 </div>
 
@@ -520,6 +602,24 @@ Split the image into patches, **mask 75%**, feed the visible 25% to the encoder,
 
 ---
 
+# Intuition · why 75%? language needs 15%, pixels don't
+
+BERT masks only **15%** of tokens; MAE masks **75%** of patches. Why so much more?
+
+<div class="insight">
+
+**Language is dense; pixels are redundant.** Every word carries hard-won meaning, so hiding a few is already a real puzzle. But a masked patch of sky is almost *free* to guess — just copy the neighbouring blue. Mask a little and the model solves the task by **local interpolation**, learning nothing about objects.
+
+</div>
+
+<div class="keypoint">
+
+You must delete **most** of the image before “fill in the blank” stops being copy-the-neighbour and starts demanding a real *visual world model* — what a whole face or a whole tree looks like. High masking is the pixel-world version of **strong augmentations**: both destroy the cheap shortcut, forcing the encoder onto semantics.
+
+</div>
+
+---
+
 # The asymmetric encoder / decoder
 
 ![w:820px](figures/lec17/svg/mae_pipeline.svg)
@@ -527,6 +627,48 @@ Split the image into patches, **mask 75%**, feed the visible 25% to the encoder,
 <div class="keypoint">
 
 **The heavy encoder sees only the visible 25%.** A large ViT processes a quarter of the patches → **~4× cheaper** pretraining. A **lightweight decoder** then takes the encoded visible patches plus mask tokens and reconstructs everything. Encoder = expensive expert on a few pages; decoder = cheap intern writing the full document. After pretraining, keep the encoder, discard the decoder.
+
+</div>
+
+---
+
+# Practice problem 4
+
+<div class="popquiz">
+
+**Practice problem 4.** An MAE takes a $224\times224$ image split into $16\times16$ patches and masks **75%**. **(a)** How many patches total, and how many does the **encoder** actually process? **(b)** If a ViT's self-attention cost grows with the *square* of the number of tokens, roughly how much cheaper is the encoder than running on the full image?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 4
+
+**(a)** The grid is $224/16 = 14$ patches per side → $14\times14=\mathbf{196}$ patches. Keeping 25%, the encoder sees $0.25\times196=\mathbf{49}$ patches; the other **147** are dropped (only the light decoder ever sees mask tokens).
+
+**(b)** Attention cost $\propto (\text{tokens})^2$, so the ratio is $\left(\tfrac{196}{49}\right)^2 = 4^2 = \mathbf{16\times}$ cheaper on the attention layers. Blended with the linear (MLP) layers that scale $\propto$ tokens ($4\times$), the paper reports an overall **~3–4× speedup**.
+
+<div class="keypoint">
+
+Masking is not only a *pretext* — it is a **compute win**. The expensive encoder runs on a quarter of the patches, which is exactly what lets MAE pretrain huge ViTs cheaply. Contrast SimCLR, whose big-batch negatives make it *more* expensive, not less.
+
+</div>
+
+---
+
+# See it / play with it
+
+<div class="notebook">
+
+**📓 Notebook · MAE from scratch** — patchify tiny-ImageNet, randomly mask 75%, encode the visible patches, and reconstruct with a light decoder. Watch the pixel loss fall and the fill-ins sharpen epoch by epoch. *(ES 667 · `notebooks/17-mae-masking.ipynb`)*
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · information theory by hand** — InfoNCE is secretly a mutual-information bound (Appendix). Drag two distributions and watch cross-entropy split into $H(p)+D_{\text{KL}}$ — the same accounting that gives the $\log N$ ceiling on how much two views can share. *(Interactive Lab · `interactive/articles/info-theory`)*
 
 </div>
 
@@ -560,6 +702,45 @@ Split the image into patches, **mask 75%**, feed the visible 25% to the encoder,
 <div class="insight">
 
 Contrastive learns *invariances* (throw nuisances away); masked prediction learns *everything reconstructable* (keep local detail). That's why they win different downstream tasks — and why DINOv2 blends both ideas.
+
+</div>
+
+---
+
+# Practice problem 5
+
+<div class="popquiz">
+
+**Practice problem 5.** You must build a **tumor-segmentation** model for a hospital: a large pool of *unlabeled* CT scans, only a handful of pixel-level masks, and a tight compute budget (no room for batch-8192). Would you pretrain with **contrastive SimCLR** or **masked MAE** — and why? Give two reasons grounded in today's trade-offs.
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 5
+
+Reach for **MAE**. Two reasons, straight from the trade-off table:
+
+<div class="columns">
+<div>
+
+**1 · The task is dense.**
+Segmentation needs *local*, per-pixel detail. MAE reconstructs pixels, so it learns exactly the fine spatial features segmentation lives on; contrastive learns *global* invariances better suited to whole-image classification.
+
+</div>
+<div>
+
+**2 · The budget is tight.**
+MAE works at **any batch size** and needs almost no augmentation tuning. SimCLR's negatives demand huge batches (8192) you cannot afford, and its augmentation set would need redesigning for CT scans.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+**Match the pretext to the downstream job:** contrastive for global / classification, masked for dense / segmentation. This is exactly why **DINOv2 blends both** — self-distillation for clean global features *and* enough local signal for dense tasks.
 
 </div>
 

@@ -149,6 +149,25 @@ Vocab size is a **tunable knob** (typically 32k–128k). The algorithm that buil
 
 ---
 
+# Intuition · vocabulary size is a dial you tune
+
+The Ng-style move: don't agonize philosophically over char-vs-word — treat **vocabulary size as a hyperparameter** and read the tradeoff off a table. Bigger vocab → **shorter** sequences (cheaper attention), but a **fatter** embedding table and more rare, under-trained tokens.
+
+| Vocabulary | Size | Tokens / English word | Failure mode |
+|:--|:--:|:--:|:--|
+| **Characters** | ~256 | ~4–5 | sequences 5× longer |
+| **Subword (small)** | 32k | ~1.3 | — *the sweet spot* |
+| **Subword (large)** | 100k | ~1.1 | rare tokens under-trained |
+| **Whole words** | ~1M | 1.0 | OOV, giant table |
+
+<div class="insight">
+
+Every modern LLM lives in the **32k–128k** band — large enough that common words collapse to one token, small enough that the embedding table and rare-token counts stay sane. "Just right" is a **measured** compromise, not a philosophy.
+
+</div>
+
+---
+
 # Warm-up: how many tokens is this sentence?
 
 Take **"GPT-4 is great!"**
@@ -186,6 +205,24 @@ Take **"GPT-4 is great!"**
 <div class="insight">
 
 If `ABCABCABC` appears often, define a new symbol $Z = $ `ABC` and rewrite it as `ZZZ`. BPE does exactly this for language: find the most common adjacent pair (like `t`+`h`), replace every occurrence with one new token `th`, and repeat. Compression and tokenization are the *same algorithm* — one shrinks files, the other shrinks sequences.
+
+</div>
+
+---
+
+# Intuition · why merge the *most frequent* pair
+
+Why greedily merge the **most frequent** pair, rather than the "most meaningful" one? Because language is deeply **Zipfian** — a tiny handful of pairs (`t`+`h`, `i`+`n`, `e`+`</w>`) are wildly more common than all the rest.
+
+<div class="insight">
+
+Merging the top pair first buys the **most compression per new token**: one merge of `t`+`h` shortens millions of positions at once. BPE spends its early, precious vocabulary slots exactly where the data is densest — **greedy compression guided by counts, with no hand-written rules.** A linguist would argue about morphemes; BPE just *counts*.
+
+</div>
+
+<div class="keypoint">
+
+Same reason Huffman coding gives short codes to frequent symbols (L1): **frequency is where the bits are.** BPE is Huffman's cousin, run on adjacent *pairs* instead of single symbols.
 
 </div>
 
@@ -243,6 +280,47 @@ Four merges, and BPE has discovered a **whole common word** (`low`) and a **reus
 **Encoding a word never seen in training:** apply merges 1–4 in order to `lowest`:
 $$\texttt{l o w e s t </w>} \xrightarrow{1,2} \texttt{l o w est </w>} \xrightarrow{3,4} \texttt{low est </w>}$$
 A brand-new word, tokenized into two familiar units. **No OOV.**
+
+---
+
+# Worked numeric · what 4 merges bought
+
+Count the tokens in the toy corpus `low lower newest widest`, **before** any merges and **after** the 4 merges (`es`, `est`, `lo`, `low`):
+
+<div class="columns">
+<div>
+
+**Before — chars + `</w>`**
+| word | tokens |
+|:--|:--:|
+| `low` | 4 |
+| `lower` | 6 |
+| `newest` | 7 |
+| `widest` | 7 |
+| **total** | **24** |
+
+</div>
+<div>
+
+**After 4 merges**
+| word | tokens |
+|:--|:--:|
+| `low·</w>` | 2 |
+| `low·e·r·</w>` | 4 |
+| `n·e·w·est·</w>` | 5 |
+| `w·i·d·est·</w>` | 5 |
+| **total** | **16** |
+
+</div>
+</div>
+
+$$\text{compression} = \frac{24}{16} = \mathbf{1.5\times}\qquad(\text{sequence } 33\%\text{ shorter, for only } 4\text{ new tokens})$$
+
+<div class="insight">
+
+Real BPE runs **tens of thousands** of merges — the sequence keeps shrinking with sharply diminishing returns. That plateau is exactly why vocab size settles around 32k–128k (the dial from Part 1).
+
+</div>
 
 ---
 
@@ -405,6 +483,33 @@ Every objective is the **same move**: hide part of the text, output a **distribu
 **Causal LM (GPT)** — predict the **next** token, left context only → built to *generate*.
 **Masked LM (BERT)** — predict a **masked** token, both sides visible → built to *understand*.
 **Span corruption (T5)** — predict a masked **span** with an encoder–decoder → a blend.
+
+</div>
+
+---
+
+# Intuition · comprehension vs composition
+
+An Ng-style analogy for the two objectives, run on the *same* sentence:
+
+<div class="columns">
+<div>
+
+**MLM (BERT) = reading comprehension.**
+You see the whole passage with one word blanked and fill it in — using words on **both sides**. Ideal for *understanding* a fixed text: classification, retrieval, NER. But you never practice producing the next word with the future hidden.
+
+</div>
+<div>
+
+**CLM (GPT) = writing an essay.**
+You emit each word seeing only what you have written **so far** — strictly left context. That is literally the *generation* setting: extend the text one token at a time. Weaker per-token representations, but it can actually *write*.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+Same loss (cross-entropy on the hidden token), opposite **information available**: two-sided → *understand*, left-only → *generate*. Every other difference in Part 3 is a consequence of this single choice.
 
 </div>
 
@@ -595,6 +700,30 @@ Next-token prediction is so rich that a model good at it ends up learning **most
 
 ---
 
+# Intuition · compression *is* understanding
+
+Why should "guess the next token" produce grammar, facts, and reasoning? Because **predicting well requires modeling whatever generated the text.**
+
+<div class="insight">
+
+To put high probability on the next token of a physics paper, a chess game, or a Python function, the model has no shortcut but to internalize physics, chess, and Python. A better next-token predictor is a **better compressor** of the corpus — and to compress the world's text, you must build a model *of the world that wrote it.* (Sutskever's framing; the information-theoretic root of L1: fewer **bits-per-token** = less surprise = more understanding.)
+
+</div>
+
+<div class="keypoint">
+
+**Compression = understanding = low cross-entropy.** The single scalar the optimizer drives down — average $-\log P_\theta(x_t\mid\text{context})$ — is simultaneously the *loss*, the *code length* (L1), and a proxy for *how much the model has understood.*
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · information theory** — watch cross-entropy split into $H(p)+D_\text{KL}(p\Vert q)$; a language model drives its own predictive **bits-per-token** down as it learns. *(Interactive Lab · `interactive/articles/info-theory`)*
+
+</div>
+
+---
+
 # Why the loss is so rich — free supervision at scale
 
 Every position in a context window is its own little labeled example, and the label is just "the next token" — already in the text.
@@ -639,6 +768,147 @@ This scale-and-generality combination is *why* next-token prediction — which l
 <div class="realworld">
 
 **Pointer to L17.** *How much* compute and money a run costs — the $6ND$ rule, Chinchilla-optimal token budgets, the $-per-training-run economics — is L17's job. Today's takeaway is only: the loss is cheap per token, and there are *a lot* of tokens.
+
+</div>
+
+---
+
+# Worked numeric · same meaning, different bills
+
+A tokenizer trained mostly on English is efficient on English and **wasteful elsewhere**. **Fertility** = tokens per word for the *same* content:
+
+| Text (same meaning) | Words | Tokens | Fertility |
+|:--|:--:|:--:|:--:|
+| English | 10 | 12 | **1.2** |
+| German (compounds) | 9 | 18 | **2.0** |
+| Hindi (Devanagari) | 10 | 35 | **3.5** |
+
+<div class="warning">
+
+Higher fertility = more tokens for the *same idea* = more context consumed, more FLOPs, **higher API bill**, and a shorter effective context window. A Hindi user here pays ≈ **3×** what an English user pays to say the same thing.
+
+</div>
+
+<div class="insight">
+
+This is a direct consequence of *what the BPE merges were trained on* (Part 2): English pairs won the vocabulary slots. Multilingual tokenizers (SentencePiece on balanced corpora) narrow — but never fully close — the gap.
+
+</div>
+
+---
+
+# Practice problem 4
+
+<div class="popquiz">
+
+**Practice problem 4 · fertility.** The *same* 8-word sentence in a low-resource language tokenizes to **20 tokens** under tokenizer A (English-centric) and **12 tokens** under tokenizer B (balanced multilingual).
+
+**(a)** Give the fertility (tokens / word) of each.
+**(b)** At \$2 per **1M** tokens, what does each cost to process **100,000** such sentences, and how much does B save?
+**(c)** Name one reason a team might still ship the higher-fertility tokenizer A.
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 4
+
+<div class="columns">
+<div>
+
+**(a) Fertility = tokens / words.**
+$$\text{A}=\tfrac{20}{8}=\mathbf{2.5}\qquad \text{B}=\tfrac{12}{8}=\mathbf{1.5}$$
+B packs the same meaning into 40% fewer tokens.
+
+</div>
+<div>
+
+**(b) Cost over 100k sentences.**
+A: $20\times10^5 = 2.0\text{M} \to \$4.00$
+B: $12\times10^5 = 1.2\text{M} \to \$2.40$
+**B saves \$1.60** — and every request leaves more room in the context window.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+**(c)** A can still win when the workload is **mostly English** (A is the *low*-fertility one there), when you want a mature ecosystem and matching pretrained weights (GPT-2 / Llama), or when a **smaller** vocabulary keeps the embedding table and output softmax cheap. Fertility is one axis of a multi-axis choice — but for non-English users it maps straight to **cost and context**.
+
+</div>
+
+---
+
+# Perplexity · the number everyone quotes
+
+The training loss is average cross-entropy per token; report it in a friendlier unit. **Perplexity** exponentiates it:
+
+$$\text{PPL} = \exp\!\Big(\tfrac{1}{T}\textstyle\sum_t -\log P_\theta(x_t\mid x_{<t})\Big) = 2^{\;\text{bits-per-token}}$$
+
+<div class="insight">
+
+Read it as an **average branching factor**: "at each token the model is as unsure as if choosing uniformly among PPL options." A blind guess over a 50k vocab has PPL 50,000; a good LM on English sits around **10–20**. Lower PPL = fewer bits-per-token = better compression = (previous slide) more understanding.
+
+</div>
+
+<div class="keypoint">
+
+Cross-entropy, bits-per-token, and perplexity are **one number in three costumes** — $\text{bits}=\log_2\text{PPL}=\text{CE}/\ln 2$. **Halving** the per-token loss takes the **square root** of the perplexity — a large win.
+
+</div>
+
+---
+
+# Practice problem 5
+
+<div class="popquiz">
+
+**Practice problem 5 · perplexity.** Over a 4-token validation snippet, a language model assigns the *true* tokens the probabilities $\tfrac12,\ \tfrac12,\ \tfrac14,\ \tfrac18$.
+
+**(a)** Compute the average cross-entropy in **bits per token**.
+**(b)** Convert it to **perplexity**.
+**(c)** A second model reports perplexity **1.0** on the same snippet — what did it do, and is that good news?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 5
+
+**(a) Bits per token** = average of $-\log_2 p$:
+$$-\log_2\tfrac12,\ -\log_2\tfrac12,\ -\log_2\tfrac14,\ -\log_2\tfrac18 = 1,1,2,3 \;\Rightarrow\; \frac{1+1+2+3}{4}=\mathbf{1.75\ \text{bits/token}}$$
+
+**(b) Perplexity** $= 2^{\text{bits}} = 2^{1.75}\approx\mathbf{3.36}$ — "as unsure as a uniform choice among ~3.4 tokens."
+
+<div class="keypoint">
+
+**(c)** Perplexity **1.0** means $2^0=$ **0 bits/token** — the model put probability **1** on every true token. On *training* data that is memorization / overfitting; the only way it is good news is on a genuinely held-out set (essentially never at this extreme). Perplexity near 1 is a **leakage alarm**, not a trophy.
+
+</div>
+
+---
+
+# Play with it · from tokens to behavior
+
+<div class="notebook">
+
+**🎛 Interactive · softmax & temperature** — the LM's final layer is a softmax over the vocabulary; slide temperature from peaky (greedy) to flat (creative) and watch the sampling distribution — and its entropy — move. The exact knob behind LLM decoding. *(Interactive Lab · `interactive/articles/softmax-temperature`)*
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · in-context learning** — few-shot prompting is an *emergent* consequence of next-token pretraining; watch a model pick up a pattern from examples in its context with **no weight updates**. *(Interactive Lab · `interactive/articles/in-context-learning`)*
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · BPE merge playground** — close the loop: type a corpus, merge live, then see how the resulting vocabulary changes token counts (and fertility) on new text. *(Interactive Lab · `interactive/articles/bpe-merges`)*
 
 </div>
 
@@ -693,8 +963,11 @@ This lecture reuses and adapts material from ES 667 course materials and standar
 - **BERT (masked LM)** — Devlin, Chang, Lee & Toutanova, NAACL 2019
 - **T5 (span corruption, text-to-text)** — Raffel et al., JMLR 2020
 - **Pedagogical framing** (crisp, output-first) — A. Ng, *Deep Learning Specialization*
+- **"Compression is understanding," next-token as world-modeling** — framing after I. Sutskever (public talks), grounded in the entropy / bits-per-token view of L1
+- **Perplexity & bits-per-token** — standard LM evaluation, tracing to Shannon, *A Mathematical Theory of Communication* (1948)
+- **Interactive explainers** (BPE merges, softmax & temperature, in-context learning, information theory) — *ES 667 Interactive Lab*, N. Batra
 
-Figures adapted from the ES 667 figure library. Interactive: `interactive-articles/bpe-merges`. All source courses © N. Batra & teaching staff.
+Figures adapted from the ES 667 figure library. Interactive: `interactive/articles/{bpe-merges, softmax-temperature, in-context-learning, info-theory}`. All source courses © N. Batra & teaching staff.
 
 </div>
 

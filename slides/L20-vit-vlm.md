@@ -81,6 +81,45 @@ The whole trick is the first step: **patches → tokens.** Once an image is a se
 
 ---
 
+# ViT · the same machine, a new tokenizer
+
+Ng's move: don't memorize a new architecture — notice it's one you already own. The **entire** ViT body is the L15 Transformer, unchanged. Only the **tokenizer** at the front is new.
+
+<div class="columns">
+<div>
+
+**In an LLM (L15–L17)**
+- token = a word / sub-word
+- embed = **look up** a word vector
+- position = positional encoding
+- pool the sequence to a summary vector
+
+</div>
+<div>
+
+**In a ViT**
+- token = a 16×16 patch
+- embed = **linearly project** the flattened patch
+- position = learned position embedding
+- the `[CLS]` token *is* the summary
+
+</div>
+</div>
+
+<div class="keypoint">
+
+Swap "look up a word vector" for "linearly project a patch" and **every other line is identical.** ViT is L15 with a different first layer.
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · attention & positional encoding** — the exact blocks ViT reuses: watch attention route information between tokens, and see why a set of patches still needs an explicit position signal. *(Interactive Lab · `interactive/articles/attention`, `interactive/articles/positional-encoding`)*
+
+</div>
+
+---
+
 # Why throw away CNNs — the 2020 bet
 
 <div class="paper">
@@ -166,6 +205,24 @@ The patchify step is *conceptually a strided convolution* with kernel = stride =
 
 ---
 
+# Intuition · why patches, not pixels?
+
+<div class="insight">
+
+**Why not just feed the raw pixels as tokens?** A 224×224 image has $224\times224 = 50{,}176$ pixels. Attention is $O(n^2)$ (L14) — that's $\approx 2.5$ **billion** pairwise scores *per layer*. A non-starter.
+
+</div>
+
+Patches are the fix. A 16×16 grid turns 50,176 pixels into **196 tokens** — a $256\times$ shorter sequence, and roughly $256^2 \approx 65{,}000\times$ less attention compute.
+
+<div class="keypoint">
+
+**Patch size is the dial between detail and cost.** Smaller patches → more tokens → finer detail, but attention cost grows *quadratically*. 16×16 is the sweet spot that made ViT trainable at all — the same tension you'll compute for CLIP and LLaVA later.
+
+</div>
+
+---
+
 # ViT · the full read-out
 
 ![w:900px](figures/lec18/svg/vit_patches.svg)
@@ -208,6 +265,22 @@ The `[CLS]` token summarizes the whole image → a linear head turns it into cla
 | DINOv2 ViT-g | 14×14 | 1.1B | 2023 general-purpose vision |
 
 Smaller patches → more tokens → finer detail, but more compute (attention is quadratic in token count, L14). **Swin Transformer** re-introduces windows and hierarchy — a ViT–CNN hybrid that stays popular in practice.
+
+---
+
+# Worked numeric · a ViT-L/14's token count
+
+CLIP's image encoder is a **ViT-L/14**: the *same* 224×224 image, but **14×14** patches instead of 16×16.
+
+<div class="math-box">
+
+- Patches per side: $224 / 14 = 16$.
+- Patch tokens: $16^2 = \mathbf{256}$.
+- Prepend `[CLS]` → $256 + 1 = \mathbf{257}$ tokens.
+
+</div>
+
+Versus ViT-B/16's 197 tokens, the smaller 14×14 patch buys **~30% more tokens** — finer spatial detail — at $\left(\tfrac{257}{197}\right)^2 \approx 1.7\times$ the attention cost. Hold onto **256 patch tokens**: that is exactly what LLaVA will hand its LLM in Part 3.
 
 ---
 
@@ -257,6 +330,24 @@ Under 0.6M parameters turns pixels into tokens — a rounding error next to the 
 </div>
 
 This is **exactly L19's contrastive idea, across two modalities.** In L19 the two "views" were two crops of the *same image*; here the second view is the image's **caption**. Same pull-together / push-apart loss — image-vs-text instead of image-vs-image. Both encoders are Transformers: under the hood, still attention.
+
+---
+
+# Intuition · one shared space
+
+<div class="insight">
+
+**Analogy · a bilingual meaning-space.** Imagine embedding English and French sentences into *one* space where "dog" and "chien" land on the same point. Translation collapses into a nearest-neighbour lookup.
+
+CLIP does exactly this for **images and text**: a photo of a dog and the words "a dog" are pushed to the *same place*. The modality stops mattering — only the *meaning* does.
+
+</div>
+
+<div class="keypoint">
+
+Once image and caption share one space, **comparison across modalities is free** — just a dot product. That single idea powers retrieval, zero-shot classification, and text-guided generation, with **no task-specific heads.**
+
+</div>
 
 ---
 
@@ -384,6 +475,24 @@ The **dog** caption embedding is *identical* to the image embedding (cosine $=1$
 
 ---
 
+# Worked numeric · zero-shot as a softmax
+
+Practice problem 3 found the *nearest* caption. In practice CLIP reports **probabilities** — scale the similarities by temperature $\tau$, then softmax.
+
+Same image $i=[0.6,0.8]$; the sims were cat $=0.6$, dog $=1.0$, car $=0.8$. With $\tau = 0.1$:
+
+$$\text{logits} = [0.6,\ 1.0,\ 0.8]/0.1 = [6,\ 10,\ 8]$$
+
+$$\text{softmax} = \frac{[e^6,\ e^{10},\ e^8]}{e^6+e^{10}+e^8} \approx [\,\mathbf{0.018},\ \mathbf{0.86},\ \mathbf{0.12}\,]$$
+
+<div class="insight">
+
+The small $\tau$ **sharpens** a modest cosine gap ($1.0$ vs $0.8$) into a confident $0.86$ for "dog." It is the very same temperature knob from L01's softmax slide — here it turns raw retrieval scores into a calibrated zero-shot prediction.
+
+</div>
+
+---
+
 # The text encoder is free at inference
 
 <div class="insight">
@@ -416,6 +525,28 @@ Matching the prompt to the training caption distribution *is* the trick — and 
 
 ---
 
+# Explore the shared space yourself
+
+<div class="notebook">
+
+**🎛 Interactive · CLIP zero-shot** — drop in an image, type candidate captions, and watch the softmax reassign probability as you reword the prompt. *(Interactive Lab · `interactive/articles/clip-zero-shot`)*
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · vision self-supervision** — CLIP is contrastive learning without labels (L19); this explainer builds the pull-together / push-apart intuition on images *before* text is added. *(Interactive Lab · `interactive/articles/vision-ssl`)*
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · softmax & temperature** — the exact knob that turns CLIP's cosine similarities into zero-shot probabilities; slide $\tau$ from peaky to uniform and watch the entropy move. *(Interactive Lab · `interactive/articles/softmax-temperature`)*
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ## Part 3 · LLaVA — vision is just more tokens
@@ -431,6 +562,24 @@ A small **projection layer** maps CLIP's image tokens into the **LLM's token spa
 </div>
 
 The pieces already exist: **CLIP/ViT** gives image tokens (Parts 1–2), the **LLM** (L15–L17) generates text. LLaVA only learns the **glue** between them.
+
+---
+
+# Intuition · the LLM can't tell a patch from a word
+
+<div class="insight">
+
+An LLM is just a function on a **sequence of vectors** — it has no idea whether a given vector came from a word or from a photo. It attends, it decodes; that is all.
+
+So if the projection layer lands an image token *in the same neighbourhood* as the word tokens the LLM already knows, the LLM will **read it like a word.** Vision doesn't need a new brain — only vectors in the right coordinate system.
+
+</div>
+
+<div class="keypoint">
+
+This is why "**vision is just more tokens**" is literal, not a slogan: image tokens are prepended to the text tokens and flow through the *identical* attention stack. The projector's entire job is to place them correctly.
+
+</div>
 
 ---
 
@@ -516,6 +665,38 @@ New params: ~4M for the linear bridge — **0.06%** of a 7B model. Now it clicks
 
 ---
 
+# Practice problem 4
+
+<div class="popquiz">
+
+**Practice problem 4.** **LLaVA-1.5** uses a **CLIP ViT-L/14 at 336×336** as its vision tower, then projects into a 7B LLM whose token dimension is $4096$. CLIP's patch dimension is $1024$.
+
+(a) How many image patch tokens does the vision tower produce? (14×14 patches on a 336×336 image.)
+(b) If the user's text prompt is 20 tokens, how many tokens does the LLM read in total?
+(c) How many parameters are in a **single linear** projection $1024 \to 4096$ (weights + bias)?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 4
+
+**(a)** Patches per side $= 336/14 = 24$, so $24^2 = \mathbf{576}$ image tokens.
+
+**(b)** The projection is applied *per token*, so it stays 576 image tokens; prepended to 20 text tokens $\Rightarrow 576 + 20 = \mathbf{596}$ tokens into the LLM.
+
+**(c)** $\underbrace{1024\times 4096}_{\text{weights}} + \underbrace{4096}_{\text{bias}} = 4{,}194{,}304 + 4{,}096 = \mathbf{4{,}198{,}400}$ params.
+
+<div class="keypoint">
+
+~4.2M params — about **0.06%** of a 7B LLM — is the *entire* bridge. The LLM then processes those 576 image tokens exactly like 576 extra words: **vision is just more tokens.**
+
+</div>
+
+---
+
 # See a VLM answer, end to end
 
 <div class="notebook">
@@ -556,6 +737,35 @@ New params: ~4M for the linear bridge — **0.06%** of a 7B model. Now it clicks
 <div class="insight">
 
 Same goal, two couplings: **concatenate** (LLaVA) versus **cross-attend** (Flamingo). Both are, once more, just attention (L14) wired differently — LLaVA won open source on sheer simplicity.
+
+</div>
+
+---
+
+# Practice problem 5
+
+<div class="popquiz">
+
+**Practice problem 5.** From problem 4, LLaVA-1.5 prepends **576** image tokens to a 24-token prompt, for a 600-token sequence. The LLM's self-attention is $O(n^2)$ in sequence length (L14).
+
+(a) Compared with the 24-token *text-only* prompt, by what factor does one attention layer's cost grow?
+(b) Flamingo's **Perceiver Resampler** compresses the image to **64** tokens instead of 576. What is the new sequence length, and roughly what fraction of LLaVA's attention cost is that?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 5
+
+**(a)** $\left(\dfrac{600}{24}\right)^2 = 25^2 = \mathbf{625\times}$ — the image tokens dominate the attention bill.
+
+**(b)** $64 + 24 = 88$ tokens. Cost ratio $\left(\dfrac{88}{600}\right)^2 \approx 0.0215 \Rightarrow \approx \mathbf{2\%}$ of LLaVA's attention compute.
+
+<div class="insight">
+
+Image tokens are *expensive* because attention is quadratic. That is the whole reason for **token-compressing bridges** — Flamingo's resampler (previous slide) and BLIP-2's Q-Former — which trade a little visual detail for a large drop in the LLM's compute. The couplings differ; the motive is this arithmetic.
 
 </div>
 

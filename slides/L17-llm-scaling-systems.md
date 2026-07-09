@@ -143,6 +143,20 @@ We own this rule here; every FLOPs estimate in the course rests on it. Count the
 
 ---
 
+# Where the FLOPs physically run · parallelism
+
+$C \approx 6ND$ says *how much* compute; it hides *where* it runs. A 70B model's weights alone are 140 GB — far past one accelerator's memory. So a real training run is split across thousands of them, three orthogonal ways (usually stacked):
+
+![w:560px](figures/lec15/svg/distributed_training.svg)
+
+<div class="insight">
+
+**Data** (replicate the model, split the batch), **tensor** (split each matrix across devices), **pipeline** (put different layers on different devices). Combine all three — "3D parallelism" — plus **ZeRO** optimizer-state sharding, and a 70B run lands on ~1000 GPUs. This is the "Systems" in the lecture title: $6ND$ is the bill; parallelism is *how you pay it*.
+
+</div>
+
+---
+
 # The scaling law · in one picture
 
 ![w:760px](figures/lec15/svg/loss_vs_compute.svg)
@@ -177,6 +191,24 @@ Because both correction terms shrink as *powers*, they never hit zero — you bu
 
 ---
 
+# Intuition · a straight line you can extrapolate
+
+A power law is a **straight line on log-log axes** — and a straight line is the most forecastable object in science: measure two cheap points and you know where the expensive one lands.
+
+<div class="keypoint">
+
+This is why frontier labs run a **ladder** of small models first — 10M, 100M, 1B params — fit the line, then **extrapolate** to predict the loss of a run that will cost tens of millions of dollars, *before spending it*. Scaling turned "train it and pray" into "read it off the line."
+
+</div>
+
+<div class="insight">
+
+The honest caveat: the line predicts **loss** (next-token cross-entropy), not **capability**. Loss falls smoothly and predictably; whether that smooth drop *buys* you arithmetic or reasoning is a separate, bumpier question — the subject of Part 4. Predictable fuel, less-predictable payoff.
+
+</div>
+
+---
+
 # Explore it yourself
 
 <div class="notebook">
@@ -206,6 +238,33 @@ $$C \approx 6ND, \qquad \frac{D}{N} \approx \mathbf{20 \text{ tokens per paramet
 </div>
 
 *Fine print* · the paper fits $L(N,D) = E + A/N^\alpha + B/D^\beta$ and minimizes it under $C = 6ND$; "20 tokens per parameter" is the headline ratio that falls out, not the whole law.
+
+---
+
+# Intuition · balance the model and the data
+
+Chinchilla in one sentence: **for a fixed budget, don't buy a giant engine you can't afford to fuel.** The sweet spot is roughly **20 training tokens per parameter** — model and data sized to match.
+
+<div class="columns">
+<div>
+
+**Too big, too little data** ($D/N \ll 20$)
+A huge model memorizing a thin dataset — a race-car engine with a coffee-cup fuel tank. GPT-3 sat here.
+
+</div>
+<div>
+
+**Too small, too much data** ($D/N \gg 20$)
+A tiny model drowning in tokens it lacks the capacity to absorb — a moped towing a fuel truck. Compute spent on data the model can't use.
+
+</div>
+</div>
+
+<div class="insight">
+
+Formally, the optimum **balances the two penalty terms** $A/N^\alpha$ and $B/D^\beta$: spend each marginal FLOP wherever it buys the most loss. At the compute-optimal point you are starving neither the model nor the data — which is exactly where $D \approx 20N$ comes from.
+
+</div>
 
 ---
 
@@ -247,6 +306,24 @@ Modern models often train *well past* Chinchilla optimal:
 <div class="insight">
 
 Chinchilla optimizes *training* compute. But a model earns its keep at **inference**. A smaller, over-trained model is cheaper *per query* — you repay the extra training compute many times over in serving. Serving economics, not training, drives 2024-era recipes.
+
+</div>
+
+---
+
+# Intuition · over-train for cheaper inference
+
+Chinchilla minimizes the **training** bill — paid once. But a deployed model pays an **inference** bill on *every* query, forever. So the modern move: deliberately shrink the model and over-feed it data.
+
+<div class="keypoint">
+
+**Pay more upfront to pay less per ride.** A smaller-but-over-trained model costs extra training FLOPs *once*, then is cheaper on every one of billions of future queries — and it fits on smaller, cheaper hardware. It sits *below* Chinchilla on training efficiency, but far *above* it on **total lifetime** efficiency.
+
+</div>
+
+<div class="insight">
+
+The equation is still $C \approx 6ND$ — you have just stopped minimizing $C$. You now minimize *training + lifetime-inference* cost, and that objective pushes $N$ **down** and $D$ **up**. We put numbers on the trade in **Practice problem 4**.
 
 </div>
 
@@ -306,6 +383,27 @@ Note the model is **not** simply $10\times$ bigger when budget grows $10\times$ 
 
 ---
 
+# Worked numeric · pricing a frontier run
+
+Scaling laws turn a training run into a *budget line item*. Take a frontier-scale compute of $C \approx 2\times10^{25}$ FLOPs (illustrative, as of this writing) and price it out.
+
+<div class="math-box">
+
+- Each accelerator delivers $\sim\!4\times10^{14}$ **effective** FLOP/s (fp16, real utilization — well below peak).
+- Accelerator-seconds: $\dfrac{2\times10^{25}}{4\times10^{14}} = 5\times10^{10}\ \text{s} \approx \mathbf{1600}$ **accelerator-years**.
+- Run on 10,000 of them: $\approx \mathbf{58}$ **days** wall-clock.
+- At ~\$2 per accelerator-hour: $5\times10^{10}\,\text{s} = 1.4\times10^{7}$ accelerator-hours $\Rightarrow$ **~\$28 million**.
+
+</div>
+
+<div class="insight">
+
+The exact figures age fast; the *chain* does not: $C \approx 6ND \rightarrow$ FLOPs $\rightarrow$ accelerator-hours $\rightarrow$ dollars is the back-of-envelope behind every training proposal. It is also *why* predicting the loss before you spend (the scaling law) is worth so much — you are committing tens of millions on that one forecast.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ## Part 2 · Capabilities that emerge from scale
@@ -331,6 +429,24 @@ Given three examples, the model infers the pattern (English → French) and emit
 <div class="keypoint">
 
 **Few-shot learning without gradient steps.** Emergent at scale, and the foundation of all modern prompting.
+
+</div>
+
+---
+
+# Intuition · the prompt is a training set that vanishes
+
+Ordinary learning: show examples, take gradient steps, *change the weights.* In-context learning does the first and skips the rest — the examples live only in the prompt, and when the prompt ends the "learning" evaporates. No weight ever moved.
+
+<div class="keypoint">
+
+So *where* did the learning go? Into **pretraining**. Predicting the next token across the whole internet forced the model to build a general pattern-completer — one that, at inference, reads "sea otter → loutre; cheese → fromage; carrot →" as a pattern to finish. The task-learning was **amortized into the weights once**; the prompt just *selects* which learned skill to run.
+
+</div>
+
+<div class="insight">
+
+This reframes prompting: you are not teaching the model, you are **addressing** a capability it already has. Same weights, a different program — chosen by words. (That is the exact question the discuss box a few slides on asks you to answer.)
 
 </div>
 
@@ -615,6 +731,37 @@ GQA cuts the cache by $H_q/H_{kv} = 64/8 = \mathbf{8\times}$ with negligible qua
 
 ---
 
+# Beyond GQA · quantize the weights *and* the cache
+
+GQA shrinks the cache by *sharing* K/V heads. The other lever is **precision** — store each number in fewer bits.
+
+<div class="columns">
+<div>
+
+**Weights** · 70B in fp16 = 140 GB. In **int8**, 70 GB; in **int4**, ~35 GB — the whole model on a single accelerator, with small quality loss.
+
+</div>
+<div>
+
+**KV-cache** · the same fp16 → int8 halving applies to every stored $K$ and $V$. Stack it on GQA and Part 3's 84 GB cache drops toward a few GB.
+
+</div>
+</div>
+
+<div class="insight">
+
+Quantization and GQA are **orthogonal** — they *multiply*. Modern serving stacks combine int8/int4 weights, GQA, and paged KV-caches to fit long contexts and big batches on commodity GPUs. Cheaper serving is won bit by bit.
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · quantize & prune** — sweep bit-width and sparsity; watch model size fall and accuracy hold, then break. *(Interactive Lab · `interactive/articles/quantize-prune`)*
+
+</div>
+
+---
+
 # Practice problem 3
 
 <div class="popquiz">
@@ -640,6 +787,36 @@ $$\frac{4.3\ \text{GB}}{8} \approx \mathbf{0.54\ \text{GB}} \qquad \text{(saved 
 <div class="insight">
 
 The cache scales *linearly* in $H_{kv}$, so the saving is exactly the group ratio — independent of $L$, $T$, or $d_h$. That is why GQA is a free lunch for serving.
+
+</div>
+
+---
+
+# Practice problem 4
+
+<div class="popquiz">
+
+**Practice problem 4.** A frontier lab ships an **8B-parameter** model trained on **~15T tokens** (Llama-3-scale, as of this writing). **(a)** Find $D/N$ and the training FLOPs. **(b)** A *compute-optimal* 8B model would see only $D = 20N$ tokens — how many times **more** training compute did over-training spend? **(c)** In one line: what does that extra spend buy?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 4
+
+**(a)** $\;D/N = \dfrac{15\times10^{12}}{8\times10^{9}} \approx \mathbf{1875}$ tokens/param (vs Chinchilla's 20).
+
+$$C = 6ND = 6\cdot(8\times10^9)\cdot(15\times10^{12}) \approx \mathbf{7.2\times10^{23}\ \text{FLOPs}}$$
+
+**(b)** A compute-optimal 8B sees $D_{\text{opt}} = 20N = 160\text{B}$, so $C_{\text{opt}} = 6\cdot8\times10^9\cdot160\times10^9 \approx 7.7\times10^{21}$:
+
+$$\frac{C}{C_{\text{opt}}} = \frac{7.2\times10^{23}}{7.7\times10^{21}} \approx \mathbf{94\times} \qquad\Big(=\tfrac{1875}{20}\Big)$$
+
+<div class="keypoint">
+
+**(c)** The model is still **8B**, so inference stays cheap ($\sim 2N$ FLOPs/token) — but its capability climbs far above a compute-optimally-trained 8B. Spending that same $7.2\times10^{23}$ budget *optimally* would instead build a $\sqrt{C/120}\approx\mathbf{77B}$ model — **~10× costlier to serve**. Over-training pays ~94× training compute **once** to serve a small model that punches like a large one.
 
 </div>
 
@@ -677,6 +854,34 @@ The surprise: some complex tasks stay near-random until a threshold, then take o
 <div class="insight">
 
 On a hard exact-match metric, performance hugs the floor, then shoots up past a scale threshold. Wei et al. 2022 catalogued dozens of these — arithmetic, in-context learning, chain of thought — none trained for specifically.
+
+</div>
+
+---
+
+# Practice problem 5
+
+<div class="popquiz">
+
+**Practice problem 5.** A task takes **5** reasoning steps and is marked correct only if **all 5** succeed (exact match). Model A gets each step right with probability $0.6$; Model B, $0.9$. **(a)** End-to-end accuracy of each? **(b)** Per step B is only $1.5\times$ better — what is the *end-to-end* ratio, and why does that make emergence look like a cliff?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 5
+
+**(a)** All-or-nothing over 5 independent steps means the accuracies **multiply**:
+
+$$\text{A}: 0.6^5 \approx \mathbf{7.8\%} \qquad \text{B}: 0.9^5 \approx \mathbf{59\%}$$
+
+**(b)** End-to-end ratio $\approx 59/7.8 \approx \mathbf{7.6\times}$ — a $1.5\times$ per-step edge compounds into a $7.6\times$ task-level gap.
+
+<div class="insight">
+
+Because success is a **product** of per-step accuracies, a *smooth* per-step improvement stays pinned near the floor on an exact-match metric, then lifts off once per-step accuracy clears a threshold. That is precisely Schaeffer's point (next slide): the **capability** rose gradually; the **metric** manufactured the cliff. Score by per-step log-prob instead and the "emergence" softens into a ramp.
 
 </div>
 
@@ -742,8 +947,9 @@ These capabilities are latent in a raw pretrained model — but a next-token pre
 </div>
 
 - **Scaling** — loss is a power law in compute; $C \approx 6ND$ (own it), Chinchilla's $D/N \approx 20$; modern models over-train for cheap inference.
+- **Systems** — that budget physically runs on ~1000 GPUs via data / tensor / pipeline parallelism + ZeRO sharding.
 - **Capabilities** — in-context learning, chain of thought, reasoning all *emerge* from scale, with no new objective.
-- **Serving** — RoPE gives long context for free; the KV-cache is the memory wall; GQA cuts it $8\times$ ($84 \to 10.5$ GB).
+- **Serving** — RoPE gives long context for free; the KV-cache is the memory wall; GQA cuts it $8\times$ ($84 \to 10.5$ GB), quantization multiplies the saving.
 - **Emergence** — real capability gap, partly a metric artifact — smooth underneath, sharp at the exact-match metric.
 
 **Next (L18):** from a text *completer* to a *helpful* assistant — alignment.
@@ -763,9 +969,10 @@ This lecture reuses and adapts material from the instructor's ES 667 LLM notes (
 - **RoPE** — Su et al. 2021, *RoFormer: Rotary Position Embedding.*
 - **GQA** — Ainslie et al. 2023, *GQA: Training Generalized Multi-Query Transformer Models.*
 - **Emergent abilities & chain of thought** — Wei et al. 2022 (emergence; CoT); Schaeffer et al. 2023 (metric-artifact critique).
+- **Distributed training (data / tensor / pipeline parallelism, ZeRO)** — Shoeybi et al. 2019 (Megatron-LM); Rajbhandari et al. 2020 (ZeRO); Zhao et al. 2023 (PyTorch FSDP).
 - **Pedagogical framing** — A. Ng, *Deep Learning Specialization* (scaling introduced in-line).
 
-Figures reused from the ES 667 `figures/lec15/` library. Interactive explainers: `interactive/articles/{kv-cache, in-context-learning, positional-encoding, softmax-temperature}`. All source materials © N. Batra & teaching staff.
+Figures reused from the ES 667 `figures/lec15/` library. Interactive explainers: `interactive/articles/{kv-cache, in-context-learning, positional-encoding, softmax-temperature, quantize-prune}`. All source materials © N. Batra & teaching staff.
 
 </div>
 
@@ -810,5 +1017,21 @@ $$(q'_m)^\top k'_n = q^\top R_{\theta_m}^\top R_{\theta_n}\, k = q^\top R_{(n-m)
 <div class="keypoint">
 
 **The score depends only on the offset $n-m$, never on absolute positions** — relative position, zero extra parameters. In high dimensions, group coordinates into pairs and rotate each pair at its own frequency $\Theta_i$ (block-diagonal), so different pairs encode different position scales.
+
+</div>
+
+---
+
+<!-- _class: math-heavy -->
+
+# ⭐⭐⭐ Optional · 3D parallelism & ZeRO
+
+A frontier run stacks three *orthogonal* splits, then shards the optimizer state on top:
+
+![w:470px](figures/lec15/svg/distributed_3d.svg)
+
+<div class="keypoint">
+
+**Data** (split the batch), **tensor** (split each matrix), **pipeline** (split the layers) — combine for "3D parallelism." Then **ZeRO / FSDP** shards the optimizer states (Adam's $m, v$ — two extra copies of *every* parameter) across the data-parallel replicas, so no single GPU holds the full $3\times$ memory. A 70B run is typically $\approx$ 4-way TP · 8-way PP · 32-way DP · ZeRO $\approx$ **1024 GPUs** — the systems substrate underneath $C \approx 6ND$.
 
 </div>
