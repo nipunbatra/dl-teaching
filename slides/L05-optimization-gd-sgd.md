@@ -106,6 +106,32 @@ The **gradient** $\nabla f$ points in the direction of steepest *ascent*; so $-\
 
 ---
 
+# A second picture: a ball rolling downhill
+
+The hiker *feels* the slope and steps. Picture the same surface with a **ball released on it**: gravity pulls it down the steepest direction — exactly $-\nabla f$. Same math, friendlier picture.
+
+<div class="columns">
+<div>
+
+- On a **steep** slope the ball accelerates — large $\lVert\nabla f\rVert$ ⇒ big step.
+- On **flat** ground it barely moves — small gradient ⇒ tiny step.
+
+That is GD's automatic step-shrinking, for free.
+
+</div>
+<div>
+
+<div class="insight">
+
+A *real* ball also carries **momentum** — it keeps some of yesterday's velocity, rolling through small bumps and along a valley floor without stalling. Plain GD throws that memory away; restoring it is exactly **momentum (L6)**.
+
+</div>
+
+</div>
+</div>
+
+---
+
 # Why the gradient is perpendicular to the level sets
 
 A **level set** is $\{x : f(x)=c\}$ — a contour of constant height. Walk *along* a contour and $f$ never changes.
@@ -169,6 +195,22 @@ For $f(x)=x^2$ started far from $0$, the same algorithm does four completely dif
 <div class="keypoint">
 
 **Goldilocks.** Start around $\eta\in[0.01,\,0.1]$ and read your loss curve: exploding $\Rightarrow$ lower it; barely moving $\Rightarrow$ raise it.
+
+</div>
+
+---
+
+# Feel the learning rate yourself
+
+<div class="notebook">
+
+**🎛 Interactive · GD on a loss surface (change the LR)** — drop a marble on $x^2$, drag $\eta$, and watch the four regimes from the table appear live: crawl, glide, oscillate, explode. Then switch to a *stretched* bowl and see one $\eta$ fail in two directions at once. *(Interactive Lab · to be authored at `~/git/interactive/articles/gd-loss-surface`)*
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · learning-rate schedules** — once you can pick a single $\eta$, see how *changing* $\eta$ over training (warmup, then decay) beats any constant. A preview of L6. *(Interactive Lab · `interactive/articles/lr-schedule-visualizer`)*
 
 </div>
 
@@ -270,6 +312,34 @@ This is the single most common failure of vanilla GD/SGD on real losses. **Momen
 
 ---
 
+# One knob, two curvatures
+
+Take a diagonal bowl $f(x,y)=\tfrac12(a\,x^2+b\,y^2)$. GD multiplies each coordinate by its **own** factor every step:
+
+$$x \leftarrow (1-\eta a)\,x,\qquad y \leftarrow (1-\eta b)\,y$$
+
+<div class="columns">
+<div>
+
+**Steep axis** $a=10$, **flat axis** $b=1$ ⇒ $\kappa=10$.
+- Stability needs $|1-\eta a|<1 \Rightarrow \eta<0.2$.
+- At $\eta=0.19$ the flat axis shrinks by only $1-0.19=0.81$ per step — glacial.
+- Push $\eta$ up for the flat axis and the steep axis diverges.
+
+</div>
+<div>
+
+<div class="keypoint">
+
+$\eta$ is a **single scalar**, but curvature is a whole **spectrum** — the Hessian's eigenvalues. One number can't match a spectrum, which is the precise reason **per-parameter** methods (Adam, L6) exist.
+
+</div>
+
+</div>
+</div>
+
+---
+
 # A practical fix you already know: scale your features
 
 Ravines often come from features on wildly different scales (age in $[0,100]$, income in $[0,10^6]$). Standardizing each feature — $x \leftarrow (x-\mu)/\sigma$ — makes the bowl rounder, shrinks $\kappa$, and lets a single $\eta$ work.
@@ -332,6 +402,42 @@ You can diagnose a training run from the loss curve alone: **explode $\to$ diver
 
 ---
 
+# Practice problem 3 · the zig-zag by hand
+
+<div class="popquiz">
+
+**Practice problem 3.** Take the ill-conditioned bowl $f(x,y)=x^2+10y^2$ (Hessian eigenvalues $2$ and $20$, so $\kappa=10$). Start at $(x_0,y_0)=(10,\,1)$ with $\eta=0.09$.
+
+(a) Write $\nabla f$.
+(b) Take **two** GD steps: find $(x_1,y_1)$ and $(x_2,y_2)$.
+(c) What is the $y$-coordinate doing across the steps versus $x$ — and what does that reveal about $\eta$?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 3
+
+$\nabla f=(2x,\;20y)$. Applying $\theta\leftarrow\theta-\eta\nabla f$ with $\eta=0.09$:
+
+| step | $x$ | $y$ | $\nabla f=(2x,\,20y)$ |
+|---|---|---|---|
+| 0 | $10$ | $1$ | $(20,\,20)$ |
+| 1 | $10-0.09(20)=\mathbf{8.2}$ | $1-0.09(20)=\mathbf{-0.8}$ | $(16.4,\,-16)$ |
+| 2 | $8.2-0.09(16.4)=\mathbf{6.72}$ | $-0.8-0.09(-16)=\mathbf{0.64}$ | — |
+
+![w:680px](figures/lec04/svg/ravine_zigzag.svg)
+
+<div class="keypoint">
+
+**$y$ flips sign every step** ($1\to-0.8\to0.64$): it overshoots the valley floor and bounces wall-to-wall, shrinking only $\times0.8$ each time. **$x$ creeps down monotonically** ($\times0.82$/step). One $\eta=0.09$ is *almost too big* for the steep $y$-axis yet *far too small* for the gentle $x$-axis — the ravine failure, in numbers. Momentum (L6) damps the bounce and speeds the crawl.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ## Part 3 · A gradient descent step, worked by hand
@@ -388,6 +494,27 @@ $$\theta_0 = 4 - 0.1(4) = \mathbf{3.6}, \qquad \theta_1 = 0 - 0.1(6.67) = \mathb
 <div class="keypoint">
 
 New loss at $(3.6,-0.67)$ is $\approx 1.93$ — **down from 4.67 in one step.** (Notice $\theta_1$ even moved *away* from its target first; GD only promises the loss drops, not that every coordinate marches straight to its answer.)
+
+</div>
+
+---
+
+# A second step: the descent continues
+
+From $(\theta_0,\theta_1)=(3.6,\,-0.67)$, repeat the *same three columns*:
+
+| $x_i$ | $y_i$ | $\hat y_i$ | $\epsilon_i$ |
+|---|---|---|---|
+| 1 | 1 | $2.93$ | $-1.93$ |
+| 2 | 2 | $2.27$ | $-0.27$ |
+| 3 | 3 | $1.60$ | $\;\;1.40$ |
+
+$$\frac{\partial J}{\partial\theta_0}=-\tfrac23(-0.8)=0.53,\qquad \frac{\partial J}{\partial\theta_1}=-\tfrac23(1.73)=-1.16$$
+$$\theta_0=3.6-0.1(0.53)=\mathbf{3.55},\qquad \theta_1=-0.67-0.1(-1.16)=\mathbf{-0.55}$$
+
+<div class="insight">
+
+Loss: $4.67\to1.92\to\mathbf{1.80}$ — **down every step, with diminishing returns** as $\lVert\nabla J\rVert$ shrinks. And $\theta_1$ *overshot* to $-0.67$, then **reversed** and is now climbing back toward its target $+1$. Per coordinate the path wiggles; the loss only ever falls. Loop it and it spirals into $(0,1)$.
 
 </div>
 
@@ -469,6 +596,31 @@ The catch: those cheap steps are **noisy**. Part 5 proves the noise is harmless 
 
 ---
 
+# Full-batch is a slow committee; SGD is a fast, noisy scout
+
+<div class="columns">
+<div>
+
+**Full-batch GD — the committee.**
+All $n$ examples must vote before the group takes **one** perfectly-aimed step. The direction is exact, but you hold just *one meeting per epoch*.
+
+</div>
+<div>
+
+**SGD — the scout.**
+Ask *one* example (or a squad of 32), trust its rough read, and **move now**. Any single scout may misjudge — but Part 5 proves the scouts are right *on average*.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+In the time the committee schedules its first meeting, the scout has already made **hundreds of moves** and is deep down the valley. What wins training is not precision per step but **steps per second** — which is why essentially all deep learning runs on the noisy scout.
+
+</div>
+
+---
+
 # The same step, worked stochastically
 
 Same data, same start $\theta_0=4,\theta_1=0,\ \eta=0.1$ — but update on **one** sample $(x_1,y_1)=(1,1)$ using the per-example loss $\ell=(y-\hat y)^2$:
@@ -519,11 +671,11 @@ So the true gradient is literally the **mean** of the $n$ per-example gradients.
 
 ---
 
-# Practice problem 3 · prove SGD is unbiased
+# Practice problem 4 · prove SGD is unbiased
 
 <div class="popquiz">
 
-**Practice problem 3 (guided).** Pick index $j$ **uniformly at random** from $\{1,\dots,n\}$ and use $\hat g = \nabla\ell_j(\theta)$ as your gradient estimate. Show that
+**Practice problem 4 (guided).** Pick index $j$ **uniformly at random** from $\{1,\dots,n\}$ and use $\hat g = \nabla\ell_j(\theta)$ as your gradient estimate. Show that
 
 $$\mathbb E[\hat g] = \nabla J(\theta).$$
 
@@ -535,7 +687,7 @@ $$\mathbb E[\hat g] = \nabla J(\theta).$$
 
 ---
 
-# Solution · practice problem 3
+# Solution · practice problem 4
 
 <div class="math-box">
 
@@ -552,6 +704,38 @@ $$
 </div>
 
 **On average, the one-sample gradient points exactly where the full gradient points.** A minibatch of size $b$ is the average of $b$ such draws, so it's unbiased too.
+
+---
+
+# The scatter, with numbers
+
+A one-parameter toy with four examples whose gradients are $g_1,g_2,g_3,g_4 = 2,\,6,\,-2,\,2$. The **true** gradient is their mean:
+
+$$\nabla J=\tfrac14(2+6-2+2)=2$$
+
+<div class="columns">
+<div>
+
+- A **single** random draw returns $2,6,-2,$ or $2$ — average $=2=\nabla J$ (**unbiased**), yet any one is off by up to $4$.
+- Population variance: deviations $(0,4,-4,0)$ ⇒ $\sigma^2=\tfrac{0+16+16+0}{4}=8$.
+
+</div>
+<div>
+
+| batch $b$ | $\operatorname{Var}(\hat g)=\sigma^2/b$ |
+|---|---|
+| 1 | 8 |
+| 2 | 4 |
+| 4 | 2 |
+
+</div>
+</div>
+
+<div class="keypoint">
+
+Same **aim** ($=2$) at every batch size — only the **wobble** shrinks, exactly the $1/b$ law. Averaging kills variance, never bias.
+
+</div>
 
 ---
 
@@ -592,6 +776,72 @@ So the noise costs us nothing in expectation. Next: it actually **helps**.
 
 ---
 
+# Bias and variance of a gradient estimate
+
+Every estimator's error splits two ways: $\;\text{error}=\underbrace{\text{bias}}_{\text{systematic}}+\underbrace{\text{noise}}_{\text{random (variance)}}.$ For the minibatch gradient:
+
+<div class="columns">
+<div>
+
+- **Bias** $=\mathbb E[\hat g]-\nabla J=\mathbf 0$ — proven, at *every* batch size. The scouts never lie *systematically*.
+- **Variance** $\propto 1/b$ — the *only* error, and you dial it with the batch size (or average it away over many steps).
+
+</div>
+<div>
+
+<div class="insight">
+
+This is the best possible case. A *biased* shortcut (a stale gradient, a subsampled feature set) could point **consistently wrong** and derail training no matter how long you run. SGD's error is pure, **zero-mean** noise — it washes out. Zero bias licenses the whole method; the $1/b$ variance is just a speed–stability dial.
+
+</div>
+
+</div>
+</div>
+
+---
+
+# Practice problem 5 · variance reduction from batch size
+
+<div class="popquiz">
+
+**Practice problem 5.** A single-example gradient has variance $\sigma^2$ per coordinate. You average $b$ iid example-gradients into one minibatch gradient $\hat g$.
+
+(a) What is $\operatorname{Var}(\hat g)$?
+(b) By what factor does the typical noise — the **standard deviation** — drop going from $b=1$ to $b=100$?
+(c) You use $b=32$ now and want to **halve** the noise (std). What $b$ do you need?
+(d) Doubling $b$ doubles compute per step but cuts noise-std by only $\sqrt2$. What does that imply about *huge* batches?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 5
+
+<div class="columns">
+<div>
+
+**(a)** $\operatorname{Var}(\hat g)=\sigma^2/b$ (mean of $b$ iid).
+**(b)** std $\propto 1/\sqrt b$; $b:1\to100$ drops it by $\sqrt{100}=\mathbf{10\times}$.
+**(c)** Halving std needs $4\times$ the variance ⇒ $4\times$ batch ⇒ $b=\mathbf{128}$.
+
+</div>
+<div>
+
+**(d)** Cost grows **linearly** in $b$; noise-std falls only as $\sqrt b$. Past a point, bigger batches buy little stability for a lot of compute — why batch sizes plateau (32–512) rather than going full-batch.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+**Noise (std) falls as $1/\sqrt b$ — a square-root law, not $1/b$.** Quadrupling the batch only *halves* the wobble: the variance is $1/b$, but the noise you actually feel is its square root.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ## Part 6 · Why the noise even helps
@@ -607,6 +857,38 @@ Batch GD is *deterministic*: land on a saddle where $\nabla J=0$ and it sits the
 <div class="keypoint">
 
 In the million-dimensional, non-convex landscapes of deep nets — which are *dominated* by saddles — this stochastic jitter is not a bug to be tolerated but a **feature that keeps training moving.** The very noise Part 5 proved harmless turns out to be useful.
+
+</div>
+
+---
+
+# The vivid picture: shake the table
+
+Picture the loss as a **bumpy floor** with a marble on it. Batch GD sets the marble down gently: it rolls to the nearest dimple — even a shallow, bad one — and stops dead on any flat saddle.
+
+SGD **shakes the table**. Every noisy minibatch step is a small random jolt: too weak to knock the marble out of a deep, wide basin (a good minimum), but easily enough to rattle it off a flat saddle or out of a shallow, narrow dip.
+
+![w:480px](figures/lec04/svg/saddle_minima.svg)
+
+<div class="insight">
+
+The noise acts like a **temperature** — enough to explore and escape traps, not so much that it wrecks a good solution. Late in training we deliberately **cool** it (shrink $\eta$, grow $b$) so the marble finally settles. That is the intuition behind learning-rate decay and large-batch fine-tuning (L6).
+
+</div>
+
+---
+
+# Explore the optimizers
+
+<div class="notebook">
+
+**🎛 Interactive · optimizer race** — watch plain SGD, momentum, and Adam start from the same point and race down one contour: SGD zig-zags the ravine while the others cut straight across the floor. A live preview of L6. *(Interactive Lab · `interactive/articles/optimizer-race`)*
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · beyond vanilla SGD** — toggle the gradient noise, the batch size, and the condition number $\kappa$, and watch the path and the loss curve respond. *(Interactive Lab · `interactive/articles/optimizers-beyond`)*
 
 </div>
 
@@ -671,6 +953,7 @@ This lecture reuses and adapts material from the instructor's own courses (IIT G
 - **Taylor-series derivation, gradient $\perp$ level sets, GD & SGD worked examples, the unbiased-estimator proof, complexity comparison** — *Machine Learning (ES 335)*, optimization slides & notebooks, N. Batra · `github.com/nipunbatra/ml-teaching` (`optimization/slides/gradient-descent.tex`, `convexity.tex`; `notebooks/gradient-descent-2d.ipynb`, `gradient-descent-fit-contour.ipynb`)
 - **Pedagogical framing (batch → mini-batch → stochastic, "compute argument")** — A. Ng, *Deep Learning Specialization*, Course 2 (Improving Deep Neural Networks), Week 2.
 - **Loss-landscape, ravine, saddle & variance figures** — ES 667 figure library (`figures/lec04`).
+- **Interactive optimizer / learning-rate visualizers** — ES 667 Interactive Lab (`interactive/articles/optimizer-race`, `optimizers-beyond`, `lr-schedule-visualizer`).
 
 All source courses © N. Batra & teaching staff.
 

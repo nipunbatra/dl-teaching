@@ -111,6 +111,22 @@ $$\underbrace{\frac{\partial L}{\partial \text{input}}}_{\text{downstream}} \;=\
 
 ---
 
+# Every node is a valve on the gradient
+
+The rule **downstream = local × upstream** turns each node into a tiny **valve**: it takes the flow handed down from above and multiplies by its own local derivative before passing it on.
+
+- **`+` node** — local derivative $=1$: the valve is wide open, so the gradient passes through **unchanged** to each input. A `+` node is a pure **router**.
+- **`×` node** — local derivative $=$ the *other* input: the valve is set to that value, so the gradient is **swapped and scaled**.
+- **saturated `tanh`** — local derivative $1-t^2\approx 0$: the valve is nearly **shut**, and almost no gradient gets through.
+
+<div class="insight">
+
+That's the whole of backprop in one metaphor. The gradient at an early node is the **product of every valve setting** along the path to the loss — open valves ($+$) pass it on, near-shut valves (saturated squashes) choke it. Part 4 is what happens when too many valves sit almost closed.
+
+</div>
+
+---
+
 # Backward pass: fill in the tiny graph
 
 Seed the output with $\dfrac{\partial L}{\partial L}=1$, then walk backward applying the rule.
@@ -155,6 +171,31 @@ Every op you need is one line. `out` is the node; the rule says what to **add** 
 <div class="keypoint">
 
 **"Add" distributes the gradient; "multiply" swaps and scales.** Memorize those two — they cover most of every network you'll ever train.
+
+</div>
+
+---
+
+# What a gradient actually tells you
+
+A gradient is a **local linear model** of the loss: near the current values, $\;L \approx L_0 + \dfrac{\partial L}{\partial x}\,\Delta x$.
+
+<div class="columns">
+<div>
+
+**Sign** — which way to nudge the input to *raise* $L$. From the tiny graph, $\partial L/\partial x = -3$: push $x$ **up** and $L$ goes **down**. So descend by stepping *against* the sign.
+
+</div>
+<div>
+
+**Magnitude** — sensitivity. $\partial L/\partial b = 1$ moves $L$ gently; a grad of $-24$ (Practice 1) moves it hard. Big grad → this knob matters a lot *right now*.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+Backprop hands you this sign-and-size for **every** parameter at once. Gradient descent (L5) then does the only obvious thing with it: take a small step **downhill**, $\;\theta \leftarrow \theta - \eta\,\partial L/\partial\theta$, and repeat.
 
 </div>
 
@@ -545,6 +586,62 @@ The engine gets $(-24,\,16,\,8)$ — **identical** to the by-hand answer. It nev
 
 <!-- _class: code-heavy -->
 
+# The whole engine, on one slide
+
+Everything so far — the roughly forty lines that differentiate *any* scalar expression:
+
+```python
+class Value:
+    def __init__(self, data, _children=(), _op=''):
+        self.data, self.grad = data, 0.0
+        self._prev, self._op = set(_children), _op
+        self._backward = lambda: None
+
+    def __add__(self, other):
+        other = other if isinstance(other, Value) else Value(other)
+        out = Value(self.data + other.data, (self, other), '+')
+        def _backward(): self.grad += out.grad; other.grad += out.grad
+        out._backward = _backward; return out
+
+    def __mul__(self, other):
+        other = other if isinstance(other, Value) else Value(other)
+        out = Value(self.data * other.data, (self, other), '*')
+        def _backward():
+            self.grad  += other.data * out.grad
+            other.grad += self.data  * out.grad
+        out._backward = _backward; return out
+
+    def __pow__(self, k):
+        out = Value(self.data ** k, (self,), f'**{k}')
+        def _backward(): self.grad += (k * self.data ** (k-1)) * out.grad
+        out._backward = _backward; return out
+
+    def tanh(self):
+        t = math.tanh(self.data); out = Value(t, (self,), 'tanh')
+        def _backward(): self.grad += (1 - t*t) * out.grad
+        out._backward = _backward; return out
+
+    def backward(self):
+        topo, seen = [], set()
+        def build(v):
+            if v not in seen:
+                seen.add(v)
+                for c in v._prev: build(c)
+                topo.append(v)
+        build(self); self.grad = 1.0
+        for v in reversed(topo): v._backward()
+```
+
+<div class="keypoint">
+
+This is **all of it.** `relu`, `exp`, division, neurons, whole MLPs — every one **composes** on top of these primitives. PyTorch adds tensors, a C++ backend, and a GPU; the *algorithm* on this slide does not change.
+
+</div>
+
+---
+
+<!-- _class: code-heavy -->
+
 # From a `Value` to a neuron — the payoff
 
 A neuron is $w\cdot x + b$ then a squash. Built from `Value`, its parameters get gradients **for free**.
@@ -569,6 +666,36 @@ Stack `Neuron`s into layers, layers into an MLP, define a loss — one `loss.bac
 
 ---
 
+<!-- _class: code-heavy -->
+
+# Train a neuron on 4 points — end to end
+
+No PyTorch. The `Value` engine, a `Neuron`, and a hand-written SGD loop — a net that actually learns:
+
+```python
+xs = [[2.0, 3.0], [3.0, -1.0], [-1.0, -2.0], [-2.0, 1.0]]   # 4 tiny 2-D points
+ys = [1.0, -1.0, -1.0, 1.0]                                  # targets in {-1, +1}
+
+n = Neuron(2)                          # w1, w2, b are Values; params() -> [w1, w2, b]
+for step in range(100):
+    preds = [n(x) for x in xs]                          # forward: tanh(w·x + b)
+    loss  = sum((p - y)**2 for p, y in zip(preds, ys))  # MSE, built from Values
+
+    for p in n.params(): p.grad = 0.0   # zero_grad   (Practice 3!)
+    loss.backward()                     # fill every w.grad, b.grad in ONE pass
+    for p in n.params(): p.data += -0.05 * p.grad        # SGD step (L5)
+
+    if step % 20 == 0: print(step, loss.data)            # loss falls: 3.1 -> 0.2 -> ...
+```
+
+<div class="insight">
+
+That inner block is the **five-line loop** from L1 — running on the engine *we wrote*, gradients and all. Add a `params()` returning `self.w + [self.b]`, stack `Neuron`s into an `MLP`, and this exact loop trains the whole network. *(After Karpathy's `micrograd` demo.)*
+
+</div>
+
+---
+
 # Explore & rebuild it yourself
 
 <div class="notebook">
@@ -585,7 +712,7 @@ Stack `Neuron`s into layers, layers into an MLP, define a loss — one `loss.bac
 
 <div class="notebook">
 
-**🎛 Interactive · watch gradients flow through a graph** — a scroll-driven explainer where you seed the output and step the backward pass node by node, watching each `.grad` fill in. *(Interactive Lab · could be authored at `~/git/interactive`)*
+**🎛 Interactive · watch gradients flow through a graph** — a scroll-driven explainer where you seed the output and step the backward pass node by node, watching each `.grad` fill in. *(Interactive Lab · `~/git/interactive/src/articles/autograd`)*
 
 </div>
 
@@ -606,6 +733,33 @@ We recorded operations on a **tape** (the graph) during the forward pass, then r
 <div class="keypoint">
 
 **One backward pass yields the gradient w.r.t. every input at once** — at roughly the cost of *one* forward pass, no matter how many parameters. That efficiency is the reason training billion-parameter nets is even thinkable.
+
+</div>
+
+---
+
+# Two directions to differentiate — pick the cheap one
+
+Autodiff can sweep the graph either way. The **shape** of the problem decides which is cheap.
+
+<div class="columns">
+<div>
+
+**Forward mode** — start at an **input**, push its influence forward to every output. One sweep per *input*.
+
+</div>
+<div>
+
+**Reverse mode** — start at the **output**, pull its sensitivity back to every input. One sweep per *output*.
+
+</div>
+</div>
+
+A neural net is **wide in, thin out**: millions of inputs (the parameters), a **single** scalar output (the loss).
+
+<div class="keypoint">
+
+Wide in, thin out $\Rightarrow$ go **backward**: one reverse sweep delivers all million gradients, where forward mode would need a million sweeps. That single shape fact is *why* it's called **back**prop. *(The rigorous $\propto n$ vs $\propto m$ cost is in the appendix.)*
 
 </div>
 
@@ -633,6 +787,37 @@ print(w.grad, b.grad)     # tensor(16.) tensor(8.)  -- matches our engine's node
 <div class="insight">
 
 `w.grad = 16`, `b.grad = 8` — the very gradients our `Value` engine produced for the corresponding nodes. Same algorithm; PyTorch just runs it on tensors, fused and on the GPU.
+
+</div>
+
+---
+
+# PyTorch is just this, vectorized
+
+Going from our `Value` to `torch.Tensor` changes the **data type**, not the **algorithm**:
+
+<div class="columns">
+<div>
+
+**micrograd**
+- a node holds one **scalar**
+- `_backward` is a single **multiply** by the local derivative
+- seed `dL/dL = 1`, replay in topo order, accumulate with `+=`
+
+</div>
+<div>
+
+**PyTorch**
+- a node holds a **tensor**
+- `_backward` is a **Jacobian–vector product** (a matmul)
+- seed, topo order, `+=` — **identical**
+
+</div>
+</div>
+
+<div class="keypoint">
+
+`+` still routes; a matmul is just `*` that "swaps" with the other operand **transposed**. Every `nn` layer registers a local Jacobian rule exactly like our `_backward` closures. Understand the 25-line engine and you understand `torch.autograd` — everything else is speed.
 
 </div>
 
@@ -788,6 +973,90 @@ for x, y in loader:              # 1. a mini-batch
 
 ---
 
+# Practice problem 4
+
+<div class="popquiz">
+
+**Practice problem 4.** Hand-backprop a **whole neuron**. Inputs $x_1=2,\ x_2=-1$; weights $w_1=1,\ w_2=2$; bias $b=0$; target $y=-1$.
+
+$$n = w_1x_1 + w_2x_2 + b,\qquad o = \tanh(n),\qquad L = (o-y)^2$$
+
+Do the forward pass, then backprop to find $\dfrac{\partial L}{\partial w_1},\ \dfrac{\partial L}{\partial w_2},\ \dfrac{\partial L}{\partial b}$.
+
+</div>
+
+*Try it before the next slide — the numbers are chosen so $\tanh$ stays clean.*
+
+---
+
+# Solution · practice problem 4
+
+**Forward:** $\;n = (1)(2)+(2)(-1)+0 = 0,\quad o=\tanh 0 = 0,\quad L=(0-(-1))^2 = 1.$
+
+**Backward**, node by node (seed $\partial L/\partial L=1$):
+
+$$\frac{\partial L}{\partial o}=2(o-y)=2 \;\xrightarrow{\;\tanh\;}\; \frac{\partial L}{\partial n}=(1-o^2)\frac{\partial L}{\partial o}=(1)(2)=2$$
+
+Then the linear node ($+$ copies, $\times$ swaps):
+
+$$\frac{\partial L}{\partial w_1}=x_1\frac{\partial L}{\partial n}=4,\qquad \frac{\partial L}{\partial w_2}=x_2\frac{\partial L}{\partial n}=-2,\qquad \frac{\partial L}{\partial b}=\frac{\partial L}{\partial n}=2$$
+
+<div class="keypoint">
+
+$$\boxed{\ \partial L/\partial w_1 = 4,\quad \partial L/\partial w_2 = -2,\quad \partial L/\partial b = 2\ }$$
+
+To cut the loss: $w_1$ **down**, $w_2$ **up**, $b$ **down**. Had $n$ been large, $1-o^2$ would be tiny and *every* weight's gradient would shrink with it — saturation throttling learning, exactly Part 4. *(This is Karpathy's `micrograd` neuron, done by hand.)*
+
+</div>
+
+---
+
+# Practice problem 5
+
+<div class="popquiz">
+
+**Practice problem 5.** Add one primitive: the exponential. Fill in its `_backward`, then build `sigmoid` with **no new** backward rule.
+
+```python
+def exp(self):
+    out = Value(math.exp(self.data), (self,), 'exp')
+    def _backward():
+        self.grad += ______ * out.grad      # d/dx e^x = ?
+    out._backward = _backward
+    return out
+```
+
+What goes in the blank? Then write `sigmoid` using only `exp`, `+`, `*`, and `**`.
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 5
+
+$\dfrac{d}{dx}e^x = e^x$ — and we **already computed** $e^x$; it's sitting in `out.data`. So reuse it, no re-exponentiating:
+
+```python
+        self.grad += out.data * out.grad     # local grad = e^x = out.data
+```
+
+`sigmoid` is then pure **composition** — $\sigma(x)=\dfrac{1}{1+e^{-x}}$ — and inherits correct gradients for free:
+
+```python
+def sigmoid(self):
+    return ((self * -1).exp() + 1) ** -1     # 1 / (1 + e^{-x}), all existing ops
+```
+
+<div class="keypoint">
+
+Contrast `pow`, whose local rule is $k\,a^{k-1}$; `exp` is special because its derivative **is** its own output. And once a primitive has a correct local rule, everything built from it — `sigmoid`, soft-plus, even `tanh` — differentiates automatically. That is the whole "small set of primitives" payoff.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ## Part 4 · Coda — keeping gradients healthy through depth
@@ -821,6 +1090,24 @@ Track the **variance** of activations (and gradients) as they pass through layer
 The fix isn't a new algorithm — it's **initialization**. Choose the initial weight scale so each layer keeps variance $\approx 1$ on both the forward and backward pass. Then the chain-rule product stays near $1$ and gradients neither vanish nor explode.
 
 </div>
+
+---
+
+# Watch the gradient die — and be revived
+
+<div class="notebook">
+
+**🎛 Interactive · vanishing gradients through depth** — stack sigmoid / tanh / ReLU layers and watch the gradient magnitude at each layer as depth grows; then switch on Xavier/He init and see the early-layer gradients come back to life. *(Interactive Lab · `~/git/interactive/src/articles/vanishing-gradients`)*
+
+</div>
+
+<div class="popquiz">
+
+**Predict first.** Ten `tanh` layers, each contributing a local gradient of about $0.25$ in its active region. Roughly what factor multiplies the gradient by the time it reaches layer 1 — $0.25\times 10$, $0.25^{10}$, or $10^{0.25}$?
+
+</div>
+
+*Answer:* $0.25^{10}\approx 10^{-6}$ — a **product**, not a sum. The first layer sees a gradient a *million* times smaller than the last. That is the vanishing-gradient problem in one number, and why the initialization on the next slides matters.
 
 ---
 

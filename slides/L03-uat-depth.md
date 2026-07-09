@@ -144,6 +144,26 @@ XOR is the historical embarrassment (Minsky & Papert, 1969) that stalled neural 
 
 ---
 
+# One neuron places one kink
+
+A single ReLU neuron bends the input line at exactly one place — where its pre-activation crosses zero:
+
+<div class="math-box">
+
+$$h=\text{relu}(wx+b)=0 \iff x = -\frac{b}{w}.$$
+
+$w$ sets the **slope** after the kink; $b$ **slides** the kink left or right.
+
+</div>
+
+<div class="insight">
+
+So one neuron is **one hinge** you can put anywhere and tilt to any slope. A hidden layer is a *box of hinges* — and Part 2 shows how a handful of them snap together into any bump. The activation zoo below is just different hinge shapes.
+
+</div>
+
+---
+
 # The nonlinearity zoo: sigmoid, tanh, ReLU
 
 ![w:820px](figures/lec01/svg/activation_grid.svg)
@@ -271,6 +291,27 @@ A perfect triangular bump at $x=2$. Tile the axis with these, weight each by the
 
 ---
 
+# From one brick to the whole curve
+
+You have the brick (a triangle bump). Here is the entire assembly line — four moves and you have *any* curve:
+
+<div class="math-box">
+
+1. **Slice** the input axis into $N$ intervals of width $h$.
+2. **Place** one bump on each interval — 3 ReLUs apiece.
+3. **Scale** bump $i$ by $\alpha_i=f(x_i)$, the target's height there.
+4. **Sum:** $\;\hat f(x)=\sum_{i=1}^{N}\alpha_i\,\text{bump}_i(x)$.
+
+</div>
+
+<div class="insight">
+
+Every step lives in **one hidden layer** — the bumps are its neurons, the $\alpha_i$ are the output weights. Finer slices ($h\downarrow$) buy more neurons and a tighter fit. That is the whole trick: **UAT is just "enough LEGO bricks, each scaled to the target."**
+
+</div>
+
+---
+
 # Worked example: approximate $x^2$ with 4 ReLUs
 
 ![w:900px](figures/lec02/svg/uat_relu_bumps.svg)
@@ -295,6 +336,47 @@ Four ReLU **ramps** at $x=0,0.25,0.5,0.75$ on $[0,1]$, each $\text{relu}(x-b)$ w
 </div>
 
 The running slope $(0.25,0.75,1.25,1.75)$ is exactly the average slope of $x^2$ on each quarter, so the output **matches $x^2$ at every knot**. Between knots the error is at most $\frac{h^2}{8}\max|f''| = \frac{0.25^2}{8}\cdot 2 = \frac{1}{64}\approx 0.016$ — and shrinks as you add ramps.
+
+---
+
+# Add more bricks, watch the error fall
+
+Triangle-tiling on $[0,1]$ has error $\le \tfrac{h^2}{8}\max|f''|$ with $h=1/N$. For $x^2$ ($\max|f''|=2$) that is $\le h^2/4$:
+
+<div class="math-box">
+
+| ramps $N$ | width $h$ | error bound |
+|:-:|:-:|:-:|
+| 4  | 0.25   | $1.6\times10^{-2}$ |
+| 8  | 0.125  | $3.9\times10^{-3}$ |
+| 16 | 0.0625 | $9.8\times10^{-4}$ |
+| 32 | 0.031  | $2.4\times10^{-4}$ |
+
+</div>
+
+<div class="insight">
+
+**Double the width, quarter the error** — in 1-D accuracy is *cheap*. But hold onto $N$: to keep this error over $d$ inputs you need a bump per cell of a $d$-dimensional grid — about $N^{d}$ of them. That lone exponent is the whole story of Part 3.
+
+</div>
+
+---
+
+# Any squasher builds bumps — ReLU is just the tidiest
+
+Nothing here is special to ReLU. A steep **sigmoid** is almost a step, so two of them subtracted make a bump — same LEGO game, curvier bricks:
+
+<div class="math-box">
+
+$$\text{bump}(x)\approx \sigma\!\big(s(x-a)\big)-\sigma\!\big(s(x-b)\big),\qquad s \text{ large}.$$
+
+</div>
+
+<div class="insight">
+
+That is why UAT holds for sigmoid, tanh, GELU — **any non-polynomial squash.** ReLU won the day for *training* (its gradient is exactly 1 when active), not for *expressiveness*. Bricks are bricks; only the shape changes.
+
+</div>
 
 ---
 
@@ -378,6 +460,29 @@ UAT says good weights **exist**. It does *not* say $N$ is reasonable, that SGD f
 
 ---
 
+# The curse, made tangible
+
+Cover the input space with a grid at resolution $0.1$ — ten bins per axis, one bump per cell:
+
+<div class="math-box">
+
+| inputs $d$ | grid cells $10^{d}$ | vs. a big dataset ($10^7$) |
+|:-:|:-:|:-:|
+| 2  | $100$        | trivially covered |
+| 5  | $100{,}000$  | still fine |
+| 10 | $10^{10}$    | **1000× more cells than data** |
+| 20 | $10^{20}$    | more cells than seconds since the Big Bang |
+
+</div>
+
+<div class="warning">
+
+In high dimensions **almost every cell is empty** — the data can't even reach most of the bumps a shallow net would need. Distances concentrate, "nearest" neighbors stop being near, and filling space by brute width is hopeless. Depth escapes by *reusing* structure instead of tiling space.
+
+</div>
+
+---
+
 # Three things UAT does *not* promise
 
 <div class="columns">
@@ -432,6 +537,36 @@ This compositional reuse is the inductive bias depth gives you that width alone 
 
 ---
 
+# Why reuse wins: one edge detector, every object
+
+<div class="keypoint">
+
+A shallow net that must recognize 1000 objects learns each one *straight from pixels*, separately — no sharing. A deep net learns **edges once**, then every shape reuses those edges and every object reuses those shapes.
+
+</div>
+
+<div class="columns">
+<div>
+
+**Shallow — no sharing**
+`pixels → object₁`
+`pixels → object₂`
+… 1000 independent templates
+
+</div>
+<div>
+
+**Deep — shared substructure**
+`pixels → edges → shapes → objects`
+one edge bank serves *all* 1000
+
+</div>
+</div>
+
+The same edge that outlines a cat's ear outlines a car's bumper. **Depth's inductive bias is reuse** — pay for a feature once, spend it everywhere. That is why edges→textures→parts→objects beats memorizing whole objects.
+
+---
+
 # Parity — the canonical hard-for-shallow function
 
 ![w:820px](figures/lec02/svg/parity_tree.svg)
@@ -450,6 +585,24 @@ Parity's structure *is* a shallow tree of XORs — and depth can mirror it exact
 <div class="paper">
 
 Formal separation: Telgarsky, *"Benefits of Depth in Neural Networks,"* COLT 2016 — there is a function a depth-$2k$ net computes with $O(k)$ units that any depth-$k$ net needs $\ge 2^{k}$ units to match. We take it on faith today; the sketch is in the appendix.
+
+</div>
+
+---
+
+# Depth intuition: each layer folds the paper
+
+<div class="keypoint">
+
+A nonlinearity **folds** the input space; the next layer draws on the folded sheet. One straight cut through paper folded once becomes **two** cuts unfolded — fold again for **four**, then **eight**.
+
+</div>
+
+Fold $k$ times and a single line becomes $2^{k}$ lines. That is exactly how a depth-$k$ ReLU net makes $2^{k}$ kinks from $O(k)$ neurons — and why a shallow net, with nothing to fold, must draw all $2^{k}$ by hand.
+
+<div class="insight">
+
+Reuse is free; enumeration is exponential. You don't need the depth-separation proof (appendix) to feel it — **the fold is the free lunch depth gives you.**
 
 </div>
 
@@ -522,6 +675,22 @@ At $k=10$: a shallow net needs ~1000 units to match what a deep net does with ~3
 <div class="keypoint">
 
 Depth is **not magic** — it's a strong inductive bias for compositional problems. If the data have no reusable structure, extra layers mostly add optimization pain, not capacity you can use.
+
+</div>
+
+---
+
+# See it yourself: does width really generalize?
+
+<div class="notebook">
+
+**🎛 Interactive · double descent** — UAT promises you can *fit*, never that you *generalize*. Grow the width past the point of zero training error and watch test error fall, spike, then fall again — the over-parameterized regime plain UAT can't explain. *(Interactive Articles · `nipunbatra.github.io/interactive-articles/double-descent`)*
+
+</div>
+
+<div class="notebook">
+
+**📓 Notebook · bricks you can count** — hand-build today's triangle bump, the trapezoidal pulse from Practice Problem 1, and the four-ramp $x^2$ fit as raw ReLUs in NumPy, then check that a one-hidden-layer `Linear → ReLU → Linear` learns the same weights. *(ES 667 · `notebooks/03-relu-bricks.ipynb`)*
 
 </div>
 
@@ -613,6 +782,73 @@ The same quantity is both $>0$ and $\le 0$ — a **contradiction**. No line work
 
 ---
 
+# Practice problem 4
+
+<div class="popquiz">
+
+**Practice problem 4.** The sigmoid derivative is $\sigma'(z)=\sigma(z)\big(1-\sigma(z)\big)$.
+**(a)** For which $z$ is $\sigma'$ largest, and what is that maximum?
+**(b)** In a 20-layer net with weights $\approx 1$, bound the factor by which an early-layer gradient shrinks — and compare with ReLU.
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 4
+
+<div class="math-box">
+
+**(a)** Let $s=\sigma(z)\in(0,1)$. Then $\sigma'=s(1-s)$ — a downward parabola in $s$, peaking at $s=\tfrac12$ (i.e. $z=0$) with value $\tfrac12\cdot\tfrac12=\mathbf{0.25}$. Never larger.
+
+**(b)** Best case (every unit at its peak), 20 layers multiply:
+$$0.25^{20}=4^{-20}=2^{-40}\approx 9\times10^{-13}.$$
+ReLU on its active side contributes $1$ per layer: $1^{20}=1$.
+
+</div>
+
+<div class="keypoint">
+
+Even in the *best* case, sigmoid crushes the gradient by $\sim10^{-12}$ over 20 layers; ReLU leaves it untouched. That $0.25$ ceiling — not a coding bug — is why deep sigmoid nets wouldn't train, and why **L4–L5** reach for ReLU, careful init, and residual connections.
+
+</div>
+
+---
+
+# Practice problem 5
+
+<div class="popquiz">
+
+**Practice problem 5.** A target on $[0,1]$ oscillates with $2^{12}=4096$ straight-line pieces (a fine sawtooth).
+**(a)** At minimum, how many hidden units must a *shallow* ReLU net use?
+**(b)** A *deep* net doubles the pieces per layer using $\approx 3$ units per layer — how many layers, and how many units total?
+**(c)** State the ratio.
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 5
+
+<div class="math-box">
+
+**(a)** Every piece needs its own corner, and each corner is a unit: $\;\ge 2^{12}=\mathbf{4096}$ units.
+**(b)** Doubling per layer reaches $2^{12}$ after **12 layers**; at $\approx 3$ units each that is $\;\approx \mathbf{36}$ units.
+**(c)** Ratio $\;\dfrac{4096}{36}\approx \mathbf{114\times}$.
+
+</div>
+
+<div class="insight">
+
+Shallow cost grows **linearly with the number of teeth** ($2^{k}$); deep cost grows **linearly with the depth** ($k$). Same function, exponential vs. linear price — the paper-fold picture from Part 3, now in numbers. *(This is the intuition behind Telgarsky's theorem in the appendix.)*
+
+</div>
+
+---
+
 # Where this goes next
 
 <div class="notebook">
@@ -663,6 +899,10 @@ This lecture is built on the instructor's ES 667 materials and standard referenc
 - **Basis functions $\phi(x)$ picked by hand** — *Machine Learning (ES 335)*, N. Batra · `github.com/nipunbatra/ml-teaching`
 - **Pedagogical framing** (shallow vs deep, intuition-first) — A. Ng, *Deep Learning Specialization* Course 1, Weeks 3–4.
 - **Formal results** — Cybenko (1989), Hornik (1991) — universal approximation; Telgarsky (2016) — depth separation.
+- **Visual "build any function from bumps"** (bricks, error table, any-squasher) — M. Nielsen, *Neural Networks and Deep Learning*, Ch. 4.
+- **Fold / linear-regions & shallow-vs-deep counting intuition** — Montúfar, Pascanu, Cho & Bengio (2014); Telgarsky (2016).
+- **Curse of dimensionality (tangible grid)** — C. Bishop, *PRML* §1.4; R. Bellman (1961).
+- **Double-descent explainer** — Belkin et al. (2019); Nakkiran et al. (2019).
 
 Figures adapted from the ES 667 figure library. All source courses © N. Batra & teaching staff.
 

@@ -83,6 +83,35 @@ The single $\hat y$ you read off is just a *summary* of that distribution — it
 
 ---
 
+# Intuition · a distribution is a more *honest* answer
+
+A weather app never says "it will rain tomorrow." It says **"70% chance of rain"** — and that hedge is the whole point: it tells you *how sure* the model is.
+
+<div class="insight">
+
+A model that emits only $\hat y$ is a forecaster who refuses to hedge. One that emits $p(y\mid x)$ reports its **best guess** *and* its **confidence** — and confidence is exactly what the loss will grade.
+
+</div>
+
+<div class="columns">
+<div>
+
+**"It's a cat."**
+A bare label — no way to say how sure, and no way to be *penalized* for false bravado.
+
+</div>
+<div>
+
+**"$P(\text{cat})=0.9$."**
+A bet. Say $0.99$ and be wrong, you pay far more than if you had hedged at $0.6$.
+
+</div>
+</div>
+
+That "pay more when confidently wrong" is **cross-entropy** — four parts from now, it falls out for free.
+
+---
+
 # A random variable, and its two summaries
 
 A **random variable** $Y$ maps outcomes to numbers; a distribution $p(y)$ says how probable each is.
@@ -198,6 +227,25 @@ $$P(k)=\frac{\lambda^k e^{-\lambda}}{k!}$$
 
 ---
 
+# Checkpoint · which distribution does each output need?
+
+<div class="popquiz">
+
+**Match each task to the distribution its output layer should emit:**
+(1) "Is this email spam?" · (2) "Which of 10 digits?" · (3) "Tomorrow's temperature in °C" · (4) "How many buses arrive in the next hour?"
+
+</div>
+
+*Answer:* (1) **Bernoulli** — one sigmoid · (2) **Categorical** — a 10-way softmax · (3) **Gaussian** — a mean $\hat y$ · (4) **Poisson** — a non-negative rate $\lambda$.
+
+<div class="insight">
+
+The rule of thumb: **look at the shape of the target, then pick the distribution whose support matches it** — $\{0,1\}$, one-of-$K$, all of $\mathbb R$, or the counts $0,1,2,\dots$. The output nonlinearity (sigmoid / softmax / linear / softplus) is just whatever *guarantees* that support.
+
+</div>
+
+---
+
 # Explore them yourself
 
 <div class="notebook">
@@ -279,6 +327,33 @@ Raw likelihood is a **product** of many tiny numbers (underflows), and products 
 ![w:560px](figures/lec00/svg/log_monotonic.svg)
 
 $$\arg\max_\theta \prod_i p(y_i\mid\theta) = \arg\max_\theta \sum_i \log p(y_i\mid\theta) = \arg\min_\theta \underbrace{-\sum_i \log p(y_i\mid\theta)}_{\text{negative log-likelihood}}$$
+
+---
+
+# Intuition · the underflow picture
+
+Why *minimize the negative log* instead of just *maximizing the product*? Watch what the product does on real data.
+
+<div class="math-box">
+
+$1{,}000$ examples, each with probability $\approx 0.1$:
+$$\underbrace{0.1 \times 0.1 \times \cdots}_{1000} = 10^{-1000} \;\xrightarrow{\text{float32}}\; \mathbf{0.0}$$
+The product **underflows to exactly zero** — every candidate $\theta$ now looks equally hopeless. The log stays perfectly civilized:
+$$\sum_i \log(0.1) = 1000 \times (-2.30) = -2302 \quad(\text{a fine, comparable number})$$
+
+</div>
+
+<div class="insight">
+
+**Gotcha — likelihood is *not* a probability over $\theta$.** $\mathcal L(\theta)$ says how well *each* $\theta$ explains the *fixed* data; it does **not** integrate to $1$ over $\theta$ (that object is the *posterior*, Part 4). "Most likely $\theta$" means "best explanation," not "most probable value."
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · numerical tricks of the trade** — slide a single logit toward $700$ and watch naive softmax return `+Inf` while `log_softmax` and BCE-with-logits stay finite. This is *why* every framework computes losses in log-space. *(Interactive Lab · `interactive/articles/numerical-tricks`)*
+
+</div>
 
 ---
 
@@ -375,6 +450,34 @@ Drop the constant: minimizing NLL $=$ minimizing $\sum_i (y_i-\hat y_i)^2$. **Le
 
 ---
 
+# Practice problem 2
+
+<div class="popquiz">
+
+**Practice problem 2.** A model predicts a single constant $\hat y=\mu$ for three points $y=(2,4,9)$, assuming $y\sim\mathcal N(\mu,\sigma^2)$ with $\sigma$ fixed. Write the NLL, drop the $\sigma$-constant, and minimize over $\mu$. Which value wins — and what does that reveal about the mean?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 2
+
+Stack the three per-example NLLs and drop the constant:
+
+$$J(\mu) = \frac{1}{2\sigma^2}\Big[(2-\mu)^2+(4-\mu)^2+(9-\mu)^2\Big]$$
+
+$$\frac{dJ}{d\mu}= -\frac{1}{\sigma^2}\big[(2-\mu)+(4-\mu)+(9-\mu)\big]=0 \;\Longrightarrow\; \hat\mu=\frac{2+4+9}{3}=5$$
+
+<div class="keypoint">
+
+Minimizing a Gaussian NLL **is** minimizing MSE — and its optimum is the **sample mean**. Notice $\sigma$ never touched the *location* of the minimum: it scales the loss, not its $\arg\min$. That is exactly why plain MSE quietly assumes *constant* noise (homoscedastic Gaussian).
+
+</div>
+
+---
+
 # Bernoulli output → binary cross-entropy
 
 For a Bernoulli prediction $\hat p$, the NLL of one example is
@@ -403,6 +506,43 @@ Cross-entropy only ever looks at the probability you assigned to the **true** cl
 
 ---
 
+# Intuition · why cross-entropy punishes *confident* wrongness
+
+The bill for the true class is $-\log \hat p_{\text{true}}$. Read it straight off the curve:
+
+<div class="columns">
+<div>
+
+| $\hat p_{\text{true}}$ | loss $-\log_2 \hat p$ |
+|:--:|:--:|
+| $0.9$ | $0.15$ bits |
+| $0.5$ | $1.0$ bit |
+| $0.1$ | $3.3$ bits |
+| $0.01$ | $6.6$ bits |
+| $\to 0$ | $\to \infty$ |
+
+</div>
+<div>
+
+Halving your confidence in the truth adds a roughly *fixed* toll each time; being **confidently wrong** ($\hat p_{\text{true}}\to 0$) is charged an *unbounded* one.
+
+</div>
+</div>
+
+<div class="insight">
+
+That is a **feature**, not a bug: the gradient blows up as $\hat p_{\text{true}}\to 0$, yanking the model hard away from arrogant mistakes — far faster than squared error ever would. Confidence is cheap only when it is correct.
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · softmax & temperature** — edit logits, slide temperature from peaky to uniform, and watch the entropy read-out (and a live sample) move. The same knob drives LLM sampling, distillation, and calibration. *(Interactive Lab · `interactive/articles/softmax-temperature`)*
+
+</div>
+
+---
+
 # The payoff, on one slide
 
 ![w:740px](figures/lec00/svg/nll_master_poster.svg)
@@ -419,7 +559,7 @@ Same recipe, three distributions: **Gaussian → MSE · Bernoulli → BCE · Cat
 
 <div class="notebook">
 
-**📓 Notebook · MLE by hand** — fit a Gaussian and a Bernoulli by maximizing log-likelihood, and check that `torch.nn.MSELoss` / `BCELoss` reproduce your derivation exactly. *(Prob. ML · `notebooks/mle-univariate.ipynb`, `mle_bernoulli.ipynb`)*
+**📓 Notebook · MLE by hand** — fit a Gaussian and a Bernoulli by maximizing log-likelihood, watch the log-likelihood *surface* rise to its peak, and confirm `torch.nn.MSELoss` / `BCELoss` reproduce your derivation exactly. *(Prob. ML · `notebooks/mle-univariate.ipynb`, `mle_bernoulli.ipynb`, `log-likelihood-linreg.ipynb`)* · **💡 worth building:** *"the likelihood landscape"* — a live 1-D/2-D surface you climb to the MLE peak.
 
 </div>
 
@@ -447,11 +587,11 @@ As data arrives, the posterior tightens around the truth — **today's posterior
 
 ---
 
-# Practice problem 2 · the base-rate trap
+# Practice problem 3 · the base-rate trap
 
 <div class="popquiz">
 
-**Practice problem 2.** A test is 99% accurate. The disease affects 1 in 10,000. You test positive. Roughly what's the chance you actually have it — **99%**, **50%**, or **1%**? *(Count people, don't just multiply.)*
+**Practice problem 3.** A test is 99% accurate. The disease affects 1 in 10,000. You test positive. Roughly what's the chance you actually have it — **99%**, **50%**, or **1%**? *(Count people, don't just multiply.)*
 
 </div>
 
@@ -459,7 +599,7 @@ As data arrives, the posterior tightens around the truth — **today's posterior
 
 ---
 
-# Solution · practice problem 2
+# Solution · practice problem 3
 
 Imagine 10,000 people. About **1** is truly sick (a true positive), but about **100** healthy people also test positive (1% of 9,999). So
 
@@ -514,6 +654,34 @@ $\Rightarrow$ **L1 (lasso), sparsity**
 
 ---
 
+# Intuition · the prior as a rubber band
+
+MAP is a **tug-of-war**. The likelihood pulls the weights toward whatever fits the data; the prior pulls them back toward $0$. Where they balance is $\hat\theta_{\text{MAP}}$.
+
+<div class="columns">
+<div>
+
+**$\lambda$ is the stiffness of the band.**
+- $\lambda\to 0$ (loose) → MAP $\to$ MLE, pure data fit.
+- $\lambda$ large (stiff) → weights dragged toward $0$, the model stays simple.
+
+</div>
+<div>
+
+**More data $\Rightarrow$ weaker pull.**
+The likelihood is a sum over $n$ points; the prior is one fixed term. As $n$ grows the data out-votes the prior — the band relaxes on its own.
+
+</div>
+</div>
+
+<div class="insight">
+
+**Common misconception:** "regularization is a hack bolted on to stop overfitting." No — it is a **prior belief** that weights are small, folded in by Bayes' rule. The knob $\lambda$ is just *how strongly* you hold that belief.
+
+</div>
+
+---
+
 # Why L1 gives sparsity, in one picture
 
 The prior's *shape* is the whole story: L2's round penalty shrinks weights smoothly; L1's diamond has corners on the axes, so the optimum often lands *exactly* at zero.
@@ -537,6 +705,40 @@ $$\hat\theta_{\text{MAP}}=\frac{h+\alpha-1}{n+\alpha+\beta-2}$$
 ![w:520px](figures/lec00/svg/beta_binomial_update.svg)
 
 With 4/10 heads and a gentle $\text{Beta}(2,2)$ prior: $\hat\theta_{\text{MAP}}=\tfrac{4+1}{10+2}=0.417$ — pulled slightly toward $0.5$ by the prior. **Small data → prior matters; big data → likelihood wins.**
+
+---
+
+# Practice problem 4
+
+<div class="popquiz">
+
+**Practice problem 4.** You measure one noisy value $y=10$ of a quantity $\mu$, with known noise $\sigma=2$. You also hold a prior $\mu\sim\mathcal N(0,\tau^2)$ with $\tau=2$. The MAP estimate is the precision-weighted blend
+$$\hat\mu_{\text{MAP}}=\frac{\tau^2}{\sigma^2+\tau^2}\,y .$$
+Plug in the numbers. Where does $\hat\mu$ land, and which way did the prior pull it?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 4
+
+$$\hat\mu_{\text{MAP}}=\frac{\tau^2}{\sigma^2+\tau^2}\,y=\frac{4}{4+4}\times 10 = \tfrac12\times 10 = \mathbf{5}$$
+
+The data alone (the MLE) says $\hat\mu=10$; the prior says $0$; the MAP lands **halfway** — because here data and prior are equally trustworthy ($\sigma=\tau$).
+
+<div class="keypoint">
+
+MAP with a Gaussian prior is **shrinkage** — a convex blend of the data estimate and the prior mean, weighted by relative precision ($1/\sigma^2$ vs $1/\tau^2$). Trust the data more ($\sigma\!\downarrow$) and $\hat\mu\to y$; trust the prior more ($\tau\!\downarrow$) and $\hat\mu\to 0$. **This is exactly weight decay tugging every weight a little toward zero.**
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · MLE vs MAP on a coin** — slide a $\text{Beta}(\alpha,\beta)$ prior, flip $1\!\to\!1000$ coins, and watch the estimate travel from MAP toward MLE as data accumulates: the whole of Parts 3–4 in one picture. *(Interactive Lab · `interactive/articles/mle-map-coin`)*
+
+</div>
 
 ---
 
@@ -618,11 +820,27 @@ It's a *directed* "distance" between distributions (not symmetric). Bigger KL �
 
 ---
 
-# Practice problem 3 · a tiny KL
+# Explore entropy, cross-entropy & KL yourself
+
+<div class="notebook">
+
+**🎛 Interactive · information theory by hand** — drag a categorical distribution and watch entropy fall as it sharpens; drop a model $q$ beside the data $p$ and see cross-entropy split *visually* into $H(p)+D_{\text{KL}}(p\Vert q)$; toggle forward vs reverse KL on a bimodal target to feel **mode-covering vs mode-seeking** — the exact choice a VAE makes in L21. *(Interactive Lab · `interactive/articles/info-theory`)*
+
+</div>
+
+<div class="notebook">
+
+**💡 Build-your-own · "cross-entropy as a code"** — a high-value explainer to add: draw a Huffman code for the true $p$, then *reuse that same code* on a mismatched $q$ and watch the wasted bits tick up — accumulating $H(p,q)=H(p)+D_{\text{KL}}$ one symbol at a time. Makes "extra bits" literally countable.
+
+</div>
+
+---
+
+# Practice problem 5 · a tiny KL
 
 <div class="popquiz">
 
-**Practice problem 3.** Truth $p=(\tfrac12,\tfrac12)$, model $q=(\tfrac34,\tfrac14)$. Compute $D_{\text{KL}}(p\Vert q)$ in bits.
+**Practice problem 5.** Truth $p=(\tfrac12,\tfrac12)$, model $q=(\tfrac34,\tfrac14)$. Compute $D_{\text{KL}}(p\Vert q)$ in bits.
 
 </div>
 
@@ -630,13 +848,39 @@ It's a *directed* "distance" between distributions (not symmetric). Bigger KL �
 
 ---
 
-# Solution · practice problem 3
+# Solution · practice problem 5
 
 $$D_{\text{KL}} = \tfrac12\log_2\frac{1/2}{3/4} + \tfrac12\log_2\frac{1/2}{1/4} = \tfrac12(-0.585) + \tfrac12(1) \approx \mathbf{0.208\ \text{bits}}$$
 
 <div class="insight">
 
 You'd waste ~0.2 bits per symbol coding a fair coin as if it were biased. Training a model = shrinking exactly this quantity.
+
+</div>
+
+---
+
+# Practice problem 6
+
+<div class="popquiz">
+
+**Practice problem 6.** A biased coin lands heads with $p=0.9$. Compute its entropy $H=-p\log_2 p-(1-p)\log_2(1-p)$ in bits. Is it closer to a **fair** coin ($1$ bit) or a **two-headed** coin ($0$ bits)? Then: which stream costs *more* bits to transmit — these biased flips, or fair flips?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 6
+
+$$H = -0.9\log_2 0.9 - 0.1\log_2 0.1 = 0.9(0.152)+0.1(3.32) \approx \mathbf{0.47\ \text{bits}}$$
+
+Well below the fair coin's $1$ bit — the outcome is *mostly* predictable, so each flip carries under half a bit of surprise.
+
+<div class="insight">
+
+**Fewer bits.** A predictable source is cheap to transmit: a good compressor spends $\approx 0.47$ bits per biased flip but a full $1$ bit per fair flip. **Low entropy = low surprise = short codes.** A model that has learned its data well drives its own predictive entropy down — which is exactly why a language model's *bits-per-token* is a headline metric (L16–L18).
 
 </div>
 
@@ -708,6 +952,7 @@ This lecture reuses and adapts material from the instructor's own courses (IIT G
 - **Distributions, interactive demos, Bayes base-rate** — *Probability, Statistics & Data Visualization (PSDV)*, N. Batra · `github.com/nipunbatra/psdv-teaching`
 - **MLE, MAP, information theory (entropy / cross-entropy / KL)** — *Probabilistic Machine Learning*, N. Batra · `github.com/nipunbatra/pml-teaching`
 - **MLE → cross-entropy, the 10-coin-flip example** — *Machine Learning (ES 335)*, N. Batra · `github.com/nipunbatra/ml-teaching`
+- **Interactive explainers** (numerical tricks, softmax & temperature, MLE-vs-MAP coin, information theory, multivariate normal) — *ES 667 Interactive Lab*, N. Batra
 - **Pedagogical framing** — A. Ng, *Deep Learning Specialization* (losses introduced in-line, Course 1); C. Bishop, *PRML* Ch. 1–2.
 
 Figures adapted from the ES 667 figure library. All source courses © N. Batra & teaching staff.

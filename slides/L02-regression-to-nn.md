@@ -153,6 +153,20 @@ $$\hat y = \sigma\big(\underbrace{\mathbf w^\top \mathbf x + b}_{\text{pre-activ
 
 ---
 
+# Intuition · the neuron is a *soft* threshold
+
+A sigmoid with **large** weights is almost a step: it says "yes" the moment you cross the boundary, "no" before it. Shrink the weights and that step softens into a gentle ramp.
+
+$$\sigma(k\,z)\;\xrightarrow[k\to\infty]{}\;\text{hard step}\qquad\quad \sigma(k\,z)\;\xrightarrow[k\to 0]{}\;\text{flat }0.5$$
+
+<div class="insight">
+
+So a neuron is a **soft, differentiable logic gate**: the weights set *where* it flips (the boundary) and *how sharply* (the confidence ramp). "Soft" is the whole point — a hard step has zero gradient everywhere, but $\sigma$ is smooth, so gradient descent can nudge the boundary a little at a time. The 1958 perceptron used a hard step and needed a special training rule; the sigmoid is exactly what lets us fall back on ordinary calculus.
+
+</div>
+
+---
+
 # Reading the neuron: log-odds are linear
 
 Rearrange $\hat y = \sigma(\theta^\top x)$ and the linear model reappears — on the **log-odds** scale:
@@ -243,6 +257,30 @@ Logistic regression is literally `nn.Linear(d, 1)` fed to a sigmoid. In practice
 <div class="keypoint">
 
 One neuron ⇒ one straight boundary, and the weights point "uphill" in probability. To bend that boundary we will need more than one neuron.
+
+</div>
+
+---
+
+# A single neuron *is* a logic gate
+
+With a step-like sigmoid, one neuron computes any **linearly separable** boolean function. Pick the weights, read the truth table straight off:
+
+<div class="math-box">
+
+| gate | $\mathbf w$ | $b$ | fires when |
+|:-:|:-:|:-:|:-:|
+| **OR**   | $[1,\,1]$   | $-0.5$ | $x_1+x_2-0.5>0$ |
+| **AND**  | $[1,\,1]$   | $-1.5$ | $x_1+x_2-1.5>0$ |
+| **NAND** | $[-1,-1]$   | $\;1.5$ | $-x_1-x_2+1.5>0$ |
+
+</div>
+
+Trace **AND** on $(1,1)$: $z=1+1-1.5=0.5>0\Rightarrow$ fires. On $(1,0)$: $z=1+0-1.5=-0.5<0\Rightarrow$ silent. ✓
+
+<div class="insight">
+
+OR, AND, NAND each need **one line** — one neuron does them all. The lone hold-out is **XOR**, whose two positive corners sit on opposite diagonals. *That* is the function that forces a second layer — exactly where we go next.
 
 </div>
 
@@ -430,6 +468,26 @@ $W_\text{eff}=W_2 W_1$ is just another matrix; $b_\text{eff}$ just another vecto
 
 ---
 
+# One more view · two linear layers is one matrix
+
+Put numbers on the collapse. Take
+
+<div class="math-box">
+
+$$W_1=\begin{pmatrix}2&0\\[2pt]0&3\end{pmatrix},\quad W_2=\begin{pmatrix}1&1\\[2pt]0&1\end{pmatrix} \;\Longrightarrow\; W_2W_1=\begin{pmatrix}2&3\\[2pt]0&3\end{pmatrix}$$
+
+</div>
+
+Push any $x$ through both layers and you get $y=(W_2W_1)\,x$ — a **single** $2\times2$ multiply. The hidden numbers evaporated; the "depth" left no trace.
+
+<div class="keypoint">
+
+Geometrically, each linear layer only **rotates, scales, and shears**. Compose two and you *still* have a rotate-scale-shear — never a **fold**. Data that wasn't linearly separable before is *still* not separable after. Only a nonlinearity can fold the plane, and folding is what makes a curved boundary possible.
+
+</div>
+
+---
+
 # Perceptron → multi-layer perceptron
 
 - **Perceptron** (1958) — a *single* neuron with a hard threshold. Trainable, but (Minsky–Papert) can only draw a line: XOR defeats it.
@@ -494,11 +552,50 @@ Outputs $0,1,1,0$ — **exactly XOR.** The ReLU "kink" is the bend that no line 
 
 ---
 
+# Why those weights work · a new coordinate system
+
+The two hidden units you just traced each compute a simple gate:
+
+<div class="columns">
+<div>
+
+$h_1=\mathrm{ReLU}(x_1+x_2)$ — *how many* inputs are on: $0,1,2$.
+
+$h_2=\mathrm{ReLU}(x_1+x_2-1)$ — fires only when **both** are on (an **AND**).
+
+</div>
+<div>
+
+Output $=h_1-2h_2$: count the on-inputs, then **subtract off** the "both on" case. What's left is "**exactly one** on" — the definition of XOR.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+The hidden layer re-plotted every point in new coordinates $(h_1,h_2)$. In the raw plane XOR's classes sat on crossing diagonals — unseparable. In $(h_1,h_2)$ the class-1 point $(1,0)$ pulls clear of the class-0 points $(0,0),(2,1)$, so **one output line** finishes the job. Depth in miniature: **bend the space first, then a line suffices.**
+
+</div>
+
+---
+
 # The nonlinearity has choices
 
 ![w:860px](figures/lec01/svg/activation_grid.svg)
 
 Sigmoid (gates, probabilities) · Tanh (older RNNs) · **ReLU** (the modern default — cheap, no saturation for $z>0$) · GELU / SiLU (Transformers). Any of them bends the space; they differ in how gradients flow back, which we take up in L3–L4.
+
+---
+
+# Intuition · a ReLU is a *hinge* that folds space
+
+$\mathrm{ReLU}(z)=\max(0,z)$ leaves the "on" side ($z>0$) untouched and clamps everything else to $0$. That single **kink** is a fold: points on the "off" side get creased flat.
+
+<div class="insight">
+
+Stack a few folds and a flat sheet becomes an origami surface — a **piecewise-linear** function that can hug almost any curve. The XOR "kink" two slides back was *one* fold; a wide hidden layer is *many* folds, each neuron contributing one crease. More hidden units ⇒ more folds ⇒ a boundary that can wiggle more — the seed of L3's **universal approximation theorem**.
+
+</div>
 
 ---
 
@@ -523,6 +620,59 @@ $$\underbrace{(4\times 3 + 4)}_{\text{layer 1}} \;+\; \underbrace{(2\times 4 + 2
 <div class="keypoint">
 
 General rule: $\sum_\ell (n_\ell \cdot n_{\ell-1} + n_\ell)$. The same count for a tiny MNIST net $784\to256\to10$ is $\approx 203{,}530$ — and GPT-3 is $1.75\times10^{11}$. **Same atom, more of it.**
+
+</div>
+
+---
+
+# From one neuron to $K$ classes · the softmax
+
+One sigmoid neuron gives a **yes/no** probability. For "which of 10 digits?" we need a probability *per class*. Stack $K$ output neurons, then normalise their scores with **softmax**:
+
+$$\hat y_k=\mathrm{softmax}(z)_k=\frac{e^{z_k}}{\sum_{j=1}^{K}e^{z_j}},\qquad \sum_{k=1}^{K}\hat y_k=1$$
+
+![w:320px](figures/lec01/svg/softmax_visual.svg)
+
+Exponentiate the scores (all become positive), then divide so they sum to 1 — the multi-class sigmoid. The loss stays the **NLL of the true class**: cross-entropy, straight from L1.
+
+<div class="notebook">
+
+**🎛 Interactive · softmax temperature** — divide the logits by $T$: the distribution sharpens ($T\to0$) or flattens ($T\to\infty$) — the knob that sets an LLM's "creativity." *(Interactive Lab · `interactive/articles/softmax-temperature`)*
+
+</div>
+
+---
+
+# Practice problem 4
+
+<div class="popquiz">
+
+**Practice problem 4.** A 3-class neuron outputs logits $z=(2,\,1,\,0)$ and the true class is **class 1** (one-hot $y=(1,0,0)$).
+(a) Compute the softmax $\hat y$. (b) Compute the cross-entropy loss $-\log\hat y_{\text{true}}$. (c) Compute the gradient $\partial J/\partial z$.
+
+</div>
+
+*Use $e^2\approx 7.39,\ e^1\approx 2.72,\ e^0=1$. Try it before the next slide.*
+
+---
+
+# Solution · practice problem 4
+
+**(a)** Normaliser $=7.39+2.72+1=11.11$, so
+
+$$\hat y=\Big(\tfrac{7.39}{11.11},\;\tfrac{2.72}{11.11},\;\tfrac{1}{11.11}\Big)=(0.665,\;0.245,\;0.090)$$
+
+**(b)** $J=-\log\hat y_1=-\log 0.665\approx \mathbf{0.408}$.
+
+**(c)** The gradient of softmax-with-cross-entropy is famously just
+
+$$\frac{\partial J}{\partial z}=\hat y-y=(0.665-1,\;0.245,\;0.090)=(-0.335,\;0.245,\;0.090)$$
+
+![w:420px](figures/lec01/svg/ce_gradient_visual.svg)
+
+<div class="keypoint">
+
+**$\hat y-y$: prediction minus target** — the *same* clean gradient as linear regression and the single sigmoid neuron. Push probability *up* on the true class, *down* on the rest. This one identity is why softmax + cross-entropy is the default output of every classifier and every LLM.
 
 </div>
 
@@ -567,7 +717,7 @@ The features and the boundary are learned **together**, end-to-end.
 </div>
 </div>
 
-![w:900px](figures/lec01/svg/ml_vs_dl_pipeline.svg)
+![w:600px](figures/lec01/svg/ml_vs_dl_pipeline.svg)
 
 ---
 
@@ -582,6 +732,66 @@ The features and the boundary are learned **together**, end-to-end.
 Stack the layers and the learned features become **hierarchical**: pixels → edges → parts → objects. Each level is built from the one below, and nobody wrote the rules.
 
 ![w:820px](figures/lec01/svg/feature_hierarchy.svg)
+
+---
+
+# Features are *learned*, not hand-designed
+
+Nobody tells the network *what* to compute — yet the features it invents come out **meaningful**:
+
+<div class="columns">
+<div>
+
+**Vision** — early layers learn edge detectors, then corners, then textures, then object parts: the same hierarchy a vision scientist would draw, discovered by gradient descent alone.
+
+</div>
+<div>
+
+**Language** — word vectors land so that *directions* carry meaning:
+$$\text{king}-\text{man}+\text{woman}\approx\text{queen}$$
+a relationship no one coded in.
+
+</div>
+</div>
+
+![w:380px](figures/Lnew/svg/embedding_geometry.svg)
+
+<div class="insight">
+
+This is the real payoff of "learn $\phi(x)$": the learned coordinates aren't just *a* separating space — they're an **interpretable** one. We build word embeddings for real in **L13** and see this geometry directly.
+
+</div>
+
+---
+
+# Practice problem 5
+
+<div class="popquiz">
+
+**Practice problem 5.** You have $100\times100$ grayscale images (10,000 pixels).
+(a) A hidden layer of **512** units connects to every pixel — how many weights (ignore biases)?
+(b) To let a *linear* model capture pairwise pixel interactions you would hand-craft all products $x_i x_j$. How many such quadratic features are there?
+(c) What does comparing (a) and (b) say about **learning** $\phi$ vs. **engineering** it?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 5
+
+**(a)** $512\times 10{,}000=\mathbf{5.12\text{M}}$ weights — big, but routine on a GPU.
+
+**(b)** Pairwise products number $\binom{10{,}000}{2}\approx \mathbf{5\times10^{7}}$ features — and that is only *degree 2*. "Cat" needs far higher-order pixel combinations you cannot even enumerate.
+
+**(c)** The hand-crafted basis **explodes combinatorially** and still has to be guessed correctly. The hidden layer instead learns a *compact* 512-dim $\phi(x)$ **tuned to the task**, straight from data.
+
+<div class="keypoint">
+
+Feature engineering fights the curse of dimensionality by brute force; representation learning sidesteps it by letting gradient descent keep only the few directions that matter. **That is why deep learning replaced feature engineering** — not more math, just better features, learned.
+
+</div>
 
 ---
 
@@ -607,6 +817,33 @@ A hidden layer may compute any features it likes. The useful ones share two prop
 <div class="keypoint">
 
 A good $\phi(x)$ makes the final linear decision **trivial**. That is the real work training does — which is why "just add parameters" misses the point. Depth helps because *better features* let the last layer be simple.
+
+</div>
+
+---
+
+# The perceptron winter, and the thaw
+
+The neuron is not new. The field stalled twice, waiting for the missing pieces to arrive.
+
+![w:900px](figures/lec01/svg/dl_timeline.svg)
+
+<div class="columns">
+<div>
+
+**1958** Perceptron — a single neuron. **1969** Minsky–Papert prove it cannot do XOR → the first "AI winter."
+
+</div>
+<div>
+
+**1986** backprop trains *multi-layer* nets. **2012** AlexNet — data + GPUs + ReLU finally cash the idea in.
+
+</div>
+</div>
+
+<div class="insight">
+
+Every ingredient of a modern net existed by **1986**. What was missing wasn't the *idea* — it was the **data and compute** to make learned features beat hand-crafted ones. That is the story of the next slides.
 
 </div>
 
@@ -674,6 +911,28 @@ Deep learning did not suddenly get *smarter* — the world got *faster and bigge
 
 ---
 
+# Explore it yourself
+
+<div class="notebook">
+
+**🎛 Interactive · the perceptron learning rule** — step a single neuron through examples, watch its line rotate into place, then watch it **loop forever on XOR**. *(ML ES 335 · `notebooks/perceptron-learning.ipynb`)*
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive Lab · watch a neuron learn a boundary** — a TensorFlow-Playground-style sandbox: drag data points, add a hidden unit or two, set the learning rate, and watch gradient descent *bend* the decision boundary in real time. *(to be authored · `interactive/articles/neuron-learns-a-boundary`)*
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive Lab · softmax temperature** — sharpen or flatten a multi-class distribution with one slider; the same knob sets an LLM's sampling "creativity." *(Interactive Lab · `interactive/articles/softmax-temperature`)*
+
+</div>
+
+---
+
 <!-- _class: summary-slide -->
 
 # One sentence to remember
@@ -686,8 +945,9 @@ Deep learning did not suddenly get *smarter* — the world got *faster and bigge
 
 - **Linear regression** $\hat y=\theta^\top x$ → **logistic** $\sigma(\theta^\top x)$ is a **single neuron** with a straight decision boundary.
 - One neuron fails when the boundary is a **curve** (XOR, rings).
-- **Nonlinearity is essential** — stacked linear layers collapse to one line.
-- An **MLP** bends the space: its hidden layer *learns* $\phi(x)$ instead of you designing it.
+- **Nonlinearity is essential** — stacked linear layers collapse to one line; a ReLU is a *hinge* that folds space.
+- An **MLP** bends the space: its hidden layer *learns* $\phi(x)$ instead of you designing it — and the learned features come out **meaningful** (edges, word analogies).
+- For $K$ classes the output is a **softmax**; its cross-entropy gradient is the same clean $\hat y-y$.
 - Deep learning = **representation learning**, and data + compute + algorithms made it work around 2012.
 
 **Next (L3):** if one hidden layer can bend any boundary — *exactly how expressive is it?* The universal approximation theorem, and why we still go deep.
@@ -703,9 +963,12 @@ Deep learning did not suddenly get *smarter* — the world got *faster and bigge
 This lecture reuses and adapts material from the instructor's own courses (IIT Gandhinagar) and standard references:
 
 - **Linear & logistic regression, the sigmoid, decision boundary, basis expansion $\phi(x)$, softmax cost, oranges-vs-tomatoes** — *Machine Learning (ES 335)*, N. Batra · `github.com/nipunbatra/ml-teaching` (`linear-regression`, `logistic-regression` slides; notebooks `logistic-apple-oranges.ipynb`, `logistic-circular.ipynb`, `perceptron-learning.ipynb`)
-- **Representation-learning framing** — *ML (ES 335)* neural-networks notes, N. Batra
+- **Representation-learning framing, logic-gate neurons (AND/OR/NAND → XOR)** — *ML (ES 335)* neural-networks notes, N. Batra
+- **Softmax + cross-entropy gradient $\hat y-y$** — *ML (ES 335)* `logistic-regression.tex`; softmax-temperature explainer, ES 667 Interactive Lab (`interactive/articles/softmax-temperature`)
+- **Word-analogy embedding geometry (king − man + woman ≈ queen)** — Mikolov et al., *word2vec* (2013); previewed here, built in L13
 - **MSE / cross-entropy as negative log-likelihood** — *L1 · Probability & the Language of Losses*, this course
-- **Pedagogical framing (regression → logistic → neural nets)** — A. Ng, *Deep Learning Specialization*, Course 1, Week 2; Prince, *Understanding Deep Learning*, Ch. 3–4.
+- **Perceptron winter timeline** — Rosenblatt (1958); Minsky & Papert, *Perceptrons* (1969); Krizhevsky et al., *AlexNet* (2012)
+- **Pedagogical framing (regression → logistic → neural nets, features are learned)** — A. Ng, *Deep Learning Specialization*, Course 1, Week 2; Prince, *Understanding Deep Learning*, Ch. 3–4.
 
 Figures adapted from the ES 667 figure library (`figures/lec01`). All source courses © N. Batra & teaching staff.
 
@@ -731,7 +994,7 @@ $$J(\theta) = -\sum_{i=1}^{n}\Big[\,y_i\log\hat y_i + (1-y_i)\log(1-\hat y_i)\,\
 
 — **binary cross-entropy**, exactly the L1 recipe with a Bernoulli plugged in. Differentiating gives the clean gradient $\partial J/\partial z_i = \hat y_i - y_i$ (prediction minus target), as in linear regression. For $K$ classes, use **softmax** $\hat y_k = e^{z_k}/\sum_j e^{z_j}$; the loss becomes $-\log\hat y_{\text{true}}$.
 
-![w:420px](figures/lec01/svg/softmax_visual.svg)
+![w:300px](figures/lec01/svg/softmax_visual.svg)
 
 *(Full derivation: ML ES 335 `logistic-regression.tex`, "Cross Entropy Cost Function".)*
 
