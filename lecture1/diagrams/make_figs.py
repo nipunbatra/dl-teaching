@@ -15,7 +15,11 @@ mpl.rcParams.update({
 OUT='lecture1/figures'
 os.makedirs(OUT,exist_ok=True)
 def save(fig,name):
-    fig.savefig(f'{OUT}/{name}.svg',bbox_inches='tight',transparent=True); plt.close(fig)
+    # SVG for the Marp deck (Chrome renders it); PNG for the Typst deck (resvg
+    # mangles some path-text glyph advances, so we hand Typst a rasterized copy).
+    fig.savefig(f'{OUT}/{name}.svg',bbox_inches='tight',transparent=True)
+    fig.savefig(f'{OUT}/{name}.png',bbox_inches='tight',transparent=True,dpi=200)
+    plt.close(fig)
 def gauss(x,mu=0,s=1): return np.exp(-0.5*((x-mu)/s)**2)/(s*np.sqrt(2*np.pi))
 def arrow(ax,x0,y0,x1,y1,c=MUTED,lw=2):
     ax.add_patch(FancyArrowPatch((x0,y0),(x1,y1),arrowstyle='-|>',mutation_scale=16,color=c,lw=lw))
@@ -149,8 +153,8 @@ def f_sigmoid():
 # 11 softmax_bars
 def f_softbars():
     fig,axes=plt.subplots(1,2,figsize=(5.8,2.6),gridspec_kw={'wspace':0.5})
-    axes[0].bar([0,1,2],[2,1,-0.5],color=[INK,MUTED,MUTED]); axes[0].set_title('logits z',fontsize=12); axes[0].axhline(0,color=INK,lw=.8)
-    axes[1].bar([0,1,2],[0.63,0.25,0.12],color=ACC); axes[1].set_title('probabilities',fontsize=12); axes[1].text(1,0.7,'sum = 1',ha='center',color=MUTED,fontsize=11)
+    axes[0].bar([0,1,2],[2,1,-0.5],color=[INK,MUTED,MUTED]); axes[0].set_title('logits z',fontsize=12,pad=8); axes[0].axhline(0,color=INK,lw=.8); axes[0].set_ylim(-0.9,2.4)
+    axes[1].bar([0,1,2],[0.63,0.25,0.12],color=ACC); axes[1].set_title('probabilities',fontsize=12,pad=8); axes[1].set_ylim(0,0.85); axes[1].text(1,0.72,'sum = 1',ha='center',color=MUTED,fontsize=11)
     for a in axes: a.set_xticks([0,1,2]); a.set_xticklabels(['1','2','3']); a.set_yticks([])
     fig.text(0.5,0.5,'softmax →',ha='center',color=ACC,fontsize=12)
     save(fig,'softmax_bars')
