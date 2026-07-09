@@ -1,0 +1,155 @@
+/* @theme metropolis */
+/* A clean, minimal Marp theme in the spirit of Beamer's `metropolis`.
+   Light background, dark-teal ink, one orange accent, dark section slides,
+   frame-title rules, a bottom progress bar, and Q/V/D/I legend pills. */
+
+@import url('https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Fira+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg:      #FAFAFA;   /* mBackground (light) */
+  --fg:      #23373B;   /* mDarkTeal — body ink */
+  --accent:  #EB811B;   /* mLightBrown — the metropolis orange */
+  --accent2: #14B03D;   /* example green */
+  --alert:   #D64550;   /* alert red */
+  --muted:   #6E7F82;
+  --rule:    #23373B;
+  --dark:    #23373B;   /* section-slide background */
+  --box-bg:  #EFEEEB;
+}
+
+section {
+  font-family: 'Fira Sans', 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 23px;
+  font-weight: 400;
+  line-height: 1.4;
+  padding: 56px 64px 58px;
+  letter-spacing: 0.01em;
+}
+
+/* ── frame title with the metropolis rule ─────────────── */
+section h1 {
+  font-size: 33px;
+  font-weight: 600;
+  line-height: 1.15;
+  margin: 0 0 22px;
+  padding-bottom: 8px;
+  color: var(--fg);
+  border-bottom: 2px solid var(--accent);
+  text-wrap: balance;
+}
+section h2 { font-size: 27px; font-weight: 600; margin: 0.2em 0 0.3em; }
+section h3 { font-size: 22px; font-weight: 600; color: var(--muted); margin: 0.4em 0 0.2em;
+  text-transform: uppercase; letter-spacing: 0.06em; }
+
+strong { color: var(--fg); font-weight: 600; }
+em { color: var(--fg); }
+a { color: var(--accent); text-decoration: none; }
+ul, ol { margin: 0.3em 0; padding-left: 1.1em; }
+li { margin: 0.22em 0; }
+li::marker { color: var(--accent); }
+code { font-family: 'Fira Mono', monospace; font-size: 0.9em; background: var(--box-bg); padding: 1px 5px; border-radius: 3px; }
+img { display: block; margin: 0.2em auto; }
+p { margin: 0.45em 0; }
+
+/* ── pagination + progress bar ────────────────────────── */
+section::after {
+  font-family: 'Fira Mono', monospace;
+  font-size: 13px;
+  color: var(--muted);
+  right: 30px; bottom: 18px;
+}
+/* thin bottom progress-ish accent bar */
+section::before {
+  content: "";
+  position: absolute;
+  left: 0; bottom: 0;
+  height: 4px; width: 100%;
+  background: linear-gradient(to right, var(--accent) 0 var(--pb, 0%), #E2E0DB var(--pb, 0%) 100%);
+}
+
+/* footer (course · author) */
+footer {
+  font-family: 'Fira Sans', sans-serif;
+  font-size: 13px; color: var(--muted);
+  left: 30px; bottom: 15px;
+}
+
+/* ── title slide ──────────────────────────────────────── */
+section.title {
+  background: var(--bg);
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 64px 72px;
+}
+section.title h1 { font-size: 46px; border: 0; padding: 0; margin: 0 0 10px; line-height: 1.08; }
+section.title h1::after {
+  content: ""; display: block; width: 72px; height: 3px;
+  background: var(--accent); margin: 18px 0 0;
+}
+section.title h2 { font-size: 25px; font-weight: 400; color: var(--muted); text-transform: none; letter-spacing: 0; margin: 22px 0 0; }
+section.title .meta { margin-top: 34px; font-size: 20px; color: var(--fg); }
+section.title::before { background: var(--accent); }
+
+/* ── section / standout slides (dark) ─────────────────── */
+section.section {
+  background: var(--dark);
+  color: #FDFDFD;
+  display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+}
+section.section h1 { color: #FFFFFF; border: 0; font-size: 40px; padding: 0; }
+section.section h1::after { content: ""; display: block; width: 64px; height: 3px; background: var(--accent); margin: 16px 0 0; }
+section.section .kicker { font-family: 'Fira Mono', monospace; font-size: 16px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+section.section::after { color: #7C9195; }
+section.section::before { background: var(--accent); }
+
+/* ── legend pills: [Q] [V] [D] [I] ────────────────────── */
+.tag {
+  font-family: 'Fira Mono', monospace;
+  font-size: 14px; font-weight: 500;
+  vertical-align: middle;
+  padding: 2px 9px; border-radius: 4px; margin-left: 10px;
+  color: #fff; letter-spacing: 0.03em; white-space: nowrap;
+}
+.tag.q { background: #2B6CB0; }   /* question — blue */
+.tag.v { background: #2C7A7B; }   /* visual   — teal */
+.tag.d { background: var(--accent); }  /* derivation — orange */
+.tag.i { background: var(--accent2); } /* interactive — green */
+.tag.opt { background: var(--muted); font-size: 12px; }
+
+/* ── boxes (metropolis block / alertblock / exampleblock) */
+.box, .alert, .example, .interactive {
+  border-radius: 4px; padding: 12px 16px; margin: 14px 0;
+  border-top: 3px solid var(--muted);
+  background: var(--box-bg);
+}
+.box  { border-top-color: var(--fg); }
+.alert{ border-top-color: var(--alert); background: #FBEBEC; }
+.example { border-top-color: var(--accent2); background: #EAF6EC; }
+.interactive { border-top-color: var(--accent2); background: #EAF6EC; }
+.box .h, .alert .h, .example .h, .interactive .h {
+  font-family: 'Fira Mono', monospace; font-size: 14px; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--muted); display: block; margin-bottom: 4px;
+}
+.alert .h { color: var(--alert); }
+.example .h, .interactive .h { color: #1B7A34; }
+
+/* the big boxed conclusion (metropolis-style emphatic result) */
+.result {
+  text-align: center; font-size: 26px; font-weight: 600;
+  border: 2px solid var(--accent); border-radius: 6px;
+  padding: 14px 18px; margin: 18px auto; background: #fff; color: var(--fg);
+}
+
+/* two-column layout */
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+.cols.wide-left { grid-template-columns: 1.3fr 1fr; }
+.cols.wide-right{ grid-template-columns: 1fr 1.3fr; }
+
+.muted { color: var(--muted); }
+.center { text-align: center; }
+.small { font-size: 0.86em; }
+
+/* MathJax sizing */
+mjx-container { font-size: 1.02em !important; }
+.big-eq mjx-container { font-size: 1.35em !important; }
