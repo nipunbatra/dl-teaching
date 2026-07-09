@@ -333,15 +333,29 @@ The answer you'd have *guessed* (the head-frequency) is now **derived** — and 
 
 ---
 
-# Your turn
+# Practice problem 1
 
 <div class="popquiz">
 
-**Work it out.** A different coin lands **7 heads in 10 flips**. What is $\hat\theta_{\text{MLE}}$? Redo the derivative — what's the general formula for $h$ heads in $n$ flips?
+**Practice problem 1.** A coin lands **7 heads in 10 flips**. Write the NLL, set its derivative to zero, and find $\hat\theta_{\text{MLE}}$. Then give the general formula for $h$ heads in $n$ flips.
 
 </div>
 
-*Answer:* $\hat\theta = \dfrac{7}{10}=0.7$, and in general $\hat\theta=\dfrac{h}{n}$ — MLE for a Bernoulli is just the sample mean. Clean, and it generalizes to every distribution's "natural" estimate.
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 1
+
+$$J(\theta) = -7\log\theta - 3\log(1-\theta)$$
+
+$$\frac{dJ}{d\theta} = -\frac{7}{\theta} + \frac{3}{1-\theta} = 0 \;\Longrightarrow\; 7(1-\theta)=3\theta \;\Longrightarrow\; \hat\theta=\frac{7}{10}=0.7$$
+
+<div class="keypoint">
+
+In general $\hat\theta=\dfrac{h}{n}$ — **MLE for a Bernoulli is just the sample mean.** The same "set the log-likelihood derivative to zero" move gives every distribution's natural estimate.
+
+</div>
 
 ---
 
@@ -433,19 +447,27 @@ As data arrives, the posterior tightens around the truth — **today's posterior
 
 ---
 
-# The base-rate trap (why priors matter)
+# Practice problem 2 · the base-rate trap
 
 <div class="popquiz">
 
-**Work it out.** A test is 99% accurate. The disease affects 1 in 10,000. You test positive. Roughly what's the chance you actually have it — **99%**, **50%**, or **1%**?
+**Practice problem 2.** A test is 99% accurate. The disease affects 1 in 10,000. You test positive. Roughly what's the chance you actually have it — **99%**, **50%**, or **1%**? *(Count people, don't just multiply.)*
 
 </div>
 
-Of 10,000 people: ~1 true positive, but ~100 false positives (1% of 9,999). So $P(\text{sick}\mid +)\approx \tfrac{1}{101}\approx \mathbf{1\%}$.
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 2
+
+Imagine 10,000 people. About **1** is truly sick (a true positive), but about **100** healthy people also test positive (1% of 9,999). So
+
+$$P(\text{sick}\mid +)\approx \frac{1}{1+100}\approx \mathbf{1\%}$$
 
 <div class="insight">
 
-The **prior** (rarity) dominates a strong likelihood. Ignore priors and you're badly miscalibrated — the same failure a model makes when it overfits with no regularization.
+The **prior** (rarity) dominates even a strong likelihood. Ignore priors and you're badly miscalibrated — the same failure a model makes when it overfits with no regularization.
 
 </div>
 
@@ -596,15 +618,21 @@ It's a *directed* "distance" between distributions (not symmetric). Bigger KL �
 
 ---
 
-# Work it out: a tiny KL
+# Practice problem 3 · a tiny KL
 
 <div class="popquiz">
 
-**Compute.** Truth $p=(\tfrac12,\tfrac12)$, model $q=(\tfrac34,\tfrac14)$. Find $D_{\text{KL}}(p\Vert q)$ in bits.
+**Practice problem 3.** Truth $p=(\tfrac12,\tfrac12)$, model $q=(\tfrac34,\tfrac14)$. Compute $D_{\text{KL}}(p\Vert q)$ in bits.
 
 </div>
 
-$$D_{\text{KL}} = \tfrac12\log_2\tfrac{1/2}{3/4} + \tfrac12\log_2\tfrac{1/2}{1/4} = \tfrac12(-0.585) + \tfrac12(1) \approx \mathbf{0.208\ \text{bits}}$$
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 3
+
+$$D_{\text{KL}} = \tfrac12\log_2\frac{1/2}{3/4} + \tfrac12\log_2\frac{1/2}{1/4} = \tfrac12(-0.585) + \tfrac12(1) \approx \mathbf{0.208\ \text{bits}}$$
 
 <div class="insight">
 
