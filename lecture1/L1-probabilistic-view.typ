@@ -1,73 +1,14 @@
 // Why These Losses? — Lecture 1 · ES 667 Deep Learning
-// Typst + touying metropolis theme (Beamer-metropolis look, native builds).
-// Compile:  typst compile lecture1/L1-probabilistic-view.typ
-//
-// The metropolis theme fixes the header (dark title bar) and footer at the
-// SAME position on every slide, independent of content. `#pause` gives the
-// Beamer-style incremental build. Palette (dark-teal + orange) = metropolis
-// defaults, so header/section/progress-bar colours match the Marp version.
+// Typst + shared metropolis theme. Compile from the repo root:
+//   typst compile --root . lecture1/L1-probabilistic-view.typ
+//   typst compile --root . --input handout=true lecture1/L1-probabilistic-view.typ
+// All theme/palette/helpers/diagrams live in common/metropolis.typ.
 
-#import "@preview/touying:0.6.1": *
-#import themes.metropolis: *
-
-// ── palette (named; matches metropolis defaults) ──
-#let INK   = rgb("#23373B")
-#let ACC   = rgb("#EB811B")
-#let TEAL  = rgb("#2C7A7B")
-#let GREEN = rgb("#14B03D")
-#let BLUE  = rgb("#2B6CB0")
-#let MUTED = rgb("#6E7F82")
-#let RED   = rgb("#D64550")
-
-// ── legend pills [Q] [V] [D] [I] [optional] ──
-// Rendered top-right of the content area (light ground) via `stag`, so they
-// never collide with the metropolis header rule and always sit in one place.
-#let pill(lbl, col) = box(fill: col, inset: (x: 6pt, y: 3pt), radius: 3pt,
-  text(font: "IBM Plex Mono", size: 12pt, fill: white, weight: 600, lbl))
-#let Q = pill("Q", BLUE)      // question — blue
-#let V = pill("V", TEAL)      // visual   — teal
-#let D = pill("D", ACC)       // derivation — orange
-#let I = pill("I", GREEN)     // interactive — green
-#let OPT = pill("optional", MUTED)
-// place a tag at the fixed top-right of the body (same spot every slide)
-#let stag(t) = place(top + right, dx: 0pt, dy: -2pt, t)
-
-// ── blocks ──
-#let bar-block(body, col, bg, head, headcol) = block(width: 100%, fill: bg, inset: 11pt,
-  radius: 3pt, stroke: (top: 3pt + col), {
-    if head != none { text(font: "IBM Plex Mono", size: 11pt, fill: headcol, tracking: 0.5pt, upper(head)); v(4pt) }
-    body
-  })
-#let notebox(body)  = bar-block(body, INK, rgb("#EFEEEB"), none, MUTED)
-#let alertbox(body) = bar-block(body, RED, rgb("#FBEBEC"), none, RED)
-#let interbox(body) = bar-block(body, GREEN, rgb("#EAF6EC"), "Interactive", rgb("#1B7A34"))
-#let result(body) = align(center, block(fill: white, inset: (x: 15pt, y: 11pt), radius: 5pt,
-  stroke: 2pt + ACC, text(size: 21pt, weight: 600, fill: INK, body)))
-// Typst reads the PNG copy (resvg mishandles some matplotlib path-text SVGs).
-#let fig(path, w: 58%) = align(center, image(path.replace(".svg", ".png"), width: w))
-#let two(a, b, r: (1fr, 1fr)) = grid(columns: r, gutter: 20pt, align(horizon, a), align(horizon, b))
-
-// ── theme ──
-// Handout mode collapses every #pause build to one page per slide:
-//   typst compile --input handout=true  lecture1/L1-probabilistic-view.typ
-#let HANDOUT = sys.inputs.at("handout", default: "false") == "true"
-#show: metropolis-theme.with(
-  aspect-ratio: "16-9",
-  config-common(handout: HANDOUT),
-  config-info(
-    title: [Why These Losses?],
-    subtitle: [A probabilistic refresher for Deep Learning],
-    author: [Prof. Nipun Batra],
-    institution: [ES 667 · Deep Learning · IIT Gandhinagar],
-  ),
-  footer: self => [ES 667 · Deep Learning · N. Batra],
+#import "../common/metropolis.typ": *
+#show: metropolis-deck.with(
+  title: [Why These Losses?],
+  subtitle: [A probabilistic refresher for Deep Learning],
 )
-
-#set text(font: "IBM Plex Sans", size: 20pt)
-#show raw: set text(font: "IBM Plex Mono")
-#show heading: set text(font: "IBM Plex Sans")
-#set heading(numbering: none)
-#show math.equation: set text(size: 19pt)
 
 #title-slide()
 
@@ -139,7 +80,7 @@ For a continuous $Y$, probability comes from *area*:
 $ P(a <= Y <= b) = integral_a^b p(y) dif y $
 #pause
 #alertbox[$p(y) != P(Y{=}y)$ — a density can *exceed 1*; only _integrals_ are probabilities.]
-#fig("figures/density_area.svg", w: 42%)
+#fig("/lecture1/figures/density_area.svg", w: 42%)
 
 == Uniform distribution: support matters
 #stag(V)
@@ -150,7 +91,7 @@ $ P(a <= Y <= b) = integral_a^b p(y) dif y $
    *Q.* NLL _outside_ $[a,b]$? #h(6pt) *A.* $-log 0 = +infinity$.
    #v(4pt)
    #notebox[A likelihood can impose a *hard constraint*.]],
-  fig("figures/uniform.svg", w: 96%),
+  fig("/lecture1/figures/uniform.svg", w: 96%),
 )
 
 == Gaussian distribution
@@ -158,7 +99,7 @@ $ P(a <= Y <= b) = integral_a^b p(y) dif y $
 
 $ Y tilde cal(N)(mu, sigma^2) quad quad p(y) = 1/sqrt(2 pi sigma^2) exp(-(y-mu)^2/(2 sigma^2)) $
 #pause
-#fig("figures/gaussian_params.svg", w: 56%)
+#fig("/lecture1/figures/gaussian_params.svg", w: 56%)
 #align(center)[Only two knobs: *location* $mu$ and *scale* $sigma$.]
 
 == Why the Gaussian produces a square
@@ -168,14 +109,14 @@ Take the negative log:
 $ -log p(y) = underbrace((y-mu)^2/(2 sigma^2), "depends on " mu) + underbrace(1/2 log(2 pi sigma^2), "constant in " mu) $
 #pause
 #align(center)[The only $mu$-dependent term is the *squared error* $(y-mu)^2$.]
-#fig("figures/gaussian_to_square.svg", w: 54%)
+#fig("/lecture1/figures/gaussian_to_square.svg", w: 54%)
 
 == Multivariate Gaussian geometry
 #stag(V)
 
 $ theta tilde cal(N)(mu, Sigma) quad -log p(theta) = 1/2 (theta - mu)^top Sigma^(-1) (theta - mu) + C $
 #pause
-#fig("figures/mvn_triptych.svg", w: 74%)
+#fig("/lecture1/figures/mvn_triptych.svg", w: 74%)
 #align(center, text(size: 17pt)[Covariance says *which directions in parameter space are plausible.*])
 
 == Independence turns products into sums
@@ -241,7 +182,7 @@ $ Y_i | x_i, theta tilde cal(N)(f_theta (x_i), sigma^2) $
 == What the assumption means visually
 #stag(V)
 
-#fig("figures/regression_conditionals.svg", w: 52%)
+#fig("/lecture1/figures/regression_conditionals.svg", w: 52%)
 #notebox[Gaussian noise lives in the *output direction*, conditional on $x$ — a vertical bell at every input.]
 
 == Gaussian likelihood
@@ -284,7 +225,7 @@ $ ell_i = (y_i - mu_i)^2/(2 sigma^2) + 1/2 log sigma^2 + C $
     [Uniform], [hard interval],
     [Student-$t$], [robust])
    #v(3pt) #text(fill: MUTED)[$r = y - hat(y)$]],
-  fig("figures/residual_losses.svg", w: 94%),
+  fig("/lecture1/figures/residual_losses.svg", w: 94%),
 )
 
 == Interactive: likelihood → loss
@@ -303,7 +244,7 @@ _Controls:_ Gaussian / Laplace / Uniform / Student-$t$ · noise scale · slope &
 For $K$ classes:
 $ p_theta (y{=}k | x) >= 0, quad quad sum_(k=1)^K p_theta (y{=}k | x) = 1 $
 #pause
-#fig("figures/softmax_pipeline.svg", w: 58%)
+#fig("/lecture1/figures/softmax_pipeline.svg", w: 58%)
 #align(center)[*logits* $z_k in RR$ → *probabilities* $p_k in [0,1]$.]
 
 == Binary classification: Bernoulli model
@@ -333,7 +274,7 @@ $ p = sigma(z) = 1/(1 + e^(-z)) $
 #two(r: (1fr, 1.2fr),
   [$z -> -infinity: p -> 0$ \ $z = 0: p = 0.5$ \ $z -> +infinity: p -> 1$
    #v(4pt) #text(size: 16pt, fill: MUTED)[In practice sigmoid + BCE are fused for numerical stability.]],
-  fig("figures/sigmoid.svg", w: 80%),
+  fig("/lecture1/figures/sigmoid.svg", w: 80%),
 )
 
 == Multi-class: categorical model
@@ -348,7 +289,7 @@ $ p(y | x, theta) = product_(k=1)^K p_k^(y_k) $
 $ p_k = e^(z_k) / (sum_j e^(z_j)) $
 #pause
 Two guaranteed properties: $p_k > 0$ and $sum_k p_k = 1$.
-#fig("figures/softmax_bars.svg", w: 48%)
+#fig("/lecture1/figures/softmax_bars.svg", w: 48%)
 #align(center, text(size: 17pt)[*Shift invariance:* $"softmax"(z) = "softmax"(z + c bold(1))$.])
 
 == Categorical NLL gives cross-entropy
@@ -366,7 +307,7 @@ $ ell(p_y) = -log p_y $
 #pause
 #two(r: (1fr, 1.25fr),
   [$p_y = 0.9 => ell approx 0.105$ \ $p_y = 0.1 => ell approx 2.303$ \ $p_y = 0.001 => ell approx 6.908$],
-  fig("figures/neglog_curve.svg", w: 78%),
+  fig("/lecture1/figures/neglog_curve.svg", w: 78%),
 )
 #align(center, text(size: 17pt)[*Q.* Why punish a _confidently wrong_ prediction so hard?])
 
@@ -376,7 +317,7 @@ $ ell(p_y) = -log p_y $
 For softmax followed by cross-entropy:
 $ (partial cal(L))/(partial z_k) = p_k - y_k, quad quad nabla_z cal(L) = p - y $
 #pause
-#fig("figures/gradient_bars.svg", w: 54%)
+#fig("/lecture1/figures/gradient_bars.svg", w: 54%)
 #align(center, text(size: 16pt, fill: MUTED)[Predicted $p$, target $y$, and their difference — a preview of backprop.])
 
 == Interactive: logits → softmax → cross-entropy
@@ -417,14 +358,14 @@ $ hat(y) = arg max_k p(x | y{=}k) thin p(y{=}k) $
 
 $ X | Y{=}0 tilde cal(N)(mu_0, sigma_0^2), quad X | Y{=}1 tilde cal(N)(mu_1, sigma_1^2) $
 #pause
-#fig("figures/bayes_classifier.svg", w: 50%)
+#fig("/lecture1/figures/bayes_classifier.svg", w: 50%)
 #align(center, text(size: 16pt, fill: MUTED)[Two class-conditional densities, a test point $x^star$, and its likelihood under each class.])
 
 == Priors move the decision boundary
 #stag(V)
 
 #two(notebox[*Balanced* $p(Y{=}1) = 0.5$], notebox[*Rare* $p(Y{=}1) = 0.1$])
-#fig("figures/priors_shift_boundary.svg", w: 54%)
+#fig("/lecture1/figures/priors_shift_boundary.svg", w: 54%)
 #result[posterior $prop$ likelihood $times$ prior]
 
 == Interactive: Bayes classifier
@@ -441,7 +382,7 @@ $ X | Y{=}0 tilde cal(N)(mu_0, sigma_0^2), quad X | Y{=}1 tilde cal(N)(mu_1, sig
 
 MLE asks only: _how well does $theta$ explain the data?_
 #pause
-#fig("figures/overfit_polynomial.svg", w: 40%)
+#fig("/lecture1/figures/overfit_polynomial.svg", w: 40%)
 #notebox[Many parameters fit a small dataset. *Which should we prefer?*]
 
 == Put a prior over parameters
@@ -457,7 +398,7 @@ _Before seeing this dataset, which parameter values are plausible?_
 
 $ p(theta | cal(D)) = (p(cal(D) | theta) thin p(theta)) / p(cal(D)) $
 #pause
-#fig("figures/prior_likelihood_posterior.svg", w: 38%)
+#fig("/lecture1/figures/prior_likelihood_posterior.svg", w: 38%)
 #align(center, text(size: 17pt)[$p(cal(D)) = integral p(cal(D) | theta) p(theta) dif theta$ — the evidence (we stop here).])
 
 == MAP estimation
@@ -518,7 +459,7 @@ _Controls:_ amount of data · noise · prior variance · Gaussian vs Laplace · 
 
 $ p(y^star | x^star, cal(D)) = integral p(y^star | x^star, theta) thin p(theta | cal(D)) dif theta $
 #pause
-#fig("figures/posterior_samples.svg", w: 46%)
+#fig("/lecture1/figures/posterior_samples.svg", w: 46%)
 #notebox[Bayesian prediction *averages over plausible models* — and reports uncertainty.]
 
 == Why DL usually uses point estimates
