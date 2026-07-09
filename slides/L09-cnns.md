@@ -113,6 +113,35 @@ The MLP's weights are almost all redundant: 99.99% of them *should* be copies of
 
 ---
 
+# Intuition · a shifted cat is a brand-new problem for an MLP
+
+Move the cat **one pixel to the right**. To your eye, nothing changed — same cat. To an MLP's input layer, the 150,528-number vector is now *completely different*: every pixel value landed on a different input wire.
+
+<div class="insight">
+
+An MLP has **no notion that pixel 5 sits next to pixel 6** — the input is an unordered bag. So "cat in the corner" and "cat in the centre" are two unrelated vectors, and the network must learn each from scratch, almost as if they were different classes.
+
+</div>
+
+<div class="columns">
+<div>
+
+**MLP's world**
+Shift by one pixel → a new input vector → relearn everything. Recognising the shifted cat needs *its own* training examples.
+
+</div>
+<div>
+
+**Convolution's world**
+Shift the cat → the feature map shifts with it (equivariance). One set of shared weights already covers *every* position.
+
+</div>
+</div>
+
+This is why data-hungry MLPs never caught on for vision: they burn their capacity memorising *position* instead of learning *"cat."*
+
+---
+
 # The fix, in one line
 
 <div class="keypoint">
@@ -236,6 +265,37 @@ The same operation, now with the notation we will count with. The filter's weigh
 
 ---
 
+# Intuition · weight sharing is one edge detector, reused everywhere
+
+<div class="keypoint">
+
+**Learn the edge detector once, then apply it at every pixel.** A convolution stores *one* small set of weights and slides it across the image — an edge detector discovered top-left is *automatically* available bottom-right, for free.
+
+</div>
+
+<div class="columns">
+<div>
+
+**MLP** — a separate weight per (pixel, unit) pair. "Vertical edge" must be *independently* rediscovered at all 150,528 positions.
+
+</div>
+<div>
+
+**Conv** — one filter, *tied* across all positions. Learn it once; nothing to store for the other positions.
+
+</div>
+</div>
+
+Weight sharing is why a CNN needs **fewer parameters** *and* **generalises better** — a feature confirmed in a thousand locations is a thousand times more evidenced.
+
+<div class="notebook">
+
+**🎛 Interactive · equivariant networks** — shift the input, watch the feature map shift in lockstep. *(Interactive Lab · `interactive/articles/equivariant-networks`)*
+
+</div>
+
+---
+
 # Padding: what to do at the border
 
 Without help, the filter's centre cannot sit on the edge pixels, so the output **shrinks** — and repeated layers erode the image away. Pad the border with zeros to control this:
@@ -256,6 +316,32 @@ Just enough zeros that **output size = input size**. A $3\times3$ filter uses $P
 </div>
 
 Padding is the "paved sidewalk" that lets the filter start with its centre on the very first pixel.
+
+---
+
+# Same padding, derived — one line of algebra
+
+"Same" padding means: choose $P$ so the output equals the input. Set $O = W$ in the output formula (with $S=1$):
+
+<div class="math-box">
+
+$$W = (W + 2P - K) + 1 \;\Longrightarrow\; 2P = K - 1 \;\Longrightarrow\; \boxed{\,P = \dfrac{K-1}{2}\,}$$
+
+</div>
+
+So the padding is fixed *entirely* by the kernel size — and this is why **odd** kernels are the norm ($K-1$ is even, so $P$ comes out a whole number):
+
+| Kernel $K$ | Same padding $P=\tfrac{K-1}{2}$ |
+|:--:|:--:|
+| $3\times3$ | $1$ |
+| $5\times5$ | $2$ |
+| $7\times7$ | $3$ |
+
+<div class="insight">
+
+An **even** kernel ($K=2,4,\dots$) gives a fractional $P$ — there is no symmetric way to pad, so you would have to add a lop-sided extra pixel on one side. That asymmetry is exactly why almost every architecture sticks to odd kernels.
+
+</div>
 
 ---
 
@@ -328,6 +414,42 @@ Halved — a `Conv2d(3,64,7,stride=2,pad=3)` turns $(3,224,224)$ into $(64,112,1
 <div class="notebook">
 
 **📓 Notebook · convolution by hand** — run `F.conv2d` with the edge kernels above and with stride/padding, and confirm the output shapes match the formula. *(ML ES 335 · `notebooks/convolution-operation.ipynb`, `convolution-operation-stride.ipynb`, `cnn-edge.ipynb`)*
+
+</div>
+
+---
+
+# Reading a `Conv2d` line — shape and params in your head
+
+Every convolution in real code is one line. Take a mid-network layer and decode it *without running anything*:
+
+<div class="math-box">
+
+`nn.Conv2d(64, 128, kernel_size=3, padding=1)`  on input  $(64,\,56,\,56)$
+
+</div>
+
+<div class="columns">
+<div>
+
+**Output shape** — same padding ($K{=}3,P{=}1,S{=}1$):
+$$O=\left\lfloor\tfrac{56+2-3}{1}\right\rfloor+1 = 56$$
+$$\Rightarrow (128,\,56,\,56)$$
+Depth becomes 128 (one map per filter); spatial size preserved.
+
+</div>
+<div>
+
+**Parameters** — $K\!\cdot\!K\!\cdot\!C_{\text{in}}\!\cdot\!C_{\text{out}}+C_{\text{out}}$:
+$$3\cdot3\cdot64\cdot128 + 128$$
+$$= 73{,}728 + 128 = \mathbf{73{,}856}$$
+
+</div>
+</div>
+
+<div class="insight">
+
+Two numbers, both by hand: the first two `Conv2d` arguments ($C_{\text{in}}, C_{\text{out}}$) set the **depth** and drive the parameter count; $K,P,S$ set the **spatial** size through the output formula. Read every `Conv2d` this way and a network's shapes are never a mystery.
 
 </div>
 
@@ -576,6 +698,40 @@ And the four-layer stack is far cheaper: $4\cdot9\,C^2 = 36\,C^2$ params vs $81\
 
 ---
 
+# Practice problem 4
+
+<div class="popquiz">
+
+**Practice problem 4.** A small stack, all convolutions stride 1: **conv $3\times3$ → conv $3\times3$ → maxpool $2\times2$ (stride 2) → conv $3\times3$.**
+
+Using $\text{RF}_{\ell} = \text{RF}_{\ell-1} + (K_\ell - 1)\cdot\prod_{i<\ell} S_i$ — each layer's reach is scaled by the strides *before* it — what is the receptive field of a neuron in the final conv layer?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 4
+
+Track two quantities — the receptive field, and the running **stride product** (the "jump"):
+
+| Layer | $K$ | $S$ | jump $\prod_{i<\ell} S_i$ | $\text{RF}$ |
+|---|:--:|:--:|:--:|:--:|
+| input | — | — | $1$ | $1$ |
+| conv $3\times3$ | $3$ | $1$ | $1$ | $1+2\cdot1=3$ |
+| conv $3\times3$ | $3$ | $1$ | $1$ | $3+2\cdot1=5$ |
+| maxpool $2\times2$ | $2$ | $2$ | $1$ | $5+1\cdot1=6$ |
+| conv $3\times3$ | $3$ | $1$ | $2$ | $6+2\cdot2=\mathbf{10}$ |
+
+<div class="keypoint">
+
+**RF $=10$.** The pool didn't just shrink the map — it **doubled the reach of every layer after it**: the last conv's $(K-1)=2$ is multiplied by the jump of $2$, adding $4$ instead of $2$. Downsampling is precisely what lets a few small filters eventually see the whole image.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ## Part 5 · A full CNN, end to end (LeNet)
@@ -640,6 +796,51 @@ The two conv layers do the heavy *seeing* with under **1,000** parameters; the F
 
 ---
 
+# Practice problem 5
+
+<div class="popquiz">
+
+**Practice problem 5.** A layer must turn a $(16,\,10,\,10)$ feature map into a $(16,\,10,\,10)$ output.
+
+**(a)** A **conv** layer does it with $16$ filters of $3\times3\times16$ (same padding, with biases). How many parameters?
+**(b)** A **fully-connected** layer maps the *flattened* input ($16\cdot10\cdot10$) to the flattened output ($16\cdot10\cdot10$), with biases. How many?
+**(c)** What is the ratio?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 5
+
+<div class="columns">
+<div>
+
+**(a) Convolution**
+$$\underbrace{3\cdot3\cdot16}_{\text{one filter}}\cdot16 + 16$$
+$$= 2{,}304 + 16 = \mathbf{2{,}320}$$
+
+</div>
+<div>
+
+**(b) Fully connected**
+$$\underbrace{1{,}600}_{16\cdot10\cdot10}\times\underbrace{1{,}600}_{\text{outputs}} + 1{,}600$$
+$$= 2{,}560{,}000 + 1{,}600 = \mathbf{2{,}561{,}600}$$
+
+</div>
+</div>
+
+$$\text{ratio} = \frac{2{,}561{,}600}{2{,}320} \approx \mathbf{1{,}100\times}\ \text{fewer parameters for the conv}$$
+
+<div class="keypoint">
+
+Same input map, same output map — but the FC layer wires *every* input pixel to *every* output pixel (over a million weights), while the conv reuses one tiny filter everywhere. And the conv's count is **independent of the $10\times10$ resolution**; the FC's grows with its *square*. This is Part 1's parameter blow-up, now measured on a single mid-network layer.
+
+</div>
+
+---
+
 # What the layers end up learning
 
 Train the stack and its filters organise themselves **bottom-up** — each layer composing the one below:
@@ -647,6 +848,30 @@ Train the stack and its filters organise themselves **bottom-up** — each layer
 ![w:720px](figures/lec07/svg/feature_hierarchy.svg)
 
 Conv1 learns oriented edges and colour blobs (Gabor-like) → Conv2–3 learn junctions and textures → deeper layers learn object *parts* → the top learns whole objects. Nobody programmed this hierarchy; **the growing receptive field plus the loss produced it.**
+
+---
+
+# What did the network actually look at?
+
+Once trained, we can ask a CNN *which pixels* drove its decision — backpropagate the class score to the input, and the bright regions are what it "looked at." Reassuringly, a well-trained classifier lights up the **object**, not the background.
+
+<div class="insight">
+
+This is the quiet payoff of the whole stack: locality + weight sharing + a growing receptive field don't just save parameters — they push the network to *localise the evidence*. When saliency instead highlights the grass behind every "cow," you've caught the model cheating on a spurious correlation.
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · saliency maps** — pick an image and a class, and watch the input-gradient heatmap reveal which pixels the CNN used to decide. *(Interactive Lab · `interactive/articles/saliency`)*
+
+</div>
+
+<div class="notebook">
+
+**📓 Notebook · train LeNet, then look inside** — after `lenet.ipynb` trains on MNIST, visualise the learned first-layer filters and the feature maps a single digit produces. *(ML ES 335 · `lenet.ipynb`)*
+
+</div>
 
 ---
 
@@ -709,6 +934,22 @@ With enough examples a Vision Transformer can *learn* the missing structure and 
 **Use a CNN when data is limited** (which is most of the time). Its assumptions are worth an enormous multiplier of labelled examples — they don't reduce true capacity, they shrink the *search space* to hypotheses images actually obey.
 
 </div>
+
+---
+
+# The same template scales: LeNet → AlexNet → VGG → ResNet
+
+Everything today — conv + pool to *see*, a head to *decide*, three inductive biases underneath — is the *fixed skeleton*. The famous architectures just push it further: more depth, smaller kernels, cleverer ways to keep gradients flowing.
+
+![w:480px](figures/lec07/svg/architecture_timeline.svg)
+
+<div class="insight">
+
+**LeNet** (1998) proved the template; **AlexNet** (2012) scaled it to ImageNet on GPUs; **VGG** (2014) made it uniform — nothing but stacked $3\times3$s (the trade you costed on the receptive-field slide); **ResNet** (2015) added skip connections so *hundreds* of layers still train. Same three biases throughout — just deeper.
+
+</div>
+
+The next lecture is this arms race in detail; today you already own the vocabulary to read all of it.
 
 ---
 

@@ -232,6 +232,24 @@ In PyTorch this is one argument: `AdamW(..., weight_decay=0.05)`. (Why the decou
 
 ---
 
+# Weight decay in numbers — a weight literally *decays*
+
+Freeze the data gradient for a moment and the update is pure shrink. Take $\eta=0.1$, $\lambda=1$, so $(1-\eta\lambda)=0.9$. Starting from $w=1.0$:
+
+$$1.0 \to 0.9 \to 0.81 \to 0.729 \to 0.656 \to \dots \qquad w_t = (0.9)^t$$
+
+A weight left with no supporting evidence loses **10% every step** — it halves in $\log 0.5/\log 0.9\approx 7$ steps.
+
+<div class="keypoint">
+
+The data gradient is the *only* thing keeping a weight alive. With a steady gradient $g$, the weight settles at the balance point $\eta\lambda w^\* = -\eta g$, i.e. $\lvert w^\*\rvert = \lvert g\rvert/\lambda$: **useful weights survive at a height set by how much the data needs them; unused ones decay to 0.** Bigger $\lambda$ ⇒ everything sits lower.
+
+</div>
+
+This is the MAP tug-of-war of L1, now visible one SGD step at a time.
+
+---
+
 # Callback to L1: a prior *is* a regularizer
 
 From L1: maximizing the posterior adds $-\log p(\theta)$ to the loss. The **shape of the prior** picks the penalty.
@@ -258,6 +276,39 @@ $\;$*"weights are small **and many are exactly 0**"*
 <div class="insight">
 
 Regularization was never a hack bolted onto the loss — it is a **belief about the weights**, written as a prior. Choosing L2 vs L1 is choosing the *shape* of that belief.
+
+</div>
+
+---
+
+# Intuition · the penalty as a rubber band
+
+<div class="insight">
+
+Picture a **rubber band** tying every weight to $0$. Training is a tug-of-war: the data-gradient drags each weight toward whatever fits the training set; the band pulls it back toward $0$. Where the two forces cancel is $\hat\theta_{\text{MAP}}$.
+
+</div>
+
+<div class="columns">
+<div>
+
+**$\lambda$ is the band's stiffness.**
+- $\lambda\to 0$ (loose) → pure MLE, the model is free to overfit.
+- $\lambda$ large (stiff) → weights hugged toward $0$, the model stays simple.
+
+</div>
+<div>
+
+**L1 vs L2 is the band's *spring law*.**
+- **L2:** pull $\propto\theta$ — fades near $0$, so a weight only *approaches* $0$.
+- **L1:** pull $=\pm\lambda$, constant — snaps weak weights to *exactly* $0$.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+This is MAP from L1, redrawn: the band **is** the prior, and $\lambda$ is how strongly you believe weights are small. Regularization was never bolted onto the loss — it is a belief, mechanized.
 
 </div>
 
@@ -350,6 +401,24 @@ Early stopping is implicit capacity control: **free, and almost always helps.** 
 
 ---
 
+# Why early stopping ≈ weight decay
+
+Start the weights near $0$. Gradient descent grows them outward, high-curvature directions first, flat ones last — so after $t$ steps the weights have traveled only a **bounded distance** from the origin.
+
+<div class="keypoint">
+
+That bounded travel *is* a constraint "$\lVert\theta\rVert$ small" — the very ball L2 enforces with $\lambda$. For a quadratic loss the match is exact: stopping after $t$ steps at learning rate $\eta$ behaves like L2 with $\;\lambda\approx\dfrac{1}{\eta t}$. **Train longer ⇒ weaker regularization**; stop sooner ⇒ a stiffer band.
+
+</div>
+
+<div class="insight">
+
+So early stopping and weight decay are the *same* knob wearing two hats — one tuned by *when you stop*, the other by a number you pick. That is why cranking both hard at once rarely helps: you are paying for the same constraint twice.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ## Part 3 · Regularize the data, not the model
@@ -367,6 +436,35 @@ Classical regularization constrains the **model**. Augmentation constrains the *
 ![w:820px](figures/lec06/svg/aug_examples.svg)
 
 By training on transformed copies, the model **learns** the invariance instead of us hard-coding it — often the single highest-value regularizer for vision.
+
+---
+
+# Why augmentation is the highest-value regularizer
+
+<div class="insight">
+
+L2 and dropout constrain the model **blindly** — they shrink or delete weights without knowing *which* patterns matter. Augmentation injects **domain knowledge**: it tells the model the exact symmetries the label respects (a flipped cat is still a cat, a shifted cat is still a cat).
+
+</div>
+
+<div class="columns">
+<div>
+
+**It regularizes where the others can't reach.** Weight penalties shrink the *hypothesis space*; augmentation enlarges the *training distribution* toward the test distribution — attacking the generalization gap from the data side.
+
+</div>
+<div>
+
+**It's nearly free and it stacks.** CPU transforms overlap with GPU compute, so throughput barely moves, and it composes with weight decay, dropout, and BatchNorm all at once.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+Every other regularizer says *"be simpler."* Augmentation says *"here is more of the world."* That is why, for vision, one good augmentation policy routinely beats any weight-penalty you can tune — and why **a bigger model + more augmentation** is the modern default over a smaller model with heavier weight decay.
+
+</div>
 
 ---
 
@@ -433,6 +531,12 @@ $$y_{\text{smooth}}=(1-\alpha)\,y_{\text{hard}}+\frac{\alpha}{K} \qquad\text{e.g
 
 Better calibration, robustness to wrong labels — one flag: `CrossEntropyLoss(label_smoothing=0.1)`. *(Downside: smoothed models make weaker distillation teachers — the inter-class structure flattens.)*
 
+<div class="notebook">
+
+**🎛 Interactive · calibration** — plot a reliability diagram and watch label smoothing and Mixup pull an over-confident classifier back onto the diagonal (predicted probability $\approx$ empirical accuracy). *([calibration](https://nipunbatra.github.io/interactive-articles/calibration/) · Interactive Lab)*
+
+</div>
+
 ---
 
 <!-- _class: section-divider -->
@@ -480,6 +584,26 @@ Dropout removes that guarantee, forcing each unit to be useful **on its own**.
 The result is a more **distributed**, robust representation.
 
 </div>
+</div>
+
+---
+
+# How big is the dropout ensemble? Count it
+
+Each forward pass keeps a random subset of the $N$ units — one **thinned** sub-network. Two passes almost never draw the same mask.
+
+![w:460px](figures/lec06/svg/dropout_masks.svg)
+
+<div class="math-box">
+
+A single hidden layer of $N=100$ units has $2^{100}\approx 10^{30}$ possible masks — **more sub-networks than training steps you will ever run.** You never train the same one twice, yet they *all share one weight matrix*, so every SGD step improves the whole exponential family at once.
+
+</div>
+
+<div class="keypoint">
+
+At test time (mask off, the $1/p$ already folded in) one forward pass evaluates the **average** of that $10^{30}$-model ensemble. Weight-sharing buys ensemble-grade generalization at single-model cost — that is dropout's whole trick.
+
 </div>
 
 ---
@@ -560,6 +684,24 @@ The $1/p$ train-time amplification is exactly what lets us **turn the mask off a
 
 ---
 
+# BatchNorm, in one sentence: a stable input for the next layer
+
+Every layer's weights are tuned to the **distribution** of its inputs. When lower layers update, that input distribution shifts under the higher layers' feet — Ioffe & Szegedy named this **internal covariate shift**. Each layer is forever chasing a moving target.
+
+<div class="keypoint">
+
+BatchNorm freezes the target: **re-center to mean 0, re-scale to unit variance at every step**, so layer $k{+}1$ always sees a standardized input no matter how layer $k$ churns. The learned $\gamma,\beta$ then hand back only the scale the network actually wants.
+
+</div>
+
+<div class="insight">
+
+**The twist (Santurkar et al., 2018):** the covariate-shift story turned out *not* to be the real mechanism — BN mainly **smooths the loss landscape** (smaller, more predictable gradients), which is why it unlocks much larger learning rates. Whatever the true cause, the *effect* you rely on is the same: a well-conditioned input to every layer, faster training, and a little regularizing noise from the batch statistics.
+
+</div>
+
+---
+
 # BatchNorm · LayerNorm · RMSNorm — same recipe, three axes
 
 The only question is **which slice you average over.**
@@ -615,6 +757,34 @@ At **train** time BN uses the *batch's* mean/variance; at **eval** it uses the *
 
 ---
 
+# Practice problem 4
+
+<div class="popquiz">
+
+**Practice problem 4.** A BatchNorm layer sees one neuron's pre-activations over a batch of four: $x=[2,4,6,8]$, with $\gamma=1,\beta=0$ and $\epsilon\approx 0$. **(a)** Compute the four BatchNorm outputs. **(b)** A *second* neuron in the same batch has $x=[10,10,10,10]$ — what does BN output for it, and why is that a warning about constant features and tiny batches?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 4
+
+**(a)** $\mu=\dfrac{2+4+6+8}{4}=5$, $\;\sigma^2=\dfrac{9+1+1+9}{4}=5$, $\;\sigma\approx2.236$.
+
+$$\hat x=\frac{x-5}{2.236}=[-1.342,\,-0.447,\,0.447,\,1.342],\qquad y=\gamma\hat x+\beta=\hat x$$
+
+**(b)** Constant feature: $\mu=10$, $\sigma^2=0$, so $\hat x=\dfrac{0}{\sqrt{\epsilon}}\approx 0$ — BN outputs $\beta$ (here $0$) for **every** sample.
+
+<div class="warning">
+
+A feature with no in-batch variance is **erased** by BN. Worse: with a *small* batch even a genuinely useful feature can look near-constant by chance, so its running statistics are noisy. This is exactly why BN wants batches $\ge 32$ and breaks at batch size $1$ — and why LayerNorm (next) sidesteps the whole problem.
+
+</div>
+
+---
+
 # LayerNorm & RMSNorm — the sequence-model normalizers
 
 <div class="columns">
@@ -642,6 +812,38 @@ Every modern Transformer (BERT, GPT, Llama, Claude) uses **LayerNorm** or its ch
 
 ---
 
+# Practice problem 5
+
+<div class="popquiz">
+
+**Practice problem 5.** One token's feature vector is $x=[1,2,3,4]$ (4 features), with $\gamma=1,\beta=0,\epsilon\approx 0$. **(a)** Compute its LayerNorm output. **(b)** Why is this answer identical whether the batch holds 1 sample or 1000? **(c)** What would **RMSNorm** output instead?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 5
+
+**(a)** LayerNorm normalizes across *this sample's own features*: $\mu=2.5$, $\;\sigma^2=\dfrac{2.25+0.25+0.25+2.25}{4}=1.25$, $\;\sigma\approx1.118$.
+
+$$\hat x=\frac{x-2.5}{1.118}=[-1.342,\,-0.447,\,0.447,\,1.342]$$
+
+**(b)** The statistics use **only this one vector** — no other sample enters — so batch size is irrelevant. That batch-independence is the whole reason Transformers pick LayerNorm over BatchNorm.
+
+**(c)** RMSNorm skips the mean: $\;\text{rms}=\sqrt{\tfrac{1+4+9+16}{4}}=\sqrt{7.5}\approx2.739$, so
+
+$$\hat x=\frac{x}{2.739}=[0.365,\,0.730,\,1.095,\,1.461]\quad(\text{scaled, not centered}).$$
+
+<div class="insight">
+
+One fewer statistic to compute (no mean, no subtraction) — ~15–30% cheaper — and empirically no worse. That is why Llama, Mistral and PaLM dropped the mean entirely.
+
+</div>
+
+---
+
 # Pre-norm vs post-norm — where to place it in a deep net
 
 ![w:760px](figures/lec06/svg/pre_vs_post_norm.svg)
@@ -653,6 +855,12 @@ Every modern Transformer (BERT, GPT, Llama, Claude) uses **LayerNorm** or its ch
 </div>
 
 **Building a Transformer in 2026? Use pre-norm** — the default since GPT-2.
+
+<div class="notebook">
+
+**🎛 Interactive · vanishing gradients** — stack an $L$-deep net and watch the gradient norm shrink layer by layer; add a residual skip (the pre-norm "highway") and watch it stay flat. *([vanishing-gradients](https://nipunbatra.github.io/interactive-articles/vanishing-gradients/) · Interactive Lab)*
+
+</div>
 
 ---
 
@@ -751,6 +959,8 @@ This lecture reuses and adapts material from the instructor's own courses (IIT G
 - **L2 $=$ Gaussian prior, L1 $=$ Laplace prior (MAP)** — *ES 667 · Lecture 1*, this course
 - **Dropout, augmentation, Mixup, label smoothing, normalization, double descent** — ES 667 regularization materials; A. Ng, *Deep Learning Specialization* Course 2 (Weeks 1 & 3)
 - **BatchNorm** — Ioffe & Szegedy, *Batch Normalization* (2015); the ICS re-analysis — Santurkar et al. (2018)
+- **Early stopping ≈ L2, the rubber-band prior, weight-decay dynamics** — Goodfellow, Bengio & Courville, *Deep Learning* (2016), §7.8; A. Ng, *Deep Learning Specialization* Course 2
+- **Interactive explainers** (dropout-playground, norm-comparison, double-descent, calibration, vanishing-gradients) — *ES 667 Interactive Lab*, N. Batra · `~/git/interactive`
 
 Figures reused from the ES 667 figure library (`figures/lec06/svg/`). All source courses © N. Batra & teaching staff.
 

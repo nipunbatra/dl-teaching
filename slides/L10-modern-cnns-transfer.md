@@ -135,6 +135,37 @@ The obvious next move: if depth is this good, **just keep stacking**. VGG-19 →
 
 ---
 
+# Under the hood · quantifying the $3\times3$ trick
+
+Before we hit the wall, bank *why* VGG's one move works — the same instinct returns all lecture. Stacking small kernels wins on **both** axes at once:
+
+<div class="columns">
+<div>
+
+**Receptive field grows by stacking.** Each extra $3\times3$ adds $2$ to the field: one layer sees $3\times3$, two see $5\times5$, three see $7\times7$. Three $3\times3$s match one $7\times7$'s *view*.
+
+</div>
+<div>
+
+**Parameters shrink.** Per channel-pair: $3\times(3^2)=27$ weights vs $7^2=49$ — **~45% fewer** — *and* you get three ReLUs instead of one, so a strictly richer function.
+
+</div>
+</div>
+
+<div class="insight">
+
+The lesson generalizes: **replace one wide operation with several narrow ones and you usually pay less for more.** That exact instinct returns as the $1\times1$ bottleneck and the depthwise split in Part 3.
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · receptive-field grower** — stack $3\times3$ layers one at a time and watch the receptive field expand $3\to5\to7\to\dots$ back over the input pixels. *(Interactive Lab · `interactive/articles/receptive-field-grower`)*
+
+</div>
+
+---
+
 # The wall: deeper suddenly made things *worse*
 
 Take a plain CNN that trains fine at 20 layers. Stack the *same* design to 56. Common sense says it should do *at least* as well — the extra 36 layers can always learn the identity and change nothing. Reality (He et al., 2015):
@@ -183,6 +214,37 @@ Don't ask a block to compute the whole mapping $H(x)$. Ask it to output the **in
 
 ---
 
+# Intuition · learn the *residual* — the change, not the whole map
+
+Why is $x + F(x)$ so much easier to train than a plain block's $H(x)$? Because $F$ only has to learn the **difference** from "leave the input alone."
+
+<div class="columns">
+<div>
+
+**Plain block** must synthesize the *entire* target mapping $H(x)$ from scratch — even when the right answer is "barely touch this."
+
+</div>
+<div>
+
+**Residual block** learns only $F(x) = H(x) - x$, the **correction**. If the ideal map is near identity ($H(x)\approx x$), then $F\approx 0$ — a tiny, easy thing to fit.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+**Editing beats rewriting.** Nudging a good draft ("change these three words") is far easier than writing the essay from a blank page. Deep layers rarely need to *transform* their input — mostly they should *refine* it, and $x+F(x)$ makes refinement the default move.
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · vanishing gradients** — watch a plain deep stack's gradient decay layer by layer toward zero, then switch on skip connections and see the signal survive intact all the way to layer 1. *(Interactive Lab · `interactive/articles/vanishing-gradients`)*
+
+</div>
+
+---
+
 # Why "identity for free" kills degradation
 
 Back to the 56-vs-20-layer puzzle — now with residual blocks:
@@ -194,6 +256,23 @@ Back to the 56-vs-20-layer puzzle — now with residual blocks:
 <div class="keypoint">
 
 Plain deep nets struggled because *every* layer was forced to learn something useful and hitting "do nothing" was hard. Skip connections make "do nothing" the **default** — so you can pile on depth and only pay for the layers that earn their keep.
+
+</div>
+
+---
+
+# The receipt · ResNet vs plain, in real numbers
+
+He et al. ran the *same* experiment both ways on ImageNet. Plain nets show the degradation; add the skip and deeper suddenly helps:
+
+| Setup | 18-layer | 34-layer | did depth help? |
+|---|:--:|:--:|:--:|
+| **Plain** (top-1 error) | 27.9% | 28.5% | **no — got worse** |
+| **ResNet** (top-1 error) | 27.9% | 25.0% | **yes — got better** |
+
+<div class="keypoint">
+
+Same depth increase, opposite sign. Plain-34 *regressed* on both training and validation error — the degradation problem in a single row. Bolt on the identity skip and those extra 16 layers finally **earn their keep**. The network didn't become more powerful *in principle* — a plain net can represent the very same function — it became **trainable**.
 
 </div>
 
@@ -391,6 +470,33 @@ Each branch's outputs are **concatenated along channels**, so the next layer see
 
 ---
 
+# Worked numeric · the $1\times1$ makes Inception affordable
+
+A naïve Inception branch runs a $5\times5$ conv straight on a fat input. On a $28\times28\times192$ feature map, producing $32$ output channels:
+
+<div class="math-box">
+
+**Naïve $5\times5$:** output $28\times28\times32$, each value costs $5\cdot5\cdot192$ multiply-adds:
+$$(28\cdot28\cdot32)\times(5\cdot5\cdot192) \approx \mathbf{120\ \text{million}}$$
+
+</div>
+
+Now insert a $1\times1$ that first **squeezes** $192\to16$ channels, *then* run the $5\times5$ on only $16$:
+
+<div class="math-box">
+
+$$\underbrace{(28\cdot28\cdot16)(1\cdot1\cdot192)}_{\text{squeeze}\ \approx\,2.4\text{M}} \;+\; \underbrace{(28\cdot28\cdot32)(5\cdot5\cdot16)}_{5\times5\ \text{on 16 ch}\ \approx\,10\text{M}} \approx \mathbf{12.4\ \text{million}}$$
+
+</div>
+
+<div class="keypoint">
+
+**~10× cheaper**, *same* output shape. A $1\times1$ costs almost nothing yet lets the expensive kernel run on a **thin** stack of channels — the identical squeeze that powers ResNet-50's bottleneck and every Transformer's FFN projection (L13). Learn it once, spot it everywhere.
+
+</div>
+
+---
+
 # Depthwise-separable convolution — split spatial from channel
 
 A standard conv does two jobs in one expensive step: mix **space** and mix **channels**. MobileNet (Howard et al., 2017) splits them:
@@ -541,6 +647,31 @@ Someone spent weeks of GPU time teaching ResNet-50 to see edges, textures, fur, 
 
 ---
 
+# Intuition · don't train from scratch — someone already learned edges for you
+
+The first convolutional layers of *every* vision model learn nearly the same thing: oriented edges, colour blobs, simple textures — Gabor-like filters, painstakingly rediscovered from zero every time someone trains from scratch.
+
+<div class="keypoint">
+
+**That work is already done.** A pretrained backbone hands you a feature extractor $\phi$ that cost **weeks of GPU time and 1.2M labels** to build — for free, in one line of code. Refusing it to "train your own" on 500 images is like re-deriving calculus before every homework problem.
+
+</div>
+
+<div class="columns">
+<div>
+
+**From scratch** on 500 images: the net burns its scarce data *relearning edges*, and overfits long before it ever reaches useful object parts.
+
+</div>
+<div>
+
+**Warm-started** from ImageNet: edges and textures are already there, so the 500 images only need to learn *your* decision boundary on top. That prior is worth **≈ 1–2 orders of magnitude** of labelled data.
+
+</div>
+</div>
+
+---
+
 # What the backbone already knows — and what it doesn't
 
 ImageNet pretraining gives you a **generic vision stack**, but not every layer transfers equally:
@@ -671,6 +802,50 @@ The deciding quantity is **your labelled dataset size relative to the model's ca
 
 ---
 
+# Practice problem 4
+
+<div class="popquiz">
+
+**Practice problem 4.** You linear-probe a pretrained **ResNet-50** for a **10-class** task. The backbone has $\approx 25.5$M parameters and outputs a $2048$-dim feature vector; you freeze it and train only a fresh linear head.
+
+**(a)** How many parameters does the optimizer actually update (include the bias)?
+**(b)** What fraction of the *total* model is that?
+**(c)** In one line: why does this make a linear probe so hard to overfit on small data?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 4
+
+<div class="columns">
+<div>
+
+**(a) Trainable params — the head only**
+$$\underbrace{2048\times 10}_{\text{weights}} + \underbrace{10}_{\text{bias}} = \mathbf{20{,}490}$$
+
+**(b) Fraction of the whole**
+$$\frac{20{,}490}{25.5\text{M}+20{,}490} \approx \mathbf{0.08\%}$$
+
+</div>
+<div>
+
+**(c) Why it resists overfitting**
+You fit **~20k** parameters, not 25M — a plain logistic regression on frozen features. With so few free parameters it simply *can't* memorize a small training set; the 25M-param $\phi$ is fixed, so there is almost nothing to overfit.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+"Reuse the features, retrain the head" made literal: **>99.9% of the network never moves.** All the representational power is inherited — you only learn a decision boundary *inside* the pretrained feature space.
+
+</div>
+
+---
+
 # Discriminative (layer-wise) learning rates
 
 When you *do* unfreeze early layers, don't wreck them: they're already good, so they should move **slower** than the fresh head.
@@ -689,6 +864,53 @@ opt = torch.optim.AdamW(params, weight_decay=0.01)
 <div class="insight">
 
 A too-high LR on the backbone is the #1 transfer bug: the net does *worse* than a plain linear probe because large steps overwrite the pretrained features on the first batch. Fix: divide the backbone LR by 10, leave the head LR alone.
+
+</div>
+
+---
+
+# Practice problem 5
+
+<div class="popquiz">
+
+**Practice problem 5.** You have **8,000** in-domain images, so you full-fine-tune a pretrained ResNet-50 with a **single** learning rate $10^{-3}$ for *all* parameters. After one epoch your validation accuracy is **worse** than a plain linear probe on the same backbone.
+
+**(a)** What went wrong on that very first batch?
+**(b)** Give a two-line fix using discriminative learning rates.
+**(c)** Why is the *head's* $10^{-3}$ fine, but the *backbone's* is not?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 5
+
+<div class="columns">
+<div>
+
+**(a) The pretrained features got wiped.**
+A random-initialized head produces a large, noisy loss → large gradients flow back into the backbone. At $\text{lr}=10^{-3}$ the *first* update already overwrites the carefully learned edges and textures — you've discarded the very prior you came for.
+
+</div>
+<div>
+
+**(b) Split the learning rates:**
+```python
+opt = AdamW([
+  {"params": backbone.parameters(), "lr": 1e-5},
+  {"params": head.parameters(),     "lr": 1e-3},
+])
+```
+Backbone crawls; head sprints.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+**(c)** The head is **random** — it *should* move fast. The backbone is **already excellent** — big steps can only make it worse. Rule of thumb: backbone LR $\approx$ head LR $/\,100$, or warm up the head first (freeze the backbone for an epoch) *then* unfreeze. This is the #1 transfer-learning bug.
 
 </div>
 
@@ -775,6 +997,28 @@ Warning signs, some visible before you train:
 
 ---
 
+# Explore transfer, adaptation & efficiency
+
+<div class="notebook">
+
+**🎛 Interactive · domain adaptation** — shift the target distribution away from the source and watch a frozen backbone's accuracy fall, then recover it by adapting — the *negative-transfer* story from the previous slide, made tangible. *(Interactive Lab · `interactive/articles/domain-adaptation`)*
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · LoRA adapters** — instead of moving 25M weights, inject a tiny low-rank $\Delta W = BA$ and train only that. Parameter-efficient fine-tuning: the transfer recipe's modern successor. *(Interactive Lab · `interactive/articles/lora-adapter`)*
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · self-supervised vision features** — see *why* a DINO-style backbone learns transferable structure from **unlabelled** images, the frozen prior behind the 2026 default recipe. *(Interactive Lab · `interactive/articles/vision-ssl`)*
+
+</div>
+
+---
+
 # See it in code
 
 <div class="notebook">
@@ -826,7 +1070,8 @@ This lecture reuses and adapts material from the instructor's own courses (IIT G
 
 - **Modern-CNN & transfer framing, figures** — *ES 667 Deep Learning* CNN materials, N. Batra.
 - **Learned basis $\phi$, MLE/cross-entropy grounding; VGG / feature-reuse & DINOv3 notebooks** — *Machine Learning (ES 335)*, N. Batra · `github.com/nipunbatra/ml-teaching` (`vgg-minst.ipynb`, `dinov3-classification.ipynb`).
-- **Pedagogical structure (classic nets & transfer learning)** — A. Ng, *Deep Learning Specialization*, **Course 4 (CNNs), Week 2**.
+- **Pedagogical structure (classic nets & transfer learning)** — A. Ng, *Deep Learning Specialization*, **Course 4 (CNNs), Week 2**. The $1\times1$-reduction cost example follows GoogLeNet/Inception (Szegedy et al., 2014).
+- **Interactive explainers** (ResNet & skip, vanishing gradients, receptive-field grower, domain adaptation, LoRA adapters, self-supervised vision features) — *ES 667 Interactive Lab*, N. Batra.
 - **ResNet & the degradation/residual idea** — K. He, X. Zhang, S. Ren, J. Sun, *Deep Residual Learning for Image Recognition*, CVPR 2016 (arXiv 2015).
 - **MobileNet / depthwise-separable** — A. Howard et al., *MobileNets: Efficient CNNs for Mobile Vision*, 2017. Also GoogLeNet/Inception (Szegedy et al., 2014), EfficientNet (Tan & Le, 2019), BatchNorm (Ioffe & Szegedy, 2015).
 

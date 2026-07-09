@@ -167,6 +167,23 @@ Early stopping is the cheapest variance fix there is: it costs nothing but a sav
 
 ---
 
+# The *other* learning curve — grow the data, not the epochs
+
+The curve above plots loss vs. **epochs**. Ng draws a second one: fix the model, plot train & val error as you **add data**. Its shape tells you whether more data will even help — *before* you spend a month collecting it.
+
+| Curve shape as data grows | Diagnosis | Will more data help? |
+|---|---|---|
+| train low, val high, gap **still wide** at the right edge | high **variance** | **yes** — keep collecting; the gap is shrinking |
+| train and val **converge** and plateau, both **high** | high **bias** | **no** — more data is wasted; add capacity |
+
+<div class="keypoint">
+
+The **height** of the shared plateau is bias you can only buy down with a better model; the **gap** between the two curves is variance you can buy down with data. Reading this saves you from the two classic mistakes: collecting data a *bigger model* would fix, and scaling a model *more data* would fix.
+
+</div>
+
+---
+
 # Read the signal → apply the matching fix
 
 <div class="columns">
@@ -314,6 +331,40 @@ Every item here is caught at **rung 3**. That's why overfitting one batch comes 
 
 ---
 
+# Worked example · the ladder in action
+
+A real run: CIFAR-10, cross-entropy **stuck at 2.30** for 200 steps. Climb the ladder, stop at the first rung that breaks:
+
+<div class="columns">
+<div>
+
+- **Rung 1 · become one with the data** — print a batch. `y` is one-hot `float32`, shape `[B, 10]`. First smell.
+- **Rung 2 · one forward pass** — logits look sane; the loss simply won't fall.
+- **Rung 3 · overfit 4 examples** — **fails**, loss frozen at 2.30. So the bug is *structural*, not the LR.
+- **Re-read rung 1** → `CrossEntropyLoss` wants class **indices** (`long`), not one-hot floats. Fix it; 4 examples now hit ~0.
+
+</div>
+<div>
+
+<div class="math-box">
+
+**Why 2.30 was the tell.**
+$$-\log\tfrac{1}{10}=2.302$$
+A loss pinned at exactly $-\log(1/K)$ means the model outputs **uniform** — it isn't learning *at all*, not learning *slowly*. That points straight at wiring (rung 3), not the learning rate.
+
+</div>
+
+</div>
+</div>
+
+<div class="keypoint">
+
+The ladder converted a vague *"it won't train"* into a **located** bug — found in minutes, not epochs. The dtype smell at rung 1 was the culprit; rung 3 proved it was structural before anyone touched a hyperparameter.
+
+</div>
+
+---
+
 # Practice problem 2
 
 <div class="popquiz">
@@ -406,6 +457,28 @@ Suppose the finder returns:
 <div class="keypoint">
 
 The minimum is at LR $=0.1$ — **don't pick it**, it's on the edge of blowing up. Steepest descent is at LR $\approx10^{-2}$. **Good starting LR $=10^{-2}$** (≈3–10× below the minimum) — use it as `max_lr` for a one-cycle schedule (L5).
+
+</div>
+
+---
+
+# See it, and play with it
+
+<div class="notebook">
+
+**🎛 Interactive · LR schedules** — take the finder's `max_lr` and watch warmup, cosine decay, and one-cycle unfold; the finder picks the *ceiling*, the schedule decides how you *descend* from it. *(Interactive Lab · `interactive/articles/lr-schedule-visualizer`)*
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · optimizer race** — drop SGD, momentum, and Adam on the same loss surface and watch the *effective* step size — the very thing the LR sets — play out step by step. *(Interactive Lab · `interactive/articles/optimizer-race`)*
+
+</div>
+
+<div class="notebook">
+
+**📓 Notebook · hyperparameter search** — grid vs. random vs. Bayesian search over LR and weight decay, and why random beats grid when only a few knobs matter. *(ML ES 335 · `notebooks/hyperparameter-optimisation.ipynb`)*
 
 </div>
 
@@ -531,6 +604,24 @@ For classification, the confusion matrix *is* the error analysis, laid out as a 
 
 ---
 
+# Look at the *confidences*, not just the labels
+
+Error analysis asks *which* examples are wrong. Calibration asks a second question: **when the model says "90%," is it right 90% of the time?** A net can be accurate *and* badly overconfident — and a threshold you tuned on miscalibrated probabilities will surprise you in production.
+
+<div class="insight">
+
+Ng's "look at your data" extends to "look at your **predictions**." Sort the val set by confidence and skim the top: a wall of *confident-but-wrong* examples is its own error bucket — almost always a leak, a label error, or a shortcut. The highest-ROI ten minutes after a run finishes.
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · calibration & reliability diagrams** — bin predictions by confidence, plot accuracy per bin against the diagonal, and watch **temperature scaling** pull an overconfident model back onto it. *(Interactive Lab · `interactive/articles/calibration` · see also `softmax-temperature`)*
+
+</div>
+
+---
+
 # Ceiling analysis — for multi-stage pipelines
 
 If your system is a pipeline (detect → crop → classify), which stage deserves the work? **Manually make one stage perfect**, measure the end-to-end gain, then move to the next.
@@ -643,6 +734,12 @@ Every time you tune on the val set you leak a little into it — so a held-out *
 
 </div>
 
+<div class="notebook">
+
+**📓 Notebook · k-fold cross-validation** — rotate the val role across $k$ folds and average; see why it trades compute for a lower-variance estimate when data is scarce. *(ML ES 335 · `notebooks/cross-validation-diagrams.ipynb`)*
+
+</div>
+
 ---
 
 # Leakage — the silent killer
@@ -660,6 +757,42 @@ Leakage makes the training recipe look *perfect* while the model has learned the
 <div class="keypoint">
 
 Check the split *before* celebrating a curve. A too-good val score is a leak until proven otherwise.
+
+</div>
+
+---
+
+# Practice problem 4
+
+<div class="popquiz">
+
+**Practice problem 4 · the leakage trap.** You forecast tomorrow's demand from the last 30 days. You pool **3 years of daily rows**, **shuffle** them, and split 80/20 at random. Val accuracy is a gorgeous **98%** — but on next month's real data it collapses to **60%**. (a) What leaked? (b) *Why* does a random split inflate val so much here? (c) What is the correct split?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 4
+
+**(a)** The **future leaked into the past.** A random shuffle scatters days from the *same week* across train and val — so for almost every val day, its immediate neighbours (yesterday, tomorrow) sit in the *training* set.
+
+<div class="math-box">
+
+**(b)** Demand on adjacent days is highly correlated ($x_t\approx x_{t-1}$). With a random split the model can essentially **interpolate between two training days it has already seen** to "predict" the val day sitting between them — memorization wearing a forecasting costume. The IID assumption (L1) is simply **false** for a time series.
+
+</div>
+
+<div class="keypoint">
+
+**(c)** Split **chronologically** — train on months 1–30, validate on 31–33, test on 34–36. Never let a training timestamp fall *after* a validation one. The honest val number will be **lower** — and it's the only one that predicts next month.
+
+</div>
+
+<div class="insight">
+
+Same failure, other domains: a patient's scans across train *and* val, near-duplicate video frames, un-deduped documents. **Whenever samples are correlated, a random split leaks** — exactly the IID-breaks case from L1.
 
 </div>
 
@@ -781,6 +914,36 @@ If you cannot compare two runs later, the experiment **did not really happen.**
 
 ---
 
+# Practice problem 5
+
+<div class="popquiz">
+
+**Practice problem 5 · read the curve.** A run shows **train loss falling smoothly to 0.05**; **val loss falls to 0.30 by epoch 10, then climbs steadily** to 0.55 by epoch 40 while train keeps dropping. A *second* run — identical config, new seed — peaks at **val 0.42**. (a) Name the regime and the one-line fix. (b) What does the seed-to-seed spread (0.30 vs 0.42) tell you, and what should you report?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 5
+
+**(a)** Val **falling then rising while train keeps dropping** is the textbook signature of **overfitting (high variance)**. The fix costs nothing: **early stopping** — keep the epoch-10 checkpoint (best val); add regularization or data for the *next* run.
+
+<div class="keypoint">
+
+**(b)** A **0.12 best-val swing from only changing the seed** means a single number is *within noise* of its neighbours. Report **mean ± spread over ≥3 seeds**, not one run's best. A bare "0.30 beats 0.42" claim from single runs is indistinguishable from luck.
+
+</div>
+
+<div class="insight">
+
+Two lectures live in this one curve: **Part 1** (read the gap → variance, stop early) and **Part 6** (trust the number → seeds). The *shape* told you **what** is wrong; the *seeds* told you **whether an improvement is even real**.
+
+</div>
+
+---
+
 <!-- _class: summary-slide -->
 
 # One sentence to remember
@@ -812,7 +975,8 @@ This lecture reuses and adapts material from the instructor's own courses (IIT G
 - **Whole-lecture framing — error analysis, single-number metric, avoidable bias & human-level performance** — A. Ng, *Deep Learning Specialization*, **Course 3 · "Structuring Machine Learning Projects"** (the primary inspiration; his most practical, no-code course).
 - **Bias–variance, cross-validation, confusion matrix on MNIST** — *Machine Learning (ES 335)*, N. Batra · `github.com/nipunbatra/ml-teaching` (notebooks `bias-variance.ipynb`, `confusion-mnist.ipynb`, `hyperparameter-optimisation.ipynb`).
 - **The debugging ladder — overfit one batch, "become one with the data"** — A. Karpathy, *"A Recipe for Training Neural Networks"* (2019).
-- **Learning-curve diagnosis interactive** — Interactive Lab · `~/git/interactive`.
+- **Interactive explainers** (learning-curve diagnosis, LR schedules, optimizer race, calibration & reliability, double descent) — *ES 667 Interactive Lab* · `~/git/interactive`.
+- **Double descent at scale** — Belkin, Hsu, Ma & Mandal, *"Reconciling modern machine-learning practice and the bias–variance trade-off"* (PNAS, 2019).
 
 Figures adapted from the ES 667 figure library (`figures/lec03/`). All source courses © N. Batra & teaching staff.
 

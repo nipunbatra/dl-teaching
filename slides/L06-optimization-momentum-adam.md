@@ -126,6 +126,37 @@ The ball's velocity is an **exponentially-weighted average (EMA)** of the recent
 
 ---
 
+# Intuition · an EMA is just a smoother
+
+The velocity $v_t=\beta v_{t-1}+(1-\beta)g_t$ is the **exponentially-weighted average** Ng uses to smooth a noisy temperature series: each new reading nudges the running average a little, so spikes get ironed out and the underlying trend shows through.
+
+<div class="columns">
+<div>
+
+**How far back does it remember?**
+The weights decay like $\beta,\beta^2,\beta^3,\dots$, so the average effectively spans the last
+$$\frac{1}{1-\beta}\ \text{gradients.}$$
+- $\beta=0.9 \Rightarrow \sim\!10$
+- $\beta=0.98 \Rightarrow \sim\!50$
+- $\beta=0.5 \Rightarrow \sim\!2$ (barely smooths)
+
+</div>
+<div>
+
+**Higher $\beta$ = smoother but laggier.**
+More memory irons out more noise — but the average also reacts *slower* to a genuine change of direction. The exact trade-off of any moving average: stability vs. responsiveness.
+
+</div>
+</div>
+
+<div class="insight">
+
+Momentum gets this for free: a jittery stream of gradients goes in, a smooth velocity comes out. Everything else today — RMSProp, Adam — is this **one smoothing tool**, applied to $g$ or to $g^2$.
+
+</div>
+
+---
+
 # The momentum update rule
 
 <div class="math-box">
@@ -143,6 +174,20 @@ $$\theta_t = \theta_{t-1} - \eta\, v_t \qquad(\text{step along the velocity, not
 <div class="insight">
 
 Same downhill step as L5 — but taken along a **smoothed** direction instead of the raw, jittery one.
+
+</div>
+
+---
+
+# Intuition · momentum averages away mini-batch noise
+
+In L5 each mini-batch gave only a **noisy** estimate of the true gradient — the descent direction jitters even on a smooth bowl. Averaging is the textbook cure for noise, and the EMA is exactly that average.
+
+![w:640px](figures/lec04/svg/gradient_variance.svg)
+
+<div class="keypoint">
+
+Two failures, one mechanism. On a **ravine** the EMA cancels the sideways *oscillation*; on **noisy SGD** it cancels the random *variance*. Either way the consistent signal survives while the noise averages toward zero — so the step you actually take points more reliably downhill than any single gradient did.
 
 </div>
 
@@ -282,6 +327,34 @@ The recipe every adaptive optimizer shares: divide the step by (roughly) how big
 ![w:820px](figures/lec05/svg/per_coordinate_stepsize.svg)
 
 The steep coordinate (big $g$) gets a **small** step; the flat coordinate (small $g$) gets a **large** step — one scale per coordinate, computed for free from the gradients you already have.
+
+---
+
+# Intuition · a private step size for every weight
+
+One global $\eta$ is a single coach shouting the *same* stride length at every runner. Adaptive methods hire **one coach per weight**, each watching only *its own* gradient history.
+
+<div class="columns">
+<div>
+
+**Steep / busy weight** — big, frequent gradients → coach says *"short steps, you keep overshooting."*
+
+**Flat / quiet weight** — tiny gradients → coach says *"stride out, you're barely moving."*
+
+</div>
+<div>
+
+**The sparse-feature win.**
+A rare-word embedding fires only occasionally, so a global $\eta$ hardly ever moves it. Its private rate stays **large** between visits, so the one gradient it *does* see counts fully — this is the problem AdaGrad was invented for in sparse NLP.
+
+</div>
+</div>
+
+<div class="insight">
+
+Nothing here is hand-set: the per-weight rate is read straight off $\sqrt{v}$, the running size of that weight's own gradients. Adaptive methods **tune a million learning rates for you, every single step.**
+
+</div>
 
 ---
 
@@ -426,6 +499,66 @@ $$\hat m_t = \frac{m_t}{1-\beta_1^{\,t}}, \qquad \hat v_t = \frac{v_t}{1-\beta_2
 $$\theta_t = \theta_{t-1} - \eta\,\frac{\hat m_t}{\sqrt{\hat v_t}+\epsilon}$$
 
 **Defaults:** $\beta_1=0.9,\ \beta_2=0.999,\ \epsilon=10^{-8},\ \eta=10^{-3}$.
+
+</div>
+
+---
+
+# Intuition · Adam in one mental picture
+
+<div class="keypoint">
+
+A **heavy ball** (momentum, $\hat m_t$) rolling downhill, fitted with a **shock absorber on every axis** (RMSProp, $\sqrt{\hat v_t}$) that stiffens wherever the ground has been bumpy.
+
+</div>
+
+Read the update $\theta_t=\theta_{t-1}-\eta\,\dfrac{\hat m_t}{\sqrt{\hat v_t}+\epsilon}$ as one sentence:
+
+<div class="columns">
+<div>
+
+**Numerator $\hat m_t$ — *which way?***
+The smoothed, noise-averaged direction. Inertia keeps it pointed along the consistent slope.
+
+</div>
+<div>
+
+**Denominator $\sqrt{\hat v_t}$ — *how far?***
+The recent gradient size on *this* axis. Big & bumpy → a short, cautious step; small & smooth → a long, confident one.
+
+</div>
+</div>
+
+<div class="insight">
+
+That is the whole optimizer. Everything left — bias correction, AdamW's decay, warmup — is fine print that protects this one idea at the very *start* and very *end* of training.
+
+</div>
+
+---
+
+# Intuition · why divide by $\sqrt{v}$, not $v$?
+
+$v_t$ tracks $g^2$, so it carries the **units of gradient-squared**. Taking the *square root* puts the denominator back in the **units of the gradient**, so the ratio $g/\sqrt{v}$ is (roughly) dimensionless and well-behaved.
+
+<div class="columns">
+<div>
+
+**Divide by $v$ (too aggressive).**
+A gradient of $10$ would be scaled by $1/100$; a gradient of $0.1$ by $1/0.01=100$. Step sizes swing over *four* orders of magnitude — wildly unstable.
+
+</div>
+<div>
+
+**Divide by $\sqrt{v}$ (just right).**
+The same gradients scale by $1/10$ and $1/0.1=10$ — a controlled $100\times$ spread. The update $g/\sqrt{v}$ lands near $\pm1$ for a *typical* gradient, so $\eta$ genuinely sets the step length.
+
+</div>
+</div>
+
+<div class="insight">
+
+This is why an Adam step stays $\approx\eta$ in magnitude no matter the raw gradient scale (you'll see it in Practice problem 2): the $\sqrt{\cdot}$ normalizes the gradient to roughly unit size *before* $\eta$ scales it.
 
 </div>
 
@@ -588,6 +721,42 @@ In AdamW every parameter is decayed by the same fraction $\eta\lambda$, regardle
 
 ---
 
+# Practice problem 4
+
+<div class="popquiz">
+
+**Practice problem 4.** Two weights sit at $\theta=1.0$; you ask for weight decay $\lambda=0.1$, $\eta=10^{-3}$. Weight **A** has a large gradient history ($\sqrt{\hat v}=10$); weight **B** is quiet ($\sqrt{\hat v}=0.1$).
+
+(a) Under **Adam with L2 folded into the gradient**, the decay part of the step is $-\eta\,(\lambda\theta)/\sqrt{\hat v}$. Compute it for A and B.
+(b) Under **AdamW**, the decay is $-\eta\lambda\theta$, applied directly to the weight. Compute it for A and B.
+(c) *One sentence:* which method regularizes the two weights *equally*, and why is that what the Gaussian (L2) prior from L1 actually asks for?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 4
+
+<div class="math-box">
+
+**(a) Adam (L2 in the gradient)** — decay $=-\eta\lambda\theta/\sqrt{\hat v}$:
+$$\text{A:}\ -\frac{10^{-3}(0.1)(1)}{10}=-10^{-5} \qquad \text{B:}\ -\frac{10^{-3}(0.1)(1)}{0.1}=-10^{-3}$$
+Weight A is decayed **100× less** than B — purely because it has bigger gradients.
+
+**(b) AdamW (decoupled)** — decay $=-\eta\lambda\theta=-10^{-4}$ for **both** A and B.
+
+</div>
+
+<div class="keypoint">
+
+(c) **AdamW** shrinks both weights by the same fraction $\eta\lambda$. A prior says *"all weights should be small"* — it knows nothing about gradient magnitudes, so the penalty **must** be uniform. Adam's $\sqrt{\hat v}$ leak makes the effective $\lambda$ silently depend on gradient history; AdamW removes the leak. That is the entire reason to prefer AdamW.
+
+</div>
+
+---
+
 # AdamW in PyTorch · one line
 
 ```python
@@ -667,6 +836,66 @@ Warmup $=$ 1–10% of total steps (thousands for a big run — *not* 10). This 5
 
 ---
 
+# Practice problem 5
+
+<div class="popquiz">
+
+**Practice problem 5.** You train for $T=10{,}000$ steps with peak LR $\eta_{\max}=3\times10^{-4}$, using **linear warmup over the first $W=1{,}000$ steps**, then **cosine decay to $0$**:
+$$\eta(t)=\begin{cases}\eta_{\max}\,\dfrac{t}{W} & t<W\\[6pt] \eta_{\max}\cdot\tfrac12\Big(1+\cos\pi\,\dfrac{t-W}{T-W}\Big) & t\ge W\end{cases}$$
+
+(a) $\eta$ at $t=500$ (inside warmup)?
+(b) $\eta$ at $t=1000$ (warmup just ended)?
+(c) $\eta$ at the cosine midpoint $t=5500$?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 5
+
+<div class="math-box">
+
+**(a) $t=500<W$:** $\ \eta=3\times10^{-4}\cdot\dfrac{500}{1000}=1.5\times10^{-4}$ — half of peak, still ramping.
+
+**(b) $t=1000$:** warmup ends exactly at the *peak*; $\cos(0)=1\Rightarrow \eta=3\times10^{-4}$.
+
+**(c) $t=5500$:** progress $=\dfrac{5500-1000}{10000-1000}=\dfrac{4500}{9000}=0.5$, so $\cos(\pi\cdot0.5)=0$ and
+$$\eta=3\times10^{-4}\cdot\tfrac12(1+0)=1.5\times10^{-4}.$$
+
+</div>
+
+<div class="keypoint">
+
+The curve **ramps up** to the peak over warmup, then **glides down** a half-cosine to $\approx0$ at $t=T$. Halfway through the decay you are back at half-peak — the same $\eta$ as halfway through warmup, but now heading *down*. Change $T$ and every one of these numbers moves: **the schedule is glued to the step budget.**
+
+</div>
+
+---
+
+# See schedules & the optimizer race
+
+<div class="notebook">
+
+**🎛 Interactive · LR schedule visualizer** — drag peak LR, warmup length and total steps; watch warmup+cosine (and step decay) redraw, and read $\eta$ off at any step — the exact curve you computed in Practice problem 5. *(Interactive Lab · `interactive-articles/lr-schedule-visualizer`)*
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · the optimizer race** — SGD, momentum, RMSProp, Adam and AdamW released from the *same* point on the *same* loss surface; scrub time and watch who reaches the minimum first and who stalls. *(Interactive Lab · `interactive-articles/optimizer-race`, `optimizers-beyond`)*
+
+</div>
+
+<div class="notebook">
+
+**💡 Worth building — "watch the optimizers race on a loss surface"** — a flyover of a ravine / Rosenbrock surface with all five optimizers as colored balls, a live velocity vector and per-axis step-size read-out, and sliders for $\eta,\beta_1,\beta_2$. Turns every worked numeric in this lecture into something you can *see* move.
+
+</div>
+
+---
+
 # Gradient clipping · cheap insurance
 
 One freak batch can produce a giant gradient that blows up the weights. **Clip** the global gradient norm to a ceiling (say $1.0$) before the optimizer steps — direction preserved, magnitude capped.
@@ -728,7 +957,8 @@ This lecture reuses and adapts material from the instructor's own courses (IIT G
 
 - **ES 667 optimization materials** — Adam / AdamW / schedule build-up, worked numerics & figure library (`figures/lec04`, `figures/lec05`), N. Batra.
 - **Momentum practice problem & GD tutorial** — *Machine Learning (ES 335)*, N. Batra · `github.com/nipunbatra/ml-teaching` (`optimization/tutorials/optimization.tex`).
-- **Pedagogical framing** (momentum as EMA, batch→mini→stochastic, warmup) — A. Ng, *Deep Learning Specialization*, Course 2 (Improving Deep Neural Networks), Week 2.
+- **Pedagogical framing** (exponentially-weighted averages as a smoother, momentum as EMA, per-parameter learning rates, batch→mini→stochastic, warmup) — A. Ng, *Deep Learning Specialization*, Course 2 (Improving Deep Neural Networks), Week 2.
+- **Interactive explainers** (optimizer race, optimizers-beyond, LR-schedule visualizer) — *ES 667 Interactive Lab*, N. Batra.
 - **Adam** — D. Kingma & J. Ba, *Adam: A Method for Stochastic Optimization*, ICLR 2015.
 - **AdamW** — I. Loshchilov & F. Hutter, *Decoupled Weight Decay Regularization*, ICLR 2019.
 
