@@ -263,7 +263,7 @@ A single layer with $x, h in RR^4096$ has a Jacobian of $4096 times 4096 approx 
 == Vector–Jacobian product = backprop #D
 
 If $y = f(x)$ and $cal(L) = cal(L)(y)$:
-$ underbrace(bar(x), (partial cal(L))/(partial x)) = J^top thin underbrace(bar(y), (partial cal(L))/(partial y)) $
+$ underbrace(overline(x), (partial cal(L))/(partial x)) = J^top thin underbrace(overline(y), (partial cal(L))/(partial y)) $
 #pause
 #result[one VJP per layer — no matrix ever formed]
 
@@ -272,7 +272,7 @@ $ underbrace(bar(x), (partial cal(L))/(partial x)) = J^top thin underbrace(bar(y
 For $x -> h_1 -> h_2 -> cal(L)$:
 $ nabla_x cal(L) = J_(h_1, x)^top thin J_(h_2, h_1)^top thin nabla_(h_2) cal(L) $
 #pause
-Evaluate *right to left*: $bar(h)_2 -> bar(h)_1 -> bar(x)$ — vectors only.
+Evaluate *right to left*: $overline(h)_2 -> overline(h)_1 -> overline(x)$ — vectors only.
 
 == Interactive: the Jacobian as a local warp #I
 
