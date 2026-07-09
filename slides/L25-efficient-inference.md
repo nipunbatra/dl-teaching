@@ -174,6 +174,68 @@ Real 70B+ training combines all three (**3-D parallelism**). Notice the recurrin
 
 ---
 
+# Data parallelism — replicate, then average
+
+The simplest split: give every GPU a **full copy** of the model and a **different slice of the batch**. Each computes its own gradient; an **all-reduce** then averages them so every replica takes the *identical* step.
+
+<div class="math-box">
+
+$$\text{effective batch} = (\text{per-GPU batch}) \times (\text{\#GPUs}), \qquad \text{comm} = \text{one all-reduce of the full gradient, per step}$$
+
+</div>
+
+<div class="insight">
+
+Plain data parallelism grows *throughput* but not *capacity* — every GPU still stores the whole model, gradients, and optimizer state. **FSDP / ZeRO** fix that: they **shard** those three across the group and rebuild each layer's weights on the fly, so the same replicas *also* cut per-GPU memory.
+
+</div>
+
+What it splits: **the data.** What it doesn't: the model — so it only helps once the model already fits on one GPU.
+
+---
+
+# Tensor parallelism — split one layer's matmul
+
+When a single layer is itself too big, split the **matmul across GPUs**. For $Y = XW$, give each GPU a column-block of $W$; each computes a slice of $Y$, and an **all-reduce** stitches the slices back together.
+
+<div class="math-box">
+
+Megatron pattern: a **column-parallel** matmul feeding a **row-parallel** matmul ⇒ just **2 all-reduces forward** (+2 backward) per transformer block.
+
+</div>
+
+<div class="insight">
+
+The catch: that all-reduce sits *inside every layer*, so tensor parallelism moves a lot of bytes very often. It is kept **within one node** on fast NVLink — spread it across nodes and the slow network stalls the whole model.
+
+</div>
+
+What it splits: **each layer's parameters and its matmul FLOPs** — cutting both memory and compute per GPU, at the price of constant communication.
+
+---
+
+# Pipeline parallelism — split the layers into stages
+
+Cut the model **by depth**: GPU 0 holds layers 1–20, GPU 1 holds 21–40, and so on. Activations flow forward stage → stage, gradients flow back — and only the **boundary activations** cross GPUs, so the traffic is light.
+
+The catch is the **bubble**: while stage 0 works, later stages sit idle waiting for input. You fill it by pushing many **micro-batches** through the pipe at once (GPipe / 1F1B schedules).
+
+<div class="math-box">
+
+$$\text{bubble fraction} \approx \frac{S-1}{m + S - 1} \qquad (S \text{ stages}, \; m \text{ micro-batches})$$
+
+$S=4,\; m=1 \Rightarrow \tfrac{3}{4}$ idle; &nbsp; but $m=16 \Rightarrow \tfrac{3}{19} \approx 16\%$ idle.
+
+</div>
+
+<div class="keypoint">
+
+**3-D parallelism** = data × tensor × pipeline: split the batch *across nodes*, the layers *into stages*, and each stage's matmuls *within a node*. That combination is what trains 70B+ models.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ## Part 2 · Why serving is memory-bound — prefill vs decode
@@ -209,6 +271,31 @@ To produce **one** decode token on a 70B model, the GPU must:
 ![w:680px](figures/lec23/svg/memory_bound.svg)
 
 On an A100 (~1.5 TB/s HBM) moving ~150 GB takes ~0.1 s; the arithmetic finishes in a fraction of that. **The GPU sits idle, waiting for weights.** That single fact drives the whole rest of the lecture.
+
+---
+
+# The roofline — one picture for "memory-bound"
+
+Plot achievable throughput against **arithmetic intensity** (FLOPs done per byte moved). Two regimes meet at a corner:
+
+<div class="math-box">
+
+$$\text{achievable FLOP/s} = \min\big(\underbrace{\text{peak FLOP/s}}_{\text{compute roof}},\; \underbrace{\text{bandwidth} \times \text{intensity}}_{\text{memory slope}}\big)$$
+
+The corner (ridge) sits at intensity $=\dfrac{\text{peak FLOP/s}}{\text{bandwidth}} = \dfrac{312\text{ T}}{1.5\text{ T}} \approx \mathbf{200}$ FLOP/byte on an A100.
+
+</div>
+
+| Phase | Operation | Intensity | Where on the roofline |
+|:--|:--|:-:|:--|
+| **Prefill** | matrix–matrix | $\gg 200$ | up on the flat roof → **compute-bound** |
+| **Decode** | matrix–vector | $\approx 1$ | far left on the slope → **memory-bound** |
+
+<div class="insight">
+
+Decode lives at the far left, using **under 1% of peak FLOPs**. You climb the roofline two ways — **move right** (bigger batches raise intensity, so each weight-read serves many sequences) or **lower the bytes** (quantization). *(Precise threshold derived in the appendix.)*
+
+</div>
 
 ---
 
@@ -352,6 +439,31 @@ The cache scales **linearly** in every factor. Doubling context, batch, or KV he
 
 ---
 
+# Paged attention & continuous batching — serving many users
+
+One request rarely fills a GPU; a real server juggles **hundreds at once**. Two ideas from **vLLM** make that cheap — both are pure memory management, no change to the model:
+
+<div class="columns">
+<div>
+
+**Paged attention.** Naive serving reserves one big *contiguous* KV buffer per request, sized for the *max* length → most of it sits empty (fragmentation). Instead, store the cache in small fixed **blocks** — like OS memory pages — with a block table mapping logical → physical. Allocate on demand, near-zero waste, and different requests can **share** blocks (a common prompt prefix is stored once).
+
+</div>
+<div>
+
+**Continuous batching.** Don't wait for a whole batch to finish. At **every decode step** the scheduler evicts finished sequences and admits waiting ones, so the expensive weight-read always serves a full batch instead of trickling out the last straggler.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+Together they raise GPU utilisation and crush fragmentation — vLLM serves **2–4×+** the throughput of naive `generate`. Same spine as always: waste no bytes, and make each weight-read serve as many sequences as possible (which also lifts arithmetic intensity off the roofline's floor).
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ## Part 4 · Quantization — how few bits can a weight survive on?
@@ -467,6 +579,29 @@ Both work well at 4-bit; AWQ edges ahead at the extreme (3-bit, 2-bit). Practica
 
 ---
 
+# INT8 vs INT4 — the trade, worked on a 7B model
+
+Same trained weights, coarser storage. What each bit-width actually buys:
+
+| Precision | Bytes/wt | 7B size | Method | Quality |
+|:--|:-:|:-:|:--|:--|
+| FP16 | 2 | 14 GB | — | baseline |
+| **INT8** | 1 | 7 GB | per-**channel** scale (LLM.int8) | ~lossless |
+| **INT4** | 0.5 | 3.5 GB | **GPTQ / AWQ**, per-**group** scale | ~1–2% perplexity ↑ |
+
+Why INT4 needs GPTQ/AWQ: 4 bits gives only **16 levels**, so a single per-channel scale is too coarse — one outlier ruins everyone else (recall practice problem 3). **GPTQ** picks codes that minimize each layer's *reconstruction* error; **AWQ** keeps the few salient weights in higher precision. Both switch to **group-wise** scales (e.g. one per 128 weights).
+
+<div class="math-box">
+
+**Bandwidth floor** (weights streamed at ~2 TB/s, the real decode bottleneck):
+$$\text{FP16 } 14\text{ GB} \to 7\text{ ms} \quad\to\quad \text{INT8 } 7\text{ GB} \to 3.5\text{ ms} \quad\to\quad \text{INT4 } 3.5\text{ GB} \to \mathbf{1.75\ ms}$$
+
+</div>
+
+**4× on the bottleneck** — and $14 \to 3.5$ GB is exactly what lets a 7B model run on an **8 GB consumer GPU**. Rule of thumb: **INT8** when quality risk is unacceptable, **INT4 (AWQ/GPTQ)** when memory is the wall.
+
+---
+
 <!-- _class: section-divider -->
 
 ## Part 5 · FlashAttention — exact attention, no N×N matrix
@@ -534,6 +669,32 @@ You almost never write this yourself: **PyTorch 2.0+ ships `F.scaled_dot_product
 
 ---
 
+# Online softmax — why the tiles stay exact
+
+The one trick that makes tiling *exact*. A normal softmax needs the **global** max and sum over all $N$ keys — seemingly the whole row at once. Online softmax instead keeps a **running** max $m$ and normalizer $\ell$, correcting the partial output as each block arrives:
+
+<div class="math-box">
+
+For a new block with local max $\tilde m$ and scores $s_j$:
+$$m' = \max(m,\, \tilde m), \qquad \ell' = e^{\,m-m'}\,\ell \;+\; \sum_{j\in\text{block}} e^{\,s_j - m'}$$
+and the running output is **rescaled by** $e^{\,m-m'}$ before the new block's contribution is added.
+
+</div>
+
+<div class="insight">
+
+Every partial sum gets re-scaled by $e^{(\text{old max} - \text{new max})}$, so when the last block lands the result is **bit-for-bit** the full-row softmax — exact, not an approximation. Subtracting the running max also keeps it numerically stable (nothing overflows).
+
+</div>
+
+<div class="math-box">
+
+**Memory:** you store only $O(d)$ running state per query, never the $O(N)$ score row. For $N=8192$ that is the **134 MB → 131 KB** difference — the big matrix is *never created*.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ## Part 6 · Speculative decoding — many tokens per big-model pass
@@ -575,6 +736,41 @@ Correctness is preserved *exactly* by a rejection-sampling accept/reject rule �
 </div>
 
 </div>
+</div>
+
+---
+
+# How much does speculative decoding actually save?
+
+Let $\alpha$ be the probability a drafted token is **accepted**. Acceptance stops at the first miss, so with block size $k$ the expected tokens per big-model pass is
+
+$$\mathbb{E}[\text{tokens}] = \frac{1-\alpha^{\,k+1}}{1-\alpha} \qquad (\text{derived in the appendix}).$$
+
+<div class="columns">
+<div>
+
+**Tokens per big pass** ($k=4$):
+
+| accept rate $\alpha$ | tokens / pass |
+|:-:|:-:|
+| 0.5 | 1.94 |
+| 0.7 | 2.77 |
+| 0.9 | 4.10 |
+
+</div>
+<div>
+
+But it isn't free: each big pass also runs $k$ **draft** passes. With draft cost $c = \tfrac{\text{draft}}{\text{big}}$ per token,
+$$\text{speedup} \approx \frac{\mathbb{E}[\text{tokens}]}{1 + k\,c}.$$
+A 1B draft vs a 70B verifier gives $c\approx 0.014$, so $k=4$ adds only $\times 1.06$ overhead.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+**Worked:** $\alpha=0.8,\, k=4 \Rightarrow \mathbb{E}\approx 3.36$ tokens/pass; after the $\times 1.06$ draft overhead, **~3.2× wall-clock**. The win is bounded by draft **quality** ($\alpha$) and draft **cheapness** ($c$) — too inaccurate *or* too big a draft erases the gain.
+
 </div>
 
 ---

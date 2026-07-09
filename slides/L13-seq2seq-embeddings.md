@@ -140,10 +140,7 @@ The vector $v_{\text{king}}-v_{\text{man}}$ is a "royalty minus male" *direction
 </div>
 <div>
 
-**Same idea, another axis:**
-$$v_{\text{Paris}} - v_{\text{France}} + v_{\text{Italy}} \approx v_{\text{Rome}}$$
-
-capital-of is *one consistent direction* in the space.
+![w:430px](figures/Lnew/svg/embedding_geometry.svg)
 
 </div>
 </div>

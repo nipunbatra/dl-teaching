@@ -133,6 +133,8 @@ $$\sigma(z) = \frac{1}{1+e^{-z}}\in(0,1), \qquad \hat y = P(y{=}1\mid x)=\sigma(
 - $z\to+\infty \Rightarrow \sigma\to 1$ · $z\to-\infty \Rightarrow \sigma\to 0$ · $z=0 \Rightarrow \sigma=0.5$
 - monotone, smooth, differentiable — so gradient descent still works.
 
+![w:520px](figures/Lnew/svg/sigmoid.svg)
+
 The model is unchanged from linear regression *except* for this one nonlinear cap. That cap turns a number into a probability.
 
 ---
@@ -306,7 +308,7 @@ Two binary inputs, output $= x_1 \oplus x_2$:
 </div>
 <div>
 
-Try to draw **one line** that puts $\{(0,1),(1,0)\}$ on one side and $\{(0,0),(1,1)\}$ on the other.
+![w:380px](figures/Lnew/svg/xor_not_separable.svg)
 
 *You can't.* The positive class sits on **opposite corners** — no half-plane contains exactly those two.
 

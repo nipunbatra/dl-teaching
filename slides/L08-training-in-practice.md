@@ -92,10 +92,7 @@ You cannot fix what you haven't diagnosed. The bias/variance read comes **first*
 
 Think of every retrain (different data sample) as a dart. The bullseye is the truth $f(x)$.
 
-|  | **Low variance** (tight cluster) | **High variance** (scattered) |
-|---|---|---|
-| **Low bias** (centered) | 🎯 bullseye — the goal | right *on average*, noisy per-run |
-| **High bias** (off-center) | consistently wrong — *underfit* | wrong **and** noisy — worst case |
+![w:420px](figures/Lnew/svg/bias_variance_dartboard.svg)
 
 <div class="insight">
 

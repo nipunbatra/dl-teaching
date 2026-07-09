@@ -201,6 +201,37 @@ This course itself was built largely by **Claude Code** — an agent loop over `
 
 ---
 
+# Multi-agent systems · a team of specialists
+
+One loop can plan, act, and observe. But a long job — *"research this topic and write a report"* — is often better **split across several agents**, each with its own tools, context, and role.
+
+<div class="columns">
+<div>
+
+**Orchestrator → workers**
+- a **lead** agent decomposes the task and spawns **sub-agents**
+- each sub-agent runs its *own* ReAct loop on a slice of the problem
+- the lead **merges** their results into one answer
+
+</div>
+<div>
+
+**Why bother?**
+- **parallelism** — sub-agents hit different sources at once
+- **fresh context** — each gets a clean window, dodging context rot
+- **specialisation** — a "searcher," a "coder," a "critic"
+
+</div>
+</div>
+
+<div class="realworld">
+
+It's turtles all the way down: a sub-agent is *just another LLM in a loop*, and one agent's output is the next one's input. As of this writing, production systems (deep-research modes, coding swarms) are orchestrations of many such loops — but every extra agent **multiplies the failure surface** of the next slide.
+
+</div>
+
+---
+
 # Where agents break
 
 <div class="insight">
@@ -210,6 +241,27 @@ A single tool call is reliable. A **20-step** plan multiplies the failure rates:
 </div>
 
 So the research is not "smarter single answers" but **reliability across many steps**: better planning, error recovery, verification, and knowing when to stop. Keep this in mind — it reappears in the open-problems slide.
+
+---
+
+# Agent failure modes · a field guide
+
+Compounding error is *why* agents fail; here is *how* — the modes you will actually debug:
+
+| Failure mode | What it looks like | Blunt fix |
+|:--|:--|:--|
+| **Hallucinated tool call** | invents a tool or an argument that doesn't exist | strict schema validation; reject &amp; retry |
+| **Error cascade** | one bad observation poisons every later step | checkpoints; let the agent backtrack |
+| **Doom loop** | calls the same tool forever, never converging | step budget; loop detection |
+| **No stop signal** | keeps "improving" an already-finished answer | an explicit success criterion |
+| **Context rot** | transcript outgrows what the model can attend to | summarise / prune old turns |
+| **Goal drift** | quietly solves a *different* task than asked | re-state the goal each turn; a verifier |
+
+<div class="insight">
+
+Notice the fixes are **engineering**, not new math — validation, budgets, memory management, verification. Reliability is *the* product problem of agentic AI as of this writing, which is why "smarter agent" usually means "more disciplined loop," not "bigger model."
+
+</div>
 
 ---
 
@@ -391,6 +443,26 @@ Codeforces Elo is a competitive-programming rating (like chess) — ~2700 is top
 
 ---
 
+# Distilling reasoning · small models can think too
+
+If a big model can *generate* good chains of thought, why not use those chains as **training data** for a small one?
+
+<div class="keypoint">
+
+**Reasoning distillation:** collect thousands of *correct* chains from a strong reasoning model, then **fine-tune** a small model to imitate them — ordinary supervised cross-entropy (the loss from L1, the fine-tuning setup from L18). The small model inherits much of the *reasoning behaviour* without ever running the expensive RL.
+
+</div>
+
+This is plain **knowledge distillation** — a small *student* mimics a large *teacher* — now pointed at *reasoning traces* rather than logits. DeepSeek-R1 (2025) distilled its chains into 7B–70B open students, which then jumped sharply on math and code.
+
+<div class="realworld">
+
+Honest limit, as of this writing: distillation copies the teacher's *habits*, not its *ceiling* — a distilled 7B won't out-reason the model it learned from. But it makes "thinking" cheap enough to run locally. Capability, once discovered, tends to get **smaller and cheaper** fast.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ## Part 3 · Mechanistic interpretability
@@ -486,6 +558,33 @@ That's the payoff: features are **directions we can name *and* steer** — the f
 
 ---
 
+# The payoff · name a feature, monitor it, steer it
+
+Golden Gate Claude was a *demo*. The prize is three verbs that clean SAE features unlock — the first practical handles on a model's insides:
+
+<div class="columns">
+<div>
+
+**Name** — gather every input that fires a feature and label the shared concept ("Golden Gate Bridge," "insecure code," "sycophancy").
+
+**Monitor** — watch a feature light up *while the model runs* — an early-warning gauge for deception, jailbreaks, or off-task behaviour.
+
+</div>
+<div>
+
+**Steer** — clamp a feature up or down and change behaviour **without retraining**: dial *down* a "toxicity" feature, dial *up* "caution."
+
+</div>
+</div>
+
+<div class="keypoint">
+
+Together these turn a black box into something you can **audit and adjust at the level of concepts**, not raw weights. As of this writing it's still early — features are noisy, coverage is partial, mostly on smaller models — but it's the most promising road from *"it works"* to *"we know why."*
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ## Part 4 · Open problems &amp; safety
@@ -545,6 +644,26 @@ No hand-waving about 2030: these are *open* — the honest state of the field as
 | Frontier | L25–L26 | efficient inference; agents, reasoning, interpretability |
 
 Ten modules — but, we're about to see, **one idea**.
+
+---
+
+# The whole arc, one sentence per module
+
+Those ten rows are really **seven movements of one melody** — each a single sentence:
+
+1. **Foundations (L1–L3)** — a model outputs a *distribution*; every loss is its negative log-likelihood; a nonlinearity makes an MLP a universal fitter.
+2. **Optimization (L4–L8)** — backprop gives the gradient for free; SGD → momentum → Adam, plus regularization and normalization, make it *generalize*.
+3. **Vision (L9–L11)** — convolution bakes in translation invariance; depth, transfer, detection, and segmentation follow.
+4. **Sequences (L12–L13)** — RNN / LSTM / GRU and seq2seq give order a memory; embeddings turn tokens into vectors.
+5. **Attention → LLMs (L14–L18)** — attention replaces recurrence; Transformer + scale + alignment = a language model on the *same* cross-entropy.
+6. **Representation &amp; generation (L19–L24)** — self-supervision learns features label-free; VAE / GAN / diffusion learn a distribution you can *sample*.
+7. **Frontier (L25–L26)** — efficient inference makes it cheap; agents, reasoning, and interpretability add a loop, a scratchpad, and a microscope.
+
+<div class="keypoint">
+
+Seven movements, one loss — the **cross-entropy you first met classifying oranges from tomatoes.** *Only the scale changed.*
+
+</div>
 
 ---
 

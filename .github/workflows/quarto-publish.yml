@@ -34,7 +34,7 @@ jobs:
       - name: Build Marp slides (HTML)
         run: |
           mkdir -p html
-          for f in slides/*-lecture.md; do
+          for f in slides/L*.md; do
             filename=$(basename "$f" .md)
             echo "Building HTML: $f"
             npx marp "$f" -o "html/${filename}.html" --html --allow-local-files --theme-set slides/anthropic-theme.css
@@ -49,7 +49,7 @@ jobs:
         run: |
           mkdir -p pdf
           npx playwright install chromium
-          ls slides/*-lecture.md | xargs -P 4 -I {} sh -c '
+          ls slides/L*.md | xargs -P 4 -I {} sh -c '
             filename=$(basename "{}" .md)
             echo "Building PDF: {}"
             npx marp "{}" -o "pdf/${filename}.pdf" --pdf --allow-local-files --theme-set slides/anthropic-theme.css || echo "Warning: PDF build failed for {}"

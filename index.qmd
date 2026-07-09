@@ -5,16 +5,18 @@ subtitle: "IIT Gandhinagar · Aug 2026 · Prof. Nipun Batra"
 
 ::: {.hero-section}
 
-A 24-lecture course (plus a 3-part probability primer) that maps the modern deep-learning stack — from the probability under every loss, through CNNs and Transformers, to LLMs, diffusion, and 2026 frontier topics.
+A **26-lecture** course that builds the modern deep-learning stack from the ground up — from the probability under every loss, through CNNs and Transformers, to LLMs, diffusion, and 2026 frontier topics.
 
-Every lecture follows the same rhythm · a pop-quiz hook · worked numerics · linked interactives · canonical references · 6 practice problems. New to the material? Start with the **[L00 primer](html/lec00-probability-mle-recap-lecture.html)**, then open any deck from the **[Slides](slides.qmd)** page.
+Lectures **1–15 map onto Andrew Ng's [Deep Learning Specialization](https://www.coursera.org/specializations/deep-learning)** — watch his videos and re-derive them here. Lectures **16–26** carry the same method into the modern topics he never taught. Every deck is a self-contained **80 minutes**: an output-first opener, one worked idea per slide, practice problems with solutions, and linked interactives, notebooks, and references.
+
+Start with **[Lecture 1 · Probability & the Language of Losses](html/L01-probability-primer.html)**, or browse the full **[Slides](slides.qmd)**.
 
 :::
 
 ```{=html}
 <div class="entry-grid">
-<a class="entry-card" href="syllabus.html"><span class="entry-title">Syllabus →</span><span class="entry-desc">Lecture-by-lecture reading map — UDL chapters and the key papers.</span></a>
-<a class="entry-card" href="slides.html"><span class="entry-title">Slides →</span><span class="entry-desc">All 27 decks in HTML and PDF, primer through frontier.</span></a>
+<a class="entry-card" href="slides.html"><span class="entry-title">Slides →</span><span class="entry-desc">All 26 lectures in HTML and PDF, grouped by module.</span></a>
+<a class="entry-card" href="syllabus.html"><span class="entry-title">Syllabus →</span><span class="entry-desc">Lecture-by-lecture reading map — the key papers and chapters.</span></a>
 <a class="entry-card" href="notebooks.html"><span class="entry-title">Notebooks →</span><span class="entry-desc">Hands-on PyTorch notebooks that pair with each lecture.</span></a>
 <a class="entry-card" href="labs/index.html"><span class="entry-title">Labs →</span><span class="entry-desc">Four homeworks and a project, each grown from a lecture notebook.</span></a>
 <a class="entry-card" href="resources.html"><span class="entry-title">Resources →</span><span class="entry-desc">The canonical books, video courses, and blogs — curated.</span></a>
@@ -22,23 +24,19 @@ Every lecture follows the same rhythm · a pop-quiz hook · worked numerics · l
 </div>
 ```
 
-## Course at a glance
+## The arc
 
-The course splits into a **spine** (L00–L14 · mastery) and a **landscape** (L15–L24 · literacy).
+Seven modules, 26 lectures. The first four are Andrew Ng's five courses, re-taught; the last three take his method past where his curriculum ends.
 
-- **Module 0 · Probabilistic foundations** · *L00–L00C* — distributions → MLE → MAP → information theory: where every loss and regularizer comes from.
-- **Module 1 · Foundations & deep networks** · *L1–L3* — why depth, universal approximation, training in practice.
-- **Module 2 · Optimization** · *L4–L5* — SGD, momentum, Adam, learning-rate schedules.
-- **Module 3 · Regularization** · *L6* — double descent, dropout, normalization (spans two sessions).
-- **Module 4 · CNNs & visual recognition** · *L7–L9* — modern CNNs, transfer learning, detection & segmentation.
-- **Module 5 · Sequence models** · *L10–L11* — RNNs / LSTMs, seq2seq, and the attention bottleneck.
-- **Module 6 · Attention & Transformers** · *L12–L14* — attention, the Transformer built live, tokenization.
-- **Module 7 · LLMs** · *L15–L16* — scaling laws, alignment, LoRA / RLHF / DPO.
-- **Module 8 · Self-supervised & vision-language** · *L17–L18* — contrastive learning, CLIP.
-- **Module 9 · Generative models** · *L19–L22* — VAEs, GANs, diffusion (theory + practice).
-- **Module 10 · Wrap-up** · *L23–L24* — efficient inference, and the frontier: agents, reasoning, interpretability.
+- **Module 1 · Foundations** · *L1–L4* — probability & losses, the neuron, universal approximation, and backprop (build micrograd). *(Ng Course 1)*
+- **Module 2 · Optimization & Training** · *L5–L8* — SGD → Adam, regularization & normalization, and the practitioner's playbook (bias/variance, debugging, error analysis). *(Ng Courses 2 & 3)*
+- **Module 3 · Computer Vision** · *L9–L11* — CNNs, ResNet & transfer learning, detection & segmentation. *(Ng Course 4)*
+- **Module 4 · Sequences & Transformers** · *L12–L15* — RNN/LSTM → seq2seq & embeddings → attention → the Transformer, built live as nanoGPT. *(Ng Course 5)*
+- **Module 5 · Modern LLMs & Multimodal** · *L16–L20* — tokenization & pretraining, scaling & systems, alignment (RLHF/DPO), self-supervised learning, and vision-language models.
+- **Module 6 · Generative Modeling** · *L21–L24* — autoencoders & VAEs, GANs, and diffusion (theory → Stable Diffusion).
+- **Module 7 · Systems & Frontier** · *L25–L26* — efficient training & inference, then the frontier: agents, reasoning, and interpretability.
 
-The full schedule with slide links is on the **[Slides](slides.qmd)** page; the chapter-by-chapter reading map is on the **[Syllabus](syllabus.qmd)**.
+The full schedule with slide links is on the **[Slides](slides.qmd)** page.
 
 ## What you'll build
 
@@ -49,4 +47,6 @@ Two code threads run end-to-end through the course:
 
 Running examples · cat / not-cat · MNIST · CIFAR-10 · Tiny Shakespeare · CelebA.
 
-The course follows **Prince · [*Understanding Deep Learning*](https://udlbook.github.io/udlbook/)** (2023, free PDF) — see [Resources](resources.qmd) for the full book / video / blog map.
+::: {.callout-tip}
+This is the redesigned course. It reuses and adapts material — with attribution — from Prof. Batra's [ML (ES 335)](https://github.com/nipunbatra/ml-teaching), [Probabilistic ML](https://github.com/nipunbatra/pml-teaching), and [PSDV](https://github.com/nipunbatra/psdv-teaching) courses, Andrew Ng's Deep Learning Specialization, and Andrej Karpathy's micrograd / nanoGPT. The previous 27-deck version is archived in the repo.
+:::

@@ -337,6 +337,24 @@ Larger $s$ pushes the predicted noise **further along the prompt direction** $\D
 
 ---
 
+# CFG in practice · the negative prompt
+
+The null prompt in CFG only means "point away from *nothing*." Replace it with a **real** prompt and you get the most-used knob in every SD front-end — you point away from something specific.
+
+<div class="keypoint">
+
+**Same formula, better baseline.** Swap $\epsilon_\text{uncond}$ for $\epsilon_\text{neg}$ — the noise predicted for a *negative* prompt like "blurry, extra fingers, watermark":
+
+$$\epsilon_\text{cfg} = \epsilon_\text{neg} + s\,\big(\epsilon_\text{cond} - \epsilon_\text{neg}\big)$$
+
+Now $s$ pushes **toward** what you asked for **and away from** what you never want.
+
+</div>
+
+Worked: keep $\epsilon_\text{cond} = [+0.5,\, +0.3]$, and let the negative prompt predict $\epsilon_\text{neg} = [-0.1,\, +0.4]$. The pull becomes $\Delta = \epsilon_\text{cond}-\epsilon_\text{neg} = [+0.6,\, -0.1]$ — steeper *away* from "blurry" than the plain null baseline gave. It costs nothing extra: the second pass CFG already runs is simply **conditioned on the negative prompt instead of the null token.**
+
+---
+
 <!-- _class: section-divider -->
 
 ## Part 4 · Latent diffusion — the compute win
@@ -371,6 +389,28 @@ A patch of blue sky is hundreds of near-identical pixels. Asking the network to 
 </div>
 
 The VAE **decoder runs exactly once**; the encoder isn't used for text-to-image at all (there's no input image to encode — it *is* used for img2img and during training). Every expensive U-Net pass now works on 16k numbers, not 800k.
+
+---
+
+# img2img · start the loop from a real image
+
+Text-to-image starts from pure noise. **img2img** starts from *your* image — this is where the VAE encoder finally earns its keep at inference time.
+
+<div class="math-box">
+
+1. **Encode** the input image → latent $z_0$.
+2. **Noise it partway**: jump only to $z_\tau$ for $\tau = \text{strength}\times T$, not all the way to pure noise.
+3. **Denoise** from $z_\tau$ with the prompt, as usual → a new image that keeps the original's layout.
+
+</div>
+
+<div class="insight">
+
+**Strength is a "how much to repaint" dial.** $\text{strength}=0.3$ re-noises only 30% of the way, so the output stays close to the input (recolour, restyle). $\text{strength}=0.9$ erases almost everything, keeping only rough composition. **Inpainting** is the same trick with a mask — noise and re-denoise *only inside the hole*, freezing every pixel outside it.
+
+</div>
+
+A smaller strength also runs *fewer* steps — you start at $z_\tau$, not $z_T$ — so img2img is strictly cheaper than a full text-to-image generation.
 
 ---
 
@@ -467,6 +507,26 @@ The trick: reinterpret the forward process as **non-Markovian** with the *same* 
 
 ---
 
+# DDPM vs DDIM · the step-count that matters
+
+Same trained $\epsilon_\theta$, same $\bar\alpha_t$ schedule — only the *sampler's rule* changes. What that swap buys, concretely:
+
+| | DDPM | DDIM |
+|:--|:-:|:-:|
+| Reverse update | stochastic (re-adds noise) | deterministic (noise $=0$) |
+| Steps for good quality | ~1000 | ~25–50 |
+| Same seed → same image? | no | **yes** — reproducible |
+| Retraining needed? | — | **none** |
+| U-Net passes / image | 1000 | ~25 |
+
+<div class="keypoint">
+
+At 25 DDIM steps vs 1000 DDPM steps that is a **~40× wall-clock win for free**, and the determinism is what makes fixed seeds, latent interpolation, and image inversion possible at all. Push below ~15 steps and quality drops — the trajectory is *smooth*, not a straight line.
+
+</div>
+
+---
+
 # Practice problem 3
 
 <div class="popquiz">
@@ -492,6 +552,26 @@ The trick: reinterpret the forward process as **non-Markovian** with the *same* 
 <div class="keypoint">
 
 Both samplers only ever need $q(x_t\mid x_0)$ and the same $\epsilon_\theta$ — that is *why no retraining is needed.* DDIM just chooses a **deterministic** update and a **sparse** timestep schedule. Result: ~$20$–$40\times$ fewer passes at matched quality.
+
+</div>
+
+---
+
+# The sampler menu · DDIM is one of many
+
+DDIM was the *first* fast sampler; once you view the reverse process as an **ODE to integrate**, a whole menu opens up. All of them reuse the *same* trained $\epsilon_\theta$ — picking one is a runtime choice, never a retraining one.
+
+| Sampler | Idea | Typical steps |
+|:--|:--|:-:|
+| DDPM | stochastic, tiny steps | ~1000 |
+| DDIM | deterministic, 1st-order | 25–50 |
+| Euler | plain ODE step | 20–30 |
+| Heun | Euler + a correction (2nd-order) | 15–25 |
+| DPM++ (2M) | tuned multi-step solver | **~20** |
+
+<div class="insight">
+
+Higher-order solvers spend more compute *per* step so they can take *bigger* steps — fewer network calls for the same picture. **DPM++ reaches usable images in ~20 steps** and is the default in most modern front-ends. The knob trades steps against per-step cost; it never trades quality for retraining.
 
 </div>
 
@@ -568,6 +648,38 @@ Every arrow is one of today's four objects. Text in on the left, image out on th
 <div class="keypoint">
 
 Two of the four cost *nothing to train* (they reuse frozen or already-trained parts), and DDIM is free. That is why Stable Diffusion was a re-assembly of known parts, not a new model from scratch.
+
+</div>
+
+---
+
+# Practice problem 4
+
+<div class="popquiz">
+
+**Practice problem 4.** Take one U-Net forward pass as the unit of cost. Classifier-free guidance runs it **twice** per step. Count the passes to make one image: **(a)** pixel-space DDPM at 1000 steps with CFG; **(b)** latent Stable Diffusion with DDIM at 25 steps and CFG. **(c)** By what factor did the *step change alone* help — and does CFG change that factor?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 4
+
+<div class="math-box">
+
+**(a)** $1000\ \text{steps} \times 2\ (\text{CFG}) = \mathbf{2000}$ U-Net passes.
+
+**(b)** $25\ \text{steps} \times 2\ (\text{CFG}) = \mathbf{50}$ U-Net passes.
+
+**(c)** $2000 / 50 = \mathbf{40\times}$ fewer passes — exactly $1000/25$. The CFG factor of $2$ sits in *both* numerator and denominator, so it **cancels**: the step-count win is independent of guidance.
+
+</div>
+
+<div class="keypoint">
+
+CFG doubles the *constant*; DDIM cuts the *count*. And this $40\times$ rides **on top of** latent diffusion's $48\times$ smaller passes — the two savings multiply while the guidance overhead tags along unchanged. That product is the "prompt in, image in a second" budget.
 
 </div>
 
