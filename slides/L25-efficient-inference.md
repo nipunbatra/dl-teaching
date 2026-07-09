@@ -274,6 +274,26 @@ On an A100 (~1.5 TB/s HBM) moving ~150 GB takes ~0.1 s; the arithmetic finishes 
 
 ---
 
+# Intuition · the tokens-per-second ceiling
+
+If decode must stream **every weight once per token**, then the fastest you can *possibly* emit tokens is just **bandwidth ÷ model bytes** — the arithmetic never even enters the estimate.
+
+<div class="math-box">
+
+$$\text{tokens/s ceiling} \;\approx\; \frac{\text{HBM bandwidth}}{\text{bytes per forward pass}}$$
+
+**Llama-70B on an A100 (1.5 TB/s):** &nbsp; BF16 $= 140$ GB $\Rightarrow \dfrac{1500}{140} \approx \mathbf{11}$ tok/s. &nbsp; INT4 $= 35$ GB $\Rightarrow \dfrac{1500}{35} \approx \mathbf{43}$ tok/s.
+
+</div>
+
+<div class="insight">
+
+The weights dwarf the KV-cache (140 GB vs a few GB), so they set the ceiling. This one division explains two headlines at once: **why a 70B model feels slow**, and **why quantization is the highest-leverage fix** — cut the bytes 4×, get roughly 4× the tokens. You cannot out-*compute* a bandwidth wall; you can only move fewer bytes across it.
+
+</div>
+
+---
+
 # The roofline — one picture for "memory-bound"
 
 Plot achievable throughput against **arithmetic intensity** (FLOPs done per byte moved). Two regimes meet at a corner:
@@ -294,6 +314,35 @@ The corner (ridge) sits at intensity $=\dfrac{\text{peak FLOP/s}}{\text{bandwidt
 <div class="insight">
 
 Decode lives at the far left, using **under 1% of peak FLOPs**. You climb the roofline two ways — **move right** (bigger batches raise intensity, so each weight-read serves many sequences) or **lower the bytes** (quantization). *(Precise threshold derived in the appendix.)*
+
+</div>
+
+---
+
+# Intuition · batching is how decode climbs the roofline
+
+A single decode request wastes the GPU: you stream all 140 GB of weights to make **one** token. But that same weight-read can serve **many sequences at once** — so batch them.
+
+<div class="columns">
+<div>
+
+**One read, many riders.**
+Reading the weights costs the same whether 1 or 64 sequences are waiting. Batch $B$ requests and each weight-read yields $B$ tokens — arithmetic intensity rises $\sim B\times$, sliding you **right** along the roofline toward the compute roof.
+
+</div>
+<div>
+
+**Latency vs throughput.**
+Per-user latency barely moves (still one weight-read per step). But **total** throughput multiplies:
+$$B=1:\ \sim 11 \text{ tok/s total}$$
+$$B=32:\ \sim 11 \text{ tok/s each} \times 32 \approx \mathbf{350\ tok/s}$$
+
+</div>
+</div>
+
+<div class="insight">
+
+This is why a serving system optimizes **throughput** (tokens/s across *all* users), not one user's latency — and why **continuous batching** (Part 3) works so hard to keep the batch full. The bandwidth ceiling only bites when the batch is nearly empty.
 
 </div>
 
@@ -330,6 +379,41 @@ You serve Llama-70B at 8 tokens/s. Rank these by likely speedup:
 ![w:640px](figures/lec23/svg/kv_cache.svg)
 
 You spend a little memory (the cache grows with context) to erase an enormous amount of repeated compute — from $O(t^2)$ down to $O(t)$ work per step.
+
+---
+
+# Intuition · the cache turns $O(t^2)$ into $O(t)$
+
+"Don't recompute the past" isn't a slogan — it's a quadratic-to-linear win you can count.
+
+<div class="columns">
+<div>
+
+**Without a cache**, step $t$ re-encodes all $t$ prior tokens. Over a length-$T$ generation the work is
+$$\sum_{t=1}^{T} t = \frac{T(T+1)}{2} \approx \frac{T^2}{2}.$$
+
+**With a cache**, each step encodes only the **one** new token → $T$ total.
+
+</div>
+<div>
+
+<div class="math-box">
+
+**Generate $T = 1000$ tokens**
+no cache: $\approx 500{,}000$ token-encodes
+cache: $1{,}000$ token-encodes
+$$\text{ratio} \approx \mathbf{500\times}$$
+
+</div>
+
+</div>
+</div>
+
+<div class="insight">
+
+The cache trades a little memory (linear growth in context) for erasing an entire *quadratic* factor of repeated attention work. Every autoregressive server keeps this cache — generating without it would be unthinkably slow.
+
+</div>
 
 ---
 
@@ -695,6 +779,67 @@ Every partial sum gets re-scaled by $e^{(\text{old max} - \text{new max})}$, so 
 
 ---
 
+# Practice problem 4
+
+<div class="popquiz">
+
+**Practice problem 4.** Naive attention runs at context $N = 4096$ in FP16 (2 bytes/element), for **one** attention head.
+(a) How large is the materialized $N \times N$ score matrix in HBM?
+(b) FlashAttention processes it in $128 \times 128$ tiles — how large is one tile?
+(c) By what factor is the tile smaller, and what does that buy you?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 4
+
+<div class="columns">
+<div>
+
+**(a) Full score matrix**
+$$4096^2 \times 2 = 33{,}554{,}432 \text{ B} \approx \mathbf{32\ MB}$$
+written to HBM, then read back for the softmax.
+
+**(b) One FlashAttention tile**
+$$128^2 \times 2 = 32{,}768 \text{ B} \approx \mathbf{32\ KB}$$
+
+</div>
+<div>
+
+**(c) Factor**
+$$\frac{32\text{ MB}}{32\text{ KB}} = \mathbf{1024\times}$$
+The 32 KB tile fits in **SRAM** (~20× faster than HBM), so the 32 MB matrix is **never written to HBM at all**.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+FlashAttention doesn't cut the *FLOPs* — it deletes the HBM round-trip of that $N\times N$ matrix. Same answer, far fewer byte-moves: **memory-bound thinking, one more time.** (At $N=8192$ the matrix is 4× bigger — the 134 MB from the earlier slide.)
+
+</div>
+
+---
+
+# See it in code
+
+<div class="notebook">
+
+**🎛 Interactive · the attention matrix FlashAttention refuses to build** — visualize the full $N\times N$ score matrix, watch it grow quadratically with context, and see which entries a single query actually attends to. This is exactly the object FlashAttention tiles away. *(Interactive Lab · `interactive/articles/attention`)*
+
+</div>
+
+<div class="notebook">
+
+**📓 Notebook · `F.scaled_dot_product_attention`** — swap a hand-written `Q @ K.T → softmax → @ V` for PyTorch's fused kernel, time both at $N = 8192$, and confirm the outputs match bit-for-bit while peak memory drops. *(ES 667 · `notebooks/25-efficient-inference.ipynb`)* · **💡 worth building:** a tile-by-tile animation of online softmax accumulating the exact result.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ## Part 6 · Speculative decoding — many tokens per big-model pass
@@ -770,6 +915,51 @@ A 1B draft vs a 70B verifier gives $c\approx 0.014$, so $k=4$ adds only $\times 
 <div class="keypoint">
 
 **Worked:** $\alpha=0.8,\, k=4 \Rightarrow \mathbb{E}\approx 3.36$ tokens/pass; after the $\times 1.06$ draft overhead, **~3.2× wall-clock**. The win is bounded by draft **quality** ($\alpha$) and draft **cheapness** ($c$) — too inaccurate *or* too big a draft erases the gain.
+
+</div>
+
+---
+
+# Practice problem 5
+
+<div class="popquiz">
+
+**Practice problem 5.** A 1.3B **draft** proposes $k = 3$ tokens per step; the 70B **verifier** accepts each drafted token independently with probability $\alpha = 0.8$.
+(a) Expected tokens per big-model pass? Use $\mathbb{E} = \dfrac{1 - \alpha^{\,k+1}}{1 - \alpha}$.
+(b) Each big pass also runs $k$ draft passes at cost $c = 0.02$ per token. Net speedup $\approx \dfrac{\mathbb{E}}{1 + kc}$?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 5
+
+<div class="columns">
+<div>
+
+**(a) Tokens per pass**
+$$\mathbb{E} = \frac{1 - 0.8^{4}}{1 - 0.8} = \frac{1 - 0.4096}{0.2} \approx \mathbf{2.95}$$
+
+**(b) Net speedup**
+$$\frac{2.95}{1 + 3(0.02)} = \frac{2.95}{1.06} \approx \mathbf{2.8\times}$$
+
+</div>
+<div>
+
+<div class="insight">
+
+Compare the worked $k=4$ case ($\mathbb{E}\approx 3.36$): the extra draft token bought only $\sim 0.4$ more accepted tokens. **Diminishing returns** — the $k$-th draft token is right only if *all* earlier ones were, i.e. with probability $\alpha^{k}$, which decays fast.
+
+</div>
+
+</div>
+</div>
+
+<div class="keypoint">
+
+The gain rides on two knobs: draft **accuracy** $\alpha$ (raises $\mathbb{E}$) and draft **cheapness** $c$ (shrinks the overhead). A tiny *and* accurate draft — here $\sim\!2.8\times$ — is the whole trick; a slow or sloppy draft erases it.
 
 </div>
 

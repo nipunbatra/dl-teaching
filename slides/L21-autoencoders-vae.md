@@ -123,6 +123,26 @@ Modern variants force it differently — add noise (**denoising AE**) or mask pa
 
 ---
 
+# Intuition · what survives the bottleneck?
+
+A trained autoencoder is **lossy compression the network designs itself.** JPEG discards high-frequency detail your eye barely notices; an autoencoder learns *which* details to discard — tuned to *this* dataset — with nobody specifying the rule.
+
+<div class="insight">
+
+Train on faces and the code keeps pose, lighting, and identity while dropping sensor noise. Train on MNIST and it keeps stroke shape, not pixel-exact ink. **The bottleneck is a budget, and the encoder spends it on whatever most reduces reconstruction error** — an automatic, data-specific compressor.
+
+</div>
+
+<div class="popquiz">
+
+**Quick check.** Two autoencoders, same architecture: one trained only on cats, one only on street signs. Feed a cat photo through *both*. Which reconstructs it better, and why?
+
+</div>
+
+*Answer:* the **cat** AE — it spent its bottleneck budget learning cat structure. The sign AE kept edges and flat colours useful for signs, so it rebuilds the cat poorly. **A code is only as good as the distribution it was trained to compress.**
+
+---
+
 # Worked numeric · a 4-pixel autoencoder
 
 Tiny grayscale image $x = [0.9,\ 0.2,\ 0.8,\ 0.1]$, latent dim $d=1$.
@@ -210,6 +230,31 @@ Two failures at once: the trained points are **scattered with gaps**, and there 
 
 ---
 
+# Intuition · the holes, made concrete
+
+Take two training images — a **4** and a **9**. The encoder maps them to two latent points $z_4$ and $z_9$. Now decode the **midpoint** $\tfrac12(z_4+z_9)$.
+
+<div class="columns">
+<div>
+
+**What you hope for:** something halfway — a 4 blurring into a 9.
+
+</div>
+<div>
+
+**What a plain AE gives:** garbage. The decoder was trained *only at* $z_4$ and $z_9$, never *between* them. The midpoint is a hole.
+
+</div>
+</div>
+
+<div class="insight">
+
+The latent is like cities on a map with **no roads between them.** Each training image is a city the decoder knows; the space in between was never visited, so the decoder has no idea what lives there. Generation drops a pin at random — and random pins land on empty countryside. The VAE's whole job is to **pave the roads.**
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ## Part 3 · The VAE — a distribution, not a point
@@ -273,6 +318,24 @@ To generate, just draw $z\sim\mathcal N(0,I)$. The prior is the **rule book** fo
 <div class="keypoint">
 
 A VAE is a plain AE **plus a regularizer that makes the latent match a known distribution** $\mathcal N(0,I)$. Everything else — the ELBO, the KL formula — is just making that regularizer principled.
+
+</div>
+
+---
+
+# Intuition · a point has zero width — that's the bug
+
+Why does encoding to a *point* doom generation, but a *cloud* saves it? A point occupies **zero volume**. Stack a million training points in the latent and they still cover **none** of the space between them — measure zero. Sample anywhere and you miss them all.
+
+<div class="insight">
+
+A cloud has **width**. Give each image a Gaussian blob and neighbouring blobs **overlap**, tiling the region with actual trained territory. Pulling every blob toward the *same* $\mathcal N(0,I)$ makes that territory a place you know how to sample from. **Width + a shared home = a latent you can draw from.**
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · VAE latent explorer** — shrink $\sigma$ toward $0$ and watch the clouds collapse back to points as the gaps reopen; raise the KL weight and watch them slide onto the prior. *(Interactive Lab · `interactive/articles/vae-latent-explorer`)*
 
 </div>
 
@@ -374,6 +437,30 @@ Sampling $z\sim\mathcal N(\mu,\sigma^2)$ **directly** has no functional edge fro
 
 ---
 
+# Worked numeric · the cloud from three draws
+
+Same encoder output $\mu=2.0,\ \sigma=0.5$. Reparameterize $z=\mu+\sigma\epsilon$ with three noise draws:
+
+<div class="math-box">
+
+| $\epsilon\sim\mathcal N(0,1)$ | $z=2.0+0.5\,\epsilon$ |
+|:--:|:--:|
+| $-1.0$ | $1.5$ |
+| $\;\;0.4$ | $2.2$ |
+| $\;\;1.2$ | $2.6$ |
+
+</div>
+
+The three $z$'s scatter **around** $\mu=2.0$ with spread set by $\sigma=0.5$ — that is the "cloud." Across a run, a *fresh* $\epsilon$ each step forces the decoder to rebuild the image from *any* point in the cloud, not just its centre. That is literally what fills the holes: the neighbours of $\mu$ are all trained to decode sensibly.
+
+<div class="insight">
+
+Check the statistics: the draws average $\approx 2.1\approx\mu$ and their spread tracks $\sigma$ — reparameterization changed *how* we draw the sample, not *what* distribution it comes from. $z$ is still exactly $\mathcal N(2.0,\,0.5^2)$.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ## Part 5 · The loss — reconstruction + KL
@@ -404,6 +491,33 @@ The tension between the two is what produces a latent that is *both* informative
 <div class="insight">
 
 Push too hard on reconstruction → clouds drift apart, holes reappear (a plain AE in the limit). Push too hard on KL → every cloud collapses to $\mathcal N(0,I)$ and $z$ forgets which image it came from. The VAE lives at the balance point.
+
+</div>
+
+---
+
+# Intuition · reconstruct well, but stay organized
+
+The loss is two forces in one sentence: **"rebuild the image accurately, but keep the latent tidy."**
+
+<div class="columns">
+<div>
+
+**Reconstruction = the messy genius.** Scatter each image's code wherever rebuilding is easiest — every sheet findable, the desk itself chaos.
+
+</div>
+<div>
+
+**KL = the librarian.** Shelve every code near the origin in one standard shape $\mathcal N(0,I)$ — tidy and samplable, even at the cost of some detail.
+
+</div>
+</div>
+
+The VAE is their **truce**: accurate enough to rebuild, organized enough that a *random* draw lands on a real code. Messy-but-accurate has holes; tidy-but-empty forgets the images.
+
+<div class="notebook">
+
+**🎛 Interactive · information theory by hand** — the VAE's regularizer is the *forward* KL $D_{\text{KL}}(q\Vert p)$; toggle forward vs reverse on a bimodal target to feel **mode-covering vs mode-seeking**, the exact directionality this loss commits to. *(Interactive Lab · `interactive/articles/info-theory`)*
 
 </div>
 
@@ -477,6 +591,28 @@ $$D_{\text{KL}} = \tfrac12\big(\mu^2 + \sigma^2 - 1 - \log\sigma^2\big)
 <div class="insight">
 
 The **mean** term $\mu^2=1.44$ dominates: the cloud sits off-center at $1.2$. The spread $\sigma^2=0.25$ is a tight (confident) encoding, which also costs a little. Training will pull $\mu$ back toward $0$ and $\sigma$ toward $1$ — *unless* reconstruction needs this image encoded far from the others. Every sample negotiates exactly this trade.
+
+</div>
+
+---
+
+# Worked example · the spread cost is asymmetric
+
+Practice problem 2's cloud was off-centre (big $\mu$). Now hold $\mu=0$ and vary only the spread, using $\tfrac12(\mu^2+\sigma^2-1-\log\sigma^2)$:
+
+<div class="math-box">
+
+| posterior | $\sigma^2$ | KL $=\tfrac12(\sigma^2-1-\log\sigma^2)$ |
+|:--|:--:|:--:|
+| too tight | $0.25$ | $\tfrac12(0.25-1+1.386)=\mathbf{0.32}$ |
+| just right | $1.0$ | $\tfrac12(1-1-0)=\mathbf{0}$ |
+| too wide | $4.0$ | $\tfrac12(4-1-1.386)=\mathbf{0.81}$ |
+
+</div>
+
+<div class="insight">
+
+The spread cost is **zero only at $\sigma^2=1$** and climbs on *both* sides — a cloud that is too **confident** (tight) is penalized just like one that is too **vague** (wide). That is why a VAE resists collapsing a posterior to a spike: an over-tight $\sigma$ costs KL, so the encoder is nudged to keep a little honest uncertainty. Add the mean cost $\mu^2$ from PP2 and you have the full pressure. *(Uses $\log 0.25=-1.386$, $\log 4=1.386$.)*
 
 </div>
 
@@ -578,6 +714,86 @@ The KL didn't just regularize — it *manufactured the sampling distribution*. T
 
 ---
 
+# Practice problem 4 · turning the β knob
+
+<div class="popquiz">
+
+**Practice problem 4.** You train two VAEs on the same data, identical except for the KL weight: model **A** with $\beta=0.05$, model **B** with $\beta=10$.
+
+For each, predict (i) which has **sharper** reconstructions, (ii) which latent you can **sample** cleanly, (iii) which risks the latent **forgetting** the image. Then name the failure mode each extreme approaches.
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 4
+
+<div class="columns">
+<div>
+
+**A · $\beta=0.05$ (KL barely matters)**
+- (i) **Sharper** — almost all budget on reconstruction.
+- (ii) **No** — clouds drift apart, holes return.
+- Approaches a **plain autoencoder**: great recon, can't generate.
+
+</div>
+<div>
+
+**B · $\beta=10$ (KL dominates)**
+- (i) **Blurrier** — recon is out-voted.
+- (ii) **Yes**, cleanly — clouds packed onto $\mathcal N(0,I)$.
+- (iii) **Forgets** — every $q(z\mid x)\to\mathcal N(0,I)$: **posterior collapse** (appendix).
+
+</div>
+</div>
+
+<div class="keypoint">
+
+$\beta$ slides you along the **recon ↔ KL** trade-off: small $\beta\to$ plain-AE holes, large $\beta\to$ posterior collapse. $\beta=1$ is the exact ELBO; the useful window sits near it, nudged by what you want (fidelity vs disentanglement). *Same shape as L7's regularization strength — too little overfits, too much underfits.*
+
+</div>
+
+---
+
+# Practice problem 5 · the whole loss, one number
+
+<div class="popquiz">
+
+**Practice problem 5.** For one training image a VAE gives reconstruction error $\lVert x-\hat x\rVert^2 = 3.0$ and a 1-D posterior $q(z\mid x)=\mathcal N(\mu=1.2,\ \sigma^2=0.25)$ — the same cloud as PP2, whose KL you found $\approx 1.04$.
+
+Write the total loss $\mathcal L=\text{recon}+\beta\,\text{KL}$ for **$\beta=1$** and **$\beta=4$**. Which term does cranking $\beta$ amplify, and which way will the encoder then move $\mu,\sigma$?
+
+</div>
+
+*Try it before the next slide.* *(Reuse KL $\approx 1.04$ from PP2.)*
+
+---
+
+# Solution · practice problem 5
+
+<div class="math-box">
+
+$$\beta=1:\quad \mathcal L = 3.0 + 1{\cdot}1.04 = \mathbf{4.04}$$
+$$\beta=4:\quad \mathcal L = 3.0 + 4{\cdot}1.04 = 3.0 + 4.16 = \mathbf{7.16}$$
+
+</div>
+
+<div class="insight">
+
+At $\beta=4$ the KL contribution ($4.16$) now **outweighs** reconstruction ($3.0$): the gradient cares more about tidying the latent than about pixel fidelity. So the optimizer pulls $\mu$ harder toward $0$ and $\sigma$ toward $1$ — accepting a *worse* recon to shrink that inflated KL. That is how $\beta$ buys packing and disentanglement at the cost of sharpness, made numeric.
+
+</div>
+
+<div class="keypoint">
+
+The VAE objective is always this one sum — **recon $+\ \beta\cdot$KL** — evaluated per image and averaged over the batch. Every design choice ($\beta$, latent width, decoder power) just moves where this sum's minimum sits.
+
+</div>
+
+---
+
 # Latent-space interpolation
 
 ![w:900px](figures/lec19/svg/vae_interpolation.svg)
@@ -659,6 +875,12 @@ VAE blur is structural: MSE with overlapping posteriors makes the decoder predic
 
 </div>
 
+<div class="notebook">
+
+**🎛 Interactive · meet the neighbours** — *GAN minimax dance* (generator vs discriminator) and *diffusion denoising* (many-step sampling), to contrast with today's one-pass VAE. *(Interactive Lab · `interactive/articles/gan-minimax-dance`, `diffusion-denoise`)*
+
+</div>
+
 ---
 
 # See it live
@@ -713,7 +935,7 @@ This lecture reuses and adapts material from the instructor's own courses (IIT G
 
 - **VAE build (AE → VAE → β-VAE on MNIST), reparameterization, ELBO & Gaussian-KL derivation** — *Probabilistic Machine Learning*, N. Batra · `github.com/nipunbatra/pml-teaching` *(`notebooks/vae.ipynb`, `slides/Variational-Inference.tex`)*
 - **KL divergence, Gaussian NLL, information theory** — *Machine Learning / Prob. ML (L1 primer)*, N. Batra
-- **ES 667 VAE materials** — `notebooks/19-vae-mnist.ipynb`, figure library, interactive explainers
+- **ES 667 VAE materials & interactive explainers** — `notebooks/19-vae-mnist.ipynb`, figure library; explainers *vae-latent-explorer, elbo-decomposition, multivariate-normal, info-theory, gan-minimax-dance, diffusion-denoise*
 - **Original method** — D. Kingma & M. Welling, *Auto-Encoding Variational Bayes* (2014); β-VAE — Higgins et al. (2017); disentanglement caveat — Locatello et al. (2019).
 - **Pedagogical framing** — A. Ng, *Deep Learning Specialization* (representation learning, in-line losses).
 

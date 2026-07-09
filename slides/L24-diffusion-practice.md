@@ -302,6 +302,45 @@ $s=0$ ignores the prompt · $s=1$ is the plain conditional · $s>1$ overshoots t
 
 ---
 
+# CFG · a contrast dial for prompt-adherence
+
+The compass told you *where* CFG points. Here is what the knob *feels* like in one word: **contrast.**
+
+<div class="insight">
+
+Think of a photo editor. $\epsilon_\text{uncond}$ is the flat, washed-out RAW — technically an image, committed to nothing. $\epsilon_\text{cond}$ nudges it toward the prompt. **CFG turns up the contrast on that nudge:** it *extrapolates away from the unconditioned prediction*, exaggerating every feature the prompt asked for and muting everything it didn't.
+
+</div>
+
+<div class="columns">
+<div>
+
+**Low $s$ (0–1) · washed out**
+The prompt barely registers; samples look generic and "safe."
+
+</div>
+<div>
+
+**High $s$ (7–12) · punchy**
+Every prompt feature is vivid — until, like over-cranked contrast, colours clip and detail blows out.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+CFG is the single most-used dial in image generation, and it is nothing but *"how far past the conditional prediction do I walk."* One subtraction, one scalar — a contrast slider for prompt-adherence.
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · CFG as contrast** — drag $s$ and watch the pixel-value histogram stretch (contrast up) then clip (over-saturation) — the visual signature of extrapolating too far. *(`~/git/diffusion-interactive` · guidance panel)*
+
+</div>
+
+---
+
 # Practice problem 1
 
 <div class="popquiz">
@@ -443,6 +482,36 @@ This one change — diffusing in a VAE latent instead of on pixels — is the **
 
 ---
 
+# What the 48× actually buys · datacenter → laptop
+
+The $48\times$ is not an abstract ratio — it is the gap between "needs a research cluster" and "runs on the GPU in your laptop." Put rough numbers on it.
+
+<div class="math-box">
+
+**Memory.** Per U-Net pass, activation memory tracks the feature-map size. The $64\times64\times4$ latent (and its U-Net activations) fits in a few GB; the $512\times512$ pixel-space equivalent is ~$48\times$ larger. So latent SD runs text-to-image in **~4–6 GB of VRAM**, where pixel-space at the same resolution would demand **tens of GB.**
+
+</div>
+
+<div class="insight">
+
+**Same story for time.** Each of the ~25 sampling steps does its convolutions on **16k** numbers, not **800k**. "Diffuse in a small VAE latent, decode once" turns minutes-per-image into a second-per-image — and the VAE decoder runs a *single* time at the very end to paint the fine texture back in.
+
+</div>
+
+<div class="keypoint">
+
+The compute win (PP2) and the memory win are the **same** $48\times$, surfacing as *both* a smaller VRAM bill *and* a shorter wall-clock. That is precisely why Stable Diffusion could ship as something you run at home.
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · VAE latent explorer** — encode an image, poke its $64\times64\times4$ latent, decode it back, and see how little the latent must store for the decoder to rebuild the picture. *(Interactive Lab · `~/git/interactive/src/articles/vae-latent-explorer`)*
+
+</div>
+
+---
+
 # Practice problem 2
 
 <div class="popquiz">
@@ -504,6 +573,36 @@ Small per-step noise makes each inverse problem easy for the network — but it 
 The trick: reinterpret the forward process as **non-Markovian** with the *same* marginals $q(x_t \mid x_0)$, but a reverse update whose injected noise is set to **zero**. The path becomes a smooth trajectory you can traverse on any subset of timesteps.
 
 ![w:660px](figures/lec22/svg/ddim_vs_ddpm.svg)
+
+---
+
+# DDIM · one step, by the numbers
+
+"Fewer, bigger, deterministic steps" is concrete arithmetic. One DDIM stride does two things: **estimate the clean image, then re-noise straight to a much earlier timestep.**
+
+<div class="math-box">
+
+Toy scalar: at step $t$ the network sees $x_t = 1.4$, the schedule gives $\bar\alpha_t = 0.36$ (so $\sqrt{\bar\alpha_t}=0.6,\ \sqrt{1-\bar\alpha_t}=0.8$), and it predicts $\epsilon_\theta = 0.5$.
+
+**1 · predict the clean signal**
+$$\hat x_0 = \frac{x_t - \sqrt{1-\bar\alpha_t}\,\epsilon_\theta}{\sqrt{\bar\alpha_t}} = \frac{1.4 - 0.8(0.5)}{0.6} = \frac{1.0}{0.6} = 1.67$$
+
+**2 · re-noise directly to a far earlier $s$** with $\bar\alpha_s = 0.81$ ($\sqrt{\ }=0.9,\ \sqrt{1-\ }=0.436$):
+$$x_s = \sqrt{\bar\alpha_s}\,\hat x_0 + \sqrt{1-\bar\alpha_s}\,\epsilon_\theta = 0.9(1.67) + 0.436(0.5) \approx 1.72$$
+
+</div>
+
+<div class="keypoint">
+
+We jumped from $t$ **straight to a distant $s$** in one pass — no intermediate timesteps, **no fresh random noise.** That "predict $\hat x_0$, re-noise deterministically" is the engine that lets ~25 strides replace 1000. *(Full derivation in the appendix.)*
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · the reverse loop** — scrub the denoising trajectory and toggle DDPM (jittery, stochastic) against DDIM (smooth, deterministic) on the *same* trained network. *(Interactive Lab · `~/git/interactive/src/articles/diffusion-denoise`)*
+
+</div>
 
 ---
 
@@ -626,6 +725,12 @@ cross-attention injects the text at every scale
 
 </div>
 
+<div class="notebook">
+
+**🎛 Interactive · the frozen parts** — meet the two pretrained blocks this pipeline reuses without training: `clip-zero-shot` (how CLIP turns a prompt into the $77\times768$ vector) and `unet` (the denoiser's skip-connection backbone). *(Interactive Lab · `~/git/interactive/src/articles/clip-zero-shot`, `unet`)*
+
+</div>
+
 ---
 
 # The annotated full stack
@@ -680,6 +785,70 @@ Two of the four cost *nothing to train* (they reuse frozen or already-trained pa
 <div class="keypoint">
 
 CFG doubles the *constant*; DDIM cuts the *count*. And this $40\times$ rides **on top of** latent diffusion's $48\times$ smaller passes — the two savings multiply while the guidance overhead tags along unchanged. That product is the "prompt in, image in a second" budget.
+
+</div>
+
+---
+
+# Practice problem 5
+
+<div class="popquiz">
+
+**Practice problem 5.** On your GPU, one U-Net pass in the $64\times64\times4$ **latent** costs $20$ ms; the same U-Net on $512\times512\times3$ **pixels** would cost ~$48\times$ more, about $960$ ms. You generate one image with **CFG** (2 passes/step). Estimate the wall-clock for **(a)** latent SD with DDIM at $25$ steps; **(b)** pixel-space DDPM at $1000$ steps; **(c)** the overall speedup. (Ignore the one-time VAE decode.)
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 5
+
+<div class="math-box">
+
+**(a) Latent + DDIM** · passes $= 25 \times 2 = 50$; time $= 50 \times 20\,\text{ms} = \mathbf{1.0\ s}$.
+
+**(b) Pixel + DDPM** · passes $= 1000 \times 2 = 2000$; time $= 2000 \times 960\,\text{ms} = 1{,}920{,}000\,\text{ms} \approx \mathbf{32\ min}$.
+
+**(c) Speedup** · $1{,}920{,}000 / 1{,}000 = \mathbf{1920\times}$ — exactly the $48\times40$ of PP2, now read straight off the clock.
+
+</div>
+
+<div class="keypoint">
+
+The two independent wins **multiply**: $48\times$ smaller passes (latent) $\times\ 40\times$ fewer steps (DDIM). CFG's $2\times$ multiplies *both* numerator and denominator, so it cancels from the ratio. **One second on a laptop vs half an hour on the same chip** — that product is why SD feels interactive.
+
+</div>
+
+---
+
+# Practice problem 6
+
+<div class="popquiz">
+
+**Practice problem 6.** A user adds a **negative prompt** ("blurry, watermark") to their generation. Recall plain CFG already runs the U-Net twice per step (conditional + null). **(a)** With a negative prompt, how many U-Net passes per step does CFG now need? **(b)** Write the guidance formula it uses. **(c)** So what is the *extra* cost of a negative prompt — and why is that a bargain?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 6
+
+<div class="math-box">
+
+**(a) Still two.** The negative prompt **replaces** the null token in the second pass; it does not add a third. Passes/step $= \mathbf{2}$, exactly as before.
+
+**(b)** $\epsilon_\text{cfg} = \epsilon_\text{neg} + s\,(\epsilon_\text{cond} - \epsilon_\text{neg})$ — the null baseline swapped for the negative one.
+
+**(c) Extra cost: zero.** You were already computing an unconditional pass; conditioning it on "blurry, watermark" instead of the null token is the *same* forward pass — you just get a better baseline to walk away from.
+
+</div>
+
+<div class="keypoint">
+
+The negative prompt is the highest-leverage knob in any SD front-end precisely because it is **free**: same 2 passes, same $s$, but now $s$ pushes *toward* what you asked for **and away from** a named list of failure modes.
 
 </div>
 

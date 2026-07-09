@@ -249,6 +249,32 @@ As $t$ grows, $\sqrt{\bar\alpha_t}$ (signal kept) slides to $0$ and $\sqrt{1-\ba
 
 ---
 
+# Signal-to-noise ratio · one number for "how corrupted"
+
+Instead of tracking two curves, collapse them into a single **signal-to-noise ratio** — signal variance over noise variance:
+
+<div class="math-box">
+
+$$\text{SNR}(t) = \frac{\text{signal variance}}{\text{noise variance}} = \frac{\bar\alpha_t}{1-\bar\alpha_t}$$
+
+</div>
+
+With unit-variance data, $x_t=\sqrt{\bar\alpha_t}\,x_0+\sqrt{1-\bar\alpha_t}\,\epsilon$ carries signal power $\bar\alpha_t$ and noise power $1-\bar\alpha_t$. Read it straight off the linear-schedule table:
+
+| $t$ | $\bar\alpha_t$ | $\text{SNR}=\bar\alpha_t/(1-\bar\alpha_t)$ | in dB |
+|:-:|:-:|:-:|:-:|
+| 250 | 0.52 | $1.08$ | $\approx 0$ dB |
+| 500 | 0.08 | $0.087$ | $\approx -11$ dB |
+| 750 | 0.003 | $0.003$ | $\approx -25$ dB |
+
+<div class="insight">
+
+$\text{SNR}=1$ (0 dB) is the **crossover**: signal power exactly equals noise power. That is where denoising is hardest *and* most informative — precisely the range the cosine schedule lingers in. Early $t$ is trivially high-SNR, late $t$ trivially low; the model earns its keep in the middle.
+
+</div>
+
+---
+
 # Closed form · worked numeric · straight to $x_{500}$
 
 Take $x_0 = 2.0$; the linear DDPM schedule gives $\bar\alpha_{500}\approx 0.08$.
@@ -476,6 +502,28 @@ Given $(x_t,t)$ — both known to the network — $\hat x_0$ and $\hat\epsilon$ 
 
 ---
 
+# $\epsilon \to \hat x_0$ · denoise in one shot (worked numeric)
+
+Practice problem 2 said predicting $\epsilon$ *is* predicting $x_0$. Here it is with numbers — reuse the forward example $x_0=[\,3.0,-1.0\,]$, $\bar\alpha_t=0.36$, which gave $x_t=[\,2.2,\ 0.2\,]$ (so $\sqrt{\bar\alpha_t}=0.6$, $\sqrt{1-\bar\alpha_t}=0.8$).
+
+<div class="math-box">
+
+$$\hat x_0 = \frac{x_t - \sqrt{1-\bar\alpha_t}\,\hat\epsilon}{\sqrt{\bar\alpha_t}}$$
+
+**Perfect guess** $\hat\epsilon=[\,0.5,\,1.0\,]$ (the true $\epsilon$): $\ \hat x_0 = \dfrac{[\,2.2,0.2\,]-0.8[\,0.5,1.0\,]}{0.6}=\dfrac{[\,1.8,-0.6\,]}{0.6}=[\,3.0,\,-1.0\,]$ — exact.
+
+**Slightly off** $\hat\epsilon=[\,0.45,\,1.10\,]$: $\ \hat x_0 = \dfrac{[\,2.2,0.2\,]-[\,0.36,0.88\,]}{0.6}=\dfrac{[\,1.84,-0.68\,]}{0.6}=[\,3.07,\,-1.13\,]$.
+
+</div>
+
+<div class="keypoint">
+
+A good noise guess *is* a good clean-image estimate — the error in $\hat\epsilon$ passes through a fixed $\sqrt{1-\bar\alpha_t}/\sqrt{\bar\alpha_t}$ gain to the error in $\hat x_0$. "Predict the noise" and "denoise the image" are the same network, read two ways.
+
+</div>
+
+---
+
 # Practice problem 3
 
 <div class="popquiz">
@@ -520,6 +568,32 @@ Everything on the last five slides is ~30 lines of PyTorch. The theory really is
 
 ---
 
+# Practice problem 4
+
+<div class="popquiz">
+
+**Practice problem 4.** At some timestep the schedule gives $\bar\alpha_t = 0.2$. Compute the signal-to-noise ratio $\text{SNR}=\bar\alpha_t/(1-\bar\alpha_t)$ (and in dB). Is $x_t$ mostly signal or mostly noise? And at what value of $\bar\alpha_t$ is $\text{SNR}$ exactly $1$?
+
+</div>
+
+*Try it before the next slide — recall the SNR picture from Part 2.*
+
+---
+
+# Solution · practice problem 4
+
+$$\text{SNR}=\frac{\bar\alpha_t}{1-\bar\alpha_t}=\frac{0.2}{0.8}=0.25,\qquad 10\log_{10}(0.25)\approx \mathbf{-6\ \text{dB}}.$$
+
+Noise variance is **4×** the signal variance — $x_t$ is mostly noise. And $\text{SNR}=1 \iff \bar\alpha_t = 1-\bar\alpha_t \iff \bar\alpha_t=\tfrac12$.
+
+<div class="keypoint">
+
+$\bar\alpha_t=0.5$ is the **halfway point of corruption** — signal power equals noise power. Modern schedules are often designed directly in SNR space (drop log-SNR by a fixed amount per step) rather than in $\beta_t$, and the loss can even be reweighted by SNR to balance easy and hard timesteps.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ## Part 4 · Sampling — running the chain backward
@@ -559,6 +633,32 @@ Start at $x_T\sim\mathcal N(0,I)$ and apply the reverse step $T$ times. Each ste
 Add fresh noise: $\sigma_{100}=0.1$, $z=-0.3 \Rightarrow$ noise term $=-0.03$, so $x_{99}=1.494-0.03=\mathbf{1.464}$.
 
 One small step from noisier ($1.5$) to slightly cleaner ($1.464$). At the final step $t=1$ we drop the noise term and output the mean.
+
+---
+
+# Practice problem 5
+
+<div class="popquiz">
+
+**Practice problem 5.** One reverse step in 1D. You have $x_t = 2.0$ with $\alpha_t = 0.8$ and $\bar\alpha_t = 0.36$, and the network predicts $\epsilon_\theta = 1.0$. Compute the **denoised mean** (ignore the fresh-noise term $\sigma_t z$). Did the step move $x_t$ toward zero or away?
+
+</div>
+
+*Try it before the next slide — plug into $\frac{1}{\sqrt{\alpha_t}}\big(x_t-\frac{1-\alpha_t}{\sqrt{1-\bar\alpha_t}}\,\epsilon_\theta\big)$.*
+
+---
+
+# Solution · practice problem 5
+
+$$\frac{1-\alpha_t}{\sqrt{1-\bar\alpha_t}}=\frac{0.2}{\sqrt{0.64}}=\frac{0.2}{0.8}=0.25,\qquad x_t-0.25\cdot 1.0 = 1.75.$$
+
+$$\mu = \frac{1}{\sqrt{0.8}}\times 1.75 = 1.118\times 1.75 = \mathbf{1.96}.$$
+
+<div class="keypoint">
+
+We predicted positive noise, so we **subtracted** a slice of it ($2.0\to1.75$); the $1/\sqrt{\alpha_t}$ factor then rescales back toward unit variance. One step barely moves $x_t$ — cleaning is gentle and *iterative*, which is exactly why sampling needs $T$ of these (the cost L24 attacks).
+
+</div>
 
 ---
 
@@ -621,6 +721,22 @@ Same trick, new meaning: in L13 it encoded *where a token sits in a sentence*; h
 
 ---
 
+# Explore the backbone yourself
+
+<div class="notebook">
+
+**🎛 Interactive · U-Net** — walk an image down the encoder and back up the decoder, and toggle the **skip connections** to see the fine detail they rescue. The same shape-preserving architecture (L9) that segments images is the one that predicts $\epsilon$. *(Interactive Lab · `interactive/src/articles/unet` · [nipunbatra.github.io/interactive-articles/unet](https://nipunbatra.github.io/interactive-articles/unet/))*
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · positional encoding** — drag the position and watch the sinusoidal basis light up. In L13 the index was a token's position; here it is the timestep $t$ fed to every U-Net block. Same encoding, new meaning. *(Interactive Lab · `interactive/src/articles/positional-encoding` · [nipunbatra.github.io/interactive-articles/positional-encoding](https://nipunbatra.github.io/interactive-articles/positional-encoding/))*
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ## Part 6 · One lens more — noise prediction ≈ score
@@ -648,6 +764,26 @@ $$s_\theta(x_t,t) = -\frac{\epsilon_\theta(x_t,t)}{\sqrt{1-\bar\alpha_t}}.$$
 <div class="insight">
 
 **DDPM (Ho 2020)** and **score-based SDEs (Song & Ermon 2019)** are two lenses on the *same* model — "guess the noise" and "follow the uphill arrows" give the same equations. Sampling then looks just like Langevin dynamics: step along the score, add a little jitter.
+
+</div>
+
+---
+
+# Noise → score · worked numeric
+
+The conversion $s_\theta(x_t,t) = -\,\epsilon_\theta(x_t,t)\,/\,\sqrt{1-\bar\alpha_t}$ is just a scaled sign-flip. Put numbers on it: $\bar\alpha_t=0.36$ so $\sqrt{1-\bar\alpha_t}=0.8$, and the network predicts $\epsilon_\theta=[\,0.4,\,-0.2\,]$.
+
+<div class="math-box">
+
+$$s_\theta = -\frac{[\,0.4,\,-0.2\,]}{0.8} = [\,-0.5,\ 0.25\,]$$
+
+</div>
+
+The score points **opposite** the predicted noise: where the model sees positive noise, "uphill toward the data" is negative — i.e. *subtract the noise*, exactly the reverse step. The scale $1/\sqrt{1-\bar\alpha_t}$ grows at small $t$ (little noise, steep density) and shrinks at large $t$.
+
+<div class="insight">
+
+So a Langevin sampler that walks along $+s_\theta$ and a DDPM reverse step that subtracts $\epsilon_\theta$ are **doing the same move**. "Guess the noise" and "follow the score uphill" are one algorithm in two dialects.
 
 </div>
 
@@ -686,7 +822,7 @@ This lecture reuses and adapts material from the instructor's own ES 667 diffusi
 - **The original idea** — J. Sohl-Dickstein et al., *Deep Unsupervised Learning using Nonequilibrium Thermodynamics* (ICML 2015); cosine schedule — Nichol & Dhariwal 2021
 - **Pedagogical framing** — A. Ng, *Deep Learning Specialization* (build intuition first, math second); canonical walkthroughs by L. Weng and C. Luo
 
-Interactives: `interactive/src/articles/diffusion-denoise` · `~/git/diffusion-interactive`. Figures from the ES 667 figure library. All source courses © N. Batra & teaching staff.
+Interactives: `interactive/src/articles/diffusion-denoise`, `unet`, `positional-encoding` · `~/git/diffusion-interactive` · notebook `notebooks/21-ddpm-2d.ipynb`. Figures from the ES 667 figure library. All source courses © N. Batra & teaching staff.
 
 </div>
 

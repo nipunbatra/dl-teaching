@@ -113,6 +113,31 @@ One paper turned "there is no loss" into "the loss is a network you also train."
 
 ---
 
+# Intuition · the counterfeiter and the detective
+
+Goodfellow's own picture: $G$ is a **counterfeiter** printing fake banknotes, $D$ is the **detective** learning to spot them. Neither is handed an answer key — they teach each other by competing.
+
+<div class="columns">
+<div>
+
+**The counterfeiter ($G$)** never studies a real note directly. All it ever learns is *the detective's verdict* — "that one got caught" — and adjusts to make the next batch harder to flag.
+
+</div>
+<div>
+
+**The detective ($D$)** sees genuine notes *and* the latest fakes, and sharpens its eye. Every time it improves, it forces the counterfeiter to improve in turn.
+
+</div>
+</div>
+
+<div class="insight">
+
+The engine is the **arms race**: each side's progress *raises the bar* for the other. Begin with crude fakes and a lazy detective; end with flawless forgeries and a detective reduced to a coin flip. Neither reaches that ceiling alone — **the competition is the curriculum.**
+
+</div>
+
+---
+
 # Meet the two objects
 
 Before any math, meet $G$ and $D$. $G$ turns noise into an image; $D$ looks at an image and returns one number.
@@ -149,6 +174,30 @@ Everything else in this lecture is just *how to train these two so $G$'s images 
 
 ---
 
+# Intuition · why an adversarial loss gives *sharp* images
+
+The VAE (L21) minimizes pixel MSE, so where several outputs are equally plausible it hedges toward their **average** — and the average of many sharp faces is a **blur**. A GAN never averages.
+
+<div class="keypoint">
+
+$D$ is a **blur detector for free.** A washed-out face is trivially "fake" — no real photograph looks like that — so $D$ hands $G$ a gradient that shoves it *off* the safe average and *onto* one crisp, committed sample. The adversarial loss rewards **picking a specific answer**, not splitting the difference.
+
+</div>
+
+<div class="insight">
+
+This is the flip side of mode collapse (Part 4). The very force that makes GAN samples **sharp** — commit hard to a mode — is what later tempts $G$ to **abandon** the other modes. Sharpness and coverage pull in opposite directions; that tension runs through the whole lecture.
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · VAE latent explorer** — wander the VAE's latent space and watch reconstructions go smooth and blurry; the contrast with GAN sharpness is the point. *(Interactive Lab · `interactive/articles/vae-latent-explorer`)*
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ## Part 2 · The minimax game
@@ -166,6 +215,33 @@ $G$ wants the opposite — push $D(G(z))\to1$ — i.e. **minimize** the same exp
 $$\boxed{\;\min_G\max_D\; V(D,G)\;}$$
 
 ![w:640px](figures/lec20/svg/minimax_game.svg)
+
+---
+
+# Intuition · minimax is "$G$ lowers what $D$ raises"
+
+$V(D,G)$ is **one number two players fight over**: $D$ turns the knob *up*, $G$ turns *the same knob* down.
+
+<div class="columns">
+<div>
+
+**$D$ raises $V$** by driving $D(x)\to1$ on real and $D(G(z))\to0$ on fakes — pulling the two piles apart.
+
+**$G$ lowers $V$** through the *only* term it touches, $\log(1-D(G(z)))$, by manufacturing fakes $D$ can no longer push down.
+
+</div>
+<div>
+
+So there is no "the loss dropped, we're done." Every gain for $D$ is a loss for $G$ and vice-versa; the needle stops **only when neither can move it** — a saddle, not a valley floor.
+
+</div>
+</div>
+
+<div class="insight">
+
+Contrast every optimizer you've met: SGD walks *downhill on a fixed surface*. Here the surface $G$ stands on is **reshaped by $D$ at every step** (and $D$'s by $G$). Same symbols as ordinary loss minimization — completely different dynamics, which is why "just make the loss go down" fails for GANs.
+
+</div>
 
 ---
 
@@ -247,6 +323,24 @@ At the equilibrium:
 <div class="insight">
 
 This is why the loss curves are useless as a progress bar: at the target, $D$'s loss sits at $\ln 2\approx0.69$, not $0$. "Winning" looks like a **tie.**
+
+</div>
+
+---
+
+# Worked numeric · why a healthy $D$-loss sits at $\ln 2$
+
+The deck keeps asserting "$D$-loss should hover near $\ln 2\approx0.69$." Here is *why*. At the equilibrium $D\equiv\tfrac12$ on **everything**, so plug $D(x)=D(G(z))=0.5$ into $D$'s binary-cross-entropy (averaging the real- and fake-batch terms, the usual reporting convention):
+
+<div class="math-box">
+
+$$L_D = -\tfrac12\log D(x) - \tfrac12\log\big(1-D(G(z))\big) = -\tfrac12\log\tfrac12 - \tfrac12\log\tfrac12 = -\log\tfrac12 = \ln 2 \approx 0.69$$
+
+</div>
+
+<div class="keypoint">
+
+So $\ln 2$ is **not a target you tune toward** — it is the loss of a detective *reduced to guessing*. If $L_D$ slides toward $0$, $D$ is winning too hard and $G$'s gradient is drying up; if it climbs, $G$ is running away with the game. **Healthy GAN training looks boring: $L_D$ parked at $\ln 2$.**
 
 </div>
 
@@ -450,6 +544,38 @@ Lower is better: FID $10$–$20$ "looks good," $3$–$5$ "basically indistinguis
 
 ---
 
+# Practice problem 4
+
+<div class="popquiz">
+
+**Practice problem 4.** Collapse FID to **1D** features, where it reduces to $\text{FID}=(\mu_r-\mu_f)^2+(\sigma_r-\sigma_f)^2$. Real features are $\mathcal N(0,1)$. Compute FID for **(a)** a healthy fake $\mathcal N(0,1)$ and **(b)** a mode-collapsed $G$ that emits a *single point at the real mean*, $\mathcal N(0,0)$. Each collapsed sample sits **exactly on a real value** — so why does FID still flag it?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 4
+
+$$\text{(a)}\;\; \text{FID}=(0-0)^2+(1-1)^2=\mathbf{0}\qquad\qquad \text{(b)}\;\; \text{FID}=(0-0)^2+(1-0)^2=\mathbf{1}$$
+
+A partly-collapsed $G$ with $\sigma_f=0.2$ lands between them: $(1-0.2)^2=\mathbf{0.64}$ — FID climbs monotonically as coverage shrinks $\sigma_f:1\to0.2\to0$, even though the mean stays perfect.
+
+<div class="keypoint">
+
+FID reads the **second moment** — the spread. Collapse zeroes the fake's variance, so the $(\sigma_r-\sigma_f)^2$ term lights up *even when the means match and every individual sample is realistic.* This is exactly the mode-collapse slide's "per-sample quality flawless, FID spikes": **sample-level realism $\ne$ distribution-level coverage**, and FID measures the latter.
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · seeing the multivariate normal** — FID fits one Gaussian to the real feature cloud and one to the fake, then measures their distance; drag $\mu$ and $\Sigma$ to feel what that distance rewards. *(Interactive Lab · `interactive/articles/multivariate-normal`)*
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ## Part 5 · The machinery, lightly
@@ -501,6 +627,47 @@ Think of two piles of sand (two distributions). **How much work** to reshape one
 $$W(p,q)=\inf_\gamma\;\mathbb E_{(x,y)\sim\gamma}\big[\lVert x-y\rVert\big]$$
 
 Move the pile $1$ metre → $W=1$; $10$ metres → $W=10$. Unlike JS, $W$ keeps varying **smoothly even when the piles don't overlap** — a live gradient exactly where JS flatlines.
+
+---
+
+# Practice problem 5
+
+<div class="popquiz">
+
+**Practice problem 5.** Let $p$ be a point mass at $x=0$ and $q$ a point mass at $x=d>0$ — **disjoint supports** for every $d>0$. (a) Give the Earth-mover distance $W(p,q)$ as a function of $d$. (b) Give the Jensen–Shannon divergence $\text{JSD}(p\Vert q)$. (c) Differentiate each in $d$. Which one hands $G$ a gradient that *closes the gap*, and which is flat?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 5
+
+<div class="columns">
+<div>
+
+**(a)** Move one unit of mass a distance $d$: $\;W(p,q)=d$.
+
+**(b)** The supports never overlap, so with mixture $m=\tfrac12(p+q)$ each KL term is $\log 2$:
+$$\text{JSD}=\tfrac12\log2+\tfrac12\log2=\log 2\;(\approx0.69\text{ nats})$$
+— a **constant**, independent of $d$.
+
+</div>
+<div>
+
+**(c)** $\dfrac{dW}{dd}=1$ — a fixed, nonzero slope pulling $q$ toward $p$.
+
+$\dfrac{d\,\text{JSD}}{dd}=0$ — flat everywhere the supports are disjoint.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+This is the entire WGAN argument in two derivatives. Vanilla GANs minimize a JS-like quantity whose gradient is **zero while the fakes are far away** — precisely when $G$ most needs a push. Wasserstein slopes downhill the *whole way in*: **a smooth gradient even when the two distributions don't overlap.**
+
+</div>
 
 ---
 
@@ -669,6 +836,7 @@ This lecture reuses and adapts material from the instructor's ES 667 GAN materia
 - **Original GAN, minimax game, non-saturating loss** — I. Goodfellow et al., *Generative Adversarial Nets*, NeurIPS 2014; and Goodfellow, *NIPS 2016 GAN Tutorial*.
 - **Architectural recipe** — A. Radford, L. Metz, S. Chintala, *DCGAN*, ICLR 2016.
 - **Earth-mover distance, 1-Lipschitz critic** — M. Arjovsky, S. Chintala, L. Bottou, *Wasserstein GAN*, ICML 2017 (gradient penalty: Gulrajani et al. 2017).
+- **FID / Fréchet Inception Distance** — M. Heusel et al., *GANs Trained by a Two Time-Scale Update Rule Converge to a Local Nash Equilibrium*, NeurIPS 2017.
 - **Disentangled style latent** — T. Karras et al., *StyleGAN* (1–3), NVIDIA 2019–2021.
 - **Pedagogical framing** ("when you can't write the loss, learn it") — A. Ng, *Deep Learning Specialization*; ES 667 figure library. All source material © N. Batra & teaching staff.
 

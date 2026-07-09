@@ -95,6 +95,24 @@ Everything in Part 1 is one question: *how do we wire that loop, and how does it
 
 ---
 
+# Agents, in one sentence
+
+Ng's one-liner: **an agent is an LLM in a loop with tools** — *reason, act, observe, repeat.*
+
+<div class="keypoint">
+
+**Function calling is the "act."** The model emits a **structured action** — JSON saying *which* tool and *what* arguments. *You* run it. The return value becomes the next **observation**, appended to the context. The network's weights never change; what's new is the **loop wrapped around it**.
+
+</div>
+
+<div class="insight">
+
+If you've met RL (**L18**), this is the same **policy ↔ environment** picture: the LLM is the *policy* choosing an action; your `run(...)` code is the *environment* returning an observation. The twist — unlike RLHF, we do **not** update weights here. We close the loop entirely at **inference time**. The model *proposes*; the world *disposes*; the outcome re-enters the prompt.
+
+</div>
+
+---
+
 # The ReAct loop
 
 Yao et al. (2022) named the pattern: **Reason → Act → Observe**, repeated until the task is done.
@@ -265,6 +283,35 @@ Notice the fixes are **engineering**, not new math — validation, budgets, memo
 
 ---
 
+# Agents in the wild · what you can build now
+
+Concrete systems shipping today (as of this writing) — every one is *the same loop* over a different toolset:
+
+<div class="columns">
+<div>
+
+- **Coding agents** — read / edit / run over a repo (this course was built by one). Tools: `bash`, `read`, `edit`, `test`.
+- **Deep research** — a lead spawns searchers, reads sources, writes a cited report. Tools: `web_search`, `fetch`.
+- **Computer use** — drive a browser or desktop by screenshot → click. Tools: `screenshot`, `mouse`, `keyboard`.
+
+</div>
+<div>
+
+- **Customer support** — look up an order, issue a refund, escalate. Tools: internal APIs.
+- **Data analyst** — write SQL, run it, plot, explain the result. Tools: `sql`, `python`.
+- **Multi-agent swarms** — planner + workers + critic on one long job.
+
+</div>
+</div>
+
+<div class="realworld">
+
+The pattern is identical every time: *reason → call a tool → read the result → repeat.* Only the **toolset** and the **stopping rule** differ. If you can name a tool and a success criterion, you can build the agent — the hard part is the **reliability** from the failure-modes table, not the model.
+
+</div>
+
+---
+
 # See the pieces yourself
 
 <div class="notebook">
@@ -425,6 +472,26 @@ These inference-time search ideas predate o1 — o1's contribution was **product
 
 ---
 
+# Self-consistency · think several times, then vote
+
+The simplest way to *spend* test-time compute: sample **several independent chains of thought**, then keep the **majority answer**. Independent mistakes scatter; the correct path tends to agree with itself.
+
+<div class="math-box">
+
+**Back-of-envelope.** One chain reaches the right final answer with probability $0.6$, and its wrong answers scatter. Sample **5** chains and take a majority vote:
+- a single chain: $0.6$ → **60%**.
+- majority-of-5 (needs $\ge 3$ correct): $\displaystyle\sum_{k\ge 3}\binom{5}{k}(0.6)^k(0.4)^{5-k}\approx \mathbf{68\%}$.
+
+</div>
+
+<div class="insight">
+
+"Let it think longer" often really means "let it think **several times**." Best-of-$n$ and tree-of-thoughts are the same idea with a smarter selector than a plain vote. As of this writing, self-consistency is one of the cheapest reliable wins in the reasoning toolkit — **no retraining, just more inference** — and it is literally the test-time-scaling curve of the previous slide.
+
+</div>
+
+---
+
 # Reasoning models · the numbers, and the honest caveat
 
 | Model | AIME 2024 (math) | Codeforces |
@@ -453,11 +520,17 @@ If a big model can *generate* good chains of thought, why not use those chains a
 
 </div>
 
-This is plain **knowledge distillation** — a small *student* mimics a large *teacher* — now pointed at *reasoning traces* rather than logits. DeepSeek-R1 (2025) distilled its chains into 7B–70B open students, which then jumped sharply on math and code.
+This is plain **knowledge distillation** (student mimics teacher), pointed at *reasoning traces*. DeepSeek-R1 (2025) distilled its chains into 7B–70B open students that then jumped on math and code.
 
 <div class="realworld">
 
-Honest limit, as of this writing: distillation copies the teacher's *habits*, not its *ceiling* — a distilled 7B won't out-reason the model it learned from. But it makes "thinking" cheap enough to run locally. Capability, once discovered, tends to get **smaller and cheaper** fast.
+Honest limit (as of this writing): distillation copies the teacher's *habits*, not its *ceiling* — a distilled 7B won't out-reason its teacher. But it makes "thinking" cheap enough to run locally: capability, once discovered, gets **smaller and cheaper** fast.
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · knowledge distillation** — a small student learns to match a large teacher's soft targets. *(Interactive Lab · `interactive/articles/knowledge-distillation`)*
 
 </div>
 
@@ -558,6 +631,31 @@ That's the payoff: features are **directions we can name *and* steer** — the f
 
 ---
 
+# Feature steering · Golden Gate Claude, concretely
+
+Once a feature has a name, you can **turn its knob** — no retraining, no prompt. Anthropic (2024) isolated a feature that fires on the **Golden Gate Bridge**, clamped it to many times its normal value, and released **"Golden Gate Claude."**
+
+```
+User:    What's a good recipe for banana bread?
+Normal:  Mash 3 bananas, mix with flour, sugar, eggs; bake at 175°C…
+Steered: You'll want to bake it while gazing at the Golden Gate Bridge —
+         its 1.7-mile art-deco span glowing orange over the fog-lit bay…
+```
+
+<div class="insight">
+
+The model was **not** fine-tuned and **not** prompted to mention the bridge — a single **direction in the residual stream** was amplified, and it colored *every* answer. Concepts live as directions, and directions are things you can **add**. Turn a "toxic language" feature *down* and the model gets safer, with the weights untouched.
+
+</div>
+
+<div class="realworld">
+
+The demo was a toy; the **mechanism** is the prize — editing behaviour at the level of a **named concept** rather than by retraining. Still early as of this writing: features are noisy and coverage is partial, but this is the first handle of its kind.
+
+</div>
+
+---
+
 # The payoff · name a feature, monitor it, steer it
 
 Golden Gate Claude was a *demo*. The prize is three verbs that clean SAE features unlock — the first practical handles on a model's insides:
@@ -585,11 +683,57 @@ Together these turn a black box into something you can **audit and adjust at the
 
 ---
 
+# See the model's insides yourself
+
+<div class="notebook">
+
+**🎛 Interactive · attention, visualized** — edit a sentence and watch which tokens attend to which; an induction head's "…A B … A → B" copying shows up as a bright off-diagonal stripe. Every head reads and writes the same residual-stream bus. *(Interactive Lab · `interactive/src/articles/attention`, `positional-encoding`)*
+
+</div>
+
+<div class="notebook">
+
+**🔬 Explore · a real feature browser** — thousands of named SAE features pulled from a production model, each shown with the inputs that light it up (the *Golden Gate* feature is in there). *(Anthropic, "Scaling Monosemanticity," `transformer-circuits.pub` · as of this writing)*
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ## Part 4 · Open problems &amp; safety
 
 *What's still unsolved?*
+
+---
+
+# Practice problem 3 · why long agents fail
+
+<div class="popquiz">
+
+**Practice problem 3.** An agent completes a task with a **12-step** plan. Each step succeeds independently with probability **0.9**.
+
+**(a)** What is the end-to-end success rate? **(b)** Roughly how many steps until the plan is *more likely to fail than succeed*? **(c)** Name two *engineering* fixes — not "a bigger model" — that raise the end-to-end number.
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 3
+
+**(a)** $0.9^{12}\approx \mathbf{0.28}$ — a 90%-reliable step, chained 12 times, is right only about a quarter of the time.
+
+**(b)** Solve $0.9^{n}=0.5 \Rightarrow n=\dfrac{\ln 0.5}{\ln 0.9}\approx \mathbf{6.6}$ — by the **7th step** the plan is more likely wrong than right.
+
+**(c)** Any two of: **verify / checkpoint** each step before continuing · **validate-and-retry** tool calls · let the agent **backtrack** from a bad observation · a **step budget + loop detection** · **decompose** into shorter sub-agent loops with fresh context.
+
+<div class="keypoint">
+
+This is the arithmetic behind *"reliability at long horizons"* — the central open problem of agentic AI (as of this writing). Push per-step reliability from $0.9$ to $0.99$ and $0.9^{12}=0.28$ becomes $0.99^{12}=0.89$. **The product is brutal; disciplined loops — not bigger models — are what tame it.**
+
+</div>
 
 ---
 
@@ -778,6 +922,33 @@ You're not finished — **you have the tools.**
 <div class="notebook">
 
 **Final project** · apply a technique from *any* lecture to a real problem · 3-week timeline · pitch week after endsem.
+
+</div>
+
+---
+
+# The interactive lab · a course in your browser
+
+Every big idea this semester has a **scroll-driven explainer** — revisit any of them while you build:
+
+<div class="columns">
+<div>
+
+**Foundations → training**
+`universal-approximation` · `optimizer-race` · `info-theory` · `mle-map-coin` · `numerical-tricks` · `softmax-temperature` · `dropout-playground`
+
+</div>
+<div>
+
+**Modern → frontier**
+`attention` · `positional-encoding` · `kv-cache` · `in-context-learning` · `rag` · `mixture-of-experts` · `lora-adapter` · `quantize-prune` · `vae-latent-explorer` · `diffusion-denoise`
+
+</div>
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive Lab** — the full set lives under `interactive/src/articles/`; each is a self-contained explainer for a single lecture's core idea. *Drag the knobs — intuition sticks better than algebra.*
 
 </div>
 
