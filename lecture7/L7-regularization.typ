@@ -1,0 +1,583 @@
+// Generalization and Regularization — Lecture 7 · ES 667 Deep Learning
+// Compile from the repo root:
+//   typst compile --root . lecture7/L7-regularization.typ /tmp/L7.pdf
+//   typst compile --root . --input handout=true lecture7/L7-regularization.typ /tmp/L7h.pdf
+// Theme, palette, helpers and diagram builders live in common/metropolis.typ.
+
+#import "../common/metropolis.typ": *
+#show: metropolis-deck.with(
+  title: [Generalization and Regularization],
+  subtitle: [Making deep networks perform well on unseen data],
+)
+
+#let IA = "https://nipunbatra.github.io/interactive-articles/"
+
+#title-slide()
+
+// ═══════════════════════════ PART I — The generalization problem ═══════════════════════════
+= The generalization problem
+
+== Where we are
+
+The last lectures gave us a network that *trains*:
+#pause
+$ f_theta (x) -> hat(y), quad cal(L)(theta) = 1/n sum_(i=1)^n ell(f_theta (x_i), y_i) $
+#pause
+$ g_t = nabla_theta cal(L)(theta_t), quad quad theta_(t+1) = theta_t - eta thin g_t $
+#pause
+#notebox[Backprop gives the gradient; the optimizer drives $cal(L)_"train"$ down. We can now make the *training loss* small.]
+
+== But is low training loss the goal?
+
+*Q.* Does a low training loss guarantee a good model?
+#pause
+#align(center, text(size: 26pt, fill: RED, weight: 600)[No.])
+#pause
+#v(4pt)
+We never cared about the training set. We care about *new, unseen* data.
+#pause
+#result[Training loss is not the goal — *test performance* is.]
+
+== Train loss vs test loss #D
+
+*Training loss* — an empirical average over the data we happened to collect:
+$ cal(L)_"train"(theta) = 1/n sum_(i=1)^n ell(f_theta (x_i), y_i) $
+#pause
+*Test loss* — the expectation over the *true* data distribution $p_"data"$:
+$ cal(L)_"test"(theta) = EE_((x,y) ~ p_"data") [ell(f_theta (x), y)] $
+#pause
+#notebox[We only ever *see finite data*; $cal(L)_"train"$ is a noisy estimate of the quantity we actually want, $cal(L)_"test"$.]
+
+== The generalization gap
+
+$ underbrace(cal(L)_"test" - cal(L)_"train", "generalization gap") $
+#pause
+#v(4pt)
+*Overfitting*: training loss keeps falling while validation loss *turns up*.
+#pause
+#fig("/lecture7/figures/train_val.svg", w: 60%)
+
+== Overfitting is memorization
+
+*Q.* Give a big network *random* labels $y -> y_pi$ (a fixed permutation). What happens?
+#pause
+- A high-capacity net still drives $cal(L)_"train" -> 0$ — it *memorizes* the noise;
+#pause
+- but validation stays at chance: it learned *nothing generalizable*.
+#pause
+#alertbox[Fitting the training set is *not* evidence of learning. Capacity alone is not enough — we need *inductive bias* + an honest *validation* signal.]
+
+== The plan for this lecture
+
+We have networks that train. Now we must stop them from *memorizing*.
+#pause
+#align(center, table(
+  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 11pt, y: 6pt), align: (left, left),
+  table.header([*Lever*], [*What it controls*]),
+  [splits + early stopping], [when to stop],
+  [weight decay / $ell_2$], [size of the weights],
+  [dropout], [co-adaptation of units],
+  [data augmentation / mixup], [invariance, linearity],
+  [label smoothing], [overconfidence],
+  [implicit regularization], [SGD noise, architecture, init],
+))
+
+// ═══════════════════════════ PART II — Splits & early stopping ═══════════════════════════
+= Data splits and early stopping
+
+== Three splits, three jobs
+
+#align(center, table(
+  columns: 3, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 7pt), align: (left, left, left),
+  table.header([*Split*], [*Used to*], [*Touches weights?*]),
+  [*train*], [fit parameters $theta$], [yes — via gradients],
+  [*validation*], [select model / hyperparameters], [no — only choices],
+  [*test*], [final, unbiased estimate], [no — used *once*],
+))
+#pause
+#alertbox[*Never* tune on the test set. Every peek leaks information and inflates your reported number.]
+
+== Early stopping
+
+Monitor validation loss each epoch; keep the *best* checkpoint, not the last:
+$ t^star = arg min_t thin cal(L)_"val"(theta_t) $
+#pause
+#fig("/lecture7/figures/train_val.svg", w: 55%)
+#align(center, text(size: 16pt, fill: MUTED)[train keeps falling; validation is U-shaped — stop at the bottom.])
+
+== Worked example: early stopping #D
+
+Six epochs of training. Which checkpoint do we keep?
+#pause
+#align(center, table(
+  columns: 7, stroke: 0.5pt + MUTED, inset: (x: 9pt, y: 6pt), align: center,
+  table.header([*epoch*], [1], [2], [3], [4], [5], [6]),
+  [$cal(L)_"train"$], [1.20], [0.80], [0.45], [0.32], [0.28], [0.25],
+  [$cal(L)_"val"$], [1.25], [0.98], [0.82], [#text(fill: GREEN, weight: 700)[0.78]], [0.84], [0.97],
+))
+#pause
+#v(3pt)
+- Training loss is *lowest at epoch 6* — but that is not what we want;
+#pause
+- Validation loss bottoms out at *epoch 4* ($0.78$), then rises → overfitting.
+#pause
+#result[keep $theta_4$ — the *last epoch is the wrong choice*]
+
+== Early stopping as implicit regularization
+
+Why does stopping early help?
+#pause
+- Weights *grow* over training; stopping early keeps them *small*;
+#pause
+- fewer effective updates ⇒ a *simpler* function is explored;
+#pause
+#notebox[Early stopping limits *effective capacity* without changing the architecture — a free, always-on regularizer. It is the cheapest one you have.]
+
+== Interactive: train / val / overfit #I
+
+#interbox(link-to: IA + "double-descent")[
+  Sweep model capacity and training time and watch the train and validation curves separate — find the checkpoint where validation is lowest before the gap opens.
+]
+#pause
+*Q.* You stop at the epoch with the lowest *training* loss. Why is your reported accuracy likely too optimistic?
+
+// ═══════════════════════════ PART III — Capacity, bias, variance ═══════════════════════════
+= Capacity, bias and variance
+
+== Three regimes
+
+#align(center, table(
+  columns: 4, stroke: 0.5pt + MUTED, inset: (x: 11pt, y: 7pt), align: (left, center, center, left),
+  table.header([*Regime*], [$cal(L)_"train"$], [$cal(L)_"val"$], [*Diagnosis*]),
+  [underfit], [high], [high], [too little capacity],
+  [good fit], [low], [low], [capacity \~ right],
+  [overfit], [low], [high], [memorizing train],
+))
+#pause
+#fig("/lecture7/figures/bias_variance_poly.svg", w: 74%)
+
+== Bias–variance decomposition
+
+Expected test error splits into three pieces:
+$ EE[("error")^2] approx underbrace("bias"^2, "too simple") + underbrace("variance", "too sensitive") + underbrace(sigma^2, "irreducible noise") $
+#pause
+- *high bias* — the model is too simple; misses the true pattern (underfit);
+#pause
+- *high variance* — the model is too sensitive to the particular sample (overfit).
+#pause
+#notebox[More capacity ↓ bias but ↑ variance. Classically we trade one against the other.]
+
+== Worked example: polynomial fits #V
+
+Fit $y = sin(2 pi x) + epsilon$ from noisy samples with polynomials of degree $d$:
+#pause
+#fig("/lecture7/figures/bias_variance_poly.svg", w: 82%)
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[$d = 1$ underfits (high bias) · $d = 5$ fits · $d = 15$ overfits (high variance)])
+
+== The deep-learning twist
+
+Classical wisdom: *bigger model ⇒ more overfitting*. Modern practice complicates this.
+#pause
+- huge over-parameterized nets often generalize *well*, not worse;
+#pause
+- what governs generalization: *optimization, data, architecture, implicit bias* — not just parameter count;
+#pause
+#fig("/lecture7/figures/double_descent.svg", w: 48%)
+
+== Double descent
+
+#two(
+  fig("/lecture7/figures/double_descent.svg", w: 100%),
+  [
+    Past the interpolation threshold, test error can *fall again* — the modern "second descent".
+    #v(6pt)
+    #notebox[Parameter count is a poor proxy for capacity in deep nets. #text(fill: MUTED)[(active research)]]
+  ],
+)
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[But *validation discipline is still non-negotiable* — it is how we know what is happening.])
+
+// ═══════════════════════════ PART IV — Weight decay & L2 ═══════════════════════════
+= Weight decay and $ell_2$ regularization
+
+== Penalize large weights
+
+Add a penalty on the *size* of the weights to the data loss:
+$ cal(L)_"reg"(theta) = cal(L)_"data"(theta) + lambda norm(theta)^2 $
+#pause
+- $lambda > 0$ — the *regularization strength* (a hyperparameter);
+- large weights ⇒ sharp, wiggly functions; the penalty prefers *smooth* ones.
+#pause
+#notebox[$ell_2$ regularization $<=>$ a *Gaussian prior* on the weights: MAP estimation with $theta ~ cal(N)(0, sigma^2 I)$ gives exactly this penalty.]
+
+== The gradient of the penalty #D
+
+Differentiate $cal(L)_"reg" = cal(L)_"data" + lambda norm(theta)^2$:
+$ nabla cal(L)_"reg" = nabla cal(L)_"data" + 2 lambda thin theta $
+#pause
+Substitute into the SGD step:
+$ theta_(t+1) = theta_t - eta (nabla cal(L)_"data" + 2 lambda thin theta_t) $
+#pause
+$ theta_(t+1) = (1 - 2 eta lambda) thin theta_t - eta thin nabla cal(L)_"data" $
+#pause
+#result[a *multiplicative shrinkage* $(1 - 2 eta lambda)$ before the gradient step]
+
+== Why "weight decay"?
+
+Each step first *shrinks* the weight toward zero, then applies the gradient:
+$ theta_t arrow.r.bar (1 - eta lambda') thin theta_t $
+#pause
+#notebox[Absent any gradient, weights *decay* geometrically toward $0$ — hence the name. $ell_2$ regularization and weight decay are the same mechanism (for SGD).]
+
+== Worked example: one decay step #D
+
+$theta = 5$, gradient $g = 3$, learning rate $eta = 0.1$, decay $lambda' = 0.2$:
+#pause
+*Without* weight decay:
+$ theta^+ = theta - eta thin g = 5 - 0.1 dot 3 = 4.7 $
+#pause
+*With* weight decay $theta^+ = (1 - eta lambda') theta - eta g$:
+$ theta^+ = (1 - 0.1 dot 0.2) dot 5 - 0.1 dot 3 = 0.98 dot 5 - 0.3 = 4.6 $
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[the extra $-0.1$ is the shrinkage pulling the weight toward zero.])
+
+== Adam ≠ Adam + $ell_2$: AdamW #D
+
+For *SGD*, adding $lambda norm(theta)^2$ to the loss $equiv$ weight decay (up to scaling).
+#pause
+For *Adam* they *differ*: the $2 lambda theta$ term gets divided by $sqrt(hat(v))$ like any gradient — so decay is *distorted* per coordinate.
+#pause
+Loshchilov & Hutter *decoupled* it — apply decay directly to the weights:
+$ theta arrow.r.bar "AdamStep"(theta), quad quad theta arrow.r.bar (1 - eta lambda) thin theta $
+#pause
+#result[use *AdamW*, not Adam with naive $ell_2$]
+
+== When (and when not) to decay
+
+- Use it almost everywhere: *MLPs, CNNs, Transformers*, large models;
+#pause
+- typical $lambda$: $10^(-4)$ to $10^(-2)$ (tune on validation);
+#pause
+- *do not* decay *biases*, *norm* scale/shift, and often not *embeddings* — decaying them helps nothing and can hurt.
+#pause
+#notebox[Rule of thumb: decay the *weight matrices*, leave the *one-dimensional* parameters alone.]
+
+== Weight decay shrinks the weights #V
+
+Weight norm $norm(theta)$ over training for several $lambda$:
+#pause
+#fig("/lecture7/figures/weight_decay.svg", w: 60%)
+#align(center, text(size: 16pt, fill: MUTED)[larger $lambda$ ⇒ smaller final weights ⇒ smoother function.])
+
+== Interactive: weight decay #I
+
+#interbox[
+  #text(fill: MUTED)[(to build)] — sweep $lambda$ and watch the weight norm shrink and the decision boundary smooth out; too large and the model underfits.
+]
+#pause
+*Q.* Doubling $eta$ and halving $lambda$ leaves $eta lambda$ fixed. Does weight decay behave the same? (Careful — the *data* step changed too.)
+
+// ═══════════════════════════ PART V — Dropout ═══════════════════════════
+= Dropout
+
+== The idea
+
+During training, randomly *drop* each hidden unit with probability $1 - p$:
+$ m_j ~ "Bernoulli"(p), quad quad tilde(h) = m dot.o h $
+#pause
+- a different random *subnetwork* is trained on every minibatch;
+- units cannot rely on any single partner ⇒ less *co-adaptation*.
+#pause
+#fig("/lecture7/figures/dropout_mask.svg", w: 52%)
+
+== Inverted dropout: keep the scale #D
+
+Dropping units shrinks the expected activation. *Rescale* by $1 / p$ during training:
+$ tilde(h) = (m dot.o h) / p $
+#pause
+Then the expected activation is *unchanged*:
+$ EE[tilde(h)_j] = 1/p dot (p dot h_j + (1-p) dot 0) = h_j $
+#pause
+#result[no test-time rescaling needed — at test time just use the full network]
+
+== Worked example: inverted dropout #D
+
+$h = [2, 4, 6, 8]$, keep prob $p = 0.5$, sampled mask $m = [1, 0, 1, 0]$:
+#pause
+$ tilde(h) = (m dot.o h) / p = ([2, 0, 6, 0]) / 0.5 = [4, 0, 12, 0] $
+#pause
+Check the expectation (each unit kept w.p. $0.5$, scaled by $2$):
+$ EE[tilde(h)] = 0.5 dot (h / 0.5) = h = [2, 4, 6, 8] $
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[surviving units are *doubled*, so the layer's expected output is preserved.])
+
+== Why it helps: model averaging
+
+Each mask defines a *different subnetwork*; over training we fit exponentially many.
+#pause
+At test time the full network *approximates an average* of all these subnetworks.
+#pause
+#notebox[An *ensemble-like* effect from one model — but this is an intuition, not an exact Bayesian average. Do not overclaim it.]
+
+== Dropout caveats
+
+- Works best on *fully-connected* layers and *classifier heads*;
+#pause
+- less useful alongside strong *augmentation* and *normalization* (which already regularize);
+#pause
+- adds gradient noise ⇒ can *slow optimization*, needs more epochs;
+#pause
+- tune the *keep* rate $p approx 0.5$–$0.8$ (i.e. drop $20$–$50%$).
+
+== Interactive: dropout #I
+
+#interbox(link-to: IA + "dropout-playground")[
+  Toggle dropout on a small MLP, sweep the rate, and watch training vs validation loss — see how too much drop underfits and too little overfits.
+]
+
+// ═══════════════════════════ PART VI — Data augmentation ═══════════════════════════
+= Data augmentation
+
+== Regularize by enlarging the data
+
+Generate new *label-preserving* examples from the ones you have:
+$ (x, y) arrow.r.bar (T(x), y), quad quad T "preserves the label" $
+#pause
+#align(center, table(
+  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 11pt, y: 6pt), align: (left, left),
+  table.header([*Domain*], [*Transforms $T$*]),
+  [images], [crop, flip, rotate, color jitter, noise],
+  [audio / time series], [time-shift, mask spans, add noise],
+  [text], [paraphrase, synonym swap, back-translation],
+))
+
+== Augmentation teaches invariance #V
+
+If $T$ preserves the label, we want the model to be *invariant* to it:
+$ f_theta (x) approx f_theta (T(x)) $
+#pause
+#fig("/lecture7/figures/augmentation.svg", w: 82%)
+#align(center, text(size: 16pt, fill: MUTED)[same object, many views — the network learns to ignore the nuisance transform.])
+
+== Bad augmentation encodes wrong knowledge
+
+Augmentation *injects domain knowledge* — the wrong $T$ injects the wrong knowledge:
+#pause
+- flipping a *6* into a *9* — the label changed;
+#pause
+- *time-reversing* speech or a heartbeat — no longer valid;
+#pause
+- *color* jitter when *color is the label* (ripe vs unripe fruit);
+#pause
+- *cropping out* the object you are trying to classify.
+#pause
+#alertbox[$T$ must preserve the label. Choosing $T$ *is* a modelling decision about what should not matter.]
+
+== Mixup: interpolate examples
+
+Blend two examples *and* their labels with $lambda ~ "Beta"(alpha, alpha)$:
+$ tilde(x) = lambda x_i + (1 - lambda) x_j, quad quad tilde(y) = lambda y_i + (1 - lambda) y_j $
+#pause
+#fig("/lecture7/figures/mixup.svg", w: 46%)
+#align(center, text(size: 16pt, fill: MUTED)[convex combinations encourage *linear* behaviour between examples.])
+
+== Worked example: mixup #D
+
+$x_A$ = cat, $y_A = [1, 0]$; $x_B$ = dog, $y_B = [0, 1]$; mix $lambda = 0.7$:
+#pause
+$ tilde(x) = 0.7 thin x_A + 0.3 thin x_B $
+#pause
+$ tilde(y) = 0.7 [1, 0] + 0.3 [0, 1] = [0.7, 0.3] $
+#pause
+Train with the *soft* cross-entropy against this target:
+$ ell = - sum_k tilde(y)_k log p_k = -0.7 log p_1 - 0.3 log p_2 $
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[the network is asked to be $70%$ cat, $30%$ dog — no hard boundary jump.])
+
+== Interactive: augmentation + mixup #I
+
+#interbox[
+  #text(fill: MUTED)[(to build)] — apply transforms and mixup to a 2-D dataset and watch the decision boundary become smoother and more invariant.
+]
+#pause
+*Q.* Why does mixup improve *calibration* as well as accuracy?
+
+// ═══════════════════════════ PART VII — Label smoothing ═══════════════════════════
+= Label smoothing
+
+== Hard labels push to extremes
+
+With a one-hot target, cross-entropy keeps pushing $p_y -> 1$:
+$ ell = - log p_y quad ==> quad "logits" -> plus.minus infinity $
+#pause
+#notebox[The model is rewarded for *ever more extreme* confidence — even on ambiguous or mislabelled examples. This encourages *overconfidence*.]
+
+== Softening the target #D
+
+Move a little mass $epsilon$ off the correct class onto the rest:
+$ y_k^"smooth" = cases(1 - epsilon & "if " k = y, epsilon \/ (K - 1) & "otherwise") $
+#pause
+Equivalently, mix the one-hot with a uniform distribution over the *other* classes.
+#pause
+#fig("/lecture7/figures/label_smoothing.svg", w: 60%)
+
+== Worked example: label smoothing #D
+
+$K = 5$ classes, smoothing $epsilon = 0.1$, correct class $= 2$:
+#pause
+$ "correct": 1 - epsilon = 0.9, quad quad "each other": epsilon/(K-1) = 0.1/4 = 0.025 $
+#pause
+$ y^"smooth" = [0.025, 0.025, thick 0.9, thick 0.025, 0.025] $
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[still sums to $1$; the target is achievable with *finite* logits.])
+
+== Why it helps (and when it hurts)
+
+- *discourages extreme confidence* — logits stay bounded;
+#pause
+- improves *calibration* (predicted probabilities match accuracy);
+#pause
+- adds *robustness to noisy labels* and often improves generalization;
+#pause
+#alertbox[Can *hurt* when you need exact confidences — e.g. *knowledge distillation* or when downstream code reads calibrated probabilities.]
+
+== Interactive: label smoothing #I
+
+#interbox(link-to: IA + "calibration")[
+  Sweep $epsilon$ and watch the reliability diagram — see over-confident predictions pull back toward the diagonal as smoothing increases.
+]
+
+// ═══════════════════════════ PART VIII — Noise & implicit regularization ═══════════════════════════
+= Noise and implicit regularization
+
+== Noise is a regularizer
+
+Many effective regularizers work by *injecting noise* during training:
+#pause
+- *SGD* minibatch sampling — noisy gradients;
+- *dropout* — noisy activations;
+- *augmentation* — noisy inputs;
+- *stochastic depth*, *label / input noise*.
+#pause
+#notebox[Noise prevents the network from building *brittle*, precise dependencies — it must be robust to the perturbation.]
+
+== Explicit vs implicit regularization
+
+#align(center, table(
+  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 7pt), align: (left, left),
+  table.header([*Explicit* (a term / operation)], [*Implicit* (a side effect)]),
+  [$+ lambda norm(theta)^2$ penalty], [SGD gradient noise],
+  [dropout], [architecture / optimizer bias],
+  [data augmentation], [early stopping],
+  [label smoothing], [normalization, initialization],
+))
+#pause
+#align(center, text(size: 17pt, fill: INK)[Regularization is *not only a penalty term*.])
+
+== Regularization changes the learned function #V
+
+Two models can both fit the training set to $cal(L)_"train" approx 0$ — yet differ:
+#pause
+#fig("/lecture7/figures/decision_boundary_reg.svg", w: 76%)
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[regularization *picks* the smoother boundary — smaller norm, more invariance, less confidence, better val.])
+
+// ═══════════════════════════ PART IX — Practical workflow ═══════════════════════════
+= A practical workflow
+
+== First: debug before you regularize
+
+*Q.* Both training and validation loss are *high*. Add dropout?
+#pause
+#align(center, text(size: 22pt, fill: RED, weight: 600)[No — that is *underfitting*.])
+#pause
+Fix the fit first: *bigger model*, *train longer*, *better LR*, *less augmentation*, *check the labels*.
+#pause
+#alertbox[Adding regularization to an underfit model makes it *worse*. Regularize only once you can *overfit*.]
+
+== Then: regularize an overfit model
+
+Training loss *low*, validation loss *high* ⇒ overfitting. Now reach for:
+#pause
+#align(center, table(
+  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 11pt, y: 6pt), align: (left, left),
+  table.header([*Lever*], [*First choice when...*]),
+  [more data / augmentation], [cheap to collect more or transform],
+  [weight decay], [almost always — near-free],
+  [dropout], [MLP / classifier head],
+  [early stopping], [always on],
+  [smaller model], [data is truly limited],
+  [label smoothing], [over-confident / noisy labels],
+))
+
+== A regularization dashboard
+
+Track more than the loss — watch *what* is being controlled:
+#pause
+- $cal(L)_"train"$ *and* $cal(L)_"val"$ (and the gap between them);
+- $"acc"_"train"$ *and* $"acc"_"val"$;
+- weight norm $norm(theta)$;
+- confidence $max_k p_k$ and *calibration error*.
+#pause
+#notebox[If the *gap* widens while train keeps improving, you are overfitting — turn a regularization knob.]
+
+== Worked diagnosis #D
+
+#align(center, table(
+  columns: 4, stroke: 0.5pt + MUTED, inset: (x: 10pt, y: 7pt), align: (center, center, center, left),
+  table.header([*Model*], [$"acc"_"train"$], [$"acc"_"val"$], [*Action*]),
+  [A], [65%], [63%], [underfit → *add capacity*, train longer],
+  [B], [99%], [72%], [overfit → *regularize* / augment / early-stop],
+))
+#pause
+#v(3pt)
+- *A*: small gap, both low ⇒ the model *cannot fit* — do *not* regularize;
+#pause
+- *B*: large gap ⇒ the model *memorized* — rein it in.
+
+== Practical defaults
+
+#align(center, table(
+  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 11pt, y: 6pt), align: (left, left),
+  table.header([*Setting*], [*Default recipe*]),
+  [images (CNN)], [augmentation + weight decay + early stopping],
+  [MLP / tabular], [weight decay + dropout + early stopping],
+  [Transformer], [AdamW + dropout + (label smoothing) + aug],
+  [small data], [transfer learning + strong validation],
+))
+#pause
+#notebox[Start simple, add one knob at a time, and let *validation* decide whether it helped.]
+
+// ═══════════════════════════ PART X — Summary ═══════════════════════════
+= Summary
+
+== One table: every method
+
+#align(center, table(
+  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 7pt), align: (left, left),
+  table.header([*Method*], [*What it controls*]),
+  [early stopping], [effective complexity — when to stop],
+  [weight decay], [parameter norm $norm(theta)$],
+  [dropout], [co-adaptation / activation noise],
+  [data augmentation], [invariance to nuisance transforms],
+  [mixup], [linearity between examples],
+  [label smoothing], [overconfidence / calibration],
+  [validation split], [model selection — the judge],
+))
+
+== Final mental model — one idea
+
+#align(center, text(size: 22pt)[
+  Optimization *reduces training loss*. \
+  Regularization *improves unseen-data performance*. \
+  #v(4pt)
+  #text(size: 18pt, fill: MUTED)[validation tells us whether it is actually helping.]
+])
+
+#focus-slide[
+  Optimization reduces train loss; regularization improves generalization; validation is the judge.
+  #v(12pt)
+  #set text(size: 22pt)
+  Next: *CNNs* — why fully-connected nets are inefficient for images.
+]
