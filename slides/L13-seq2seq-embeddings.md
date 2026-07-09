@@ -125,6 +125,60 @@ A one-hot times a matrix = **selecting a row.** So the embedding layer is a matr
 
 ---
 
+# Intuition · meaning becomes geometry
+
+Andrew Ng's one-liner for embeddings: **turn every word into a point in space, and let *distance* mean *similarity*.** Once meaning is geometry, the network gets neighbours, clusters, and analogies for free.
+
+<div class="columns">
+<div>
+
+**One-hot is blind.** Every word is its own axis, all mutually perpendicular. "cat" is exactly as far from "dog" as from "airplane" — the representation *knows nothing* about meaning, so the model must relearn every similarity from scratch, in every context.
+
+</div>
+<div>
+
+**Learned vectors share structure.** Coordinates are trained, so related words pack together and **directions carry relationships** — a "plural" direction, a "past-tense" direction, a "capital-of" direction. Structure one-hot could never express becomes a straight-line move.
+
+</div>
+</div>
+
+<div class="insight">
+
+The whole shift of Part 1: stop storing words as *identities* (one-hot) and start storing them as *positions* (dense vectors). Similar words sit close; a relationship is a direction you can add. Everything that follows — vowels clustering, `king−man+woman`, cosine scores — is a *consequence* of that one move.
+
+</div>
+
+---
+
+# Worked example · a lookup *is* a row-select
+
+Make the "one-hot × matrix = pick a row" identity concrete. Take a tiny table with $V=4$ tokens and $d=3$:
+
+<div class="columns">
+<div>
+
+$$E = \begin{bmatrix} \mathbf{0.2} & \mathbf{-0.1} & \mathbf{0.8}\\ -0.3 & 0.5 & -0.2\\ 0.7 & -0.4 & 0.1\\ 0.0 & 0.9 & 0.6 \end{bmatrix}$$
+
+Token **"cat"** = index 0 → one-hot $[1,0,0,0]$.
+
+</div>
+<div>
+
+$$[1,0,0,0]\,E = [\,\mathbf{0.2},\,\mathbf{-0.1},\,\mathbf{0.8}\,] = E_0$$
+
+The 1 selects row 0; the zeros erase every other row. No arithmetic actually happens — which is why frameworks skip the multiply and **index** the row directly (`nn.Embedding`).
+
+</div>
+</div>
+
+<div class="keypoint">
+
+A matrix multiply by a one-hot is just a **gather**. The embedding layer is the one "weight matrix" in the network you can read without doing any math — its row $i$ is literally *what token $i$ means to the model.*
+
+</div>
+
+---
+
 # Meaning shows up as directions: `king − man + woman ≈ queen`
 
 Train these vectors on real text and the *geometry* becomes meaningful — differences between vectors encode **relationships**.
@@ -204,6 +258,60 @@ $$\cos(\text{king},\text{truck}) = \frac{4\cdot(-3) + 3\cdot4}{5\cdot5} = \frac{
 <div class="keypoint">
 
 **queen** is king's nearest neighbour (angle ≈ 16°); **truck** is orthogonal (angle 90°) — unrelated. The lookup was literally reading a row; the meaning is entirely in the *angles*. This is exactly the query–key score attention will compute per pair.
+
+</div>
+
+---
+
+# Practice problem 2
+
+<div class="popquiz">
+
+**Practice problem 2 · analogy arithmetic.** In a 2-D toy space:
+
+| token | $d_1$ | $d_2$ |
+|:-:|:-:|:-:|
+| king | 4 | 3 |
+| man | 3 | 1 |
+| woman | 1 | 2 |
+| queen | 2 | 4 |
+
+(a) Compute the "royalty" direction $v_{\text{king}}-v_{\text{man}}$.
+(b) Form the analogy vector $v_{\text{king}}-v_{\text{man}}+v_{\text{woman}}$.
+(c) Of the four tokens, which is **nearest** to that result — and does `king − man + woman ≈ queen` hold here?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 2
+
+<div class="columns">
+<div>
+
+**(a)** The "royalty minus male" direction:
+$$v_{\text{king}}-v_{\text{man}} = (4,3)-(3,1) = (1,2)$$
+
+**(b)** Transport it onto "woman":
+$$(1,2) + v_{\text{woman}} = (1,2)+(1,2) = (2,4)$$
+
+</div>
+<div>
+
+**(c)** The result $(2,4)$ is *exactly* $v_{\text{queen}}$ — distance $0$. The others are far:
+- king $(4,3)$: dist $\sqrt{4+1}=2.24$
+- woman $(1,2)$: dist $\sqrt{1+4}=2.24$
+
+So `king − man + woman = queen`. ✓
+
+</div>
+</div>
+
+<div class="keypoint">
+
+The analogy is **pure vector arithmetic**: subtract to *isolate* a relationship ("royalty"), add to *transport* it onto a new word ("woman"). Nobody encoded "queen = royal female" — it fell out of *where next-token prediction placed the four vectors*. Real word2vec does this in 300-D, landing *near* queen and reading it off by cosine nearest-neighbour rather than exact equality.
 
 </div>
 
@@ -416,6 +524,34 @@ The problem is already visible: for a *long* sentence, even a great translator's
 
 ---
 
+# Intuition · everything the one vector must remember
+
+The encoder's final state $\mathbf c$ is a **"thought vector"** — Ng's picture: read the whole sentence, form a single mental summary, then speak from it. But list what that *one* vector has to hold for a faithful translation:
+
+<div class="columns">
+<div>
+
+- **who did what to whom** — subject, verb, object
+- **tense & aspect** — did it happen, will it, is it ongoing
+- **number & gender** — one dog or many; agreement downstream
+- **tone & negation** — "not happy" must not decompress to "happy"
+
+</div>
+<div>
+
+<div class="insight">
+
+For *"The cat sat"* one vector is luxurious. For a 40-word clause with three sub-clauses, the *same* fixed $\mathbf c$ must cram all of the above for *every* phrase — with no more room than it had for three words. **Compress-then-decompress is elegant right up until the thing you compress won't fit.**
+
+</div>
+
+</div>
+</div>
+
+The mismatch — *constant* capacity, *growing* demand — is the bottleneck we make precise in Part 4.
+
+---
+
 # Seq2Seq in PyTorch · skeleton
 
 ```python
@@ -524,6 +660,35 @@ The **conditional NLL** of the target given the *true* history — the L1 next-t
 
 ---
 
+# Intuition · why the training wheels make it *fast*
+
+Teacher forcing isn't only more stable — it changes the **shape of the computation**. Because every decoder input is known up front, the whole target is one batched tensor.
+
+<div class="columns">
+<div>
+
+**Autoregressive training** (naïve)
+For a length-$T$ target you must:
+sample $y_1 \to$ embed $\to$ feed $\to$ sample $y_2 \to \dots$
+$T$ **sequential, data-dependent** steps — you cannot begin step $t$ until step $t-1$ is sampled. Nothing batches across positions.
+
+</div>
+<div>
+
+**Teacher forcing**
+Inputs $\langle s\rangle, y_1^{*},\dots,y_{T-1}^{*}$ are *all* known, so all $T$ positions go through **one** forward/backward. On a Transformer this is fully parallel across $t$; even on an RNN you drop the per-token *sampling* loop.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+Rough count: a $T{=}30$ target trains in **one** batched pass instead of **30** generate-one-token passes. That constant factor is why every large model is trained teacher-forced. The bill for that speed — **exposure bias** — is next.
+
+</div>
+
+---
+
 # Exposure bias · the price you pay
 
 ![w:900px](figures/lec11/svg/exposure_bias.svg)
@@ -533,11 +698,11 @@ At inference the decoder predicts "A" instead of "The", then **feeds "A" back** 
 
 ---
 
-# Practice problem 2
+# Practice problem 3
 
 <div class="popquiz">
 
-**Practice problem 2.** Teacher forcing feeds the decoder the ground-truth previous token at every step during training.
+**Practice problem 3.** Teacher forcing feeds the decoder the ground-truth previous token at every step during training.
 
 (a) Why does this make training **much faster** than letting the decoder run on its own predictions?
 (b) The model is trained on $p(y_t\mid y_{<t}^{*},x)$ but at inference sees $p(y_t\mid \hat y_{<t},x)$. Name this train/test mismatch, and explain in one line why it causes generation to **derail** after one wrong token.
@@ -548,7 +713,7 @@ At inference the decoder predicts "A" instead of "The", then **feeds "A" back** 
 
 ---
 
-# Solution · practice problem 2
+# Solution · practice problem 3
 
 <div class="columns">
 <div>
@@ -589,6 +754,33 @@ For short sentences, fine. For long sentences the encoder **forgets the beginnin
 
 ---
 
+# Intuition · one vector can't hold a 40-word sentence
+
+Before the math, the picture. A fixed context vector is a **fixed-size suitcase**. Packing for a weekend is easy; packing for a month into the *same* suitcase means something gets left behind.
+
+<div class="columns">
+<div>
+
+**5 words → roomy.** $\mathbf c$ has spare coordinates for every nuance; nothing is lost.
+
+**40 words → overflowing.** The encoder keeps overwriting the same $d$ numbers; by the last word the first clause is a faded memory. The decoder asks "what was the subject?" and $\mathbf c$ no longer knows.
+
+</div>
+<div>
+
+<div class="insight">
+
+Ng's framing: a human translator *also* holds one mental summary — but a human can **glance back** at the source sentence. The seq2seq decoder cannot: once the source is compressed into $\mathbf c$, the original words are **gone**. Attention (L14) is precisely "let the decoder glance back."
+
+</div>
+
+</div>
+</div>
+
+The next slide turns "won't fit" into a **counting argument** — demand grows with length, supply is fixed.
+
+---
+
 # Why it *must* fail: a capacity argument
 
 Treat $\mathbf c$ as a communication channel with **fixed** capacity $B$ bits (a $d$-dim vector holds only so much usable information — finite precision, finite $d$).
@@ -617,6 +809,37 @@ $$n^{\star} \approx \frac{B}{\log_2 V} \quad\Longrightarrow\quad \text{beyond } 
 </div>
 
 No training trick removes this: a line (demand) eventually crosses a horizontal line (supply). The decoder receives an ambiguous $\mathbf c$ and *cannot* disambiguate.
+
+---
+
+# Worked numbers · where does the cliff fall?
+
+Put numbers on $n^{\star}\approx B/\log_2 V$. Take a $d=512$ context vector and a $V=32{,}000$ subword vocabulary.
+
+<div class="columns">
+<div>
+
+**Vocabulary term.** $\log_2 32{,}000 \approx 15$ bits — the information in *naming one token* out of the vocabulary.
+
+**Channel term.** Suppose each of the 512 coordinates reliably carries $\approx 4$ usable bits (finite precision, noise):
+$$B \approx 512 \times 4 = 2048 \text{ bits}$$
+
+</div>
+<div>
+
+**The crossover.**
+$$n^{\star} \approx \frac{2048}{15} \approx \mathbf{136}\ \textbf{tokens}$$
+
+Below ~130 tokens $\mathbf c$ *can*, in principle, keep every sentence distinct; past it, distinct sentences **must** collide. Real systems crack far earlier (~20–40 words) — coordinates are nowhere near 4 clean bits and the encoder wastes capacity — but the *shape* is exactly this.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+The number is a back-of-envelope, not a spec — the point is the **structure**: demand that rises with $n$ against a supply that doesn't. Change $B$ or $V$ and the cliff *moves*; it never disappears.
+
+</div>
 
 ---
 
@@ -655,11 +878,11 @@ Why would that help? Reversing puts the *first* source words nearest the decoder
 
 ---
 
-# Practice problem 3
+# Practice problem 4
 
 <div class="popquiz">
 
-**Practice problem 3.** A seq2seq model uses the encoder's final hidden state $\mathbf c \in \mathbb R^{512}$ as its only context.
+**Practice problem 4.** A seq2seq model uses the encoder's final hidden state $\mathbf c \in \mathbb R^{512}$ as its only context.
 
 (a) Model $\mathbf c$ as a channel of fixed capacity $B$ bits. For a sentence of $n$ tokens over vocabulary $V$, write the information the decoder *needs* vs. the information $\mathbf c$ can *supply*, and argue there is a length $n^{\star}$ beyond which quality **must** degrade.
 (b) A 50-word sentence's subject-verb agreement depends on word #1. Why is "final hidden state" the *worst* place to store it?
@@ -670,7 +893,7 @@ Why would that help? Reversing puts the *first* source words nearest the decoder
 
 ---
 
-# Solution · practice problem 3
+# Solution · practice problem 4
 
 <div class="columns">
 <div>
@@ -690,6 +913,28 @@ For $n>n^{\star}$ the map "sentence → $\mathbf c$" cannot be injective: distin
 <div class="keypoint">
 
 Both parts point the same way: **stop forcing everything through one vector.** Let the decoder read *all* encoder states and choose what to look at — that is attention.
+
+</div>
+
+---
+
+# See it yourself · watch the vector saturate
+
+<div class="notebook">
+
+**🎛 Interactive · the seq2seq bottleneck** — push sentences of growing length through a fixed-size context vector and watch reconstruction quality fall off a cliff as demand crosses capacity. Drag the context dimension $d$ up and see the cliff slide *right* — never vanish. *(Interactive Lab · `interactive/seq2seq-bottleneck`)*
+
+</div>
+
+<div class="notebook">
+
+**📓 Notebook · a minimal encoder–decoder** — the `Seq2Seq` skeleton from Part 2, trained on a toy copy/reverse task; plot BLEU vs. source length and reproduce the cliff yourself, *before* attention (L14) erases it. *(ES 667 Seq2Seq materials.)*
+
+</div>
+
+<div class="popquiz">
+
+**Predict first.** Before you drag $d$: doubling the context dimension roughly **doubles** $B$. By the counting argument, what happens to the crossover length $n^{\star}$ — and does that *solve* the bottleneck or merely postpone it?
 
 </div>
 
@@ -757,6 +1002,54 @@ Bad output? Ask which error: **search error** (a better sequence exists, beam mi
 
 ---
 
+# Practice problem 5
+
+<div class="popquiz">
+
+**Practice problem 5 · beam vs. length bias.** A decoder scores sequences by summed log-probability. Two candidate translations:
+- **A** (3 tokens): log-probs $-0.2,\,-0.3,\,-0.5$
+- **B** (5 tokens): log-probs $-0.2,\,-0.3,\,-0.4,\,-0.2,\,-0.3$
+
+(a) Which wins on **raw** summed log-prob?
+(b) Apply **length normalization** — divide each score by $T^{\alpha}$ with $\alpha=0.7$. Which wins now?
+(c) In one line: why does raw beam search systematically prefer *shorter* outputs?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 5
+
+<div class="columns">
+<div>
+
+**(a) Raw sums.**
+$$\text{A}=-1.0,\qquad \text{B}=-1.4$$
+**A wins** — but only because it has fewer (all-negative) terms to add.
+
+**(b) Length-normalized** ($\div\,T^{0.7}$):
+$$\text{A}: \frac{-1.0}{3^{0.7}}=\frac{-1.0}{2.16}=\mathbf{-0.46}$$
+$$\text{B}: \frac{-1.4}{5^{0.7}}=\frac{-1.4}{3.09}=\mathbf{-0.45}$$
+**B now edges ahead** — its per-token confidence is actually higher.
+
+</div>
+<div>
+
+**(c) The length bias.** Every extra token adds another *negative* $\log P$, so a longer sequence's score can only go **down**. Raw beam search therefore rewards brevity for a reason that has nothing to do with quality. Dividing by $T^{\alpha}$ compares sequences on **average** log-prob per token, cancelling the length penalty.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+$\alpha$ tunes the correction: $\alpha=0$ is raw (short-biased), $\alpha=1$ is a pure per-token average (can over-reward length). Production decoders land at $\alpha\approx 0.6$–$0.7$ — the value quoted on the beam-search slide.
+
+</div>
+
+---
+
 # Sampling: when you *want* variety
 
 Greedy and beam are deterministic — great for translation, dull for open-ended text (every story reads the same). **Sampling** draws from the distribution, and three knobs shape the pool:
@@ -778,6 +1071,43 @@ Greedy and beam are deterministic — great for translation, dull for open-ended
 </div>
 
 </div>
+</div>
+
+---
+
+# Worked example · softmax at two temperatures
+
+Three tokens with logits $z = (2.0,\,1.0,\,0.0)$. Apply $P(y_i)\propto e^{z_i / T}$ at $T=1$ and $T=0.5$.
+
+<div class="columns">
+<div>
+
+**$T=1$** — exponentiate the logits:
+$$e^{2},e^{1},e^{0} = 7.39,\,2.72,\,1.00$$
+sum $=11.11$, so
+$$P \approx (0.67,\,0.24,\,0.09)$$
+
+</div>
+<div>
+
+**$T=0.5$** — logits double ($z/T = 4,2,0$):
+$$e^{4},e^{2},e^{0} = 54.6,\,7.39,\,1.00$$
+sum $=63.0$, so
+$$P \approx (\mathbf{0.87},\,0.12,\,0.02)$$
+
+</div>
+</div>
+
+<div class="keypoint">
+
+Lower $T$ **sharpens** the distribution — the top token's mass climbs $0.67 \to 0.87$, the tail is starved. $T\to 0$ collapses to greedy $\arg\max$; $T\to\infty$ flattens to uniform. It is *the same softmax* from L1 — temperature only rescales the logits **before** it, so it never reorders the tokens, only how peaky the winner is.
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · softmax temperature** — drag $T$ and watch this exact distribution sharpen and flatten, with a live sample. *(Interactive Lab · `interactive/softmax-temperature`)*
+
 </div>
 
 ---

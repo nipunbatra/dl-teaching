@@ -122,6 +122,33 @@ $$\text{output} \;=\; \sum_i \underbrace{\text{softmax}_i(q\cdot k_i)}_{\text{we
 
 ---
 
+# Intuition · attention is a *learned* weighted average
+
+Strip attention to its skeleton and it is the most familiar object in statistics — an **average of the value vectors**:
+
+$$\text{output} = \sum_i w_i\, v_i,\qquad \sum_i w_i = 1,\ \ w_i\ge 0.$$
+
+<div class="columns">
+<div>
+
+**Plain pooling** uses *fixed, equal* weights $w_i=\tfrac1n$ — every token counts the same regardless of input. It cannot tell *"loan"* from *"the."*
+
+</div>
+<div>
+
+**Attention** makes the weights $w_i=\text{softmax}_i(q\cdot k_i)$ — **chosen per query, from the content itself.** Relevant tokens get more mass; the rest fade.
+
+</div>
+</div>
+
+<div class="insight">
+
+That single upgrade — *fixed* weights → *input-dependent, learned* weights — is the whole leap. Attention is a weighted average whose weights are **a function of the data**, recomputed fresh for every token and differentiable end-to-end. Everything after this is *how* those weights get chosen.
+
+</div>
+
+---
+
 # What attention looks like — literally, a heatmap
 
 ![w:720px](figures/lec12/svg/attention_heatmap.svg)
@@ -176,6 +203,12 @@ The decoder reads a **weighted mixture**, dominated by the relevant source word 
 <div class="notebook">
 
 **📓 Notebook · attention by hand** — build one attention head from three `nn.Linear` layers, compute scores → softmax → weighted values on a toy sentence, and visualize the resulting heatmap. *(ES 667 · `notebooks/12-attention-by-hand.ipynb`)*
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · the bottleneck you're escaping** — revisit L13's seq2seq compression: watch translation quality fall off a cliff as the sentence grows and *everything* is forced through one context vector. Attention is the fix you're building on top. *(Interactive Lab · `interactive/seq2seq-bottleneck`)*
 
 </div>
 
@@ -344,6 +377,28 @@ Token 1 reads mostly $v_1$ and $v_3$ (equal weight), and their average is exactl
 
 ---
 
+# Worked example · the *whole* attention matrix
+
+Practice problem 1 read out **row 1**. Turn the same crank for rows 2 and 3 and you have the complete self-attention layer — every output token in one $3\times3$ pass.
+
+<div class="math-box">
+
+Scaled scores $QK^\top/\sqrt2$, then row-softmax (each row sums to 1):
+$$A=\begin{pmatrix}0.40&0.20&0.40\\[2pt]0.20&0.40&0.40\\[2pt]0.25&0.25&0.50\end{pmatrix}$$
+
+Weighted values $AV$ with $v_1=[1,2],\ v_2=[3,4],\ v_3=[5,6]$:
+$$AV \approx \begin{pmatrix}3.0&4.0\\[2pt]3.4&4.4\\[2pt]3.5&4.5\end{pmatrix}$$
+
+</div>
+
+<div class="insight">
+
+Token 3's query matches key 3 best, so it pulls hardest on $v_3$ and drifts toward $[5,6]$. **Every row is the same four steps — scores → scale → softmax → blend — run in parallel, no loop over tokens.** This $3\times3$ matrix *is* the whole self-attention layer for a 3-word sentence.
+
+</div>
+
+---
+
 <!-- _class: section-divider -->
 
 ## Part 3 · The scaled dot-product, and why $\sqrt{d_k}$
@@ -425,6 +480,49 @@ Softmax $\approx [0.64,\ 0.09,\ 0.27]$ — **soft**, and gradients flow.
 <div class="keypoint">
 
 Same logits, one division: saturated → healthy. The $\sqrt{d_k}$ is a *temperature derived from variance*, not a hyperparameter you tune.
+
+</div>
+
+---
+
+# Intuition · $\sqrt{d_k}$ is just a *temperature*
+
+Softmax has a temperature knob $T$: $\ \text{softmax}(z/T)$. Large $T$ → smooth, near-uniform weights; small $T$ → peaky, near one-hot. Scaling the scores by $1/\sqrt{d_k}$ **is** setting $T=\sqrt{d_k}$.
+
+<div class="insight">
+
+The twist: this temperature is **not** a knob you sweep. The variance argument *derives* $T=\sqrt{d_k}$ as the exact value that holds the score spread near $1$ for **every** width — so one setting works from a 2-token toy to a 4096-dim production head. A temperature you would normally tune here falls straight out of the math.
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · softmax & temperature** — slide $T$ from peaky to uniform and watch the weight distribution (and its entropy) move; then set $T=\sqrt{d_k}$ and see why the scaled scores stay soft. Same knob drives LLM sampling and distillation. *(Interactive Lab · `interactive/softmax-temperature`)*
+
+</div>
+
+---
+
+# Does $\sqrt{d_k}$ change *which* token wins?
+
+A fair worry: if we divide every score by $\sqrt{d_k}$, do we change the model's *choice*? Take the saturated row $[15.5,\,-16.1,\,2.3]$ from two slides ago.
+
+<div class="columns">
+<div>
+
+**Ranking is untouched.** Dividing every entry by the same $16$ is monotonic — token 1 still has the largest score, token 2 the smallest. The **argmax never moves.**
+
+</div>
+<div>
+
+**Only the *sharpness* changes.** Unscaled → $[\approx1,\,0,\,\approx0]$ (one-hot). Scaled → $[0.64,\,0.09,\,0.27]$ (soft). Same winner — but now the runners-up still contribute, and gradients survive.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+Scaling is a **temperature, not a re-vote**: it decides *how confidently* attention commits, never *what* it commits to. That is exactly why it can be derived from variance alone, without ever touching the model's learned preferences.
 
 </div>
 
@@ -539,6 +637,35 @@ Softmax each row → an $n\times n$ attention matrix; multiply by $V$ → each o
 <div class="keypoint">
 
 Self-attention lets every position aggregate information from every other position **in parallel, with no recurrence.** That parallelism is what let attention replace RNNs — and it is the engine L15 stacks into the Transformer.
+
+</div>
+
+---
+
+# Self vs cross, in one line
+
+Same three steps, same softmax, same weighted sum. The *only* difference is **where the queries and the keys/values come from.**
+
+<div class="columns">
+<div>
+
+### Self-attention · *look within*
+$Q,K,V$ all from **one** sequence.
+"Let every word refine its own meaning using the other words *beside it*." Resolves *"it"*, disambiguates *"bank"*.
+
+</div>
+<div>
+
+### Cross-attention · *look across*
+$Q$ from sequence A, $K,V$ from sequence B.
+"Let each target word pull the source words it needs." Translation, captioning, retrieval.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+**Self = a sequence talking to itself; cross = one sequence reading another.** Swap where $Q$ and $K,V$ are sourced and the *identical* module does both jobs — the projections, the $\sqrt{d_k}$, the softmax never change.
 
 </div>
 
@@ -691,6 +818,57 @@ Same module, one triangular mask: BERT-style (bidirectional, no mask) vs GPT-sty
 
 ---
 
+# Practice problem 4
+
+<div class="popquiz">
+
+**Practice problem 4 · cross-attention shapes.** A translation decoder attends to its encoder. The **source** has $m=5$ tokens; the **target** is at $n=3$ positions. Model width $d_\text{model}=512$, projected to $d_k=d_v=64$.
+
+Give the shape of: **(a)** $Q$, $K$, $V$; **(b)** the score matrix $QK^\top$, and the axis softmax runs over; **(c)** the attention output. **(d)** One line: which of these shapes would *change* if you switched to encoder **self**-attention?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 4
+
+**(a)** $Q$ from the 3 target states $\to \mathbf{3\times64}$. $K,V$ from the 5 source states $\to \mathbf{5\times64}$ each.
+
+**(b)** $QK^\top \to \mathbf{3\times5}$ — one row per *target* position, one column per *source* token. **Softmax runs along the 5 source columns**, so each target position gets its own distribution over the source.
+
+**(c)** $AV \to \mathbf{3\times64}$: one contextualized vector per target position (a per-head $W_O$ then maps it back to $512$).
+
+**(d)** Encoder self-attention sets source $=$ target, so $Q,K,V$ are all $5\times64$ and the score matrix becomes a **square $5\times5$** — the rectangle only appears when the two sequences differ.
+
+<div class="keypoint">
+
+Cross-attention scores are **rectangular** ($n_\text{target}\times n_\text{source}$); self-attention scores are **square** ($n\times n$). Same module, same softmax — only *who supplies $Q$ versus $K,V$* decides the shape.
+
+</div>
+
+---
+
+# Intuition · every token compares to every token
+
+Self-attention's cost comes straight from its superpower. To let position $i$ read position $j$ **for every pair**, you must actually *form* every pair.
+
+<div class="math-box">
+
+$n$ tokens → an $n\times n$ grid of scores → $n^2$ comparisons.
+$$n=10\to100,\qquad n=1{,}000\to10^6,\qquad n=100{,}000\to10^{10}.$$
+
+</div>
+
+<div class="insight">
+
+Double the context and you **quadruple** the work — every new token compares against *all* the old ones *and* itself. Convolution never pays this: it only compares within a fixed window. **Global reach is exactly what costs $O(n^2)$** — total connectivity vs quadratic cost is the tension the next slide, and all of L23, wrestles with.
+
+</div>
+
+---
+
 # The $O(n^2)$ wall
 
 Self-attention on a length-$n$ sequence builds the full $n\times n$ score matrix $QK^\top$:
@@ -700,6 +878,71 @@ Self-attention on a length-$n$ sequence builds the full $n\times n$ score matrix
 <div class="warning">
 
 At $n=8{,}192$, one head's score matrix has $8192^2\approx67$M entries — **~134 MB in fp16, per head, per layer**. At $n=1$M tokens it becomes a *trillion*-entry (terabyte-scale) matrix that naive attention simply cannot store. This wall motivates **FlashAttention** (tiled recompute), **sparse / linear attention**, and **KV-caching** — all in L23.
+
+</div>
+
+---
+
+# Practice problem 5
+
+<div class="popquiz">
+
+**Practice problem 5 · the cost of more context.** A model runs self-attention with context length $n=1{,}024$, head dimension $d=64$, in **fp16** (2 bytes/entry).
+
+**(a)** How many entries are in one head's score matrix $QK^\top$, and how much memory is that?
+**(b)** You extend the context to $n=4{,}096$. By what factor does the score-matrix memory grow?
+**(c)** In one line: why is the *compute* $O(n^2 d)$ and not $O(n^3)$?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 5
+
+**(a)** The score matrix is $n\times n$ regardless of $d$: $\;1024^2=\mathbf{1{,}048{,}576}$ entries $\approx1.05$M. At 2 bytes each, $\approx\mathbf{2.1\ \text{MB}}$ — per head, per layer.
+
+**(b)** Memory scales as $n^2$: $\left(\tfrac{4096}{1024}\right)^2 = 4^2 = \mathbf{16\times}$ (to $\approx33.6$ MB). The "double $\to 4\times$" rule, applied twice.
+
+**(c)** Forming $QK^\top$ is $n^2$ dot products of length $d$ $\to O(n^2 d)$; the $d$ is the *work per pair*, not a third loop over tokens. Multiplying by $V$ costs another $O(n^2 d)$.
+
+<div class="keypoint">
+
+Notice the memory ($n^2$) is **independent of $d$** — it is the $n^2$ term, not the width, that explodes with context. Stack dozens of heads and layers and this is the wall FlashAttention, sparsity, and KV-caching exist to break (L23).
+
+</div>
+
+---
+
+# Escaping the $n^2$ wall — a first look
+
+Three families of fixes, all deferred to **L23** — but the intuition is already yours:
+
+<div class="columns">
+<div>
+
+- **FlashAttention** — never store the full $n\times n$ matrix; tile the compute and recompute on the fly. *Same math, $O(n)$ memory.*
+- **Sparse / local attention** — let each token attend to a *window* plus a few global tokens, not all $n$.
+
+</div>
+<div>
+
+- **Linear attention** — reorder the products to skip the $n\times n$ matrix entirely, $O(n)$ compute.
+- **KV-caching** — at generation time, reuse past keys/values instead of recomputing them every step.
+
+</div>
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · KV-cache** — step a decoder forward token by token and watch the key/value cache grow, turning an $O(n^2)$ regenerate into an $O(n)$ append — the trick behind fast LLM inference. *(Interactive Lab · `interactive/kv-cache`)*
+
+</div>
+
+<div class="notebook">
+
+**📓 Notebook · attention by hand (masked)** — the same three-`nn.Linear` head, now with a causal mask: verify row $i$ attends only to positions $\le i$, and that removing the mask lets the model "cheat" on next-token prediction. *(ES 667 · `notebooks/12-attention-by-hand.ipynb`)*
 
 </div>
 
@@ -755,7 +998,7 @@ This lecture reuses and adapts material from the instructor's own courses (IIT G
 - **Attention as soft alignment (additive), the first heatmaps** — Bahdanau, Cho & Bengio, *"Neural Machine Translation by Jointly Learning to Align and Translate"* (2015).
 - **Scaled dot-product attention, self-attention, the $\sqrt{d_k}$** — Vaswani et al., *"Attention Is All You Need"* (2017).
 
-Interactive Lab · `interactive/attention`. Notebook · `notebooks/12-attention-by-hand.ipynb`. Figures adapted from the ES 667 figure library. All source courses © N. Batra & teaching staff.
+Interactive Lab · `interactive/attention`, `interactive/seq2seq-bottleneck`, `interactive/softmax-temperature`, `interactive/positional-encoding`, `interactive/kv-cache`. Notebook · `notebooks/12-attention-by-hand.ipynb`. Figures adapted from the ES 667 figure library. All source courses © N. Batra & teaching staff.
 
 </div>
 

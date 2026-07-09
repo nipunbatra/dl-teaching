@@ -99,6 +99,34 @@ An RNN cell is a **memory-updater**: *new state = f(old state, new token)*. Ever
 
 ---
 
+# Intuition · an RNN is an MLP in a loop
+
+Forget the word "recurrent" for a second. A vanilla RNN cell is **exactly one hidden layer of an MLP** — a matrix multiply and a $\tanh$. The only new idea: **wire its output back to its input.**
+
+<div class="columns">
+<div>
+
+**MLP layer** — one shot:
+$$h = \tanh(W_{xh}\,x + b)$$
+in → hidden → out. Done.
+
+</div>
+<div>
+
+**RNN cell** — the *same* layer, fed its own last output:
+$$h_t = \tanh(W_{xh}\,x_t + \underbrace{W_{hh}\,h_{t-1}}_{\text{the loop}} + b)$$
+
+</div>
+</div>
+
+<div class="keypoint">
+
+**An RNN is an MLP in a `for` loop, carrying a memory $h_t$ forward.** The loop is the whole trick — it lets one fixed-size layer read a sequence of *any* length, because the memory $h_t$ is a running summary of everything seen so far.
+
+</div>
+
+---
+
 # Weight sharing: the same net at every step
 
 Unroll the recurrence in time and the picture is a chain — but every box is the **same** $W_{xh}, W_{hh}, b$:
@@ -310,6 +338,47 @@ Two failure modes, one cause. $\|W_{hh}\|<1 \Rightarrow$ **vanishing** (can't le
 
 ---
 
+# Worked numeric · multiply by $W_{hh}$, $T$ times
+
+The scalar picture is real for matrices too — the **largest eigenvalue** plays the role of $w$. Take a concrete diagonal $W_{hh}$ so the algebra is transparent:
+
+$$W_{hh}=\begin{pmatrix}0.9&0\\0&1.2\end{pmatrix}\qquad\Rightarrow\qquad W_{hh}^{\,T}=\begin{pmatrix}0.9^{T}&0\\0&1.2^{T}\end{pmatrix}$$
+
+<div class="math-box">
+
+Push a gradient back $T=50$ steps (ignore the $\tanh'\le 1$ factor, which only *helps* it vanish):
+$$0.9^{50}\approx 5\times 10^{-3}\ (\textbf{direction 1: vanishes}) \qquad 1.2^{50}\approx 9{,}100\ (\textbf{direction 2: explodes})$$
+
+</div>
+
+<div class="insight">
+
+**One matrix, both diseases at once.** Along the eigenvector with $|\lambda|<1$ the signal dies; along the one with $|\lambda|>1$ it blows up. A general $W_{hh}$ also *rotates* (off-diagonal terms), but the rule is unchanged: raise the eigenvalues to the $T$. "Vanishing/exploding" is just *"multiply by $W_{hh}$, $T$ times."*
+
+</div>
+
+---
+
+# Worked numeric · a 3-hop gradient by hand
+
+Take the scalar RNN from Practice problem 1 ($w_{hh}=0.5$, stream $x_1{=}x_2{=}x_3{=}1$) and follow the gradient back **3 real steps**, keeping the $\tanh'$ factor this time. The states are $h_1\approx0.762,\ h_2\approx0.881,\ h_3\approx0.894$, and $\tanh'(z_t)=1-\tanh^2(z_t)=1-h_t^2$:
+
+$$\frac{\partial h_t}{\partial h_{t-1}}=w_{hh}\,\tanh'(z_t)=0.5\,(1-h_t^2)$$
+
+<div class="math-box">
+
+$$\frac{\partial h_3}{\partial h_0}=\underbrace{0.5(1-0.894^2)}_{\approx\,0.100}\times \underbrace{0.5(1-0.881^2)}_{\approx\,0.112}\times \underbrace{0.5(1-0.762^2)}_{\approx\,0.210}\ \approx\ \mathbf{2.4\times10^{-3}}$$
+
+</div>
+
+<div class="insight">
+
+Three hops already shrank the gradient **~400×** — and notice $\tanh'$ made it *worse* than the $0.5^3=0.125$ bound, because $\tanh'<1$ everywhere the state is nonzero. The saturating nonlinearity doesn't just fail to help; it actively *accelerates* vanishing. Now imagine 50 hops.
+
+</div>
+
+---
+
 # Practice problem 2
 
 <div class="popquiz">
@@ -447,6 +516,35 @@ Get the **masks** first: sigmoid makes the dial, the dial multiplies the memory.
 
 ---
 
+# Intuition · the belt as editable memory
+
+Picture the cell state $c_t$ as a **conveyor belt** running left to right through time. Boxes of information ride it forward. The three gates are **valves** the network learned to open and close:
+
+<div class="columns">
+<div>
+
+- **forget** $f_t$ — the **erase** valve: how much of each box on the belt to wipe.
+- **input** $i_t\odot\tilde c_t$ — the **write** valve: what new box to drop onto the belt.
+- **output** $o_t$ — the **read** valve: which boxes to copy off the belt into $h_t$.
+
+</div>
+<div>
+
+A concrete slot: belt carries $c_{t-1}=5$. This step $f_t=0.9$ (**keep 90%**), and write $i_t\odot\tilde c_t=+0.3$:
+$$c_t = 0.9(5) + 0.3 = 4.8$$
+The box rode forward almost untouched — the belt *defaults to remembering*.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+The belt is **edited, not overwritten.** A vanilla RNN rebuilds $h_t$ from scratch each step (multiply-through); the LSTM only *nudges* the belt with valves. That "default to keep" is exactly why, next, the gradient can ride the belt home.
+
+</div>
+
+---
+
 # The gate algebra: 3 sigmoids + 1 tanh
 
 Stack $[h_{t-1},x_t]$ into one control vector; four little linear layers read it:
@@ -509,6 +607,24 @@ If the net learns $f_t\approx 1$ ("don't forget"), the gradient flows back **unc
 
 ---
 
+# Intuition · start the highway *open*
+
+The highway only helps if $f_t$ is *near 1* early in training — but a freshly initialized net has $f_t\approx\sigma(0)=0.5$, halving the gradient every step ($0.5^{100}\approx 0$). The net can't learn to remember if it forgets before it ever learns.
+
+<div class="keypoint">
+
+**The one-line trick:** initialize the forget-gate **bias** $b_f=1$, so $f_t\approx\sigma(1)\approx 0.73$ *before any training*. The belt starts biased toward **keep**, the gradient flows on day one, and the net can *then* learn what to forget.
+
+</div>
+
+<div class="insight">
+
+This is the LSTM analogue of "**start a ResNet as the identity**." You don't ask gradient descent to first *discover* that memory should persist — you make persistence the **default** and let it learn the exceptions. A tiny bias change; a huge difference on long-range tasks. *(Full account in the appendix.)*
+
+</div>
+
+---
+
 # Gradient survival over 100 steps
 
 Memory that must persist → the net learns $f_t\approx 0.99$. Contrast the vanilla factor $0.5$:
@@ -536,6 +652,39 @@ $$0.99^{100}\approx \mathbf{0.37}\ (\text{usable}) \qquad\text{vs}\qquad 0.5^{10
 $$c_t=f_t\,c_{t-1}+i_t\,\tilde c_t = 0.1(5.0)+0.9(-1.0)=0.5-0.9=\mathbf{-0.4}$$
 
 The memory **flips** from strongly positive (plural) to negative (singular) in one step — precisely because forget was small *and* input was large. Grammar agreement, learned as gate behavior.
+
+---
+
+# Worked forward · one full LSTM step
+
+That last example *handed* you the gates. Here we start one layer back — from the four **pre-activations** the linear layers emit — and run the sigmoids and $\tanh$ ourselves. 1-D cell, $c_{t-1}=0.8$:
+
+<div class="columns">
+<div>
+
+**Gates** (squash each pre-activation):
+$$f_t=\sigma(2.2)\approx 0.90$$
+$$i_t=\sigma(-0.85)\approx 0.30$$
+$$o_t=\sigma(0.85)\approx 0.70$$
+$$\tilde c_t=\tanh(0.62)\approx 0.55$$
+
+</div>
+<div>
+
+**Belt update**, then **read-out**:
+$$c_t=f_t c_{t-1}+i_t\tilde c_t$$
+$$=0.90(0.8)+0.30(0.55)\approx \mathbf{0.885}$$
+$$h_t=o_t\tanh(c_t)$$
+$$=0.70\,\tanh(0.885)\approx \mathbf{0.50}$$
+
+</div>
+</div>
+
+<div class="insight">
+
+Read the story off the numbers: a **high** $f$ kept most of the belt, a **low** $i$ let only a trickle of new info in, and the **output** valve exposed 70% of the (squashed) belt as $h_t$. Every LSTM step is just these six lines — three sigmoids, one $\tanh$, one weighted sum, one read.
+
+</div>
 
 ---
 
@@ -601,6 +750,91 @@ $$h_t=(1-z_t)\odot h_{t-1}+z_t\odot\tilde h_t$$
 </div>
 
 One state, one **update gate** $z_t$ interpolating old↔new, one **reset gate** $r_t$ filtering the past into the candidate. The **additive** interpolation is, once again, the gradient highway — same fix, fewer parts.
+
+---
+
+# Intuition · the update gate is a blend knob
+
+The GRU's whole update is a **crossfader** between the old memory and a fresh proposal:
+
+$$h_t=(1-z_t)\odot h_{t-1}+z_t\odot\tilde h_t$$
+
+<div class="columns">
+<div>
+
+- $z_t\to 0$ → $h_t\approx h_{t-1}$: **copy the past.** This is the carry lane — gradient rides through untouched.
+- $z_t\to 1$ → $h_t\approx\tilde h_t$: **overwrite** with the new candidate, like a fresh MLP layer.
+- $z_t=0.5$ → a clean average of the two.
+
+</div>
+<div>
+
+**One knob, not two.** The LSTM lets forget and input move independently (keep *and* write, or neither). The GRU **ties** them: $(1-z_t)$ and $z_t$ sum to 1, so *what you write, you must forget in equal measure.* One fewer gate, almost always the same accuracy.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+Same fix as the LSTM belt, re-expressed: the **additive** blend $(1-z)\,h_{t-1}+z\,\tilde h$ is a gradient highway. $z_t$ small keeps the lane open; the reset $r_t$ only shapes the *proposal*, never the carry.
+
+</div>
+
+---
+
+# Practice problem 4
+
+<div class="popquiz">
+
+**Practice problem 4.** A 1-D GRU has $h_{t-1}=2.0$. On this step the net emits reset $r_t=0.1$, update $z_t=0.2$, and (after forming the candidate) $\tilde h_t=-1.0$. (a) What does $r_t=0.1$ do to the past *inside* the candidate? (b) Compute $h_t=(1-z_t)h_{t-1}+z_t\tilde h_t$. (c) Redo (b) with $z_t=0.9$ and say what the gate chose.
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 4
+
+**(a)** The candidate sees $r_t\odot h_{t-1}=0.1\times 2.0=0.2$ — the reset nearly **wipes the past** when *proposing* $\tilde h_t$, so the new content is driven mostly by $x_t$. (The carry lane still keeps the old memory separately, via $1-z_t$.)
+
+**(b)** $h_t=(1-0.2)(2.0)+0.2(-1.0)=1.6-0.2=\mathbf{1.4}$ — mostly the old memory, barely nudged.
+
+**(c)** $h_t=(1-0.9)(2.0)+0.9(-1.0)=0.2-0.9=\mathbf{-0.7}$ — a near-total **overwrite**.
+
+<div class="keypoint">
+
+$z_t$ *is* the keep/overwrite dial: small $z_t$ carries memory forward (and gradient with it); large $z_t$ replaces it. Reset shapes the proposal; update decides how much of that proposal actually lands.
+
+</div>
+
+---
+
+# Practice problem 5
+
+<div class="popquiz">
+
+**Practice problem 5.** Along the GRU carry lane the per-step Jacobian is dominated by $\partial h_t/\partial h_{t-1}\approx(1-z_t)$ (same move as the LSTM's $f_t$). A slot must hold memory for $T=100$ steps and the net learns $z_t=0.02$ on it. (a) Estimate the surviving gradient. (b) Contrast a vanilla RNN with per-step factor $0.9$. (c) Which LSTM quantity is $(1-z_t)$ playing the role of?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 5
+
+**(a)** $\displaystyle\prod_{t}(1-z_t)\approx 0.98^{100}\approx \mathbf{0.13}$ — a usable gradient after 100 steps.
+
+**(b)** Vanilla RNN: $0.9^{100}\approx 2.7\times10^{-5}$ — effectively **zero**.
+
+**(c)** $(1-z_t)$ is the GRU's stand-in for the LSTM's **forget gate $f_t$**: a learned, near-1 scalar on a clean **additive** carry path.
+
+<div class="insight">
+
+Same cure, two spellings. LSTM: $\partial c_t/\partial c_{t-1}=f_t$. GRU: $\partial h_t/\partial h_{t-1}\approx 1-z_t$. Both replace the vanilla RNN's *fixed matrix wrapped in $\tanh$* with a **learned gate on an additive path** — which is *the* reason either one reaches past a few tens of steps.
+
+</div>
 
 ---
 
@@ -686,6 +920,28 @@ To translate "it," the decoder must recover "animal" from a single vector that a
 
 ---
 
+# See it in code — recurrence end to end
+
+<div class="notebook">
+
+**📓 Notebook · from cell to language model** — build the RNN cell from `nn.Linear`, run the unrolled loop, then train a next-token model and *sample* from it as coherence rises. *(ES 667 · `notebooks/10-rnn-by-hand.ipynb`; language-model version: ML · `notebooks/autoregressive-model.ipynb`)*
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · the three explainers, side by side** — **vanishing-gradients** (slide $T$ and $\|W_{hh}\|$, watch $\|\partial\mathcal L/\partial h_t\|$ decay), **lstm-gates** (drag forget/input/output, freeze or flush the belt), **seq2seq-bottleneck** (watch one vector strain to hold a long sentence). *(Interactive Lab · `interactive/articles/{vanishing-gradients, lstm-gates, seq2seq-bottleneck}`)*
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · Mamba & the return of recurrence** — a **linear** state-space recurrence unrolls into a parallel scan: Transformer-style parallel training, RNN-style $O(1)$ inference — the additive-memory idea, made scalable. *(Interactive Lab · `interactive/articles/mamba`)*
+
+</div>
+
+---
+
 <!-- _class: summary-slide -->
 
 # One sentence to remember
@@ -715,7 +971,7 @@ This lecture reuses and adapts material from the instructor's own courses (IIT G
 
 - **RNN cell, weight sharing, vanishing/exploding, LSTM gates** — *Machine Learning (ES 335)*, N. Batra · `github.com/nipunbatra/ml-teaching` (`neural-networks/slides/rnn.tex`)
 - **Autoregressive / language-model view** — ML `notebooks/autoregressive-model.ipynb`; ES 667 `notebooks/10-rnn-by-hand.ipynb`
-- **Interactive explainers** — Interactive Lab · `lstm-gates`, `vanishing-gradients`, `seq2seq-bottleneck` (`nipunbatra.github.io/interactive-articles/`)
+- **Interactive explainers** — Interactive Lab · `lstm-gates`, `vanishing-gradients`, `seq2seq-bottleneck`, `mamba` (`nipunbatra.github.io/interactive-articles/`)
 - **Pedagogical framing** — A. Ng, *Deep Learning Specialization*, Course 5 (Sequence Models), Week 1.
 - **The LSTM** — S. Hochreiter & J. Schmidhuber, *Long Short-Term Memory*, Neural Computation 9(8), 1997; GRU — Cho et al., 2014; gradient clipping — Pascanu et al., 2013.
 

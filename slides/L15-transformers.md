@@ -146,6 +146,28 @@ Think of $x$ as a **shared bus (the residual stream)** running the height of the
 
 ---
 
+<!-- _class: code-heavy -->
+
+# A token on the residual stream — one numeric pass
+
+Take a width-4 stream vector for one token and walk it through a block. Numbers are illustrative — watch that nothing is ever *overwritten*, only *added*.
+
+```python
+x = [ 1.0, 0.0, -1.0,  2.0]     # the token's slot on the residual stream
+a = [ 0.2, 0.1,  0.0, -0.3]     # attn(norm(x)) — what attention routed in
+x = [ 1.2, 0.1, -1.0,  1.7]     # x = x + a   → communicate (add, don't replace)
+f = [-0.1, 0.4,  0.2,  0.1]     # ffn(norm(x)) — what the FFN computed
+x = [ 1.1, 0.5, -0.8,  1.8]     # x = x + f   → think  (add again)
+```
+
+<div class="code-note">
+
+Two additions — that is the entire block. The original $[1,0,-1,2]$ is still *reachable*; each sublayer wrote a small correction on top. Stack 96 of these (GPT-3 depth) and the stream accumulates **192** such edits, none destructive. This is the residual stream interpretability reads features off of.
+
+</div>
+
+---
+
 # Pre-norm vs post-norm — the gradient highway
 
 <div class="insight">
@@ -157,6 +179,38 @@ Think of $x$ as a **shared bus (the residual stream)** running the height of the
 </div>
 
 **Every modern LLM uses pre-norm** — it trains without learning-rate warmup and scales past 100 layers. (Gradient algebra in the appendix.)
+
+---
+
+# LayerNorm, concretely — "re-center each token"
+
+Pre-norm normalizes **each token vector independently**, across its $d_\text{model}$ features, right before every sublayer:
+
+$$\text{LN}(x)=\gamma\odot\frac{x-\mu}{\sqrt{\sigma^2+\epsilon}}+\beta,\qquad \mu=\tfrac1d\!\sum_j x_j,\ \ \sigma^2=\tfrac1d\!\sum_j (x_j-\mu)^2$$
+
+<div class="columns">
+<div>
+
+**Numeric.** $x=[2,4,4,6]$ → $\mu=4$, $\sigma^2=2$, $\sigma\approx1.41$.
+Normalized: $[-1.41,\,0,\,0,\,1.41]$ — zero mean, unit variance, *then* rescaled by the learned $\gamma,\beta$.
+
+</div>
+<div>
+
+<div class="insight">
+
+Unlike **BatchNorm** (L07), LayerNorm never looks across the batch — so it behaves identically for batch size 1 or 1000, and for 10 tokens or 10 000. That batch-independence is exactly why it, not BatchNorm, survived into Transformers, where sequence lengths vary wildly.
+
+</div>
+
+</div>
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · Norm comparison** — LayerNorm vs BatchNorm vs RMSNorm on the same activations; see which axis each normalizes over, and why RoPE-era LLMs drop the mean-centring for RMSNorm (L16). *(Interactive Lab · `interactive/norm-comparison`)*
+
+</div>
 
 ---
 
@@ -213,6 +267,33 @@ That is the whole Transformer. `x + ...` twice is the residual stream; `norm` be
 
 ---
 
+# Recall (L14): scores → weights → weighted sum, per head
+
+Before we replicate it, hold the single head's three-step pipeline in view — every one of the $h$ heads we build next runs *exactly* this, in its own subspace.
+
+![w:640px](figures/lec13/svg/qk_to_weights.svg)
+
+<div class="columns">
+<div>
+
+1. **Score** every query against every key: $S=QK^\top/\sqrt{d_k}$.
+2. **Normalize** each row with softmax → weights that sum to 1.
+3. **Mix** the values: $\text{weights}\cdot V$ → one context vector per token.
+
+</div>
+<div>
+
+<div class="insight">
+
+That is the *whole* per-head computation. Multi-head just says: **run $h$ of these in parallel, each on its own slice of $d_\text{model}$.** Nothing below changes the three steps — only *how many* copies run and *how wide* each is.
+
+</div>
+
+</div>
+</div>
+
+---
+
 # One head is never enough — run several in parallel
 
 ![w:820px](figures/lec13/svg/multi_head_attention.svg)
@@ -258,6 +339,20 @@ Two other tokens' keys, also split: $k_1=[\underbrace{5,6}_{h1},\underbrace{7,8}
 - **Head 2 scores:** $q^{(2)}\!\cdot\! k_1^{(2)}=53$, $\ q^{(2)}\!\cdot\! k_2^{(2)}=11$ → prefers token 1, sharply.
 
 Same tokens, **different relationships and magnitudes** — that is the point of separate subspaces.
+
+---
+
+# Why concat-then-project — the job of $W_O$
+
+Each head returns a $d_k$-vector; concatenating $h$ of them rebuilds a $d_\text{model}$-vector — but a raw concat just *stacks* the heads side by side, with no communication between them.
+
+<div class="keypoint">
+
+$W_O$ (shape $d_\text{model}\times d_\text{model}$) is the **mixing step**: it lets every output dimension read from *all* heads at once, and re-embeds the concatenated result back onto the residual stream. Drop $W_O$ and the heads can never combine — each is stuck writing to its own fixed slice.
+
+</div>
+
+So the four matrices split cleanly by role: $W_Q,W_K$ decide **who talks to whom**, $W_V$ decides **what gets passed**, and $W_O$ decides **how the heads' answers are fused** back into one vector on the stream.
 
 ---
 
@@ -465,6 +560,22 @@ An RNN is **sequential by construction**: it consumes token $t$ *after* token $t
 
 ---
 
+# The fix — stamp each token with its position
+
+We give every position its own vector $PE_{pos}\in\mathbb R^{d_\text{model}}$ and **add** it to the token embedding *before block 1*:
+
+$$x_{pos}=\underbrace{E[\text{token}]}_{\text{what}}\;+\;\underbrace{PE_{pos}}_{\text{where}}$$
+
+<div class="keypoint">
+
+Think of it as a **postmark**: two copies of the same word at positions 2 and 5 leave the embedding table identical, but arrive at the first block carrying *different* stamps — so attention can finally tell "dog bites man" from "man bites dog." The stamp costs **zero** extra width (added, not concatenated) and **zero** extra parameters if it's fixed sinusoidal.
+
+</div>
+
+The only open question is *what to write on the stamp*: it must be unique per position, bounded, and make **relative** offsets easy — exactly what the sinusoids on the next slide deliver.
+
+---
+
 # Sinusoidal positional encoding — a multi-scale clock
 
 ![w:760px](figures/lec13/svg/positional_encoding.svg)
@@ -484,6 +595,26 @@ Like a **clock with many hands** — one ticks every position, one every 10, one
 </div>
 
 The vector is **added** to the token embedding (not concatenated) — same width, free to stack.
+
+---
+
+# Sinusoidal — a worked numeric
+
+$d_\text{model}=4$, so two frequency pairs with $\theta_0=1$ and $\theta_1=1/10000^{1/2}=0.01$.
+
+| $pos$ | $\sin(\theta_0\,pos)$ | $\cos(\theta_0\,pos)$ | $\sin(\theta_1\,pos)$ | $\cos(\theta_1\,pos)$ |
+|:-:|:-:|:-:|:-:|:-:|
+| 0 | 0.000 | 1.000 | 0.000 | 1.000 |
+| 1 | 0.841 | 0.540 | 0.010 | 1.000 |
+| 2 | 0.909 | −0.416 | 0.020 | 1.000 |
+
+<div class="insight">
+
+The **fast** pair (cols 1–2) swings hard from row to row — it encodes *fine* position. The **slow** pair (cols 3–4) barely moves — it encodes *coarse* position over long ranges. Read together, the four numbers give positions 0, 1, 2 each a distinct fingerprint, and no two positions in the whole window collide.
+
+</div>
+
+A real model uses *hundreds* of such pairs, with wavelengths spanning from 2 up to ~10 000 tokens.
 
 ---
 
@@ -731,6 +862,81 @@ Autoregression in five lines: predict → sample → append → feed back. `temp
 
 ---
 
+# Generation is wasteful — cache the keys and values
+
+Look again at `generate`: each new token re-runs the model over the **whole** prefix, recomputing $K$ and $V$ for tokens it already processed. Those don't change — so **cache them**.
+
+<div class="keypoint">
+
+The **KV-cache** stores every layer's $K,V$ for all past tokens. Generating token $t{+}1$ then computes $Q,K,V$ for the *one* new token only and attends against the cache — turning each step from $O(t)$ recompute into $O(1)$. It is the single most important inference optimization in production LLMs.
+
+</div>
+
+The catch: that cache must *live in memory* for the whole generation, and it grows with every token. How big does it get? (next problem.)
+
+<div class="notebook">
+
+**🎛 Interactive · the KV-cache** — step generation one token at a time, watch the cache fill row by row, and see the memory bar climb linearly with context length. *(Interactive Lab · `interactive/kv-cache`)*
+
+</div>
+
+---
+
+# Practice problem 4
+
+<div class="popquiz">
+
+**Practice problem 4 · the KV-cache teaser.** A Llama-style decoder has $n_\text{layers}=32$, $d_\text{model}=4096$, and stores $K$ and $V$ in fp16 (2 bytes). For a single sequence of $n=2048$ tokens, how many **bytes** does the KV-cache hold? Write the general formula first, then plug in. Why does *this*, not the weights, often cap your batch size?
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 4
+
+Per token, per layer we store one $K$ and one $V$ vector, each of width $d_\text{model}$:
+
+$$\text{bytes}=\underbrace{2}_{K,\,V}\times n_\text{layers}\times n\times d_\text{model}\times \underbrace{2}_{\text{fp16}}$$
+$$=2\times 32\times 2048\times 4096\times 2 \;\approx\; \mathbf{1.07\ GB}$$
+
+<div class="keypoint">
+
+**~1 GB — for one 2k-token sequence.** It grows *linearly* with both context length and batch size, and it sits *on top of* the model weights. Double the context or the batch, double the cache — which is why long-context inference is **memory-bound**, and why **GQA** (share $K,V$ across query heads) and paged caches exist. Full treatment in **L16 / L23**.
+
+</div>
+
+---
+
+# Practice problem 5
+
+<div class="popquiz">
+
+**Practice problem 5 · when does attention overtake the FFN?** Per token, the FFN does $\approx 8\,d_\text{model}^2$ multiply-adds. The *quadratic* part of attention — forming $QK^\top$ and applying the weights to $V$ — costs $\approx 2\,n\,d_\text{model}$ per token over a length-$n$ sequence. At what context length $n$ does the quadratic attention term match the FFN? Plug in $d_\text{model}=512$.
+
+</div>
+
+*Try it before the next slide.*
+
+---
+
+# Solution · practice problem 5
+
+Set the per-token costs equal:
+
+$$2\,n\,d_\text{model} = 8\,d_\text{model}^2 \;\Longrightarrow\; n = 4\,d_\text{model}$$
+
+For $d_\text{model}=512$: $\;n = 4\times 512 = \mathbf{2048}$ tokens.
+
+<div class="keypoint">
+
+Below ~$4\,d_\text{model}$ tokens the **FFN** dominates compute; above it, the **quadratic attention** term takes over and keeps growing as $n^2$. This crossover is *the* reason long context is expensive — and why **FlashAttention** (never materialize the $n^2$ matrix) and sparse / sliding-window attention exist. The block's *structure* is unchanged; only the bill grows. (**L16 / L23**.)
+
+</div>
+
+---
+
 # Variations you'll meet — and where they return
 
 <div class="math-box">
@@ -766,6 +972,36 @@ The reason it won: **parallelism** (all positions at once), **long-range** (any 
 
 ---
 
+# The same block, on things that aren't text
+
+Swap "token" for any sequence of vectors and the block is **unchanged**:
+
+<div class="columns">
+<div>
+
+- **Images (ViT, L18)** — cut the image into 16×16 patches, linearly embed each as a "token," add positions, run the *identical* encoder stack. No convolutions required.
+- **Audio, video, proteins, time series** — anything you can tokenize into a sequence of vectors rides the same block.
+
+</div>
+<div>
+
+<div class="insight">
+
+The block never knew its inputs were words. It **mixes vectors** (attention) and **transforms vectors** (FFN). That input-agnosticism is why *one* architecture now spans language, vision, and science — and why learning this block once pays off everywhere.
+
+</div>
+
+</div>
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · Vision Transformer** — watch an image get sliced into patches, flattened into a token sequence, and classified by the very block you just built; toggle the attention maps to see which patches attend to which. *(Interactive Lab · `interactive/vision-transformer`)*
+
+</div>
+
+---
+
 <!-- _class: summary-slide -->
 
 # One sentence to remember
@@ -781,6 +1017,7 @@ The reason it won: **parallelism** (all positions at once), **long-range** (any 
 - **Position** · attention is order-blind → add sinusoidal / RoPE; an RNN needs neither because it's sequential.
 - **Three flavours** · BERT (no mask) · GPT (causal mask) · T5 (+cross-attention) — the mask is the switch.
 - **nanoGPT** · ~80 lines, plain cross-entropy, and it writes Shakespeare.
+- **Cost** · attention is $O(n^2)$ and overtakes the FFN past ~$4d_\text{model}$ tokens; the KV-cache makes generation $O(1)$ per step but grows linearly with context — the twin drivers of L16/L23.
 
 **Next (L16):** from *one* Transformer to *large* language models — scaling laws, RoPE, GQA, FlashAttention, and what emerges at scale.
 
@@ -800,7 +1037,7 @@ This lecture reuses and adapts material from the instructor's own courses (IIT G
 - **Pedagogical framing (sequence models → attention → Transformers)** — A. Ng, *Deep Learning Specialization*, Course 5 Week 4.
 - **The architecture** — Vaswani et al., *Attention Is All You Need* (2017); pre-norm: Xiong et al. (2020); RoPE: Su et al. (2021).
 
-Interactive Lab · `interactive/attention`, `interactive/positional-encoding` (nipunbatra.github.io/interactive-articles). Figures adapted from the ES 667 figure library. All source courses © N. Batra &amp; teaching staff.
+Interactive Lab · `interactive/attention`, `interactive/positional-encoding`, `interactive/norm-comparison`, `interactive/kv-cache`, `interactive/vision-transformer` (nipunbatra.github.io/interactive-articles). Notebook · `notebooks/13-nanogpt.ipynb`. Figures adapted from the ES 667 figure library. All source courses © N. Batra &amp; teaching staff.
 
 </div>
 

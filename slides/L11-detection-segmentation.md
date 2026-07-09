@@ -88,6 +88,57 @@ The naive fixes fail on **one property** of a real frame: the number of objects 
 
 ---
 
+# Name every number — then the loss almost writes itself
+
+This is the one habit for the whole lecture. Before touching a loss, **list the numbers the head emits and the *support* of each** — is it a probability, a real coordinate, a yes/no? The support forces the distribution, and the loss is its negative log-likelihood (straight from L1).
+
+<div class="columns">
+<div>
+
+| Output group | Support | Distribution | Loss |
+|--|--|--|--|
+| class scores | one-of-$K$ | Categorical | cross-entropy |
+| box $x,y,w,h$ | real | Gaussian | Smooth L1 / MSE |
+| objectness | yes/no | Bernoulli | BCE |
+| pixel label | one-of-$C$ | Categorical | per-pixel CE |
+
+</div>
+<div>
+
+Every task today is just a **different pile of these rows**. Localize $=$ class $+$ box. Detect $=$ objectness $+$ box $+$ class, per cell. Segment $=$ one class row *per pixel*.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+**The loss is never invented.** Read the output groups, match each to its distribution, take $-\log$, sum. That is the entire recipe — L1's NLL story wearing a vision hat.
+
+</div>
+
+---
+
+# Worked numeric · count the ladder's numbers
+
+Take a toy detector: $C = 3$ classes (cat/dog/car), a $7\times7$ grid, $B = 2$ anchors per cell.
+
+<div class="math-box">
+
+- **Classify** · $C = \mathbf{3}$ numbers (one softmax).
+- **Classify + localize** · $C + 4 = \mathbf{7}$ numbers (add one box).
+- **Detect** · per anchor $5 + C = 8$; per cell $B(5{+}C) = 16$; whole grid $7 \times 7 \times 16 = \mathbf{784}$ numbers.
+- **Segment** (image $224\times224$) · $224 \times 224 \times 3 \approx \mathbf{150{,}000}$ numbers — a full softmax *per pixel*.
+
+</div>
+
+<div class="insight">
+
+Same backbone, four wildly different output sizes — from **3** numbers to **150k**. The count explodes; the recipe doesn't. Each number still belongs to exactly one distribution and one loss term. **"Name every number" scales — memorising architectures doesn't.**
+
+</div>
+
+---
+
 # Classification + localization · output first, then loss
 
 **Name every number.** Keep the CNN, add **two heads**. For one object the network emits exactly **$K + 4$ numbers**: $K$ class scores, then 4 box numbers $[x, y, w, h]$. Nothing else.
@@ -177,6 +228,31 @@ Detectors report **mAP at several IoU thresholds** because a box that is 90% rig
 
 ---
 
+# Intuition · IoU is overlap *over union*, not just overlap
+
+Why divide by the **union** at all — why not just measure the shared area?
+
+<div class="columns">
+<div>
+
+**Overlap alone can be cheated.** Draw one giant box covering the whole image and it overlaps every object perfectly — huge intersection, but a useless "detection."
+
+</div>
+<div>
+
+**Union is the honest denominator.** It grows whenever the box is too big *or* misplaced, so IoU punishes a sloppy oversized box as hard as a missed one. Only a box of the *right size and place* scores near 1.
+
+</div>
+</div>
+
+<div class="insight">
+
+Read it as a **fraction of agreement**: of all the pixels *either* box claims, what share do they *agree* on? $\text{IoU}=1$ only when the two boxes are identical. That single ratio is why it became the field's standard overlap score — and why it returns, unchanged, to grade *masks* in Part 4.
+
+</div>
+
+---
+
 # IoU · a quick worked example
 
 Predicted box · $(x_1, y_1, x_2, y_2) = (50, 50, 150, 150)$ · area $= 100 \times 100 = 10{,}000$.
@@ -233,6 +309,31 @@ After prediction you get a **pile of overlapping boxes** on the same object — 
 <div class="notebook">
 
 **🎛 Interactive · draw boxes, watch IoU + NMS live** — drag two boxes on a canvas and see the intersection, union, and which duplicates get suppressed. *(Interactive Lab · `interactive/articles/object-detection` · [object-detection](https://nipunbatra.github.io/interactive-articles/object-detection/))*
+
+</div>
+
+---
+
+# Intuition · the loudest detection silences its neighbours
+
+Picture a crowded room where several people spot the same cat and all shout a box. NMS is the **chairperson's rule**: believe the loudest voice, then tell everyone standing *near* that person to be quiet — they're describing the same cat.
+
+<div class="columns">
+<div>
+
+**"Loudest"** $=$ highest confidence. That box is kept; it becomes the accepted answer for its patch of image.
+
+</div>
+<div>
+
+**"Near"** $=$ high IoU with the kept box. Overlap above the threshold means "same object" → suppressed. Low overlap means a *different* cat, so it survives to shout next.
+
+</div>
+</div>
+
+<div class="keypoint">
+
+It is **greedy and per-object**: the winner silences only its own neighbourhood, never a distant detection. The threshold is the knob — too low deletes real nearby objects (two cats hugging), too high leaves duplicates. That trade-off is why **crowded scenes are the classic NMS failure case**.
 
 </div>
 
@@ -416,6 +517,55 @@ Convolutions are **translation-equivariant** — the same filter runs at every l
 
 ---
 
+# Intuition · anchor boxes are *priors on shape*
+
+Where have we seen "hand the model a sensible starting belief, let it learn a small correction" before? **L1 — the MAP prior.** Anchors are that idea, applied to box geometry.
+
+<div class="columns">
+<div>
+
+**Objects have characteristic shapes.** A standing pedestrian is *tall and thin*; a car is *wide and short*; a plate is *square*. These are priors on the box's aspect ratio.
+
+</div>
+<div>
+
+**Anchors encode those priors.** We tile a few fixed shapes at every cell. The network never guesses a box from nothing — it nudges the *closest* prior (the deltas of the appendix).
+
+</div>
+</div>
+
+<div class="keypoint">
+
+Just as a Gaussian prior pulls a weight gently toward zero, an anchor pulls a prediction toward a **plausible shape** — so the net spends its capacity on the small correction, not on rediscovering that pedestrians are tall. Good anchors (clustered from the data, YOLOv3) are simply a *well-chosen prior*.
+
+</div>
+
+---
+
+# Worked numeric · which anchor is responsible?
+
+An object with normalized box size $(w, h) = (0.2, 0.4)$ — **tall**. Three anchors tiled at its cell, centres aligned. Which one "owns" it? → the highest **shape IoU**.
+
+<div class="math-box">
+
+| Anchor | $(w,h)$ | $\cap = \min w \cdot \min h$ | $\cup = a_\text{gt}{+}a_\text{anc}{-}\cap$ | IoU |
+|--|--|--|--|--|
+| A1 tall | $(0.2, 0.4)$ | $0.2\cdot0.4=0.08$ | $0.08$ | $\mathbf{1.00}$ |
+| A2 square | $(0.3, 0.3)$ | $0.2\cdot0.3=0.06$ | $0.08{+}0.09{-}0.06=0.11$ | $0.55$ |
+| A3 wide | $(0.5, 0.2)$ | $0.2\cdot0.2=0.04$ | $0.08{+}0.10{-}0.04=0.14$ | $0.29$ |
+
+</div>
+
+**A1 wins** → it is the anchor made *responsible* for this object; its box + class terms switch on, the other two stay background.
+
+<div class="insight">
+
+This is exactly how the "active only where an object lives" gate is *decided* in training: match each ground-truth box to its best-IoU anchor, and only that anchor pays the box and class loss. Anchors turn a variable list of objects into a **fixed set of slots**.
+
+</div>
+
+---
+
 # One-stage vs two-stage · speed vs accuracy
 
 | Detector | mAP (COCO) | FPS | Notes |
@@ -521,6 +671,24 @@ d1 = self.dec1(cat([up(d2), e1]))   # ← skip from encoder level 1
 
 ---
 
+# Intuition · the decoder phones the encoder for the lost detail
+
+Downsampling is **lossy on purpose**: pooling trades *where* for *what*. By the bottleneck the net knows "this blob is a kidney" but has forgotten the exact edge — those pixels were averaged away.
+
+<div class="keypoint">
+
+A skip connection is the decoder **phoning back to the encoder layer at its own resolution**: *"You still remember the sharp edges here — send them over."* The decoder supplies the **semantics** (what), the encoder's saved feature map supplies the **geometry** (exactly where). Concatenate the two and the label comes out both correct *and* crisply placed.
+
+</div>
+
+<div class="insight">
+
+Detail lost to pooling is **recalled, not reinvented** — the encoder still holds it. That is the whole reason a U-Net beats a plain encoder-decoder: without the phone line the decoder would have to *hallucinate* boundaries from a blurry summary.
+
+</div>
+
+---
+
 # Practice problem 3
 
 <div class="popquiz">
@@ -581,6 +749,40 @@ The model backprops this `0.28` — and, as the appendix shows, that gradient de
 
 ---
 
+# Practice problem 4
+
+<div class="popquiz">
+
+**Practice problem 4.** A $3\times3$ segmentation. The thresholded prediction $P$ and truth $T$ (both an L-shape of foreground) are
+
+$$T=\begin{pmatrix}1&0&0\\1&0&0\\1&1&0\end{pmatrix}\qquad P=\begin{pmatrix}1&0&0\\1&0&0\\0&1&1\end{pmatrix}$$
+
+Compute the **Dice score**, the **IoU**, and the **Dice loss** $1-\text{Dice}$. Is Dice larger or smaller than IoU here?
+
+</div>
+
+*Try it before the next slide — count $|P\cap T|$, $|P|$, $|T|$ first.*
+
+---
+
+# Solution · practice problem 4
+
+Foreground pixels: $T$ has 4, $P$ has 4; they agree on 3 (both top-left column pixels and $(2,1)$).
+
+$$|P\cap T| = 3, \qquad |P| = 4, \qquad |T| = 4$$
+
+$$\text{Dice} = \frac{2\cdot 3}{4+4} = \frac{6}{8} = \mathbf{0.75}, \qquad \text{IoU} = \frac{3}{4+4-3} = \frac{3}{5} = \mathbf{0.60}$$
+
+$$\mathcal{L}_\text{Dice} = 1 - 0.75 = \mathbf{0.25}$$
+
+<div class="keypoint">
+
+**Dice $\ge$ IoU always** (here $0.75 > 0.60$) — Dice double-counts the intersection in its numerator, so it is the *gentler* score with smoother gradients for SGD. They agree only at the extremes: both are $1$ for a perfect mask and $0$ for no overlap. Report IoU as the metric, optimise Dice as the loss.
+
+</div>
+
+---
+
 # Other segmentation losses · when Dice isn't enough
 
 | Loss | What it does | Reach for it when |
@@ -600,6 +802,42 @@ In practice, **Dice + CE** (summed) is a strong default: CE gives clean per-pixe
 <div class="notebook">
 
 **📓 Notebook · train a tiny U-Net** — segment a toy dataset, compare **CE vs Dice** under 95% background, and measure IoU per class. *(ES 667 · `notebooks/11-yolo-unet.ipynb`)*
+
+</div>
+
+---
+
+# Practice problem 5
+
+<div class="popquiz">
+
+**Practice problem 5.** A $10\times10$ medical scan has **4** foreground (tumour) pixels; the other 96 are background. A lazy model predicts **background everywhere**. Compute its **pixel accuracy** and its **Dice score** on the foreground. What does the gap tell you about which loss to train with?
+
+</div>
+
+*Try it before the next slide — accuracy counts *all* pixels; Dice counts only the foreground.*
+
+---
+
+# Solution · practice problem 5
+
+**Pixel accuracy** · 96 of 100 pixels are correctly called background:
+
+$$\text{acc} = \frac{96}{100} = \mathbf{96\%}$$
+
+**Dice** · the model predicts *no* foreground, so $|P\cap T| = 0$:
+
+$$\text{Dice} = \frac{2\cdot 0}{0 + 4} = \mathbf{0}$$
+
+<div class="warning">
+
+A model scores **96% accuracy while finding nothing** — accuracy and plain CE are dominated by the 96 easy background pixels. **Dice sees the disaster (0) because it never counts the true-negative background** — *the* reason to use Dice (or weighted CE) on imbalanced masks.
+
+</div>
+
+<div class="notebook">
+
+**📓 Notebook · feel the imbalance trap** — retrain the toy U-Net with CE vs Dice on this split; CE flatlines at "all background," Dice recovers the foreground. *(ES 667 · `notebooks/11-yolo-unet.ipynb`)*
 
 </div>
 
@@ -660,6 +898,24 @@ The frontier is **fully prompt-driven** vision. Two caveats for SAM: it returns 
 
 ---
 
+# Intuition · prompting beats a fixed dictionary
+
+A classic detector ships with a **closed dictionary** — train it on {cat, dog, car} and it is *blind* to "zebra" forever; a new class means relabelling and retraining.
+
+<div class="keypoint">
+
+**CLIP breaks the dictionary open.** It embeds image regions and free text in **one shared space**, so "find the zebra" becomes *"which region's embedding is closest to the text 'a zebra'?"* — no retraining, any word you can type. Open-vocabulary detection (OWLv2, GroundingDINO) and SAM-with-text are this trick bolted onto a detector or segmenter.
+
+</div>
+
+<div class="notebook">
+
+**🎛 Interactive · match images to text prompts in CLIP space** — type a caption and watch the cosine similarity to each image rise and fall; this is exactly the scoring an open-vocabulary detector runs per region. *(Interactive Lab · `interactive/articles/clip-zero-shot` · [clip-zero-shot](https://nipunbatra.github.io/interactive-articles/clip-zero-shot/))*
+
+</div>
+
+---
+
 <!-- _class: summary-slide -->
 
 # One sentence to remember
@@ -691,7 +947,8 @@ This lecture reuses and adapts material from the instructor's own ES 667 course 
 - **Pedagogical structure & pacing** — A. Ng, *Deep Learning Specialization*, **Course 4 (CNNs), Week 3** (detection & segmentation).
 - **YOLO** — Redmon, Divvala, Girshick & Farhadi, *You Only Look Once: Unified, Real-Time Object Detection*, CVPR 2016.
 - **U-Net** — Ronneberger, Fischer & Brox, *U-Net: Convolutional Networks for Biomedical Image Segmentation*, MICCAI 2015.
-- **Interactives** — Interactive Lab (`~/git/interactive`): `object-detection`, `image-segmentation`, `unet`.
+- **Open-vocabulary / prompt-driven frontier** — Radford et al., *Learning Transferable Visual Models from Natural Language Supervision* (CLIP), ICML 2021; Kirillov et al., *Segment Anything* (SAM), ICCV 2023.
+- **Interactives** — Interactive Lab (`~/git/interactive`): `object-detection`, `image-segmentation`, `unet`, `clip-zero-shot`.
 
 Figures adapted from the ES 667 figure library (`figures/lec09/`). All source material © N. Batra & teaching staff.
 
