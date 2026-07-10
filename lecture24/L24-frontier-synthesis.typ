@@ -7,6 +7,7 @@
 // Trend figures: python3 lecture24/diagrams/l24_figs.py   (all structural diagrams are native fletcher)
 
 #import "../common/metropolis.typ": *
+#import "../common/mldiag.typ": *
 #show: metropolis-deck.with(
   title: [Frontier Topics and the Deep-Learning Toolkit],
   subtitle: [Agents, reasoning, interpretability — and the vocabulary to evaluate what comes next],
@@ -290,7 +291,20 @@ Some capabilities *appear* to switch on sharply with scale — but the *metric* 
 
 == Generalization still surprises us #V
 
-#fig("/lecture24/figures/double_desc.svg", w: 40%)
+#let _test(x) = 0.38 + 0.12 * calc.exp(-x / 0.4) + 0.92 * calc.exp(-calc.pow((x - 1.0) / 0.06, 2))
+#let _train(x) = if x < 1.0 { 0.57 * (1.0 - x) } else { 0.0 }
+#align(center, lines(
+  (
+    range(0, 119).map(i => { let x = 0.05 + i * 0.025; (x, _test(x)) }),
+    range(0, 119).map(i => { let x = 0.05 + i * 0.025; (x, _train(x)) }),
+    ((1.0, 0), (1.0, 1.31)),
+  ),
+  colors: (ACC, TEAL, MUTED),
+  labels: ([test error], [train error], none),
+  markers: false,
+  x-label: [capacity (params / data)], y-label: [error],
+  size: (78mm, 48mm),
+))
 #pause
 #align(center, text(size: 15pt, fill: MUTED)[even classical questions are not closed — *double descent*: test error falls, spikes, then falls again])
 #pause

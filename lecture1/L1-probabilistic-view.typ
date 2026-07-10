@@ -265,12 +265,24 @@ $ ell_i = (y_i - mu_i)^2/(2 sigma^2) + 1/2 log sigma^2 + C $
 #two(r: (1fr, 1.25fr),
   [#table(columns: 2, stroke: 0.5pt + MUTED, inset: 7pt, align: left,
     table.header([*Noise model*], [*NLL*]),
-    [Gaussian], [$r^2$],
-    [Laplace], [$|r|$],
-    [Uniform], [hard interval],
-    [Student-$t$], [robust])
-   #v(3pt) #text(fill: MUTED)[$r = y - hat(y)$]],
-  fig("/lecture1/figures/residual_losses.svg", w: 94%),
+    [#text(fill: ACC, weight: 600)[Gaussian]], [$r^2$],
+    [#text(fill: TEAL, weight: 600)[Laplace]], [$|r|$],
+    [#text(fill: MUTED, weight: 600)[Uniform]], [hard interval],
+    [#text(fill: GREEN, weight: 600)[Student-$t$]], [robust])
+   #v(3pt) #text(fill: MUTED)[$r = y - hat(y)$ · colours match the curves]],
+  align(center, lines(
+    (
+      range(0, 61).map(i => { let r = -3 + i * 0.1; (r, r * r) }),
+      range(0, 61).map(i => { let r = -3 + i * 0.1; (r, calc.abs(r) * 1.6) }),
+      range(0, 61).map(i => { let r = -3 + i * 0.1; (r, 2.2 * calc.ln(1 + r * r)) }),
+      ((-2.2, 0), (-2.2, 9)),
+      ((2.2, 0), (2.2, 9)),
+    ),
+    colors: (ACC, TEAL, GREEN, MUTED, MUTED),
+    markers: false,
+    x-label: [residual $r$], y-label: [$-log p(r)$],
+    size: (64mm, 44mm),
+  )),
 )
 
 == Interactive: likelihood → loss

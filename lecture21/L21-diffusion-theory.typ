@@ -7,6 +7,7 @@
 // Quantitative figures: python3 lecture21/diagrams/l21_figs.py
 
 #import "../common/metropolis.typ": *
+#import "../common/mldiag.typ": *
 #show: metropolis-deck.with(
   title: [Diffusion Models: Theory],
   subtitle: [From a known noising process back to data — predict the noise, then reverse it],
@@ -379,7 +380,29 @@ Different reverse steps do qualitatively different work:
 
 Training touches *every* difficulty, from trivial to nearly hopeless:
 #pause
-#fig("/lecture21/figures/noise_schedule.svg", w: 78%)
+#let _T = 1000
+#let _bmin = 0.0001
+#let _bmax = 0.02
+#let _beta(s) = _bmin + (s - 1) / (_T - 1) * (_bmax - _bmin)
+#let _abar(t) = if t == 0 { 1.0 } else { range(1, t + 1).map(s => 1.0 - _beta(s)).fold(1.0, (a, b) => a * b) }
+#two(r: (1fr, 1fr),
+  align(center, lines(
+    ((1, _beta(1)), (_T, _beta(_T))),
+    colors: (RED,),
+    markers: false,
+    x-label: [timestep $t$], y-label: [$beta_t$],
+    title: [$beta_t$: $10^(-4) -> 0.02$ (linear)],
+    size: (50mm, 38mm),
+  )),
+  align(center, lines(
+    range(0, _T + 1, step: 40).map(t => (t, _abar(t))),
+    colors: (TEAL,),
+    markers: false,
+    x-label: [timestep $t$], y-label: [$overline(alpha)_t$],
+    title: [$overline(alpha)_t$: signal retained],
+    size: (50mm, 38mm),
+  )),
+)
 #pause
 #align(center, text(size: 15pt, fill: MUTED)[$beta_t$ (how much noise each step adds) sets $overline(alpha)_t$ (how much signal survives)])
 

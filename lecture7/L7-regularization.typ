@@ -5,12 +5,34 @@
 // Theme, palette, helpers and diagram builders live in common/metropolis.typ.
 
 #import "../common/metropolis.typ": *
+#import "../common/mldiag.typ": *
 #show: metropolis-deck.with(
   title: [Generalization and Regularization],
   subtitle: [Making deep networks perform well on unseen data],
 )
 
 #let IA = "https://nipunbatra.github.io/interactive-articles/"
+
+// native ml-plot: double descent — test error (bias + variance spike at the
+// interpolation threshold c=1) and train error vs capacity (mirrors l7_figs.py
+// f_double_descent). Reused on two slides, so bound once here.
+#let dd-c = range(0, 100).map(i => 0.05 + i * (2.95 / 99))
+#let dd-test = dd-c.map(c => {
+  let bias = 0.35 * calc.exp(-2.5 * c)
+  let vf = if c < 1.0 { 1.0 } else { 0.55 }
+  let vari = 0.28 / (calc.abs(c - 1.0) + 0.14) * vf
+  (c, calc.min(1.4, bias + vari * 0.35 + 0.12))
+})
+#let dd-train = dd-c.map(c => (c, calc.min(1.0, 0.9 * calc.exp(-2.2 * c))))
+#let double-descent-plot(size: (66mm, 42mm)) = lines(
+  (dd-test, dd-train),
+  colors: (ACC, TEAL),
+  labels: ([test], [train]),
+  markers: false,
+  points: ((dd-c.at(31), dd-test.at(31).at(1), [interp. threshold]),),
+  x-label: [model size / capacity], y-label: [error],
+  size: size,
+)
 
 // ── dropout: an MLP with two hidden units zeroed (a sampled subnetwork) ──
 #let dropoutnet = align(center, diagram(spacing: (20mm, 4.5mm), {
@@ -210,12 +232,12 @@ Classical wisdom: *bigger model ⇒ more overfitting*. Modern practice complicat
 #pause
 - what governs generalization: *optimization, data, architecture, implicit bias* — not just parameter count;
 #pause
-#fig("/lecture7/figures/double_descent.svg", w: 48%)
+#align(center, double-descent-plot(size: (66mm, 40mm)))
 
 == Double descent
 
 #two(
-  fig("/lecture7/figures/double_descent.svg", w: 100%),
+  double-descent-plot(size: (72mm, 46mm)),
   [
     Past the interpolation threshold, test error can *fall again* — the modern "second descent".
     #v(6pt)
@@ -301,7 +323,16 @@ $ theta arrow.r.bar "AdamStep"(theta), quad quad theta arrow.r.bar (1 - eta lamb
 
 Weight norm $norm(theta)$ over training for several $lambda$:
 #pause
-#fig("/lecture7/figures/weight_decay.svg", w: 60%)
+// native ml-plot: ‖θ‖ = 3(1−e^(−0.10 s))/(1+8λ) + 0.15 (mirrors l7_figs.py f_weight_decay)
+#let wd-series(lam) = range(0, 60).map(s => (s, 3.0 * (1 - calc.exp(-0.10 * s)) * (1.0 / (1.0 + 8.0 * lam)) + 0.15))
+#align(center, lines(
+  (wd-series(0.0), wd-series(0.01), wd-series(0.05), wd-series(0.15)),
+  colors: (INK, BLUE, TEAL, ACC),
+  markers: false,
+  x-label: [training step], y-label: [weight norm $norm(theta)$],
+  size: (82mm, 46mm),
+))
+#align(center, text(size: 15pt)[#text(fill: INK)[$lambda = 0$] · #text(fill: BLUE)[$lambda = 0.01$] · #text(fill: TEAL)[$lambda = 0.05$] · #text(fill: ACC)[$lambda = 0.15$]])
 #align(center, text(size: 16pt, fill: MUTED)[larger $lambda$ ⇒ smaller final weights ⇒ smoother function.])
 
 == Interactive: weight decay #I

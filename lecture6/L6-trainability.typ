@@ -5,6 +5,7 @@
 // Theme, palette, helpers and diagram builders live in common/metropolis.typ.
 
 #import "../common/metropolis.typ": *
+#import "../common/mldiag.typ": *
 #show: metropolis-deck.with(
   title: [Making Deep Networks Trainable],
   subtitle: [Initialization, activations, normalization and residual connections],
@@ -727,7 +728,24 @@ Same 50-layer net and data, six recipes stacked from naive to modern:
 
 == The ablation, as curves #V
 
-#fig("/lecture6/figures/ablation_curves.svg", w: 60%)
+// native ml-plot: train loss = floor + (start−floor)·e^(−t/τ) (mirrors l6_figs.py f_ablation_curves)
+#let ab-t = range(0, 300, step: 5)
+#let ab-curve(start, floor, tau) = ab-t.map(t => (t, floor + (start - floor) * calc.exp(-t / tau)))
+#align(center, lines(
+  (
+    ab-curve(2.35, 2.15, 120),
+    ab-curve(2.30, 1.15, 90),
+    ab-curve(2.30, 0.62, 55),
+    ab-curve(2.30, 0.34, 38),
+    ab-curve(2.30, 0.17, 24),
+    ab-curve(2.30, 0.08, 16),
+  ),
+  colors: (RED, ACC, BLUE, TEAL, GREEN, INK),
+  markers: false,
+  x-label: [training step], y-label: [training loss],
+  size: (86mm, 44mm),
+))
+#align(center, text(size: 14pt)[#text(fill: RED)[sigmoid + $cal(N)(0,1)$] · #text(fill: ACC)[sigmoid + Xavier] · #text(fill: BLUE)[tanh + Xavier] · #text(fill: TEAL)[ReLU + He] · #text(fill: GREEN)[\+ BatchNorm] · #text(fill: INK)[\+ residual]])
 #align(center, text(size: 15pt, fill: MUTED)[naive sigmoid never moves; each added technique lowers and speeds the loss])
 
 == What each technique changes

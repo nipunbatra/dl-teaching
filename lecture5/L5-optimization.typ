@@ -5,6 +5,7 @@
 // Theme, palette, helpers and diagram builders live in common/metropolis.typ.
 
 #import "../common/metropolis.typ": *
+#import "../common/mldiag.typ": *
 #show: metropolis-deck.with(
   title: [Optimization for Deep Learning],
   subtitle: [SGD, Momentum, Adam, and Learning-Rate Schedules],
@@ -556,9 +557,26 @@ $ theta_(t+1) = theta_t - eta thin hat(m)_t/(sqrt(hat(v)_t) + epsilon) - eta lam
 
 == Common schedules #V
 
-#fig("/lecture5/figures/lr_schedules.svg", w: 74%)
+// native ml-plot: five schedules on t∈[0,100), e0=1 (mirrors l5_figs.py f_lr_schedules)
+#let lr-T = 100
+#let lr-t = range(0, lr-T)
+#let sched-step = lr-t.map(t => (t, calc.pow(0.5, calc.floor(t / 30))))
+#let sched-expo = lr-t.map(t => (t, calc.exp(-0.03 * t)))
+#let sched-cos = lr-t.map(t => (t, 0.5 * (1 + calc.cos(calc.pi * t / lr-T))))
+#let sched-wc = lr-t.map(t => (t, if t < 10 { t / 10 } else { 0.5 * (1 + calc.cos(calc.pi * (t - 10) / 90)) }))
+#let sched-oc = lr-t.map(t => (t, calc.max(0, calc.min(1.05,
+  if t < 25 { 0.25 + 0.75 * t / 25 }
+  else if t < 90 { 1 - 0.85 * (t - 25) / 65 }
+  else { 0.15 * (1 - (t - 90) / 10) }))))
+#align(center, lines(
+  (sched-step, sched-expo, sched-cos, sched-wc, sched-oc),
+  colors: (TEAL, BLUE, GREEN, ACC, RED),
+  markers: false,
+  x-label: [training step], y-label: [learning rate $eta_t$],
+  size: (90mm, 46mm),
+))
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[step · exponential · cosine · warmup+cosine · one-cycle])
+#align(center, text(size: 16pt)[#text(fill: TEAL)[step] · #text(fill: BLUE)[exponential] · #text(fill: GREEN)[cosine] · #text(fill: ACC)[warmup+cosine] · #text(fill: RED)[one-cycle]])
 
 == Warmup
 

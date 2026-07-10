@@ -5,6 +5,7 @@
 // Theme, palette, helpers and diagram builders live in common/metropolis.typ.
 
 #import "../common/metropolis.typ": *
+#import "../common/mldiag.typ": *
 #show: metropolis-deck.with(
   title: [Localization and Object Detection],
   subtitle: [From one label to a variable set of boxes],
@@ -480,7 +481,20 @@ where $p_t$ is the predicted probability of the *true* class.
 
 == Focal loss down-weights easy examples #V
 
-#fig("/lecture9/figures/focal_loss.svg", w: 58%)
+#align(center, lines(
+  (
+    range(0, 100).map(i => { let p = 0.01 + i * 0.01; (p, -calc.ln(p)) }),
+    range(0, 100).map(i => { let p = 0.01 + i * 0.01; (p, -(1 - p) * calc.ln(p)) }),
+    range(0, 100).map(i => { let p = 0.01 + i * 0.01; (p, -calc.pow(1 - p, 2) * calc.ln(p)) }),
+    range(0, 100).map(i => { let p = 0.01 + i * 0.01; (p, -calc.pow(1 - p, 5) * calc.ln(p)) }),
+  ),
+  colors: (INK, BLUE, ACC, RED),
+  markers: false,
+  x-label: [$p_t$ (prob. of true class)], y-label: [loss $"FL"(p_t)$],
+  size: (74mm, 46mm),
+))
+#align(center, text(size: 15pt, weight: 600)[
+  #text(fill: INK)[$gamma = 0$ (CE)]#h(1.4em)#text(fill: BLUE)[$gamma = 1$]#h(1.4em)#text(fill: ACC)[$gamma = 2$]#h(1.4em)#text(fill: RED)[$gamma = 5$]])
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[higher $gamma$ ⇒ easy examples ($p_t -> 1$) contribute almost nothing — built for *dense one-stage* detectors.])
 
