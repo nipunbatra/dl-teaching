@@ -1,37 +1,53 @@
 ---
-title: "HW1 · Micrograd, an MLP, and the Optimizer Race"
+title: "Assignment 1 · Foundations & Optimization"
 ---
 
-**Out after L5 · due in 2 weeks · 100 points.**
+**Out after L7 · programming submission + individual post-deadline viva · 13 marks.**
 
 You built a `Value` class in lecture that does reverse-mode autodiff in ~100 lines.
-You also watched four optimizers race across a loss surface. This assignment makes
-you the one holding the wrench: you extend the autodiff engine, train a network
-with it, and then explain — in words — why Adam beats SGD on some problems and
-why "beats" is the wrong word anyway.
+You watched four optimizers race across a loss surface. And you saw a network that
+memorizes its training set start to fail on data it hasn't seen. This assignment
+makes you the one holding the wrench: you extend the autodiff engine, train a
+network with it, race the optimizers on a real (toy) problem, and then take an
+over-capacity net that overfits and *close the train–val gap on purpose*.
 
 ## Goals
 
 - Extend a working autograd engine and *prove* your gradients are correct (L3–L4: chain rule as code).
-- Train an MLP end-to-end with an engine you can read in one sitting (L2–L4).
-- Reproduce the SGD / momentum / Adam comparison on a real (toy) learning problem, not just a 2D surface (L5).
+- Train an MLP end-to-end with an engine you can read in one sitting (L2).
+- Reproduce the SGD / momentum / Adam comparison on a real learning problem, not just a 2D surface (L5).
+- Watch regularization close a train–val gap you opened yourself, and connect the weight-decay penalty back to the MAP prior from L1 (L6–L7).
 - Practice the skill this course grades hardest: **explaining a curve, not just producing it**.
 
 ## Setup
 
 Start from [`../notebooks/01-micrograd-mlp.ipynb`](../notebooks/01-micrograd-mlp.ipynb)
-and [`../notebooks/05-optimizers.ipynb`](../notebooks/05-optimizers.ipynb).
-Copy both into a single working notebook. Everything runs on CPU; no GPU needed.
+and [`../notebooks/05-optimizers.ipynb`](../notebooks/05-optimizers.ipynb) for parts
+(a)–(c). Part (d) draws on
+[`../notebooks/L07/01_overfitting_and_early_stopping.ipynb`](../notebooks/L07/01_overfitting_and_early_stopping.ipynb),
+[`../notebooks/L07/02_dropout_from_scratch.ipynb`](../notebooks/L07/02_dropout_from_scratch.ipynb),
+and (optionally) [`../notebooks/L06/03_xavier_vs_he.ipynb`](../notebooks/L06/03_xavier_vs_he.ipynb).
+Copy what you need into a single working notebook. Everything runs on CPU; no GPU
+needed.
+
+::: {.callout-note}
+## How this is graded (13 marks)
+
+**8 marks** for the programming submission (parts a–d), **5 marks** for an
+**individual post-deadline viva** where you walk through your own gradient checks,
+loss curves, and regularization ablation, and answer follow-ups. The viva is where
+understanding is verified — see [*What the viva will probe*](#viva) at the end.
+:::
 
 ---
 
-## Part (a) · Extend micrograd — 35 points
+## Part (a) · Extend micrograd — verify every gradient
 
 The lecture `Value` class supports `+`, `*`, and `relu`. Add **three** new operations:
 
 1. `tanh(self)` — you may use `math.tanh` for the forward pass. What is $\frac{d}{dx}\tanh(x)$ in terms of $\tanh(x)$ itself? Use that.
 2. `__pow__(self, other)` for a *constant* exponent (enough for `x**2`, `x**-1`). Why is a constant exponent so much easier than `x**y` with both as `Value`s?
-3. `exp(self)` — and then use it to write `sigmoid` *as a composition* of ops you already have ($\sigma(x) = 1/(1+e^{-x})$). No new backward rule allowed for sigmoid itself.
+3. `exp(self)` — and then write `sigmoid` *as a composition* of ops you already have ($\sigma(x) = 1/(1+e^{-x})$). No new backward rule allowed for sigmoid itself.
 
 **Gradient checks (this is where the points are).** For each new op, verify against
 the centered finite difference
@@ -45,7 +61,7 @@ All relative errors should be below $10^{-6}$.
 - *Question to answer in a markdown cell:* why centered differences and not the
   one-sided $\frac{f(x+h)-f(x)}{h}$? (One sentence + the order of the error.)
 
-## Part (b) · Train an MLP on a toy 2D dataset — 25 points
+## Part (b) · Train an MLP on a toy 2D dataset
 
 Use `sklearn.datasets.make_moons(n_samples=200, noise=0.15)`.
 
@@ -55,9 +71,9 @@ Use `sklearn.datasets.make_moons(n_samples=200, noise=0.15)`.
 4. Reach ≥ 95% training accuracy. **We are not grading the accuracy** — we are grading that you can tell us, in 3–4 sentences, what the boundary plots show about *what the network learned and when*.
 
 Sanity check before training long: can you overfit 4 points perfectly? If not,
-stop and debug (this foreshadows the course's debugging workflow).
+stop and debug (this foreshadows the debug ladder in Assignment 2).
 
-## Part (c) · The optimizer race — 40 points
+## Part (c) · The optimizer race
 
 Same moons problem, same architecture, same initialization (seed everything;
 re-initialize identically for each run).
@@ -66,32 +82,63 @@ re-initialize identically for each run).
 2. Run each for the same number of epochs at a *tuned* learning rate: try {1.0, 0.1, 0.01, 0.001} for each optimizer and keep the best. Report the grid as a table.
 3. Plot all three loss curves on one figure (log-scale y-axis).
 
-**The written part (20 of the 40 points).** Answer each in 2–5 sentences:
+**The written part.** Answer each in 2–5 sentences, pointing at your figure:
 
 - Why does momentum's curve often *overshoot* and oscillate before settling? Connect it to the heavy-ball picture from L5.
 - Why is Adam's best learning rate so different from SGD's best? What is Adam dividing by, and what does that do to the effective step size per parameter?
 - Did Adam *win*? Define what "win" means here (fastest early progress? lowest final loss?) and argue from your plot. If your plot shows something surprising, say so — honest reading of evidence beats a textbook answer that contradicts your figure.
 - Bias correction: at step t = 1 with β₂ = 0.999, what would Adam's denominator look like *without* the correction, and what would that do to the first step?
 
+## Part (d) · Close the train–val gap — regularization (L6–L7)
+
+Now open a gap and close it. You may use **PyTorch** here — the micrograd exercise
+already proved you own the gradients; this part is about training dynamics.
+
+1. Take a deliberately **over-capacity** MLP (e.g. `2 → 256 → 256 → 256 → 1`, or the moons with a `noise=0.3` and a proper train/val split) and train it long enough to overfit: training accuracy climbs toward 100% while validation accuracy plateaus and then *degrades*. Plot train and val loss (or accuracy) on one figure — the gap between the two curves **is the phenomenon**.
+2. Now, **one regularizer at a time** (same architecture, same seed, same split), show the gap shrink relative to that unregularized baseline:
+   - **L2 weight decay** — sweep the coefficient over {0, 1e-4, 1e-3, 1e-2}.
+   - **Dropout** — p ∈ {0, 0.2, 0.5} on the hidden layers.
+   - **Early stopping** — stop at the epoch of best validation loss; report that epoch.
+
+   A small overlay or multi-panel figure comparing baseline vs each regularizer is the ideal deliverable.
+3. Questions to answer in a markdown cell (3–5 sentences each, **every claim pointing at your figure**):
+   - Weight decay is an L2 penalty on the weights. Connect it to **L1**: under the MAP view, what *prior* on the weights does an L2 penalty correspond to, and what is being pulled toward what? Show the one line where the log-prior becomes the penalty.
+   - Dropout is on at train time and off at test time. What is the network effectively *averaging over*, and why must activations be rescaled (at train or test) so expectations match?
+   - Early stopping regularizes without touching the loss function. What is it implicitly limiting, and why does "best val epoch" usually arrive *before* "best train epoch"?
+   - Which regularizer closed the gap most on *your* data, and did any of them hurt final *train* accuracy? Read your own plot — an honest "dropout 0.5 was too aggressive here" scores full marks.
+4. *(Optional, from L6.)* If the over-capacity net was hard to train at all, was it an **initialization** problem? Swap Xavier ↔ He and say in one sentence what changed. Ties trainability to init; not required.
+
 ## Deliverables
 
-- **One notebook** (`hw1_<rollno>.ipynb`), run top to bottom (`Restart & Run All` before submitting — a notebook that doesn't run loses 10 points immediately).
-- Written answers as markdown cells *next to the plots they discuss*, not in a separate document.
+- **One notebook** (`a1_<rollno>.ipynb`), run top to bottom (`Restart & Run All` before submitting).
 - The gradient-check table from Part (a).
+- Written answers as markdown cells *next to the plots they discuss*, not in a separate document.
+- A short **LLM usage note** (see the [course LLM policy](index.qmd#llm-policy)).
 
-## Rubric
+## Rubric (internal — sums to 13)
 
-| Component | Points | What we look for |
+| Component | Marks | What we look for |
 |---|---:|---|
-| (a) Three ops implemented correctly | 15 | Backward rules right; sigmoid is a composition |
-| (a) Gradient checks | 15 | Table complete, errors < 1e-6, multiple points |
-| (a) Centered-difference question | 5 | Error order stated correctly |
-| (b) MLP trains, boundary plots | 17 | ≥95% train acc; three boundary snapshots |
-| (b) Boundary explanation | 8 | Says *what* changed and *when*, not just "it got better" |
-| (c) Three optimizers on micrograd | 12 | Same init, tuned LRs, grid reported |
-| (c) Loss-curve figure | 8 | One figure, log scale, labeled |
-| (c) Written explanations | 20 | Mechanistic reasons, consistent with *your* plot |
+| (a) Three ops + gradient checks | 2 | Backward rules right; sigmoid is a composition; centered-diff table, errors < 1e-6 at ≥3 points incl. a negative |
+| (b) MLP trains + boundary plots | 2 | ≥95% train acc; three boundary snapshots; says *what* changed and *when* |
+| (c) Optimizer race | 2 | Same init, tuned-LR grid, one log-scale figure; mechanistic write-up consistent with the plot |
+| (d) Regularization closes the gap | 2 | Overfitting baseline shown; weight decay / dropout / early stopping each compared to it; weight-decay ↔ MAP-prior link made |
+| **Programming subtotal** | **8** | |
+| **Individual viva** | **5** | Explains *own* gradient check, *own* loss curves, and *own* regularization ablation live; can answer the follow-ups below |
+| **Total** | **13** | |
 
-**Common ways to lose points:** gradient checks at only one point; optimizers
-run at the same LR "for fairness" (it isn't — each method's best LR *is* part of
-the method); written answers that could have been written without running the code.
+::: {#viva}
+### What the viva will probe
+
+Come ready to, with your notebook open:
+
+- Derive the `tanh` (or `exp`) backward rule on the spot, and explain why your finite-difference check confirms it.
+- Point at your own optimizer figure and say what "winning" means for *that* curve — and defend it if the plot disagrees with the textbook.
+- Explain, from your own train/val curves, which regularizer closed the gap and why, and reproduce the one line taking an L2 penalty back to a Gaussian prior.
+:::
+
+**Common ways to lose points:** gradient checks at only one point; optimizers run
+at the same LR "for fairness" (it isn't — each method's best LR *is* part of the
+method); a regularization sweep with no unregularized baseline to measure the gap
+against; written answers (or viva answers) that could have been given without
+running *your* code.

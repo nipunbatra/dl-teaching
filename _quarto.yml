@@ -26,7 +26,7 @@ website:
         menu:
           - text: "Notebooks"
             href: notebooks.qmd
-          - text: "Assignments & project"
+          - text: "Assignments"
             href: labs/index.qmd
       - text: "Resources"
         href: resources.qmd

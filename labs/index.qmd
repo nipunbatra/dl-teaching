@@ -1,24 +1,36 @@
 ---
-title: "Assignments & project"
+title: "Assignments"
 ---
 
-Four homeworks and a project. Every homework grows out of a notebook you've
-already seen in lecture — the assignment is never "build something alien", it's
-"take the thing we built together and push it until you own it".
+Three programming assignments — no separate project. Every assignment grows out of
+a notebook you've already seen in lecture — the work is never "build something
+alien", it's "take the thing we built together and push it until you own it". Each
+covers **only the material taught by its deadline**, and each is followed by an
+**individual post-deadline quiz/viva** where you explain your own code, plots, and
+choices out loud. That conversation is where understanding is actually verified.
 
-## The homeworks
+## The three assignments
 
 | | Out after | Built from | One line | Due |
 |---|---|---|---|---|
-| [HW1 · Micrograd & the optimizer race](hw1-micrograd-optimizers.qmd) | L05 | [`01-micrograd-mlp`](../notebooks/01-micrograd-mlp.ipynb) · [`05-optimizers`](../notebooks/05-optimizers.ipynb) | Extend the autodiff engine, train an MLP with it, race SGD/momentum/Adam and explain the curves | +2 weeks |
-| [HW2 · CNNs & the sabotaged script](hw2-cnn-debugging.qmd) | L10 | [`07-cnn-shape-tour`](../notebooks/07-cnn-shape-tour.ipynb) · [`03-debug-ladder`](../notebooks/03-debug-ladder.ipynb) | Budget a CNN by hand, measure what pretraining is worth, and diagnose three planted bugs with the debug ladder | +2 weeks |
-| [HW3 · BPE, attention & nanoGPT](hw3-nanogpt-tokenization.qmd) | L17 | [`12-attention-by-hand`](../notebooks/12-attention-by-hand.ipynb) · [`13-nanogpt`](../notebooks/13-nanogpt.ipynb) | Run BPE on paper, build attention from matmuls and verify it, train a GPT and explain the temperature knob | +2 weeks |
-| [HW4 · VAEs & diffusion](hw4-vae-diffusion.qmd) | L23 | [`19-vae-mnist`](../notebooks/19-vae-mnist.ipynb) · [`21-ddpm-2d`](../notebooks/21-ddpm-2d.ipynb) | Ablate the KL term on a VAE, watch a DDPM denoise, and argue VAE vs GAN vs diffusion like an engineer | +2 weeks |
-| [Project](project.qmd) | proposal after L18 | — | A landscape topic executed with spine rigor: one question, one baseline, honest analysis | last week |
+| [Assignment 1 · Foundations & Optimization](hw1-micrograd-optimizers.qmd) | L7 | [`01-micrograd-mlp`](../notebooks/01-micrograd-mlp.ipynb) · [`05-optimizers`](../notebooks/05-optimizers.ipynb) · L6–L7 reg | Extend the autodiff engine, train an MLP, race SGD/momentum/Adam, then close the train–val gap with weight decay / dropout / early stopping | +2 wks · viva after |
+| [Assignment 2 · Vision & Sequences](hw2-cnn-debugging.qmd) | L15 | [`07-cnn-shape-tour`](../notebooks/07-cnn-shape-tour.ipynb) · [`03-debug-ladder`](../notebooks/03-debug-ladder.ipynb) · [`10-rnn-by-hand`](../notebooks/10-rnn-by-hand.ipynb) | Budget a CNN by hand, measure what pretraining is worth, diagnose three planted bugs with the debug ladder, and build a char-level sequence model | +2 wks · viva after |
+| [Assignment 3 · Transformers & Generative](hw3-nanogpt-tokenization.qmd) | L23 | [`12-attention-by-hand`](../notebooks/12-attention-by-hand.ipynb) · [`13-nanogpt`](../notebooks/13-nanogpt.ipynb) · [`19-vae-mnist`](../notebooks/19-vae-mnist.ipynb) · [`21-ddpm-2d`](../notebooks/21-ddpm-2d.ipynb) | BPE by hand, attention from matmuls (verified), train nanoGPT + the temperature knob, ablate a VAE's KL term, watch a DDPM denoise — then argue VAE vs GAN vs diffusion like an engineer | +2 wks · viva after |
 
-All homeworks fit a free Colab GPU; HW1 and most of HW3 don't even need that.
-Each is sized at *hours, not days* — if a part is eating a full day, you're
-fighting an infrastructure problem, not a learning problem; come to office hours.
+All three fit a free Colab GPU; Assignment 1 and most of Assignment 3's written
+parts don't even need that. Each is sized at *hours, not days* — if a part is
+eating a full day, you're fighting an infrastructure problem, not a learning
+problem; come to office hours.
+
+## Grading model
+
+Each assignment is worth **13 marks**, split the same way every time:
+
+- **8 marks — programming submission.** One `.ipynb` that runs top to bottom and produces the figures and printouts each part asks for.
+- **5 marks — individual post-deadline quiz/viva.** A short one-on-one after the deadline where you explain *your* code, *your* plots, and *your* choices. The viva is where the marks for understanding actually live: a polished notebook you cannot explain scores near zero on those 5 marks.
+
+There is no team project. The full schedule, deadlines, and mark breakdown are on
+the **[grading page ↗](https://nipunbatra.github.io/dl-2026/grading.html)**.
 
 ## Grading philosophy
 
@@ -26,31 +38,30 @@ The assignments move from foundations, through vision and language, to generativ
 modeling. Their purpose is not to produce a leaderboard result: each asks for a
 small reproducible system plus a clear account of what its measurements mean.
 
-Within each homework, notice where the points actually are. The plots and
-accuracies are the cheap part — every assignment reserves its largest block for
-the **written explanations**: why momentum overshoots, why the β = 0 latent space
-has holes, why high temperature decays into nonsense. We would rather read a
-correct mechanistic explanation of a mediocre result than a state-of-the-art
+Within each assignment, notice where the marks actually are. The plots and
+accuracies are the cheap part — the largest single block is the **viva**, where
+you explain, in your own words, why momentum overshoots, why the β = 0 latent
+space has holes, why high temperature decays into nonsense. We would rather hear a
+correct mechanistic explanation of a mediocre result than see a state-of-the-art
 number with "it worked" underneath. Concretely:
 
-- **Accuracy targets are floors, not goals.** "≥ 70% on CIFAR" means "your pipeline isn't broken", nothing more. No points exist above the floor.
-- **Evidence over assertion.** Every written claim should point at one of your own figures or printouts.
-- **Honest negative results score.** "Adam didn't win on my problem, and here's the plot" graded above a textbook answer that contradicts your own figure.
-- **Notebooks must run.** `Restart & Run All` before submission; a notebook that doesn't execute top-to-bottom loses 10 points before we read a word.
+- **Accuracy targets are floors, not goals.** "≥ 70% on CIFAR" means "your pipeline isn't broken", nothing more. No marks exist above the floor.
+- **Evidence over assertion.** Every written or spoken claim should point at one of your own figures or printouts.
+- **Honest negative results score.** "Adam didn't win on my problem, and here's the plot" is graded above a textbook answer that contradicts your own figure.
+- **Notebooks must run.** `Restart & Run All` before submission; a notebook that doesn't execute top-to-bottom is graded on what runs — and you cannot viva code that never ran, so the missing marks compound.
 
 ## LLM policy {#llm-policy}
 
 You are training to work in a field that builds these tools; pretending they
 don't exist would be both unenforceable and bad preparation. So the policy is
-honesty-based and built around one fact: **the parts of each assignment that
-carry the most points are the parts an LLM cannot do for you** — explaining
-*your* loss curves, *your* latent scatter, *your* planted-bug symptoms, in your
-own words, consistent with figures the model has never seen.
+honesty-based and built around one fact: **the marks that matter most live in the
+viva** — explaining *your* loss curves, *your* latent scatter, *your* planted-bug
+symptoms, out loud, consistent with figures the model has never seen.
 
 **Allowed, no questions asked:**
 
 - Asking an LLM to *explain* a concept, an error message, or a piece of lecture code.
-- Debugging help — "here's my traceback, what's wrong?" is fine (though for HW2 part (c), see below).
+- Debugging help — "here's my traceback, what's wrong?" is fine (though for Assignment 2 part (c), see below).
 - Boilerplate: plotting code, data-loading scaffolds, LaTeX for your derivations.
 
 **Allowed with declaration:** anything beyond the above — generating solution
@@ -62,20 +73,20 @@ dishonesty costs you.
 
 **Not allowed:**
 
-- Submitting LLM-generated *written analysis* as your own. This is the part of the course that assesses understanding; outsourcing it is plagiarism here, same as copying a classmate.
-- For **HW2 part (c)**: pasting the sabotaged script into an LLM and asking "find the bugs". That assignment grades the *diagnostic process* (symptom → suspect → test → fix); an oracle answer with a back-filled process is easy to spot and graded as such. Using an LLM to explain *what `zero_grad` does* after you've found a suspect is fine — that's understanding, not outsourcing.
-- For **HW3 part (a)**: having a model execute the BPE merges. It's a by-hand exercise; the verification step at the end exists precisely so you can check yourself without one.
+- Submitting LLM-generated *written analysis* as your own understanding. The viva assumes the notebook's explanations are yours; if they aren't, the gap shows in the first question.
+- For **Assignment 2 part (c)**: pasting the sabotaged script into an LLM and asking "find the bugs". That part grades the *diagnostic process* (symptom → suspect → test → fix); an oracle answer with a back-filled process is easy to spot and graded as such. Using an LLM to explain *what `zero_grad` does* after you've found a suspect is fine — that's understanding, not outsourcing.
+- For **Assignment 3 part (a)**: having a model execute the BPE merges. It's a by-hand exercise; the verification step at the end exists precisely so you can check yourself without one.
 
 **The deal, stated plainly:** we design the assessed parts so that doing them
 honestly is the efficient path — explaining your own figure is faster than
 laundering a model's explanation until it matches your plot. If you find a part
 where that's not true, tell us; that's a bug in the assignment, and we fix those.
-Quizzes and the project presentation are in-person and LLM-free; if your
-homework understanding is real, those are easy points. If it isn't, they're
-where the gap shows.
+The vivas are in-person and LLM-free; if your notebook understanding is real,
+they are easy marks. If it isn't, they're where the gap shows.
 
 ## Logistics
 
-- Submit one `.ipynb` per homework via the course portal, named `hw<N>_<rollno>.ipynb`.
-- Late policy: 3 grace days across the semester, then 10%/day.
-- Work solo on homeworks (discussion fine, code and writing your own); project in teams of 2.
+- Submit one `.ipynb` per assignment via the course portal, named `a<N>_<rollno>.ipynb`.
+- The **viva is scheduled shortly after each deadline**; bring nothing but your submitted notebook — you'll be asked to walk through parts of it and answer follow-ups.
+- Late policy: 3 grace days across the semester, then 10%/day. Grace days move the *submission* deadline, not your viva slot.
+- Work solo (discussion is fine; the code and writing you submit — and explain in the viva — must be your own).

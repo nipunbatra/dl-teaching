@@ -1,33 +1,48 @@
 ---
-title: "HW2 · CNNs, Transfer Learning, and the Sabotaged Script"
+title: "Assignment 2 · Vision & Sequences"
 ---
 
-**Out after L10 · due in 2 weeks · 100 points.**
+**Out after L15 · programming submission + individual post-deadline viva · 13 marks.**
 
 Part of being good at deep learning is building models. A bigger part — the one
 nobody puts on a slide — is figuring out why a model that *should* work doesn't.
-This assignment grades both. Part (c) hands you a training script we broke on
-purpose, three different ways. Your job is to find every bug *systematically*,
-using the debug ladder from the foundations block — not by staring at the code until something
-looks wrong.
+This assignment grades both, across the two big architecture families of the
+middle of the course. You'll budget a CNN by hand and train it, measure what
+ImageNet pretraining is actually worth, hunt down three bugs in a trainer we broke
+on purpose, and finally build a character-level **sequence** model and watch its
+gradients behave (or misbehave) through time.
 
 ## Goals
 
 - Predict tensor shapes and parameter counts *before* running code (L8: the conv arithmetic).
 - See, with your own numbers, when transfer learning crushes training from scratch — and when the gap narrows (L9).
-- Turn the debug ladder from a slide into a reflex: **symptom → suspect → test → fix**.
-- Learn that the most expensive bugs are the ones that don't crash.
+- Turn the debug ladder into a reflex: **symptom → suspect → test → fix** (foundations block).
+- Build a char-level sequence model from scratch and explain, from your own plot, either the vanishing-gradient problem in an RNN or the exponential receptive field of a dilated conv stack (L12–L14).
 
 ## Setup
 
 Start from [`../notebooks/07-cnn-shape-tour.ipynb`](../notebooks/07-cnn-shape-tour.ipynb)
-and [`../notebooks/03-debug-ladder.ipynb`](../notebooks/03-debug-ladder.ipynb).
-You'll need a GPU for parts (a) and (b) — free Colab is enough (each training run
-below is under 10 minutes there). Part (c) needs only your eyes and a CPU.
+and [`../notebooks/03-debug-ladder.ipynb`](../notebooks/03-debug-ladder.ipynb) for
+parts (a)–(c). Part (d) builds on
+[`../notebooks/10-rnn-by-hand.ipynb`](../notebooks/10-rnn-by-hand.ipynb) (with the
+minimal [`../notebooks/L12/02_char_rnn_language_model.ipynb`](../notebooks/L12/02_char_rnn_language_model.ipynb))
+for the RNN path, or [`../notebooks/L13/01_causal_dilated_conv.ipynb`](../notebooks/L13/01_causal_dilated_conv.ipynb)
+for the TCN path. You'll want a free Colab GPU for parts (a), (b), and (d);
+each run below is under ~10 minutes there. Part (c) needs only your eyes and a CPU.
+
+::: {.callout-note}
+## How this is graded (13 marks)
+
+**8 marks** for the programming submission (parts a–d), **5 marks** for an
+**individual post-deadline viva** where you defend your shape table, your
+transfer-learning curves, your three bug reports, and your sequence-model plot,
+and answer follow-ups. The viva is where understanding is verified — see
+[*What the viva will probe*](#viva).
+:::
 
 ---
 
-## Part (a) · A CNN on CIFAR-10, shapes first — 30 points
+## Part (a) · A CNN on CIFAR-10, shapes first
 
 Design a CNN for CIFAR-10 with **at most 500k parameters** and **at least 3 conv layers**.
 
@@ -43,7 +58,7 @@ Design a CNN for CIFAR-10 with **at most 500k parameters** and **at least 3 conv
 3. Train with standard augmentation (random crop + horizontal flip) for ~15 epochs. Report test accuracy. Anything ≥ 70% is fine — **the table is worth more than the accuracy**.
 4. One question: your network's final conv layer sees how much of the input image (receptive field)? Compute it layer by layer, like in the notebook.
 
-## Part (b) · Transfer learning vs from scratch, with starving data — 30 points
+## Part (b) · Transfer learning vs from scratch, with starving data
 
 The question: *how much is ImageNet pretraining worth, per training example?*
 
@@ -57,7 +72,7 @@ The question: *how much is ImageNet pretraining worth, per training example?*
    - The frozen ResNet is just a linear classifier on fixed features. Which ML-course model is this exactly? Why does it still beat a deep net trained from scratch at small n?
    - Predict (no need to run): at 50,000 images and 100 epochs, which wins? Justify.
 
-## Part (c) · The sabotaged script — 40 points
+## Part (c) · The sabotaged script
 
 The script below is a CIFAR-10 trainer that **contains exactly three bugs**. None
 of them raise an error — the script runs to completion every time. It just trains
@@ -73,7 +88,8 @@ Your job, for **each** bug, is a four-line lab report in this exact format:
 Rules of engagement: you may add print statements, plot things, and run the
 ladder. You may *not* just diff against a reference trainer and submit "found
 them". We grade the *diagnosis*, not the find — a correct fix with no symptom/test
-trail gets at most half credit for that bug.
+trail gets at most half credit for that bug. (See the [LLM policy](index.qmd#llm-policy):
+asking a model to "find the bugs" defeats the entire exercise.)
 
 ```python
 # train_cifar.py -- runs fine. trains terribly. three bugs.
@@ -150,18 +166,69 @@ Hints, in the spirit of the ladder, not the answer key:
 After fixing all three, run 5 epochs and report the test accuracy — it should land
 somewhere sane (55–70%). This confirms you found all three and didn't introduce a fourth.
 
+## Part (d) · A character-level sequence model (L12–L14)
+
+Time to leave images. Build a char-level model on a **tiny** text corpus and study
+how information (and gradient) moves along the sequence. Pick **one** of the two
+paths below — both train in minutes.
+
+**Corpus.** Something small and stated: the `names.txt` from the makemore lineage,
+a few KB of a public-domain poem, or the first ~50 KB of Tiny Shakespeare. Report
+which you used and its size in characters.
+
+**Baseline (both paths).** Compute the cross-entropy of always predicting the
+empirical unigram character distribution (one pass over the corpus). Your model's
+validation loss must land clearly below this "memorize the marginal" baseline —
+report both, in the same units (nats or bits, consistently).
+
+### Path A — RNN from scratch
+
+1. Implement a char-level RNN cell by hand — $h_t = \tanh(W_{xh}x_t + W_{hh}h_{t-1} + b)$ plus an output head. **No `nn.RNN`**; write the recurrence. Train with backprop-through-time over a fixed window (e.g. 32 characters).
+2. Plot train and val loss; beat the unigram baseline.
+3. Generate ~300 characters by sampling from the model; include the sample verbatim.
+4. **Vanishing gradients.** For a single BPTT unroll, plot $\lVert \partial \mathcal{L}/\partial h_t \rVert$ against the time step $t$. Then add gradient clipping and say what changed.
+5. Questions (2–4 sentences each): why does $\lVert \partial \mathcal{L}/\partial h_t \rVert$ decay (or explode) as you go *back* in time — trace it to the repeated multiplication by $W_{hh}$ and the $\tanh$ derivative. What does clipping fix, and what does it *not* fix? In one sentence: how does this vanishing-gradient problem motivate the attention mechanism (L15) you'll build in Assignment 3?
+
+### Path B — Causal dilated conv (TCN)
+
+1. Implement a stack of **causal, dilated** 1-D convolutions with dilations 1, 2, 4, 8, … over the character stream. Causal = no peeking at the future — pad on the **left** only.
+2. Plot train and val loss; beat the unigram baseline; generate ~300 characters and include the sample verbatim.
+3. **Receptive field.** Derive, layer by layer, how many characters of context the top layer sees as a function of kernel size and the dilation schedule. **Verify empirically:** zero out an input character far in the past and check whether a given output actually changes at (and only at) the range your derivation predicts.
+4. Questions (2–4 sentences each): why does stacking dilated convs grow the receptive field *exponentially* in depth, while a plain conv stack grows it linearly? What is the TCN trading away versus an RNN (hint: parallel training vs unbounded memory)?
+
+State your config (hidden size / channels, layers, context length, steps) in one line.
+
 ## Deliverables
 
-- **One notebook** containing Parts (a)–(b), the three bug reports for (c) in the symptom/suspect/test/fix format, and the fixed script with the three changed lines marked `# FIXED:`.
-- `Restart & Run All` must succeed (it's fine for the notebook to load saved metrics for the longer runs — note where you did).
+- **One notebook** containing Parts (a)–(b), the three bug reports for (c) in the symptom/suspect/test/fix format with the fixed script (changed lines marked `# FIXED:`), and Part (d) with its baseline, curves, sample, and gradient/receptive-field analysis.
+- `Restart & Run All` must succeed (it's fine to load saved metrics for the longer runs — note where you did).
+- A short **LLM usage note** (see the [course LLM policy](index.qmd#llm-policy)).
 
-## Rubric
+## Rubric (internal — sums to 13)
 
-| Component | Points | What we look for |
+| Component | Marks | What we look for |
 |---|---:|---|
-| (a) Hand-filled shape/param table | 15 | Every layer; matches PyTorch or discrepancy explained |
-| (a) Training + receptive field | 15 | ≥70% test acc; RF computed layer-by-layer |
-| (b) 6 runs, accuracy-vs-n plot | 15 | Class-balanced subsets, fair comparison |
-| (b) Written analysis | 15 | Names the linear-probe connection; prediction justified |
-| (c) Bug 1 / Bug 2 / Bug 3 reports | 10+10+10 | Evidence-driven; minimal confirming test for each |
-| (c) Fixed script trains sanely | 10 | 5-epoch accuracy in a plausible range |
+| (a) CNN, shapes first | 2 | Hand-filled shape/param table for every layer, matching PyTorch (or discrepancy explained); ≥70% test acc; receptive field computed layer-by-layer |
+| (b) Transfer vs from scratch | 2 | Class-balanced subsets; 6 fair runs; accuracy-vs-n plot; names the linear-probe connection; prediction justified |
+| (c) The sabotaged script | 2 | Three evidence-driven bug reports (symptom → suspect → test → fix), each with a minimal confirming test; fixed script trains sanely (5-epoch acc in range) |
+| (d) Sequence model | 2 | RNN or TCN from scratch beats the unigram baseline; sample included; the gradient-through-time (Path A) or receptive-field (Path B) analysis done and verified |
+| **Programming subtotal** | **8** | |
+| **Individual viva** | **5** | Defends *own* shape arithmetic, transfer curves, diagnostic process, and sequence-model plot live; can answer the follow-ups below |
+| **Total** | **13** | |
+
+::: {#viva}
+### What the viva will probe
+
+Come ready to, with your notebook open:
+
+- Re-derive one row of your shape/param table on the spot, including where the bias terms live.
+- Say, from your own accuracy-vs-n curves, *why* the frozen ResNet wins at n = 500 and name the ML model it reduces to.
+- Walk one bug's symptom → test → fix trail without reading it verbatim — we may point at a fix and ask "what was the symptom that led you here?"
+- Explain your own gradient-through-time plot (Path A) or your receptive-field verification (Path B), and connect it to why the next architecture in the course exists.
+:::
+
+**Common ways to lose points:** a shape table that just echoes PyTorch's numbers
+(the point is to predict them first); a transfer comparison that isn't
+epoch-matched or class-balanced; a bug "fix" with no symptom/test trail; a
+sequence model that never actually beats its unigram baseline; analysis (written
+or in the viva) that could have been produced without running *your* code.

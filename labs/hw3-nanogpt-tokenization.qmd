@@ -1,33 +1,52 @@
 ---
-title: "HW3 · BPE by Hand, Attention from Scratch, and Your Own GPT"
+title: "Assignment 3 · Transformers & Generative Models"
 ---
 
-**Out after L17 · due in 2 weeks · 100 points.**
+**Out after L23 · programming submission + individual post-deadline viva · 13 marks.**
 
-By the end of this assignment you will have trained a language model that writes
-(bad) Shakespeare, built its central mechanism with your own hands, and tokenized
-text the way every frontier model's input pipeline does. The point is to make
-"GPT" stop being a brand name and start being a thing you can rebuild.
+This is the capstone. By the end you will have tokenized text the way every
+frontier model's input pipeline does, built the attention mechanism from raw
+matrix multiplications and *proven* it correct, trained a small GPT that writes
+(bad) Shakespeare, and then crossed into generative modeling — ablating a VAE's KL
+term until its latent space develops holes, and watching a diffusion model carve
+structure out of noise. It closes where a good engineer's job really is: choosing
+between VAE, GAN, and diffusion for a concrete problem, and defending the choice.
 
 ## Goals
 
-- Run the BPE algorithm by hand and see why "LLMs see tokens, not letters" (L17).
-- Implement scaled dot-product attention from raw matrix ops and verify it against PyTorch's — the strongest possible proof you understand it (L16).
-- Train a small transformer end-to-end and watch what the **temperature** knob actually controls at sampling time (L16–L17).
-- Explain generated text qualitatively — the writing is graded, not the eloquence of the model.
+- Run BPE by hand and see why "LLMs see tokens, not letters" (L12 tokenization, L17 GPT).
+- Implement scaled dot-product attention from raw ops and verify it against PyTorch's — the strongest possible proof you understand it (L16).
+- Train a small transformer and see what the **temperature** knob controls at sampling time (L16–L17).
+- Ablate a VAE's KL term and read the reconstruction–regularization trade-off off *your* latent scatter; watch a DDPM's reverse process build a distribution (L20, L22).
+- Build the judgment layer: model selection across VAE / GAN / diffusion as an engineering decision (L20–L23).
 
 ## Setup
 
 Start from [`../notebooks/12-attention-by-hand.ipynb`](../notebooks/12-attention-by-hand.ipynb)
-and [`../notebooks/13-nanogpt.ipynb`](../notebooks/13-nanogpt.ipynb).
-Parts (a) and (b) run anywhere; Part (c) wants a free Colab GPU (~10–15 min of training).
+and [`../notebooks/13-nanogpt.ipynb`](../notebooks/13-nanogpt.ipynb) for parts (a)–(c),
+and [`../notebooks/19-vae-mnist.ipynb`](../notebooks/19-vae-mnist.ipynb) +
+[`../notebooks/21-ddpm-2d.ipynb`](../notebooks/21-ddpm-2d.ipynb) for part (d).
+For the GAN comparison in the closing essay,
+[`../notebooks/L20/01_gan_minimax_1d.ipynb`](../notebooks/L20/01_gan_minimax_1d.ipynb)
+is worth a look. Parts (a)–(b) and the 2D DDPM run anywhere; nanoGPT and the VAE
+want a free Colab GPU (~10–15 min each).
+
+::: {.callout-note}
+## How this is graded (13 marks)
+
+**8 marks** for the programming submission (parts a–d), **5 marks** for an
+**individual post-deadline viva** where you reproduce a BPE merge, explain your
+attention verification, and defend your generative-model ablations and the
+engineer's essay. The viva is where understanding is verified — see
+[*What the viva will probe*](#viva).
+:::
 
 ---
 
-## Part (a) · BPE by hand — 30 points
+## Part (a) · BPE by hand
 
-This is a paper-and-pencil exercise (typed into markdown cells). **No code** for
-steps 1–3; the entire point is to execute the algorithm yourself.
+A paper-and-pencil exercise (typed into markdown cells). **No code** for steps
+1–3; the entire point is to execute the algorithm yourself.
 
 Corpus (word : count):
 
@@ -38,15 +57,15 @@ low : 5     lower : 2     newest : 6     widest : 3
 Initial vocabulary: the characters `{l, o, w, e, r, n, s, t, i, d}` plus an
 end-of-word marker `</w>` appended to each word.
 
-1. Perform the **first 6 BPE merges**. For each merge show: the pair-count table (only the top 3 pairs is fine), the winning pair, and the corpus rewritten with the new symbol. Break ties alphabetically.
+1. Perform the **first 6 BPE merges**. For each merge show: the pair-count table (top 3 pairs is fine), the winning pair, and the corpus rewritten with the new symbol. Break ties alphabetically.
 2. After 6 merges, tokenize two *unseen* words with your learned merges: `lowest` and `wider`. Show the merge sequence applied to each.
 3. Questions (2–4 sentences each):
    - `newest` likely became very few tokens while `wider` stayed fragmented. What property of the *training corpus* caused that, and what does it imply for an LLM trained mostly on English when it reads Gujarati?
    - Why does BPE use an end-of-word marker? Give a concrete pair of words that would wrongly share tokens without it.
-   - Connect to lecture: give one real LLM failure (e.g., counting letters in a word, arithmetic on long numbers, rhyming) and trace it to tokenization in 2–3 sentences.
+   - Connect to lecture: give one real LLM failure (counting letters in a word, arithmetic on long numbers, rhyming) and trace it to tokenization in 2–3 sentences.
 4. *(Code allowed now.)* Verify your hand merges with a ~20-line Python BPE trainer, or with `tiktoken`-style inspection of your tokenization of `lowest`. A mismatch you find and explain is worth full credit; a silent mismatch is not.
 
-## Part (b) · Single-head attention from scratch — 35 points
+## Part (b) · Single-head attention from scratch
 
 1. Implement, using only `torch.matmul`, `softmax`, and arithmetic:
 
@@ -67,36 +86,93 @@ end-of-word marker `</w>` appended to each word.
    - Remove the $\sqrt{d_k}$ scaling and set $d_k = 512$ with random $\mathcal{N}(0,1)$ entries. What happens to the softmax, numerically? Show it (print the max attention weight with and without scaling) and connect to *vanishing gradients through softmax*.
    - In the causal case, what does row $t$ of the attention matrix sum to, and why must the mask be applied to scores rather than to the output?
 
-## Part (c) · Train nanoGPT, turn the temperature knob — 35 points
+## Part (c) · Train nanoGPT, turn the temperature knob
 
-1. Train the lecture's character-level nanoGPT on Tiny Shakespeare until validation loss is clearly below the "memorize the marginal character frequencies" baseline. Compute that baseline first: what is the cross-entropy of always predicting the empirical unigram character distribution? (One pass over the data; compare in nats or bits, consistently.) Plot train and val loss.
-2. From the same checkpoint and the same prompt (e.g., `"ROMEO:"`), generate ~500 characters at **temperature 0.2, 0.8, and 1.5**. Include all three samples verbatim.
-3. The written part (this carries 15 of the 35 points):
-   - Mechanically: temperature divides the logits before softmax. Show with a tiny worked example (3 logits, e.g., `[2.0, 1.0, 0.5]`) what T = 0.2 / 0.8 / 1.5 does to the resulting probabilities. A small table is perfect.
+1. Train the lecture's character-level nanoGPT on Tiny Shakespeare until validation loss is clearly below the "memorize the marginal character frequencies" baseline. Compute that baseline first: the cross-entropy of always predicting the empirical unigram character distribution (one pass over the data; compare in nats or bits, consistently). Plot train and val loss.
+2. From the same checkpoint and the same prompt (e.g. `"ROMEO:"`), generate ~500 characters at **temperature 0.2, 0.8, and 1.5**. Include all three samples verbatim.
+3. The written part:
+   - Mechanically: temperature divides the logits before softmax. With a tiny worked example (3 logits, e.g. `[2.0, 1.0, 0.5]`), show what T = 0.2 / 0.8 / 1.5 does to the resulting probabilities. A small table is perfect.
    - Describe each sample in 2–3 sentences: repetition? made-up words? structure (character names, line breaks)? coherence?
    - Connect the two: *why* does low temperature loop and repeat, and *why* does high temperature produce well-spelled openings that decay into nonsense words? (Hint for the second: what happens when one unlikely character gets sampled and becomes context?)
    - At T → 0 sampling becomes argmax. Why is greedy decoding still not the same as "the most likely 500-character string"?
 
+State your training config (layers, heads, embedding dim, context length, steps) in one line so we can sanity-check your loss.
+
+## Part (d) · Generative models — VAE, DDPM, and the engineer's choice
+
+Three deliverables. Keep each tight; the depth is verified in the viva.
+
+### (d.1) VAE on MNIST + the β ablation (L20)
+
+The loss you are training (β-VAE form):
+
+$$\mathcal{L} = \underbrace{\text{reconstruction}}_{\mathbb{E}_{q}[-\log p(x|z)]} + \beta \cdot \underbrace{\text{KL}\big(q(z|x)\,\|\,\mathcal{N}(0,I)\big)}_{\text{the tax}}$$
+
+1. Train the notebook's 2D-latent VAE at **β ∈ {0, 1, 10}** (same architecture, epochs, seed). For each run report: final reconstruction loss, final KL, the latent scatter colored by digit class, and a grid of decoded prior samples $z \sim \mathcal{N}(0, I)$. A 3-row comparison figure is the ideal deliverable.
+2. Written (3–6 sentences each, every claim pointing at your figure):
+   - **β = 0** is a plain autoencoder — best reconstructions of the three, yet garbage *prior samples*. What does the latent scatter show about where $q(z|x)$ actually lives relative to $\mathcal{N}(0,I)$? (The phrase "holes in the latent space" should appear, justified by your plot.)
+   - **β = 10**: what happened to the reconstructions and to the latent scatter? Some latent dimensions may have stopped carrying information — name that failure mode and say how you'd detect it from the per-dimension KL.
+   - State the trade-off in one sentence: "β buys you ___ at the price of ___."
+3. Reproduce (from L20, closed book, then check yourself): the KL between $\mathcal{N}(\mu, \sigma^2)$ and $\mathcal{N}(0, 1)$ for a single dimension. Show the steps — this is the central derivation of the lecture.
+
+### (d.2) DDPM on a 2D toy (L22)
+
+1. Train the notebook's DDPM on a 2D dataset that is **not** the Swiss roll — `make_moons`, two concentric circles, or a smiley-face point cloud. Show real vs generated scatter at the end of training.
+2. **Visualize the reverse trajectory:** starting from $x_T \sim \mathcal{N}(0, I)$, plot the sample cloud at $t \in \{T, 0.75T, 0.5T, 0.25T, 0\}$ — a 1×5 panel. Noise on the left, your dataset on the right, the interesting part in between. Plot the *forward* process at the same timesteps too; the two rows should look like mirror images.
+3. Written (2–5 sentences each):
+   - At which timesteps does recognizable structure emerge — near T or near 0? Connect to the noise schedule: at large t, what is the network's target mostly made of, and why is that an *easy* regression problem?
+   - The network only ever learned to predict noise $\epsilon$ from $(x_t, t)$ — one step, no notion of the whole trajectory. Why does iterating this local skill produce samples from the data distribution? One paragraph, your own words.
+   - Sample with 10 reverse steps instead of T. Show the plot and explain.
+
+### (d.3) VAE vs GAN vs diffusion — when to reach for which (L20–L23)
+
+A written section, ~300–500 words, no code. You've now trained a VAE and a DDPM,
+and seen GANs in lecture (L21). For **each** scenario, pick a model family and
+justify with the *properties* you observed or derived — training stability, sample
+quality, sampling speed/cost, latent space (does one exist? is it useful?),
+likelihood/ELBO availability, mode coverage:
+
+1. A medical-imaging lab wants **anomaly detection**: flag scans unlike the training distribution, with a score for "how unlikely".
+2. A game studio wants **high-resolution textures**, offline, quality above all; generation can take minutes.
+3. A startup wants **real-time avatar generation** on-device at 30 fps, willing to sacrifice some fidelity.
+
+"Diffusion because it's the best" is indefensible. "Diffusion, because quality
+dominates and its main cost — slow iterative sampling — is explicitly forgiven by
+the offline constraint" is the shape we want. Close with two sentences on why, as
+of 2026, diffusion has largely displaced GANs for images, and one thing GANs still
+have over diffusion.
+
 ## Deliverables
 
-- **One notebook**: hand-BPE in markdown (typeset tables, not photos of paper — photos are accepted only if fully legible), attention code + verification printouts, training curves, the three samples, and all written answers inline.
-- State your training config (layers, heads, embedding dim, context length, steps) in one line so we can sanity-check your loss.
+- **One notebook**: hand-BPE in markdown (typeset tables, not photos of paper — photos accepted only if fully legible); attention code + verification printouts; nanoGPT curves, config, and the three temperature samples verbatim; the three VAE runs with the comparison figure and the KL derivation; the DDPM trajectory panels; and (d.3) as a closing markdown section.
+- Cache long-run outputs if needed, but nanoGPT (a shortened run is fine), the β = 1 VAE, and the DDPM must train live on `Restart & Run All`.
+- A short **LLM usage note** (see the [course LLM policy](index.qmd#llm-policy)).
 
-## Rubric
+## Rubric (internal — sums to 13)
 
-| Component | Points | What we look for |
+| Component | Marks | What we look for |
 |---|---:|---|
-| (a) Six merges, fully shown | 14 | Pair counts and rewrites at every step; ties broken as specified |
-| (a) Unseen-word tokenization | 6 | Merge order applied correctly |
-| (a) Written questions + verification | 10 | The corpus-frequency → fragmentation link made explicitly |
-| (b) Implementation + allclose checks | 15 | Scaling and causal mask right; both modes verified |
-| (b) Paper computation | 10 | Every intermediate matrix shown |
-| (b) Scaling/masking questions | 10 | The d_k = 512 experiment actually run |
-| (c) Training beats unigram baseline | 10 | Baseline computed, units consistent, curves plotted |
-| (c) Three samples | 10 | Same checkpoint, same prompt, verbatim |
-| (c) Temperature explanation | 15 | Worked 3-logit example; mechanism, not vibes |
+| (a) BPE by hand | 1.5 | Six merges fully shown (pair counts + rewrites, ties as specified); unseen words tokenized; corpus-frequency → fragmentation link made; verified |
+| (b) Attention from scratch | 1.5 | Scaling and causal mask correct; `allclose` vs PyTorch at 3 shapes; the 2×2 paper computation; the $d_k=512$ experiment actually run |
+| (c) nanoGPT + temperature | 2 | Beats the unigram baseline (baseline computed, units consistent); three verbatim samples; worked 3-logit temperature table + mechanism, not vibes |
+| (d) VAE ablation + DDPM + engineer's essay | 3 | β∈{0,1,10} with the holes-in-latent-space argument and KL derivation; reverse+forward trajectory panels with the "local skill, global result" paragraph; model-selection essay argued from properties |
+| **Programming subtotal** | **8** | |
+| **Individual viva** | **5** | Reproduces a merge; explains the attention verification and the temperature mechanism; defends the β and DDPM findings and the engineer's choice live; answers the follow-ups below |
+| **Total** | **13** | |
 
-**A note on what we're really testing in (c):** anyone can call `.generate()`.
-The question is whether you can explain a sampling distribution. Answers that
-say "low temperature = more conservative, high = more creative" without the
-logit-level mechanism get half credit at best.
+::: {#viva}
+### What the viva will probe
+
+Come ready to, with your notebook open:
+
+- Do one more BPE merge on the spot, and explain the multilingual-fragmentation consequence.
+- Point at your `allclose` output and explain *why* the $\sqrt{d_k}$ scaling matters, using your own $d_k = 512$ numbers.
+- Read your own temperature table and say why low-T loops and high-T decays into nonsense.
+- Stand at your β = 0 latent scatter and argue the "holes" claim; reproduce one line of the KL derivation; and defend one of the three engineer's-choice scenarios against a pushback (e.g. "why not a VAE for the textures?").
+:::
+
+**A note on what we're really testing:** anyone can call `.generate()` or
+`.sample()`. The question is whether you can explain a sampling distribution and a
+latent geometry. Answers — written or in the viva — that say "low temperature =
+more conservative" or "diffusion is higher quality" without the mechanism get half
+credit at best.

@@ -32,10 +32,10 @@ The complete titles and canonical PDFs are on [Lecture decks](slides.qmd).
 
 - [Lecture decks](slides.qmd) — the canonical source for the current sequence.
 - [Notebooks](notebooks.qmd) — runnable companions and downloadable `.ipynb` files.
-- [Assignments & project](labs/index.qmd) — programming work, policy, and submission expectations.
+- [Assignments](labs/index.qmd) — programming work, policy, and submission expectations.
 - [Resources](resources.qmd) — a deliberately short list of books, videos, papers, and interactives.
 - **[Logistics & grading ↗](https://nipunbatra.github.io/dl-2026/)** — schedule, grading, deadlines, and FAQ for the August 2026 offering.
 
 ## Course norms
 
-Bring questions to the [course Slack workspace](https://join.slack.com/t/dl26workspace/shared_invite/zt-43b3v79vb-bVZl1_sJVCrBkVMDsq5TYA). For programming work, use AI tools honestly and document meaningful assistance; the assessed work is your ability to explain your own plots, decisions, and failures. The detailed policy lives on the [Assignments & project](labs/index.qmd) page.
+Bring questions to the [course Slack workspace](https://join.slack.com/t/dl26workspace/shared_invite/zt-43b3v79vb-bVZl1_sJVCrBkVMDsq5TYA). For programming work, use AI tools honestly and document meaningful assistance; the assessed work is your ability to explain your own plots, decisions, and failures. The detailed policy lives on the [Assignments](labs/index.qmd) page.
