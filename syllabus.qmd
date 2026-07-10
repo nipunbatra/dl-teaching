@@ -1,110 +1,40 @@
 ---
-title: "Syllabus · UDL mapping"
-subtitle: "Lecture-by-lecture reading map for Prince · *Understanding Deep Learning* (2023)"
+title: "Course guide"
+subtitle: "The current 25-meeting course spine"
 ---
 
-> Primary textbook · Simon J. D. Prince, *Understanding Deep Learning* (MIT Press, 2023).
-> Free PDF at [udlbook.github.io](https://udlbook.github.io/udlbook/).
->
-> The course follows the UDL chapter order closely. Read the cited chapter(s) **before** each lecture.
->
-> **Lecture 0 is a probability / MLE primer; 24 main lectures follow.** L6 (Regularization) is comprehensive — spans two class sessions.
+This course is organized around the **published lecture decks**. The short calculus bridge is a distinct meeting, which is why the current sequence has 25 meetings rather than the older 24- and 26-lecture plans still preserved in the repository history.
 
-## Module 0 · Probability &amp; MLE Primer { .module-0 }
+## How the course is built
 
-| # | Lecture | Reading | Supplementary |
-|:-:|---------|---------|---------------|
-| 0 | Probability, MLE &amp; NLL | Bishop &amp; Bishop Ch 2–5; Prince Ch 1, Ch 3 | KL, MAP, reparameterization, score-function preview |
+Each module answers one question and hands a working idea to the next:
 
-## Module 1 · Foundations &amp; Going Deep { .module-1 }
+| Module | Meetings | Core question |
+|---|:---:|---|
+| Foundations | 1–4 | Why these losses, and how do we differentiate a network? |
+| Optimization & training | 5–7 | How do we train deep networks reliably and make them generalize? |
+| Vision | 8–11 | How do locality, hierarchy, and dense prediction change the model? |
+| Sequences & language | 12–15 | How do models represent and generate ordered data? |
+| Transformers | 16–17 | How does attention become a scalable architecture? |
+| Representation & multimodal learning | 18–19 | How can data supervise itself, and how do images meet text? |
+| Generative modeling | 20–23 | How do latent-variable, adversarial, and diffusion models generate? |
+| Systems & synthesis | 24–25 | How do we serve models efficiently, and what ideas survive the whole course? |
 
-| # | Lecture | UDL chapter | Supplementary |
-|:-:|---------|-------------|---------------|
-| 1 | Why DL + MLP Recap | **Ch 1** *Introduction* · **Ch 3** *Shallow networks* | Bishop Ch 6 |
-| 2 | UAT + ResNets + Initialization | **Ch 4** *Deep networks* · **Ch 7** *Gradients &amp; init* · **Ch 11** *Residual networks* | He et al. 2015 (ResNet) |
-| 3 | Training Deep Networks in Practice | **Ch 6** *Fitting models* (early) · **Ch 8** *Measuring performance* | Karpathy *makemore-1* |
+The complete titles and canonical PDFs are on [Lecture decks](slides.qmd).
 
-## Module 2 · Optimization { .module-2 }
+## What to do each week
 
-| # | Lecture | UDL chapter | Supplementary |
-|:-:|---------|-------------|---------------|
-| 4 | SGD, Momentum, Nesterov | **Ch 6** (SGD + momentum) | Sutskever et al. 2013 |
-| 5 | Adam, AdamW, Schedules | **Ch 6** (Adam) · **Ch 7** (initialization revisited) | Kingma &amp; Ba 2015; Loshchilov &amp; Hutter 2017 |
+- **Deck first.** It contains the conceptual thread, a worked mechanism, and two short MCQ checkpoints with immediate answer slides.
+- **Notebook second.** Use the companion only where calculation or implementation makes the idea clearer.
+- **Assignment third.** Assignments extend already-seen code and value an explanation of your own measurements over a leaderboard number.
 
-## Module 3 · Regularization { .module-3 }
+## Materials
 
-| # | Lecture | UDL chapter | Supplementary |
-|:-:|---------|-------------|---------------|
-| 6 | **Regularization (2 sessions)** · classical + data + dropout + normalization | **Ch 9** *Regularization* · **Ch 11** (BatchNorm) | Belkin 2019 (double descent); Santurkar 2018 (BN); Ba 2016 (LN) |
+- [Lecture decks](slides.qmd) — the canonical source for the current sequence.
+- [Notebooks](notebooks.qmd) — runnable companions and downloadable `.ipynb` files.
+- [Assignments & project](labs/index.qmd) — programming work, policy, and submission expectations.
+- [Resources](resources.qmd) — a deliberately short list of books, videos, papers, and interactives.
 
-## Module 4 · CNNs &amp; Visual Recognition { .module-4 }
+## Course norms
 
-| # | Lecture | UDL chapter | Supplementary |
-|:-:|---------|-------------|---------------|
-| 7 | CNN Deep Dive + Classic Architectures | **Ch 10** *Convolutional networks* (early) | LeCun 1998; Krizhevsky 2012 |
-| 8 | Modern CNNs &amp; Transfer Learning | **Ch 10** (advanced) · **Ch 11** (skip in CNNs) | Szegedy 2014; Howard 2017 |
-| 9 | Detection &amp; Segmentation | Not in Prince — use Bishop Ch 10 + CS231n notes | Ren 2015 (Faster R-CNN); Redmon 2015 (YOLO); Ronneberger 2015 (U-Net); SAM |
-
-## Module 5 · Sequence Models { .module-5 }
-
-| # | Lecture | Reading | Supplementary |
-|:-:|---------|---------|---------------|
-| 10 | RNNs, LSTMs, GRUs | Bishop Ch 12 · d2l §9–10 | Hochreiter &amp; Schmidhuber 1997 |
-| 11 | Seq2Seq &amp; Motivation for Attention | Bishop Ch 12 · d2l §10.6–10.8 | Sutskever et al. 2014 |
-
-## Module 6 · Attention &amp; Transformers { .module-6 }
-
-| # | Lecture | UDL chapter | Supplementary |
-|:-:|---------|-------------|---------------|
-| 12 | Attention Mechanism | **Ch 12** *Transformers* (early) | Bahdanau 2014; Luong 2015 |
-| 13 | The Transformer — Built Live | **Ch 12** (mid) | Vaswani 2017; Karpathy *nanoGPT* |
-| 14 | Tokenization &amp; Pretraining Paradigms | **Ch 12** (pretraining) | Sennrich 2015 (BPE); Devlin 2018 (BERT); Radford 2018 (GPT-1); Karpathy *tokenization* |
-
-## Module 7 · LLMs { .module-7 }
-
-| # | Lecture | Reading | Supplementary |
-|:-:|---------|---------|---------------|
-| 15 | Large Language Models | Hoffmann 2022 (Chinchilla); HuggingFace course Ch 1 | Karpathy *State of GPT*; Touvron 2023 (Llama 2); Su 2021 (RoPE) |
-| 16 | Alignment &amp; Fine-tuning | HF PEFT docs; Ouyang 2022 (InstructGPT); Rafailov 2023 (DPO) | Hu 2021 (LoRA); Dettmers 2023 (QLoRA); Anthropic *Constitutional AI* |
-
-## Module 8 · Self-Supervision &amp; Vision-Language { .module-8 }
-
-| # | Lecture | UDL chapter | Supplementary |
-|:-:|---------|-------------|---------------|
-| 17 | Self-Supervised &amp; Contrastive Learning | **Ch 14** *Unsupervised learning* (contrastive) | Chen 2020 (SimCLR); Grill 2020 (BYOL); He 2021 (MAE); Oquab 2023 (DINOv2) |
-| 18 | Vision-Language Models | **Ch 12** (ViT) + papers | Dosovitskiy 2020 (ViT); Radford 2021 (CLIP); Liu 2023 (LLaVA); Alayrac 2022 (Flamingo) |
-
-## Module 9 · Generative Models { .module-9 }
-
-| # | Lecture | UDL chapter | Supplementary |
-|:-:|---------|-------------|---------------|
-| 19 | Autoencoders &amp; VAEs | **Ch 17** *Variational autoencoders* | Kingma &amp; Welling 2013 |
-| 20 | GANs | **Ch 15** *GANs* | Goodfellow 2014; Radford 2015 (DCGAN); Arjovsky 2017 (WGAN) |
-| 21 | Diffusion Models — Theory | **Ch 18** *Diffusion models* (early) | Ho et al. 2020 (DDPM); Song 2020 (Score-SDE) |
-| 22 | Diffusion Models — Practice | **Ch 18** (later) + HF `diffusers` docs | Rombach 2022 (Stable Diffusion); Ho &amp; Salimans 2022 (CFG); Peebles &amp; Xie 2023 (DiT) |
-
-## Module 10 · Wrap-up { .module-10 }
-
-| # | Lecture | Reading |
-|:-:|---------|---------|
-| 23 | Efficient Inference (KV-cache, quantization, FlashAttention, distillation, speculative decoding) | Chip Huyen blog; HF inference docs; Dao 2022 (FlashAttention); Hinton 2015 (distillation); Leviathan 2022 (speculative decoding); Kwon 2023 (vLLM) |
-| 24 | Frontier · Agents, Reasoning, Interpretability + Course Recap | Yao 2022 (ReAct); Wei 2022 (CoT); OpenAI o1 blog; Anthropic interpretability blog; Elhage 2021 (circuits) |
-
----
-
-## Where UDL doesn't cover
-
-- **L9 · Detection &amp; Segmentation** — UDL does not cover OD/segmentation. Use Bishop Ch 10 + CS231n notes.
-- **L15 · LLMs at scale** — scaling laws, RoPE, GQA, distributed training. Use Chinchilla paper + HF course.
-- **L16 · Alignment &amp; Fine-tuning** — LoRA, RLHF, DPO. Use HF PEFT docs + DPO paper.
-- **L23 · Efficient Inference** — KV-cache, quantization, FlashAttention. Blog posts + papers.
-- **L24 · Frontier · Agents, Reasoning, Interpretability** — active 2024–26 research. Curated blogs + papers.
-
----
-
-## Other references
-
-- **Bishop &amp; Bishop**, *Deep Learning: Foundations and Concepts* (2024) — rigorous second opinion.
-- **Zhang et al.**, *Dive into Deep Learning* (d2l.ai) — hands-on PyTorch notebooks.
-- **Karpathy**, *Neural Networks: Zero to Hero* (YouTube) — build-from-scratch video series; backup for L12–L14.
-- **Goodfellow, Bengio, Courville**, *Deep Learning* (2016) — classical reference.
+Bring questions to the [course Slack workspace](https://join.slack.com/t/dl26workspace/shared_invite/zt-43b3v79vb-bVZl1_sJVCrBkVMDsq5TYA). For programming work, use AI tools honestly and document meaningful assistance; the assessed work is your ability to explain your own plots, decisions, and failures. The detailed policy lives on the [Assignments & project](labs/index.qmd) page.

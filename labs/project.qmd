@@ -2,10 +2,9 @@
 title: "Semester Project · Spine Rigor, Landscape Freedom"
 ---
 
-**Teams of 2 · proposal due after L16 · final presentation in the last week.**
+**Teams of 2 · proposal due after L18 · final presentation in the last week.**
 
-The course contract: you *master* L00–L14 and become *fluent* in L15–L24. The
-project is where those meet. You pick a topic from the landscape — anything from
+The project is where the core mechanisms meet the modern topics. You pick a topic from the later modules — anything from
 the second half of the course — but you execute it with the standards of the
 spine: derivations checked, baselines run, claims backed by your own plots,
 failures reported honestly.
@@ -42,7 +41,7 @@ yourself), a DPO ablation on a toy preference dataset (L16's worked numeric, sca
 
 | Milestone | When | Format | Weight |
 |---|---|---|---:|
-| **Proposal** | week after L16 | 1 page: the question, the method, the baseline, the *minimum viable result* you'll show even if everything else fails, a compute estimate | 10% |
+| **Proposal** | week after L18 | 1 page: the question, the method, the baseline, the *minimum viable result* you'll show even if everything else fails, a compute estimate | 10% |
 | **Mid-report** | ~4 weeks later | 2 pages: evidence of one end-to-end run (however small/bad), what surprised you, updated plan. The grade is for *de-risking*, not for results | 20% |
 | **Final report** | last week | 4–6 pages: question, method, results with plots, honest limitations, "what we'd do with 10× compute" | 45% |
 | **Presentation** | last week | 10 minutes + 3 of questions. Every team member presents; questions go to individuals | 25% |

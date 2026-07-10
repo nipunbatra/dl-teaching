@@ -2,20 +2,20 @@
 title: "HW2 · CNNs, Transfer Learning, and the Sabotaged Script"
 ---
 
-**Out after L09 · due in 2 weeks · 100 points.**
+**Out after L10 · due in 2 weeks · 100 points.**
 
 Part of being good at deep learning is building models. A bigger part — the one
 nobody puts on a slide — is figuring out why a model that *should* work doesn't.
 This assignment grades both. Part (c) hands you a training script we broke on
 purpose, three different ways. Your job is to find every bug *systematically*,
-using the debug ladder from L03 — not by staring at the code until something
+using the debug ladder from the foundations block — not by staring at the code until something
 looks wrong.
 
 ## Goals
 
-- Predict tensor shapes and parameter counts *before* running code (L07: the conv arithmetic).
-- See, with your own numbers, when transfer learning crushes training from scratch — and when the gap narrows (L08).
-- Turn the debug ladder (L03) from a slide into a reflex: **symptom → suspect → test → fix**.
+- Predict tensor shapes and parameter counts *before* running code (L8: the conv arithmetic).
+- See, with your own numbers, when transfer learning crushes training from scratch — and when the gap narrows (L9).
+- Turn the debug ladder from a slide into a reflex: **symptom → suspect → test → fix**.
 - Learn that the most expensive bugs are the ones that don't crash.
 
 ## Setup
@@ -144,7 +144,7 @@ for epoch in range(10):
 Hints, in the spirit of the ladder, not the answer key:
 
 - Rung 1 says inspect the data *after* the transform pipeline. What should the per-channel mean and std of a normalized batch be, roughly?
-- Rung 3 says overfit one batch. If you can't, the bug is upstream of "not enough data or epochs". Which two suspects does L03 name for a flat (or exploding) loss?
+- Rung 3 says overfit one batch. If you can't, the bug is upstream of "not enough data or epochs". Which two suspects would you test first for a flat (or exploding) loss?
 - One of the bugs makes each `loss.backward()` see ghosts of every batch that came before it. What single print statement, placed before `opt.step()`, exposes it?
 
 After fixing all three, run 5 epochs and report the test accuracy — it should land

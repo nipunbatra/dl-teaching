@@ -1,13 +1,15 @@
 project:
   type: website
-  output-dir: .
+  # Publish only Quarto's deliberately built site. The repository also contains
+  # slide sources, archived decks, review material, and notebook source files;
+  # none of those should become accidental public pages.
+  output-dir: _site
   render:
     - "*.qmd"
     - "labs/*.qmd"
-    - "labs/*.ipynb"
-    - "notebooks/*.ipynb"
+  resources:
+    - "slides-pdf/**"
     - "notebooks/**/*.ipynb"
-    - "!slides/"
 
 website:
   title: "ES 667: Deep Learning"
@@ -16,18 +18,18 @@ website:
     left:
       - text: "Home"
         href: index.qmd
-      - text: "Syllabus"
+      - text: "Course guide"
         href: syllabus.qmd
-      - text: "Slides"
+      - text: "Lectures"
         href: slides.qmd
-      - text: "Notebooks"
-        href: notebooks.qmd
-      - text: "Labs"
-        href: labs/index.qmd
+      - text: "Work"
+        menu:
+          - text: "Notebooks"
+            href: notebooks.qmd
+          - text: "Assignments & project"
+            href: labs/index.qmd
       - text: "Resources"
         href: resources.qmd
-      - text: "Interactives"
-        href: https://nipunbatra.github.io/interactive-articles/
   page-footer:
     left: "Course materials by Prof. Nipun Batra, IIT Gandhinagar"
     right:

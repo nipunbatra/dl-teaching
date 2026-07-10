@@ -2,7 +2,7 @@
 title: "HW4 · VAEs, Diffusion, and the KL Knob"
 ---
 
-**Out after L22 · due in 2 weeks · 100 points.**
+**Out after L23 · due in 2 weeks · 100 points.**
 
 Two generative models, two philosophies. The VAE compresses data into a latent
 space and pays a KL tax for keeping that space tidy. The diffusion model never
@@ -13,9 +13,9 @@ for each.
 
 ## Goals
 
-- Train a VAE and *see* the ELBO's two terms fighting each other in the latent space (L19).
-- Run the β ablation and explain reconstruction–regularization trade-off from evidence, not from the slide (L19).
-- Train a DDPM on 2D data and visualize the reverse process actually carving structure out of noise (L21).
+- Train a VAE and *see* the ELBO's two terms fighting each other in the latent space (L20).
+- Run the β ablation and explain reconstruction–regularization trade-off from evidence, not from the slide (L20).
+- Train a DDPM on 2D data and visualize the reverse process actually carving structure out of noise (L22).
 - Build the judgment layer: model selection across VAE / GAN / diffusion as an engineering decision.
 
 ## Setup
@@ -39,8 +39,8 @@ $$\mathcal{L} = \underbrace{\text{reconstruction}}_{\mathbb{E}_{q}[-\log p(x|z)]
    - **β = 0** is a plain autoencoder. Its reconstructions are the best of the three — so why are its *prior samples* garbage? What does the latent scatter show about where $q(z|x)$ actually lives relative to $\mathcal{N}(0,I)$? (The phrase "holes in the latent space" should appear, justified by your plot.)
    - **β = 10**: what happened to the reconstructions, and what happened to the latent scatter? Some latent dimensions may have stopped carrying information entirely — what's the name for this failure mode, and how would you detect it from the per-dimension KL?
    - State the trade-off in one sentence of the form "β buys you ___ at the price of ___."
-   - Connect backwards to L00B: the KL term is a regularizer. What is the prior, and what is being pulled toward it?
-4. One derivation to reproduce (from L19, closed book, then check yourself): the KL between $\mathcal{N}(\mu, \sigma^2)$ and $\mathcal{N}(0, 1)$ for a single dimension. Show the steps; this is *the* spine derivation of the lecture.
+   - Connect backwards to L1: the KL term is a regularizer. What is the prior, and what is being pulled toward it?
+4. One derivation to reproduce (from L20, closed book, then check yourself): the KL between $\mathcal{N}(\mu, \sigma^2)$ and $\mathcal{N}(0, 1)$ for a single dimension. Show the steps; this is the central derivation of the lecture.
 
 ## Part (b) · DDPM on a 2D toy — 35 points
 
@@ -49,13 +49,13 @@ $$\mathcal{L} = \underbrace{\text{reconstruction}}_{\mathbb{E}_{q}[-\log p(x|z)]
 3. Also plot the *forward* process at the same timesteps for comparison. The two rows should look like mirror images. Do they?
 4. Written, 2–5 sentences each:
    - At which timesteps does recognizable structure emerge — early in the reverse process (near T) or late (near 0)? Connect to the noise schedule: at large t, what is the network's prediction target mostly made of, and why is that an *easy* regression problem?
-   - The network was only ever trained to predict noise $\epsilon$ from $(x_t, t)$ — one step, no notion of "the whole trajectory". Why does iterating this local skill produce samples from the data distribution? One paragraph, in your own words (L21's "learn to denoise; generate by iterating").
+   - The network was only ever trained to predict noise $\epsilon$ from $(x_t, t)$ — one step, no notion of "the whole trajectory". Why does iterating this local skill produce samples from the data distribution? One paragraph, in your own words (L22's "learn to denoise; generate by iterating").
    - What happens if you sample with 10 reverse steps instead of T? Try it, show the plot, explain.
 
 ## Part (c) · VAE vs GAN vs diffusion — when to reach for which — 20 points
 
 A written section, ~300–500 words total. No code. You have now trained a VAE and
-a DDPM, and seen GANs in lecture (L20). For **each** of the three scenarios below,
+a DDPM, and seen GANs in lecture (L21). For **each** of the three scenarios below,
 pick a model family, and justify with the *properties* you observed or derived —
 training stability, sample quality, sampling speed/cost, latent space (does one
 exist? is it useful?), likelihood/ELBO availability, mode coverage:

@@ -2,7 +2,7 @@
 title: "HW1 · Micrograd, an MLP, and the Optimizer Race"
 ---
 
-**Out after L05 · due in 2 weeks · 100 points.**
+**Out after L5 · due in 2 weeks · 100 points.**
 
 You built a `Value` class in lecture that does reverse-mode autodiff in ~100 lines.
 You also watched four optimizers race across a loss surface. This assignment makes
@@ -12,9 +12,9 @@ why "beats" is the wrong word anyway.
 
 ## Goals
 
-- Extend a working autograd engine and *prove* your gradients are correct (L01: chain rule as code).
-- Train an MLP end-to-end with an engine you can read in one sitting (L01).
-- Reproduce the SGD / momentum / Adam comparison on a real (toy) learning problem, not just a 2D surface (L04–L05).
+- Extend a working autograd engine and *prove* your gradients are correct (L3–L4: chain rule as code).
+- Train an MLP end-to-end with an engine you can read in one sitting (L2–L4).
+- Reproduce the SGD / momentum / Adam comparison on a real (toy) learning problem, not just a 2D surface (L5).
 - Practice the skill this course grades hardest: **explaining a curve, not just producing it**.
 
 ## Setup
@@ -55,7 +55,7 @@ Use `sklearn.datasets.make_moons(n_samples=200, noise=0.15)`.
 4. Reach ≥ 95% training accuracy. **We are not grading the accuracy** — we are grading that you can tell us, in 3–4 sentences, what the boundary plots show about *what the network learned and when*.
 
 Sanity check before training long: can you overfit 4 points perfectly? If not,
-stop and debug (this foreshadows L03's ladder).
+stop and debug (this foreshadows the course's debugging workflow).
 
 ## Part (c) · The optimizer race — 40 points
 
@@ -68,7 +68,7 @@ re-initialize identically for each run).
 
 **The written part (20 of the 40 points).** Answer each in 2–5 sentences:
 
-- Why does momentum's curve often *overshoot* and oscillate before settling? Connect to the "heavy ball" picture from L04.
+- Why does momentum's curve often *overshoot* and oscillate before settling? Connect it to the heavy-ball picture from L5.
 - Why is Adam's best learning rate so different from SGD's best? What is Adam dividing by, and what does that do to the effective step size per parameter?
 - Did Adam *win*? Define what "win" means here (fastest early progress? lowest final loss?) and argue from your plot. If your plot shows something surprising, say so — honest reading of evidence beats a textbook answer that contradicts your figure.
 - Bias correction: at step t = 1 with β₂ = 0.999, what would Adam's denominator look like *without* the correction, and what would that do to the first step?

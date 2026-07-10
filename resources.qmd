@@ -1,170 +1,36 @@
 ---
-title: "Resources · Books, videos, blogs, interactives"
-subtitle: "Every reference cross-linked to where it shows up in the course"
+title: "Resources"
+subtitle: "A small reference shelf — use the deck first"
 ---
 
-A single page you can return to during the semester. Three tiers · primary textbooks, recommended video courses, per-lecture deep-dive references.
+Do not try to read everything below. The [lecture decks](slides.qmd) tell you what matters in a given week; these resources are dependable places to go deeper when you need another explanation, a derivation, or implementation context.
 
-[All slides](slides.qmd){.btn .btn-outline-primary .btn-sm}
-[Syllabus](syllabus.qmd){.btn .btn-outline-primary .btn-sm}
-[Interactive library →](https://nipunbatra.github.io/interactive-articles/){.btn .btn-outline-primary .btn-sm}
-[GitHub repo](https://github.com/nipunbatra/dl-teaching){.btn .btn-outline-secondary .btn-sm}
+## Core references
 
----
+| Use this for | Resource |
+|---|---|
+| One broad, modern textbook | Simon J. D. Prince, [*Understanding Deep Learning*](https://udlbook.github.io/udlbook/) |
+| A rigorous second treatment | Christopher Bishop & Hugh Bishop, *Deep Learning: Foundations and Concepts* |
+| Hands-on PyTorch | [Dive into Deep Learning](https://d2l.ai/) |
+| Classical reference | Goodfellow, Bengio & Courville, [*Deep Learning*](https://www.deeplearningbook.org/) |
 
-## Books · the spine of the course
+## Video companions
 
-| Role | Resource | Why |
-|------|----------|-----|
-| **Primary textbook** | [Prince, *Understanding Deep Learning* (2023)](https://udlbook.github.io/udlbook/) | Free PDF, CC-BY figures, modern coverage |
-| **Rigour supplement** | Bishop & Bishop, *Deep Learning: Foundations and Concepts* (2024) | Math-first, careful derivations |
-| **Hands-on labs** | [Zhang et al., *Dive into Deep Learning*](https://d2l.ai) | PyTorch code for every chapter |
-| **Practical engineering** | [Chip Huyen, *AI Engineering* (2024)](https://huyenchip.com/) | LLM productionization, inference |
-| **Classical reference** | Goodfellow, Bengio, Courville, *Deep Learning* (2016) | The bibliography canon |
+- **Build from scratch:** Andrej Karpathy’s [Zero to Hero](https://karpathy.ai/zero-to-hero.html) is ideal for the early implementation thread and language-model construction.
+- **Vision:** [CS231n](https://cs231n.stanford.edu/) is the most useful companion for CNNs, detection, and segmentation.
+- **Language and Transformers:** [CS224N](https://web.stanford.edu/class/cs224n/) provides a deeper treatment of sequence models and attention.
+- **Practical model work:** the [Hugging Face course](https://huggingface.co/learn) is the best bridge to modern tooling.
 
----
+## Papers: read selectively
 
-## Video courses · pick one and watch start-to-finish
+Read the original paper only after you understand the deck’s mechanism. The recurring landmarks are: ResNet, *Attention Is All You Need*, BERT/GPT, SimCLR/MAE/BYOL, VAE/GAN/DDPM, and FlashAttention. Individual deck endings name the relevant paper when it earns a close read.
 
-| Course | Best for | Length |
-|--------|----------|--------|
-| **Karpathy · *Zero to Hero*** | the *foundations* track — micrograd → MLP → Transformer → tokenizer | ~10 hrs |
-| **CS231n (Stanford)** | CNN / vision deep dive — maps almost 1-1 onto L01-L09 | ~12 hrs |
-| **CS224N (Manning, Stanford)** | sequences → attention → transformers → LLMs — covers L10-L16 | ~15 hrs |
-| **MIT 6.S191** | gentle intro alternative to CS231n | ~10 hrs |
-| **Andrew Ng · Deep Learning Specialization** | gentlest pace, classic intuition | ~30 hrs (5 courses) |
-| **Fast.ai · Practical Deep Learning** | code-first, transfer-learning emphasis | ~20 hrs |
+## Interactives
 
----
+[Interactive Articles](https://nipunbatra.github.io/interactive-articles/) hosts optional browser explainers for mechanics such as convolution, optimization, attention, contrastive learning, and diffusion. Follow the links on `[I]` lecture slides; they are the curated entry points rather than a separate parallel syllabus.
 
-## Canonical blogs · keep these in your bookmarks
+## For each lecture
 
-| Author | Posts that matter |
-|--------|-------------------|
-| **Jay Alammar** | *Illustrated Transformer*, *Illustrated GPT-2*, *Illustrated BERT* |
-| **Lilian Weng** | *What are Diffusion Models?*, *VAE post*, *SSL post*, *Generalized VLMs*, *RLHF* |
-| **Karpathy** | *State of GPT*, *Intro to LLMs*, *A Recipe for Training Neural Nets* |
-| **Sebastian Ruder** | *An Overview of Gradient Descent Optimization* |
-| **Chris Olah** | *Understanding LSTMs*, *Calculus on Computational Graphs* |
-| **Tim Dettmers** | quantization deep-dives, LLM systems |
-| **Anthropic Research** | mechanistic interpretability blog series |
-
----
-
-## Per-lecture deep-dive references
-
-### Module 0–1 · Foundations
-
-| # | Topic | Best reference(s) |
-|:---:|------|-------------------|
-| 0 | Prob/MLE/MAP/KL | Bishop Ch 2; *3Blue1Brown · Bayes theorem* (10 min) |
-| 1 | Why DL · MLP recap | Karpathy *micrograd* (2 hr); Andrew Ng C1W1 |
-| 2 | UAT · going deep | UDL Ch 4 + 11; *3Blue1Brown · But what is a neural network?* |
-| 3 | Training in practice | CS231n L6–7; Karpathy *Recipe for training NNs* (blog) |
-
-### Module 2–3 · Optimization & regularization
-
-| # | Topic | Best reference(s) |
-|:---:|------|-------------------|
-| 4 | SGD + momentum + Nesterov | CS231n L7; Sebastian Ruder overview |
-| 5 | Adam · AdamW · schedules | CS231n L7; Kingma 2014 (Adam); Loshchilov & Hutter 2017 (AdamW) |
-| 6 | Regularization (classical + dropout + norm) | UDL Ch 9 + 11; *BatchNorm* (Ioffe 2015) |
-
-### Module 4 · CNNs & vision
-
-| # | Topic | Best reference(s) |
-|:---:|------|-------------------|
-| 7 | CNN deep dive | CS231n L5 + L9; *Visualizing CNN features* (Zeiler 2013) |
-| 8 | Modern CNNs + transfer | He 2015 (ResNet); fast.ai transfer-learning notebooks |
-| 9 | Object detection + segmentation | CS231n L11; *YOLO* (Redmon 2015); *Mask R-CNN* (He 2017); SAM paper |
-
-### Module 5–6 · Sequences → Transformers
-
-| # | Topic | Best reference(s) |
-|:---:|------|-------------------|
-| 10 | RNN · LSTM · GRU | CS224N L5; Chris Olah *Understanding LSTMs* |
-| 11 | Seq2seq | CS224N L7; Sutskever 2014; Cho 2014 |
-| 12 | Attention | **Jay Alammar · *Illustrated Transformer***; CS224N L8 |
-| 13 | The Transformer | **Karpathy · *Let's build GPT***; CS224N L9; Vaswani 2017 |
-| 14 | Tokenization + pretraining | **Karpathy · *Let's build the GPT Tokenizer***; HF Course Ch 6 |
-
-### Module 7–8 · LLMs & multimodal
-
-| # | Topic | Best reference(s) |
-|:---:|------|-------------------|
-| 15 | LLMs | **Karpathy · *State of GPT***; Kaplan 2020; Hoffmann 2022 (Chinchilla) |
-| 16 | Alignment + LoRA + RLHF + DPO | InstructGPT (Ouyang 2022); DPO (Rafailov 2023); HF PEFT/TRL docs |
-| 17 | Self-supervised learning | Lilian Weng *SSL post*; SimCLR / BYOL / DINO / MAE / DINOv2 |
-| 18 | Vision-language | Lilian Weng *Generalized VLMs*; CLIP, LLaVA, Flamingo papers |
-
-### Module 9 · Generative models
-
-| # | Topic | Best reference(s) |
-|:---:|------|-------------------|
-| 19 | Autoencoder + VAE | Kingma & Welling 2013; Lilian Weng *From AE to β-VAE*; Doersch tutorial |
-| 20 | GAN | Goodfellow 2014; Goodfellow *NIPS 2016 GAN Tutorial* |
-| 21 | Diffusion theory | **Lilian Weng *What are Diffusion Models?***; Calvin Luo survey; Ho 2020 (DDPM) |
-| 22 | Diffusion practice | Rombach 2022 (Stable Diffusion); Ho & Salimans 2022 (CFG); HF `diffusers` docs |
-
-### Module 10 · Wrap-up
-
-| # | Topic | Best reference(s) |
-|:---:|------|-------------------|
-| 23 | Efficient inference | Chip Huyen *AI Engineering* Ch 5–7; FlashAttention; vLLM blog; Tim Dettmers |
-| 24 | Frontier · agents · interp | Wei 2022 (CoT); Yao 2022 (ReAct); OpenAI o1 blog; Anthropic interp blog |
-
----
-
-## Interactive explainer library
-
-Every lecture links one or more interactives from [nipunbatra.github.io/interactive-articles](https://nipunbatra.github.io/interactive-articles/). The complete cross-reference ·
-
-| Lecture | Interactives |
-|:---:|---|
-| L00 | [mle-map-coin](https://nipunbatra.github.io/interactive-articles/mle-map-coin/) · [bayesian-posterior](https://nipunbatra.github.io/interactive-articles/bayesian-posterior/) · [info-theory](https://nipunbatra.github.io/interactive-articles/info-theory/) · [multivariate-normal](https://nipunbatra.github.io/interactive-articles/multivariate-normal/) · [demystifying-p-values](https://nipunbatra.github.io/interactive-articles/demystifying-p-values/) |
-| L02 | [universal-approximation](https://nipunbatra.github.io/interactive-articles/universal-approximation/) · [vanishing-gradients](https://nipunbatra.github.io/interactive-articles/vanishing-gradients/) · [resnet](https://nipunbatra.github.io/interactive-articles/resnet/) |
-| L05 | [optimizer-race](https://nipunbatra.github.io/interactive-articles/optimizer-race/) · [optimizers-beyond](https://nipunbatra.github.io/interactive-articles/optimizers-beyond/) · [lr-schedule-visualizer](https://nipunbatra.github.io/interactive-articles/lr-schedule-visualizer/) |
-| L06 | [double-descent](https://nipunbatra.github.io/interactive-articles/double-descent/) · [dropout-playground](https://nipunbatra.github.io/interactive-articles/dropout-playground/) · [norm-comparison](https://nipunbatra.github.io/interactive-articles/norm-comparison/) |
-| L07 | [convolution-visualizer](https://nipunbatra.github.io/interactive-articles/convolution-visualizer/) · [receptive-field-grower](https://nipunbatra.github.io/interactive-articles/receptive-field-grower/) |
-| L08 | [resnet](https://nipunbatra.github.io/interactive-articles/resnet/) · [knowledge-distillation](https://nipunbatra.github.io/interactive-articles/knowledge-distillation/) |
-| L09 | [object-detection](https://nipunbatra.github.io/interactive-articles/object-detection/) · [image-segmentation](https://nipunbatra.github.io/interactive-articles/image-segmentation/) · [unet](https://nipunbatra.github.io/interactive-articles/unet/) |
-| L10 | [lstm-gates](https://nipunbatra.github.io/interactive-articles/lstm-gates/) · [vanishing-gradients](https://nipunbatra.github.io/interactive-articles/vanishing-gradients/) |
-| L11 | [seq2seq-bottleneck](https://nipunbatra.github.io/interactive-articles/seq2seq-bottleneck/) |
-| L12 | [attention](https://nipunbatra.github.io/interactive-articles/attention/) |
-| L13 | [attention](https://nipunbatra.github.io/interactive-articles/attention/) · [positional-encoding](https://nipunbatra.github.io/interactive-articles/positional-encoding/) |
-| L14 | [bpe-merges](https://nipunbatra.github.io/interactive-articles/bpe-merges/) |
-| L15 | [softmax-temperature](https://nipunbatra.github.io/interactive-articles/softmax-temperature/) · [in-context-learning](https://nipunbatra.github.io/interactive-articles/in-context-learning/) · [mixture-of-experts](https://nipunbatra.github.io/interactive-articles/mixture-of-experts/) · [mamba](https://nipunbatra.github.io/interactive-articles/mamba/) |
-| L16 | [lora-adapter](https://nipunbatra.github.io/interactive-articles/lora-adapter/) |
-| L17 | [vision-ssl](https://nipunbatra.github.io/interactive-articles/vision-ssl/) · [info-theory](https://nipunbatra.github.io/interactive-articles/info-theory/) |
-| L18 | [clip-zero-shot](https://nipunbatra.github.io/interactive-articles/clip-zero-shot/) · [vision-transformer](https://nipunbatra.github.io/interactive-articles/vision-transformer/) · [vlm](https://nipunbatra.github.io/interactive-articles/vlm/) · [saliency](https://nipunbatra.github.io/interactive-articles/saliency/) |
-| L19 | [vae-latent-explorer](https://nipunbatra.github.io/interactive-articles/vae-latent-explorer/) · [multivariate-normal](https://nipunbatra.github.io/interactive-articles/multivariate-normal/) · [elbo-decomposition](https://nipunbatra.github.io/interactive-articles/elbo-decomposition/) |
-| L20 | [gan-minimax-dance](https://nipunbatra.github.io/interactive-articles/gan-minimax-dance/) |
-| L21 | [diffusion-denoise](https://nipunbatra.github.io/interactive-articles/diffusion-denoise/) |
-| L22 | [cfg-scale-visualizer](https://nipunbatra.github.io/interactive-articles/cfg-scale-visualizer/) · [text-diffusion](https://nipunbatra.github.io/interactive-articles/text-diffusion/) |
-| L23 | [kv-cache](https://nipunbatra.github.io/interactive-articles/kv-cache/) · [quantize-prune](https://nipunbatra.github.io/interactive-articles/quantize-prune/) · [knowledge-distillation](https://nipunbatra.github.io/interactive-articles/knowledge-distillation/) |
-
----
-
-## Preparation runbook for the instructor
-
-A first-time-teaching survival plan, condensed ·
-
-### 4 weeks before semester
-
-- **Week 1** · read UDL Ch 1–7 end-to-end · skim formulas, focus on figures.
-- **Week 2** · watch **CS231n** L1–9 (Karpathy/Johnson) · ~12 hrs.
-- **Week 3** · watch **Karpathy *Zero to Hero*** playlist · ~10 hrs.
-- **Week 4** · watch **CS224N** L1–10 (Manning) · ~15 hrs.
-
-### 1 week before each lecture
-
-1. Read your own deck cold (45 min). Note any slide you can't explain in 30 sec.
-2. Walk every worked numeric on paper (15 min).
-3. Play with the linked interactive (10 min) — be the student.
-4. Pick 2 students to call on. Decide your skip list from the ⭐⭐⭐ optional slides.
-
-### Day of lecture
-
-- Marp presenter mode + notebook + interactive in three windows.
-- Write opening sentence on paper. One sentence.
-- 75-min timer. 5 min for Q&A.
+1. Read the deck’s opening and its worked mechanism.
+2. Use one notebook or interactive only if it resolves a concrete question.
+3. Return to the relevant book or paper afterward, with the structure already in mind.

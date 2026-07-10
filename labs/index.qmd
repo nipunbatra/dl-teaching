@@ -1,5 +1,5 @@
 ---
-title: "Labs · Assignments & Project"
+title: "Assignments & project"
 ---
 
 Four homeworks and a project. Every homework grows out of a notebook you've
@@ -11,10 +11,10 @@ already seen in lecture — the assignment is never "build something alien", it'
 | | Out after | Built from | One line | Due |
 |---|---|---|---|---|
 | [HW1 · Micrograd & the optimizer race](hw1-micrograd-optimizers.qmd) | L05 | [`01-micrograd-mlp`](../notebooks/01-micrograd-mlp.ipynb) · [`05-optimizers`](../notebooks/05-optimizers.ipynb) | Extend the autodiff engine, train an MLP with it, race SGD/momentum/Adam and explain the curves | +2 weeks |
-| [HW2 · CNNs & the sabotaged script](hw2-cnn-debugging.qmd) | L09 | [`07-cnn-shape-tour`](../notebooks/07-cnn-shape-tour.ipynb) · [`03-debug-ladder`](../notebooks/03-debug-ladder.ipynb) | Budget a CNN by hand, measure what pretraining is worth, and diagnose three planted bugs with the debug ladder | +2 weeks |
-| [HW3 · BPE, attention & nanoGPT](hw3-nanogpt-tokenization.qmd) | L14 | [`12-attention-by-hand`](../notebooks/12-attention-by-hand.ipynb) · [`13-nanogpt`](../notebooks/13-nanogpt.ipynb) | Run BPE on paper, build attention from matmuls and verify it, train a GPT and explain the temperature knob | +2 weeks |
-| [HW4 · VAEs & diffusion](hw4-vae-diffusion.qmd) | L22 | [`19-vae-mnist`](../notebooks/19-vae-mnist.ipynb) · [`21-ddpm-2d`](../notebooks/21-ddpm-2d.ipynb) | Ablate the KL term on a VAE, watch a DDPM denoise, and argue VAE vs GAN vs diffusion like an engineer | +2 weeks |
-| [Project](project.qmd) | proposal after L16 | — | A landscape topic executed with spine rigor: one question, one baseline, honest analysis | last week |
+| [HW2 · CNNs & the sabotaged script](hw2-cnn-debugging.qmd) | L10 | [`07-cnn-shape-tour`](../notebooks/07-cnn-shape-tour.ipynb) · [`03-debug-ladder`](../notebooks/03-debug-ladder.ipynb) | Budget a CNN by hand, measure what pretraining is worth, and diagnose three planted bugs with the debug ladder | +2 weeks |
+| [HW3 · BPE, attention & nanoGPT](hw3-nanogpt-tokenization.qmd) | L17 | [`12-attention-by-hand`](../notebooks/12-attention-by-hand.ipynb) · [`13-nanogpt`](../notebooks/13-nanogpt.ipynb) | Run BPE on paper, build attention from matmuls and verify it, train a GPT and explain the temperature knob | +2 weeks |
+| [HW4 · VAEs & diffusion](hw4-vae-diffusion.qmd) | L23 | [`19-vae-mnist`](../notebooks/19-vae-mnist.ipynb) · [`21-ddpm-2d`](../notebooks/21-ddpm-2d.ipynb) | Ablate the KL term on a VAE, watch a DDPM denoise, and argue VAE vs GAN vs diffusion like an engineer | +2 weeks |
+| [Project](project.qmd) | proposal after L18 | — | A landscape topic executed with spine rigor: one question, one baseline, honest analysis | last week |
 
 All homeworks fit a free Colab GPU; HW1 and most of HW3 don't even need that.
 Each is sized at *hours, not days* — if a part is eating a full day, you're
@@ -22,9 +22,9 @@ fighting an infrastructure problem, not a learning problem; come to office hours
 
 ## Grading philosophy
 
-The course splits into **spine** (L00–L14: mastery) and **landscape** (L15–L24:
-literacy), and the grading follows: HW1–HW3 and quizzes 1–3 assess the spine and
-carry most of the weight; HW4 and the project sit at the spine/landscape boundary.
+The assignments move from foundations, through vision and language, to generative
+modeling. Their purpose is not to produce a leaderboard result: each asks for a
+small reproducible system plus a clear account of what its measurements mean.
 
 Within each homework, notice where the points actually are. The plots and
 accuracies are the cheap part — every assignment reserves its largest block for

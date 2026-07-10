@@ -2,7 +2,7 @@
 title: "HW3 · BPE by Hand, Attention from Scratch, and Your Own GPT"
 ---
 
-**Out after L14 · due in 2 weeks · 100 points.**
+**Out after L17 · due in 2 weeks · 100 points.**
 
 By the end of this assignment you will have trained a language model that writes
 (bad) Shakespeare, built its central mechanism with your own hands, and tokenized
@@ -11,9 +11,9 @@ text the way every frontier model's input pipeline does. The point is to make
 
 ## Goals
 
-- Run the BPE algorithm by hand and see why "LLMs see tokens, not letters" (L14).
-- Implement scaled dot-product attention from raw matrix ops and verify it against PyTorch's — the strongest possible proof you understand it (L12).
-- Train a small transformer end-to-end and watch what the **temperature** knob actually controls at sampling time (L13).
+- Run the BPE algorithm by hand and see why "LLMs see tokens, not letters" (L17).
+- Implement scaled dot-product attention from raw matrix ops and verify it against PyTorch's — the strongest possible proof you understand it (L16).
+- Train a small transformer end-to-end and watch what the **temperature** knob actually controls at sampling time (L16–L17).
 - Explain generated text qualitatively — the writing is graded, not the eloquence of the model.
 
 ## Setup
@@ -58,7 +58,7 @@ end-of-word marker `</w>` appended to each word.
 
    including the $\sqrt{d_k}$ scaling and an optional causal mask (use `-inf` before the softmax — why before and not after?).
 2. **Verify** against `torch.nn.functional.scaled_dot_product_attention` on random inputs, with and without the causal mask: `torch.allclose` with `atol=1e-6`, at three different shapes. Print the comparison.
-3. The by-hand check from L12: with
+3. The by-hand attention check: with
 
    $$Q = \begin{pmatrix}1&0\\0&1\end{pmatrix},\; K = \begin{pmatrix}1&0\\0&1\end{pmatrix},\; V = \begin{pmatrix}10&0\\0&20\end{pmatrix}$$
 
