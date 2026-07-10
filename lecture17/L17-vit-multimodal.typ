@@ -532,7 +532,7 @@ $ H times W times C quad -->^"concat 2×2" quad H/2 times W/2 times 4C quad -->^
   [best for], [classification], [detection, segmentation],
 ))
 #pause
-#interbox[#text(fill: MUTED)[(to build)] — a shifted-window widget: watch windows tile, then shift, so neighbours mix.]
+#interbox(link-to: IA + "shifted-window")[A shifted-window widget: watch windows tile, then shift, so neighbours mix.]
 
 // ═══════════════════════════ PART VIII — Vision pretraining ═══════════════════════════
 = Vision pretraining (briefly)

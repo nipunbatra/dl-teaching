@@ -776,7 +776,7 @@ $ #text(fill: TEAL)[continuous VAE latent] quad quad #text(fill: MUTED)[versus] 
 #pause
 #align(center, text(size: 15pt, fill: MUTED)[this previews *tokenized* visual representations — the basis of many image + video generators])
 #pause
-#interbox[#text(fill: MUTED)[(to build)] — a codebook widget: snap continuous encodings to their nearest discrete code vectors.]
+#interbox(link-to: IA + "vq-codebook")[A codebook widget: snap continuous encodings to their nearest discrete code vectors.]
 
 == Why VAEs matter to modern diffusion #V
 

@@ -392,7 +392,7 @@ Two consistent conventions — both correct, if you shift the targets to match:
 
 == Interactive: causal convolution #I
 
-#interbox[#text(fill: MUTED)[(to build)] — drag the kernel across the sequence and watch it *forbidden* from crossing the "now" line; toggle left-padding and see the output length change.]
+#interbox(link-to: IA + "causal-conv")[Drag the kernel across the sequence and watch it *forbidden* from crossing the "now" line; toggle left-padding and see the output length change.]
 
 // ═══════════════════════════ PART IV — Receptive field ═══════════════════════════
 = Receptive field
@@ -675,7 +675,7 @@ The same recipe of *causal conv, dilation, residual, and autoregression* reaches
 
 == Interactive: WaveNet block #I
 
-#interbox[#text(fill: MUTED)[(to build)] — step through one gated residual block: watch $tanh$ and $sigma$ combine, the skip branch peel off, and the residual rejoin for the next block.]
+#interbox(link-to: IA + "gated-residual")[Step through one gated residual block: watch $tanh$ and $sigma$ combine, the skip branch peel off, and the residual rejoin for the next block.]
 
 // ═══════════════════════════ PART VIII — CNN vs RNN ═══════════════════════════
 = Convolutional vs recurrent sequence models

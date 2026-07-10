@@ -611,7 +611,7 @@ $ p_theta(x_(t-1) | x_t, c) $
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[text, class labels, masks, low-res images — all change the *same* conditional denoising question])
 #pause
-#interbox[#text(fill: MUTED)[(to build)] — a conditioning widget: watch the reverse trajectory bend toward a chosen class.]
+#interbox(link-to: IA + "classifier-guidance")[A conditioning widget: watch the reverse trajectory bend toward a chosen class.]
 
 == Classifier guidance, previewed #D
 

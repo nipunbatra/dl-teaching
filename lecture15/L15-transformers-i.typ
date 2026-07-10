@@ -614,7 +614,7 @@ Drop the encoder and cross-attention: *causal self-attention $+$ FFN*, then an L
 
 == Interactive: the Transformer block #I
 
-#interbox[#text(fill: MUTED)[(to build)] — send a sequence through one block and watch the residual stream: attention mixes across positions, the FFN transforms each, and the norms keep it stable.]
+#interbox(link-to: IA + "transformer-block")[Send a sequence through one block and watch the residual stream: attention mixes across positions, the FFN transforms each, and the norms keep it stable.]
 
 // ═══════════════════════════ PART VIII — Complexity & comparison ═══════════════════════════
 = Complexity and comparison
@@ -703,7 +703,7 @@ Feed the sequence in; the target is the *same sequence shifted left by one*:
 
 == Interactive: tiny Transformer LM #I
 
-#interbox[#text(fill: MUTED)[(to build)] — type a short prefix and watch it flow through embeddings, causal attention and the FFN to a next-token distribution; sample a token and feed it back.]
+#interbox(link-to: IA + "decoding-lab")[Type a short prefix and watch it flow through embeddings, causal attention and the FFN to a next-token distribution; sample a token and feed it back.]
 
 // ═══════════════════════════ PART X — Summary ═══════════════════════════
 = Summary
