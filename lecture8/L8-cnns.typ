@@ -5,12 +5,21 @@
 // Theme, palette, helpers and diagram builders live in common/metropolis.typ.
 
 #import "../common/metropolis.typ": *
+#import "../common/mldiag.typ": *
 #show: metropolis-deck.with(
   title: [Convolutional Neural Networks],
   subtitle: [Locality, Weight Sharing, and Hierarchy in Images],
 )
 
 #let IA = "https://nipunbatra.github.io/interactive-articles/"
+
+// the SAME data the worked-example prose talks about drives the native conv figure
+#let Xconv = ((1, 2, 0, 1, 2),
+             (0, 1, 3, 2, 0),
+             (2, 1, 0, 1, 3),
+             (1, 0, 2, 0, 1),
+             (0, 2, 1, 3, 2))
+#let Kedge = ((1, 1, 1), (0, 0, 0), (-1, -1, -1))   // horizontal-edge detector
 
 // ── the CNN pipeline: image -> (conv act pool) x N -> GAP -> FC -> softmax ──
 #let cnnpipe = align(center, diagram(spacing: (9mm, 8mm), node-stroke: 0.9pt + INK, node-fill: white, {
@@ -178,9 +187,14 @@ $ Y = 3 + 0 + (-3) = 0 $
 
 == Convolution, visually #V
 
-#fig("/lecture8/figures/conv_op.svg", w: 74%)
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[top row minus bottom row: this kernel *fires* only where brightness changes vertically])
+#v(3mm)
+#only("1")[#align(center, conv-op(input: Xconv, kernel: Kedge, step: 0, show-expr: true, cell: 7.5mm))]
+#only("2")[#align(center, conv-op(input: Xconv, kernel: Kedge, step: 4, show-expr: true, cell: 7.5mm))]
+#only("3-")[#align(center, conv-op(input: Xconv, kernel: Kedge, step: 8, show-expr: true, cell: 7.5mm))]
+#only("4-")[
+  #v(3mm)
+  #align(center, text(size: 16pt, fill: MUTED)[top row minus bottom row: this kernel *fires* only where brightness changes vertically])
+]
 
 == A kernel is a feature detector
 
@@ -267,7 +281,13 @@ Add a ring of $p$ zeros around the input before convolving:
 #pause
 - e.g. $k = 3, p = 1$ or $k = 5, p = 2$ preserve $H times W$.
 #pause
-#fig("/lecture8/figures/padding_stride.svg", w: 44%)
+#v(2mm)
+#align(center, conv-op(input: 5, kernel: 3, padding: 1, step: 0, cell: 6.5mm,
+  labels: (input: [padded input ($p = 1$)], kernel: [$K$], output: [output])))
+#pause
+#align(center, text(size: 15pt, fill: MUTED)[
+  $5 times 5$ input, $k = 3$, $p = 1$, $s = 1$ → output is $#conv-out-size(5, 3, padding: 1) times #conv-out-size(5, 3, padding: 1)$ — the pad ring keeps the size, computed in Typst
+])
 
 == Stride
 
@@ -333,8 +353,11 @@ $ y = 1/abs(R) sum_((i,j) in R) x_(i j) quad quad (#text[average pooling]) $
 
 == Pooling, worked #V
 
-#fig("/lecture8/figures/pooling.svg", w: 72%)
+#v(3mm)
+#align(center, pool-op(((1, 3, 2, 4), (5, 6, 1, 2), (7, 2, 3, 0), (1, 0, 4, 8)),
+  window: 2, kinds: ("max", "avg"), cell: 9mm))
 #pause
+#v(2mm)
 #align(center, text(size: 16pt, fill: MUTED)[max keeps the *strongest* response in each region; average keeps the *mean*])
 
 == What pooling buys us
@@ -381,8 +404,10 @@ The *receptive field* of an output unit = the region of the *input* that can aff
 
 == Receptive field grows with depth #V
 
-#fig("/lecture8/figures/receptive_field.svg", w: 56%)
+#v(3mm)
+#align(center, receptive-field(kernels: (3, 3, 3), cell: 8mm))
 #pause
+#v(2mm)
 #align(center, text(size: 16pt, fill: MUTED)[three stacked $3 times 3$ convs: receptive field $3 -> 5 -> 7$])
 
 == Two small kernels beat one big one #D

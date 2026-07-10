@@ -6,6 +6,7 @@
 // Theme, palette, helpers and diagram builders live in common/metropolis.typ.
 
 #import "../common/metropolis.typ": *
+#import "../common/mldiag.typ": *
 #show: metropolis-deck.with(
   title: [Transformers I: Self-Attention, Positional Encoding and Transformer Blocks],
   subtitle: [Replacing recurrence with attention between all tokens],
@@ -386,7 +387,8 @@ $ A_(i j) = 0 quad #text(size: 15pt, fill: MUTED)[for all] quad j > i $
 
 $T = 5$: allowed entries (lower triangle) vs masked future ($-oo$, upper triangle):
 #pause
-#fig("/lecture15/figures/causal_mask.svg", w: 33%)
+#align(center, attn-matrix(("1", "2", "3", "4", "5"), mask: "causal", cell: 11mm,
+  q-label: [query position $i$], k-label: [key position $j$]))
 #pause
 #align(center, text(size: 15pt, fill: MUTED)[query $i$ may attend to key $j$ only when $j <= i$ — a lower-triangular attention pattern])
 

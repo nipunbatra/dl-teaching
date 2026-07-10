@@ -6,6 +6,7 @@
 // Theme, palette, helpers and diagram builders live in common/metropolis.typ.
 
 #import "../common/metropolis.typ": *
+#import "../common/mldiag.typ": *
 #show: metropolis-deck.with(
   title: [Transformers II: BERT, GPT, Pretraining, Finetuning and Generation],
   subtitle: [Same block, different mask + objective + head ⇒ different model family],
@@ -133,7 +134,29 @@ We keep the Transformer block *fixed* and change three knobs:
 
 The mask is the single biggest lever — it decides who may attend to whom:
 #pause
-#fig("/lecture16/figures/attention_masks.svg", w: 92%)
+#grid(columns: (1fr, 1fr, 1fr), gutter: 8pt,
+  align(center + top)[
+    #text(size: 12pt, weight: 600, fill: TEAL)[bidirectional (encoder)] \
+    #text(size: 11pt, fill: MUTED)[BERT — no mask]
+    #v(2.5mm)
+    #attn-matrix(("1", "2", "3", "4", "5"), cell: 7mm,
+      q-label: [query $i$], k-label: [key $j$])
+  ],
+  align(center + top)[
+    #text(size: 12pt, weight: 600, fill: RED)[causal (decoder)] \
+    #text(size: 11pt, fill: MUTED)[GPT — mask future]
+    #v(2.5mm)
+    #attn-matrix(("1", "2", "3", "4", "5"), mask: "causal", cell: 7mm,
+      q-label: [query $i$], k-label: [key $j$])
+  ],
+  align(center + top)[
+    #text(size: 12pt, weight: 600, fill: BLUE)[cross-attention] \
+    #text(size: 11pt, fill: MUTED)[decoder $->$ encoder]
+    #v(2.5mm)
+    #attn-matrix((q: ("1", "2", "3", "4"), k: ("1", "2", "3", "4", "5")), cell: 7mm,
+      q-label: [target $u$], k-label: [source $j$])
+  ],
+)
 #pause
 #align(center, text(size: 14pt, fill: MUTED)[bidirectional (BERT): all-to-all · causal (GPT): only the past · cross-attention: decoder reads encoder])
 
