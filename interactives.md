@@ -5,10 +5,9 @@ Every deck's `[I]` slides point at a browser explainer hosted in the
 repo (`~/git/interactive`), deployed at
 `https://nipunbatra.github.io/interactive-articles/<slug>/`.
 
-- **LIVE** — an article already exists and is linked from the deck (`#interbox(link-to: …)`).
-- LIVE — the deck references it as `(to build)`; needs a new article in
-  `interactive-articles/src/articles/<slug>/` (self-contained `index.html` + `meta.json`),
-  then `node scripts/build.js`, then wire the deck's `#interbox` to `link-to`.
+- **LIVE** — the article exists and the deck links it via `#interbox(link-to: …)`.
+  As of this cycle **every `[I]` slide is LIVE** (see the status section below); the
+  `(to build)` backlog is empty.
 
 New articles follow the repo house style: single self-contained `index.html`
 (warm-paper palette `--bg #fdfcf9`, blue `--accent #2c6fb7`, orange `--warm #d9622b`;
