@@ -59,7 +59,9 @@ $ theta_(t+1) = "update"(theta_t, g_t) $
 They differ only in *what state they keep* and *how they scale the step*:
 #pause
 - plain GD keeps *nothing* — just $-eta g_t$;
+#pause
 - momentum keeps a *running direction*;
+#pause
 - Adam keeps a running *direction* and a running *magnitude*.
 
 == The loss landscape #V
@@ -101,20 +103,37 @@ $ Delta_"Newton" = -H^(-1) nabla cal(L) $
 #result[$theta_(t+1) = theta_t - eta thin nabla cal(L)(theta_t)$]
 #pause
 - $eta$ — the *learning rate* (step size);
+#pause
 - $nabla cal(L)$ — the direction of steepest ascent, so $-nabla cal(L)$ descends;
+#pause
 - one hyperparameter, no memory — the simplest optimizer there is.
 
 == Worked example: 1-D quadratic #D
 
+Minimum is at $theta = 3$. Set up the loss, gradient, and starting point:
+#pause
 $ cal(L)(theta) = (theta - 3)^2, quad nabla cal(L) = 2(theta - 3), quad theta_0 = 0, quad eta = 0.1 $
 #pause
-$ theta_1 = 0 - 0.1 dot 2(0 - 3) = 0.6 $
+*Step 1* — plug $theta_0 = 0$ into the update rule:
+$ theta_1 = 0 - 0.1 dot 2(0 - 3) $
 #pause
-$ theta_2 = 0.6 - 0.1 dot 2(0.6 - 3) = 1.08 $
+$ theta_1 = 0 - 0.1 dot (-6) = 0.6 $
 #pause
-$ theta_3 = 1.08 - 0.1 dot 2(1.08 - 3) = 1.464 $
+#align(center, text(size: 16pt, fill: MUTED)[the gradient $-6$ points left of the min, so the step moves us *right*, toward $3$.])
+
+== Worked example: 1-D quadratic (cont.) #D
+
+Recall $theta_1 = 0.6$, still with $eta = 0.1$ on $cal(L) = (theta - 3)^2$.
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[$0 -> 0.6 -> 1.08 -> 1.464 -> dots -> 3$ — geometric approach to the minimum.])
+*Step 2* — gradient at $0.6$ is $2(0.6 - 3) = -4.8$:
+$ theta_2 = 0.6 - 0.1 dot (-4.8) = 1.08 $
+#pause
+*Step 3* — gradient at $1.08$ is $2(1.08 - 3) = -3.84$:
+$ theta_3 = 1.08 - 0.1 dot (-3.84) = 1.464 $
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[$0 -> 0.6 -> 1.08 -> 1.464 -> dots -> 3$ — each step covers $80%$ of the remaining gap.])
+#pause
+#notebox[The distance to the minimum obeys $(theta_t - 3) -> (1 - 2 eta)(theta_t - 3)$; here $1 - 2 eta = 0.8$, a clean geometric decay.]
 
 == The learning rate matters #V
 
@@ -227,6 +246,7 @@ Accumulate past gradients into a *velocity*, then step along it:
 $ v_t = beta thin v_(t-1) + g_t, quad quad theta_(t+1) = theta_t - eta thin v_t $
 #pause
 - $beta in [0, 1)$ — the *momentum* coefficient (typically $0.9$);
+#pause
 - $v_t$ is a running memory of *where we have been going*.
 
 == Momentum as a vector sum #V
@@ -249,20 +269,31 @@ $ v_t = g_t + beta g_(t-1) + beta^2 g_(t-2) + beta^3 g_(t-3) + dots $
 #fig("/lecture5/figures/momentum_vs_gd.svg", w: 82%)
 #pause
 - *oscillating* directions ($y$) → gradients flip sign → they *cancel* in $v_t$;
+#pause
 - *consistent* directions ($x$) → gradients agree → they *accumulate* and accelerate;
+#pause
 - averaging also *smooths* stochastic noise.
 
 == Worked example: the EMA #D
 
-Use the *normalized* form $m_t = beta m_(t-1) + (1 - beta) g_t$ with $beta = 0.9$, gradients $g = (10, 8, 11)$:
+Use the *normalized* form $m_t = beta m_(t-1) + (1 - beta) g_t$ with $beta = 0.9$, start $m_0 = 0$, gradients $g = (10, 8, 11)$:
 #pause
+Step 1 — take $10%$ of the new gradient, keep $90%$ of the old average:
 $ m_1 = 0.9 dot 0 + 0.1 dot 10 = 1.0 $
 #pause
-$ m_2 = 0.9 dot 1.0 + 0.1 dot 8 = 1.7 $
+#align(center, text(size: 16pt, fill: MUTED)[one gradient of $10$ only nudges the average to $1.0$ — the memory of $m_0 = 0$ still dominates.])
+
+== Worked example: the EMA (cont.) #D
+
+Carry $m_1 = 1.0$ forward; $beta = 0.9$, next gradients $8$ then $11$.
 #pause
-$ m_3 = 0.9 dot 1.7 + 0.1 dot 11 = 2.63 $
+*Step 2* — carry $0.9 dot 1.0$ forward, add $0.1 dot 8$:
+$ m_2 = 0.9 dot 1.0 + 0.1 dot 8 = 0.9 + 0.8 = 1.7 $
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[the average *lags* the raw gradients and moves smoothly — that is the point.])
+*Step 3* — carry $0.9 dot 1.7$, add $0.1 dot 11$:
+$ m_3 = 0.9 dot 1.7 + 0.1 dot 11 = 1.53 + 1.1 = 2.63 $
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[raw gradients average $~9.7$, but starting from $0$ the EMA is still climbing at $m_3 = 2.63$ — early averages are biased *low* (Adam will correct this).])
 
 == How much does momentum remember?
 
@@ -293,6 +324,7 @@ $ 1/(1 - beta) quad "steps." $
 Different parameters live on different scales and see different gradient sizes.
 #pause
 - a rarely-active feature gets *tiny, infrequent* gradients — wants a *big* step;
+#pause
 - a hot feature gets *large, frequent* gradients — wants a *small* step.
 #pause
 #result[give every coordinate its *own* effective learning rate]
@@ -303,6 +335,7 @@ Scale each coordinate $j$ by the size of *its own* recent gradients:
 $ theta_(t+1, j) = theta_(t, j) - eta/(sqrt(s_(t, j)) + epsilon) thin g_(t, j) $
 #pause
 - $s_(t,j)$ — a running estimate of the *squared* gradient in coordinate $j$;
+#pause
 - $epsilon$ — a small constant ($~10^(-8)$) to avoid dividing by zero.
 
 == RMSProp: an EMA of squared gradients
@@ -320,6 +353,19 @@ Dividing by $sqrt(s_t)$ makes the update *scale-invariant* per coordinate:
 $ (g_(t,j))/(sqrt(s_(t,j))) approx plus.minus 1 $
 #pause
 #notebox[Steep and shallow directions get *comparable* step sizes — exactly what the ravine needed, without hand-tuning per axis.]
+
+== Worked example: RMSProp on two axes #D
+
+Steep axis sees $g = 10$, shallow axis sees $g = 0.1$; take $rho = 0.9$, $s_0 = 0$:
+#pause
+$ s_"steep" = 0.9 dot 0 + 0.1 dot 10^2 = 10, quad quad s_"shallow" = 0.9 dot 0 + 0.1 dot 0.1^2 = 0.001 $
+#pause
+Divide each gradient by its own $sqrt(s)$ (ignore $epsilon$):
+$ g_"steep"/sqrt(s_"steep") = 10/sqrt(10) approx 3.16, quad quad g_"shallow"/sqrt(s_"shallow") = 0.1/sqrt(0.001) approx 3.16 $
+#pause
+#result[a $100 times$ gap in raw gradient becomes the *same* effective step]
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[self-normalization: both axes move at rate $~eta$, so the ravine no longer zigzags.])
 
 // ═══════════════════════════ PART V — Adam ═══════════════════════════
 = Adam
@@ -351,23 +397,48 @@ $ theta_(t+1) = theta_t - eta thin hat(m)_t/(sqrt(hat(v)_t) + epsilon) $
 
 == Worked example: Adam step 1 #D
 
-$g_1 = 4$, $quad beta_1 = 0.9$, $beta_2 = 0.999$, $eta = 0.001$:
+$g_1 = 4$, $quad beta_1 = 0.9$, $beta_2 = 0.999$, $eta = 0.001$, start $m_0 = v_0 = 0$:
 #pause
-$ m_1 = 0.9 dot 0 + 0.1 dot 4 = 0.4, quad quad v_1 = 0.999 dot 0 + 0.001 dot 16 = 0.016 $
+*1st moment* — EMA of the gradient (direction):
+$ m_1 = 0.9 dot 0 + 0.1 dot 4 = 0.4 $
 #pause
-$ hat(m)_1 = 0.4/(1 - 0.9) = 4, quad quad hat(v)_1 = 0.016/(1 - 0.999) = 16 $
+*2nd moment* — EMA of the squared gradient (magnitude):
+$ v_1 = 0.999 dot 0 + 0.001 dot 16 = 0.016 $
 #pause
-$ Delta theta_1 = -0.001 dot 4/sqrt(16) = -0.001 $
+#align(center, text(size: 16pt, fill: MUTED)[both are far *below* the true scale ($g = 4$, $g^2 = 16$) — biased toward $0$ by the cold start.])
+
+== Worked example: Adam step 1 (cont.) #D
+
+Undo the bias by dividing out $1 - beta^t$ (here $t = 1$):
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[bias correction rescues the tiny raw $m_1, v_1$ back to the true gradient scale.])
+$ hat(m)_1 = 0.4/(1 - 0.9) = 4 $
+#pause
+$ hat(v)_1 = 0.016/(1 - 0.999) = 16 $
+#pause
+Now take the RMSProp-style step with the corrected moments:
+$ Delta theta_1 = -eta thin hat(m)_1/sqrt(hat(v)_1) = -0.001 dot 4/sqrt(16) = -0.001 $
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[bias correction rescues $m_1, v_1$ back to the true gradient scale — the step is exactly $-eta$.])
 
 == Worked example: Adam step 2 #D
 
-$g_2 = 6$ (now $t = 2$):
+$g_2 = 6$ (now $t = 2$), carrying $m_1 = 0.4$, $v_1 = 0.016$ from before:
 #pause
-$ m_2 = 0.9 dot 0.4 + 0.1 dot 6 = 0.96, quad v_2 = 0.999 dot 0.016 + 0.001 dot 36 = 0.051984 $
+*1st moment* — decay the old average, add $10%$ of the new gradient:
+$ m_2 = 0.9 dot 0.4 + 0.1 dot 6 = 0.96 $
 #pause
-$ hat(m)_2 = 0.96/(1 - 0.9^2) = 5.05, quad hat(v)_2 = 0.051984/(1 - 0.999^2) = 26.0 $
+*2nd moment* — same, with the squared gradient $36$:
+$ v_2 = 0.999 dot 0.016 + 0.001 dot 36 = 0.051984 $
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[the bias factor is now $1 - beta^2$, weaker than at $t = 1$ — the correction is already fading.])
+
+== Worked example: Adam step 2 (cont.) #D
+
+Bias-correct with $t = 2$, so divide by $1 - beta^2$:
+#pause
+$ hat(m)_2 = 0.96/(1 - 0.9^2) = 0.96/0.19 approx 5.05 $
+#pause
+$ hat(v)_2 = 0.051984/(1 - 0.999^2) approx 26.0 $
 #pause
 $ Delta theta_2 = -0.001 dot 5.05/sqrt(26.0) approx -0.000991 $
 #pause
@@ -378,7 +449,9 @@ $ Delta theta_2 = -0.001 dot 5.05/sqrt(26.0) approx -0.000991 $
 $ theta_(t+1) = theta_t - eta thin underbrace(hat(m)_t, "which way") / underbrace((sqrt(hat(v)_t) + epsilon), "how big") $
 #pause
 - numerator $hat(m)_t$ — a *momentum-smoothed direction*;
+#pause
 - denominator $sqrt(hat(v)_t)$ — a *per-coordinate magnitude* that self-normalizes;
+#pause
 - together: a smoothed, scale-free step in every coordinate.
 
 == Adam defaults
@@ -448,6 +521,7 @@ $ theta_(t+1) = theta_t - eta thin hat(m)_t/(sqrt(hat(v)_t) + epsilon) - eta lam
 
 #pause
 - *early* training: far from any minimum → want *large* steps to make progress;
+#pause
 - *late* training: near a minimum → want *small* steps to settle, not bounce.
 #pause
 #result[so *decay* the learning rate over training]
@@ -470,7 +544,9 @@ $ eta_t = eta_max dot t/T_"warmup" quad "for" t <= T_"warmup" $
 $ eta_t = 1/2 eta_max (1 + cos(pi thin (t - T_"warmup")/(T - T_"warmup"))) $
 #pause
 - smooth decay from $eta_max$ down to $~0$;
+#pause
 - no sharp drops (unlike step decay);
+#pause
 - pairs naturally with a short linear warmup.
 
 == Interactive: LR schedules #I

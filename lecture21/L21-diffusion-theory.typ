@@ -164,7 +164,7 @@ We have met two ways to generate data:
   notebox[*GAN* (L20) — learn a generator against an *adversarial critic*. One pass, but unstable minimax training.],
 )
 #pause
-#result[*Diffusion* starts from a *corruption process we design* — and can sample from *exactly*]
+#result[*Diffusion* starts from a *corruption process we design* — then generates by iterating a learned reverse process]
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[the key move: if we *know* how to add noise, we can train a network to *remove* it])
 
@@ -713,7 +713,7 @@ The same recipe travels — only the denoiser and conditioning change:
 - *audio* waveforms or spectrograms;  *video* with temporal structure;
 - *molecular* coordinates;  *trajectories* and actions;  continuous *latent* representations.
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[forward = Gaussian corruption always; the *architecture* must respect the data's structure])
+#align(center, text(size: 16pt, fill: MUTED)[for standard continuous-data DDPMs, forward = Gaussian corruption; the *architecture* must respect the data's structure])
 
 == Why direct pixel diffusion is demanding #D
 

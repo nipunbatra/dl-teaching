@@ -284,7 +284,7 @@ Add a learned position vector to every token — patches *and* the class token:
 #pause
 $ Z_0 = [thin z_"cls"; thin z_1; thin dots; thin z_N] + E_"pos", quad quad E_"pos" in RR^((N+1) times d) $
 #pause
-#notebox[ViT uses *learned 1-D* position embeddings, one per slot. Trained freely, they recover the 2-D grid structure — nearby patches end up with similar position vectors.]
+#notebox[ViT uses *learned 1-D* position embeddings, one vector per slot in the flattened patch order. They give attention a location signal; at a new resolution, the learned grid must be adapted (usually by interpolation).]
 
 == Position choices and changing resolution #D
 
@@ -592,7 +592,9 @@ A single label is a thin signal. A *caption* is far richer:
 #pause
 #align(center, text(size: 15pt, fill: MUTED)[object *dog* · attribute *brown* · action *running* · scene *snow* · relations *through*])
 #pause
-#result[far more supervision than the one word "dog" — and it comes *free* with web images]
+#result[far more supervision than the one word "dog" — without manually annotating every image]
+#pause
+#align(center, text(size: 14pt, fill: MUTED)[web pairs are still noisy and require collection, filtering, and careful attention to provenance, bias, and consent])
 
 == The dual encoder #V
 

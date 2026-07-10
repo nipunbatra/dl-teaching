@@ -76,7 +76,11 @@ $ f(x + Delta x) approx f(x) + f'(x) thin Delta x $
 #pause
 #result[derivative = best local *linear* approximation]
 #pause
-Example: $f(x) = x^2$, $f'(3) = 6$, so $f(3 + Delta x) approx 9 + 6 thin Delta x$.
+Example: $f(x) = x^2$ at $x = 3$, so $f(3) = 9$ and $f'(3) = 6$:
+#pause
+$ f(3 + Delta x) approx 9 + 6 thin Delta x. $
+#pause
+#notebox[*Check* at $Delta x = 0.1$: the line predicts $9.6$, the true value is $f(3.1) = 9.61$ — error just $0.01$.]
 
 == Interactive: tangent line #I
 
@@ -173,7 +177,9 @@ $ x_(t+1) = x_t - eta thin nabla f(x_t) $
 
 $ f''(x) = (dif^2 f)/(dif x^2) quad = quad "how fast the slope changes" $
 #pause
-$f(x) = x^2 => f'' = 2$ (bowl); #h(0.6em) $f(x) = -x^2 => f'' = -2$ (hill).
+$f(x) = x^2 => f'' = 2$ (bowl, curves *up*);
+#pause
+#h(0.6em) $f(x) = -x^2 => f'' = -2$ (hill, curves *down*).
 
 == Convex, concave, flat #V
 
@@ -188,7 +194,11 @@ $ H = mat((partial^2 f)/(partial x^2), (partial^2 f)/(partial x partial y); (par
 
 == Hessian example #D
 
-$ f(x, y) = x^2 + 3y^2 quad ==> quad nabla f = vec(2x, 6y), quad H = mat(2, 0; 0, 6) $
+$ f(x, y) = x^2 + 3y^2 quad ==> quad nabla f = vec(2x, 6y) $
+#pause
+Differentiate each partial again: $partial_(x x) = 2$, $partial_(y y) = 6$, $partial_(x y) = 0$.
+#pause
+$ H = mat(2, 0; 0, 6) $
 #pause
 #notebox[Curvature is *larger* in the $y$ direction — the bowl is steeper that way.]
 
@@ -203,6 +213,7 @@ $ f(x + Delta x) approx f(x) + underbrace(nabla f(x)^top Delta x, "tilt (gradien
 For a quadratic $f(x) = 1/2 x^top A x$: #h(0.6em) $nabla f = A x$, #h(0.4em) $H = A$.
 #pause
 - *eigenvectors* of $H$ → the curvature *directions*;
+#pause
 - *eigenvalues* of $H$ → the curvature *magnitudes*.
 
 == Classifying critical points
@@ -309,12 +320,17 @@ Evaluate *right to left*: $overline(h)_2 -> overline(h)_1 -> overline(x)$ — ve
 == Derivative → activations
 
 Scalar activation derivatives drive backprop through nonlinearities:
-$ dif/(dif z) sigma(z) = sigma(z)(1 - sigma(z)), quad "ReLU"'(z) = bb(1)[z > 0] $
+#pause
+$ dif/(dif z) sigma(z) = sigma(z)(1 - sigma(z)) $
+#pause
+$ "ReLU"'(z) = bb(1)[z > 0] $
 
 == Gradient → learning & attribution
 
 - parameter updates: $theta <- theta - eta thin nabla_theta cal(L)$;
+#pause
 - saliency maps: $nabla_x f_y (x)$;
+#pause
 - adversarial examples: $x_"adv" = x + epsilon thin "sign"(nabla_x cal(L))$.
 
 == Jacobian → sensitivity & flows #OPT

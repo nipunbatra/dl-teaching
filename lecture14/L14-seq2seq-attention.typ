@@ -370,7 +370,7 @@ $ "score"(y_(1:u)) = sum_(j=1)^u log p(y_j | y_(<j), x_(1:T)) $
 #pause
 - *expand* every beam by all vocabulary tokens;
 - *score* each extension; *keep* only the top $B$;
-- repeat until every beam has emitted `<EOS>`.
+- repeat until enough beams emit #raw("<EOS>") or a maximum length is reached.
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[$B = 1$ is greedy; larger $B$ searches wider (more compute) for a better sequence])
 

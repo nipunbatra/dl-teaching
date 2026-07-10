@@ -69,7 +69,9 @@ A colour image is a 3-D array — height, width, and colour channels:
 $ X in RR^(H times W times C) $
 #pause
 - $H times W$ — a *grid* of pixels with a real *geometry*;
+#pause
 - $C$ — channels (e.g. $C = 3$ for RGB);
+#pause
 - neighbouring pixels are *strongly correlated*; far-apart ones usually are not.
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[a $224 times 224$ RGB image is $224 times 224 times 3 = "150,528"$ numbers])
@@ -129,6 +131,7 @@ Slide a small *kernel* $K$ of weights over a signal $x$, taking a weighted sum a
 $ y[i] = sum_(u) K[u] thin x[i + u] $
 #pause
 - the *same* weights $K$ are reused at *every* position $i$ — that is *weight sharing*;
+#pause
 - each output looks at only a *few* neighbouring inputs — that is *locality*.
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[a 3-tap kernel $[-1, 0, 1]$ computes a local *difference* — a 1-D edge detector])
@@ -140,7 +143,9 @@ For an image, slide a 2-D kernel over both axes:
 $ Y[i, j] = sum_(u, v) K[u, v] thin X[i + u, j + v] $
 #pause
 - $K$ is a small window (e.g. $3 times 3$) of *learned* weights;
+#pause
 - one output pixel is a weighted sum of a small *patch* of the input;
+#pause
 - the *same* $K$ produces *every* output pixel.
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[few weights, reused everywhere — the opposite of a fully-connected layer])
@@ -159,10 +164,17 @@ Kernel = horizontal-edge detector; patch = top-left $3 times 3$ of the input:
 #pause
 $ K = mat(1, 1, 1; 0, 0, 0; -1, -1, -1), quad X_"patch" = mat(1, 2, 0; 0, 1, 3; 2, 1, 0) $
 #pause
-Multiply elementwise and sum — the middle row is killed by the zeros:
-$ Y = (1+2+0) dot 1 + (0+1+3) dot 0 + (2+1+0) dot (-1) $
+Elementwise-multiply and sum — take it one row at a time:
 #pause
-#result[$Y = 3 - 3 = 0$ — no horizontal edge here]
+- top row: $1 dot 1 + 1 dot 2 + 1 dot 0 = 3$;
+#pause
+- middle row: $0 dot 0 + 0 dot 1 + 0 dot 3 = 0$ — the zeros erase it;
+#pause
+- bottom row: $(-1) dot 2 + (-1) dot 1 + (-1) dot 0 = -3$.
+#pause
+$ Y = 3 + 0 + (-3) = 0 $
+#pause
+#result[$Y = 0$ — top brightness $=$ bottom brightness, so *no* horizontal edge here]
 
 == Convolution, visually #V
 
@@ -216,7 +228,10 @@ Each of the $C_"out"$ kernels has $k_h dot k_w dot C_"in"$ weights, plus one bia
 $ #text(fill: INK)[params] = k_h dot k_w dot C_"in" dot C_"out" + C_"out" $
 #pause
 Worked example — a $3 times 3$ conv, $C_"in" = 64$, $C_"out" = 128$:
-$ 3 dot 3 dot 64 dot 128 + 128 = "73,728" + 128 = "73,856" $
+#pause
+$ 3 dot 3 dot 64 = 576 quad "weights in one kernel" $
+#pause
+$ 576 dot 128 + 128 = "73,728" + 128 = "73,856" $
 #pause
 #notebox[Independent of image size $H times W$ — a $3 times 3$ kernel costs the same on a $32 times 32$ or a $2000 times 2000$ image. Contrast the MLP's $1.5 times 10^8$.]
 
@@ -237,6 +252,7 @@ A $k times k$ kernel cannot centre on the border pixels, so the output is *small
 $ H' = H - k + 1 quad (#text[valid convolution, no padding]) $
 #pause
 - a $3 times 3$ kernel on $32 times 32$ → $30 times 30$;
+#pause
 - stack many layers and the map *shrinks away*.
 #pause
 #result[fix: *pad* the border with zeros]
@@ -246,7 +262,9 @@ $ H' = H - k + 1 quad (#text[valid convolution, no padding]) $
 Add a ring of $p$ zeros around the input before convolving:
 #pause
 - $p = 0$ — *valid*: no padding, output shrinks;
+#pause
 - $p = floor(k slash 2)$ — *same*-ish: output keeps the input size (for stride 1);
+#pause
 - e.g. $k = 3, p = 1$ or $k = 5, p = 2$ preserve $H times W$.
 #pause
 #fig("/lecture8/figures/padding_stride.svg", w: 44%)
@@ -256,6 +274,7 @@ Add a ring of $p$ zeros around the input before convolving:
 *Stride* $s$ = how far the kernel jumps between outputs. $s > 1$ *downsamples*:
 #pause
 - $s = 1$ — evaluate at every position (dense);
+#pause
 - $s = 2$ — skip every other position → output roughly *halved* in each dimension.
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[stride is a cheap way to shrink the spatial size *inside* the convolution])
@@ -268,10 +287,12 @@ $ H_"out" = floor((H + 2 p - k) / s) + 1 $
 #pause
 #two(
   notebox[*Same* — $H = 32, k = 5, p = 2, s = 1$:
-  $ floor((32 + 4 - 5) / 1) + 1 = 32 $],
+  $ floor((32 + 4 - 5) / 1) + 1 = 31 + 1 = 32 $],
   notebox[*Halved* — $H = 32, k = 3, p = 1, s = 2$:
-  $ floor((32 + 2 - 3) / 2) + 1 = 16 $],
+  $ floor((32 + 2 - 3) / 2) + 1 = 15 + 1 = 16 $],
 )
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[*check:* a $7 times 7$ kernel, $s = 1$ — what padding keeps $H times W$? #h(0.4em) ($p = 3$, since $floor(k slash 2) = 3$)])
 
 == Output size at a glance #V
 
@@ -320,8 +341,11 @@ $ y = 1/abs(R) sum_((i,j) in R) x_(i j) quad quad (#text[average pooling]) $
 
 #pause
 - *Downsampling* — fewer spatial positions → less compute and memory downstream;
+#pause
 - *Larger receptive field* — each later neuron now sees more of the input;
+#pause
 - *Local robustness* — a small shift within a window leaves $max$ unchanged → a step toward *invariance*;
+#pause
 - but *information loss* — pooling is not invertible; you discard *where* inside the window.
 
 == Global average pooling
@@ -331,7 +355,9 @@ At the very end, collapse each feature map to a *single number* — its channel-
 $ h_c = 1/(H W) sum_(i, j) X_(i j c) $
 #pause
 - turns an $H times W times C$ map into a length-$C$ vector;
+#pause
 - no parameters, and works at *any* input resolution;
+#pause
 - the modern replacement for a giant flatten-then-dense head.
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[GAP is where a stack of *equivariant* conv layers finally becomes *invariant* to position])
@@ -348,6 +374,7 @@ $ h_c = 1/(H W) sum_(i, j) X_(i j c) $
 The *receptive field* of an output unit = the region of the *input* that can affect it.
 #pause
 - a single $3 times 3$ conv → receptive field $3 times 3$;
+#pause
 - stack a *second* $3 times 3$ conv → each new unit sees a $3 times 3$ patch of units that *each* saw $3 times 3$ → an effective $5 times 5$ input region.
 #pause
 #result[depth grows the receptive field — deeper neurons see *more context*]
@@ -378,8 +405,13 @@ For stride-1 layers, the receptive field grows by $k_ell - 1$ at each layer:
 #pause
 $ r_ell = r_(ell - 1) + (k_ell - 1) $
 #pause
-Worked example — three $3 times 3$ layers ($r_0 = 1$):
-$ r_3 = 1 + (3 - 1) + (3 - 1) + (3 - 1) = 1 + 3 dot 2 = 7 $
+Worked example — three $3 times 3$ layers, starting from $r_0 = 1$:
+#pause
+- after layer 1: $r_1 = 1 + (3 - 1) = 3$;
+#pause
+- after layer 2: $r_2 = 3 + (3 - 1) = 5$;
+#pause
+- after layer 3: $r_3 = 5 + (3 - 1) = 7$.
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[strided or pooled layers grow it *much* faster — the receptive field can cover the whole image within a few blocks])
 
@@ -494,6 +526,7 @@ Convolution can be *unrolled* into a single matrix multiply (`im2col`):
 $ y = K_"mat" thin x $
 #pause
 - lay each input patch out as a column, stack the kernel into a matrix;
+#pause
 - convolution becomes one big matmul — exactly what GPUs are fastest at.
 #pause
 #notebox[This is how libraries *implement* conv efficiently. The gradient is then just the transpose $K_"mat"^top$ — standard linear-layer backprop.]
@@ -506,7 +539,9 @@ $ y = K_"mat" thin x $
 Images admit *label-preserving* transforms — a flipped cat is still a cat:
 #pause
 - random *crop* and *resize*; horizontal *flip*;
+#pause
 - *colour jitter* (brightness, contrast); small *rotations*;
+#pause
 - then *normalize* to a standard range.
 #pause
 #notebox[Augmentation multiplies your effective dataset and bakes in invariances — one of the cheapest, most effective regularisers in vision.]
@@ -517,6 +552,7 @@ Standardise each channel using the *training-set* mean and standard deviation:
 $ x' = (x - mu) / sigma $
 #pause
 - keeps inputs on a consistent scale → healthier gradients, faster training;
+#pause
 - compute $mu, sigma$ on the *train* set only, then reuse them for val / test.
 
 == Transfer learning
@@ -524,7 +560,9 @@ $ x' = (x - mu) / sigma $
 Rarely train from scratch — start from a network *pretrained* on a large dataset:
 #pause
 - keep the pretrained *backbone* (it already knows edges, textures, parts);
+#pause
 - replace the *head* with one for your classes;
+#pause
 - *fine-tune* — train the head, optionally unfreeze the backbone with a small LR.
 #pause
 #result[strong results from *little* data — reuse features, don't relearn them]

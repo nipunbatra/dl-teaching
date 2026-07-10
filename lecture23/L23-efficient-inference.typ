@@ -200,7 +200,7 @@ Two different resources can be the ceiling:
   [memory-bound], [device idles waiting to *fetch* weights / activations],
 ))
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[optimize the *right* thing: shrinking FLOPs does nothing if you are memory-bound])
+#align(center, text(size: 16pt, fill: MUTED)[optimize the *right* thing: shrinking FLOPs has little effect unless it also lowers byte traffic])
 
 == The bytes intuition #V
 

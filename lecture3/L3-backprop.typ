@@ -149,6 +149,8 @@ Suppose $u = 3$ (forward) and the upstream gradient is $overline(v) = 7$. Then
 $ overline(u) = overline(v) dot 2u = 7 dot 6 = 42. $
 #pause
 #result[downstream $overline(u) = 42$]
+#pause
+#notebox[The node did *one* thing: multiply the incoming $overline(v) = 7$ by its own local slope $2u = 6$.]
 
 == Addition node: copy the gradient #D
 
@@ -284,7 +286,10 @@ $ overline(e) = overline(cal(L)) dot 2e = 1 dot 2(-3) = -6. $
 == Backward: the subtraction node #D
 
 Node $e = a - y$, locals $partial e \/ partial a = 1$, $partial e \/ partial y = -1$:
-$ overline(a) = overline(e) dot 1 = -6, quad quad overline(y) = overline(e) dot (-1) = 6. $
+#pause
+$ overline(a) = overline(e) dot 1 = -6 $
+#pause
+$ overline(y) = overline(e) dot (-1) = 6 $
 #pause
 #notebox[The target $y$ already has a gradient — we would use $overline(y)$ if $y$ were itself a learned quantity.]
 
@@ -298,7 +303,10 @@ So $overline(b) = -6$ is one of our final answers.
 == Backward: the multiplication node #D
 
 Node $m = w x$ *sends the other input*:
-$ overline(w) = overline(m) dot x = -6 dot 3 = -18, quad quad overline(x) = overline(m) dot w = -6 dot 2 = -12. $
+#pause
+$ overline(w) = overline(m) dot x = -6 dot 3 = -18 $
+#pause
+$ overline(x) = overline(m) dot w = -6 dot 2 = -12 $
 #pause
 #result[$overline(w) = -18, quad overline(x) = -12$]
 
@@ -376,7 +384,9 @@ $ nabla_w cal(L) = delta thin x, quad quad (partial cal(L))/(partial b) = delta,
 
 Sigmoid $a = sigma(z)$, binary cross-entropy $cal(L) = -[y log a + (1 - y) log(1 - a)]$.
 #pause
-$ (partial cal(L))/(partial a) = -y/a + (1 - y)/(1 - a), quad quad (partial a)/(partial z) = a(1 - a). $
+$ (partial cal(L))/(partial a) = -y/a + (1 - y)/(1 - a) $
+#pause
+$ (partial a)/(partial z) = a(1 - a) $
 #pause
 Multiply — the denominators cancel:
 $ overline(z) = (partial cal(L))/(partial a) dot a(1 - a) = a - y. $

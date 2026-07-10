@@ -145,7 +145,7 @@ Labels make the objective crisp — but they *cost*. Contrast three data pools:
   columns: 3, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 6pt), align: (left, center, left),
   table.header([*Pool*], [*Scale*], [*Cost*]),
   [curated labeled images], [$10^6$–$10^7$], [expensive human annotation],
-  [web images / text / audio / sensors], [$10^9$+], [essentially free, *no labels*],
+  [web images / text / audio / sensors], [$10^9$+], [no manual labels; noisy and costly to curate],
   [what a student / lab can collect], [modest], [cheap, but tiny],
 ))
 #pause
@@ -406,7 +406,7 @@ Drop the negatives. Train two networks *only to agree* on two views — what bre
 
 == BYOL at a glance #V
 
-BYOL (Grill et al. 2020): a student *predicts* a slowly-moving *teacher* — and never collapses.
+BYOL (Grill et al. 2020): a student *predicts* a slowly-moving *teacher* — a design that can avoid collapse in practice.
 #pause
 #byol
 #pause

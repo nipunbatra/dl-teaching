@@ -150,7 +150,9 @@ $ p_theta (x_(t+1) = v | x_(1:t)) quad "for every" v in V $
 Our anchor all lecture: a *character-level name generator*.
 #pause
 - predict the next *character* of a name: `emma`, `olivia`, `ava`, `noah`;
+#pause
 - tiny vocabulary — 26 letters plus one special token;
+#pause
 - embeddings small enough to *see*, training fast enough to *play with*.
 #pause
 #notebox[This is Karpathy's *makemore* (part 2), which is exactly the neural language model of *Bengio et al. 2003, "A Neural Probabilistic Language Model"*. We build up to that model in this lecture.]
@@ -232,6 +234,7 @@ A neural network consumes *numbers*, not strings. So we fix a *vocabulary* and m
 $ "cat" -> 17, quad "dog" -> 18, quad "." -> 0 $
 #pause
 - the vocabulary $V$ is the fixed set of tokens the model knows;
+#pause
 - a sequence of text becomes a sequence of *token ids*.
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[makemore: $V = { space . space, a, b, dots, z }$ — 27 symbols])
@@ -285,7 +288,9 @@ Represent token $i$ as a vector that is *1* in position $i$, *0* elsewhere:
 $ o_i in RR^V, quad (o_i)_j = cases(1 quad j = i, 0 quad "otherwise") $
 #pause
 - no false ordering — every token is a distinct axis;
+#pause
 - but *high-dimensional* ($V$ can be $"50,000"$) and *sparse*;
+#pause
 - and *no notion of similarity* — every pair is equally far apart.
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[$norm(o_i - o_j)^2 = 2$ for *every* distinct pair — "cat" is as close to "dog" as to "the"])
@@ -303,6 +308,7 @@ Give each token a *dense* vector $e_i in RR^d$ with $d << V$. Stack them as rows
 $ E in RR^(V times d), quad quad e_i = E_(i, :) quad (#text[the $i$-th row]) $
 #pause
 - $V = 27, d = 2$ — small enough to *plot* (makemore);
+#pause
 - $V = "50,000", d = 256$ — a realistic language model.
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[from a $V$-dim sparse axis to a $d$-dim dense point — $d$ is the *embedding dimension*])
@@ -326,7 +332,9 @@ $ E = mat(1, 0; 0, 1; 1, 1; -1, 1), quad quad e_"I" = mat(1, 0), quad e_"like" =
 Context `"I like"` looks up two rows:
 $ (e_"I", e_"like") = ((1, 0), (0, 1)) $
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[two integer ids in $-> $ two dense rows out — this is the whole embedding layer])
+#align(center, text(size: 16pt, fill: BLUE)[*Check:* what does context `"cats dogs"` look up?])
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[rows $3$ and $4$: $(e_"cats", e_"dogs") = ((1, 1), (-1, 1))$ — two dense rows out, the whole embedding layer])
 
 == The embedding table E #V
 
@@ -356,6 +364,7 @@ Trained embeddings place *similar-context* tokens *near* each other:
 
 #pause
 - similarity emerges from *usage* — tokens used in like contexts drift together;
+#pause
 - cosine similarity $cos(e_i, e_j) = (e_i^top e_j) / (norm(e_i) norm(e_j))$ measures it;
 #pause
 #alertbox[Do *not* over-promise. Not every direction is a clean semantic axis, and small models learn only coarse structure. "Vowels cluster" is a *tendency*, not a law.]
@@ -448,15 +457,28 @@ where $H$ is the hidden width and $k$ the context length.
 
 Take $V = "20,000", thin d = 128, thin k = 4, thin H = 512$:
 #pause
-$ "embedding" = V d = "20,000" dot 128 = "2,560,000" $
+*Embedding* — one $d$-vector per vocab item:
+$ V d = "20,000" dot 128 = "2,560,000" $
 #pause
-$ "hidden" = H dot k d + H = 512 dot 512 + 512 = "262,656" $
+*Hidden* — an $H times k d$ matrix plus $H$ biases (note $k d = 512$):
+$ H dot k d + H = 512 dot 512 + 512 = "262,656" $
 #pause
-$ "output" = V H + V = "20,000" dot 512 + "20,000" = "10,260,000" $
+*Output* — a $V times H$ matrix plus $V$ biases:
+$ V H + V = "20,000" dot 512 + "20,000" = "10,260,000" $
+
+== Worked parameter count (cont.) #D
+
+Add the three weight blocks:
+#pause
+$ underbrace("2,560,000", "embed") + underbrace("262,656", "hidden") + underbrace("10,260,000", "output") $
+#pause
+$ = "13,082,656" $
 #pause
 #result[total $approx 13.08$ M parameters]
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[embedding + output (both $prop V$) dominate — the hidden layer is tiny by comparison])
+#align(center, text(size: 16pt, fill: BLUE)[*Check:* which block shrinks most if we halve the vocabulary $V$?])
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[embedding + output (both $prop V$) dominate — halving $V$ nearly *halves* the model])
 
 // ═══════════════════════════ PART VI — Fully-worked forward + backward ═══════════════════════════
 = A fully-worked forward and backward pass
@@ -473,11 +495,13 @@ $ W_h = mat(1, 0, 0, 1; 0, 1, 1, 0), quad b_h = 0 $
 
 == Forward: the hidden layer #D
 
-Multiply and apply ReLU:
+Multiply row by row, then apply ReLU. Recall $c = mat(1, 0, 0, 1)^top$:
 #pause
-$ W_h thin c = mat(1 dot 1 + 0 dot 0 + 0 dot 0 + 1 dot 1, 0 + 0 + 0 + 0) = mat(2, 0) $
+$ (W_h c)_1 = 1 dot 1 + 0 dot 0 + 0 dot 0 + 1 dot 1 = 2 $
 #pause
-$ h = "ReLU"(W_h c) = mat(2, 0) $
+$ (W_h c)_2 = 0 dot 1 + 1 dot 0 + 1 dot 0 + 0 dot 1 = 0 $
+#pause
+$ h = "ReLU"(mat(2, 0)) = mat(2, 0) $
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[the first hidden unit fires; the second is switched off])
 
@@ -487,10 +511,26 @@ Suppose the output layer produces logits (for `[I, like, cats, dogs]`):
 #pause
 $ z = mat(-2, 0, 2, 1) $
 #pause
-Softmax needs the normalizer:
-$ Z = e^(-2) + e^0 + e^2 + e^1 approx 0.135 + 1 + 7.389 + 2.718 = 11.243 $
+Softmax first *exponentiates* each logit:
 #pause
-$ p = mat(0.012, 0.089, 0.657, 0.242) $
+$ e^(-2) approx 0.135, quad quad e^0 = 1 $
+#pause
+$ e^2 approx 7.389, quad quad e^1 approx 2.718 $
+#pause
+Sum them to get the normalizer $Z$:
+$ Z = 0.135 + 1 + 7.389 + 2.718 = 11.243 $
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[a bigger logit becomes an *exponentially* bigger weight — that is the "soft-max"])
+
+== Forward: softmax probabilities (cont.) #D
+
+Divide each exponential by the normalizer $Z = 11.243$:
+#pause
+$ p_"I" = 0.135 / 11.243 approx 0.012, quad quad p_"like" = 1 / 11.243 approx 0.089 $
+#pause
+$ p_"cats" = 7.389 / 11.243 approx 0.657, quad quad p_"dogs" = 2.718 / 11.243 approx 0.242 $
+#pause
+$ p = mat(0.012, 0.089, 0.657, 0.242), quad quad sum_i p_i = 1 $
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[the model already puts most mass ($0.657$) on the correct token `cats`])
 
@@ -510,23 +550,39 @@ For softmax + cross-entropy, the gradient w.r.t. the logits is beautifully simpl
 #pause
 $ nabla_z cal(L) = p - y, quad quad y = mat(0, 0, 1, 0) quad (#text[one-hot target]) $
 #pause
+Only the target coordinate `cats` has $y = 1$; subtract term by term:
+#pause
+$ nabla_z cal(L) = mat(0.012 - 0, 0.089 - 0, 0.657 - 1, 0.242 - 0) $
+#pause
 $ nabla_z cal(L) = mat(0.012, 0.089, -0.343, 0.242) $
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[*push down* the three wrong logits, *push up* the correct one `cats` — that is all learning is here])
 
 == Backward: down to the embeddings #D
 
-The chain rule walks the gradient back through the MLP:
+The chain rule walks the gradient back through the MLP. First to the hidden layer:
 #pause
-$ nabla_h cal(L) = W_o^top nabla_z cal(L), quad quad nabla_c cal(L) = W_h^top (nabla_h cal(L) dot.o "ReLU"'(W_h c)) $
+$ nabla_h cal(L) = W_o^top thin nabla_z cal(L) quad quad #text(size: 14pt, fill: MUTED)[(pull the logit gradient through $W_o$)] $
 #pause
-With our numbers this gives
-$ nabla_c cal(L) = mat(-0.234, 0, 0, -0.234) $
+Through the ReLU — only the units that *fired* in the forward pass pass a gradient:
+$ nabla_a cal(L) = nabla_h cal(L) dot.o "ReLU"'(W_h c) $
 #pause
+Then back to the concatenated context $c$:
+$ nabla_c cal(L) = W_h^top thin nabla_a cal(L) = mat(-0.234, 0, 0, -0.234) $
+#pause
+#align(center, text(size: 15pt, fill: MUTED)[the two *zeros* are the coordinates the switched-off hidden unit never touched])
+
+== Backward: the embedding gradients (cont.) #D
+
 Split $c = [e_"I"; e_"like"]$ back into the two rows that were looked up:
-$ nabla_(e_"I") cal(L) = mat(-0.234, 0), quad nabla_(e_"like") cal(L) = mat(0, -0.234) $
 #pause
-#align(center, text(size: 15pt, fill: MUTED)[only rows `I` and `like` of $E$ get updated this step — the tokens the context actually used])
+$ nabla_(e_"I") cal(L) = mat(-0.234, 0) quad quad #text(size: 14pt, fill: MUTED)[(first two coordinates of $nabla_c cal(L)$)] $
+#pause
+$ nabla_(e_"like") cal(L) = mat(0, -0.234) quad quad #text(size: 14pt, fill: MUTED)[(last two coordinates)] $
+#pause
+#align(center, text(size: 16pt, fill: BLUE)[*Check:* which of the four rows of $E$ move this step?])
+#pause
+#align(center, text(size: 15pt, fill: MUTED)[only rows `I` and `like` — `cats` and `dogs` were not in the context, so their gradient is $0$])
 
 == Interactive: the MLP language model #I
 
@@ -652,7 +708,9 @@ Draw the next token *at random* from the distribution:
 $ hat(x)_(t+1) ~ "Categorical"(p_t) $
 #pause
 - respects the model's uncertainty — likely tokens are likely, but not forced;
+#pause
 - produces *diverse* outputs across runs;
+#pause
 - makemore sampling character-by-character gives *new* plausible names.
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[`. -> e -> m -> m -> a -> .` yields `emma`; a different draw yields `elian`, `amara`, …])
@@ -672,7 +730,9 @@ $ p_i (tau) = "softmax"(z \/ tau)_i $
 Keep only the $k$ most probable tokens, *renormalize*, then sample:
 #pause
 - zero out everything outside the top $k$;
+#pause
 - rescale the survivors to sum to $1$;
+#pause
 - prevents rare, low-probability tokens from ever being drawn.
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[nucleus / top-$p$ sampling is the close cousin — we meet it in the Transformer lecture])
@@ -703,6 +763,7 @@ Widening the window grows the hidden weight matrix:
 $ W_h in RR^(H times k d) quad => quad H dot k d quad "parameters" $
 #pause
 - double the context $k$ $-> $ double the hidden-layer parameters;
+#pause
 - and the model *still* cannot accept a sequence longer than $k$.
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[you cannot simply set $k = infinity$ — cost grows with the window, and $k$ is fixed at build time])
@@ -720,8 +781,11 @@ $ c_t = [e_(t-k); dots; e_(t-1)], quad quad #text(size: 15pt)[slot $j$ $-> $ its
 A better sequence model should:
 #pause
 - accept *variable-length* input (no fixed $k$);
+#pause
 - *share* parameters across time steps;
+#pause
 - *carry* information from arbitrarily far back;
+#pause
 - emit an output at *every* step.
 #pause
 #result[a recurrent update: $h_t = f_theta (h_(t-1), x_t)$]

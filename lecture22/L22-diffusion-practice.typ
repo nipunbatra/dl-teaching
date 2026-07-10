@@ -571,7 +571,7 @@ Separate two things that are easy to conflate:
 #pause
 $ underbrace(#text[model parameters $theta$], "trained once") quad quad #text[vs.] quad quad underbrace(#text[number and type of reverse updates], "chosen at inference") $
 #pause
-#notebox[The denoiser is trained *once*. A sampler is just an algorithm that decides *how* to walk its reverse field — swap samplers with no retraining.]
+#notebox[The denoiser is trained *once*. Many compatible samplers can reuse its weights, but their schedule, quality, and diversity trade-offs still need to be checked.]
 
 == DDPM vs accelerated sampling #V
 

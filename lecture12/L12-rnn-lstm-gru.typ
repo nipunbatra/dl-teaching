@@ -329,7 +329,11 @@ $ w_x = 1, quad w_h = 0.5, quad b = 0, quad h_0 = 0, quad x = (1, 2, -1) $
 
 == Step 1 #D
 
-$ a_1 = w_x x_1 + w_h h_0 + b = 1 dot 1 + 0.5 dot 0 = 1 $
+Plug $x_1 = 1$ and $h_0 = 0$ into the update:
+#pause
+$ a_1 = w_x x_1 + w_h h_0 + b $
+#pause
+$ a_1 = 1 dot 1 + 0.5 dot 0 + 0 = 1 $
 #pause
 $ h_1 = tanh(1) approx 0.762 $
 #pause
@@ -339,7 +343,9 @@ $ h_1 = tanh(1) approx 0.762 $
 
 Now the past enters through $w_h h_1$:
 #pause
-$ a_2 = w_x x_2 + w_h h_1 = 1 dot 2 + 0.5 dot 0.762 = 2.381 $
+$ a_2 = w_x x_2 + w_h h_1 = 1 dot 2 + 0.5 dot 0.762 $
+#pause
+$ a_2 = 2 + 0.381 = 2.381 $
 #pause
 $ h_2 = tanh(2.381) approx 0.983 $
 #pause
@@ -349,7 +355,9 @@ $ h_2 = tanh(2.381) approx 0.983 $
 
 A negative input, but the state still remembers the positive past:
 #pause
-$ a_3 = w_x x_3 + w_h h_2 = 1 dot (-1) + 0.5 dot 0.983 = -0.509 $
+$ a_3 = w_x x_3 + w_h h_2 = 1 dot (-1) + 0.5 dot 0.983 $
+#pause
+$ a_3 = -1 + 0.492 = -0.509 $
 #pause
 $ h_3 = tanh(-0.509) approx -0.469 $
 #pause
@@ -369,8 +377,14 @@ $ h_3 = tanh(-0.509) approx -0.469 $
 
 == Why this is memory #D
 
-Substitute backwards — $h_3$ depends on *every* earlier input:
+Substitute the recurrence backwards:
 #pause
+$ h_3 = tanh(x_3 + 0.5 thin underbrace(tanh(x_2 + 0.5 thin underbrace(tanh(x_1), h_1)), h_2)) $
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[$h_3$ nests *every* earlier input — each one $tanh$ deeper, with one more factor of $w_h$])
+
+== Why this is memory (cont.) #D
+
 $ h_3 = tanh(x_3 + 0.5 thin underbrace(tanh(x_2 + 0.5 thin underbrace(tanh(x_1), h_1)), h_2)) $
 #pause
 #notebox[$x_1$ reaches $h_3$ through *two* nested $tanh$ and two factors of $w_h = 0.5$. Information persists — but each step *attenuates* it by $w_h$. Hold that thought (Part V).]
@@ -434,6 +448,7 @@ Forward state (teal) flows right; the adjoint (orange = own loss, red = future) 
 Full BPTT over a length-$10^4$ sequence is expensive and unstable. So *chunk* it:
 #pause
 - process the sequence in blocks of length $K$ (say $K = 35$);
+#pause
 - backprop *within* a block; then *carry the state but detach it*:
 #pause
 $ h_"start"^"(next block)" = "detach"(h_"end"^"(this block)") $
@@ -470,11 +485,15 @@ $ (partial h_T)/(partial h_0) approx w^T $
 
 == Worked: $w^50$ #D
 
-Fifty steps back, with two nearby weights:
+Fifty steps back, with two nearby weights. Read powers as $w^50 = e^(50 ln w)$:
 #pause
-$ w = 0.9: quad 0.9^50 approx 0.005 quad #text(fill: RED)[(vanished)] $
+$ w = 0.9: quad 50 ln 0.9 approx 50 dot (-0.105) = -5.27 $
 #pause
-$ w = 1.1: quad 1.1^50 approx 117 quad #text(fill: RED)[(exploded)] $
+$ 0.9^50 = e^(-5.27) approx 0.005 quad #text(fill: RED)[(vanished)] $
+#pause
+$ w = 1.1: quad 50 ln 1.1 approx 50 dot 0.0953 = 4.77 $
+#pause
+$ 1.1^50 = e^(4.77) approx 117 quad #text(fill: RED)[(exploded)] $
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[a $10%$ change in $w$ flips the gradient from $1/200$ to $times 117$ — over just 50 steps])
 
@@ -504,9 +523,13 @@ $ "if" norm(g) > c: quad g <- c thin g / norm(g) $
 
 Threshold $c = 5$, gradient $g = (6, 8)$:
 #pause
-$ norm(g) = sqrt(6^2 + 8^2) = 10 > 5 $
+$ norm(g) = sqrt(6^2 + 8^2) = sqrt(36 + 64) = sqrt(100) = 10 $
 #pause
-$ g <- 5 dot (6, 8) / 10 = (3, 4), quad norm((3,4)) = 5 quad checkmark $
+$ 10 > c = 5 quad => quad #text[rescale by] quad c / norm(g) = 5 / 10 = 0.5 $
+#pause
+$ g <- 0.5 dot (6, 8) = (3, 4) $
+#pause
+$ norm((3, 4)) = sqrt(9 + 16) = 5 quad checkmark $
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[same direction $(3,4) parallel (6,8)$, length now exactly $5$])
 
@@ -606,10 +629,29 @@ $ (partial c_T)/(partial c_k) = product_(j=k+1)^T "diag"(f_j) $
 
 One cell, old memory $c_(t-1) = 5$. *Retain* case — forget open, input nearly shut:
 #pause
-$ f_t = 0.8, thick i_t = 0.2, thick tilde(c)_t = 3: quad c_t = 0.8 dot 5 + 0.2 dot 3 = 4.6 $
+$ f_t = 0.8, quad i_t = 0.2, quad tilde(c)_t = 3 $
 #pause
+Keep a fraction of the old memory:
+$ f_t dot.o c_(t-1) = 0.8 dot 5 = 4.0 $
+#pause
+Add a gated bit of the candidate:
+$ i_t dot.o tilde(c)_t = 0.2 dot 3 = 0.6 $
+#pause
+$ c_t = 4.0 + 0.6 = 4.6 quad quad #text(size: 14pt, fill: MUTED)[(memory barely moves: $5 -> 4.6$)] $
+
+== Worked scalar LSTM: replace (cont.) #D
+
 *Replace* case — forget nearly shut, input open, candidate negative:
-$ f_t = 0.1, thick i_t = 0.9, thick tilde(c)_t = -2: quad c_t = 0.1 dot 5 + 0.9 dot (-2) = -1.3 $
+#pause
+$ f_t = 0.1, quad i_t = 0.9, quad tilde(c)_t = -2 $
+#pause
+Almost none of the old memory survives:
+$ f_t dot.o c_(t-1) = 0.1 dot 5 = 0.5 $
+#pause
+The new candidate is written in strongly:
+$ i_t dot.o tilde(c)_t = 0.9 dot (-2) = -1.8 $
+#pause
+$ c_t = 0.5 + (-1.8) = -1.3 $
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[same equation: gates near $(1, 0)$ *hold* memory ($5 -> 4.6$); near $(0, 1)$ *overwrite* it ($5 -> -1.3$)])
 
@@ -658,12 +700,14 @@ $ h_t = (1 - z_t) dot.o h_(t-1) + z_t dot.o tilde(h)_t $
 
 One unit, old state $h_(t-1) = 4$, candidate $tilde(h)_t = 0$. *Keep* — update nearly shut:
 #pause
-$ z_t = 0.25: quad h_t = 0.75 dot 4 + 0.25 dot 0 = 3 $
+$ z_t = 0.25: quad h_t = (1 - 0.25) dot 4 + 0.25 dot 0 = 0.75 dot 4 = 3 $
 #pause
 *Replace* — update wide open:
-$ z_t = 0.9: quad h_t = 0.1 dot 4 + 0.9 dot 0 = 0.4 $
+$ z_t = 0.9: quad h_t = (1 - 0.9) dot 4 + 0.9 dot 0 = 0.1 dot 4 = 0.4 $
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[$z$ small holds the state ($4 -> 3$); $z$ large pulls it to the candidate ($4 -> 0.4$)])
+#align(center, text(size: 16pt, fill: BLUE)[*Check:* what is $h_t$ if $z_t = 0$ exactly?])
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[$h_t = h_(t-1) = 4$ — the state is copied unchanged; $z$ small holds, $z$ large replaces ($4 -> 0.4$)])
 
 == LSTM vs GRU #V
 

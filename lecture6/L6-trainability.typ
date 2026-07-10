@@ -179,6 +179,7 @@ For $L = 10$: #h(0.5em) $(1\/4)^10 approx 9.5 times 10^(-7)$ — gradients are e
 $ tanh(z) = (e^z - e^(-z))/(e^z + e^(-z)), quad quad tanh'(z) = 1 - tanh^2(z). $
 #pause
 - *zero-centred* — outputs in $(-1, 1)$, fixing sigmoid's bias problem;
+#pause
 - max derivative is $1$ (not $1\/4$) — gradients survive a bit longer.
 #pause
 #alertbox[Still *saturates* for large $|z|$: $tanh' -> 0$. Better than sigmoid, but deep tanh stacks still vanish.]
@@ -188,7 +189,9 @@ $ tanh(z) = (e^z - e^(-z))/(e^z + e^(-z)), quad quad tanh'(z) = 1 - tanh^2(z). $
 $ "ReLU"(z) = max(0, z), quad quad "ReLU"'(z) = bb(1)[z > 0] in {0, 1}. $
 #pause
 - *no positive saturation* — for $z > 0$ the slope is exactly $1$, so gradients pass *unattenuated*;
+#pause
 - *sparse* — about half the units output $0$;
+#pause
 - *cheap* — a single comparison.
 #pause
 #result[the default hidden activation for MLPs and CNNs]
@@ -208,6 +211,7 @@ Give the negative side a small slope so the unit can recover:
 $ "LeakyReLU"(z) = cases(z & z > 0, a z & z <= 0), quad a approx 0.01. $
 #pause
 - the negative branch has slope $a > 0$ ⇒ *nonzero gradient* ⇒ no permanent death;
+#pause
 - *PReLU* makes $a$ a *learned* parameter per channel.
 #pause
 #notebox[A cheap insurance policy against dead units, at the cost of one extra hyperparameter (or parameter).]
@@ -219,7 +223,9 @@ $ "GELU"(z) = z thin Phi(z), quad quad "SiLU"(z) = z thin sigma(z), $
 where $Phi$ is the standard-normal CDF.
 #pause
 - smooth everywhere ⇒ well-behaved second-order behaviour;
+#pause
 - *nonzero gradient* for small negative $z$ (unlike ReLU);
+#pause
 - the default in *Transformers* (GELU) and many modern CNNs (SiLU / Swish).
 
 == The activation zoo #V
@@ -349,9 +355,21 @@ $ "Var"(w) = 2/((1 + a^2) thin n_"in"). $
 #fig("/lecture6/figures/signal_flow.svg", w: 58%)
 #align(center, text(size: 15pt, fill: MUTED)[He holds the activation scale flat through a deep ReLU net; a tiny $sigma$ collapses; Xavier drifts down])
 
+== Init example: the two failures #D
+
+Layer with $n_"in" = 100$, unit-variance inputs, so $"Var"(z) = 100 thin "Var"(w)$.
+#pause
+Case (A), too small — $"Std"(w) = 0.01$, so $"Var"(w) = 10^(-4)$:
+$ "Var"(z) = 100 dot 10^(-4) = 0.01 quad ("shrinks" 100 times) $
+#pause
+Case (B), too large — $"Std"(w) = 1$, so $"Var"(w) = 1$:
+$ "Var"(z) = 100 dot 1 = 100 quad ("explodes" 100 times) $
+#pause
+#align(center, text(size: 15pt, fill: MUTED)[off by $100 times$ in *one* layer; over $20$ layers that compounds to $100^(plus.minus 20)$ — hopeless.])
+
 == Fully worked init example #D
 
-Layer with $n_"in" = 100$, inputs $x ~ cal(N)(0, 1)$ so $"Var"(z) = 100 dot "Var"(w)$:
+Same layer ($n_"in" = 100$, $"Var"(z) = 100 thin "Var"(w)$) — now compare all four schemes:
 #pause
 #align(center, table(
   columns: 4, stroke: 0.5pt + MUTED, inset: (x: 10pt, y: 6pt), align: (left, center, center, left),
@@ -404,6 +422,7 @@ Forcing mean $0$, variance $1$ can be *too* restrictive. Add a learnable affine 
 $ y = gamma thin hat(x) + beta. $
 #pause
 - $gamma$ rescales, $beta$ re-shifts — both *learned*;
+#pause
 - the network can *recover the identity* ($gamma = sqrt(sigma^2 + epsilon)$, $beta = mu$) if normalizing hurt.
 #pause
 #result[normalize for a stable scale, then let the model choose the scale it wants]
@@ -452,13 +471,24 @@ $ mu_"run" <- rho thin mu_"run" + (1 - rho) thin mu_B, quad quad sigma_"run"^2 <
 
 == Worked BatchNorm #D
 
-Feature values $x = [1, 2, 3, 4]$ across a batch, with $gamma = 2, beta = 1$:
+Feature values $x = [1, 2, 3, 4]$ across a batch of $4$, learnable $gamma = 2, beta = 1$.
 #pause
-$ mu = 2.5, quad quad sigma^2 = 1.25. $
+Mean — average over the batch:
+$ mu = (1 + 2 + 3 + 4)/4 = 2.5 $
+#pause
+Variance — average squared deviation from $mu$:
+$ sigma^2 = 1/4 (2.25 + 0.25 + 0.25 + 2.25) = 1.25 $
+#pause
+#align(center, text(size: 15pt, fill: MUTED)[next: standardize with these stats, then apply the learnable $gamma, beta$.])
+
+== Worked BatchNorm (cont.) #D
+
+Standardize each value with $mu = 2.5$, $sigma^2 = 1.25$ (so $sqrt(sigma^2) approx 1.118$):
 #pause
 $ hat(x) = (x - 2.5)/sqrt(1.25) approx [-1.342, thin -0.447, thin 0.447, thin 1.342]. $
 #pause
-$ y = 2 hat(x) + 1 approx [-1.683, thin 0.106, thin 1.894, thin 3.683]. $
+Apply the learnable affine $y = gamma hat(x) + beta = 2 hat(x) + 1$:
+$ y approx [-1.683, thin 0.106, thin 1.894, thin 3.683]. $
 #pause
 #align(center, text(size: 15pt, fill: MUTED)[$hat(x)$ is mean-$0$ / var-$1$; $gamma, beta$ then place it where the network wants — verified numerically])
 
@@ -475,8 +505,11 @@ The original story was *"reducing internal covariate shift"* — the layer-input
 BatchNorm couples every example in the batch:
 #pause
 - *batch-dependent* — an example's output depends on *who else* is in the batch;
+#pause
 - *small-batch noise* — statistics are unreliable for tiny batches;
+#pause
 - *train $!=$ inference* — needs running stats and a mode switch;
+#pause
 - *awkward for sequences* — variable lengths, per-step statistics.
 #pause
 #result[these are exactly the cases where LayerNorm wins]
@@ -487,6 +520,7 @@ Normalize *each example over its own features* — no batch involved:
 $ mu_i = 1/D sum_(j=1)^D x_(i j), quad sigma_i^2 = 1/D sum_(j=1)^D (x_(i j) - mu_i)^2, quad y_(i j) = gamma_j hat(x)_(i j) + beta_j. $
 #pause
 - *batch-independent* — identical result for batch size $1$ or $1000$;
+#pause
 - *train $=$ inference* — no running statistics needed.
 
 == LayerNorm normalizes across each example #V
@@ -609,6 +643,7 @@ When $F_ell$ changes width or resolution, the identity no longer fits. Project i
 $ x_(ell+1) = P_ell thin x_ell + F_ell (x_ell). $
 #pause
 - $P_ell$ is a learned *linear projection* (a $1 times 1$ conv in CNNs, or a stride to downsample);
+#pause
 - used only at the blocks where dimensions change; elsewhere $P_ell = I$.
 
 == Pre- vs post-activation blocks #OPT
@@ -627,7 +662,9 @@ Where does the activation (and norm) sit relative to the add?
 A shortcut alone does not fix everything:
 #pause
 - the branch still needs sensible *scale and init* (start $F approx 0$);
+#pause
 - *norm placement* around the block matters (pre- vs post-);
+#pause
 - the *learning rate* still interacts with everything.
 #pause
 #notebox[*Fixup* init trains deep ResNets *without* normalization — by carefully scaling the residual branches. Init, norm and residuals are three *coupled* knobs, not independent fixes.]
@@ -681,9 +718,13 @@ Same 50-layer net and data, six recipes stacked from naive to modern:
 They are *not* independent tricks:
 #pause
 - ReLU ⇒ use *He*, not Xavier (the factor of $2$);
+#pause
 - BatchNorm *reduces* but does not *remove* init sensitivity;
+#pause
 - residual branches want *smaller* init (start near $0$);
+#pause
 - LayerNorm *placement* changes the residual stream;
+#pause
 - the *learning rate* interacts with all of the above.
 #pause
 #alertbox[Change one and you often have to retune another — treat them as a *system*, not a checklist.]
@@ -731,10 +772,15 @@ for name, p in model.named_parameters():
 
 #pause
 - BatchNorm does *not* "solve internal covariate shift" — it smooths optimization;
+#pause
 - residuals do *not* prevent *all* vanishing — they add a path, not a guarantee;
+#pause
 - ReLU *can* effectively *die* — watch the zero fraction;
+#pause
 - He does *not* preserve variance *exactly* — it is an approximation that erodes;
+#pause
 - normalization is *not always* required (Fixup, careful init);
+#pause
 - *deeper is not always better* — depth has to be earned.
 
 == Retrieval exercise #Q

@@ -597,7 +597,7 @@ Where do the weights get reused?
 The receptive field gives an *upper bound* on memory — the model need not use all of it:
 #pause
 - theoretical context $= R_L$; *effective* context may be shorter;
-- yet TCN benchmarks show *long* effective memory — often beating LSTMs on long-range tasks.
+- TCNs can achieve *long* effective memory and, on some long-range benchmarks, match or beat LSTMs.
 #pause
 #result[recurrence is *not* required for long-range sequence modeling]
 

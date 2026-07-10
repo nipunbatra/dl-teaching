@@ -148,7 +148,9 @@ $ X in RR^(H times W times C), quad quad #text[Conv] -> #text[Norm] -> #text[Act
 VGG asked: what if we *only* ever use small $3 times 3$ convs, and just go *deep*?
 #pause
 - every conv is $3 times 3$, stride $1$, pad $1$ — so spatial size is *preserved*;
+#pause
 - downsampling is left entirely to $2 times 2$ *max-pooling*;
+#pause
 - stack $16$–$19$ such layers into a uniform, repetitive network.
 #pause
 #result[one kernel size, one stride — depth is the only knob]
@@ -158,6 +160,7 @@ VGG asked: what if we *only* ever use small $3 times 3$ convs, and just go *deep
 Stacking small kernels *grows the receptive field* while adding *nonlinearities*:
 #pause
 - two $3 times 3$ convs see a $5 times 5$ input region;
+#pause
 - three $3 times 3$ convs see a $7 times 7$ region;
 #pause
 $ r_ell = r_(ell-1) + (k - 1), quad quad 1 ->^(3 times 3) 3 ->^(3 times 3) 5 ->^(3 times 3) 7 $
@@ -190,7 +193,9 @@ A stage = a couple of $3 times 3$ convs, a pool, and *double* the channels:
 
 #pause
 - *depth matters* — a deep stack of simple blocks beats a shallow clever one;
+#pause
 - *small kernels are enough* — no need for large, exotic filters;
+#pause
 - *uniform blocks* make networks easy to design, scale, and reason about.
 #pause
 #alertbox[But VGG is *parameter-heavy*: its fully-connected head alone holds over $100$ million weights. The next ideas are largely about *removing that waste*.]
@@ -200,6 +205,8 @@ A stage = a couple of $3 times 3$ convs, a pool, and *double* the channels:
 #interbox(link-to: IA + "receptive-field-grower")[
   Add $3 times 3$ conv layers one at a time and watch the receptive field grow $3 -> 5 -> 7 -> dots$ — the exact mechanism behind VGG's "go deep with small kernels".
 ]
+#pause
+*Q.* How many stacked $3 times 3$ convs match the receptive field of one $9 times 9$ kernel?
 
 // ═══════════════════════════ PART III — 1×1 convolution ═══════════════════════════
 = The $1 times 1$ convolution
@@ -211,7 +218,9 @@ Take a conv whose kernel is a single pixel. At each location $(h, w)$:
 $ y_(h w) = W thin x_(h w) + b, quad quad x_(h w) in RR^(C_"in") -> y_(h w) in RR^(C_"out") $
 #pause
 - it looks at *one* pixel, across *all* its channels;
+#pause
 - it *mixes channels*, but touches *no spatial neighbours*;
+#pause
 - $W$ is just a $C_"out" times C_"in"$ matrix, shared over every position.
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[a $3 times 3$ asks "what pattern is *around* here?"; a $1 times 1$ asks "what *combination* of channels is here?"])
@@ -243,6 +252,8 @@ $ #text[1×1:] quad 1 dot 1 dot 256 dot 64 + 64 = "16,448" $
 #pause
 $ #text[3×3:] quad 3 dot 3 dot 256 dot 64 + 64 = "147,520" $
 #pause
+$ "147,520" \/ "16,448" approx 9 times $
+#pause
 #result[same channel change, $9 times$ fewer parameters]
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[if you only need to *re-mix channels*, spending a $3 times 3$ on it is wasteful])
@@ -254,7 +265,9 @@ Instead of a fat $3 times 3$ that maps $256 -> 256$, *sandwich* it between two $
 $ underbrace(1 times 1, 256 -> 64) quad -> quad underbrace(3 times 3, 64 -> 64) quad -> quad underbrace(1 times 1, 64 -> 256) $
 #pause
 - the $1 times 1$s *squeeze* then *restore* the channel count;
+#pause
 - the expensive $3 times 3$ runs in the *cheap* $64$-channel space;
+#pause
 - far less compute, with similar representational power.
 #pause
 #notebox[This *bottleneck* is the engine inside ResNet, Inception, and MobileNet — reduce channels, do the spatial work, expand back.]
@@ -275,7 +288,9 @@ Two $1 times 1$s wrap the costly $3 times 3$, so the spatial work runs in a *thi
 Objects appear at *many scales* — an eye is tiny, a face is large. Why pick one kernel?
 #pause
 - run several kernel sizes *in parallel*: $1 times 1$, $3 times 3$, $5 times 5$, and a pool;
+#pause
 - *concatenate* their outputs along the channel axis;
+#pause
 - let training decide how much to lean on each scale.
 #pause
 #result[don't choose a receptive field — offer *several* and combine]
@@ -293,7 +308,12 @@ A $5 times 5$ conv straight onto $C = 256$, producing $128$ channels, is expensi
 $ #text[direct 5×5:] quad 5 dot 5 dot 256 dot 128 = "819,200" $
 #pause
 Reduce channels *first* with a $1 times 1$ ($256 -> 32$), then do the $5 times 5$ ($32 -> 128$):
-$ underbrace(256 dot 32, "1×1 reduce") + underbrace(25 dot 32 dot 128, "5×5") = "8,192" + "102,400" = "110,592" $
+#pause
+- $1 times 1$ reduce: $256 dot 32 = "8,192"$;
+#pause
+- $5 times 5$ on the thin map: $25 dot 32 dot 128 = "102,400"$;
+#pause
+$ "8,192" + "102,400" = "110,592" $
 #pause
 #result[$approx 7.4 times$ cheaper — same output shape]
 
@@ -301,7 +321,9 @@ $ underbrace(256 dot 32, "1×1 reduce") + underbrace(25 dot 32 dot 128, "5×5") 
 
 #pause
 - *multi-scale in parallel* — capture fine and coarse structure in one block;
+#pause
 - *$1 times 1$ reductions* — put the expensive spatial convs in a low-channel space;
+#pause
 - *put computation where it matters* — spend FLOPs on spatial work, not channel bulk.
 #pause
 #notebox[Inception is Part III's bottleneck idea, applied *per branch*. The recurring move: shrink channels, do spatial work, then combine.]
@@ -340,6 +362,7 @@ Look at the gradient flowing back through one block. Since $x_(ell+1) = x_ell + 
 $ (partial cal(L))/(partial x_ell) = (partial cal(L))/(partial x_(ell+1)) dot (I + (partial F_ell)/(partial x_ell)) $
 #pause
 - the $I$ term is a *direct highway*: gradient reaches $x_ell$ *undiminished*;
+#pause
 - even if $partial F_ell slash partial x_ell$ is tiny, the identity keeps the signal alive.
 #pause
 #result[skip connections defeat vanishing gradients — the same trick that tamed deep MLPs]
@@ -398,7 +421,9 @@ A $k times k$ conv from $C_"in"$ to $C_"out"$ channels over an $H times W$ map c
 $ #text[cost] = k^2 dot C_"in" dot C_"out" dot H W $
 #pause
 - one factor for the *spatial* window ($k^2$);
+#pause
 - one factor for *every input–output channel pair* ($C_"in" dot C_"out"$);
+#pause
 - that channel-pair product is where most of the cost hides.
 #pause
 #result[idea: *separate* the spatial part from the channel-mixing part]
@@ -410,6 +435,7 @@ Split one conv into two cheaper steps:
 #fig("/lecture8b/figures/depthwise_sep.svg", w: 74%)
 #pause
 - *depthwise* — one $k times k$ filter *per channel*: spatial only, cost $k^2 dot C_"in" dot H W$;
+#pause
 - *pointwise* — a $1 times 1$ mixing channels: cost $C_"in" dot C_"out" dot H W$.
 #pause
 #align(center, text(size: 15pt, fill: MUTED)[MobileNet's core block — the two factors *add* instead of *multiplying*])
@@ -420,13 +446,17 @@ A $3 times 3$ conv with $C_"in" = C_"out" = 128$ (drop the shared $H W$ factor):
 #pause
 $ #text[standard:] quad 3^2 dot 128 dot 128 = "147,456" $
 #pause
-$ #text[separable:] quad underbrace(3^2 dot 128, "depthwise") + underbrace(128 dot 128, "pointwise") = "1,152" + "16,384" = "17,536" $
+- depthwise — one $3 times 3$ per channel: $3^2 dot 128 = "1,152"$;
+#pause
+- pointwise — a $1 times 1$ mixing channels: $128 dot 128 = "16,384"$;
+#pause
+$ #text[separable total:] quad "1,152" + "16,384" = "17,536" $
 #pause
 #result[$"147,456" slash "17,536" approx 8.4 times$ cheaper]
 
 == Cost, side by side #V
 
-#fig("/lecture8b/figures/param_bars.svg", w: 86%)
+#fig("/lecture8b/figures/param_bars.svg", w: 80%)
 #pause
 #align(center, text(size: 15pt, fill: MUTED)[left: $1 times 1$ vs $3 times 3$ params · right: standard vs depthwise-separable cost])
 
@@ -435,6 +465,7 @@ $ #text[separable:] quad underbrace(3^2 dot 128, "depthwise") + underbrace(128 d
 You can make a net bigger three ways — *depth* (more layers), *width* (more channels), *resolution* (bigger input).
 #pause
 - scaling *one* alone hits diminishing returns quickly;
+#pause
 - EfficientNet scales all three *together*, in a fixed ratio;
 #pause
 #result[balanced growth gives more accuracy per FLOP than any single axis]
@@ -444,7 +475,9 @@ You can make a net bigger three ways — *depth* (more layers), *width* (more ch
 Take a plain ResNet and apply every modern trick, one at a time:
 #pause
 - *larger* depthwise kernels ($7 times 7$); *inverted* bottlenecks;
+#pause
 - *fewer* activations and norms per block; *LayerNorm* in place of BatchNorm;
+#pause
 - modern training recipe (augmentation, schedules, AdamW).
 #pause
 #notebox[No attention, no self-attention — just a carefully modernized *convolutional* net that competes with Transformer-era backbones. Convolution is far from obsolete.]
@@ -507,7 +540,7 @@ Track shapes and count the head's parameters ($K = 10$ classes):
   [linear → $K$], [$10$], [class scores],
 ))
 #pause
-$ #text[head params] = 2048 dot 10 + 10 = "20,490" $
+$ #text[head params] = 2048 dot 10 + 10 = "20,480" + 10 = "20,490" $
 #pause
 #align(center, text(size: 15pt, fill: MUTED)[a $20$k-parameter head on a $25$-million-parameter backbone — the head is *tiny*])
 
@@ -521,6 +554,7 @@ Early and middle layers learn *generic* visual features — edges, textures, par
 $ theta_"pretrained" quad -->^"adapt" quad theta_"your task" $
 #pause
 - so *start* from weights pretrained on a large dataset (e.g. ImageNet);
+#pause
 - *keep* the reusable feature extractor; only the task-specific top must change.
 #pause
 #result[reuse features, don't relearn them — strong results from *little* data]
@@ -547,6 +581,7 @@ $ theta_"pretrained" quad -->^"adapt" quad theta_"your task" $
 $ eta_"backbone" < eta_"head" $
 #pause
 - the head starts random → needs a *larger* learning rate;
+#pause
 - the backbone is already good → a *small* rate nudges it without erasing it.
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[good for *larger* datasets or a *different domain* (medical, satellite, art) where features must shift])
@@ -566,11 +601,11 @@ $ eta_"backbone" < eta_"head" $
 
 $"5,000"$ images, $K = 6$ classes, a ResNet-50 backbone. Replace its $2048 -> 1000$ head:
 #pause
-$ #text[new head:] quad 2048 dot 6 + 6 = "12,294" quad #text[parameters] $
+$ #text[new head:] quad 2048 dot 6 + 6 = "12,288" + 6 = "12,294" quad #text[parameters] $
 #pause
 #result[$approx 12$k weights to fit — versus *millions* if you trained the whole net from scratch]
 #pause
-#align(center, text(size: 15pt, fill: MUTED)[with only $5$k images, fitting $12$k parameters is safe; fitting $25$M would overfit badly])
+#align(center, text(size: 15pt, fill: MUTED)[with only $5$k images, fitting $12$k new parameters is usually the lower-variance starting point; end-to-end adaptation of a $25$M pretrained backbone can still work, but needs a smaller LR and careful validation.])
 
 == Transfer pitfalls
 
@@ -619,7 +654,9 @@ $ F = f_"backbone"(x); quad z = f_"cls"(F); quad {b_i, c_i, s_i} = f_"det"(F); q
 Objects come at *wildly* different scales — a distant sign, a nearby truck. One resolution cannot serve both.
 #pause
 - a Feature Pyramid Network (FPN) taps the backbone at *several* stages;
+#pause
 - it builds multi-resolution maps $P_2, P_3, P_4, P_5$ — fine to coarse;
+#pause
 - small objects use the fine maps; large objects use the coarse ones.
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[a brief preview — the detection lecture builds this properly on top of the C2–C5 maps we saw])

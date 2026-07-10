@@ -787,6 +787,24 @@ The tokenizer silently shapes everything downstream:
 #pause
 #alertbox[*Perplexity is not comparable across tokenizers* — a character model and a subword model predict different-sized units. Never compare PPL across vocabularies.]
 
+== Worked BPE: learn one subword #D
+
+Start from characters. In a toy corpus with #raw("low") three times and #raw("lower") once:
+#pause
+#align(center, table(
+  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 6pt), align: (left, left),
+  table.header([*word*], [*initial symbols*]),
+  [#raw("low") × 3], [#raw("l o w </w>")],
+  [#raw("lower") × 1], [#raw("l o w e r </w>")],
+))
+#pause
+The adjacent pairs #raw("(l, o)") and #raw("(o, w)") each occur four times. Choose one tie arbitrarily:
+$l o -> "lo"$, then the next frequent pair can give $"lo" w -> "low"$.
+#pause
+#result[after those two merges, an unseen #raw("lowest") can begin as #raw("[low, e, s, t, </w>]") — frequent pieces are reused.]
+#pause
+#align(center, text(size: 15pt, fill: MUTED)[BPE discovers frequent character sequences, not guaranteed linguistic morphemes.])
+
 == Interactive: tokenization #I
 
 #interbox(link-to: IA + "bpe-merges")[

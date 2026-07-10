@@ -97,7 +97,9 @@ One image in, one categorical label out.
 $ f_theta (x) = hat(y) in {1, dots, K} $
 #pause
 - output shape is *fixed*: a $K$-way distribution;
+#pause
 - no notion of *location* — the object could be anywhere;
+#pause
 - the whole image is assumed to be *about one thing*.
 
 == Localization: $x -> (y, b)$
@@ -107,7 +109,9 @@ Now also report *where* the (single, dominant) object is:
 $ f_theta (x) = (hat(y), hat(b)), quad hat(b) in RR^4 $
 #pause
 - $hat(y)$ — the class, as before;
+#pause
 - $hat(b)$ — *one* bounding box (four numbers);
+#pause
 - still *exactly one* object per image — the output is fixed-size.
 #pause
 #result[classification + a box regression head]
@@ -119,7 +123,9 @@ Report *every* object: a *variable-length set*.
 $ f_theta (x) = { (hat(y)_i, hat(b)_i, s_i) }_(i=1)^N $
 #pause
 - $hat(y)_i$ — class of object $i$; #h(0.5em) $hat(b)_i$ — its box; #h(0.5em) $s_i$ — a confidence score;
+#pause
 - $N$ *varies per image* — 0 objects, 1, or dozens;
+#pause
 - this variable $N$ is what makes detection *fundamentally harder*.
 
 == One more task — but that is next time
@@ -181,7 +187,9 @@ The network must be *right about the class* and *tight around the object*:
 $ cal(L) = cal(L)_"cls" + lambda thin cal(L)_"box" $
 #pause
 - $cal(L)_"cls"$ — cross-entropy on $hat(p)$ (Lecture 1);
+#pause
 - $cal(L)_"box"$ — a *regression* loss on $hat(b)$;
+#pause
 - $lambda$ — a weight balancing the two (they have different units/scales).
 #pause
 #notebox[This *multi-task loss* — a shared trunk with several weighted heads — recurs throughout detection.]
@@ -206,6 +214,10 @@ $ "smooth"_(L_1)(r) = cases(
   |r| - 1/2 & "otherwise"
 ) $
 #pause
+- small residual $r = 0.5$ → quadratic branch: $1/2 (0.5)^2 = 0.125$;
+#pause
+- large residual $r = 3$ → linear branch: $|3| - 1/2 = 2.5$ (no quadratic blow-up).
+#pause
 #align(center, text(size: 16pt, fill: MUTED)[$r = hat(b)_j - b_j$ is the per-coordinate residual — the pieces meet smoothly at $|r| = 1$.])
 
 == Smooth $L_1$ vs $L_1$ vs $L_2$ #V
@@ -219,9 +231,12 @@ $ "smooth"_(L_1)(r) = cases(
 True box $b = (0.5, 0.5, 0.4, 0.2)$, prediction $hat(b) = (0.6, 0.45, 0.5, 0.3)$ (normalized).
 #pause
 Per-coordinate absolute residuals:
+#pause
 $ |0.6 - 0.5| = 0.10, quad |0.45 - 0.5| = 0.05 $
+#pause
 $ |0.5 - 0.4| = 0.10, quad |0.3 - 0.2| = 0.10 $
 #pause
+Sum the four coordinates:
 $ cal(L)_"box" = 0.10 + 0.05 + 0.10 + 0.10 = 0.35 $
 #pause
 #result[$L_1 = 0.35$]
@@ -255,13 +270,17 @@ $ |A union B| = |A| + |B| - |A inter B| = 100 + 100 - 25 = 175 $
 $ "IoU" = (|A inter B|)/(|A union B|) = 25/175 approx 0.143 $
 #pause
 #result[IoU $= 25\/175 approx 0.143$]
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[an overlap of $25$ on boxes of area $100$ still scores only $0.14$ — IoU is a *strict* measure.])
 
 == Why coordinate loss is not enough
 
 Smooth-$L_1$ drives the four numbers together — but that is *not the same* as overlap.
 #pause
 - two boxes can have *equal* coordinate error yet *very different* IoU;
+#pause
 - IoU is *scale-invariant*; a fixed pixel error matters more for a *small* box;
+#pause
 - the metric we *report* (IoU) differs from the loss we *optimize* (coordinates).
 #pause
 #result[so: optimize an *IoU-based* loss directly]
@@ -279,6 +298,7 @@ Use $cal(L)_"IoU" = 1 - "IoU"$? It works *when boxes overlap* — but:
 $ "GIoU" = "IoU" - (|C \\ (A union B)|)/(|C|) in [-1, 1] $
 #pause
 - when $A, B$ overlap, GIoU $approx$ IoU;
+#pause
 - when they are *apart*, the enclosing-box term *still varies with distance* — a usable gradient.
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[later variants (DIoU, CIoU) refine this further — all share the same fix: keep a signal when IoU is 0.])
@@ -290,6 +310,7 @@ To *score a detector*, first count matches (a prediction is a *hit* if IoU with 
 $ "precision" = "TP"/("TP" + "FP") quad quad "recall" = "TP"/("TP" + "FN") $
 #pause
 - *precision* — of the boxes I predicted, how many were *right*?
+#pause
 - *recall* — of the objects that exist, how many did I *find*?
 #pause
 #notebox[Lowering the score threshold finds more objects (↑ recall) but admits more false alarms (↓ precision). There is a *tradeoff curve*.]
@@ -309,7 +330,9 @@ AP is *per class* at a *given* IoU threshold. Average to summarize a detector:
 $ "mAP" = 1/K sum_(k=1)^K "AP"_k $
 #pause
 - average over all *classes* $k$ (car, person, dog, …);
-- modern benchmarks *also* average over IoU thresholds $tau in {0.5, 0.55, dots, 0.95}$;
+#pause
+- COCO-style benchmarks *also* average over IoU thresholds $tau in {0.5, 0.55, dots, 0.95}$;
+#pause
 - reported as e.g. *mAP\@0.5* or *mAP\@[.5:.95]*.
 #pause
 #result[mAP — one number summarizing detection quality]
@@ -330,8 +353,11 @@ $ "mAP" = 1/K sum_(k=1)^K "AP"_k $
 Unlike classification, the output is a *set of unknown size*:
 #pause
 - *how many* objects? unknown, and it varies per image;
+#pause
 - *where / what scale*? anywhere, any size;
+#pause
 - *class imbalance* — the vast majority of image regions are *background*;
+#pause
 - *duplicates* — one object easily triggers *many* overlapping predictions.
 #pause
 #notebox[Every design choice below is a response to one of these four problems.]
@@ -341,7 +367,9 @@ Unlike classification, the output is a *set of unknown size*:
 Rather than guess $N$, *predict at many fixed locations and scales*, then filter.
 #pause
 - tile the image with a *dense grid* of candidate regions;
+#pause
 - at each, ask: *is there an object here? what class? what exact box?*
+#pause
 - most candidates say "background"; a few fire — then we *clean up duplicates*.
 #pause
 #result[turn a variable-size set problem into a *fixed, dense* prediction problem]
@@ -372,12 +400,30 @@ The network outputs *corrections* to each anchor — easier to learn and well-sc
   r: (0.92fr, 1.08fr),
 )
 
+== Anchor offsets: a worked example #D
+
+Anchor $a = (x_a, y_a, w_a, h_a) = (50, 50, 40, 40)$; matched box $(x, y, w, h) = (58, 46, 80, 40)$:
+#pause
+- $t_x = (58 - 50) / 40 = 0.2$;
+#pause
+- $t_y = (46 - 50) / 40 = -0.1$;
+#pause
+- $t_w = log(80 / 40) = log 2 approx 0.69$;
+#pause
+- $t_h = log(40 / 40) = log 1 = 0$.
+#pause
+#result[the head regresses $(0.2, -0.1, 0.69, 0)$ — small, well-scaled numbers]
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[all-zero offsets would reproduce the anchor exactly; here the box shifts right, up, and doubles in width.])
+
 == What the detection head outputs
 
 Per anchor (at each grid location), the head emits:
 #pause
 - *objectness* $hat(o) in [0,1]$ — is there an object here at all?
+#pause
 - *class logits* — a $K$-way distribution *if* there is;
+#pause
 - *box offsets* $(t_x, t_y, t_w, t_h)$ — how to reshape the anchor.
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[for $A$ anchors and $K$ classes: $A times (1 + K + 4)$ numbers per location.])
@@ -389,7 +435,9 @@ Sum the three jobs, over *positive* (object) and relevant anchors:
 $ cal(L) = cal(L)_"obj" + cal(L)_"cls" + lambda thin cal(L)_"box" $
 #pause
 - $cal(L)_"obj"$ — objectness (object vs background), over *all* anchors;
+#pause
 - $cal(L)_"cls"$ — class cross-entropy, on *positive* anchors only;
+#pause
 - $cal(L)_"box"$ — smooth-$L_1$ on offsets, on *positive* anchors only.
 
 == Which anchors are positive? #D
@@ -397,11 +445,14 @@ $ cal(L) = cal(L)_"obj" + cal(L)_"cls" + lambda thin cal(L)_"box" $
 Assign each anchor a label by its IoU with the *ground-truth* boxes:
 #pause
 $ "IoU"(a, b_"gt") > tau_+ ==> "positive (an object)" $
+#pause
 $ "IoU"(a, b_"gt") < tau_- ==> "negative (background)" $
 #pause
 - anchors in between ($tau_- <= "IoU" <= tau_+$) are *ignored* (ambiguous);
+#pause
 - a positive anchor's box/class targets come from the matched $b_"gt"$;
-- typical thresholds: $tau_+ approx 0.7$, $tau_- approx 0.3$.
+#pause
+- for a simple RPN-style rule, common teaching values are $tau_+ approx 0.7$, $tau_- approx 0.3$; modern detectors may use task-specific or learned assignment instead.
 
 == The class-imbalance problem
 
@@ -420,8 +471,12 @@ $ "FL"(p_t) = -(1 - p_t)^gamma log p_t $
 where $p_t$ is the predicted probability of the *true* class.
 #pause
 - $gamma = 0$ recovers *ordinary cross-entropy*;
+#pause
 - large $p_t$ (easy) ⇒ $(1-p_t)^gamma approx 0$ ⇒ *tiny* loss;
+#pause
 - small $p_t$ (hard) ⇒ factor $approx 1$ ⇒ loss *kept*.
+#pause
+#align(center, text(size: 15pt, fill: MUTED)[numeric ($gamma = 2$): an easy $p_t = 0.9$ scales its loss by $(1 - 0.9)^2 = 0.01$ — just *1%* of plain CE.])
 
 == Focal loss down-weights easy examples #V
 
@@ -510,7 +565,9 @@ The familiar three terms, over the *dense grid* (no proposal stage):
 $ cal(L) = cal(L)_"box" + cal(L)_"obj" + cal(L)_"cls" $
 #pause
 - $cal(L)_"box"$ — box offset regression (smooth-$L_1$ / IoU-based);
+#pause
 - $cal(L)_"obj"$ — objectness / confidence per cell-anchor;
+#pause
 - $cal(L)_"cls"$ — class prediction for cells that contain an object.
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[same ingredients as Faster R-CNN — just predicted *all at once*, no region-proposal stage.])
@@ -540,11 +597,33 @@ The dense grid fires *many* overlapping boxes for one object:
 A greedy filter run *per class*, on the raw boxes:
 #pause
 + *sort* all boxes by confidence score;
+#pause
 + *keep* the highest-scoring remaining box;
+#pause
 + *suppress* every other box with $"IoU" > tau$ against it;
+#pause
 + *repeat* on the boxes that survive.
 #pause
 #notebox[Each kept box "claims" its neighbourhood; overlapping lower-score boxes are discarded. Typical $tau approx 0.5$. (Soft-NMS *decays* scores instead of hard-removing.)]
+
+== Worked NMS example #D
+
+Three *cat* boxes, with IoU threshold $tau = 0.7$:
+#pause
+#align(center, table(
+  columns: 3, stroke: 0.5pt + MUTED, inset: (x: 11pt, y: 6pt), align: (left, left, left),
+  table.header([*box*], [*coordinates*], [*score*]),
+  [A], [$[10, 10, 50, 50]$], [$0.95$],
+  [B], [$[12, 12, 52, 52]$], [$0.90$],
+  [C], [$[70, 70, 100, 100]$], [$0.88$],
+))
+#pause
+$"IoU"(A,B) = 38 dot 38 \/ (1600 + 1600 - 38 dot 38) = 1444\/1756 approx 0.82 > 0.7$:
+keep A, suppress B.
+#pause
+$"IoU"(A,C) = 0 < 0.7$: C survives, so NMS returns $\{A, C\}$.
+#pause
+#result[NMS keeps the best box in each overlap cluster — but low $tau$ can wrongly merge two nearby objects.]
 
 == Interactive: NMS #I
 
@@ -580,7 +659,7 @@ A greedy filter run *per class*, on the raw boxes:
   [YOLO], [dense prediction in one pass], [one],
 ))
 #pause
-#align(center, text(size: 15pt, fill: MUTED)[all share: anchors/cells · objectness + class + box · NMS to deduplicate.])
+#align(center, text(size: 15pt, fill: MUTED)[all produce scored candidate boxes, but the candidate mechanism differs: hand-crafted proposals, learned proposals, or dense cells/anchors. NMS is the common post-processing pattern here.])
 
 == Final mental model — one idea
 
@@ -589,7 +668,7 @@ A greedy filter run *per class*, on the raw boxes:
   Detection answers *what + where*, \
   for a *variable set* of objects. \
   #v(4pt)
-  #text(size: 18pt, fill: MUTED)[boxes + scores over dense candidates, cleaned up by NMS]
+  #text(size: 18pt, fill: MUTED)[boxes + scores from proposals or dense candidates, cleaned up by NMS]
 ])
 
 #focus-slide[

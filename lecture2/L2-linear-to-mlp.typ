@@ -389,7 +389,9 @@ Then $p = "softmax"(z)$ for classification, or $hat(y) = z$ for regression.
 $ phi(z) = max(0, z) $
 #pause
 - one ReLU → a hinge;
+#pause
 - a sum of ReLUs → a piecewise-linear curve;
+#pause
 - many ReLUs → arbitrarily fine approximation.
 
 == Building functions from ReLUs #V
@@ -397,12 +399,20 @@ $ phi(z) = max(0, z) $
 A one-hidden-layer scalar network:
 $ f(x) = sum_(j=1)^m a_j thin "ReLU"(w_j x + b_j) + c $
 #pause
+- each term is one hinge, switched on past $x = -b_j \/ w_j$;
+#pause
+- $w_j$ sets its slope, $a_j$ scales it, $c$ shifts the whole curve.
+
+== Building functions from ReLUs (cont.) #V
+
 #fig("/lecture2/figures/relu_build.svg", w: 50%)
-#align(center, text(size: 16pt, fill: MUTED)[each hidden unit adds one kink])
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[each hidden unit adds one kink — sum them to trace any piecewise-linear shape])
 
 == The universal approximation theorem #D
 
 Let $f$ be continuous on a compact domain. A feedforward network with *one* hidden layer and a suitable nonlinearity can approximate $f$ arbitrarily well:
+#pause
 $ forall thin epsilon > 0, thick exists thin "MLP" g quad "s.t." quad sup_x abs(f(x) - g(x)) < epsilon $
 
 == What the theorem does *not* say #OPT
@@ -410,8 +420,11 @@ $ forall thin epsilon > 0, thick exists thin "MLP" g quad "s.t." quad sup_x abs(
 Universal approximation does *not* promise:
 #pause
 - that training will *find* that function;
+#pause
 - that *finite data* is enough;
+#pause
 - that a *small* network suffices;
+#pause
 - that it will *generalize*.
 #pause
 #result[expressivity $eq.not$ trainability $eq.not$ generalization]
@@ -447,8 +460,13 @@ Forward pass, then a single scalar loss:
 Layer $ell$: $W_ell in RR^(d_ell times d_(ell-1))$, $b_ell in RR^(d_ell)$. Total:
 $ sum_(ell=1)^L (d_ell thin d_(ell-1) + d_ell) $
 #pause
-#notebox[*Exercise.* Input 784, hidden 128, output 10:
-$ 784 times 128 + 128 + 128 times 10 + 10 = "101,770". $]
+*Exercise.* Input 784, hidden 128, output 10.
+#pause
+Layer 1: #h(0.4em) $784 times 128 + 128 = "100,480"$ #h(0.4em) (weights $+$ biases).
+#pause
+Layer 2: #h(0.4em) $128 times 10 + 10 = "1,290"$.
+#pause
+#result[total $= "100,480" + "1,290" = "101,770"$]
 
 == The standard supervised DL template
 

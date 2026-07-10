@@ -10,18 +10,20 @@
   subtitle: [A probabilistic refresher for Deep Learning],
 )
 
+#let IA = "https://nipunbatra.github.io/interactive-articles/"
+
 #title-slide()
 
 // ══════════════════════════════ PART I ══════════════════════════════
 == Three familiar equations
 
 You have already met these losses:
-
-#align(center)[
-  $ cal(L)_"reg" = 1/n sum_i (y_i - hat(y)_i)^2 quad quad cal(L)_"class" = -1/n sum_i log p_theta (y_i | x_i) $
-  #v(4pt)
-  $ cal(L)_"total" = cal(L)_"data" + lambda norm(theta)_2^2 $
-]
+#pause
+$ cal(L)_"reg" = 1/n sum_i (y_i - hat(y)_i)^2 quad #text(fill: MUTED, size: 15pt)[(regression)] $
+#pause
+$ cal(L)_"class" = -1/n sum_i log p_theta (y_i | x_i) quad #text(fill: MUTED, size: 15pt)[(classification)] $
+#pause
+$ cal(L)_"total" = cal(L)_"data" + lambda norm(theta)_2^2 quad #text(fill: MUTED, size: 15pt)[(regularized)] $
 #pause
 #notebox[*Why exactly these three expressions?* Today: they are not arbitrary.]
 
@@ -29,13 +31,16 @@ You have already met these losses:
 #stag(Q)
 
 Which is it?
-
+#pause
 - Historical convention?
+#pause
 - Convenient gradients?
+#pause
 - Empirically successful?
+#pause
 - *Derived from probability?*
+#pause
 - All of the above?
-
 #pause
 #alertbox[*Reveal.* Primarily *consequences of probabilistic assumptions* — that is the thread for the whole lecture.]
 
@@ -43,6 +48,7 @@ Which is it?
 #stag(V)
 
 Two probabilistic assumptions, two halves of the objective:
+#pause
 #v(10pt)
 #align(center, diagram(
   spacing: (17mm, 9mm), node-stroke: 0.9pt,
@@ -70,7 +76,9 @@ Two probabilistic assumptions, two halves of the objective:
 )
 #pause
 - regression network → a *Gaussian mean*
+#pause
 - classifier → *categorical* probabilities
+#pause
 - language model → categorical distribution over *tokens*
 #pause
 #result[A neural network parameterizes a probability distribution.]
@@ -185,6 +193,7 @@ $ Y_i | x_i, theta tilde cal(N)(f_theta (x_i), sigma^2) $
 #stag(V)
 
 #fig("/lecture1/figures/regression_conditionals.svg", w: 52%)
+#pause
 #notebox[Gaussian noise lives in the *output direction*, conditional on $x$ — a vertical bell at every input.]
 
 == Gaussian likelihood
@@ -211,7 +220,9 @@ $ hat(theta)_"MLE" = arg min_theta sum_i (y_i - f_theta (x_i))^2 $
 $ ell_i = (y_i - mu_i)^2/(2 sigma^2) + 1/2 log sigma^2 + C $
 #pause
 - small $sigma$: errors penalized *strongly*
+#pause
 - large $sigma$: errors deemed *less surprising*
+#pause
 - a predicted $sigma_i$ needs the $1/2 log sigma_i^2$ term — it stops the model claiming infinite uncertainty
 #pause
 #notebox[*Heteroscedastic regression:* let the network output both $(mu_i, log sigma_i^2) = f_theta (x_i)$.]
@@ -233,7 +244,7 @@ $ ell_i = (y_i - mu_i)^2/(2 sigma^2) + 1/2 log sigma^2 + C $
 == Interactive: likelihood → loss
 #stag(I)
 
-#interbox[*`likelihood-to-loss.html`* — three synchronized panels: the *noise density* $p(r)$, the *loss* $-log p(r)$, and *data with a fitted line*. \
+#interbox(link-to: IA + "likelihood-to-loss")[*`likelihood-to-loss.html`* — three synchronized panels: the *noise density* $p(r)$, the *loss* $-log p(r)$, and *data with a fitted line*. \
 _Controls:_ Gaussian / Laplace / Uniform / Student-$t$ · noise scale · slope & intercept · *add an outlier* · per-point contributions.]
 #pause
 *Ask:* which model reacts most to an outlier? why does Uniform give an infinite barrier? which loss is robust?
@@ -266,6 +277,8 @@ $ -log p(y | x, theta) = -log(p^y (1-p)^(1-y)) $
 $ = -y log p - (1-y) log(1-p) $
 #pause
 #result[Binary cross-entropy = Bernoulli NLL.]
+#pause
+#notebox[*Check.* True label $y=1$: if $p=0.8$ the loss is $-log 0.8 approx 0.22$; if $p=0.2$ it is $-log 0.2 approx 1.61$.]
 
 == Why use logits?
 #stag(V)
@@ -291,6 +304,7 @@ $ p(y | x, theta) = product_(k=1)^K p_k^(y_k) $
 $ p_k = e^(z_k) / (sum_j e^(z_j)) $
 #pause
 Two guaranteed properties: $p_k > 0$ and $sum_k p_k = 1$.
+#pause
 #fig("/lecture1/figures/softmax_bars.svg", w: 48%)
 #align(center, text(size: 17pt)[*Shift invariance:* $"softmax"(z) = "softmax"(z + c bold(1))$.])
 
@@ -307,10 +321,13 @@ $ cal(L) = -log p_"true class" $
 
 $ ell(p_y) = -log p_y $
 #pause
+Read off the loss at three confidences for the *true* class:
+#pause
 #two(r: (1fr, 1.25fr),
   [$p_y = 0.9 => ell approx 0.105$ \ $p_y = 0.1 => ell approx 2.303$ \ $p_y = 0.001 => ell approx 6.908$],
   fig("/lecture1/figures/neglog_curve.svg", w: 78%),
 )
+#pause
 #align(center, text(size: 17pt)[*Q.* Why punish a _confidently wrong_ prediction so hard?])
 
 == A remarkably simple gradient
@@ -325,7 +342,7 @@ $ (partial cal(L))/(partial z_k) = p_k - y_k, quad quad nabla_z cal(L) = p - y $
 == Interactive: logits → softmax → cross-entropy
 #stag(I)
 
-#interbox[*`softmax-cross-entropy.html`* — controls $z_1, z_2, z_3$, the true class, and temperature $T$; presets for *correct & confident / correct & unsure / wrong & unsure / wrong & confident*. Shows $z -> "softmax"(z\/T) -> -log p_y -> p - y$.]
+#interbox(link-to: IA + "softmax-cross-entropy")[*`softmax-cross-entropy.html`* — controls $z_1, z_2, z_3$, the true class, and temperature $T$; presets for *correct & confident / correct & unsure / wrong & unsure / wrong & confident*. Shows $z -> "softmax"(z\/T) -> -log p_y -> p - y$.]
 #pause
 *Ask students to predict the loss before it is revealed.*
 
@@ -352,7 +369,9 @@ Prediction ignores the constant denominator:
 $ hat(y) = arg max_k p(x | y=k) thin p(y=k) $
 #pause
 - $p(y=k)$ — class *prior*
+#pause
 - $p(x | y=k)$ — class-conditional *likelihood*
+#pause
 - $p(y=k | x)$ — *posterior* class probability
 
 == A 1-D generative classifier
@@ -373,7 +392,7 @@ $ X | Y=0 tilde cal(N)(mu_0, sigma_0^2), quad X | Y=1 tilde cal(N)(mu_1, sigma_1
 == Interactive: Bayes classifier
 #stag(I)
 
-#interbox[*`bayes-classifier.html`* — controls the means $mu_0, mu_1$, the variances, the *prior* $p(Y=1)$, and a test point $x^star$. Shows $p(x | Y=0)$, $p(x | Y=1)$, the posterior $p(Y=1 | x)$, and the decision boundary together.]
+#interbox(link-to: IA + "bayes-classifier")[*`bayes-classifier.html`* — controls the means $mu_0, mu_1$, the variances, the *prior* $p(Y=1)$, and a test point $x^star$. Shows $p(x | Y=0)$, $p(x | Y=1)$, the posterior $p(Y=1 | x)$, and the decision boundary together.]
 #pause
 *Try:* balanced → drop the positive prior to $0.1$ → why does the boundary move? then widen one variance.
 
@@ -429,7 +448,9 @@ $ => quad cal(L)_"MAP" = -log p(cal(D) | theta) + lambda norm(theta)_2^2, quad l
 For $theta tilde cal(N)(0, Sigma)$ the penalty is $1/2 theta^top Sigma^(-1) theta$.
 #pause
 - isotropic $Sigma$ → ordinary $L_2$
+#pause
 - unequal variances → penalize parameters *differently*
+#pause
 - correlations → penalize particular *directions*
 
 == Laplace prior produces $L_1$
@@ -443,7 +464,7 @@ $ p(theta_j) = 1/(2b) exp(-|theta_j|/b) => -log p(theta) = 1/b sum_j |theta_j| +
 == Interactive: likelihood, prior, MAP
 #stag(I)
 
-#interbox[*`map-regularization.html`* — a two-parameter linear model so contours are visible. Shows *likelihood*, *prior*, and *posterior* contours with the *MLE*, *MAP*, and zero points. \
+#interbox(link-to: IA + "map-regularization")[*`map-regularization.html`* — a two-parameter linear model so contours are visible. Shows *likelihood*, *prior*, and *posterior* contours with the *MLE*, *MAP*, and zero points. \
 _Controls:_ amount of data · noise · prior variance · Gaussian vs Laplace · prior correlation.]
 #pause
 *Ask:* more data? narrower prior? why does MAP → MLE as data grows? a correlated prior?
@@ -471,8 +492,11 @@ A modern network has millions–billions of parameters, so integrating $p(theta 
 #pause
 Common practical choices:
 - MLE · MAP
+#pause
 - deep *ensembles*
+#pause
 - *dropout*-based approximations
+#pause
 - *variational* inference
 
 == The standard supervised DL objective
@@ -492,7 +516,7 @@ Complete each:
 #pause
 #two(
   [Gaussian likelihood ⇒ ? \ Categorical likelihood ⇒ ? \ Gaussian prior ⇒ ? \ Laplace prior ⇒ ? \ MLE + prior ⇒ ?],
-  [⇒ *MSE* \ ⇒ *cross-entropy* \ ⇒ *$L_2$* \ ⇒ *$L_1$* \ ⇒ *MAP*],
+  [#pause ⇒ *MSE* \ ⇒ *cross-entropy* \ ⇒ *$L_2$* \ ⇒ *$L_1$* \ ⇒ *MAP*],
 )
 
 // final mental model — a metropolis "standout" (dark, centered)

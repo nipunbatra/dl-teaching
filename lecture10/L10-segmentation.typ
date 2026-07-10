@@ -113,7 +113,9 @@ For each object, detection returns a *box + class + score*:
 $ x quad -> quad { (hat(b)_i, hat(y)_i, hat(s)_i) }_(i=1)^N $
 #pause
 - $hat(b)_i$ — a *rectangle* $(x, y, w, h)$;
+#pause
 - $hat(y)_i$ — the class;
+#pause
 - $hat(s)_i$ — a confidence, filtered by *NMS*.
 #pause
 #notebox[A box says *"an object is roughly here."* It never traces the object's actual *shape*.]
@@ -122,7 +124,9 @@ $ x quad -> quad { (hat(b)_i, hat(y)_i, hat(s)_i) }_(i=1)^N $
 
 #pause
 - a box is *axis-aligned* — a diagonal or curved object wastes most of it;
+#pause
 - overlapping objects share pixels — which pixel belongs to whom?
+#pause
 - some questions need the *outline*: tumor area, road surface, free space.
 #pause
 #result[we want a label for *every pixel*, not a rectangle]
@@ -139,6 +143,7 @@ Assign a class to *every* pixel $(h, w)$:
 $ x quad -> quad y_(h w) in {1, dots, K} quad forall thin h, w $
 #pause
 - output is a *label map* of size $H times W$;
+#pause
 - *all* pixels of the same class look identical — two cats merge into one "cat" region;
 #pause
 #notebox[Semantic segmentation answers *"what class is this pixel?"* — it does *not* count objects.]
@@ -149,6 +154,7 @@ Return a *mask per object*, like detection but with pixels:
 $ x quad -> quad { (hat(y)_i, hat(b)_i, hat(m)_i, hat(s)_i) }_(i=1)^N $
 #pause
 - $hat(m)_i$ — a *binary mask* over the object's pixels;
+#pause
 - two cats now become *two separate* masks — objects are *counted and separated*.
 #pause
 #result[detection's boxes, upgraded to *pixel-accurate masks*]
@@ -198,6 +204,7 @@ Segmentation is *classification, run at every pixel*:
 $ p_(h w k) = p(y_(h w) = k mid(|) x) $
 #pause
 - for each pixel $(h, w)$ the network emits a vector of $K$ class scores;
+#pause
 - a *softmax over the $K$ channels* turns scores into probabilities;
 #pause
 #notebox[Same loss you already know from image classification — just applied $H times W$ times, once per pixel.]
@@ -215,6 +222,7 @@ Sum the ordinary cross-entropy over *all pixels* and average:
 $ cal(L) = -1/(H W) sum_(h, w) log p_(h w, thin y_(h w)) $
 #pause
 - $y_(h w)$ — the *true* class at pixel $(h, w)$;
+#pause
 - $p_(h w, thin y_(h w))$ — the probability the model gave to that *correct* class;
 #pause
 #result[each pixel contributes its own classification loss]
@@ -223,8 +231,9 @@ $ cal(L) = -1/(H W) sum_(h, w) log p_(h w, thin y_(h w)) $
 
 $ cal(L) = -1/(H W) sum_(h, w) underbrace(-log p_(h w, thin y_(h w)), "loss at one pixel") $
 #pause
-- a *confident, correct* pixel ($p -> 1$) contributes $≈ 0$;
-- a *confident, wrong* pixel ($p -> 0$) contributes a *large* penalty;
+- a *confident, correct* pixel ($p = 0.95$) contributes $-log 0.95 approx 0.05$;
+#pause
+- a *confident, wrong* pixel ($p = 0.05$) contributes $-log 0.05 approx 3.0$;
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[the $1/(H W)$ makes it a *mean* — it treats every pixel as equally important (we will question this soon).])
 
@@ -232,6 +241,7 @@ $ cal(L) = -1/(H W) sum_(h, w) underbrace(-log p_(h w, thin y_(h w)), "loss at o
 
 #pause
 - a classification CNN ends in *pooling + fully-connected* layers → one vector;
+#pause
 - that *destroys spatial layout* — exactly what a pixel map needs to keep.
 #pause
 #result[how do we turn a "one-label" network into an "$H times W$-label" network?]
@@ -241,6 +251,7 @@ $ cal(L) = -1/(H W) sum_(h, w) underbrace(-log p_(h w, thin y_(h w)), "loss at o
 Replace the final *fully-connected* layers with *$1 times 1$ convolutions*:
 #pause
 - a $1 times 1$ conv is an FC layer applied *at every spatial location*;
+#pause
 - the net now accepts *any input size* and emits a *coarse label map*, not a vector;
 #pause
 #notebox["Fully convolutional" = *no FC layers at all*. Output is a spatial map of class scores — the first end-to-end dense-prediction net.]
@@ -271,6 +282,7 @@ The general shape of every modern segmentation net:
 The decoder must *increase* spatial resolution. Two common ways:
 #pause
 - *transposed convolution* — a learned upsampling ("deconv");
+#pause
 - *bilinear upsample + conv* — cheap interpolation, then refine.
 #pause
 #notebox[Downsampling was *pooling / stride*; upsampling *undoes* it — but the fine detail that pooling threw away is gone unless we bring it back another way.]
@@ -289,6 +301,7 @@ Symmetric encoder–decoder with *skip connections* at every level:
 The bottleneck knows *what* but has lost *where*. Skips restore the *where*.
 #pause
 - each skip *copies* high-resolution encoder features to the matching decoder level;
+#pause
 - the decoder *concatenates* them with its upsampled features before predicting;
 #pause
 #result[coarse semantics (from depth) + fine detail (from skips) = sharp masks]
@@ -297,7 +310,9 @@ The bottleneck knows *what* but has lost *where*. Skips restore the *where*.
 
 #pause
 - designed for *biomedical* segmentation, where images are large and labels scarce;
+#pause
 - works from *very few* annotated images (heavy augmentation);
+#pause
 - the skip-connected encoder–decoder is now the *default backbone* for dense prediction — including diffusion models.
 
 == Interactive: encoder–decoder / U-Net #I
@@ -316,6 +331,7 @@ The bottleneck knows *what* but has lost *where*. Skips restore the *where*.
 In dense prediction the *background usually dominates* the image.
 #pause
 - a small tumor may be *< 1%* of the pixels; the rest is "healthy";
+#pause
 - pixelwise CE is a *mean over pixels* → the majority class drowns the minority.
 #pause
 #alertbox[A network can score *low CE and high pixel accuracy* by predicting *"all background"* — and still be useless.]
@@ -326,6 +342,7 @@ Measure *overlap* between predicted set $P$ and ground-truth set $G$:
 $ "Dice" = (2 abs(P inter G))/(abs(P) + abs(G)) $
 #pause
 - $= 1$ when $P$ and $G$ coincide exactly; $= 0$ when they are disjoint;
+#pause
 - it *ignores* the vast background — it only cares about the *foreground overlap*.
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[same idea as the F1 score, phrased for masks.])
@@ -336,6 +353,7 @@ Make Dice differentiable: use *probabilities* $p_i in [0,1]$ instead of hard set
 $ cal(L)_"Dice" = 1 - (2 sum_i p_i g_i + epsilon)/(sum_i p_i + sum_i g_i + epsilon) $
 #pause
 - $p_i$ — predicted foreground probability at pixel $i$; $g_i in {0, 1}$ — ground truth;
+#pause
 - $epsilon$ — a small constant so an empty mask is *stable*, not $0/0$.
 #pause
 #result[gradient pushes overlap up directly, regardless of how much background there is]
@@ -352,7 +370,9 @@ $ cal(L)_"Dice" = 1 - (2 sum_i p_i g_i + epsilon)/(sum_i p_i + sum_i g_i + epsil
     - $abs(P inter G) = 5$ (overlap).
     #v(3pt)
     #pause
-    $ "Dice" = (2 dot 5)/(8 + 6) = 10/14 ≈ 0.714 $
+    $ 2 abs(P inter G) = 10, quad abs(P) + abs(G) = 14 $
+    #pause
+    $ "Dice" = 10/14 ≈ 0.714 $
   ],
   r: (1.35fr, 1fr),
 )
@@ -404,6 +424,7 @@ The two-stage detector we build on:
 $ "backbone" -> "RPN (proposals)" -> "RoI features" -> {"class", "box"} $
 #pause
 - the *RPN* proposes candidate regions;
+#pause
 - each region's features feed *two* heads: a *class* head and a *box-regression* head.
 #pause
 #notebox[Faster R-CNN already localizes objects — it just stops at boxes.]
@@ -422,6 +443,7 @@ Add a *third, parallel* head that predicts a *mask*:
 For each RoI, a *small FCN* predicts one binary mask per class:
 #pause
 - output is $K$ masks of size $m times m$ (e.g. $28 times 28$), one per class;
+#pause
 - the *classification head chooses which* mask to use — the mask branch stays *class-agnostic* in its loss;
 #pause
 #notebox[Decoupling *"what class"* from *"which pixels"* is the key trick: masks and classes do not compete.]
@@ -432,7 +454,10 @@ Per-pixel *binary* cross-entropy, only on the RoI's chosen-class mask:
 $ cal(L)_"mask" = -1/m^2 sum_(u, v) [ thin m_(u v) log hat(m)_(u v) + (1 - m_(u v)) log(1 - hat(m)_(u v)) thin ] $
 #pause
 - $m_(u v) in {0, 1}$ — true mask; $hat(m)_(u v) in [0, 1]$ — predicted (per-pixel *sigmoid*);
-- summed only over the $m times m$ RoI, and only for the *ground-truth class*.
+#pause
+- summed only over the $m times m$ RoI, and only for the *ground-truth class*;
+#pause
+- *sigmoid*, not softmax: each class's mask is scored *independently*, so masks don't compete.
 #pause
 #result[total loss: $cal(L) = cal(L)_"cls" + cal(L)_"box" + cal(L)_"mask"$]
 
@@ -441,6 +466,7 @@ $ cal(L)_"mask" = -1/m^2 sum_(u, v) [ thin m_(u v) log hat(m)_(u v) + (1 - m_(u 
 The old *RoIPool* *rounded* region coordinates to the feature grid.
 #pause
 - rounding shifts features by up to *half a cell* — invisible for a coarse box;
+#pause
 - for a *per-pixel mask* that misalignment *smears the boundary*.
 #pause
 #alertbox[*RoIAlign* skips rounding: it samples features at *exact* sub-pixel locations with bilinear interpolation — the single change that made masks sharp.]
