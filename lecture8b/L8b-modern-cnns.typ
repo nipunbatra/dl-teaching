@@ -330,7 +330,7 @@ $ "8,192" + "102,400" = "110,592" $
 
 == Interactive: cost of a block #I
 
-#interbox[#text(fill: MUTED)[(inception-cost widget to build)] — drag the $1 times 1$ reduction width and watch a branch's FLOPs collapse, then rise again as you widen the reduced space.]
+#interbox(link-to: IA + "inception-cost")[drag the $1 times 1$ reduction width and watch a branch's FLOPs collapse, then rise again as you widen the reduced space.]
 #pause
 *Q.* If the $1 times 1$ reduced $256 -> 64$ instead of $256 -> 32$, would the branch be cheaper or dearer than the direct $5 times 5$?
 
@@ -623,7 +623,7 @@ $ #text[new head:] quad 2048 dot 6 + 6 = "12,288" + 6 = "12,294" quad #text[para
 
 == Interactive: transfer playground #I
 
-#interbox[#text(fill: MUTED)[(transfer-learning-playground to build)] — slide the dataset size and choose freeze vs finetune, then watch accuracy trade off against overfitting.]
+#interbox(link-to: IA + "transfer-learning-playground")[slide the dataset size and choose freeze vs finetune, then watch accuracy trade off against overfitting.]
 #pause
 *Q.* You have $200$ labelled images in a domain close to ImageNet. Freeze or finetune?
 

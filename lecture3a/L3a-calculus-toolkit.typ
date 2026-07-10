@@ -100,8 +100,8 @@ Error: #h(0.4em) $9.61 - 9.6 = 0.01$ — tiny.
 
 == Interactive: tangent line #I
 
-#interbox[
-  #text(fill: MUTED)[(to build)] — drag the point and $Delta x$; watch the tangent, the secant, and the approximation error.
+#interbox(link-to: IA + "derivative-tangent")[
+  drag the point and $Delta x$; watch the tangent, the secant, and the approximation error.
   Functions: $x^2$, $sin x$, $e^x$, $log(1 + e^x)$.
 ]
 #pause
@@ -140,8 +140,8 @@ Fix one input and you are left with a 1-D curve — the partial is *its* slope.
 
 == Interactive: surface slices #I
 
-#interbox[
-  #text(fill: MUTED)[(to build)] — move a point on a 3-D surface and read off the two slice slopes.
+#interbox(link-to: IA + "surface-partials")[
+  move a point on a 3-D surface and read off the two slice slopes.
   Functions: $x^2 + y^2$, $x^2 + 3y^2$, $sin x cos y$.
 ]
 #pause
@@ -407,8 +407,8 @@ Evaluate *right to left*: $overline(h)_2 -> overline(h)_1 -> overline(x)$ — ve
 
 == Interactive: the Jacobian as a local warp #I
 
-#interbox[
-  #text(fill: MUTED)[(to build)] — a 2-D map warps a grid; the local Jacobian sends a small circle to an ellipse.
+#interbox(link-to: IA + "jacobian-local-map")[
+  a 2-D map warps a grid; the local Jacobian sends a small circle to an ellipse.
 ]
 #pause
 #fig("/lecture3a/figures/jacobian_warp.svg", w: 58%)

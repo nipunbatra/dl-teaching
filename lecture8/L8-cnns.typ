@@ -306,7 +306,7 @@ $ H_"out" = floor((H + 2 p - k) / s) + 1 $
   Sweep padding and stride and watch the output grid grow, hold, or shrink — and confirm the $floor((H + 2p - k) slash s) + 1$ count.
 ]
 #pause
-#interbox[#text(fill: MUTED)[(padding–stride widget to build)] — a dedicated dial for $p$ and $s$ with the live output-size readout.]
+#interbox(link-to: IA + "padding-stride")[a dedicated dial for $p$ and $s$ with the live output-size readout.]
 
 // ═══════════════════════════ PART IV — Equivariance & pooling ═══════════════════════════
 = Equivariance and pooling
@@ -364,7 +364,7 @@ $ h_c = 1/(H W) sum_(i, j) X_(i j c) $
 
 == Interactive: pooling #I
 
-#interbox[#text(fill: MUTED)[(pooling widget to build)] — drag a window over a feature map and compare max vs average pooling, and watch a small shift of the input leave the max output unchanged.]
+#interbox(link-to: IA + "pooling-visualizer")[drag a window over a feature map and compare max vs average pooling, and watch a small shift of the input leave the max output unchanged.]
 
 // ═══════════════════════════ PART V — Receptive field ═══════════════════════════
 = Receptive field

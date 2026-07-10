@@ -371,7 +371,7 @@ Trained embeddings place *similar-context* tokens *near* each other:
 
 == Interactive: embedding lookup #I
 
-#interbox[#text(fill: MUTED)[(to build)] — click a token id and watch the corresponding *row* of $E$ light up and drop out as the dense embedding vector; nudge a value and see the point move in 2-D.]
+#interbox(link-to: IA + "embedding-lookup")[click a token id and watch the corresponding *row* of $E$ light up and drop out as the dense embedding vector; nudge a value and see the point move in 2-D.]
 
 // ═══════════════════════════ PART V — Fixed-context MLP language model ═══════════════════════════
 = A fixed-context MLP language model
@@ -586,7 +586,7 @@ $ nabla_(e_"like") cal(L) = mat(0, -0.234) quad quad #text(size: 14pt, fill: MUT
 
 == Interactive: the MLP language model #I
 
-#interbox[#text(fill: MUTED)[(to build)] — step through this exact example: watch the embeddings look up, the concat form, the softmax bar chart appear, and the $p - y$ gradient flow back and nudge the two used rows.]
+#interbox(link-to: IA + "makemore-forward")[step through this exact example: watch the embeddings look up, the concat form, the softmax bar chart appear, and the $p - y$ gradient flow back and nudge the two used rows.]
 
 // ═══════════════════════════ PART VII — Training objective & evaluation ═══════════════════════════
 = Training objective and evaluation

@@ -391,7 +391,7 @@ $ h_3 = tanh(x_3 + 0.5 thin underbrace(tanh(x_2 + 0.5 thin underbrace(tanh(x_1),
 
 == Interactive: RNN forward #I
 
-#interbox[#text(fill: MUTED)[(to build)] — set $w_x, w_h, b$ and type a short sequence; watch $h_t$ update step by step and the state trajectory trace out, exactly like the scalar example above.]
+#interbox(link-to: IA + "rnn-state-stepper")[set $w_x, w_h, b$ and type a short sequence; watch $h_t$ update step by step and the state trajectory trace out, exactly like the scalar example above.]
 
 // ═══════════════════════════ PART IV — Backpropagation through time ═══════════════════════════
 = Backpropagation through time
@@ -457,7 +457,7 @@ $ h_"start"^"(next block)" = "detach"(h_"end"^"(this block)") $
 
 == Interactive: BPTT #I
 
-#interbox[#text(fill: MUTED)[(to build)] — step through the unrolled graph and watch each $overline(h)_t$ accumulate its two contributions; toggle truncation length $K$ and see where the gradient is cut.]
+#interbox(link-to: IA + "bptt-unroll")[step through the unrolled graph and watch each $overline(h)_t$ accumulate its two contributions; toggle truncation length $K$ and see where the gradient is cut.]
 
 // ═══════════════════════════ PART V — Vanishing / exploding gradients ═══════════════════════════
 = Vanishing and exploding gradients
@@ -724,7 +724,7 @@ $ z_t = 0.9: quad h_t = (1 - 0.9) dot 4 + 0.9 dot 0 = 0.1 dot 4 = 0.4 $
 
 == Interactive: the GRU cell #I
 
-#interbox[#text(fill: MUTED)[(to build)] — move the update and reset gates and watch the state interpolate between "keep the past" and "take the candidate", side by side with the LSTM.]
+#interbox(link-to: IA + "gru-gates")[move the update and reset gates and watch the state interpolate between "keep the past" and "take the candidate", side by side with the LSTM.]
 
 // ═══════════════════════════ PART VIII — Applications ═══════════════════════════
 = Sequence tasks with RNNs

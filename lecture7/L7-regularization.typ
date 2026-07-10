@@ -309,8 +309,8 @@ Weight norm $norm(theta)$ over training for several $lambda$:
 
 == Interactive: weight decay #I
 
-#interbox[
-  #text(fill: MUTED)[(to build)] — sweep $lambda$ and watch the weight norm shrink and the decision boundary smooth out; too large and the model underfits.
+#interbox(link-to: IA + "weight-decay")[
+  sweep $lambda$ and watch the weight norm shrink and the decision boundary smooth out; too large and the model underfits.
 ]
 #pause
 *Q.* Doubling $eta$ and halving $lambda$ leaves $eta lambda$ fixed. Does weight decay behave the same? (Careful — the *data* step changed too.)
@@ -445,8 +445,8 @@ $ ell = - sum_k tilde(y)_k log p_k = -0.7 log p_1 - 0.3 log p_2 $
 
 == Interactive: augmentation + mixup #I
 
-#interbox[
-  #text(fill: MUTED)[(to build)] — apply transforms and mixup to a 2-D dataset and watch the decision boundary become smoother and more invariant.
+#interbox(link-to: IA + "augmentation-mixup")[
+  apply transforms and mixup to a 2-D dataset and watch the decision boundary become smoother and more invariant.
 ]
 #pause
 *Q.* Why does mixup improve *calibration* as well as accuracy?

@@ -243,8 +243,8 @@ $ cal(L)_"box" = 0.10 + 0.05 + 0.10 + 0.10 = 0.35 $
 
 == Interactive: box-regression loss #I
 
-#interbox[
-  #text(fill: MUTED)[(to build)] — drag the predicted box around a fixed ground-truth box and watch $L_1$, $L_2$, and smooth-$L_1$ update coordinate-by-coordinate, and see where each loss's gradient is large or flat.
+#interbox(link-to: IA + "bbox-loss")[
+  drag the predicted box around a fixed ground-truth box and watch $L_1$, $L_2$, and smooth-$L_1$ update coordinate-by-coordinate, and see where each loss's gradient is large or flat.
 ]
 #pause
 *Q.* Coordinate losses treat all four numbers independently. What about the box do they *not* directly measure?
@@ -486,8 +486,8 @@ where $p_t$ is the predicted probability of the *true* class.
 
 == Interactive: anchor assignment #I
 
-#interbox[
-  #text(fill: MUTED)[(to build)] — drop a ground-truth box on an anchor grid and watch anchors light up *positive / ignored / negative* as you sweep $tau_+$ and $tau_-$.
+#interbox(link-to: IA + "anchor-assignment")[
+  drop a ground-truth box on an anchor grid and watch anchors light up *positive / ignored / negative* as you sweep $tau_+$ and $tau_-$.
 ]
 #pause
 *Q.* If you set $tau_+$ very high (say $0.9$), what happens to the number of positive anchors — and to training?

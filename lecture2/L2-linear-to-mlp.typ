@@ -374,8 +374,8 @@ Then $p = "softmax"(z)$ for classification, or $hat(y) = z$ for regression.
 
 == Interactive: MLP decision boundaries #I
 
-#interbox[
-  #text(fill: MUTED)[(to build in interactive-articles)] — train a small MLP on *linear / XOR / circles / spirals* and watch the boundary form.
+#interbox(link-to: IA + "mlp-decision-boundary")[
+  train a small MLP on *linear / XOR / circles / spirals* and watch the boundary form.
   Controls: hidden units · layers · activation · learning rate · steps.
 ]
 #pause
