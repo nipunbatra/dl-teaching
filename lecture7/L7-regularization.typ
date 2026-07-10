@@ -67,9 +67,11 @@ We never cared about the training set. We care about *new, unseen* data.
 == Train loss vs test loss #D
 
 *Training loss* — an empirical average over the data we happened to collect:
+#pause
 $ cal(L)_"train"(theta) = 1/n sum_(i=1)^n ell(f_theta (x_i), y_i) $
 #pause
 *Test loss* — the expectation over the *true* data distribution $p_"data"$:
+#pause
 $ cal(L)_"test"(theta) = EE_((x,y) ~ p_"data") [ell(f_theta (x), y)] $
 #pause
 #notebox[We only ever *see finite data*; $cal(L)_"train"$ is a noisy estimate of the quantity we actually want, $cal(L)_"test"$.]
@@ -166,6 +168,8 @@ Why does stopping early help?
 ]
 #pause
 *Q.* You stop at the epoch with the lowest *training* loss. Why is your reported accuracy likely too optimistic?
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[the *last* epoch overfits — training keeps dropping while validation has already turned up.])
 
 // ═══════════════════════════ PART III — Capacity, bias, variance ═══════════════════════════
 = Capacity, bias and variance
@@ -230,9 +234,11 @@ Classical wisdom: *bigger model ⇒ more overfitting*. Modern practice complicat
 == Penalize large weights
 
 Add a penalty on the *size* of the weights to the data loss:
+#pause
 $ cal(L)_"reg"(theta) = cal(L)_"data"(theta) + lambda norm(theta)^2 $
 #pause
 - $lambda > 0$ — the *regularization strength* (a hyperparameter);
+#pause
 - large weights ⇒ sharp, wiggly functions; the penalty prefers *smooth* ones.
 #pause
 #notebox[$ell_2$ regularization $<=>$ a *Gaussian prior* on the weights: MAP estimation with $theta ~ cal(N)(0, sigma^2 I)$ gives exactly this penalty.]
@@ -260,13 +266,18 @@ $ theta_t arrow.r.bar (1 - eta lambda') thin theta_t $
 
 $theta = 5$, gradient $g = 3$, learning rate $eta = 0.1$, decay $lambda' = 0.2$:
 #pause
-*Without* weight decay:
+*Without* weight decay — a plain gradient step:
 $ theta^+ = theta - eta thin g = 5 - 0.1 dot 3 = 4.7 $
 #pause
-*With* weight decay $theta^+ = (1 - eta lambda') theta - eta g$:
-$ theta^+ = (1 - 0.1 dot 0.2) dot 5 - 0.1 dot 3 = 0.98 dot 5 - 0.3 = 4.6 $
+*With* weight decay, shrink first, then step: $theta^+ = (1 - eta lambda') theta - eta g$.
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[the extra $-0.1$ is the shrinkage pulling the weight toward zero.])
+Step 1 — the shrink factor: #h(0.5em) $1 - eta lambda' = 1 - 0.1 dot 0.2 = 0.98$.
+#pause
+Step 2 — shrink the weight: #h(0.5em) $0.98 dot 5 = 4.9$.
+#pause
+Step 3 — subtract the gradient step: #h(0.5em) $4.9 - 0.1 dot 3 = 4.9 - 0.3 = 4.6$.
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[the extra $-0.1$ ($4.7$ vs $4.6$) is the shrinkage pulling the weight toward zero.])
 
 == Adam ≠ Adam + $ell_2$: AdamW #D
 
@@ -303,6 +314,8 @@ Weight norm $norm(theta)$ over training for several $lambda$:
 ]
 #pause
 *Q.* Doubling $eta$ and halving $lambda$ leaves $eta lambda$ fixed. Does weight decay behave the same? (Careful — the *data* step changed too.)
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[no — the shrink factor $(1 - eta lambda)$ is unchanged, but the gradient step $-eta nabla cal(L)_"data"$ *doubled*.])
 
 // ═══════════════════════════ PART V — Dropout ═══════════════════════════
 = Dropout
@@ -310,9 +323,11 @@ Weight norm $norm(theta)$ over training for several $lambda$:
 == The idea
 
 During training, randomly *drop* each hidden unit with probability $1 - p$:
+#pause
 $ m_j ~ "Bernoulli"(p), quad quad tilde(h) = m dot.o h $
 #pause
 - a different random *subnetwork* is trained on every minibatch;
+#pause
 - units cannot rely on any single partner ⇒ less *co-adaptation*.
 #pause
 #fig("/lecture7/figures/dropout_mask.svg", w: 52%)
@@ -331,6 +346,9 @@ $ EE[tilde(h)_j] = 1/p dot (p dot h_j + (1-p) dot 0) = h_j $
 
 $h = [2, 4, 6, 8]$, keep prob $p = 0.5$, sampled mask $m = [1, 0, 1, 0]$:
 #pause
+Step 1 — apply the mask (units 2 and 4 are dropped): #h(0.4em) $m dot.o h = [2, 0, 6, 0]$.
+#pause
+Step 2 — rescale survivors by $1 \/ p = 2$:
 $ tilde(h) = (m dot.o h) / p = ([2, 0, 6, 0]) / 0.5 = [4, 0, 12, 0] $
 #pause
 Check the expectation (each unit kept w.p. $0.5$, scaled by $2$):
@@ -414,8 +432,10 @@ $ tilde(x) = lambda x_i + (1 - lambda) x_j, quad quad tilde(y) = lambda y_i + (1
 
 $x_A$ = cat, $y_A = [1, 0]$; $x_B$ = dog, $y_B = [0, 1]$; mix $lambda = 0.7$:
 #pause
+The complementary weight is $1 - lambda = 0.3$. Blend the inputs:
 $ tilde(x) = 0.7 thin x_A + 0.3 thin x_B $
 #pause
+Blend the labels the *same* way:
 $ tilde(y) = 0.7 [1, 0] + 0.3 [0, 1] = [0.7, 0.3] $
 #pause
 Train with the *soft* cross-entropy against this target:
@@ -430,6 +450,8 @@ $ ell = - sum_k tilde(y)_k log p_k = -0.7 log p_1 - 0.3 log p_2 $
 ]
 #pause
 *Q.* Why does mixup improve *calibration* as well as accuracy?
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[soft targets stop the net from driving logits to $plus.minus infinity$ — so it stays less over-confident.])
 
 // ═══════════════════════════ PART VII — Label smoothing ═══════════════════════════
 = Label smoothing
@@ -454,9 +476,14 @@ Equivalently, mix the one-hot with a uniform distribution over the *other* class
 
 $K = 5$ classes, smoothing $epsilon = 0.1$, correct class $= 2$:
 #pause
-$ "correct": 1 - epsilon = 0.9, quad quad "each other": epsilon/(K-1) = 0.1/4 = 0.025 $
+Correct class keeps most of the mass: #h(0.4em) $1 - epsilon = 0.9$.
 #pause
+The remaining $epsilon = 0.1$ is split over the $K - 1 = 4$ others: #h(0.4em) $epsilon/(K-1) = 0.1/4 = 0.025$.
+#pause
+Assemble the target vector:
 $ y^"smooth" = [0.025, 0.025, thick 0.9, thick 0.025, 0.025] $
+#pause
+Verify it is a distribution: #h(0.4em) $0.9 + 4 dot 0.025 = 1$.
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[still sums to $1$; the target is achievable with *finite* logits.])
 
@@ -484,8 +511,11 @@ $ y^"smooth" = [0.025, 0.025, thick 0.9, thick 0.025, 0.025] $
 Many effective regularizers work by *injecting noise* during training:
 #pause
 - *SGD* minibatch sampling — noisy gradients;
+#pause
 - *dropout* — noisy activations;
+#pause
 - *augmentation* — noisy inputs;
+#pause
 - *stochastic depth*, *label / input noise*.
 #pause
 #notebox[Noise prevents the network from building *brittle*, precise dependencies — it must be robust to the perturbation.]
@@ -544,8 +574,11 @@ Training loss *low*, validation loss *high* ⇒ overfitting. Now reach for:
 Track more than the loss — watch *what* is being controlled:
 #pause
 - $cal(L)_"train"$ *and* $cal(L)_"val"$ (and the gap between them);
+#pause
 - $"acc"_"train"$ *and* $"acc"_"val"$;
+#pause
 - weight norm $norm(theta)$;
+#pause
 - confidence $max_k p_k$ and *calibration error*.
 #pause
 #notebox[If the *gap* widens while train keeps improving, you are overfitting — turn a regularization knob.]
@@ -560,6 +593,8 @@ Track more than the loss — watch *what* is being controlled:
 ))
 #pause
 #v(3pt)
+The gap is $"acc"_"train" - "acc"_"val"$: #h(0.5em) A $-> 2%$, #h(0.4em) B $-> 27%$.
+#pause
 - *A*: small gap, both low ⇒ the model *cannot fit* — do *not* regularize;
 #pause
 - *B*: large gap ⇒ the model *memorized* — rein it in.

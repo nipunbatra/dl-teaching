@@ -40,15 +40,19 @@
 == Why a calculus lecture?
 
 Every step of training is a gradient step:
+#pause
 $ theta_(t+1) = theta_t - eta thin nabla_theta cal(L)(theta_t) $
 #pause
 So we must be fluent with
+#pause
 $ dif/(dif x), quad (partial)/(partial x_i), quad nabla f, quad J, quad H. $
 #pause
 #notebox[These five objects are the entire vocabulary of optimization and backprop.]
 
 == The big picture #V
 
+Five objects, one theme — each is a *derivative* of a function of a particular shape:
+#pause
 #align(center, table(
   columns: 3, stroke: 0.5pt + MUTED, inset: (x: 10pt, y: 7pt), align: (left, center, left),
   table.header([*Object*], [*Function type*], [*Tells us*]),
@@ -67,11 +71,13 @@ $ dif/(dif x), quad (partial)/(partial x_i), quad nabla f, quad J, quad H. $
 $ f'(x) = (dif f)/(dif x) = lim_(epsilon -> 0) (f(x + epsilon) - f(x))/epsilon $
 #pause
 #fig("/lecture3a/figures/tangent.svg", w: 44%)
+#pause
 #align(center, text(size: 16pt, fill: MUTED)[the secant slope → the tangent slope as $epsilon -> 0$])
 
 == The derivative is a local linear model #D
 
 Near a point $x$:
+#pause
 $ f(x + Delta x) approx f(x) + f'(x) thin Delta x $
 #pause
 #result[derivative = best local *linear* approximation]
@@ -79,8 +85,18 @@ $ f(x + Delta x) approx f(x) + f'(x) thin Delta x $
 Example: $f(x) = x^2$ at $x = 3$, so $f(3) = 9$ and $f'(3) = 6$:
 #pause
 $ f(3 + Delta x) approx 9 + 6 thin Delta x. $
+
+== Local linear model: numeric check (cont.) #D
+
+Test the line $f(3 + Delta x) approx 9 + 6 thin Delta x$ at a *small* step $Delta x = 0.1$:
 #pause
-#notebox[*Check* at $Delta x = 0.1$: the line predicts $9.6$, the true value is $f(3.1) = 9.61$ — error just $0.01$.]
+Linear prediction: #h(0.4em) $9 + 6 dot 0.1 = 9.6$.
+#pause
+True value: #h(0.4em) $f(3.1) = 3.1^2 = 9.61$.
+#pause
+Error: #h(0.4em) $9.61 - 9.6 = 0.01$ — tiny.
+#pause
+#notebox[Now a *large* step $Delta x = 1$: the line gives $9 + 6 = 15$, but $f(4) = 16$ — error $1$. The linear model degrades as $Delta x$ grows.]
 
 == Interactive: tangent line #I
 
@@ -90,6 +106,8 @@ $ f(3 + Delta x) approx 9 + 6 thin Delta x. $
 ]
 #pause
 *Q.* When is the linear approximation good, and when does it break down?
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[good for *small* $Delta x$ and *low* curvature; it breaks where $f$ bends sharply (large $f''$).])
 
 // ═══════════════════════════ PART III — Partials & surfaces ═══════════════════════════
 = Partial derivatives and surfaces
@@ -99,6 +117,7 @@ $ f(3 + Delta x) approx 9 + 6 thin Delta x. $
 A function of two inputs is a *surface*: $f(x, y) = x^2 + y^2$.
 #pause
 #fig("/lecture3a/figures/bowl3d.svg", w: 33%)
+#pause
 #align(center, text(size: 16pt, fill: MUTED)[input $(x, y)$ → height $z = f(x, y)$])
 
 == Partial derivatives
@@ -106,10 +125,15 @@ A function of two inputs is a *surface*: $f(x, y) = x^2 + y^2$.
 $(partial f)/(partial x)$ — change $x$, *hold $y$ fixed*. #h(1em) $(partial f)/(partial y)$ — change $y$, hold $x$ fixed.
 #pause
 For $f(x, y) = x^2 + y^2$:
+#pause
 $ (partial f)/(partial x) = 2x, quad quad (partial f)/(partial y) = 2y $
+#pause
+At $(x, y) = (3, 1)$: #h(0.4em) $(partial f)/(partial x) = 6$, #h(0.4em) $(partial f)/(partial y) = 2$.
 
 == A partial is the slope of a slice #V
 
+Fix one input and you are left with a 1-D curve — the partial is *its* slope.
+#pause
 #fig("/lecture3a/figures/surface_slices.svg", w: 31%)
 #pause
 #notebox[For $f = x^2 + 3y^2$ at $(1, 2)$: $(partial f)/(partial x) = 2$, $(partial f)/(partial y) = 12$ — the function climbs *faster* along $y$.]
@@ -120,6 +144,10 @@ $ (partial f)/(partial x) = 2x, quad quad (partial f)/(partial y) = 2y $
   #text(fill: MUTED)[(to build)] — move a point on a 3-D surface and read off the two slice slopes.
   Functions: $x^2 + y^2$, $x^2 + 3y^2$, $sin x cos y$.
 ]
+#pause
+*Q.* For $f = x^2 + 3y^2$, along which axis is the surface steeper at $(1, 1)$?
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[the $y$-axis: $partial_y = 6y = 6$ vs $partial_x = 2x = 2$.])
 
 // ═══════════════════════════ PART IV — Gradient ═══════════════════════════
 = The gradient
@@ -129,9 +157,13 @@ $ (partial f)/(partial x) = 2x, quad quad (partial f)/(partial y) = 2y $
 $ nabla f(x) = vec((partial f)/(partial x_1), (partial f)/(partial x_2), dots.v, (partial f)/(partial x_d)) $
 #pause
 For $f(x, y) = x^2 + y^2$: #h(0.6em) $nabla f = vec(2x, 2y)$.
+#pause
+At $(3, 1)$: #h(0.4em) $nabla f = vec(6, 2)$ — pointing *outward*, uphill from the bowl's centre.
 
 == Gradient = local linear model #D
 
+Same first-order Taylor idea, now with a *dot product*:
+#pause
 $ f(x + Delta x) approx f(x) + nabla f(x)^top Delta x $
 #pause
 #result[the vector version of $f(x + Delta x) approx f(x) + f'(x) Delta x$]
@@ -139,14 +171,23 @@ $ f(x + Delta x) approx f(x) + nabla f(x)^top Delta x $
 == Directional derivative
 
 For a *unit* direction $u$:
+#pause
 $ D_u f(x) = nabla f(x)^top u $
 #pause
 #notebox[The rate of change along $u$ is just the *projection* of the gradient onto $u$.]
+#pause
+Example: $f = x^2 + y^2$ at $(1, 2)$, so $nabla f = vec(2, 4)$. Take $u = (3, 4) \/ 5 = (0.6, 0.8)$:
+#pause
+$ D_u f = 2 dot 0.6 + 4 dot 0.8 = 1.2 + 3.2 = 4.4 $
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[compare $norm(nabla f) = sqrt(20) approx 4.47$ — the *gradient* direction is a touch steeper.])
 
 == The gradient points uphill #D
 
 By Cauchy–Schwarz, over all unit $u$:
+#pause
 $ nabla f(x)^top u <= norm(nabla f(x)) $
+#pause
 with equality at $u = nabla f(x) \/ norm(nabla f(x))$.
 #pause
 #result[$nabla f$ = steepest ascent · $-nabla f$ = steepest descent]
@@ -155,11 +196,17 @@ with equality at $u = nabla f(x) \/ norm(nabla f(x))$.
 
 A contour is the set $f(x, y) = c$. Along it, $f$ does not change, so for any tangent $v$: $nabla f^top v = 0$.
 #pause
-#fig("/lecture3a/figures/contours_grad.svg", w: 34%)
+#fig("/lecture3a/figures/contours_grad.svg", w: 29%)
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[so $nabla f$ is *orthogonal* to the contour — it points straight across the level lines.])
 
 == Gradient descent on the contour map
 
 $ x_(t+1) = x_t - eta thin nabla f(x_t) $
+#pause
+Example: at $x_t = (3, 1)$ with $nabla f = (6, 2)$ and $eta = 0.1$:
+#pause
+$ x_(t+1) = (3, 1) - 0.1 (6, 2) = (2.4, 0.8) $
 #pause
 #notebox[Each step moves *perpendicular* to the current contour, downhill. The learning rate $eta$ sets the step length.]
 
@@ -169,6 +216,10 @@ $ x_(t+1) = x_t - eta thin nabla f(x_t) $
   Watch gradient arrows on a contour map and a descent trajectory as you change $eta$ and the start point.
   Surfaces: $x^2 + y^2$, $x^2 + 10 y^2$, $sin x + cos y$.
 ]
+#pause
+*Q.* At the minimum of $f$, what is $nabla f$ — and what does a gradient step do there?
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[$nabla f = 0$, so the step leaves $x$ unchanged — the iteration has converged.])
 
 // ═══════════════════════════ PART V — Hessian ═══════════════════════════
 = The Hessian and curvature
@@ -183,20 +234,29 @@ $f(x) = x^2 => f'' = 2$ (bowl, curves *up*);
 
 == Convex, concave, flat #V
 
+The *sign* of $f''$ names the shape:
+#pause
 #fig("/lecture3a/figures/curvature_1d.svg", w: 78%)
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[$f'' > 0$ convex (bowl) · $f'' < 0$ concave (hill) · $f'' = 0$ flat (inflection)])
 
 == The Hessian: matrix of second partials
 
 $ H = nabla^2 f, quad H_(i j) = (partial^2 f)/(partial x_i partial x_j) $
 #pause
 For two variables:
+#pause
 $ H = mat((partial^2 f)/(partial x^2), (partial^2 f)/(partial x partial y); (partial^2 f)/(partial y partial x), (partial^2 f)/(partial y^2)) $
 
 == Hessian example #D
 
 $ f(x, y) = x^2 + 3y^2 quad ==> quad nabla f = vec(2x, 6y) $
 #pause
-Differentiate each partial again: $partial_(x x) = 2$, $partial_(y y) = 6$, $partial_(x y) = 0$.
+Differentiate each partial again, one entry at a time:
+#pause
+$ partial_(x x) = partial/(partial x)(2x) = 2 $
+#pause
+$ partial_(y y) = partial/(partial y)(6y) = 6, quad quad partial_(x y) = partial/(partial y)(2x) = 0 $
 #pause
 $ H = mat(2, 0; 0, 6) $
 #pause
@@ -204,6 +264,8 @@ $ H = mat(2, 0; 0, 6) $
 
 == Second-order local approximation #D
 
+The full second-order Taylor expansion:
+#pause
 $ f(x + Delta x) approx f(x) + underbrace(nabla f(x)^top Delta x, "tilt (gradient)") + underbrace(1/2 Delta x^top H(x) Delta x, "curvature (Hessian)") $
 #pause
 #result[gradient tilts · Hessian bends]
@@ -228,16 +290,23 @@ At a point where $nabla f = 0$, the Hessian eigenvalues decide the shape:
   [mixed signs], [saddle point],
   [some zero], [inconclusive / flat],
 ))
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[the eigenvalue *signs* alone classify the point.])
 
 == A saddle point #V
 
 $ f(x, y) = x^2 - y^2, quad nabla f = vec(2x, -2y), quad H = mat(2, 0; 0, -2) $
 #pause
-#fig("/lecture3a/figures/saddle.svg", w: 30%)
+Eigenvalues $+2$ and $-2$ have *mixed signs* → a saddle.
+#pause
+#fig("/lecture3a/figures/saddle.svg", w: 25%)
+#pause
 #align(center, text(size: 16pt, fill: MUTED)[$nabla f = 0$ at the origin, but it is *not* a minimum])
 
 == Why curvature matters for optimization #V
 
+The gradient picks a *direction*, but curvature decides a good *step size*.
+#pause
 #fig("/lecture3a/figures/gd_zigzag.svg", w: 66%)
 #pause
 #notebox[Elongated contours (a large *condition number*) make first-order gradient descent *zigzag* — much curvature one way, little the other.]
@@ -249,6 +318,8 @@ $ f(x, y) = x^2 - y^2, quad nabla f = vec(2x, -2y), quad H = mat(2, 0; 0, -2) $
 ]
 #pause
 *Q.* Why does the trajectory zigzag when the contours are stretched?
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[one shared $eta$ overshoots the low-curvature axis while creeping along the high-curvature one.])
 
 // ═══════════════════════════ PART VI — Jacobian ═══════════════════════════
 = The Jacobian
@@ -257,17 +328,22 @@ $ f(x, y) = x^2 - y^2, quad nabla f = vec(2x, -2y), quad H = mat(2, 0; 0, -2) $
 
 The gradient is for *scalar* outputs, $f: RR^d -> RR$.
 #pause
-But network layers map *vectors to vectors*, $f: RR^n -> RR^m$ — e.g. $z = W x + b$. We need the *Jacobian*.
+But network layers map *vectors to vectors*, $f: RR^n -> RR^m$ — e.g. $z = W x + b$.
+#pause
+We need the *Jacobian*.
 
 == Jacobian: matrix of all partials
 
 For $f: RR^n -> RR^m$:
+#pause
 $ J = (partial f)/(partial x) in RR^(m times n), quad quad J_(i j) = (partial f_i)/(partial x_j) $
 #pause
 #result[$f(x + Delta x) approx f(x) + J(x) thin Delta x$ — a local *linear map*]
 
 == Two Jacobians you already know #D
 
+Two building blocks whose Jacobians you can write down instantly:
+#pause
 #two(
   notebox[*Linear layer* $f(x) = W x + b$:
    $ J = W $
@@ -277,21 +353,44 @@ $ J = (partial f)/(partial x) in RR^(m times n), quad quad J_(i j) = (partial f_
    (for ReLU, entries are $0$ or $1$).],
 )
 
+== Worked example: a $2 -> 2$ Jacobian #D
+
+$f(x_1, x_2) = vec(x_1^2 + x_2, sin(x_1 x_2))$ — the map from the PyTorch demo later.
+#pause
+Row 1, partials of $f_1 = x_1^2 + x_2$: #h(0.4em) $(partial f_1)/(partial x_1) = 2 x_1$, #h(0.3em) $(partial f_1)/(partial x_2) = 1$.
+#pause
+Row 2, partials of $f_2 = sin(x_1 x_2)$: #h(0.4em) $(partial f_2)/(partial x_1) = x_2 cos(x_1 x_2)$, #h(0.3em) $(partial f_2)/(partial x_2) = x_1 cos(x_1 x_2)$.
+#pause
+$ J = mat(2 x_1, 1; x_2 cos(x_1 x_2), x_1 cos(x_1 x_2)) $
+#pause
+At $(x_1, x_2) = (1, 2)$: #h(0.4em) $J = mat(2, 1; 2 cos 2, cos 2)$.
+#pause
+#notebox[Each entry is one partial — a $2 times 2$ local linear map, built without ever storing a big matrix.]
+
 == The chain rule, with Jacobians #D
 
 #chain3
 #pause
 $ (partial v)/(partial x) = (partial v)/(partial u) (partial u)/(partial x) quad ==> quad J_(v,x) = J_(v,u) thin J_(u,x) $
+#pause
+Shapes: with $x in RR^2, u in RR^3, v in RR^2$, then $J_(u,x) in RR^(3 times 2)$ and $J_(v,u) in RR^(2 times 3)$:
+#pause
+$ J_(v,x) = J_(v,u) thin J_(u,x) in RR^(2 times 2) $
+#pause
+#notebox[The inner dimension ($3$) cancels — exactly like ordinary matrix multiplication.]
 
 == Why we avoid full Jacobians #OPT
 
 A single layer with $x, h in RR^4096$ has a Jacobian of $4096 times 4096 approx 1.7 times 10^7$ entries.
+#pause
+That is one dense matrix *per layer, per example* — far too big to form and multiply.
 #pause
 #alertbox[Frameworks never materialize $J$. They compute *vector–Jacobian products* instead.]
 
 == Vector–Jacobian product = backprop #D
 
 If $y = f(x)$ and $cal(L) = cal(L)(y)$:
+#pause
 $ underbrace(overline(x), (partial cal(L))/(partial x)) = J^top thin underbrace(overline(y), (partial cal(L))/(partial y)) $
 #pause
 #result[one VJP per layer — no matrix ever formed]
@@ -335,11 +434,15 @@ $ "ReLU"'(z) = bb(1)[z > 0] $
 
 == Jacobian → sensitivity & flows #OPT
 
-Appears in backprop, sensitivity analysis, normalizing flows ($log abs(det J)$), neural ODEs, implicit layers — but almost always through $J v$ or $J^top v$.
+Appears in backprop, sensitivity analysis, normalizing flows ($log abs(det J)$), neural ODEs, implicit layers.
+#pause
+#notebox[But almost always accessed through a product $J v$ or $J^top v$ — never the full matrix.]
 
 == Hessian → curvature & second-order #OPT
 
-Newton's method $x_(t+1) = x_t - H^(-1) nabla f$, Laplace approximation, sharpness/flatness, influence functions — but the full $H$ is usually too large.
+Newton's method $x_(t+1) = x_t - H^(-1) nabla f$, Laplace approximation, sharpness / flatness, influence functions.
+#pause
+#notebox[But the full $H$ is usually too large — we use Hessian–vector products $H v$ instead.]
 
 == Why DL stays first-order
 
@@ -370,12 +473,15 @@ Training maps $theta in RR^P -> cal(L) in RR$ (many inputs, one output).
 == Non-scalar output needs a seed vector #D
 
 If $y = f(x) in RR^m$, `backward()` must know *which* scalar to differentiate — you supply a vector $v$ and it returns
+#pause
 $ v^top J. $
 #pause
 #notebox[This is why PyTorch errors on `.backward()` of a non-scalar tensor without a `gradient=` argument.]
 
 == PyTorch: Jacobian and VJP #I
 
+Compute the very Jacobian we found by hand — then a VJP:
+#pause
 #codebox[```python
 import torch
 x = torch.tensor([1.0, 2.0], requires_grad=True)
@@ -386,6 +492,8 @@ J = torch.autograd.functional.jacobian(f, x)   # full 2x2 Jacobian
 v = torch.tensor([1.0, 3.0])
 f(x).backward(v)                                # x.grad == v^T J  (a VJP)
 ```]
+#pause
+#align(center, text(size: 15pt, fill: MUTED)[`jacobian` forms the whole matrix; `backward(v)` returns only $v^top J$.])
 
 == PyTorch: the Hessian #I
 
@@ -403,6 +511,8 @@ H = torch.autograd.functional.hessian(g, x)     # -> [[2, 1], [1, 6]]
 
 == One table to remember #V
 
+Six objects, six shapes, six jobs:
+#pause
 #align(center, table(
   columns: 3, stroke: 0.5pt + MUTED, inset: (x: 11pt, y: 7pt), align: (left, center, left),
   table.header([*Object*], [*Shape*], [*Main DL use*]),
