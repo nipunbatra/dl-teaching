@@ -5,6 +5,7 @@
 // Theme, palette, helpers and diagram builders live in common/metropolis.typ.
 
 #import "../common/metropolis.typ": *
+#import "../common/mldiag.typ": *
 #show: metropolis-deck.with(
   title: [Convolutional Sequence Models],
   subtitle: [Causal convolutions, dilation, TCNs and WaveNet],
@@ -280,9 +281,17 @@ $ y_1 = 2(1) - 2 = 0, quad y_2 = 2(2) - 3 = 1, quad y_3 = 2(3) - 4 = 2, quad y_4
 
 == The same conv, visually #V
 
-#fig("/lecture13/figures/temporal_conv.svg", w: 62%)
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[a length-2 kernel over 5 inputs → 4 outputs; the *same* $[2, -1]$ is reused at every step])
+#v(2mm)
+// native tensor-grid conv-op: the SAME x=[1,2,3,4,5], w=[2,-1] the prose uses;
+// output y=[0,1,2,3] is computed in Typst, animated one step per subslide.
+#only("1")[#align(center, conv-op(input: ((1, 2, 3, 4, 5),), kernel: ((2, -1),), step: 0, show-expr: true, cell: 9mm))]
+#only("2")[#align(center, conv-op(input: ((1, 2, 3, 4, 5),), kernel: ((2, -1),), step: 1, show-expr: true, cell: 9mm))]
+#only("3")[#align(center, conv-op(input: ((1, 2, 3, 4, 5),), kernel: ((2, -1),), step: 2, show-expr: true, cell: 9mm))]
+#only("4-")[#align(center, conv-op(input: ((1, 2, 3, 4, 5),), kernel: ((2, -1),), step: 3, show-expr: true, cell: 9mm))]
+#only("4-")[
+  #v(3mm)
+  #align(center, text(size: 16pt, fill: MUTED)[a length-2 kernel over 5 inputs → 4 outputs; the *same* $[2, -1]$ is reused at every step])
+]
 
 == What a temporal kernel detects
 

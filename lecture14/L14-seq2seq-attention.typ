@@ -5,6 +5,7 @@
 // Theme, palette, helpers and diagram builders live in common/metropolis.typ.
 
 #import "../common/metropolis.typ": *
+#import "../common/mldiag.typ": *
 #show: metropolis-deck.with(
   title: [Sequence Models II: Encoder–Decoder, Teacher Forcing and Attention],
   subtitle: [Mapping one sequence to another — and letting the decoder look back],
@@ -527,7 +528,18 @@ Softmax with temperature $tau$: $alpha = "softmax"(e \/ tau)$ — small $tau$ sh
 
 Stack the weights over all steps: $A in RR^(U times T)$, with $A_(u t) = alpha_(u t)$. Each row is one output step's distribution over the source:
 #pause
-#fig("/lecture14/figures/attention_heatmap.svg", w: 47%)
+// native tensor-grid attn-matrix: rows = target (French) steps, cols = source
+// (English); each row is a distribution over the source (sums to 1).
+#align(center, attn-matrix(
+  (q: ("j'aime", "les", "chats", "<EOS>"), k: ("I", "like", "cats", "<EOS>")),
+  values: ((0.34, 0.56, 0.06, 0.04),
+           (0.06, 0.12, 0.72, 0.10),
+           (0.05, 0.06, 0.85, 0.04),
+           (0.04, 0.05, 0.11, 0.80)),
+  colorbar: true, cell: 12mm,
+  q-label: [target #h(0.25em) $y_(1:U)$ (Fr)],
+  k-label: [source #h(0.25em) $x_(1:T)$ (En)],
+))
 
 == It learns an alignment #D
 
