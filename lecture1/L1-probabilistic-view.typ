@@ -140,6 +140,26 @@ $ log p(cal(D) | theta) = sum_(i=1)^n log p_theta (y_i | x_i) $
 #notebox[Why a loss is an *average over examples*, and why minibatches work: $1/(|B|) sum_(i in B) ell_i$.]
 
 // ══════════════════════════════ PART III ══════════════════════════════
+= Bayes' rule → likelihood → loss
+
+== Bayes' rule and its four pieces
+#stag(D)
+
+Turn the product rule $p(cal(D), theta) = p(cal(D) | theta) thin p(theta) = p(theta | cal(D)) thin p(cal(D))$ around:
+#pause
+$ p(theta | cal(D)) = (p(cal(D) | theta) thin p(theta)) / p(cal(D)) $
+#pause
+#align(center, table(
+  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 5pt), align: (center, left),
+  [$p(theta | cal(D))$], [*posterior* — belief about $theta$ _after_ seeing data],
+  [$p(cal(D) | theta)$], [*likelihood* — how well $theta$ explains the data],
+  [$p(theta)$], [*prior* — belief about $theta$ _before_ data],
+  [$p(cal(D))$], [*evidence* — the normaliser $integral p(cal(D) | theta) p(theta) dif theta$],
+))
+#pause
+#result[*MLE* (now): keep only the *likelihood*. *MAP* (later): likelihood $times$ *prior* → regularisation.]
+
+// ══════════════════════════════ PART III·B ══════════════════════════════
 = Maximum likelihood → training losses
 
 == Likelihood: one expression, two viewpoints
@@ -153,6 +173,31 @@ The one model $p_theta (y | x)$, read two ways:
 )
 #pause
 #alertbox[The likelihood is _not_ "the probability that $theta$ is correct."]
+
+== Coin flips: a likelihood you can compute
+#stag(Q)
+
+Ten flips come up $H, H, T, T, T, H, H, T, T, T$ — so $n_H = 4$, $n_T = 6$. What is $p(H)$?
+#pause
+Model each flip as Bernoulli$(theta)$: $p(H) = theta$, $p(T) = 1 - theta$.
+#pause
+The flips are i.i.d., so the *likelihood* of this exact sequence is
+$ L(theta) = product_i p(x_i | theta) = theta^(n_H) (1 - theta)^(n_T) = theta^4 (1 - theta)^6 $
+#pause
+#notebox[Different $theta$ make the *observed* sequence more or less probable. Which $theta$ makes it most probable?]
+
+== Coin flips: maximise the (log-)likelihood
+#stag(D)
+
+Logs turn the product into a sum:
+$ cal(L)(theta) = log L(theta) = n_H log theta + n_T log(1 - theta) $
+#pause
+Set the derivative to zero:
+$ (dif cal(L))/(dif theta) = n_H / theta - n_T / (1 - theta) = 0 $
+#pause
+$ ==> theta_"MLE" = n_H / (n_H + n_T) = 4/10 = 0.4 $
+#pause
+#result[The intuitive "fraction of heads" *is* the maximum-likelihood estimate.]
 
 == Maximum likelihood estimation
 
@@ -291,6 +336,32 @@ $ p = sigma(z) = 1/(1 + e^(-z)) $
    #v(4pt) #text(size: 16pt, fill: MUTED)[In practice sigmoid + BCE are fused for numerical stability.]],
   fig("/lecture1/figures/sigmoid.svg", w: 80%),
 )
+
+== Logistic regression = Bernoulli MLE
+#stag(D)
+
+Predict each label with the sigmoid of a linear score: $p_i = sigma(w^T x_i)$, and $Y_i | x_i tilde "Bernoulli"(p_i)$.
+#pause
+Likelihood of the whole labelled dataset (i.i.d.):
+$ L(w) = product_(i=1)^n p_i^(y_i) (1 - p_i)^(1 - y_i) $
+#pause
+Its negative log — the objective we minimise:
+$ J(w) = -sum_(i=1)^n [y_i log sigma(w^T x_i) + (1 - y_i) log(1 - sigma(w^T x_i))] $
+#pause
+#notebox[Exactly the per-example *BCE from two slides ago, summed over the data*. Now differentiate it in $w$.]
+
+== The logistic-regression gradient
+#stag(D)
+
+One lemma — the sigmoid's own derivative:
+$ sigma'(z) = sigma(z) (1 - sigma(z)) $
+#pause
+Differentiate $J$ through $log sigma$ and $log(1 - sigma)$; the $sigma(1 - sigma)$ cancels the chain factors and everything collapses to
+$ (partial J)/(partial w_j) = sum_(i=1)^n (sigma(w^T x_i) - y_i) thin x_i^j $
+#pause
+$ ==> nabla_w J = sum_(i=1)^n (sigma(w^T x_i) - y_i) thin x_i = X^T (sigma(X w) - y) $
+#pause
+#result[The gradient is (*prediction* $-$ *target*) $times$ *input* — the same $p - y$ signal we will meet again for softmax.]
 
 == Multi-class: categorical model
 
