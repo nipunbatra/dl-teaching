@@ -4,6 +4,8 @@ title: "Notebooks"
 
 Hands-on **PyTorch** notebooks — each grows out of a lecture. Every one is sized in *hours, not days*; most run on a free Colab GPU and several need no GPU at all. Download to run locally, or open in Colab. These are also the seeds of the [homeworks](labs/index.qmd) — each assignment takes one you've already run and pushes it further.
 
+The **spine** and **landscape** notebooks below are the large, project-style builds. Separately, every one of the first thirteen lectures ships one or two **minimal per-lecture notebooks** — tiny (≈5–12 cells, numpy/torch only), each isolating a single idea and reproducing the exact numbers worked on the slides. Jump to those in the [per-lecture minimal notebooks](#per-lecture-minimal-notebooks) table.
+
 ## Primer · Probability & MLE
 
 | Notebook | Lecture | What you do |
@@ -32,3 +34,32 @@ Hands-on **PyTorch** notebooks — each grows out of a lecture. Every one is siz
 | [contrastive-toy](notebooks/17-contrastive-toy.ipynb) | L17 | Contrastive learning on a toy dataset |
 | [vae-mnist](notebooks/19-vae-mnist.ipynb) | L19 | A VAE on MNIST — ablate the KL term and watch samples blur |
 | [ddpm-2d](notebooks/21-ddpm-2d.ipynb) | L21 · L22 | A 2-D DDPM: watch it denoise step by step |
+
+## Per-lecture minimal notebooks
+
+One or two per lecture for the first thirteen. Each is deliberately tiny — a single idea, seeds fixed, numpy/torch/matplotlib only — and reproduces the numbers worked on that lecture's slides. Ideal for a five-minute in-class run or a quick self-check.
+
+| # | Lecture | Notebook | The one idea |
+|:---:|---|---|---|
+| 1 | Why These Losses? | [gaussian-nll-is-mse](notebooks/L01/01_gaussian_nll_is_mse.ipynb) | Gaussian negative log-likelihood **is** MSE (up to a constant) |
+| 1 | | [softmax-cross-entropy](notebooks/L01/02_softmax_cross_entropy.ipynb) | softmax → cross-entropy; the gradient is exactly `p − y` (vs finite differences) |
+| 2 | Linear → MLP | [linear-regression-gd](notebooks/L02/01_linear_regression_gd.ipynb) | fit a line by gradient descent from scratch |
+| 2 | | [mlp-xor](notebooks/L02/02_mlp_xor.ipynb) | a 2-layer MLP cracks XOR that no linear model can |
+| 3 | Calculus Toolkit | [gradient-descent-on-quadratics](notebooks/L03A/03_gradient_descent_on_quadratics.ipynb) | curvature & step size on a quadratic bowl |
+| 3 | | [jacobian-vjp-hessian](notebooks/L03A/05_jacobian_vjp_hessian_pytorch.ipynb) | Jacobian, VJP and Hessian via PyTorch autograd |
+| 4 | Backpropagation | [manual-scalar-backprop](notebooks/L03/01_manual_scalar_backprop.ipynb) | backprop through `(wx+b−y)²` by hand: `∇w=−18, ∇b=−6` |
+| 4 | | [autograd-scalar](notebooks/L03/02_autograd_scalar.ipynb) | the same with autograd, and how `.grad` accumulates |
+| 5 | Optimization | [gd-quadratic](notebooks/L05/01_gd_quadratic.ipynb) | GD trace on `(θ−3)²`: `0.6, 1.08, 1.464, …` |
+| 5 | | [optimizer-comparison](notebooks/L05/06_optimizer_comparison_pytorch.ipynb) | SGD vs momentum vs Adam, side by side |
+| 6 | Trainability | [variance-propagation](notebooks/L06/02_variance_propagation.ipynb) | how activation variance grows/shrinks with depth |
+| 6 | | [xavier-vs-he](notebooks/L06/03_xavier_vs_he.ipynb) | Xavier vs He initialization on a deep stack |
+| 7 | Regularization | [overfitting-and-early-stopping](notebooks/L07/01_overfitting_and_early_stopping.ipynb) | the U-shaped validation curve and where to stop |
+| 7 | | [dropout-from-scratch](notebooks/L07/02_dropout_from_scratch.ipynb) | inverted dropout, and why `E[h̃] = h` |
+| 8 | CNNs | [convolution-shapes-params](notebooks/L08/01_convolution_shapes_params_from_scratch.ipynb) | conv2d from scratch: output shapes & param counts (vs torch) |
+| 9 | Modern CNNs | [depthwise-separable-and-transfer](notebooks/L08B/01_depthwise_separable_and_transfer_head.ipynb) | depthwise-separable ≈ 8× cheaper; a frozen-backbone head |
+| 10 | Detection | [iou-and-bbox-losses](notebooks/L09/01_iou_and_bbox_losses.ipynb) | IoU and the L1 / smooth-L1 box losses |
+| 10 | | [nms-from-scratch](notebooks/L09/02_nms_from_scratch.ipynb) | non-maximum suppression on overlapping boxes |
+| 11 | Segmentation | [dice-vs-ce](notebooks/L10/01_dice_vs_ce_toy_masks.ipynb) | why Dice catches what pixel cross-entropy misses on imbalanced masks |
+| 12 | Next-Token | [char-mlp-language-model](notebooks/L11/01_char_mlp_language_model.ipynb) | a makemore-style char MLP that invents names |
+| 13 | RNNs | [scalar-rnn-forward-bptt](notebooks/L12/01_scalar_rnn_forward_bptt.ipynb) | RNN forward + BPTT checked against finite differences; gradient clipping |
+| 13 | | [char-rnn-language-model](notebooks/L12/02_char_rnn_language_model.ipynb) | a from-scratch char RNN that generates text |
