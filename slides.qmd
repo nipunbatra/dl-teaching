@@ -41,6 +41,11 @@ The course decks, rebuilt in **Typst** with a clean Beamer-*metropolis* look —
   <div class="lec"><span class="lec-num">16</span><span><span class="lec-title">Transformers I — Self-Attention</span><span class="lec-sub">scaled dot-product, causal masking, multi-head, positional encoding, the block</span></span><span class="lec-links"><a href="slides-pdf/L15.pdf">PDF</a></span></div>
   <div class="lec"><span class="lec-num">17</span><span><span class="lec-title">Transformers II — BERT, GPT &amp; T5</span><span class="lec-sub">encoder/decoder/enc–decoder families, pretraining objectives, finetuning, decoding</span></span><span class="lec-links"><a href="slides-pdf/L16.pdf">PDF</a></span></div>
 </div>
+
+<div class="mod-head"><span class="mod-name">Module 6 · Vision-Language &amp; Multimodal</span><span class="mod-ng">patches → CLIP → VLMs</span></div>
+<div class="lec-list">
+  <div class="lec"><span class="lec-num">18</span><span><span class="lec-title">Vision Transformers &amp; Multimodal Models</span><span class="lec-sub">image patches as tokens, ViT, Swin, CLIP contrastive alignment, BLIP-2 / LLaVA</span></span><span class="lec-links"><a href="slides-pdf/L17.pdf">PDF</a></span></div>
+</div>
 ```
 
 *More lectures — sequence models, attention, Transformers, and generative models — are in progress.*
