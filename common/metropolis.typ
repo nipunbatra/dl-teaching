@@ -43,6 +43,8 @@
   }, GREEN, rgb("#EAF6EC"), "Interactive", rgb("#1B7A34"))
 #let result(body) = align(center, block(fill: white, inset: (x: 15pt, y: 11pt), radius: 5pt,
   stroke: 2pt + ACC, text(size: 21pt, weight: 600, fill: INK, body)))
+#let codebox(body, size: 15pt) = block(fill: rgb("#F3F2EE"), inset: 10pt, radius: 4pt,
+  width: 100%, stroke: 0.5pt + rgb("#DAD8D2"), text(size: size, body))
 
 // ── figure + layout helpers (Typst reads PNG twins; resvg mangles some mpl SVGs) ──
 #let fig(path, w: 58%) = align(center, image(path.replace(".svg", ".png"), width: w))
