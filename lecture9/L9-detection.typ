@@ -320,7 +320,13 @@ $ "precision" = "TP"/("TP" + "FP") quad quad "recall" = "TP"/("TP" + "FN") $
 
 Sweep the score threshold; plot precision vs recall; AP is the *area under it*:
 #pause
-#fig("/lecture9/figures/pr_curve.svg", w: 52%)
+#align(center, lines(
+  ((0, 1), (0.1, 1), (0.2, 0.96), (0.3, 0.9), (0.4, 0.86), (0.5, 0.8),
+   (0.6, 0.72), (0.7, 0.62), (0.8, 0.48), (0.9, 0.33), (1.0, 0.18)),
+  fill-under: 0, markers: false, size: (66mm, 44mm),
+  x-label: [recall], y-label: [precision],
+  annotations: ((0.42, 0.42, [*AP*]),),
+))
 #pause
 $ "AP" = integral_0^1 "precision"(r) thin d r quad in [0, 1] $
 

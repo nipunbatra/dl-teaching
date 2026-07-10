@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════
-//  mldiag — deck-themed instances of the typst-ml-diagrams packages.
-//  The packages live in ~/git/typst-ml-diagrams (symlinked into @local);
+//  mldiag — deck-themed instances of the chalkdust packages.
+//  The packages live in ~/git/chalkdust (symlinked into @local);
 //  this file binds them to the metropolis palette ONCE so a slide is a
 //  one-liner:
 //
