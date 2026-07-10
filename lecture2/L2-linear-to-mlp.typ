@@ -431,7 +431,7 @@ Layer $ell$: $W_ell in RR^(d_ell times d_(ell-1))$, $b_ell in RR^(d_ell)$. Total
 $ sum_(ell=1)^L (d_ell thin d_(ell-1) + d_ell) $
 #pause
 #notebox[*Exercise.* Input 784, hidden 128, output 10:
-$ 784 times 128 + 128 + 128 times 10 + 10 = 101{,}770. $]
+$ 784 times 128 + 128 + 128 times 10 + 10 = "101,770". $]
 
 == The standard supervised DL template
 

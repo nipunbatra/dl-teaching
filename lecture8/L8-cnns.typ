@@ -56,7 +56,7 @@ $ X in RR^(H times W times C) $
 - $C$ — channels (e.g. $C = 3$ for RGB);
 - neighbouring pixels are *strongly correlated*; far-apart ones usually are not.
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[a $224 times 224$ RGB image is $224 times 224 times 3 = 150{,}528$ numbers])
+#align(center, text(size: 16pt, fill: MUTED)[a $224 times 224$ RGB image is $224 times 224 times 3 = "150,528"$ numbers])
 
 == Flattening destroys structure #V
 
@@ -71,7 +71,7 @@ $ X in RR^(H times W times C) quad -->^"flatten" quad x in RR^(H W C) $
 
 Connect a flattened $224 times 224 times 3$ image to a modest hidden layer of $1000$ units:
 #pause
-$ underbrace(150{,}528, "inputs") times underbrace(1000, "hidden units") = 1.5 times 10^8 quad "weights" $
+$ underbrace("150,528", "inputs") times underbrace(1000, "hidden units") = 1.5 times 10^8 quad "weights" $
 #pause
 #alertbox[*One* layer — 150 million parameters. Deeper nets become impossible: too many weights to store, and far too many to fit without massive overfitting.]
 #pause
@@ -192,7 +192,7 @@ Each of the $C_"out"$ kernels has $k_h dot k_w dot C_"in"$ weights, plus one bia
 $ #text(fill: INK)[params] = k_h dot k_w dot C_"in" dot C_"out" + C_"out" $
 #pause
 Worked example — a $3 times 3$ conv, $C_"in" = 64$, $C_"out" = 128$:
-$ 3 dot 3 dot 64 dot 128 + 128 = 73{,}728 + 128 = 73{,}856 $
+$ 3 dot 3 dot 64 dot 128 + 128 = "73,728" + 128 = "73,856" $
 #pause
 #notebox[Independent of image size $H times W$ — a $3 times 3$ kernel costs the same on a $32 times 32$ or a $2000 times 2000$ image. Contrast the MLP's $1.5 times 10^8$.]
 
