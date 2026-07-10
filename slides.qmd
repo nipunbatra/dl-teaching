@@ -42,13 +42,26 @@ The course decks, rebuilt in **Typst** with a clean Beamer-*metropolis* look —
   <div class="lec"><span class="lec-num">17</span><span><span class="lec-title">Transformers II — BERT, GPT &amp; T5</span><span class="lec-sub">encoder/decoder/enc–decoder families, pretraining objectives, finetuning, decoding</span></span><span class="lec-links"><a href="slides-pdf/L16.pdf">PDF</a></span></div>
 </div>
 
-<div class="mod-head"><span class="mod-name">Module 6 · Vision-Language &amp; Multimodal</span><span class="mod-ng">patches → CLIP → VLMs</span></div>
+<div class="mod-head"><span class="mod-name">Module 6 · Representation &amp; Multimodal</span><span class="mod-ng">learn features → align images &amp; text</span></div>
 <div class="lec-list">
-  <div class="lec"><span class="lec-num">18</span><span><span class="lec-title">Vision Transformers &amp; Multimodal Models</span><span class="lec-sub">image patches as tokens, ViT, Swin, CLIP contrastive alignment, BLIP-2 / LLaVA</span></span><span class="lec-links"><a href="slides-pdf/L17.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">18</span><span><span class="lec-title">Self-Supervised &amp; Representation Learning</span><span class="lec-sub">contrastive / SimCLR &amp; InfoNCE, masked reconstruction / MAE, teacher–student / BYOL &amp; DINO</span></span><span class="lec-links"><a href="slides-pdf/L18.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">19</span><span><span class="lec-title">Vision Transformers &amp; Multimodal Models</span><span class="lec-sub">image patches as tokens, ViT, Swin, CLIP contrastive alignment, BLIP-2 / LLaVA</span></span><span class="lec-links"><a href="slides-pdf/L17.pdf">PDF</a></span></div>
+</div>
+
+<div class="mod-head"><span class="mod-name">Module 7 · Generative Modeling</span><span class="mod-ng">latents → adversaries → diffusion</span></div>
+<div class="lec-list">
+  <div class="lec"><span class="lec-num">20</span><span><span class="lec-title">Autoencoders &amp; VAEs</span><span class="lec-sub">the latent bottleneck, the ELBO, the reparameterization trick, posterior collapse</span></span><span class="lec-links"><a href="slides-pdf/L19.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">21</span><span><span class="lec-title">Generative Adversarial Networks</span><span class="lec-sub">the minimax game, the optimal discriminator, non-saturating loss, mode collapse, WGAN</span></span><span class="lec-links"><a href="slides-pdf/L20.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">22</span><span><span class="lec-title">Diffusion Models I — Theory</span><span class="lec-sub">forward / reverse, predict-the-noise objective, sampling, the U-Net + time conditioning</span></span><span class="lec-links"><a href="slides-pdf/L21.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">23</span><span><span class="lec-title">Diffusion Models II — Practice</span><span class="lec-sub">latent diffusion, cross-attention conditioning, classifier-free guidance, DDIM, Stable Diffusion</span></span><span class="lec-links"><a href="slides-pdf/L22.pdf">PDF</a></span></div>
+</div>
+
+<div class="mod-head"><span class="mod-name">Module 8 · Systems &amp; Frontier</span><span class="mod-ng">make it fast → where it's going</span></div>
+<div class="lec-list">
+  <div class="lec"><span class="lec-num">24</span><span><span class="lec-title">Efficient Inference</span><span class="lec-sub">memory-bound decode, KV-cache &amp; MQA/GQA, quantization, MoE, FlashAttention, speculative decoding</span></span><span class="lec-links"><a href="slides-pdf/L23.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">25</span><span><span class="lec-title">Frontier Topics &amp; Course Synthesis</span><span class="lec-sub">scaling, agents &amp; reasoning, interpretability — and full circle to Lecture 1</span></span><span class="lec-links"><a href="slides-pdf/L24.pdf">PDF</a></span></div>
 </div>
 ```
-
-*More lectures — sequence models, attention, Transformers, and generative models — are in progress.*
 
 ---
 
