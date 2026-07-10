@@ -16,7 +16,8 @@ The public course site is intentionally small. Use it for the current lecture de
 <a class="entry-card" href="syllabus.html"><span class="entry-title">Course guide →</span><span class="entry-desc">The 25-meeting arc, how the parts fit together, and how to use the materials.</span></a>
 <a class="entry-card" href="slides.html"><span class="entry-title">Lecture decks →</span><span class="entry-desc">The canonical Typst PDFs, grouped by module.</span></a>
 <a class="entry-card" href="notebooks.html"><span class="entry-title">Notebooks →</span><span class="entry-desc">Small, runnable companions for the worked mechanisms.</span></a>
-<a class="entry-card" href="labs/index.html"><span class="entry-title">Assignments &amp; project →</span><span class="entry-desc">Four programming assignments and a team project.</span></a>
+<a class="entry-card" href="labs/index.html"><span class="entry-title">Assignments →</span><span class="entry-desc">Programming work, each grown from a lecture notebook.</span></a>
+<a class="entry-card" href="https://nipunbatra.github.io/dl-2026/"><span class="entry-title">Logistics &amp; grading ↗</span><span class="entry-desc">Schedule, grading, deadlines, and FAQ for the Aug 2026 offering.</span></a>
 </div>
 ```
 

@@ -34,6 +34,7 @@ The complete titles and canonical PDFs are on [Lecture decks](slides.qmd).
 - [Notebooks](notebooks.qmd) — runnable companions and downloadable `.ipynb` files.
 - [Assignments & project](labs/index.qmd) — programming work, policy, and submission expectations.
 - [Resources](resources.qmd) — a deliberately short list of books, videos, papers, and interactives.
+- **[Logistics & grading ↗](https://nipunbatra.github.io/dl-2026/)** — schedule, grading, deadlines, and FAQ for the August 2026 offering.
 
 ## Course norms
 
