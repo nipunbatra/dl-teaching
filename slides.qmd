@@ -27,6 +27,11 @@ The course decks, rebuilt in **Typst** with a clean Beamer-*metropolis* look —
   <div class="lec"><span class="lec-num">10</span><span><span class="lec-title">Localization &amp; Object Detection</span><span class="lec-sub">boxes, IoU, anchors, focal loss, R-CNN family, YOLO, NMS</span></span><span class="lec-links"><a href="slides-pdf/L9.pdf">PDF</a></span></div>
   <div class="lec"><span class="lec-num">11</span><span><span class="lec-title">Semantic &amp; Instance Segmentation</span><span class="lec-sub">pixel cross-entropy, FCN, U-Net, Dice loss, Mask R-CNN</span></span><span class="lec-links"><a href="slides-pdf/L10.pdf">PDF</a></span></div>
 </div>
+
+<div class="mod-head"><span class="mod-name">Module 4 · Sequences &amp; Language</span><span class="mod-ng">tokens → embeddings → next-token</span></div>
+<div class="lec-list">
+  <div class="lec"><span class="lec-num">12</span><span><span class="lec-title">Next-Token Prediction</span><span class="lec-sub">sequence probability, tokenization, embeddings, the MLP language model (makemore), sampling</span></span><span class="lec-links"><a href="slides-pdf/L11.pdf">PDF</a></span></div>
+</div>
 ```
 
 *More lectures — sequence models, attention, Transformers, and generative models — are in progress.*
