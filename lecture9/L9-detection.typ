@@ -488,12 +488,14 @@ where $p_t$ is the predicted probability of the *true* class.
 == Focal loss down-weights easy examples #V
 
 #align(center, lines(
-  (
-    range(0, 100).map(i => { let p = 0.01 + i * 0.01; (p, -calc.ln(p)) }),
-    range(0, 100).map(i => { let p = 0.01 + i * 0.01; (p, -(1 - p) * calc.ln(p)) }),
-    range(0, 100).map(i => { let p = 0.01 + i * 0.01; (p, -calc.pow(1 - p, 2) * calc.ln(p)) }),
-    range(0, 100).map(i => { let p = 0.01 + i * 0.01; (p, -calc.pow(1 - p, 5) * calc.ln(p)) }),
+  fn: (
+    p => -calc.ln(p),
+    p => -(1 - p) * calc.ln(p),
+    p => -calc.pow(1 - p, 2) * calc.ln(p),
+    p => -calc.pow(1 - p, 5) * calc.ln(p),
   ),
+  domain: (0.01, 1),
+  samples: 100,
   colors: (INK, BLUE, ACC, RED),
   markers: false,
   x-label: [$p_t$ (prob. of true class)], y-label: [loss $"FL"(p_t)$],

@@ -729,10 +729,10 @@ Same 50-layer net and data, six recipes stacked from naive to modern:
 == The ablation, as curves #V
 
 // native ml-plot: train loss = floor + (start−floor)·e^(−t/τ) (mirrors l6_figs.py f_ablation_curves)
-#let ab-t = range(0, 300, step: 5)
-#let ab-curve(start, floor, tau) = ab-t.map(t => (t, floor + (start - floor) * calc.exp(-t / tau)))
+// each ablation is a closed-form settling curve; ab-curve returns the fn of the step t
+#let ab-curve(start, floor, tau) = t => floor + (start - floor) * calc.exp(-t / tau)
 #align(center, lines(
-  (
+  fn: (
     ab-curve(2.35, 2.15, 120),
     ab-curve(2.30, 1.15, 90),
     ab-curve(2.30, 0.62, 55),
@@ -740,6 +740,7 @@ Same 50-layer net and data, six recipes stacked from naive to modern:
     ab-curve(2.30, 0.17, 24),
     ab-curve(2.30, 0.08, 16),
   ),
+  domain: (0, 295), samples: 59,
   colors: (RED, ACC, BLUE, TEAL, GREEN, INK),
   markers: false,
   x-label: [training step], y-label: [training loss],

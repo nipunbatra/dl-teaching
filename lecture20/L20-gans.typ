@@ -337,11 +337,13 @@ The two players can *chase* each other around rather than converge:
 #let _gloss(t) = 0.95 + 0.22 * calc.sin(6.2832 * t / 48 + 1.3) + 0.07 * calc.sin(6.2832 * t / 13 + 0.4) + 0.03 * calc.sin(6.2832 * t / 5)
 #let _dloss(t) = 0.63 - 0.17 * calc.sin(6.2832 * t / 48 + 1.3) + 0.06 * calc.sin(6.2832 * t / 9 + 2.0) + 0.03 * calc.sin(6.2832 * t / 6 + 1.0)
 #align(center, lines(
-  (
-    range(0, 101).map(t => (t, _dloss(t))),
-    range(0, 101).map(t => (t, _gloss(t))),
-    ((0, 0.693), (100, 0.693)),
+  fn: (
+    t => _dloss(t),
+    t => _gloss(t),
+    t => 0.693,
   ),
+  domain: (0, 100),
+  samples: 100,
   colors: (ACC, TEAL, MUTED),
   labels: ([$D$ loss], [$G$ loss], [$log 2$]),
   markers: false,

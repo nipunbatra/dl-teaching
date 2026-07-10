@@ -387,7 +387,8 @@ Training touches *every* difficulty, from trivial to nearly hopeless:
 #let _abar(t) = if t == 0 { 1.0 } else { range(1, t + 1).map(s => 1.0 - _beta(s)).fold(1.0, (a, b) => a * b) }
 #two(r: (1fr, 1fr),
   align(center, lines(
-    ((1, _beta(1)), (_T, _beta(_T))),
+    fn: _beta,
+    domain: (1, _T),
     colors: (RED,),
     markers: false,
     x-label: [timestep $t$], y-label: [$beta_t$],

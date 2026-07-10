@@ -558,18 +558,19 @@ $ theta_(t+1) = theta_t - eta thin hat(m)_t/(sqrt(hat(v)_t) + epsilon) - eta lam
 == Common schedules #V
 
 // native ml-plot: five schedules on t∈[0,100), e0=1 (mirrors l5_figs.py f_lr_schedules)
+// each schedule is a closed-form fn of the step, sampled at every integer step 0..lr-T-1
 #let lr-T = 100
-#let lr-t = range(0, lr-T)
-#let sched-step = lr-t.map(t => (t, calc.pow(0.5, calc.floor(t / 30))))
-#let sched-expo = lr-t.map(t => (t, calc.exp(-0.03 * t)))
-#let sched-cos = lr-t.map(t => (t, 0.5 * (1 + calc.cos(calc.pi * t / lr-T))))
-#let sched-wc = lr-t.map(t => (t, if t < 10 { t / 10 } else { 0.5 * (1 + calc.cos(calc.pi * (t - 10) / 90)) }))
-#let sched-oc = lr-t.map(t => (t, calc.max(0, calc.min(1.05,
+#let sched-step = t => calc.pow(0.5, calc.floor(t / 30))
+#let sched-expo = t => calc.exp(-0.03 * t)
+#let sched-cos = t => 0.5 * (1 + calc.cos(calc.pi * t / lr-T))
+#let sched-wc = t => if t < 10 { t / 10 } else { 0.5 * (1 + calc.cos(calc.pi * (t - 10) / 90)) }
+#let sched-oc = t => calc.max(0, calc.min(1.05,
   if t < 25 { 0.25 + 0.75 * t / 25 }
   else if t < 90 { 1 - 0.85 * (t - 25) / 65 }
-  else { 0.15 * (1 - (t - 90) / 10) }))))
+  else { 0.15 * (1 - (t - 90) / 10) }))
 #align(center, lines(
-  (sched-step, sched-expo, sched-cos, sched-wc, sched-oc),
+  fn: (sched-step, sched-expo, sched-cos, sched-wc, sched-oc),
+  domain: (0, lr-T - 1), samples: lr-T - 1,
   colors: (TEAL, BLUE, GREEN, ACC, RED),
   markers: false,
   x-label: [training step], y-label: [learning rate $eta_t$],

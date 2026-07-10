@@ -294,13 +294,15 @@ Some capabilities *appear* to switch on sharply with scale — but the *metric* 
 #let _test(x) = 0.38 + 0.12 * calc.exp(-x / 0.4) + 0.92 * calc.exp(-calc.pow((x - 1.0) / 0.06, 2))
 #let _train(x) = if x < 1.0 { 0.57 * (1.0 - x) } else { 0.0 }
 #align(center, lines(
-  (
-    range(0, 119).map(i => { let x = 0.05 + i * 0.025; (x, _test(x)) }),
-    range(0, 119).map(i => { let x = 0.05 + i * 0.025; (x, _train(x)) }),
-    ((1.0, 0), (1.0, 1.31)),
+  fn: (
+    x => _test(x),
+    x => _train(x),
   ),
-  colors: (ACC, TEAL, MUTED),
-  labels: ([test error], [train error], none),
+  domain: (0.05, 3.0),
+  samples: 118,
+  colors: (ACC, TEAL),
+  labels: ([test error], [train error]),
+  vlines: ((1.0, none, MUTED),),
   markers: false,
   x-label: [capacity (params / data)], y-label: [error],
   size: (78mm, 48mm),

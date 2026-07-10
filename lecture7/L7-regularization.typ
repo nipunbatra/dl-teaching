@@ -16,20 +16,21 @@
 // native ml-plot: double descent — test error (bias + variance spike at the
 // interpolation threshold c=1) and train error vs capacity (mirrors l7_figs.py
 // f_double_descent). Reused on two slides, so bound once here.
-#let dd-c = range(0, 100).map(i => 0.05 + i * (2.95 / 99))
-#let dd-test = dd-c.map(c => {
+#let dd-test = c => {
   let bias = 0.35 * calc.exp(-2.5 * c)
   let vf = if c < 1.0 { 1.0 } else { 0.55 }
   let vari = 0.28 / (calc.abs(c - 1.0) + 0.14) * vf
-  (c, calc.min(1.4, bias + vari * 0.35 + 0.12))
-})
-#let dd-train = dd-c.map(c => (c, calc.min(1.0, 0.9 * calc.exp(-2.2 * c))))
+  calc.min(1.4, bias + vari * 0.35 + 0.12)
+}
+#let dd-train = c => calc.min(1.0, 0.9 * calc.exp(-2.2 * c))
+#let dd-c31 = 0.05 + 31 * (2.95 / 99)   // capacity at old sample index 31 (interp.-threshold read-off)
 #let double-descent-plot(size: (66mm, 42mm)) = lines(
-  (dd-test, dd-train),
+  fn: (dd-test, dd-train),
+  domain: (0.05, 3.0), samples: 99,
   colors: (ACC, TEAL),
   labels: ([test], [train]),
   markers: false,
-  points: ((dd-c.at(31), dd-test.at(31).at(1), [interp. threshold]),),
+  points: ((dd-c31, dd-test(dd-c31), [interp. threshold]),),
   x-label: [model size / capacity], y-label: [error],
   size: size,
 )
@@ -324,9 +325,11 @@ $ theta arrow.r.bar "AdamStep"(theta), quad quad theta arrow.r.bar (1 - eta lamb
 Weight norm $norm(theta)$ over training for several $lambda$:
 #pause
 // native ml-plot: ‖θ‖ = 3(1−e^(−0.10 s))/(1+8λ) + 0.15 (mirrors l7_figs.py f_weight_decay)
-#let wd-series(lam) = range(0, 60).map(s => (s, 3.0 * (1 - calc.exp(-0.10 * s)) * (1.0 / (1.0 + 8.0 * lam)) + 0.15))
+// closed-form settling of the weight norm; wd-series returns the fn of the step s
+#let wd-series(lam) = s => 3.0 * (1 - calc.exp(-0.10 * s)) * (1.0 / (1.0 + 8.0 * lam)) + 0.15
 #align(center, lines(
-  (wd-series(0.0), wd-series(0.01), wd-series(0.05), wd-series(0.15)),
+  fn: (wd-series(0.0), wd-series(0.01), wd-series(0.05), wd-series(0.15)),
+  domain: (0, 59), samples: 59,
   colors: (INK, BLUE, TEAL, ACC),
   markers: false,
   x-label: [training step], y-label: [weight norm $norm(theta)$],

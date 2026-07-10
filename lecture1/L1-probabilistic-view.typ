@@ -271,15 +271,14 @@ $ ell_i = (y_i - mu_i)^2/(2 sigma^2) + 1/2 log sigma^2 + C $
     [#text(fill: GREEN, weight: 600)[Student-$t$]], [robust])
    #v(3pt) #text(fill: MUTED)[$r = y - hat(y)$ · colours match the curves]],
   align(center, lines(
-    (
-      range(0, 61).map(i => { let r = -3 + i * 0.1; (r, r * r) }),
-      range(0, 61).map(i => { let r = -3 + i * 0.1; (r, calc.abs(r) * 1.6) }),
-      range(0, 61).map(i => { let r = -3 + i * 0.1; (r, 2.2 * calc.ln(1 + r * r)) }),
-      ((-2.2, 0), (-2.2, 9)),
-      ((2.2, 0), (2.2, 9)),
-    ),
-    colors: (ACC, TEAL, GREEN, MUTED, MUTED),
+    // Gaussian r², Laplace |r|, Student-t ln(1+r²) — each the closed-form NLL, sampled
+    fn: (r => r * r, r => 1.6 * calc.abs(r), r => 2.2 * calc.ln(1 + r * r)),
+    domain: (-3, 3), samples: 60,
+    colors: (ACC, TEAL, GREEN),
     markers: false,
+    // Uniform "hard interval" walls at r = ±2.2 (the fn/series data channels are
+    // mutually exclusive, so the walls ride along as vertical reference lines)
+    vlines: ((-2.2, none, MUTED), (2.2, none, MUTED)),
     x-label: [residual $r$], y-label: [$-log p(r)$],
     size: (64mm, 44mm),
   )),
@@ -396,7 +395,7 @@ Read off the loss at three confidences for the *true* class:
 #two(r: (1fr, 1.3fr),
   [$p_y = 0.9 => ell approx 0.105$ \ $p_y = 0.1 => ell approx 2.303$ \ $p_y = 0.001 => ell approx 6.908$],
   lines(
-    range(0, 101).map(i => { let p = 0.001 + i * 0.00999; (p, -calc.ln(p)) }),
+    fn: p => -calc.ln(p), domain: (0.001, 1.0), samples: 100,
     markers: false, x-label: [$p_y$], y-label: [$-log p_y$],
     points: ((0.9, -calc.ln(0.9), [0.11]), (0.1, -calc.ln(0.1), [2.30]), (0.001, -calc.ln(0.001), [6.91])),
     size: (56mm, 40mm)),
