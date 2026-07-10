@@ -12,6 +12,7 @@
 #import "@local/ml-theme:0.1.0": theme
 #import "@local/tensor-grid:0.1.0" as tg
 #import "@local/ml-plot:0.1.0" as mp
+#import "@local/ml-data:0.1.0" as md    // pandas-lite: md.frame(csv("x.csv")), md.xy(f, "a", "b")
 #import "metropolis.typ": INK, ACC, TEAL, GREEN, BLUE, MUTED, RED
 
 // the deck theme: metropolis palette, teal→paper→orange diverging ramp
