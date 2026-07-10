@@ -1,0 +1,73 @@
+---
+title: "Slides — Archive (previous Marp course)"
+---
+
+::: {.callout-note}
+This is the **previous** 26-lecture Marp version of the course, kept for reference. The current, actively maintained decks (Typst / Beamer-metropolis) are on the **[Slides](slides.qmd)** page.
+:::
+
+The full 26-lecture course, in **HTML** (present in the browser) and **PDF** (download). Each deck is a self-contained ~80-minute lecture: an output-first opener, one worked idea per slide, 1–3 practice problems with solutions, and linked interactives, notebooks, and references.
+
+**Lectures 1–15** map onto Andrew Ng's [Deep Learning Specialization](https://www.coursera.org/specializations/deep-learning) — watch his videos alongside. **Lectures 16–26** carry his method into modern topics he never taught.
+
+```{=html}
+<div class="mod-head"><span class="mod-name">Module 1 · Foundations</span><span class="mod-ng">Ng · Course 1</span></div>
+<div class="lec-list">
+  <div class="lec"><span class="lec-num">1</span><span><span class="lec-title">Probability &amp; the Language of Losses</span><span class="lec-sub">distributions → likelihood → MLE → MAP → entropy / KL</span></span><span class="lec-links"><a href="html/L01-probability-primer.html">HTML</a><span class="sep">·</span><a href="pdf/L01-probability-primer.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">2</span><span><span class="lec-title">From Regression to Neural Networks</span><span class="lec-sub">linear / logistic → the neuron → why a nonlinearity</span></span><span class="lec-links"><a href="html/L02-regression-to-nn.html">HTML</a><span class="sep">·</span><a href="pdf/L02-regression-to-nn.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">3</span><span><span class="lec-title">Universal Approximation &amp; Going Deep</span><span class="lec-sub">expressivity, depth vs width, why deep</span></span><span class="lec-links"><a href="html/L03-uat-depth.html">HTML</a><span class="sep">·</span><a href="pdf/L03-uat-depth.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">4</span><span><span class="lec-title">Backpropagation &amp; Autograd</span><span class="lec-sub">the chain rule as a graph — build micrograd from scratch</span></span><span class="lec-links"><a href="html/L04-backprop-autograd.html">HTML</a><span class="sep">·</span><a href="pdf/L04-backprop-autograd.pdf">PDF</a></span></div>
+</div>
+
+<div class="mod-head"><span class="mod-name">Module 2 · Optimization &amp; Training</span><span class="mod-ng">Ng · Courses 2 &amp; 3</span></div>
+<div class="lec-list">
+  <div class="lec"><span class="lec-num">5</span><span><span class="lec-title">Optimization I — Gradient Descent to SGD</span><span class="lec-sub">the landscape, mini-batches, the unbiased-estimator proof</span></span><span class="lec-links"><a href="html/L05-optimization-gd-sgd.html">HTML</a><span class="sep">·</span><a href="pdf/L05-optimization-gd-sgd.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">6</span><span><span class="lec-title">Optimization II — Momentum to Adam</span><span class="lec-sub">momentum, AdaGrad → RMSProp → Adam, warmup &amp; schedules</span></span><span class="lec-links"><a href="html/L06-optimization-momentum-adam.html">HTML</a><span class="sep">·</span><a href="pdf/L06-optimization-momentum-adam.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">7</span><span><span class="lec-title">Regularization &amp; Normalization</span><span class="lec-sub">L2 / L1 as priors, dropout, batch / layer / RMS norm</span></span><span class="lec-links"><a href="html/L07-regularization-normalization.html">HTML</a><span class="sep">·</span><a href="pdf/L07-regularization-normalization.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">8</span><span><span class="lec-title">Training Deep Nets in Practice</span><span class="lec-sub">bias / variance, the debug ladder, error analysis</span></span><span class="lec-links"><a href="html/L08-training-in-practice.html">HTML</a><span class="sep">·</span><a href="pdf/L08-training-in-practice.pdf">PDF</a></span></div>
+</div>
+
+<div class="mod-head"><span class="mod-name">Module 3 · Computer Vision</span><span class="mod-ng">Ng · Course 4</span></div>
+<div class="lec-list">
+  <div class="lec"><span class="lec-num">9</span><span><span class="lec-title">Convolutional Neural Networks</span><span class="lec-sub">convolution, pooling, receptive fields, inductive biases</span></span><span class="lec-links"><a href="html/L09-cnns.html">HTML</a><span class="sep">·</span><a href="pdf/L09-cnns.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">10</span><span><span class="lec-title">Modern CNNs &amp; Transfer Learning</span><span class="lec-sub">ResNet, depthwise-separable, fine-tuning by data size</span></span><span class="lec-links"><a href="html/L10-modern-cnns-transfer.html">HTML</a><span class="sep">·</span><a href="pdf/L10-modern-cnns-transfer.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">11</span><span><span class="lec-title">Detection &amp; Segmentation</span><span class="lec-sub">the output ladder, IoU / NMS, YOLO, U-Net</span></span><span class="lec-links"><a href="html/L11-detection-segmentation.html">HTML</a><span class="sep">·</span><a href="pdf/L11-detection-segmentation.pdf">PDF</a></span></div>
+</div>
+
+<div class="mod-head"><span class="mod-name">Module 4 · Sequences &amp; Transformers</span><span class="mod-ng">Ng · Course 5</span></div>
+<div class="lec-list">
+  <div class="lec"><span class="lec-num">12</span><span><span class="lec-title">Sequence Models I — RNNs, LSTMs, GRUs</span><span class="lec-sub">weight-sharing over time, BPTT, the gradient highway</span></span><span class="lec-links"><a href="html/L12-rnn-lstm-gru.html">HTML</a><span class="sep">·</span><a href="pdf/L12-rnn-lstm-gru.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">13</span><span><span class="lec-title">Sequence Models II — Seq2Seq &amp; Embeddings</span><span class="lec-sub">word2vec, encoder–decoder, the bottleneck → attention</span></span><span class="lec-links"><a href="html/L13-seq2seq-embeddings.html">HTML</a><span class="sep">·</span><a href="pdf/L13-seq2seq-embeddings.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">14</span><span><span class="lec-title">Attention</span><span class="lec-sub">queries, keys, values; scaled dot-product; self vs cross</span></span><span class="lec-links"><a href="html/L14-attention.html">HTML</a><span class="sep">·</span><a href="pdf/L14-attention.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">15</span><span><span class="lec-title">Transformers, Built Live</span><span class="lec-sub">the block, multi-head, positional encoding — build nanoGPT</span></span><span class="lec-links"><a href="html/L15-transformers.html">HTML</a><span class="sep">·</span><a href="pdf/L15-transformers.pdf">PDF</a></span></div>
+</div>
+
+<div class="mod-head"><span class="mod-name">Module 5 · Modern LLMs &amp; Multimodal</span><span class="mod-ng">beyond Ng · his method</span></div>
+<div class="lec-list">
+  <div class="lec"><span class="lec-num">16</span><span><span class="lec-title">Tokenization &amp; Pretraining</span><span class="lec-sub">BPE; causal (GPT) vs masked (BERT) vs span (T5) objectives</span></span><span class="lec-links"><a href="html/L16-tokenization-pretraining.html">HTML</a><span class="sep">·</span><a href="pdf/L16-tokenization-pretraining.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">17</span><span><span class="lec-title">LLMs — Scaling &amp; Systems</span><span class="lec-sub">Chinchilla &amp; 6ND, RoPE, KV-cache → MQA / GQA</span></span><span class="lec-links"><a href="html/L17-llm-scaling-systems.html">HTML</a><span class="sep">·</span><a href="pdf/L17-llm-scaling-systems.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">18</span><span><span class="lec-title">Alignment &amp; Fine-tuning</span><span class="lec-sub">SFT, LoRA / QLoRA, RLHF, DPO, reasoning models</span></span><span class="lec-links"><a href="html/L18-alignment-finetuning.html">HTML</a><span class="sep">·</span><a href="pdf/L18-alignment-finetuning.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">19</span><span><span class="lec-title">Self-Supervised &amp; Contrastive Learning</span><span class="lec-sub">SimCLR &amp; InfoNCE, BYOL, MAE, DINOv2</span></span><span class="lec-links"><a href="html/L19-ssl-contrastive.html">HTML</a><span class="sep">·</span><a href="pdf/L19-ssl-contrastive.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">20</span><span><span class="lec-title">Vision Transformers &amp; VLMs</span><span class="lec-sub">ViT patches, CLIP zero-shot, LLaVA — vision as tokens</span></span><span class="lec-links"><a href="html/L20-vit-vlm.html">HTML</a><span class="sep">·</span><a href="pdf/L20-vit-vlm.pdf">PDF</a></span></div>
+</div>
+
+<div class="mod-head"><span class="mod-name">Module 6 · Generative Modeling</span><span class="mod-ng">beyond Ng · his method</span></div>
+<div class="lec-list">
+  <div class="lec"><span class="lec-num">21</span><span><span class="lec-title">Autoencoders &amp; VAEs</span><span class="lec-sub">the latent bottleneck, the reparameterization trick, ELBO</span></span><span class="lec-links"><a href="html/L21-autoencoders-vae.html">HTML</a><span class="sep">·</span><a href="pdf/L21-autoencoders-vae.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">22</span><span><span class="lec-title">GANs</span><span class="lec-sub">the minimax game, non-saturating loss, mode collapse, WGAN</span></span><span class="lec-links"><a href="html/L22-gans.html">HTML</a><span class="sep">·</span><a href="pdf/L22-gans.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">23</span><span><span class="lec-title">Diffusion Models I — Theory</span><span class="lec-sub">forward / reverse, predict-the-noise, the U-Net</span></span><span class="lec-links"><a href="html/L23-diffusion-theory.html">HTML</a><span class="sep">·</span><a href="pdf/L23-diffusion-theory.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">24</span><span><span class="lec-title">Diffusion Models II — Stable Diffusion</span><span class="lec-sub">cross-attention conditioning, CFG, latent diffusion, DDIM</span></span><span class="lec-links"><a href="html/L24-diffusion-practice.html">HTML</a><span class="sep">·</span><a href="pdf/L24-diffusion-practice.pdf">PDF</a></span></div>
+</div>
+
+<div class="mod-head"><span class="mod-name">Module 7 · Systems &amp; Frontier</span><span class="mod-ng">beyond Ng · his method</span></div>
+<div class="lec-list">
+  <div class="lec"><span class="lec-num">25</span><span><span class="lec-title">Efficient Training &amp; Inference</span><span class="lec-sub">memory-bound serving, KV-cache, quantization, FlashAttention</span></span><span class="lec-links"><a href="html/L25-efficient-inference.html">HTML</a><span class="sep">·</span><a href="pdf/L25-efficient-inference.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">26</span><span><span class="lec-title">Frontier &amp; Course Wrap-up</span><span class="lec-sub">agents, reasoning, interpretability — the full circle</span></span><span class="lec-links"><a href="html/L26-frontier-wrapup.html">HTML</a><span class="sep">·</span><a href="pdf/L26-frontier-wrapup.pdf">PDF</a></span></div>
+</div>
+```
+
+::: {.callout-note collapse="true"}
+## Looking for the earlier version of the course?
+
+The previous 27-deck course is archived under [`slides/archive/`](https://github.com/nipunbatra/dl-teaching/tree/master/slides/archive) in the repository. This page reflects the current, redesigned 26-lecture course.
+:::

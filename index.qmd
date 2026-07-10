@@ -5,17 +5,17 @@ subtitle: "IIT Gandhinagar · Aug 2026 · Prof. Nipun Batra"
 
 ::: {.hero-section}
 
-A **26-lecture** course that builds the modern deep-learning stack from the ground up — from the probability under every loss, through CNNs and Transformers, to LLMs, diffusion, and 2026 frontier topics.
+A ground-up, full-semester course that builds the modern deep-learning stack — from the probability under every loss, through CNNs and Transformers, to LLMs, diffusion, and 2026 frontier topics.
 
 Lectures **1–15 map onto Andrew Ng's [Deep Learning Specialization](https://www.coursera.org/specializations/deep-learning)** — watch his videos and re-derive them here. Lectures **16–26** carry the same method into the modern topics he never taught. Every deck is a self-contained **80 minutes**: an output-first opener, one worked idea per slide, practice problems with solutions, and linked interactives, notebooks, and references.
 
-Start with **[Lecture 1 · Probability & the Language of Losses](html/L01-probability-primer.html)**, or browse the full **[Slides](slides.qmd)**.
+Start with **[Lecture 1 · Why These Losses?](slides-pdf/L1.pdf)**, or browse all **[Slides](slides.qmd)**.
 
 :::
 
 ```{=html}
 <div class="entry-grid">
-<a class="entry-card" href="slides.html"><span class="entry-title">Slides →</span><span class="entry-desc">All 26 lectures in HTML and PDF, grouped by module.</span></a>
+<a class="entry-card" href="slides.html"><span class="entry-title">Slides →</span><span class="entry-desc">Lecture decks (PDF), rebuilt in Typst and grouped by module.</span></a>
 <a class="entry-card" href="syllabus.html"><span class="entry-title">Syllabus →</span><span class="entry-desc">Lecture-by-lecture reading map — the key papers and chapters.</span></a>
 <a class="entry-card" href="notebooks.html"><span class="entry-title">Notebooks →</span><span class="entry-desc">Hands-on PyTorch notebooks that pair with each lecture.</span></a>
 <a class="entry-card" href="labs/index.html"><span class="entry-title">Labs →</span><span class="entry-desc">Four homeworks and a project, each grown from a lecture notebook.</span></a>
@@ -48,5 +48,5 @@ Two code threads run end-to-end through the course:
 Running examples · cat / not-cat · MNIST · CIFAR-10 · Tiny Shakespeare · CelebA.
 
 ::: {.callout-tip}
-This is the redesigned course. It reuses and adapts material — with attribution — from Prof. Batra's [ML (ES 335)](https://github.com/nipunbatra/ml-teaching), [Probabilistic ML](https://github.com/nipunbatra/pml-teaching), and [PSDV](https://github.com/nipunbatra/psdv-teaching) courses, Andrew Ng's Deep Learning Specialization, and Andrej Karpathy's micrograd / nanoGPT. The previous 27-deck version is archived in the repo.
+This is the redesigned course. The decks are being rebuilt in **Typst** (Beamer-*metropolis* style); the [Slides](slides.qmd) page tracks what's ready, and the previous Marp version is on the **[Slides Archive](slides-legacy.qmd)** page. It reuses and adapts material — with attribution — from Prof. Batra's [ML (ES 335)](https://github.com/nipunbatra/ml-teaching), [Probabilistic ML](https://github.com/nipunbatra/pml-teaching), and [PSDV](https://github.com/nipunbatra/psdv-teaching) courses, Andrew Ng's Deep Learning Specialization, and Andrej Karpathy's micrograd / nanoGPT.
 :::
