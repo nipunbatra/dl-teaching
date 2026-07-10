@@ -48,5 +48,5 @@ Two code threads run end-to-end through the course:
 Running examples · cat / not-cat · MNIST · CIFAR-10 · Tiny Shakespeare · CelebA.
 
 ::: {.callout-tip}
-This is the redesigned course. The decks are being rebuilt in **Typst** (Beamer-*metropolis* style); the [Slides](slides.qmd) page tracks what's ready, and the previous Marp version is on the **[Slides Archive](slides-legacy.qmd)** page. It reuses and adapts material — with attribution — from Prof. Batra's [ML (ES 335)](https://github.com/nipunbatra/ml-teaching), [Probabilistic ML](https://github.com/nipunbatra/pml-teaching), and [PSDV](https://github.com/nipunbatra/psdv-teaching) courses, Andrew Ng's Deep Learning Specialization, and Andrej Karpathy's micrograd / nanoGPT.
+This is the redesigned course, authored entirely in **Typst** (Beamer-*metropolis* style) — see the **[Slides](slides.qmd)** page. The previous Marp version is retired in the repository under [`_marp-archive/`](https://github.com/nipunbatra/dl-teaching/tree/master/_marp-archive). It reuses and adapts material — with attribution — from Prof. Batra's [ML (ES 335)](https://github.com/nipunbatra/ml-teaching), [Probabilistic ML](https://github.com/nipunbatra/pml-teaching), and [PSDV](https://github.com/nipunbatra/psdv-teaching) courses, Andrew Ng's Deep Learning Specialization, and Andrej Karpathy's micrograd / nanoGPT.
 :::

@@ -22,38 +22,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install Marp CLI
-        run: npm ci
-
-      - name: Build Marp slides (HTML)
-        run: |
-          mkdir -p html
-          for f in slides/L*.md; do
-            filename=$(basename "$f" .md)
-            echo "Building HTML: $f"
-            npx marp "$f" -o "html/${filename}.html" --html --allow-local-files --theme-set slides/anthropic-theme.css
-          done
-          # Copy figures so SVG/PNG references resolve under html/
-          if [ -d "figures" ]; then cp -r figures html/; fi
-          if [ -d "slides/images" ]; then cp -r slides/images html/; fi
-
-      - name: Build Marp slides (PDF)
-        env:
-          PUPPETEER_TIMEOUT: 120000
-        run: |
-          mkdir -p pdf
-          npx playwright install chromium
-          ls slides/L*.md | xargs -P 4 -I {} sh -c '
-            filename=$(basename "{}" .md)
-            echo "Building PDF: {}"
-            npx marp "{}" -o "pdf/${filename}.pdf" --pdf --allow-local-files --theme-set slides/anthropic-theme.css || echo "Warning: PDF build failed for {}"
-          '
+      # Slide decks are authored in Typst (lecture*/L*.typ); their handout PDFs
+      # are pre-built and committed to slides-pdf/ (see build-slides-pdf.sh), so
+      # CI only needs to render the Quarto site. The old Marp course is retired
+      # to _marp-archive/ and no longer built.
 
       - name: Setup Quarto
         uses: quarto-dev/quarto-actions/setup@v2

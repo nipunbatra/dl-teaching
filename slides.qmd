@@ -65,4 +65,4 @@ The course decks, rebuilt in **Typst** with a clean Beamer-*metropolis* look —
 
 ---
 
-Looking for the earlier version? The previous 26-lecture Marp course is archived on the **[Slides Archive](slides-legacy.qmd)** page.
+All decks are authored in **Typst**. The previous 26-lecture Marp version of the course is retired in the repository under [`_marp-archive/`](https://github.com/nipunbatra/dl-teaching/tree/master/_marp-archive).
