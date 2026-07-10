@@ -53,16 +53,19 @@ $ g_t = nabla_theta cal(L)(theta_t), quad quad theta_(t+1) = theta_t - eta thin 
 #pause
 #notebox[Backprop gives the gradient; the optimizer drives $cal(L)_"train"$ down. We can now make the *training loss* small.]
 
-== But is low training loss the goal?
+== But is low training loss the goal? #Q
 
-*Q.* Does a low training loss guarantee a good model?
-#pause
-#align(center, text(size: 26pt, fill: RED, weight: 600)[No.])
-#pause
-#v(4pt)
-We never cared about the training set. We care about *new, unseen* data.
-#pause
-#result[Training loss is not the goal — *test performance* is.]
+#mcq(
+  [Does low training loss alone guarantee that a model will perform well on new data?],
+  [Yes; training loss is the only metric that matters],
+  [Yes, if the model has enough parameters],
+  [No; it may have memorized the training set],
+  [No; because gradient descent cannot reduce loss],
+)
+
+== Answer: training is not the goal #A
+
+#mcq-answer([C], [It may have memorized the training set], [We care about expected performance on unseen data. A small training loss can coexist with a large generalization gap.])
 
 == Train loss vs test loss #D
 
@@ -85,15 +88,11 @@ $ underbrace(cal(L)_"test" - cal(L)_"train", "generalization gap") $
 #pause
 #fig("/lecture7/figures/train_val.svg", w: 60%)
 
-== Overfitting is memorization
+== Overfitting can memorize
 
-*Q.* Give a big network *random* labels $y -> y_pi$ (a fixed permutation). What happens?
+Give a high-capacity net random labels $y -> y_pi$ (a fixed permutation): it can still drive $cal(L)_"train" -> 0$.
 #pause
-- A high-capacity net still drives $cal(L)_"train" -> 0$ — it *memorizes* the noise;
-#pause
-- but validation stays at chance: it learned *nothing generalizable*.
-#pause
-#alertbox[Fitting the training set is *not* evidence of learning. Capacity alone is not enough — we need *inductive bias* + an honest *validation* signal.]
+#alertbox[Validation remains at chance: fitting the training set is *not* evidence of a learned, general rule.]
 
 == The plan for this lecture
 
@@ -167,9 +166,7 @@ Why does stopping early help?
   Sweep model capacity and training time and watch the train and validation curves separate — find the checkpoint where validation is lowest before the gap opens.
 ]
 #pause
-*Q.* You stop at the epoch with the lowest *training* loss. Why is your reported accuracy likely too optimistic?
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[the *last* epoch overfits — training keeps dropping while validation has already turned up.])
+Find the checkpoint with the lowest *validation* loss rather than the last or lowest-training-loss checkpoint.
 
 // ═══════════════════════════ PART III — Capacity, bias, variance ═══════════════════════════
 = Capacity, bias and variance
@@ -313,9 +310,7 @@ Weight norm $norm(theta)$ over training for several $lambda$:
   sweep $lambda$ and watch the weight norm shrink and the decision boundary smooth out; too large and the model underfits.
 ]
 #pause
-*Q.* Doubling $eta$ and halving $lambda$ leaves $eta lambda$ fixed. Does weight decay behave the same? (Careful — the *data* step changed too.)
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[no — the shrink factor $(1 - eta lambda)$ is unchanged, but the gradient step $-eta nabla cal(L)_"data"$ *doubled*.])
+Compare the unchanged shrink factor with the doubled data-gradient step when $eta$ changes.
 
 // ═══════════════════════════ PART V — Dropout ═══════════════════════════
 = Dropout
@@ -449,9 +444,7 @@ $ ell = - sum_k tilde(y)_k log p_k = -0.7 log p_1 - 0.3 log p_2 $
   apply transforms and mixup to a 2-D dataset and watch the decision boundary become smoother and more invariant.
 ]
 #pause
-*Q.* Why does mixup improve *calibration* as well as accuracy?
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[soft targets stop the net from driving logits to $plus.minus infinity$ — so it stays less over-confident.])
+Observe how soft targets discourage infinite-margin, overconfident logits.
 
 // ═══════════════════════════ PART VII — Label smoothing ═══════════════════════════
 = Label smoothing
@@ -544,12 +537,20 @@ Two models can both fit the training set to $cal(L)_"train" approx 0$ — yet di
 // ═══════════════════════════ PART IX — Practical workflow ═══════════════════════════
 = A practical workflow
 
-== First: debug before you regularize
+== First: debug before you regularize #Q
 
-*Q.* Both training and validation loss are *high*. Add dropout?
-#pause
-#align(center, text(size: 22pt, fill: RED, weight: 600)[No — that is *underfitting*.])
-#pause
+#mcq(
+  [Both training and validation loss are high. What should be tried before adding dropout?],
+  [Add stronger regularization immediately],
+  [Improve the fit: capacity, optimization, data checks, or training time],
+  [Stop training earlier],
+  [Increase label smoothing until training loss vanishes],
+)
+
+== Answer: diagnose underfitting first #A
+
+#mcq-answer([B], [Improve the fit first], [High training loss signals underfitting or a pipeline issue. More regularization would make fitting even harder.])
+
 Fix the fit first: *bigger model*, *train longer*, *better LR*, *less augmentation*, *check the labels*.
 #pause
 #alertbox[Adding regularization to an underfit model makes it *worse*. Regularize only once you can *overfit*.]

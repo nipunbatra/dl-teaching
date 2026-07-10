@@ -254,8 +254,20 @@ $ 576 dot 128 + 128 = "73,728" + 128 = "73,856" $
 #interbox(link-to: IA + "convolution-visualizer")[
   Paint an input grid, pick a kernel, and watch the window slide — see each multiply-add produce one output pixel, and how the kernel choice changes the feature map.
 ]
-#pause
-*Q.* What kernel would detect a $45degree$ diagonal edge?
+
+== Checkpoint: diagonal feature detector #Q
+
+#mcq(
+  [Which kernel is suited to a $45degree$ diagonal edge?],
+  [$mat(1,0,-1;0,0,0;-1,0,1)$],
+  [$mat(1,1,1;0,0,0;-1,-1,-1)$],
+  [$mat(1,1,1;1,1,1;1,1,1)$],
+  [$mat(0,0,0;0,1,0;0,0,0)$],
+)
+
+== Answer: diagonal feature detector #A
+
+#mcq-answer([A], [A kernel with opposing diagonals], [It compares intensity across the two diagonal halves of the patch; the other choices emphasize horizontal change, averaging, or a single pixel.])
 
 // ═══════════════════════════ PART III — Padding, stride, output size ═══════════════════════════
 = Padding, stride, and output size
@@ -445,8 +457,20 @@ Worked example — three $3 times 3$ layers, starting from $r_0 = 1$:
 #interbox(link-to: IA + "receptive-field-grower")[
   Add conv layers one at a time and watch the highlighted receptive field expand back through the network onto the input image.
 ]
-#pause
-*Q.* How many $3 times 3$ stride-1 layers give a receptive field of at least $15 times 15$?
+
+== Checkpoint: receptive field #Q
+
+#mcq(
+  [How many $3 times 3$, stride-1 layers give a receptive field of at least $15 times 15$?],
+  [$5$],
+  [$6$],
+  [$7$],
+  [$15$],
+)
+
+== Answer: receptive field #A
+
+#mcq-answer([C], [$7$ layers], [Starting from one pixel, each stride-1 $3 times 3$ layer adds two: $1 + 2L >= 15$ gives $L >= 7$.])
 
 // ═══════════════════════════ PART VI — CNN architecture ═══════════════════════════
 = The CNN architecture

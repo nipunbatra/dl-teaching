@@ -19,15 +19,23 @@
 #let MUTED = rgb("#6E7F82")
 #let RED   = rgb("#D64550")
 
-// ── legend pills [Q] [V] [D] [I] [optional], placed top-right of the body ──
-#let pill(lbl, col) = box(fill: col, inset: (x: 6pt, y: 3pt), radius: 3pt,
-  text(font: "IBM Plex Mono", size: 12pt, fill: white, weight: 600, lbl))
-#let Q = pill("Q", BLUE)      // question
-#let V = pill("V", TEAL)      // visual
-#let D = pill("D", ACC)       // derivation
-#let I = pill("I", GREEN)     // interactive
-#let OPT = pill("optional", MUTED)
-#let stag(t) = place(top + right, dx: 0pt, dy: -2pt, t)   // fixed top-right slot
+// ── discipline tags [Q][V][D][I][opt] — seated in the dark header bar, top-right ──
+// A filled chip pops cleanly on the dark ink header; the word rides beside the
+// letter so the tag reads without the legend. `stag()` lifts it up into the bar,
+// vertically centred with the title, so it never crowds the first body line.
+#let _chip(lbl, word, col) = box(fill: col, inset: (x: 7pt, y: 3.5pt), radius: 4pt, baseline: 0.28em,
+  text(font: "IBM Plex Mono", size: 12pt, fill: white, weight: 700, tracking: 0.4pt,
+    [#lbl#h(5pt)#text(size: 8.5pt, weight: 500, tracking: 1pt)[#upper(word)]]))
+// The leading h(1fr) right-pins the chip: in an inline heading it flushes to the
+// header's right edge; inside stag()'s place() the 1fr collapses to 0 (harmless).
+#let Q = [#h(1fr)#_chip("Q", "question",    BLUE)]
+#let A = [#h(1fr)#_chip("A", "answer",      GREEN)]
+#let V = [#h(1fr)#_chip("V", "visual",      TEAL)]
+#let D = [#h(1fr)#_chip("D", "derivation",  ACC)]
+#let I = [#h(1fr)#_chip("I", "interactive", GREEN)]
+#let OPT = [#h(1fr)#_chip(sym.star.filled, "optional", MUTED)]
+// Legacy separate-line tag (L1): lift the chip up into the header bar, right-pinned.
+#let stag(t) = place(top + right, dx: 0.2em, dy: -2.62em, t)
 
 // ── callout blocks ──
 #let bar-block(body, col, bg, head, headcol) = block(width: 100%, fill: bg, inset: 11pt,
@@ -45,6 +53,25 @@
   stroke: 2pt + ACC, text(size: 21pt, weight: 600, fill: INK, body)))
 #let codebox(body, size: 15pt) = block(fill: rgb("#F3F2EE"), inset: 10pt, radius: 4pt,
   width: 100%, stroke: 0.5pt + rgb("#DAD8D2"), text(size: size, body))
+
+// ── retrieval checkpoints ──────────────────────────────────────────
+// Keep a question and its feedback on adjacent slides: students first commit to
+// an option, then see the correct choice and the one-sentence reason.
+#let mcq(prompt, a, b, c, d) = [
+  #text(size: 22pt, weight: 600, fill: INK)[#prompt]
+  #v(14pt)
+  #grid(columns: 2, gutter: 12pt,
+    block(fill: rgb("#EEF4F8"), inset: 10pt, radius: 4pt, stroke: 0.7pt + BLUE)[*A.* #a],
+    block(fill: rgb("#EEF4F8"), inset: 10pt, radius: 4pt, stroke: 0.7pt + BLUE)[*B.* #b],
+    block(fill: rgb("#EEF4F8"), inset: 10pt, radius: 4pt, stroke: 0.7pt + BLUE)[*C.* #c],
+    block(fill: rgb("#EEF4F8"), inset: 10pt, radius: 4pt, stroke: 0.7pt + BLUE)[*D.* #d],
+  )
+]
+#let mcq-answer(letter, choice, why) = [
+  #result[Correct: *#letter* — #choice]
+  #v(14pt)
+  #notebox[*Why:* #why]
+]
 
 // ── figure + layout helpers (Typst reads PNG twins; resvg mangles some mpl SVGs) ──
 #let fig(path, w: 58%) = align(center, image(path.replace(".svg", ".png"), width: w))
@@ -113,5 +140,8 @@
   show heading: set text(font: "IBM Plex Sans")
   set heading(numbering: none)
   show math.equation: set text(size: 19pt)
+  // Keep display equations on a stable left edge. Inline mathematics remains
+  // inline; only a standalone equation is wrapped by this rule.
+  show math.equation.where(block: true): it => align(left, it)
   body
 }

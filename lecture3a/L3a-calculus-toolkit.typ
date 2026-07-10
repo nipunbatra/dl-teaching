@@ -105,9 +105,21 @@ Error: #h(0.4em) $9.61 - 9.6 = 0.01$ — tiny.
   Functions: $x^2$, $sin x$, $e^x$, $log(1 + e^x)$.
 ]
 #pause
-*Q.* When is the linear approximation good, and when does it break down?
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[good for *small* $Delta x$ and *low* curvature; it breaks where $f$ bends sharply (large $f''$).])
+Explore how the approximation error grows as the step leaves the local tangent regime.
+
+== Checkpoint: local linearization #Q
+
+#mcq(
+  [When is a first-order linear approximation most reliable?],
+  [For a large step on a sharply curved function],
+  [For a small step where curvature is modest],
+  [Only at a global minimum],
+  [Whenever the gradient is zero],
+)
+
+== Answer: local linearization #A
+
+#mcq-answer([B], [For a small step where curvature is modest], [The derivative captures local slope; omitted higher-order terms become important over large steps or sharp bends.])
 
 // ═══════════════════════════ PART III — Partials & surfaces ═══════════════════════════
 = Partial derivatives and surfaces
@@ -145,9 +157,7 @@ Fix one input and you are left with a 1-D curve — the partial is *its* slope.
   Functions: $x^2 + y^2$, $x^2 + 3y^2$, $sin x cos y$.
 ]
 #pause
-*Q.* For $f = x^2 + 3y^2$, along which axis is the surface steeper at $(1, 1)$?
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[the $y$-axis: $partial_y = 6y = 6$ vs $partial_x = 2x = 2$.])
+Use the two slice slopes to compare the axes at a chosen point.
 
 // ═══════════════════════════ PART IV — Gradient ═══════════════════════════
 = The gradient
@@ -217,9 +227,21 @@ $ x_(t+1) = (3, 1) - 0.1 (6, 2) = (2.4, 0.8) $
   Surfaces: $x^2 + y^2$, $x^2 + 10 y^2$, $sin x + cos y$.
 ]
 #pause
-*Q.* At the minimum of $f$, what is $nabla f$ — and what does a gradient step do there?
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[$nabla f = 0$, so the step leaves $x$ unchanged — the iteration has converged.])
+Move the start point to the bottom of the surface and inspect the update.
+
+== Checkpoint: a stationary point #Q
+
+#mcq(
+  [At a differentiable local minimum, what does a plain gradient-descent step do?],
+  [Moves uphill],
+  [Leaves the point unchanged because $nabla f=0$],
+  [Doubles the learning rate],
+  [Must move along a contour],
+)
+
+== Answer: a stationary point #A
+
+#mcq-answer([B], [Leaves the point unchanged], [At a differentiable local minimum the gradient is zero, so $x_{t+1}=x_t-eta nabla f(x_t)=x_t$.])
 
 // ═══════════════════════════ PART V — Hessian ═══════════════════════════
 = The Hessian and curvature
@@ -317,9 +339,7 @@ The gradient picks a *direction*, but curvature decides a good *step size*.
   Reshape a quadratic $a x^2 + b y^2 + c x y$, see its Hessian eigenvectors, and watch the descent path zigzag.
 ]
 #pause
-*Q.* Why does the trajectory zigzag when the contours are stretched?
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[one shared $eta$ overshoots the low-curvature axis while creeping along the high-curvature one.])
+Observe how one shared step size alternately overshoots the steep direction and creeps along the flat one.
 
 // ═══════════════════════════ PART VI — Jacobian ═══════════════════════════
 = The Jacobian

@@ -27,23 +27,6 @@ $ cal(L)_"total" = cal(L)_"data" + lambda norm(theta)_2^2 quad #text(fill: MUTED
 #pause
 #notebox[*Why exactly these three expressions?* Today: they are not arbitrary.]
 
-== Were these arbitrary choices?
-#stag(Q)
-
-Which is it?
-#pause
-- Historical convention?
-#pause
-- Convenient gradients?
-#pause
-- Empirically successful?
-#pause
-- *Derived from probability?*
-#pause
-- All of the above?
-#pause
-#alertbox[*Reveal.* Primarily *consequences of probabilistic assumptions* — that is the thread for the whole lecture.]
-
 == The map for today
 #stag(V)
 
@@ -97,12 +80,24 @@ $ P(a <= Y <= b) = integral_a^b p(y) dif y $
 
 #two(r: (1.15fr, 1fr),
   [$ Y tilde cal(U)(a, b) quad p(y) = cases(1\/(b-a) & quad a <= y <= b, 0 & quad "otherwise") $
-   #pause
-   *Q.* NLL _outside_ $[a,b]$? #h(6pt) *A.* $-log 0 = +infinity$.
    #v(4pt)
    #notebox[A likelihood can impose a *hard constraint*.]],
   fig("/lecture1/figures/uniform.svg", w: 96%),
 )
+
+== Checkpoint: uniform support #Q
+
+#mcq(
+  [For a Uniform$(a,b)$ observation model, what is the NLL if the target lies outside $[a,b]$?],
+  [$0$],
+  [A fixed finite penalty],
+  [$-log 0 = +infinity$],
+  [It depends only on $sigma$],
+)
+
+== Answer: uniform support #A
+
+#mcq-answer([C], [$-log 0 = +infinity$], [The model assigns zero density outside its support, so such a target is impossible under the assumption.])
 
 == Gaussian distribution
 #stag(V)
@@ -111,15 +106,6 @@ $ Y tilde cal(N)(mu, sigma^2) quad quad p(y) = 1/sqrt(2 pi sigma^2) exp(-(y-mu)^
 #pause
 #fig("/lecture1/figures/gaussian_params.svg", w: 56%)
 #align(center)[Only two knobs: *location* $mu$ and *scale* $sigma$.]
-
-== Why the Gaussian produces a square
-#stag(D)
-
-Take the negative log:
-$ -log p(y) = underbrace((y-mu)^2/(2 sigma^2), "depends on " mu) + underbrace(1/2 log(2 pi sigma^2), "constant in " mu) $
-#pause
-#align(center)[The only $mu$-dependent term is the *squared error* $(y-mu)^2$.]
-#fig("/lecture1/figures/gaussian_to_square.svg", w: 54%)
 
 == Multivariate Gaussian geometry
 #stag(V)
@@ -175,9 +161,9 @@ The one model $p_theta (y | x)$, read two ways:
 #alertbox[The likelihood is _not_ "the probability that $theta$ is correct."]
 
 == Coin flips: a likelihood you can compute
-#stag(Q)
+#stag(D)
 
-Ten flips come up $H, H, T, T, T, H, H, T, T, T$ — so $n_H = 4$, $n_T = 6$. What is $p(H)$?
+Ten flips come up $H, H, T, T, T, H, H, T, T, T$ — so $n_H = 4$, $n_T = 6$.
 #pause
 Model each flip as Bernoulli$(theta)$: $p(H) = theta$, $p(T) = 1 - theta$.
 #pause
@@ -399,7 +385,21 @@ Read off the loss at three confidences for the *true* class:
   fig("/lecture1/figures/neglog_curve.svg", w: 78%),
 )
 #pause
-#align(center, text(size: 17pt)[*Q.* Why punish a _confidently wrong_ prediction so hard?])
+#align(center, text(size: 17pt)[The negative log makes a confident wrong prediction a large loss.])
+
+== Checkpoint: confident mistakes #Q
+
+#mcq(
+  [Why does cross-entropy penalize a confidently wrong prediction strongly?],
+  [It makes all class probabilities equal],
+  [The true-class probability is near zero, so $-log p_y$ is large],
+  [It adds an $L_2$ penalty to the logits],
+  [The gradient is always zero],
+)
+
+== Answer: confident mistakes #A
+
+#mcq-answer([B], [The true-class probability is near zero], [The negative log grows without bound as $p_y$ approaches zero, matching the fact that the model declared the observed class nearly impossible.])
 
 == A remarkably simple gradient
 #stag(D)
@@ -581,13 +581,11 @@ Common practical choices:
 #notebox[DL doesn't discard probabilistic ML — it *scales* it with expressive functions and gradient descent.]
 
 == Retrieval summary
-#stag(Q)
+#stag(V)
 
-Complete each:
-#pause
 #two(
-  [Gaussian likelihood ⇒ ? \ Categorical likelihood ⇒ ? \ Gaussian prior ⇒ ? \ Laplace prior ⇒ ? \ MLE + prior ⇒ ?],
-  [#pause ⇒ *MSE* \ ⇒ *cross-entropy* \ ⇒ *$L_2$* \ ⇒ *$L_1$* \ ⇒ *MAP*],
+  [Gaussian likelihood \ Categorical likelihood \ Gaussian prior \ Laplace prior \ MLE + prior],
+  [⇒ *MSE* \ ⇒ *cross-entropy* \ ⇒ *$L_2$* \ ⇒ *$L_1$* \ ⇒ *MAP*],
 )
 
 // final mental model — a metropolis "standout" (dark, centered)

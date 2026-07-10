@@ -236,6 +236,20 @@ Both paths write into the *same* $overline(x)$. If the second overwrote the firs
 #pause
 #notebox[In PyTorch, `.grad` *accumulates* across `backward()` calls — that is exactly this rule. You must `optimizer.zero_grad()` each step, or gradients from old steps pile up.]
 
+== Checkpoint: gradient accumulation #Q
+
+#mcq(
+  [Why is a branch node's backward update written with `+=` rather than `=`?],
+  [It makes the forward pass faster],
+  [The variable receives a contribution from every downstream path],
+  [It changes multiplication into addition],
+  [Autodiff cannot store scalar values],
+)
+
+== Answer: gradient accumulation #A
+
+#mcq-answer([B], [The variable receives a contribution from every downstream path], [The chain rule sums all paths from the variable to the loss; assignment would discard an earlier contribution.])
+
 // ═══════════════════════════ PART III — Central example ═══════════════════════════
 = The central worked example
 
@@ -353,7 +367,7 @@ New prediction: $hat(y) = 3.8 dot 3 + 1.6 = 13$.
   Build a scalar computation graph, run the forward pass, then click *backward* to watch each adjoint $overline(u)$ fill in — exactly the $(w x + b - y)^2$ example above.
 ]
 #pause
-*Q.* Which node's local derivative changes if we swap squared-error for absolute error $|e|$?
+Trace which local rule changes when the final squared-error operation is replaced with $|e|$.
 
 // ═══════════════════════════ PART IV — Neuron ═══════════════════════════
 = From scalar graph to a neuron
@@ -497,7 +511,21 @@ $ nabla_(W_1) cal(L) = overline(z)^((1)) x^top, quad quad nabla_(b_1) cal(L) = o
   Step through a small MLP's forward pass, then watch $overline(z)^((2)) = p - y$ propagate back through $W_2$, the activation, and $W_1$ — the adjoints light up layer by layer.
 ]
 #pause
-*Q.* Why does the *same* $overline(z)$ appear in both $nabla_W$ and $overline(x)$ for a layer?
+Trace the same upstream adjoint into the parameter and input branches of the affine layer.
+
+== Checkpoint: dense-layer backward pass #Q
+
+#mcq(
+  [For $z=W x+b$, which pair of gradients uses the same upstream adjoint $overline(z)$?],
+  [$nabla_W=overline(z)x^top$ and $overline(x)=W^top overline(z)$],
+  [$nabla_W=W^top x$ and $overline(x)=overline(z) x^top$],
+  [$nabla_W=x$ and $overline(x)=W$],
+  [$nabla_W=0$ and $overline(x)=0$],
+)
+
+== Answer: dense-layer backward pass #A
+
+#mcq-answer([A], [$nabla_W=overline(z)x^top$ and $overline(x)=W^top overline(z)$], [Both branches apply the chain rule to the same output adjoint; they differ only in the local derivative of the affine operation.])
 
 // ═══════════════════════════ PART VII — Autodiff ═══════════════════════════
 = Automatic differentiation
@@ -607,7 +635,7 @@ Multiply many small local derivatives → the signal *decays* with depth:
   Sweep depth and activation function; watch the gradient magnitude at layer $0$ collapse for sigmoid and survive for ReLU.
 ]
 #pause
-*Q.* If gradients shrink by $times 1\/4$ per layer, how deep before they underflow to zero?
+Sweep depth to see repeated small local slopes rapidly erase an early-layer gradient.
 
 // ═══════════════════════════ PART IX — Summary ═══════════════════════════
 = Summary

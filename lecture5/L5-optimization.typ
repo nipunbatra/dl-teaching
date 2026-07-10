@@ -149,7 +149,21 @@ Same curve $cal(L) = (theta - 3)^2$, four choices of $eta$:
   Drop a start point on a loss surface and watch gradient descent trace its path as you sweep the learning rate — see crawl, converge, oscillate, and diverge live.
 ]
 #pause
-*Q.* On $cal(L) = (theta-3)^2$, above what $eta$ does GD diverge? (Hint: the error scales by $1 - 2 eta$.)
+Try values around the stability boundary and watch the error multiplier $1-2eta$.
+
+== Checkpoint: learning-rate stability #Q
+
+#mcq(
+  [For $cal(L)=(theta-3)^2$, gradient descent diverges for which learning rates?],
+  [$eta < 0$ only],
+  [$0 < eta < 0.5$],
+  [$0.5 < eta < 1$],
+  [$eta > 1$],
+)
+
+== Answer: learning-rate stability #A
+
+#mcq-answer([D], [$eta>1$], [The error is multiplied by $1-2eta$ each step. Convergence requires its magnitude to be below one; beyond $eta=1$ it grows.])
 
 // ═══════════════════════════ PART II — Batch vs SGD ═══════════════════════════
 = Full-batch vs stochastic gradient descent
@@ -228,7 +242,7 @@ Same bowl, three noise levels (full / mini / tiny batch):
   Switch between full-batch and stochastic updates and watch the trajectory go from a smooth glide to a noisy walk as the batch size shrinks.
 ]
 #pause
-*Q.* Why can a *little* gradient noise actually help training rather than hurt it?
+Compare a smooth full-batch path with the small random deviations of minibatches.
 
 // ═══════════════════════════ PART III — Momentum ═══════════════════════════
 = Momentum
@@ -466,6 +480,20 @@ $ theta_(t+1) = theta_t - eta thin underbrace(hat(m)_t, "which way") / underbrac
 ))
 #pause
 #notebox[These defaults "just work" on a huge range of problems — a big reason Adam is the default optimizer.]
+
+== Checkpoint: Adam's two memories #Q
+
+#mcq(
+  [What extra information does Adam keep beyond plain gradient descent?],
+  [Only the current loss value],
+  [A first-moment direction and a second-moment magnitude estimate],
+  [A full Hessian matrix],
+  [The complete training dataset],
+)
+
+== Answer: Adam's two memories #A
+
+#mcq-answer([B], [A first and a second moment], [The first moment smooths direction like momentum; the second tracks per-coordinate gradient scale for adaptive steps.])
 
 == Interactive: Adam vs the rest #I
 

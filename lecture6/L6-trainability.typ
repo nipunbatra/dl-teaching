@@ -134,10 +134,10 @@ A product of $L$ matrices is governed by its *singular values* $s$:
 #align(center, table(
   columns: 2, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 7pt), align: (left, left),
   table.header([*Problem*], [*Intervention*]),
-  [wrong *starting* scale of signals], [*initialization* — set $"Var"(w)$],
-  [local slope kills the gradient],    [*activations* — shape the Jacobian $phi'$],
-  [scale *drifts during* training],    [*normalization* — re-standardize each layer],
-  [gradient path too *long*],          [*residual connections* — add identity shortcuts],
+  [#pause wrong *starting* scale of signals], [#pause *initialization* — set $"Var"(w)$],
+  [#pause local slope kills the gradient],    [#pause *activations* — shape the Jacobian $phi'$],
+  [#pause scale *drifts during* training],    [#pause *normalization* — re-standardize each layer],
+  [#pause gradient path too *long*],          [#pause *residual connections* — add identity shortcuts],
 ))
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[all four exist to keep $q_ell$ and $g_ell$ near constant with depth])
@@ -253,7 +253,21 @@ where $Phi$ is the standard-normal CDF.
   Swap the activation and sweep depth; watch the gradient that reaches layer $0$ collapse for sigmoid/tanh and survive for ReLU/GELU.
 ]
 #pause
-*Q.* A 20-layer sigmoid net barely learns. Name *two* changes that would most help its gradient flow.
+Compare the gradient-scale traces for a saturating activation and a modern activation.
+
+== Checkpoint: rescuing a deep sigmoid net #Q
+
+#mcq(
+  [Which pair most directly improves gradient flow in a deep sigmoid network?],
+  [More sigmoid layers and larger negative biases],
+  [A gradient-friendly activation and variance-preserving initialization],
+  [Smaller batches and no initialization],
+  [Remove all nonlinearities],
+)
+
+== Answer: rescuing a deep sigmoid net #A
+
+#mcq-answer([B], [A gradient-friendly activation and variance-preserving initialization], [ReLU/GELU-like slopes avoid widespread saturation, and Xavier/He-style scaling prevents signal scale from compounding badly at the start.])
 
 // ═══════════════════════════ PART III — Initialization ═══════════════════════════
 = Initialization: the starting scale
@@ -561,7 +575,7 @@ $ "RMS"(x) = sqrt(1/D sum_(j=1)^D x_j^2), quad quad y = gamma thin x/("RMS"(x)).
   Toggle Batch / Layer / RMS norm on the same $B times D$ tensor and watch which axis gets reduced — then compare train-time vs eval-time behaviour for BatchNorm.
 ]
 #pause
-*Q.* Why does LayerNorm give the *same* output at batch size $1$ and $128$, while BatchNorm does not?
+Compare normalizing one example's features with normalizing each feature across a batch.
 
 // ═══════════════════════════ PART V — Residual connections ═══════════════════════════
 = Residual connections: short paths
@@ -675,7 +689,21 @@ A shortcut alone does not fix everything:
   Toggle the skip connections on and off in a deep net and watch the backward gradient norm go from decaying (plain) to flat (residual), layer by layer.
 ]
 #pause
-*Q.* In $partial cal(L) \/ partial x_ell$, which term guarantees the gradient never fully vanishes?
+Trace the identity and residual contributions separately as the gradient moves backward.
+
+== Checkpoint: residual gradient path #Q
+
+#mcq(
+  [In a residual block, which term supplies the direct gradient path?],
+  [The identity term $partial cal(L) / partial x_(ell+1)$],
+  [Only the residual Jacobian $partial F_ell / partial x_ell$],
+  [The learning-rate multiplier],
+  [The batch mean],
+)
+
+== Answer: residual gradient path #A
+
+#mcq-answer([A], [The identity term], [Differentiating $x_(ell+1)=x_ell+F_ell(x_ell)$ gives an additive identity contribution, so the branch need not carry the whole gradient.])
 
 // ═══════════════════════════ PART VI — Putting it together ═══════════════════════════
 = Putting it together
@@ -783,7 +811,7 @@ for name, p in model.named_parameters():
 #pause
 - *deeper is not always better* — depth has to be earned.
 
-== Retrieval exercise #Q
+== Retrieval exercise #V
 
 Say the fix out loud before you read it:
 #pause

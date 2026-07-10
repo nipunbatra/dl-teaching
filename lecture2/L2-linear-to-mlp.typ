@@ -54,7 +54,8 @@ Every loss was a negative log-likelihood, $ell = -log p_theta (y | x)$:
 #two(r: (1fr, 1.1fr),
   [*Old ML models* — one affine map:
    $ f_theta (x) = w^top x + b $],
-  [*Neural networks* — many affine maps + nonlinearities:
+  [#pause
+   *Neural networks* — many affine maps + nonlinearities:
    $ f_theta (x) = W_L thin phi(W_(L-1) phi(dots.h phi(W_1 x + b_1))) + b_L $],
 )
 #pause
@@ -122,7 +123,7 @@ $ theta <- theta - eta thin nabla_theta cal(L) $
   Controls: slope $w$ · intercept $b$ · noise · learning rate · GD steps.
 ]
 #pause
-*Q.* What happens when the learning rate is too large?
+Try an oversized learning rate and watch the parameter trajectory overshoot or diverge.
 
 // ═══════════════════════════ PART III — Logistic regression ═══════════════════════════
 = Logistic regression
@@ -174,6 +175,20 @@ $ w^top x + b = 0. $
 #pause
 #fig("/lecture2/figures/linear_boundary.svg", w: 38%)
 
+== Checkpoint: the bias term #Q
+
+#mcq(
+  [With fixed $w$, what does increasing the bias $b$ do to $w^top x + b = 0$?],
+  [It makes the boundary nonlinear],
+  [It translates the boundary without changing its orientation],
+  [It removes the sigmoid],
+  [It has no effect on the boundary],
+)
+
+== Answer: the bias term #A
+
+#mcq-answer([B], [It translates the boundary], [Changing $b$ shifts the zero level set of the same linear score; the normal vector $w$ still sets its orientation.])
+
 == Logistic regression is still a linear classifier
 
 #two(
@@ -199,7 +214,7 @@ $ nabla_w cal(L) = (hat(p) - y) thin x $
   Controls: line angle · bias · sigmoid steepness · threshold · add/remove points.
 ]
 #pause
-*Q.* How does the decision boundary move when $b$ changes?
+Try sweeping the bias while keeping the line angle fixed.
 
 // ═══════════════════════════ PART IV — From logistic regression to a neuron ═══════════════════════════
 = From logistic regression to a neuron
@@ -233,6 +248,20 @@ $ h_2 = underbrace(W_2 W_1, "one matrix") x + underbrace((W_2 b_1 + b_2), "one v
 #pause
 #alertbox[Without a nonlinear activation, *depth collapses to a single linear layer.*]
 
+== Checkpoint: why nonlinearities matter #Q
+
+#mcq(
+  [What can a stack of affine layers represent if there is no activation between them?],
+  [Only a single affine map],
+  [Any curved decision boundary],
+  [Only a constant function],
+  [A probability distribution automatically],
+)
+
+== Answer: why nonlinearities matter #A
+
+#mcq-answer([A], [Only a single affine map], [Composing affine maps gives $W_2(W_1x+b_1)+b_2 = (W_2W_1)x+(W_2b_1+b_2)$.])
+
 == Interactive: activation functions #I
 
 #interbox(link-to: IA + "vanishing-gradients")[
@@ -240,7 +269,7 @@ $ h_2 = underbrace(W_2 W_1, "one matrix") x + underbrace((W_2 b_1 + b_2), "one v
   Controls: activation type · input $z$ · show derivative · compare saturation.
 ]
 #pause
-*Q.* Where does the sigmoid saturate, and why might that hurt training?
+Explore large positive and negative logits, where sigmoid's derivative becomes tiny.
 
 // ═══════════════════════════ PART V — Multi-class classification ═══════════════════════════
 = Multi-class classification
@@ -295,7 +324,7 @@ $ (w_i - w_j)^top x + (b_i - b_j) = 0 $
   Three class weight vectors, a movable point, and a temperature $T$ — watch the logits, the softmax probabilities, and the *linear decision regions*.
 ]
 #pause
-*Q.* Why are the decision regions straight-edged?
+Move the point and trace how linear logits partition the plane.
 
 // ═══════════════════════════ PART VI — Multilayer perceptron ═══════════════════════════
 = The multilayer perceptron
@@ -379,7 +408,7 @@ Then $p = "softmax"(z)$ for classification, or $hat(y) = z$ for regression.
   Controls: hidden units · layers · activation · learning rate · steps.
 ]
 #pause
-*Q.* What changes when you add hidden *units* vs when you add *layers*?
+Compare wider layers (more features at one stage) with deeper layers (more composed stages).
 
 // ═══════════════════════════ PART VII — Universal approximation ═══════════════════════════
 = Why MLPs represent complex functions
@@ -442,7 +471,7 @@ $ f(x) = f_L compose f_(L-1) compose dots.h compose f_1 (x) $
   Nielsen's visual proof, by hand: crank a sigmoid into a step, glue steps into bumps, stack bumps to *design any 1-D curve*, then tile towers across a 3-D surface.
 ]
 #pause
-*Q.* Does more expressivity always make optimization easier?
+Contrast representational power with the separate challenges of optimization and generalization.
 
 // ═══════════════════════════ PART VIII — Connecting to practice ═══════════════════════════
 = Connecting to deep-learning practice
