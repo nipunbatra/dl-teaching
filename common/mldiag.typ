@@ -11,6 +11,7 @@
 
 #import "@local/ml-theme:0.1.0": theme
 #import "@local/tensor-grid:0.1.0" as tg
+#import "@local/ml-plot:0.1.0" as mp
 #import "metropolis.typ": INK, ACC, TEAL, GREEN, BLUE, MUTED, RED
 
 // the deck theme: metropolis palette, teal→paper→orange diverging ramp
@@ -28,6 +29,10 @@
 #let attn-matrix     = tg.attn-matrix.with(theme: dl-theme)
 #let receptive-field = tg.receptive-field.with(theme: dl-theme)
 #let patchify        = tg.patchify.with(theme: dl-theme)
+
+// ── plots (ml-plot), palette-locked ──
+#let bars  = mp.bars.with(theme: dl-theme)
+#let lines = mp.lines.with(theme: dl-theme)
 
 // ── the math helpers (figures + prose can share one computation) ──
 #let conv2d        = tg.conv2d

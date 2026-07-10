@@ -7,6 +7,7 @@
 // Schematic figures: python3 lecture18/diagrams/l18_figs.py
 
 #import "../common/metropolis.typ": *
+#import "../common/mldiag.typ": *
 #show: metropolis-deck.with(
   title: [Self-Supervised Learning],
   subtitle: [Labels hidden in plain sight — representation learning],
@@ -277,7 +278,27 @@ Suppose the encoder collapses — every input maps to the *same* embedding.
 
 Stack all $2N$ views: entry $(i, j)$ is $s(z_i, z_j) \/ tau$. Each row is one softmax problem.
 #pause
-#fig("/lecture18/figures/sim_matrix.svg", w: 31%)
+#align(center, attn-matrix(
+  ("A1", "A2", "B1", "B2", "C1", "C2", "D1", "D2"),
+  values: (
+    (1.00, 0.90, 0.18, 0.12, 0.25, 0.15, 0.20, 0.10),
+    (0.90, 1.00, 0.14, 0.22, 0.16, 0.28, 0.12, 0.19),
+    (0.18, 0.14, 1.00, 0.90, 0.21, 0.13, 0.17, 0.24),
+    (0.12, 0.22, 0.90, 1.00, 0.15, 0.26, 0.20, 0.11),
+    (0.25, 0.16, 0.21, 0.15, 1.00, 0.90, 0.19, 0.14),
+    (0.15, 0.28, 0.13, 0.26, 0.90, 1.00, 0.23, 0.18),
+    (0.20, 0.12, 0.17, 0.20, 0.19, 0.23, 1.00, 0.90),
+    (0.10, 0.19, 0.24, 0.11, 0.14, 0.18, 0.90, 1.00),
+  ),
+  mask: (i, j) => i == j,
+  annotate: false,
+  boxes: ((0, 1, INK), (1, 0, INK), (2, 3, INK), (3, 2, INK),
+          (4, 5, INK), (5, 4, INK), (6, 7, INK), (7, 6, INK)),
+  colorbar: true,
+  cell: 9mm,
+  q-label: [anchor #h(0.25em) $z_i$],
+  k-label: [view #h(0.25em) $z_j$],
+))
 #pause
 #align(center, text(size: 14pt, fill: MUTED)[one boxed positive per row, the diagonal ignored — the *same* "correct match in a batch" geometry that powers CLIP])
 
@@ -342,12 +363,20 @@ $ L_"mask" = 1 / abs(M) sum_(p in M) norm(x_p - hat(x)_p)^2 $
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[no label anywhere — the target $x_p$ is just the pixels we chose to hide])
 
+// 14×14 = 196 patches; the 49 visible (25%) are a fixed seeded scatter,
+// so the masked set below is the MAE-style 75% (147 patches).
+#let mae-visible = (18, 23, 24, 25, 27, 28, 32, 34, 42, 43, 45, 58, 60, 62, 64,
+  71, 77, 89, 91, 92, 93, 96, 106, 112, 113, 116, 118, 121, 122, 123, 128, 131,
+  132, 136, 138, 140, 152, 154, 158, 165, 177, 179, 184, 185, 186, 192, 193, 194, 195)
+#let mae-masked = range(196).filter(i => not mae-visible.contains(i))
+
 == Why mask heavily? #V
 
 The mask ratio decides whether the task is *trivial* or *forces semantics*:
 #pause
 #two(
-  fig("/lecture18/figures/mae_mask.svg", w: 94%),
+  align(center, patchify(image: 14, patch: 1, mask: mae-masked,
+    numbering: false, cell: 3mm)),
   [
     - a *few* hidden patches $->$ copy local texture from neighbours — *trivial*;
     #v(3pt)

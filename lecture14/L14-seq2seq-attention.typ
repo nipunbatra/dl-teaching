@@ -511,13 +511,26 @@ Weighted sum of the states — the context lands near the most-attended one:
 #pause
 $ c = sum_t alpha_t h_t approx 0.0024(1) + 0.0179(2) + 0.9796(4) approx 3.96 $
 #pause
-#fig("/lecture14/figures/attention_weights.svg", w: 66%)
+#align(center, two(
+  bars((1, 2, 4), labels: ($h_1$, $h_2$, $h_3$), color: TEAL, highlight: 2,
+       title: [encoder states $h_t$ #h(0.3em) (query $q = 2$)]),
+  bars((2, 4, 8), softmax: true, labels: ($alpha_1$, $alpha_2$, $alpha_3$),
+       color: TEAL, highlight: 2, digits: 4,
+       title: [weights $alpha = "softmax"(q h)$]),
+))
 
 == Temperature: sharp vs diffuse #V
 
 Softmax with temperature $tau$: $alpha = "softmax"(e \/ tau)$ — small $tau$ sharpens, large $tau$ spreads:
 #pause
-#fig("/lecture14/figures/temperature_attention.svg", w: 74%)
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 16pt, align: bottom,
+  bars((2, 4, 8), softmax: true, temperature: 0.5, labels: ($h_1$, $h_2$, $h_3$),
+       color: ACC, title: [sharp #h(0.2em) $tau = 0.5$]),
+  bars((2, 4, 8), softmax: true, temperature: 1.0, labels: ($h_1$, $h_2$, $h_3$),
+       color: TEAL, title: [default #h(0.2em) $tau = 1$]),
+  bars((2, 4, 8), softmax: true, temperature: 2.0, labels: ($h_1$, $h_2$, $h_3$),
+       color: BLUE, title: [diffuse #h(0.2em) $tau = 2$]),
+))
 #pause
 #align(center, text(size: 15pt, fill: MUTED)[Transformers use *scaled* dot-product $q^top k \/ sqrt(d)$ — the $sqrt(d)$ keeps scores from saturating the softmax])
 

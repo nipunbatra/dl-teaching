@@ -7,6 +7,7 @@
 // Schematic figures: python3 lecture17/diagrams/l17_figs.py
 
 #import "../common/metropolis.typ": *
+#import "../common/mldiag.typ": *
 #show: metropolis-deck.with(
   title: [Vision Transformers and Multimodal Models],
   subtitle: [From image patches to CLIP and vision-language models],
@@ -469,7 +470,12 @@ $ N = (H W) / P^2, quad quad #text[attention cost] ~ O(N^2 d) $
 
 $224 times 224$ image, comparing $P = 16$ and $P = 8$:
 #pause
-#fig("/lecture17/figures/attn_cost.svg", w: 50%)
+#two(
+  bars((196, 784), labels: ("P = 16", "P = 8"), horizontal: true,
+    color: TEAL, highlight: 1, digits: 0, title: [sequence length $N$]),
+  bars((38416, 614656), labels: ("P = 16", "P = 8"), horizontal: true,
+    color: TEAL, highlight: 1, digits: 0, title: [attention entries $N^2$]),
+)
 #pause
 #align(center, text(size: 15pt, fill: MUTED)[$P: 16 -> 8$ quadruples $N$ ($196 -> 784$) and makes the attention matrix $approx 16 times$ bigger])
 

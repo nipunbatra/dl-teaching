@@ -5,6 +5,7 @@
 // Theme, palette, helpers and diagram builders live in common/metropolis.typ.
 
 #import "../common/metropolis.typ": *
+#import "../common/mldiag.typ": *
 #show: metropolis-deck.with(
   title: [Modern CNN Pipelines and Transfer Learning],
   subtitle: [Blocks, Scaling, Residuals, and Reusing Backbones],
@@ -456,7 +457,12 @@ $ #text[separable total:] quad "1,152" + "16,384" = "17,536" $
 
 == Cost, side by side #V
 
-#fig("/lecture8b/figures/param_bars.svg", w: 80%)
+#two(
+  bars((16448, 147520), labels: ("1×1", "3×3"), horizontal: true,
+    color: MUTED, highlight: ("0": GREEN), digits: 0, title: [params: $256 -> 64$ projection]),
+  bars((147456, 17536), labels: ("standard", "separable"), horizontal: true,
+    color: MUTED, highlight: ("1": GREEN), digits: 0, title: [cost: $3 times 3$, $128 -> 128$]),
+)
 #pause
 #align(center, text(size: 15pt, fill: MUTED)[left: $1 times 1$ vs $3 times 3$ params · right: standard vs depthwise-separable cost])
 

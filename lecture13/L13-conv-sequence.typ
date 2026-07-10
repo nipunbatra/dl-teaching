@@ -499,7 +499,18 @@ $ R = 1 + 4 dot 2 = 9 $
 
 == Linear vs exponential, side by side #V
 
-#fig("/lecture13/figures/rf_growth.svg", w: 62%)
+#align(center, lines(
+  (
+    ((1, 2), (2, 4), (3, 8), (4, 16), (5, 32), (6, 64), (7, 128), (8, 256), (9, 512), (10, 1024)),
+    ((1, 3), (2, 5), (3, 7), (4, 9), (5, 11), (6, 13), (7, 15), (8, 17), (9, 19), (10, 21)),
+  ),
+  log-y: true,
+  labels: ([dilated $2^L$], [ordinary $1 + 2L$]),
+  x-label: [number of layers $L$],
+  y-label: [receptive field $R_L$],
+  title: [depth buys context: linear vs exponential],
+  size: (82mm, 48mm),
+))
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[ordinary $1 + 2L$ crawls; dilated $2^L$ reaches $"1,024"$ in ten layers])
 

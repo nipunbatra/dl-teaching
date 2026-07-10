@@ -5,6 +5,7 @@
 // All theme/palette/helpers/diagrams live in common/metropolis.typ.
 
 #import "../common/metropolis.typ": *
+#import "../common/mldiag.typ": *
 #show: metropolis-deck.with(
   title: [Why These Losses?],
   subtitle: [A probabilistic refresher for Deep Learning],
@@ -362,7 +363,7 @@ $ p_k = e^(z_k) / (sum_j e^(z_j)) $
 #pause
 Two guaranteed properties: $p_k > 0$ and $sum_k p_k = 1$.
 #pause
-#fig("/lecture1/figures/softmax_bars.svg", w: 48%)
+#align(center, bars((2, 1, -0.5), labels: ("1", "2", "3"), softmax: true, title: [softmax probabilities]))
 #align(center, text(size: 17pt)[*Shift invariance:* $"softmax"(z) = "softmax"(z + c bold(1))$.])
 
 == Categorical NLL gives cross-entropy
@@ -407,8 +408,8 @@ Read off the loss at three confidences for the *true* class:
 For softmax followed by cross-entropy:
 $ (partial cal(L))/(partial z_k) = p_k - y_k, quad quad nabla_z cal(L) = p - y $
 #pause
-#fig("/lecture1/figures/gradient_bars.svg", w: 54%)
-#align(center, text(size: 16pt, fill: MUTED)[Predicted $p$, target $y$, and their difference — a preview of backprop.])
+#align(center, bars((0.55, -0.70, 0.15), labels: ("1", "2", "3"), baseline: 0, title: [$p - y$ (gradient on the logits)]))
+#align(center, text(size: 16pt, fill: MUTED)[For $p = (0.55, 0.30, 0.15)$, one-hot $y = (0, 1, 0)$: the signal $p - y$ is negative only on the true class — a preview of backprop.])
 
 == Interactive: logits → softmax → cross-entropy
 #stag(I)
