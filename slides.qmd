@@ -33,6 +33,13 @@ The course decks, rebuilt in **Typst** with a clean Beamer-*metropolis* look —
   <div class="lec"><span class="lec-num">12</span><span><span class="lec-title">Next-Token Prediction</span><span class="lec-sub">sequence probability, tokenization, embeddings, the MLP language model (makemore), sampling</span></span><span class="lec-links"><a href="slides-pdf/L11.pdf">PDF</a></span></div>
   <div class="lec"><span class="lec-num">13</span><span><span class="lec-title">Sequence Models I — RNNs, LSTMs, GRUs</span><span class="lec-sub">recurrent state, backprop through time, vanishing gradients &amp; clipping, gated cells</span></span><span class="lec-links"><a href="slides-pdf/L12.pdf">PDF</a></span></div>
   <div class="lec"><span class="lec-num">14</span><span><span class="lec-title">Convolutional Sequence Models</span><span class="lec-sub">causal &amp; dilated convolutions, receptive fields, TCNs, WaveNet</span></span><span class="lec-links"><a href="slides-pdf/L13.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">15</span><span><span class="lec-title">Sequence Models II — Encoder–Decoder &amp; Attention</span><span class="lec-sub">seq2seq, teacher forcing, beam search, and attention over source states</span></span><span class="lec-links"><a href="slides-pdf/L14.pdf">PDF</a></span></div>
+</div>
+
+<div class="mod-head"><span class="mod-name">Module 5 · Transformers</span><span class="mod-ng">attention is all you need</span></div>
+<div class="lec-list">
+  <div class="lec"><span class="lec-num">16</span><span><span class="lec-title">Transformers I — Self-Attention</span><span class="lec-sub">scaled dot-product, causal masking, multi-head, positional encoding, the block</span></span><span class="lec-links"><a href="slides-pdf/L15.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">17</span><span><span class="lec-title">Transformers II — BERT, GPT &amp; T5</span><span class="lec-sub">encoder/decoder/enc–decoder families, pretraining objectives, finetuning, decoding</span></span><span class="lec-links"><a href="slides-pdf/L16.pdf">PDF</a></span></div>
 </div>
 ```
 
