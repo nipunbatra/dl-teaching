@@ -381,9 +381,13 @@ $ ell(p_y) = -log p_y $
 #pause
 Read off the loss at three confidences for the *true* class:
 #pause
-#two(r: (1fr, 1.25fr),
+#two(r: (1fr, 1.3fr),
   [$p_y = 0.9 => ell approx 0.105$ \ $p_y = 0.1 => ell approx 2.303$ \ $p_y = 0.001 => ell approx 6.908$],
-  fig("/lecture1/figures/neglog_curve.svg", w: 78%),
+  lines(
+    range(0, 101).map(i => { let p = 0.001 + i * 0.00999; (p, -calc.ln(p)) }),
+    markers: false, x-label: [$p_y$], y-label: [$-log p_y$],
+    points: ((0.9, -calc.ln(0.9), [0.11]), (0.1, -calc.ln(0.1), [2.30]), (0.001, -calc.ln(0.001), [6.91])),
+    size: (56mm, 40mm)),
 )
 #pause
 #align(center, text(size: 17pt)[The negative log makes a confident wrong prediction a large loss.])
