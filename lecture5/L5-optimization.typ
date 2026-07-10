@@ -12,11 +12,11 @@
 
 #let IA = "https://nipunbatra.github.io/interactive-articles/"
 // the update loop: gradient -> optimizer -> new parameters
-#let updateloop = align(center, diagram(spacing: 15mm, node-stroke: 0.9pt + INK, node-fill: white, {
+#let updateloop = align(center, diagram(spacing: (23mm, 9mm), node-stroke: 0.9pt + INK, node-fill: white, {
   node((0,0), $theta_t$, radius: 7mm, stroke: 0.9pt + INK)
-  node((1,0), [backprop], radius: 9mm, fill: rgb("#EFEEEB"))
+  node((1,0), text(size: 14pt)[backprop], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 7pt, fill: rgb("#EFEEEB"))
   node((2,0), $g_t$, radius: 7mm, stroke: 0.9pt + TEAL)
-  node((3,0), [optimizer], radius: 9mm, fill: rgb("#FDECD6"), stroke: 0.9pt + ACC)
+  node((3,0), text(size: 14pt)[optimizer], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 7pt, fill: rgb("#FDECD6"), stroke: 0.9pt + ACC)
   node((4,0), $theta_(t+1)$, radius: 7mm, stroke: 0.9pt + ACC)
   edge((0,0),(1,0), "-|>", stroke: 0.8pt + MUTED)
   edge((1,0),(2,0), "-|>", stroke: 0.8pt + MUTED)
@@ -228,6 +228,14 @@ $ v_t = beta thin v_(t-1) + g_t, quad quad theta_(t+1) = theta_t - eta thin v_t 
 #pause
 - $beta in [0, 1)$ — the *momentum* coefficient (typically $0.9$);
 - $v_t$ is a running memory of *where we have been going*.
+
+== Momentum as a vector sum #V
+
+The update is a *vector addition*: the decayed velocity plus this step's gradient.
+#pause
+#fig("/lecture5/figures/momentum_vector.svg", w: 54%)
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[the long #text(fill: TEAL)[$beta v_(t-1)$] dominates; the cross-valley #text(fill: ACC)[$g_t$] is largely cancelled step to step])
 
 == Momentum is an exponential moving average #D
 

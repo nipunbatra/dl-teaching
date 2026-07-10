@@ -80,7 +80,7 @@ def f_sigmoid_saturation():
     ax.axhline(0.25,color=RED,lw=1.2,ls=':')
     ax.text(-7.6,0.28,r"max $\sigma'=1/4$",color=RED,fontsize=11)
     ax.axvspan(3,8,color=MUTED,alpha=.10); ax.axvspan(-8,-3,color=MUTED,alpha=.10)
-    ax.text(4.3,0.7,'saturated\n$\\sigma\'\\approx0$',color=MUTED,fontsize=10,ha='center')
+    ax.text(-5.5,0.62,'saturated\n$\\sigma\'\\approx0$',color=MUTED,fontsize=10,ha='center')
     ax.set_xlabel('z'); ax.set_yticks([0,.25,.5,1])
     ax.legend(frameon=False,fontsize=12,loc='center left')
     # inset: (1/4)^L

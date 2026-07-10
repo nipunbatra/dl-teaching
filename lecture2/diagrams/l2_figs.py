@@ -84,8 +84,10 @@ def f_xor():
     for ang in (0,): pass
     ax.plot([-.3,1.3],[1.05,-.05],color=MUTED,lw=1.4,ls='--'); ax.plot([-.3,1.3],[.4,1.6],color=MUTED,lw=1.4,ls='--')
     ax.text(-.28,1.5,'no single line\nseparates them',color=RED,fontsize=12)
-    ax.set_xlim(-.4,1.5); ax.set_ylim(-.3,1.7); ax.set_xticks([0,1]); ax.set_yticks([0,1])
-    ax.legend(frameon=False,fontsize=11,loc='lower right'); save(fig,'xor')
+    ax.set_xlim(-.4,1.5); ax.set_ylim(-.3,1.9); ax.set_xticks([0,1]); ax.set_yticks([0,1])
+    # legend above the plot so it never sits on the corner markers
+    ax.legend(frameon=False,fontsize=11,loc='lower center',bbox_to_anchor=(0.5,1.0),ncol=2,
+              handletextpad=0.3,columnspacing=1.2); save(fig,'xor')
 
 # 7 — feature transform: input (not sep) -> hidden (sep)
 def f_feature_transform():
@@ -107,10 +109,10 @@ def f_relu_build():
     Phi=np.column_stack([np.maximum(0,x-k) for k in kinks]+[np.ones_like(x)])  # ReLU basis + bias
     coef,*_=np.linalg.lstsq(Phi,target,rcond=None); approx=Phi@coef
     fig,ax=plt.subplots(figsize=(5.0,3.0))
-    for j in range(0,12,2): ax.plot(x,coef[j]*np.maximum(0,x-kinks[j]),color=TEAL,lw=0.8,alpha=.4)
+    for j in range(0,12,3): ax.plot(x,coef[j]*np.maximum(0,x-kinks[j]),color=TEAL,lw=0.7,alpha=.28)
     ax.plot(x,target,color=INK,lw=2.6,label='target f(x)')
     ax.plot(x,approx,color=ACC,lw=2.4,ls='--',label='sum of ReLUs')
-    ax.set_ylim(target.min()-1.2,target.max()+0.8)
+    ax.set_ylim(target.min()-1.0,target.max()+0.9)
     ax.set_xticks([]); ax.set_yticks([]); ax.legend(frameon=False,fontsize=11,loc='upper left'); save(fig,'relu_build')
 
 # 9 — softmax 3-class linear regions

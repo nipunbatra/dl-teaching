@@ -12,6 +12,32 @@
 
 #let IA = "https://nipunbatra.github.io/interactive-articles/"
 
+// ── dropout: an MLP with two hidden units zeroed (a sampled subnetwork) ──
+#let dropoutnet = align(center, diagram(spacing: (20mm, 4.5mm), {
+  let L(li, i, n) = (li, i - (n - 1)/2)
+  let dropped = (1, 3)
+  // edges only through surviving hidden units
+  for i in range(3) { for j in range(5) {
+    if not dropped.contains(j) { edge(L(0,i,3), L(1,j,5), stroke: 0.4pt + MUTED.lighten(20%)) }
+  }}
+  for j in range(5) { for k in range(2) {
+    if not dropped.contains(j) { edge(L(1,j,5), L(2,k,2), stroke: 0.4pt + MUTED.lighten(20%)) }
+  }}
+  // inputs
+  for i in range(3) { node(L(0,i,3), none, radius: 3mm, fill: INK, stroke: none) }
+  // hidden (dropped = dashed grey with ×)
+  for j in range(5) {
+    if dropped.contains(j) {
+      node(L(1,j,5), text(size: 10pt, fill: MUTED)[×], radius: 3.2mm, fill: rgb("#EFEEEB"),
+        stroke: (paint: MUTED, thickness: 0.7pt, dash: "dashed"))
+    } else {
+      node(L(1,j,5), none, radius: 3.2mm, fill: TEAL, stroke: none)
+    }
+  }
+  // outputs
+  for k in range(2) { node(L(2,k,2), none, radius: 3mm, fill: ACC, stroke: none) }
+}))
+
 #title-slide()
 
 // ═══════════════════════════ PART I — The generalization problem ═══════════════════════════
@@ -314,11 +340,13 @@ $ EE[tilde(h)] = 0.5 dot (h / 0.5) = h = [2, 4, 6, 8] $
 
 == Why it helps: model averaging
 
-Each mask defines a *different subnetwork*; over training we fit exponentially many.
+Each mask trains a *different subnetwork* — dashed units are dropped this step:
 #pause
-At test time the full network *approximates an average* of all these subnetworks.
+#dropoutnet
 #pause
-#notebox[An *ensemble-like* effect from one model — but this is an intuition, not an exact Bayesian average. Do not overclaim it.]
+We fit exponentially many subnetworks; at test the full net *approximates their average*.
+#pause
+#notebox[An *ensemble-like* effect from one model — but an intuition, not an exact Bayesian average. Do not overclaim it.]
 
 == Dropout caveats
 

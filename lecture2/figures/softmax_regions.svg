@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-07-09T21:01:43.151818</dc:date>
+    <dc:date>2026-07-10T08:49:27.046428</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -956,7 +956,7 @@ L 154.258194 187.66468
 L 154.81806 188.081871 
 L 154.81806 188.638125 
 z
-" clip-path="url(#p4adbbff298)" style="fill: #2c7a7b; fill-opacity: 0.22"/>
+" clip-path="url(#pb77a42cb1c)" style="fill: #2c7a7b; fill-opacity: 0.22"/>
     <path d="M 154.81806 188.081871 
 L 154.258194 187.66468 
 L 154.071572 187.525617 
@@ -2288,7 +2288,7 @@ L 154.444816 188.081871
 L 154.444816 188.638125 
 L 154.81806 188.638125 
 z
-" clip-path="url(#p4adbbff298)" style="fill: #eb811b; fill-opacity: 0.22"/>
+" clip-path="url(#pb77a42cb1c)" style="fill: #eb811b; fill-opacity: 0.22"/>
     <path d="M 7.946488 188.638125 
 L 8.692977 188.638125 
 L 9.439465 188.638125 
@@ -3135,7 +3135,7 @@ L 7.2 187.525617
 L 7.2 188.081871 
 L 7.2 188.638125 
 z
-" clip-path="url(#p4adbbff298)" style="fill: #14b03d; fill-opacity: 0.22"/>
+" clip-path="url(#pb77a42cb1c)" style="fill: #14b03d; fill-opacity: 0.22"/>
    </g>
    <g id="matplotlib.axis_1"/>
    <g id="matplotlib.axis_2"/>
@@ -3319,7 +3319,7 @@ L 228.160535 28.715048
 L 228.907023 28.715048 
 L 230.4 27.60254 
 L 230.4 27.60254 
-" clip-path="url(#p4adbbff298)" style="fill: none; stroke: #23373b; stroke-width: 1.4"/>
+" clip-path="url(#pb77a42cb1c)" style="fill: none; stroke: #23373b; stroke-width: 1.4"/>
     <path d="M 154.444816 188.638125 
 L 154.444816 188.081871 
 L 153.698328 187.525617 
@@ -3555,7 +3555,7 @@ L 8.692977 64.315316
 L 7.946488 64.315316 
 L 7.2 63.759061 
 L 7.2 63.759061 
-" clip-path="url(#p4adbbff298)" style="fill: none; stroke: #23373b; stroke-width: 1.4"/>
+" clip-path="url(#pb77a42cb1c)" style="fill: none; stroke: #23373b; stroke-width: 1.4"/>
    </g>
    <g id="patch_3">
     <path d="M 7.2 188.638125 
@@ -4052,7 +4052,7 @@ z
   </g>
  </g>
  <defs>
-  <clipPath id="p4adbbff298">
+  <clipPath id="pb77a42cb1c">
    <rect x="7.2" y="22.318125" width="223.2" height="166.32"/>
   </clipPath>
  </defs>

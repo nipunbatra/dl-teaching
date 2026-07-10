@@ -21,6 +21,19 @@
   for i in range(labs.len() - 1) { edge((i, 0), (i + 1, 0), "-|>", stroke: 0.8pt + MUTED) }
 }))
 
+// stacked-depth schematic: affine → nonlinearity → affine → … → output
+#let depth-schematic = align(center, diagram(spacing: (8mm, 8mm), node-stroke: 0.9pt, {
+  node((0,0), $x$, radius: 5mm, stroke: INK)
+  node((1,0), [$W_1 dot + b_1$], shape: fletcher.shapes.rect, fill: rgb("#E3EDED"), stroke: TEAL, inset: 6pt)
+  node((2,0), $phi$, radius: 5mm, fill: rgb("#FDECD6"), stroke: ACC)
+  node((3,0), [$W_2 dot + b_2$], shape: fletcher.shapes.rect, fill: rgb("#E3EDED"), stroke: TEAL, inset: 6pt)
+  node((4,0), $phi$, radius: 5mm, fill: rgb("#FDECD6"), stroke: ACC)
+  node((5,0), $dots.h$, stroke: none)
+  node((6,0), [$W_L dot + b_L$], shape: fletcher.shapes.rect, fill: rgb("#E3EDED"), stroke: TEAL, inset: 6pt)
+  node((7,0), $z$, radius: 5mm, stroke: ACC)
+  for i in range(7) { edge((i,0),(i+1,0), "-|>", stroke: 0.8pt + MUTED) }
+}))
+
 #title-slide()
 
 // ═══════════════════════════ PART I — Where we left off ═══════════════════════════
@@ -81,7 +94,7 @@ $ cal(L)(theta) = 1/n norm(y - tilde(X) theta)_2^2 $
 
 #fig("/lecture2/figures/linreg_geometry.svg", w: 46%)
 #pause
-#notebox[Linear regression fits a *hyperplane*: a line for $d{=}1$, a plane for $d{=}2$, a hyperplane in general. Residuals are the vertical gaps.]
+#notebox[Linear regression fits a *hyperplane*: a line for $d=1$, a plane for $d=2$, a hyperplane in general. Residuals are the vertical gaps.]
 
 == Closed-form solution #OPT
 
@@ -120,9 +133,9 @@ The linear score is unbounded:
 $ z = w^top x + b in RR $
 #pause
 But a binary label needs
-$ p(y{=}1 | x) in [0, 1]. $
+$ p(y=1 | x) in [0, 1]. $
 #pause
-#result[squash it: $p(y{=}1 | x) = sigma(z)$]
+#result[squash it: $p(y=1 | x) = sigma(z)$]
 
 == The sigmoid function #V
 
@@ -140,7 +153,7 @@ $ sigma(z) = 1/(1 + e^(-z)) $
 
 $ z = w^top x + b $
 #pause
-$ p_theta (y{=}1 | x) = sigma(z), quad quad p_theta (y{=}0 | x) = 1 - sigma(z) $
+$ p_theta (y=1 | x) = sigma(z), quad quad p_theta (y=0 | x) = 1 - sigma(z) $
 #pause
 $ Y | x tilde "Bernoulli"(sigma(w^top x + b)) $
 
@@ -201,7 +214,7 @@ $ z = w^top x + b, quad quad a = phi(z) $
 == Logistic regression is one neuron
 
 Take the activation to be the sigmoid:
-$ a = sigma(w^top x + b) = p(y{=}1 | x) $
+$ a = sigma(w^top x + b) = p(y=1 | x) $
 #pause
 #result[logistic regression is the simplest neural network — a single sigmoid neuron]
 
@@ -245,7 +258,7 @@ $ h_2 = underbrace(W_2 W_1, "one matrix") x + underbrace((W_2 b_1 + b_2), "one v
 
 == Softmax regression
 
-$ p(y{=}k | x) = exp(z_k) / (sum_(j=1)^K exp(z_j)), quad z = W x + b $
+$ p(y=k | x) = exp(z_k) / (sum_(j=1)^K exp(z_j)), quad z = W x + b $
 #pause
 Also called *multinomial logistic regression*. Generalizes the sigmoid to $K$ classes.
 
@@ -341,6 +354,10 @@ For ReLU, $h_j = max(0, w_j^top x + b_j)$ — each unit is active on one side of
 
 $ h^((1)) = phi(W_1 x + b_1), quad h^((2)) = phi(W_2 h^((1)) + b_2), quad dots.h $
 $ z = W_L h^((L-1)) + b_L $
+#pause
+#v(4pt)
+#depth-schematic
+#align(center, text(size: 16pt, fill: MUTED)[affine $arrow.r$ nonlinearity $arrow.r$ affine, stacked $L$ deep])
 #pause
 Then $p = "softmax"(z)$ for classification, or $hat(y) = z$ for regression.
 

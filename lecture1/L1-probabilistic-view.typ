@@ -42,20 +42,22 @@ Which is it?
 == The map for today
 #stag(V)
 
-#two(
-  [*Assumption about outputs*
-   #v(4pt)
-   #align(center)[$p_theta (y | x)$]
-   #align(center, text(fill: MUTED)[likelihood $arrow.b$ negative log-likelihood])
-   #v(2pt)
-   #align(center, text(weight: 600, fill: ACC)[training loss])],
-  [*Assumption about parameters*
-   #v(4pt)
-   #align(center)[$p(theta)$]
-   #align(center, text(fill: MUTED)[Bayes' rule $arrow.b$ MAP])
-   #v(2pt)
-   #align(center, text(weight: 600, fill: ACC)[regularization])],
-)
+Two probabilistic assumptions, two halves of the objective:
+#v(10pt)
+#align(center, diagram(
+  spacing: (17mm, 9mm), node-stroke: 0.9pt,
+  {
+    node((0,0), [outputs\ $p_theta (y|x)$], shape: fletcher.shapes.rect, fill: rgb("#EFEEEB"), stroke: INK, inset: 7pt)
+    node((2,0), [parameters\ $p(theta)$], shape: fletcher.shapes.rect, fill: rgb("#EFEEEB"), stroke: INK, inset: 7pt)
+    node((0,1), [training loss], shape: fletcher.shapes.rect, fill: rgb("#FDECD6"), stroke: ACC, inset: 7pt)
+    node((2,1), [regularizer], shape: fletcher.shapes.rect, fill: rgb("#FDECD6"), stroke: ACC, inset: 7pt)
+    edge((0,0),(0,1), text(size: 15pt)[negative log-likelihood], "-|>", stroke: 0.8pt + MUTED, label-side: left)
+    edge((2,0),(2,1), text(size: 15pt)[Bayes' rule $arrow.r$ MAP], "-|>", stroke: 0.8pt + MUTED, label-side: right)
+    node((1,2), text(fill: white, weight: 600)[DL objective], shape: fletcher.shapes.rect, fill: TEAL, stroke: none, inset: 8pt)
+    edge((0,1),(1,2), "-|>", stroke: 0.8pt + MUTED)
+    edge((2,1),(1,2), "-|>", stroke: 0.8pt + MUTED)
+  }
+))
 
 // ══════════════════════════════ PART II ══════════════════════════════
 = Minimal probability revision
@@ -64,7 +66,7 @@ Which is it?
 
 #two(
   [$ hat(y) = f_theta (x) $ #align(center, text(fill: MUTED)[a single number])],
-  [$ Y | X{=}x tilde p_theta (dot | x) $ #align(center, text(fill: MUTED)[a full distribution])],
+  [$ Y | X=x tilde p_theta (dot | x) $ #align(center, text(fill: MUTED)[a full distribution])],
 )
 #pause
 - regression network → a *Gaussian mean*
@@ -79,14 +81,14 @@ Which is it?
 For a continuous $Y$, probability comes from *area*:
 $ P(a <= Y <= b) = integral_a^b p(y) dif y $
 #pause
-#alertbox[$p(y) != P(Y{=}y)$ — a density can *exceed 1*; only _integrals_ are probabilities.]
+#alertbox[$p(y) != P(Y=y)$ — a density can *exceed 1*; only _integrals_ are probabilities.]
 #fig("/lecture1/figures/density_area.svg", w: 42%)
 
 == Uniform distribution: support matters
 #stag(V)
 
 #two(r: (1.15fr, 1fr),
-  [$ Y tilde cal(U)(a, b) quad p(y) = cases(1\/(b-a) & a <= y <= b, 0 & "otherwise") $
+  [$ Y tilde cal(U)(a, b) quad p(y) = cases(1\/(b-a) & quad a <= y <= b, 0 & quad "otherwise") $
    #pause
    *Q.* NLL _outside_ $[a,b]$? #h(6pt) *A.* $-log 0 = +infinity$.
    #v(4pt)
@@ -242,7 +244,7 @@ _Controls:_ Gaussian / Laplace / Uniform / Student-$t$ · noise scale · slope &
 == Classification should output probabilities
 
 For $K$ classes:
-$ p_theta (y{=}k | x) >= 0, quad quad sum_(k=1)^K p_theta (y{=}k | x) = 1 $
+$ p_theta (y=k | x) >= 0, quad quad sum_(k=1)^K p_theta (y=k | x) = 1 $
 #pause
 #fig("/lecture1/figures/softmax_pipeline.svg", w: 58%)
 #align(center)[*logits* $z_k in RR$ → *probabilities* $p_k in [0,1]$.]
@@ -254,7 +256,7 @@ $ Y | x tilde "Bernoulli"(p_theta (x)) $
 Compact one-line form:
 $ p(y | x, theta) = p^y (1-p)^(1-y) $
 #pause
-#two(notebox[$y{=}1 => p(y){=}p$], notebox[$y{=}0 => p(y){=}1-p$])
+#two(notebox[$y=1 => p(y)=p$], notebox[$y=0 => p(y)=1-p$])
 
 == Bernoulli NLL gives BCE
 #stag(D)
@@ -344,19 +346,19 @@ MSE is not _impossible_ — it corresponds to the *wrong observation model* for 
 
 == Bayes' rule as a classifier
 
-$ p(y{=}k | x) = (p(x | y{=}k) thin p(y{=}k)) / p(x) $
+$ p(y=k | x) = (p(x | y=k) thin p(y=k)) / p(x) $
 #pause
 Prediction ignores the constant denominator:
-$ hat(y) = arg max_k p(x | y{=}k) thin p(y{=}k) $
+$ hat(y) = arg max_k p(x | y=k) thin p(y=k) $
 #pause
-- $p(y{=}k)$ — class *prior*
-- $p(x | y{=}k)$ — class-conditional *likelihood*
-- $p(y{=}k | x)$ — *posterior* class probability
+- $p(y=k)$ — class *prior*
+- $p(x | y=k)$ — class-conditional *likelihood*
+- $p(y=k | x)$ — *posterior* class probability
 
 == A 1-D generative classifier
 #stag(V)
 
-$ X | Y{=}0 tilde cal(N)(mu_0, sigma_0^2), quad X | Y{=}1 tilde cal(N)(mu_1, sigma_1^2) $
+$ X | Y=0 tilde cal(N)(mu_0, sigma_0^2), quad X | Y=1 tilde cal(N)(mu_1, sigma_1^2) $
 #pause
 #fig("/lecture1/figures/bayes_classifier.svg", w: 50%)
 #align(center, text(size: 16pt, fill: MUTED)[Two class-conditional densities, a test point $x^star$, and its likelihood under each class.])
@@ -364,14 +366,14 @@ $ X | Y{=}0 tilde cal(N)(mu_0, sigma_0^2), quad X | Y{=}1 tilde cal(N)(mu_1, sig
 == Priors move the decision boundary
 #stag(V)
 
-#two(notebox[*Balanced* $p(Y{=}1) = 0.5$], notebox[*Rare* $p(Y{=}1) = 0.1$])
+#two(notebox[*Balanced* $p(Y=1) = 0.5$], notebox[*Rare* $p(Y=1) = 0.1$])
 #fig("/lecture1/figures/priors_shift_boundary.svg", w: 54%)
 #result[posterior $prop$ likelihood $times$ prior]
 
 == Interactive: Bayes classifier
 #stag(I)
 
-#interbox[*`bayes-classifier.html`* — controls the means $mu_0, mu_1$, the variances, the *prior* $p(Y{=}1)$, and a test point $x^star$. Shows $p(x | Y{=}0)$, $p(x | Y{=}1)$, the posterior $p(Y{=}1 | x)$, and the decision boundary together.]
+#interbox[*`bayes-classifier.html`* — controls the means $mu_0, mu_1$, the variances, the *prior* $p(Y=1)$, and a test point $x^star$. Shows $p(x | Y=0)$, $p(x | Y=1)$, the posterior $p(Y=1 | x)$, and the decision boundary together.]
 #pause
 *Try:* balanced → drop the positive prior to $0.1$ → why does the boundary move? then widen one variance.
 
@@ -398,7 +400,7 @@ _Before seeing this dataset, which parameter values are plausible?_
 
 $ p(theta | cal(D)) = (p(cal(D) | theta) thin p(theta)) / p(cal(D)) $
 #pause
-#fig("/lecture1/figures/prior_likelihood_posterior.svg", w: 38%)
+#fig("/lecture1/figures/prior_likelihood_posterior.svg", w: 34%)
 #align(center, text(size: 17pt)[$p(cal(D)) = integral p(cal(D) | theta) p(theta) dif theta$ — the evidence (we stop here).])
 
 == MAP estimation

@@ -14,15 +14,15 @@
 
 // ── local fletcher diagrams ──────────────────────────────────────────
 // deep chain: signals forward, gradients backward
-#let deepchain = align(center, diagram(spacing: 12mm, node-stroke: 0.9pt + INK, node-fill: white, {
+#let deepchain = align(center, diagram(spacing: (12mm, 10mm), node-stroke: 0.9pt + INK, node-fill: white, {
   let labs = ($x$, $h^((1))$, $h^((2))$, $dots.c$, $h^((L))$, $cal(L)$)
   for (i, l) in labs.enumerate() {
     let c = if i == labs.len() - 1 { ACC } else if i == 0 { INK } else { TEAL }
     node((i, 0), l, radius: 6.5mm, stroke: 0.9pt + c)
   }
   for i in range(labs.len() - 1) { edge((i, 0), (i + 1, 0), "-|>", stroke: 0.8pt + MUTED) }
-  edge((0, 1), (5, 1), "-|>", stroke: 1.3pt + TEAL, label: text(fill: TEAL)[signals forward])
-  edge((5, 1.75), (0, 1.75), "-|>", stroke: 1.3pt + ACC, label: text(fill: ACC)[gradients backward])
+  edge((0, 1.3), (5, 1.3), "-|>", stroke: 1.3pt + TEAL, label: text(fill: TEAL)[signals forward], label-side: left)
+  edge((5, 2.4), (0, 2.4), "-|>", stroke: 1.3pt + ACC, label: text(fill: ACC)[gradients backward], label-side: left)
 }))
 
 // residual block: two weight layers + activation, with an identity shortcut to the add
@@ -39,6 +39,20 @@
   edge((3, 0), (4, 0), $F_ell (x_ell)$, "-|>", stroke: 0.9pt + INK)
   edge((4, 0), (5, 0), "-|>", stroke: 0.9pt + ACC)
   edge((0, 0), (4, 0), text(fill: GREEN)[identity], "-|>", bend: -50deg, stroke: 1.1pt + GREEN)
+}))
+
+// backward through a residual block: upstream grad splits into identity + residual paths, then adds
+#let residback = align(center, diagram(spacing: (18mm, 12mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((3.4, 0), $overline(x)_(ell+1)$, radius: 8mm, stroke: 0.9pt + ACC)
+  node((1.7, 1.15), text(size: 14pt)[$(partial F_ell)/(partial x_ell)$], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 7pt, fill: rgb("#E6F0F0"), stroke: 0.9pt + TEAL)
+  node((1, 0), $+$, radius: 5.5mm, stroke: 1pt + INK)
+  node((0, 0), $overline(x)_ell$, radius: 8mm, stroke: 0.9pt + INK)
+  // residual path — through the branch Jacobian (can shrink)
+  edge((3.4, 0), (1.7, 1.15), "-|>", stroke: 1pt + TEAL)
+  edge((1.7, 1.15), (1, 0), text(size: 13pt, fill: TEAL)[residual term], "-|>", stroke: 1pt + TEAL, label-side: left)
+  // identity path — straight through, no matmul (green)
+  edge((3.4, 0), (1, 0), text(fill: GREEN)[identity $times I$], "-|>", stroke: 1.1pt + GREEN, label-side: right)
+  edge((1, 0), (0, 0), "-|>", stroke: 0.9pt + INK)
 }))
 
 // axes grid: a B×D table of dots; highlight one COLUMN (BN) or one ROW (LN)
@@ -564,6 +578,14 @@ $ (partial cal(L))/(partial x_ell) = (partial cal(L))/(partial x_(ell+1)) (I + (
 #result[the identity term passes the gradient through with *no* matrix multiply]
 #pause
 #align(center, text(size: 15pt, fill: MUTED)[even if the branch Jacobian vanishes, the $I$ keeps a clean path back])
+
+== The gradient's two paths #V
+
+Backward, the upstream gradient $overline(x)_(ell+1)$ splits and *adds* at the input:
+#pause
+#residback
+#pause
+#align(center, text(size: 15pt, fill: MUTED)[the #text(fill: GREEN)[green identity path] delivers $overline(x)_(ell+1)$ untouched — so $overline(x)_ell$ stays alive even if the #text(fill: TEAL)[residual term] shrinks])
 
 == Residuals keep gradients alive #V
 

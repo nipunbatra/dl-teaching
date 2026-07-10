@@ -15,6 +15,24 @@
   node((0,0), $x$, radius: 6mm); node((1,0), $u$, radius: 6mm, stroke: 0.9pt + TEAL); node((2,0), $v$, radius: 6mm, stroke: 0.9pt + ACC)
   edge((0,0),(1,0), $f$, "-|>", stroke: 0.8pt + MUTED); edge((1,0),(2,0), $g$, "-|>", stroke: 0.8pt + MUTED)
 }))
+// backprop as a right-to-left chain of vector–Jacobian products
+#let vjp-chain = align(center, diagram(spacing: (21mm, 13mm), node-stroke: 0.9pt, {
+  let fwd = ($x$, $h_1$, $h_2$, $cal(L)$)
+  for (i, l) in fwd.enumerate() {
+    let c = if i == 0 { INK } else if i == 3 { ACC } else { TEAL }
+    node((i, 0), l, radius: 6mm, stroke: c)
+  }
+  for i in range(3) { edge((i, 0), (i + 1, 0), "-|>", stroke: 0.8pt + MUTED) }
+  let bwd = ($overline(x)$, $overline(h)_1$, $overline(h)_2$, $1$)
+  for (i, l) in bwd.enumerate() {
+    let c = if i == 0 { INK } else if i == 3 { ACC } else { TEAL }
+    node((i, 1), l, radius: 6mm, fill: rgb("#EFEEEB"), stroke: c)
+  }
+  edge((3, 0), (3, 1), text(size: 14pt)[seed $1$], "-|>", stroke: 0.8pt + MUTED, label-side: right)
+  edge((3, 1), (2, 1), $J^top$, "-|>", stroke: 0.9pt + GREEN, label-side: left)
+  edge((2, 1), (1, 1), $J^top$, "-|>", stroke: 0.9pt + GREEN, label-side: left)
+  edge((1, 1), (0, 1), $J^top$, "-|>", stroke: 0.9pt + GREEN, label-side: left)
+}))
 
 #title-slide()
 
@@ -271,6 +289,9 @@ $ underbrace(overline(x), (partial cal(L))/(partial x)) = J^top thin underbrace(
 
 For $x -> h_1 -> h_2 -> cal(L)$:
 $ nabla_x cal(L) = J_(h_1, x)^top thin J_(h_2, h_1)^top thin nabla_(h_2) cal(L) $
+#pause
+#v(4pt)
+#vjp-chain
 #pause
 Evaluate *right to left*: $overline(h)_2 -> overline(h)_1 -> overline(x)$ — vectors only.
 

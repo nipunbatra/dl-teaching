@@ -14,9 +14,9 @@
 
 // ── the modern conv primitive: Conv -> Norm -> Activation ──
 #let convblock = align(center, diagram(spacing: 13mm, node-stroke: 0.9pt + INK, node-fill: white, {
-  node((0,0), [Conv], radius: 8mm, fill: TEAL.lighten(82%), stroke: 0.9pt + TEAL)
-  node((1,0), [Norm], radius: 8mm, fill: BLUE.lighten(82%), stroke: 0.9pt + BLUE)
-  node((2,0), [Activation], radius: 10mm, fill: ACC.lighten(82%), stroke: 0.9pt + ACC)
+  node((0,0), text(size: 15pt)[Conv], fill: TEAL.lighten(82%), stroke: 0.9pt + TEAL, corner-radius: 3pt, inset: 8pt)
+  node((1,0), text(size: 15pt)[Norm], fill: BLUE.lighten(82%), stroke: 0.9pt + BLUE, corner-radius: 3pt, inset: 8pt)
+  node((2,0), text(size: 15pt)[Activation], fill: ACC.lighten(82%), stroke: 0.9pt + ACC, corner-radius: 3pt, inset: 8pt)
   for i in range(2) { edge((i,0),(i+1,0), "-|>", stroke: 0.8pt + MUTED) }
 }))
 
@@ -53,7 +53,7 @@
   blk(1, "conv", TEAL); blk(2, "norm", BLUE); blk(3, "ReLU", ACC)
   blk(4, "conv", TEAL); blk(5, "norm", BLUE)
   node((6, 0), [$+$], radius: 5mm, fill: white, stroke: 1pt + INK)
-  node((7, 0), [ReLU], radius: 7mm, fill: ACC.lighten(82%), stroke: 0.9pt + ACC)
+  node((7, 0), text(size: 11.5pt)[ReLU], fill: ACC.lighten(82%), stroke: 0.9pt + ACC, corner-radius: 3pt, inset: 5pt)
   node((8, 0), $x_(ell+1)$, radius: 7mm, stroke: 0.9pt + ACC)
   for i in range(6) { edge((i,0),(i+1,0), "-|>", stroke: 0.8pt + MUTED) }
   edge((6,0),(7,0), "-|>", stroke: 0.8pt + MUTED)
@@ -74,8 +74,8 @@
 
 // ── backbone / head abstraction: one backbone, three task heads ──
 #let backboneheads = align(center, diagram(spacing: (16mm, 9mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  node((0, 0), [image $x$], radius: 8mm, fill: rgb("#EFEEEB"))
-  node((1, 0), [backbone \ #text(size: 11pt, fill: MUTED)[$F = f(x)$]], radius: 11mm, fill: TEAL.lighten(82%), stroke: 0.9pt + TEAL)
+  node((0, 0), [image $x$], fill: rgb("#EFEEEB"), stroke: 0.9pt + INK, corner-radius: 3pt, inset: 8pt)
+  node((1, 0), align(center, [backbone \ #text(size: 11pt, fill: MUTED)[$F = f(x)$]]), fill: TEAL.lighten(82%), stroke: 0.9pt + TEAL, corner-radius: 3pt, inset: 8pt)
   node((2.2, 1.3), text(size: 12pt)[classification], fill: ACC.lighten(85%), stroke: 0.9pt + ACC, corner-radius: 3pt, inset: 6pt)
   node((2.2, 0), text(size: 12pt)[detection], fill: BLUE.lighten(85%), stroke: 0.9pt + BLUE, corner-radius: 3pt, inset: 6pt)
   node((2.2, -1.3), text(size: 12pt)[segmentation], fill: GREEN.lighten(85%), stroke: 0.9pt + GREEN, corner-radius: 3pt, inset: 6pt)
@@ -83,6 +83,19 @@
   edge((1,0), (2.2,1.3), "-|>", stroke: 0.8pt + MUTED)
   edge((1,0), (2.2,0), "-|>", stroke: 0.8pt + MUTED)
   edge((1,0), (2.2,-1.3), "-|>", stroke: 0.8pt + MUTED)
+}))
+
+// ── the bottleneck sandwich: 1×1 reduce -> 3×3 spatial -> 1×1 expand ──
+#let bottleneck = align(center, diagram(spacing: (11mm, 7mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0, 0), $x$, radius: 5mm, fill: rgb("#EFEEEB"))
+  node((1, 0), align(center, [$1 times 1$ \ #text(size: 10pt, fill: MUTED)[$256 -> 64$]]), fill: BLUE.lighten(82%), stroke: 0.9pt + BLUE, corner-radius: 3pt, inset: 6pt)
+  node((2, 0), align(center, [$3 times 3$ \ #text(size: 10pt, fill: MUTED)[$64 -> 64$]]), fill: TEAL.lighten(82%), stroke: 0.9pt + TEAL, corner-radius: 3pt, inset: 6pt)
+  node((3, 0), align(center, [$1 times 1$ \ #text(size: 10pt, fill: MUTED)[$64 -> 256$]]), fill: BLUE.lighten(82%), stroke: 0.9pt + BLUE, corner-radius: 3pt, inset: 6pt)
+  node((4, 0), $y$, radius: 5mm, stroke: 0.9pt + ACC)
+  for i in range(4) { edge((i,0),(i+1,0), "-|>", stroke: 0.8pt + MUTED) }
+  node((1, 1.5), text(size: 10pt, fill: MUTED)[squeeze], stroke: none, fill: none)
+  node((2, 1.5), text(size: 10pt, fill: MUTED)[cheap spatial], stroke: none, fill: none)
+  node((3, 1.5), text(size: 10pt, fill: MUTED)[expand], stroke: none, fill: none)
 }))
 
 #title-slide()
@@ -245,6 +258,14 @@ $ underbrace(1 times 1, 256 -> 64) quad -> quad underbrace(3 times 3, 64 -> 64) 
 - far less compute, with similar representational power.
 #pause
 #notebox[This *bottleneck* is the engine inside ResNet, Inception, and MobileNet — reduce channels, do the spatial work, expand back.]
+
+== The bottleneck, visually #V
+
+Two $1 times 1$s wrap the costly $3 times 3$, so the spatial work runs in a *thin* channel space:
+#pause
+#bottleneck
+#pause
+#align(center, text(size: 15pt, fill: MUTED)[squeeze $256 -> 64$, do the $3 times 3$ in the cheap $64$-channel space, then expand $64 -> 256$])
 
 // ═══════════════════════════ PART IV — Inception ═══════════════════════════
 = Inception — multi-scale, factorized

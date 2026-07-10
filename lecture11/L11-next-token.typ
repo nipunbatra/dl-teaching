@@ -29,12 +29,13 @@
 }))
 
 // ── token id -> embedding table -> a single row ──
-#let lookupdiag = align(center, diagram(spacing: 16mm, node-stroke: 0.9pt + INK, node-fill: white, {
-  node((0, 0), [token id \ #text(size: 13pt, fill: MUTED)[$= 5$]], radius: 9mm, fill: cream)
-  node((1, 0), [$E$ \ #text(size: 12pt, fill: MUTED)[$V times d$ table]], radius: 10mm, fill: TEAL.lighten(80%), stroke: 0.9pt + TEAL)
-  node((2, 0), [row 5 \ #text(size: 12pt, fill: MUTED)[$= e_5 in RR^d$]], radius: 10mm, fill: ACC.lighten(80%), stroke: 0.9pt + ACC)
-  edge((0, 0), (1, 0), "-|>", stroke: 0.8pt + MUTED, label: text(size: 11pt)[index])
-  edge((1, 0), (2, 0), "-|>", stroke: 0.8pt + MUTED, label: text(size: 11pt)[select])
+// rounded-rect nodes so the two-line labels sit fully inside
+#let lookupdiag = align(center, diagram(spacing: (34mm, 8mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0, 0), [token id \ #text(size: 13pt, fill: MUTED)[$= 5$]], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 8pt, fill: cream)
+  node((1, 0), [$E$ \ #text(size: 12pt, fill: MUTED)[$V times d$ table]], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 8pt, fill: TEAL.lighten(80%), stroke: 0.9pt + TEAL)
+  node((2, 0), [row 5 \ #text(size: 12pt, fill: MUTED)[$= e_5 in RR^d$]], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 8pt, fill: ACC.lighten(80%), stroke: 0.9pt + ACC)
+  edge((0, 0), (1, 0), "-|>", stroke: 0.8pt + MUTED, label: text(size: 11pt)[index], label-side: center)
+  edge((1, 0), (2, 0), "-|>", stroke: 0.8pt + MUTED, label: text(size: 11pt)[select], label-side: center)
 }))
 
 // ── the makemore MLP language model (Bengio 2003) architecture ──
@@ -55,6 +56,20 @@
   edge((3.55, 0), (4.95, 0), "-|>", stroke: 0.9pt + INK)
   edge((4.95, 0), (6.1, 0), "-|>", stroke: 0.9pt + INK)
   node((0, 1.95), text(size: 11pt, fill: MUTED)[token ids], stroke: none, fill: none); node((1.05, 1.95), text(size: 11pt, fill: MUTED)[$E$ lookup], stroke: none, fill: none)
+}))
+
+// ── the autoregressive generation loop: context -> model -> p_t -> sample -> append -> repeat ──
+#let genloop = align(center, diagram(spacing: (17mm, 9mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  let rn(pos, lbl, c, fill) = node(pos, text(size: 13pt, lbl), shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 7pt, stroke: 0.9pt + c, fill: fill)
+  rn((0, 0), [context], INK, cream)
+  rn((1, 0), [model], BLUE, BLUE.lighten(82%))
+  rn((2, 0), [$p_t$], ACC, ACC.lighten(80%))
+  rn((3, 0), [sample $hat(x)_t$], GREEN, GREEN.lighten(80%))
+  edge((0, 0), (1, 0), "-|>", stroke: 0.7pt + MUTED, label: text(size: 10pt, fill: MUTED)[run])
+  edge((1, 0), (2, 0), "-|>", stroke: 0.7pt + MUTED)
+  edge((2, 0), (3, 0), "-|>", stroke: 0.7pt + MUTED, label: text(size: 10pt, fill: MUTED)[sample])
+  edge((3, 0), (0, 0), "-|>", bend: -36deg, stroke: 0.9pt + GREEN)
+  node((1.5, 1.02), text(size: 10pt, fill: GREEN)[append $hat(x)_t$, drop oldest — *repeat*], stroke: none, fill: white)
 }))
 
 #title-slide()
@@ -583,20 +598,23 @@ $ "NLL" = log 10 approx 2.30 quad => quad "PPL" = e^(log 10) = 10 $
 
 At *training* time the previous tokens are *true*; at *generation* time they are the model's *own* outputs, fed back in:
 #pause
-#align(center, diagram(spacing: (12mm, 8mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  // training row
-  node((-1.1, 0), text(size: 12pt, fill: MUTED)[train], stroke: none, fill: none)
-  node((0, 0), text(size: 12pt)[true $x_(<t)$], radius: 8mm, fill: cream)
-  node((1.4, 0), text(size: 12pt)[model], radius: 7mm, fill: BLUE.lighten(82%), stroke: 0.9pt + BLUE)
-  node((2.8, 0), text(size: 12pt)[$p(x_t)$], radius: 7mm, fill: ACC.lighten(80%), stroke: 0.9pt + ACC)
-  edge((0, 0), (1.4, 0), "-|>", stroke: 0.7pt + MUTED); edge((1.4, 0), (2.8, 0), "-|>", stroke: 0.7pt + MUTED)
-  // generation row
-  node((-1.1, -1.4), text(size: 12pt, fill: MUTED)[gen], stroke: none, fill: none)
-  node((0, -1.4), text(size: 12pt)[context], radius: 8mm, fill: cream)
-  node((1.4, -1.4), text(size: 12pt)[model], radius: 7mm, fill: BLUE.lighten(82%), stroke: 0.9pt + BLUE)
-  node((2.8, -1.4), text(size: 12pt)[sample $hat(x)_t$], radius: 8mm, fill: GREEN.lighten(80%), stroke: 0.9pt + GREEN)
-  edge((0, -1.4), (1.4, -1.4), "-|>", stroke: 0.7pt + MUTED); edge((1.4, -1.4), (2.8, -1.4), "-|>", stroke: 0.7pt + MUTED)
-  edge((2.8, -1.4), (0, -1.4), "-|>", bend: 40deg, stroke: 0.9pt + GREEN, label: text(size: 10pt, fill: GREEN)[append, feed back])
+#align(center, diagram(spacing: (17mm, 13mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  let rn(pos, lbl, c: INK, fill: white) = node(pos, text(size: 13pt, lbl),
+    shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 7pt, stroke: 0.9pt + c, fill: fill)
+  // generation row (top)
+  node((-1.15, -1.4), text(size: 12pt, fill: MUTED)[gen], stroke: none, fill: none)
+  rn((0, -1.4), [context], fill: cream)
+  rn((1.4, -1.4), [model], c: BLUE, fill: BLUE.lighten(82%))
+  rn((2.9, -1.4), [sample $hat(x)_t$], c: GREEN, fill: GREEN.lighten(80%))
+  edge((0, -1.4), (1.4, -1.4), "-|>", stroke: 0.7pt + MUTED); edge((1.4, -1.4), (2.9, -1.4), "-|>", stroke: 0.7pt + MUTED)
+  edge((2.9, -1.4), (0, -1.4), "-|>", bend: 32deg, stroke: 0.9pt + GREEN)
+  node((1.45, -0.72), text(size: 10pt, fill: GREEN)[append, feed back], stroke: none, fill: white)
+  // training row (bottom)
+  node((-1.15, 0), text(size: 12pt, fill: MUTED)[train], stroke: none, fill: none)
+  rn((0, 0), [true $x_(<t)$], fill: cream)
+  rn((1.4, 0), [model], c: BLUE, fill: BLUE.lighten(82%))
+  rn((2.9, 0), [$p(x_t)$], c: ACC, fill: ACC.lighten(80%))
+  edge((0, 0), (1.4, 0), "-|>", stroke: 0.7pt + MUTED); edge((1.4, 0), (2.9, 0), "-|>", stroke: 0.7pt + MUTED)
 }))
 
 == The generation algorithm
@@ -612,6 +630,9 @@ One token at a time:
 + *append* it; drop the oldest token if the context is fixed-length;
 #pause
 + repeat until `<EOS>` or a maximum length.
+#pause
+#v(6pt)
+#genloop
 
 == Greedy decoding
 

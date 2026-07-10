@@ -19,18 +19,34 @@
   blk(1, "Conv", TEAL); blk(2, "ReLU", ACC); blk(3, "Pool", BLUE)
   blk(4, "Conv", TEAL); blk(5, "ReLU", ACC); blk(6, "Pool", BLUE)
   blk(7, "GAP", GREEN); blk(8, "FC", ACC)
-  node((9, 0), text(size: 13pt)[softmax], radius: 9mm, fill: rgb("#FDECD6"), stroke: 0.9pt + ACC)
+  node((9, 0), text(size: 13pt)[softmax], fill: ACC.lighten(82%), stroke: 0.9pt + ACC, corner-radius: 3pt, inset: 6pt)
   for i in range(9) { edge((i, 0), (i + 1, 0), "-|>", stroke: 0.7pt + MUTED) }
 }))
 
 // ── the classifier head: feature map -> GAP -> linear -> softmax -> p ──
-#let headpipe = align(center, diagram(spacing: 15mm, node-stroke: 0.9pt + INK, node-fill: white, {
-  node((0,0), [$X$ \ #text(size: 12pt, fill: MUTED)[$H{times}W{times}C$]], radius: 9mm, fill: rgb("#EFEEEB"))
-  node((1,0), [GAP], radius: 8mm, fill: GREEN.lighten(82%), stroke: 0.9pt + GREEN)
-  node((2,0), [linear], radius: 8mm, fill: ACC.lighten(82%), stroke: 0.9pt + ACC)
-  node((3,0), [softmax], radius: 9mm, fill: rgb("#FDECD6"), stroke: 0.9pt + ACC)
+#let headpipe = align(center, diagram(spacing: 13mm, node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0,0), align(center, [$X$ \ #text(size: 11pt, fill: MUTED)[$H times W times C$]]), fill: rgb("#EFEEEB"), stroke: 0.9pt + INK, corner-radius: 3pt, inset: 7pt)
+  node((1,0), text(size: 14pt)[GAP], fill: GREEN.lighten(82%), stroke: 0.9pt + GREEN, corner-radius: 3pt, inset: 7pt)
+  node((2,0), text(size: 14pt)[linear], fill: ACC.lighten(82%), stroke: 0.9pt + ACC, corner-radius: 3pt, inset: 7pt)
+  node((3,0), text(size: 14pt)[softmax], fill: ACC.lighten(82%), stroke: 0.9pt + ACC, corner-radius: 3pt, inset: 7pt)
   node((4,0), [$p_y$], radius: 7mm, stroke: 0.9pt + INK)
   for i in range(4) { edge((i,0),(i+1,0), "-|>", stroke: 0.8pt + MUTED) }
+}))
+
+// ── weight sharing: three input patches all pass through ONE shared kernel ──
+#let weightshare = align(center, diagram(spacing: (17mm, 6mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  let patch(y, n) = node((0, y), text(size: 12pt)[patch #n], fill: rgb("#EFEEEB"), stroke: 0.9pt + INK, corner-radius: 3pt, inset: 6pt)
+  patch(2.2, 1); patch(0, 2); patch(-2.2, 3)
+  node((1.6, 0), align(center, [same kernel \ #text(size: 11pt, fill: MUTED)[$K$ — shared]]), fill: TEAL.lighten(82%), stroke: 0.9pt + TEAL, corner-radius: 3pt, inset: 8pt)
+  node((3.2, 2.2),  [$y_1$], radius: 6mm, fill: ACC.lighten(82%), stroke: 0.9pt + ACC)
+  node((3.2, 0),    [$y_2$], radius: 6mm, fill: ACC.lighten(82%), stroke: 0.9pt + ACC)
+  node((3.2, -2.2), [$y_3$], radius: 6mm, fill: ACC.lighten(82%), stroke: 0.9pt + ACC)
+  edge((0,2.2),  (1.6,0), "-|>", stroke: 0.7pt + MUTED)
+  edge((0,0),    (1.6,0), "-|>", stroke: 0.7pt + MUTED)
+  edge((0,-2.2), (1.6,0), "-|>", stroke: 0.7pt + MUTED)
+  edge((1.6,0), (3.2,2.2),  "-|>", stroke: 0.7pt + MUTED)
+  edge((1.6,0), (3.2,0),    "-|>", stroke: 0.7pt + MUTED)
+  edge((1.6,0), (3.2,-2.2), "-|>", stroke: 0.7pt + MUTED)
 }))
 
 #title-slide()
@@ -63,7 +79,7 @@ $ X in RR^(H times W times C) $
 To feed an MLP we must *flatten* $X$ into a vector:
 $ X in RR^(H times W times C) quad -->^"flatten" quad x in RR^(H W C) $
 #pause
-#alertbox[Flattening discards *which pixels are neighbours*. Pixel $(i,j)$ and $(i, j{+}1)$ — adjacent in the image — become two arbitrary, unrelated entries of $x$.]
+#alertbox[Flattening discards *which pixels are neighbours*. Pixel $(i,j)$ and $(i, j+1)$ — adjacent in the image — become two arbitrary, unrelated entries of $x$.]
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[the MLP would have to *re-learn* the grid geometry from scratch, from data])
 
@@ -129,6 +145,14 @@ $ Y[i, j] = sum_(u, v) K[u, v] thin X[i + u, j + v] $
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[few weights, reused everywhere — the opposite of a fully-connected layer])
 
+== Weight sharing, visually #V
+
+The *same* kernel $K$ is applied at *every* spatial location — not a fresh weight set per position:
+#pause
+#weightshare
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[one small set of weights serves the whole image — this is what makes convolution cheap and translation-aware])
+
 == Worked example: one conv step #D
 
 Kernel = horizontal-edge detector; patch = top-left $3 times 3$ of the input:
@@ -136,7 +160,7 @@ Kernel = horizontal-edge detector; patch = top-left $3 times 3$ of the input:
 $ K = mat(1, 1, 1; 0, 0, 0; -1, -1, -1), quad X_"patch" = mat(1, 2, 0; 0, 1, 3; 2, 1, 0) $
 #pause
 Multiply elementwise and sum — the middle row is killed by the zeros:
-$ Y = (1{+}2{+}0) dot 1 + (0{+}1{+}3) dot 0 + (2{+}1{+}0) dot (-1) $
+$ Y = (1+2+0) dot 1 + (0+1+3) dot 0 + (2+1+0) dot (-1) $
 #pause
 #result[$Y = 3 - 3 = 0$ — no horizontal edge here]
 
@@ -243,9 +267,9 @@ Padding $p$, kernel $k$, and stride $s$ combine into one count:
 $ H_"out" = floor((H + 2 p - k) / s) + 1 $
 #pause
 #two(
-  notebox[*Same* — $H{=}32, k{=}5, p{=}2, s{=}1$:
+  notebox[*Same* — $H = 32, k = 5, p = 2, s = 1$:
   $ floor((32 + 4 - 5) / 1) + 1 = 32 $],
-  notebox[*Halved* — $H{=}32, k{=}3, p{=}1, s{=}2$:
+  notebox[*Halved* — $H = 32, k = 3, p = 1, s = 2$:
   $ floor((32 + 2 - 3) / 2) + 1 = 16 $],
 )
 
@@ -253,7 +277,7 @@ $ H_"out" = floor((H + 2 p - k) / s) + 1 $
 
 #fig("/lecture8/figures/output_size.svg", w: 66%)
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[$p{=}floor(k slash 2), s{=}1$ keeps size (same) · $s{=}2$ halves it · no padding slowly shrinks])
+#align(center, text(size: 16pt, fill: MUTED)[$p = floor(k slash 2), s = 1$ keeps size (same) · $s = 2$ halves it · no padding slowly shrinks])
 
 == Interactive: padding & stride #I
 
@@ -402,9 +426,9 @@ Track the *shapes* through a small classifier on a $32 times 32$ RGB image:
   columns: 3, stroke: 0.5pt + MUTED, inset: (x: 10pt, y: 5.5pt), align: (left, center, left),
   table.header([*Layer*], [*Output shape*], [*Note*]),
   [input], [$32 times 32 times 3$], [RGB image],
-  [conv $3 times 3$, 16, $p{=}1$], [$32 times 32 times 16$], [same padding],
-  [max-pool $2 times 2$, $s{=}2$], [$16 times 16 times 16$], [halve spatial],
-  [conv $3 times 3$, 32, $p{=}1$], [$16 times 16 times 32$], [more channels],
+  [conv $3 times 3$, 16, $p = 1$], [$32 times 32 times 16$], [same padding],
+  [max-pool $2 times 2$, $s = 2$], [$16 times 16 times 16$], [halve spatial],
+  [conv $3 times 3$, 32, $p = 1$], [$16 times 16 times 32$], [more channels],
   [global avg pool], [$32$], [collapse $H,W$],
   [linear → 10], [$10$], [class scores],
 ))
@@ -427,9 +451,9 @@ $ #text[linear] = 32 dot 10 + 10 = 330 $
 In practice each "conv" step is a small *block*:
 #pause
 #align(center, diagram(spacing: 13mm, node-stroke: 0.9pt + INK, node-fill: white, {
-  node((0,0), [Conv], radius: 8mm, fill: TEAL.lighten(82%), stroke: 0.9pt + TEAL)
-  node((1,0), [Norm], radius: 8mm, fill: BLUE.lighten(82%), stroke: 0.9pt + BLUE)
-  node((2,0), [Activation], radius: 10mm, fill: ACC.lighten(82%), stroke: 0.9pt + ACC)
+  node((0,0), text(size: 15pt)[Conv], fill: TEAL.lighten(82%), stroke: 0.9pt + TEAL, corner-radius: 3pt, inset: 8pt)
+  node((1,0), text(size: 15pt)[Norm], fill: BLUE.lighten(82%), stroke: 0.9pt + BLUE, corner-radius: 3pt, inset: 8pt)
+  node((2,0), text(size: 15pt)[Activation], fill: ACC.lighten(82%), stroke: 0.9pt + ACC, corner-radius: 3pt, inset: 8pt)
   for i in range(2) { edge((i,0),(i+1,0), "-|>", stroke: 0.8pt + MUTED) }
 }))
 #pause

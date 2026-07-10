@@ -14,55 +14,56 @@
 #let OD = IA + "object-detection"
 
 // ── reusable native (fletcher) detector pipelines ───────────────────
-#let pnode(pos, lbl, c: INK, fill: white, r: 9mm) = node(pos, lbl, radius: r,
-  stroke: 0.9pt + c, fill: fill)
+// rounded-rect nodes so multi-word labels sit fully inside; compact text
+#let pnode(pos, lbl, c: INK, fill: white) = node(pos, text(size: 15pt, lbl),
+  shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 7pt, stroke: 0.9pt + c, fill: fill)
 #let parrow(a, b) = edge(a, b, "-|>", stroke: 0.8pt + MUTED)
 
 // R-CNN: proposals -> warp -> CNN (once per region) -> two heads
-#let rcnn-pipe = align(center, diagram(spacing: (13mm, 7mm), {
+#let rcnn-pipe = align(center, diagram(spacing: (17mm, 11mm), {
   pnode((0,0), [image], fill: rgb("#EFEEEB"))
   pnode((1,0), [region\ proposals], c: TEAL)
   pnode((2,0), [crop /\ warp], c: TEAL)
-  pnode((3,0), [CNN\ per region], c: ACC, fill: rgb("#FDECD6"), r: 11mm)
-  pnode((4,0.7), [class], c: BLUE)
-  pnode((4,-0.7), [box reg.], c: BLUE)
+  pnode((3,0), [CNN\ per region], c: ACC, fill: rgb("#FDECD6"))
+  pnode((4,0.85), [box reg.], c: BLUE)
+  pnode((4,-0.85), [class], c: BLUE)
   parrow((0,0),(1,0)); parrow((1,0),(2,0)); parrow((2,0),(3,0))
-  parrow((3,0),(4,0.7)); parrow((3,0),(4,-0.7))
+  parrow((3,0),(4,0.85)); parrow((3,0),(4,-0.85))
 }))
 
 // Fast R-CNN: one CNN over the image, RoI pooling per proposal, shared heads
-#let fast-pipe = align(center, diagram(spacing: (13mm, 7mm), {
+#let fast-pipe = align(center, diagram(spacing: (17mm, 11mm), {
   pnode((0,0), [image], fill: rgb("#EFEEEB"))
   pnode((1,0), [CNN\ (whole image)], c: ACC, fill: rgb("#FDECD6"))
   pnode((2,0), [RoI\ pooling], c: TEAL)
-  pnode((3,0.7), [class], c: BLUE)
-  pnode((3,-0.7), [box reg.], c: BLUE)
-  node((2,1.15), text(size: 13pt, fill: MUTED)[proposals], stroke: none)
+  pnode((3,0.85), [box reg.], c: BLUE)
+  pnode((3,-0.85), [class], c: BLUE)
+  node((2,1.5), text(size: 13pt, fill: MUTED)[proposals], stroke: none)
   parrow((0,0),(1,0)); parrow((1,0),(2,0))
-  edge((2,1.15),(2,0), "-|>", stroke: (paint: MUTED, dash: "dashed", thickness: 0.7pt))
-  parrow((2,0),(3,0.7)); parrow((2,0),(3,-0.7))
+  edge((2,1.5),(2,0), "-|>", stroke: (paint: MUTED, dash: "dashed", thickness: 0.7pt))
+  parrow((2,0),(3,0.85)); parrow((2,0),(3,-0.85))
 }))
 
 // Faster R-CNN: backbone -> RPN proposals -> RoI head, all sharing features
-#let faster-pipe = align(center, diagram(spacing: (13mm, 7mm), {
+#let faster-pipe = align(center, diagram(spacing: (18mm, 12mm), {
   pnode((0,0), [image], fill: rgb("#EFEEEB"))
   pnode((1,0), [backbone\ CNN], c: ACC, fill: rgb("#FDECD6"))
-  pnode((2,0.75), [RPN], c: GREEN, fill: rgb("#EAF6EC"))
-  pnode((2,-0.35), [RoI\ pooling], c: TEAL)
-  pnode((3.3,-0.35), [RoI head\ cls + box], c: BLUE, r: 11mm)
-  parrow((0,0),(1,0)); parrow((1,0),(2,-0.35)); parrow((1,0),(2,0.75))
-  edge((2,0.75),(2,-0.35), "-|>", stroke: (paint: GREEN, dash: "dashed", thickness: 0.8pt))
-  parrow((2,-0.35),(3.3,-0.35))
+  pnode((2,0.9), [RPN], c: GREEN, fill: rgb("#EAF6EC"))
+  pnode((2,-0.55), [RoI\ pooling], c: TEAL)
+  pnode((3.2,-0.55), [RoI head\ cls + box], c: BLUE)
+  parrow((0,0),(1,0)); parrow((1,0),(2,-0.55)); parrow((1,0),(2,0.9))
+  edge((2,0.9),(2,-0.55), "-|>", stroke: (paint: GREEN, dash: "dashed", thickness: 0.8pt))
+  parrow((2,-0.55),(3.2,-0.55))
 }))
 
 // YOLO: one network, dense grid predictions, then NMS
-#let yolo-pipe = align(center, diagram(spacing: (14mm, 7mm), {
+#let yolo-pipe = align(center, diagram(spacing: (16mm, 8mm), {
   pnode((0,0), [image], fill: rgb("#EFEEEB"))
   pnode((1,0), [single\ CNN], c: ACC, fill: rgb("#FDECD6"))
-  pnode((2,0), [dense grid:\ boxes + classes], c: TEAL, r: 11mm)
-  pnode((3.2,0), [NMS], c: GREEN, fill: rgb("#EAF6EC"))
-  pnode((4.3,0), [detections], c: BLUE)
-  parrow((0,0),(1,0)); parrow((1,0),(2,0)); parrow((2,0),(3.2,0)); parrow((3.2,0),(4.3,0))
+  pnode((2,0), [dense grid:\ boxes + classes], c: TEAL)
+  pnode((3.15,0), [NMS], c: GREEN, fill: rgb("#EAF6EC"))
+  pnode((4.15,0), [detections], c: BLUE)
+  parrow((0,0),(1,0)); parrow((1,0),(2,0)); parrow((2,0),(3.15,0)); parrow((3.15,0),(4.15,0))
 }))
 
 #title-slide()
@@ -351,17 +352,25 @@ Predefined *reference boxes* of assorted scales/aspect-ratios at every location:
 #pause
 $ a = (x_a, y_a, w_a, h_a) $
 #pause
-#fig("/lecture9/figures/anchors.svg", w: 44%)
+#fig("/lecture9/figures/anchors.svg", w: 34%)
 #align(center, text(size: 15pt, fill: MUTED)[the network *adjusts* an anchor rather than inventing a box from scratch.])
 
-== Predict box offsets, not raw coordinates
+== Predict box offsets, not raw coordinates #V
 
 The network outputs *corrections* to each anchor — easier to learn and well-scaled:
 #pause
-$ t_x = (x - x_a)/w_a, quad quad t_y = (y - y_a)/h_a $
-$ t_w = log(w/w_a), quad quad t_h = log(h/h_a) $
-#pause
-#notebox[Offsets are *relative* to the anchor: centers in anchor-widths, sizes in log-scale. A prediction of *all zeros* reproduces the anchor exactly.]
+#two(
+  [
+    $ t_x = (x - x_a)/w_a $
+    $ t_y = (y - y_a)/h_a $
+    $ t_w = log(w/w_a) $
+    $ t_h = log(h/h_a) $
+    #v(6pt)
+    #text(size: 14pt, fill: MUTED)[centers in anchor-widths, sizes in log-scale; *all-zeros* reproduces the anchor exactly.]
+  ],
+  fig("/lecture9/figures/anchor_offset.svg", w: 100%),
+  r: (0.92fr, 1.08fr),
+)
 
 == What the detection head outputs
 

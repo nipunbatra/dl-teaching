@@ -153,9 +153,7 @@ def f_anchors():
     anchors=[(0.30,0.30,TEAL),(0.44,0.22,ACC),(0.22,0.44,BLUE)]
     for (w,h,c) in anchors:
         ax.add_patch(Rectangle((cx-w/2,cy-h/2),w,h,fill=False,edgecolor=c,lw=2.2,zorder=4))
-    ax.text(0.5,1.10,'anchors: fixed reference boxes at every cell',
-            ha='center',fontsize=11.5,color=INK)
-    ax.set_ylim(-0.03,1.18)
+    ax.set_ylim(-0.03,1.05)
     save(fig,'anchors')
 
 # ── 7 — focal loss: FL(pt) for gamma in {0,1,2,5} ──
@@ -219,7 +217,38 @@ def f_nms():
     ax.set_title('after NMS: keep the best',fontsize=12)
     save(fig,'nms')
 
+# ── 10 — anchor offsets: anchor box --(t_x,t_y,t_w,t_h)--> predicted box ──
+def f_anchor_offset():
+    fig,ax=plt.subplots(figsize=(6.8,3.7))
+    ax.set_xlim(0,10); ax.set_ylim(0,8); ax.set_aspect('equal')
+    ax.set_xticks([]); ax.set_yticks([])
+    for s in ax.spines.values(): s.set_visible(False)
+    # anchor box (dashed, teal) — the fixed reference
+    axc,ayc,aw,ah = 3.5,3.9,2.8,2.2
+    ax.add_patch(Rectangle((axc-aw/2,ayc-ah/2),aw,ah,fill=False,edgecolor=TEAL,lw=2.4,ls=(0,(5,3)),zorder=2))
+    ax.scatter([axc],[ayc],color=TEAL,s=42,zorder=5)
+    ax.text(axc-aw/2,ayc-ah/2-0.2,'anchor $a$',ha='left',va='top',fontsize=12,color=TEAL,weight='bold')
+    # predicted box (solid, orange) — shifted + resized
+    pxc,pyc,pw,ph = 6.1,5.0,3.7,2.9
+    ax.add_patch(Rectangle((pxc-pw/2,pyc-ph/2),pw,ph,fill=False,edgecolor=ACC,lw=2.8,zorder=3))
+    ax.scatter([pxc],[pyc],color=ACC,s=46,zorder=5)
+    ax.text(pxc+pw/2,pyc+ph/2+0.15,'predicted box',ha='right',va='bottom',fontsize=12,color=ACC,weight='bold')
+    # center-shift arrow (t_x, t_y)
+    ax.annotate('',xy=(pxc,pyc),xytext=(axc,ayc),
+                arrowprops=dict(arrowstyle='-|>',color=INK,lw=2.2,shrinkA=4,shrinkB=4))
+    ax.text((axc+pxc)/2-0.15,(ayc+pyc)/2+0.15,r'$(t_x,t_y)$',ha='right',va='bottom',fontsize=12,color=INK)
+    # width brackets: w_a (anchor) and w (predicted), stacked below
+    ya1,ya2 = 1.9,1.15
+    ax.annotate('',xy=(axc+aw/2,ya1),xytext=(axc-aw/2,ya1),arrowprops=dict(arrowstyle='<|-|>',color=TEAL,lw=1.6))
+    ax.text(axc,ya1-0.12,r'$w_a$',ha='center',va='top',fontsize=11.5,color=TEAL)
+    ax.annotate('',xy=(pxc+pw/2,ya2),xytext=(pxc-pw/2,ya2),arrowprops=dict(arrowstyle='<|-|>',color=ACC,lw=1.6))
+    ax.text(pxc,ya2-0.12,r'$w$',ha='center',va='top',fontsize=11.5,color=ACC)
+    ax.text(9.7,3.4,r'$t_w=\log\dfrac{w}{w_a}$'+'\n'+r'$t_h=\log\dfrac{h}{h_a}$',
+            ha='right',va='center',fontsize=11.5,color=INK)
+    ax.set_ylim(0.3,8)
+    save(fig,'anchor_offset')
+
 for f in [f_task_taxonomy,f_box_params,f_smooth_l1,f_iou,f_pr_curve,
-          f_anchors,f_focal_loss,f_yolo_grid,f_nms]:
+          f_anchors,f_focal_loss,f_yolo_grid,f_nms,f_anchor_offset]:
     f(); print('ok',f.__name__)
 print('done ->',OUT)

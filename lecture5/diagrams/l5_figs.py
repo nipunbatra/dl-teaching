@@ -30,8 +30,8 @@ def f_landscape():
     X,Y=np.meshgrid(np.linspace(-2,2,60),np.linspace(-2,2,60)); Z=X**2+2.2*Y**2
     ax=fig.add_subplot(1,2,1,projection='3d')
     ax.plot_surface(X,Y,Z,cmap=CMAP,alpha=.92,linewidth=0,antialiased=True,rstride=2,cstride=2)
-    ax.set_xlabel(r'$\theta_1$'); ax.set_ylabel(r'$\theta_2$'); ax.set_title('loss surface',fontsize=12)
-    bare3d(ax); ax.view_init(30,-56)
+    ax.set_title(r'loss surface  $\mathcal{L}(\theta_1,\theta_2)$',fontsize=12)
+    bare3d(ax); ax.view_init(30,-52)
     ax2=fig.add_subplot(1,2,2)
     g=np.linspace(-2,2,220); Xc,Yc=np.meshgrid(g,g); Zc=Xc**2+2.2*Yc**2
     ax2.contour(Xc,Yc,Zc,levels=10,colors=[TEAL],linewidths=.8,alpha=.8)
@@ -177,6 +177,28 @@ def f_lr_schedules():
     ax.set_yticks([]); ax.legend(frameon=False,fontsize=10.5,loc='upper right',ncol=2)
     save(fig,'lr_schedules')
 
+# ── 8b — momentum as a vector sum: beta*v_{t-1} + g_t = v_t ──
+def f_momentum_vector():
+    O=np.array([0.0,0.0])
+    bv=np.array([2.4,0.0])     # beta * v_{t-1}: accumulated velocity, along the valley
+    g =np.array([0.6,-1.0])    # this step's gradient: a cross-valley kick
+    vt=bv+g                    # new velocity = the actual step direction
+    fig,ax=plt.subplots(figsize=(6.0,3.2))
+    def arr(a,b,c,lw=2.8):
+        ax.annotate('',xy=b,xytext=a,arrowprops=dict(arrowstyle='-|>',color=c,lw=lw))
+    # parallelogram guide (faint): shows v_t as the diagonal
+    ax.plot([bv[0],vt[0]],[bv[1],vt[1]],color=MUTED,lw=1.0,ls='--',alpha=.7)
+    ax.plot([g[0],vt[0]],[g[1],vt[1]],color=MUTED,lw=1.0,ls='--',alpha=.7)
+    arr(O,bv,TEAL); ax.text(1.0,0.14,r'$\beta\,v_{t-1}$',color=TEAL,fontsize=16,ha='center')
+    arr(O,g,ACC);   ax.text(0.12,-0.62,r'$g_t$',color=ACC,fontsize=16,ha='right')
+    arr(O,vt,INK,lw=3.4); ax.text(2.25,-0.46,r'$v_t$',color=INK,fontsize=16,ha='center')
+    ax.scatter([O[0]],[O[1]],color=INK,s=34,zorder=5)
+    ax.set_xlim(-0.8,3.4); ax.set_ylim(-1.4,0.55); ax.set_aspect('equal')
+    ax.set_xticks([]); ax.set_yticks([])
+    for s in ['left','bottom']: ax.spines[s].set_visible(False)
+    ax.set_title(r'$v_t=\beta\,v_{t-1}+g_t$  — momentum adds this step to the running velocity',fontsize=12)
+    save(fig,'momentum_vector')
+
 # ── 8 — sharp vs flat minimum (1D) ──
 def f_sharp_flat():
     x=np.linspace(-2.5,2.5,300)
@@ -195,6 +217,6 @@ def f_sharp_flat():
     save(fig,'sharp_flat')
 
 for f in [f_landscape,f_lr_trajectories,f_batch_noise,f_ravine,f_momentum_vs_gd,
-          f_optimizer_compare,f_lr_schedules,f_sharp_flat]:
+          f_optimizer_compare,f_lr_schedules,f_sharp_flat,f_momentum_vector]:
     f(); print('ok',f.__name__)
 print('done ->',OUT)

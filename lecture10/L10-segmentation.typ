@@ -65,6 +65,16 @@
   edge((2,2),(4,2),"--|>",stroke:1.0pt+GREEN)
 }))
 
+// ── panoptic = semantic (stuff) + instance (things), merged per pixel ──
+#let panopticdiag = align(center, diagram(spacing: (13mm, 5mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  let rn(pos, lbl, c, fill) = node(pos, lbl, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 7pt, stroke: 0.9pt + c, fill: fill)
+  rn((0, 0), [semantic \ #text(size: 12pt, fill: MUTED)[*stuff*: sky, road]], TEAL, enc)
+  rn((0, 1), [instance \ #text(size: 12pt, fill: MUTED)[*things*: car, person]], ACC, dec)
+  rn((2, 0.5), [panoptic \ #text(size: 12pt, fill: MUTED)[every pixel: (class, id)]], ACC, cream)
+  edge((0, 0), (2, 0.5), "-|>", stroke: 0.9pt + TEAL)
+  edge((0, 1), (2, 0.5), "-|>", stroke: 0.9pt + ACC)
+}))
+
 // ── Mask R-CNN: backbone -> RPN -> RoIAlign -> {cls, box, mask} heads ──
 #let maskrcnn = align(center, diagram(spacing: (12mm, 7mm), node-stroke: 0.9pt + INK, node-fill: white, {
   node((0,0), [image], fill: white)
@@ -153,7 +163,9 @@ $ x quad -> quad (c_(h w), thin "id"_(h w)) quad forall thin h, w $
   notebox[*things* — countable objects (car, person): class *and* a distinct instance id.],
 )
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[panoptic = semantic (stuff) *+* instance (things), with *no gaps or overlaps*.])
+#v(2pt)
+#panopticdiag
+#align(center, text(size: 15pt, fill: MUTED)[semantic (stuff) *+* instance (things) → panoptic, with *no gaps or overlaps*.])
 
 == Semantic vs instance, side by side #V
 

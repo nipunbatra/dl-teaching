@@ -15,9 +15,10 @@ mpl.rcParams.update({
 })
 CMAP=LinearSegmentedColormap.from_list('metro',['#2C7A7B','#EFEEEB','#EB811B'])
 OUT='lecture3a/figures'; os.makedirs(OUT,exist_ok=True)
-def save(fig,name):
-    fig.savefig(f'{OUT}/{name}.svg',bbox_inches='tight',transparent=True)
-    fig.savefig(f'{OUT}/{name}.png',bbox_inches='tight',transparent=True,dpi=200)
+def save(fig,name,pad=0.02):
+    # 3-D axis labels fall outside matplotlib's tight bbox, so pad the crop for them
+    fig.savefig(f'{OUT}/{name}.svg',bbox_inches='tight',pad_inches=pad,transparent=True)
+    fig.savefig(f'{OUT}/{name}.png',bbox_inches='tight',pad_inches=pad,transparent=True,dpi=200)
     plt.close(fig)
 def bare3d(ax):
     ax.set_xticks([]); ax.set_yticks([]); ax.set_zticks([])
@@ -38,7 +39,7 @@ def f_bowl():
     X,Y=np.meshgrid(np.linspace(-2,2,60),np.linspace(-2,2,60)); Z=X**2+Y**2
     fig=plt.figure(figsize=(3.8,3.1)); ax=fig.add_subplot(projection='3d')
     ax.plot_surface(X,Y,Z,cmap=CMAP,alpha=.92,linewidth=0,antialiased=True,rstride=2,cstride=2)
-    ax.set_xlabel('x'); ax.set_ylabel('y'); ax.set_title(r'$z=x^2+y^2$',fontsize=13); bare3d(ax); ax.view_init(28,-52); save(fig,'bowl3d')
+    ax.set_xlabel('x',labelpad=-6); ax.set_ylabel('y',labelpad=-6); ax.set_title(r'$z=x^2+y^2$',fontsize=13); bare3d(ax); ax.view_init(28,-52); save(fig,'bowl3d',pad=0.28)
 
 # 3 — surface with x-slice and y-slice highlighted
 def f_slices():
@@ -48,7 +49,7 @@ def f_slices():
     t=np.linspace(-2,2,80)
     ax.plot(t,np.full_like(t,-1.0),t**2+3*1.0,color=TEAL,lw=3)      # y = -1 slice (vary x)
     ax.plot(np.full_like(t,1.0),t,1.0+3*t**2,color=ACC,lw=3)        # x = 1 slice (vary y)
-    ax.set_xlabel('x'); ax.set_ylabel('y'); ax.set_title('slices = partial derivatives',fontsize=12); bare3d(ax); ax.view_init(26,-58); save(fig,'surface_slices')
+    ax.set_xlabel('x',labelpad=-6); ax.set_ylabel('y',labelpad=-6); ax.set_title('slices = partial derivatives',fontsize=12); bare3d(ax); ax.view_init(26,-58); save(fig,'surface_slices',pad=0.28)
 
 # 4 — contours (circles) with gradient field perpendicular
 def f_contours_grad():
@@ -80,9 +81,10 @@ def f_gd_zigzag():
 def f_saddle():
     X,Y=np.meshgrid(np.linspace(-2,2,60),np.linspace(-2,2,60)); Z=X**2-Y**2
     fig=plt.figure(figsize=(4.0,3.1)); ax=fig.add_subplot(projection='3d')
-    ax.plot_surface(X,Y,Z,cmap=CMAP,alpha=.9,linewidth=0,rstride=2,cstride=2)
-    ax.scatter([0],[0],[0],color=RED,s=40); ax.set_title(r'$f=x^2-y^2$  (saddle)',fontsize=13)
-    ax.set_xlabel('x'); ax.set_ylabel('y'); bare3d(ax); ax.view_init(30,-60); save(fig,'saddle')
+    ax.plot_surface(X,Y,Z,cmap=CMAP,alpha=.72,linewidth=0,rstride=2,cstride=2)
+    ax.scatter([0],[0],[0.18],color=RED,s=110,edgecolor='white',linewidths=1.2,depthshade=False,zorder=10)
+    ax.set_title(r'$f=x^2-y^2$  (saddle)',fontsize=13)
+    ax.set_xlabel('x',labelpad=-6); ax.set_ylabel('y',labelpad=-6); bare3d(ax); ax.view_init(30,-60); save(fig,'saddle',pad=0.28)
 
 # 7 — 1D curvature: convex / concave / flat
 def f_curv1d():

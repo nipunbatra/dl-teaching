@@ -14,11 +14,11 @@
 
 // ── local fletcher diagrams ──────────────────────────────────────────
 // one local node:  u -> v -> L
-#let localnode = align(center, diagram(spacing: 17mm, node-stroke: 0.9pt + INK, node-fill: white, {
+#let localnode = align(center, diagram(spacing: (26mm, 11mm), node-stroke: 0.9pt + INK, node-fill: white, {
   node((0,0), $u$, radius: 6mm)
   node((1,0), $v$, radius: 6mm, stroke: 0.9pt + TEAL)
   node((2,0), $cal(L)$, radius: 6mm, stroke: 0.9pt + ACC)
-  edge((0,0),(1,0), $v = f(u)$, "-|>", stroke: 0.8pt + MUTED)
+  edge((0,0),(1,0), $v = f(u)$, "-|>", stroke: 0.8pt + MUTED, label-sep: 8pt)
   edge((1,0),(2,0), "-|>", stroke: 0.8pt + MUTED)
 }))
 
@@ -51,6 +51,34 @@
   edge((2.8,0.7),(4.2,-0.3), $a$, "-|>", stroke: 0.8pt + INK)
   edge((0,-1.4),(4.2,-0.3), "-|>", stroke: 0.7pt + MUTED)
   edge((4.2,-0.3),(5.6,-0.3), $e$, "-|>", stroke: 0.8pt + INK)
+}))
+
+// scalar graph, BACKWARD: adjoint values flow right -> left (upstream x local)
+#let scalarback = align(center, diagram(spacing: (17mm, 9mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0,2),  $w$, radius: 5.5mm)
+  node((0,1),  $x$, radius: 5.5mm)
+  node((0,0),  $b$, radius: 5.5mm)
+  node((0,-1.4), $y$, radius: 5.5mm)
+  node((1.4,1.5), $times$, radius: 6mm, fill: rgb("#E6F0F0"), stroke: 0.9pt + TEAL)
+  node((2.8,0.7), $+$, radius: 6mm, fill: rgb("#E6F0F0"), stroke: 0.9pt + TEAL)
+  node((4.2,-0.3), $-$, radius: 6mm, fill: rgb("#E6F0F0"), stroke: 0.9pt + TEAL)
+  node((5.6,-0.3), [$(dot)^2$], radius: 7mm, fill: rgb("#FDECD6"), stroke: 0.9pt + ACC)
+  // seed at the loss
+  node((6.7,-0.3), text(size: 15pt, fill: ACC)[$overline(cal(L))=1$], stroke: none, fill: none)
+  // final adjoint for each input, placed to its left (out of the way of the arrows)
+  node((-1.25,2),   text(size: 14pt, fill: ACC)[$overline(w)=-18$], stroke: none, fill: none)
+  node((-1.25,1),   text(size: 14pt, fill: ACC)[$overline(x)=-12$], stroke: none, fill: none)
+  node((-1.25,0),   text(size: 14pt, fill: ACC)[$overline(b)=-6$],  stroke: none, fill: none)
+  node((-1.25,-1.4),text(size: 14pt, fill: ACC)[$overline(y)=6$],   stroke: none, fill: none)
+  // op-chain backward edges carry the propagating adjoint (upstream x local)
+  edge((5.6,-0.3),(4.2,-0.3), text(size: 14pt)[$overline(e)=-6$], "-|>", stroke: 1pt + ACC, label-side: right)
+  edge((4.2,-0.3),(2.8,0.7), text(size: 14pt)[$overline(a)=-6$], "-|>", stroke: 1pt + ACC, label-side: left)
+  edge((2.8,0.7),(1.4,1.5), text(size: 14pt)[$overline(m)=-6$], "-|>", stroke: 1pt + ACC, label-side: right)
+  // branch-off backward edges to the inputs (plain orange arrows)
+  edge((4.2,-0.3),(0,-1.4), "-|>", stroke: 1pt + ACC)
+  edge((2.8,0.7),(0,0), "-|>", stroke: 1pt + ACC)
+  edge((1.4,1.5),(0,2), "-|>", stroke: 1pt + ACC)
+  edge((1.4,1.5),(0,1), "-|>", stroke: 1pt + ACC)
 }))
 
 // two-layer MLP forward chain
@@ -284,6 +312,14 @@ $ overline(w) = overline(m) dot x = -6 dot 3 = -18, quad quad overline(x) = over
 #pause
 #notebox[One backward sweep produced *all four* partial derivatives — no formula re-derivation per parameter.]
 
+== The backward pass, visualized #V
+
+Seed $overline(cal(L)) = 1$ at the loss; each #text(fill: ACC)[orange arrow] carries *upstream $times$ local* one node to the left:
+#pause
+#scalarback
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[same graph as the forward pass — every arrow reversed, adjoints filling in right to left])
+
 == Check with direct calculus #D
 
 Differentiate $cal(L) = (w x + b - y)^2$ directly. With $w x + b - y = -3$:
@@ -469,14 +505,14 @@ Backprop is not two things you might guess:
 
 == Why reverse mode? #D
 
-A loss is a map $f: RR^P -> RR$ — *many* inputs, *one* output.
+A loss is a map $f: RR^P -> RR$: *many* inputs, *one* output.
 #pause
 #two(
-  notebox[*Forward mode* costs one pass *per input* → $O(P)$ passes.],
-  notebox[*Reverse mode* costs one pass *per output* → $O(1)$ pass.],
+  notebox[*Forward mode:* one pass *per input* → $O(P)$.],
+  notebox[*Reverse mode:* one pass *per output* → $O(1)$.],
 )
 #pause
-#result[with $P approx 10^9$ params and one scalar loss, reverse mode wins overwhelmingly]
+#result[$P approx 10^9$ inputs, one scalar loss ⇒ reverse mode wins]
 
 == What PyTorch / JAX actually do
 
