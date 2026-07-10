@@ -129,7 +129,7 @@ $ x quad -> quad { (hat(b)_i, hat(y)_i, hat(s)_i) }_(i=1)^N $
 
 == Segmentation: label every pixel #V
 
-#fig("/lecture10/figures/pixel_grid.svg", w: 62%)
+#fig("/lecture10/figures/pixel_grid.svg", w: 52%)
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[the output has the *same spatial size* as the input — one class per pixel.])
 

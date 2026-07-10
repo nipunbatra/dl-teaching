@@ -94,20 +94,22 @@
   title: [], subtitle: [],
   author: [Prof. Nipun Batra],
   institution: [ES 667 · Deep Learning · IIT Gandhinagar],
-  footer-text: [ES 667 · Deep Learning · N. Batra],
   body,
 ) = {
   show: metropolis-theme.with(
     aspect-ratio: "16-9",
+    align: top,                          // content starts at the SAME vertical position on every slide
     config-common(handout: HANDOUT),
-    config-page(margin: (top: 1.7em, bottom: 1.4em, left: 2.2em, right: 2.2em)),
+    // taller title bar (bigger top band) + a little side breathing room
+    config-page(margin: (top: 3.7em, bottom: 1.35em, left: 2.4em, right: 2.4em)),
     config-info(title: title, subtitle: subtitle, author: author, institution: institution),
-    // pad the footer so neither the byline nor the page-number kisses the edge
-    footer: self => [#h(0.8em)#footer-text],
-    footer-right: context [#utils.slide-counter.display() / #utils.last-slide-number#h(0.8em)],
+    footer: none,                                          // no course/author byline
+    footer-right: context utils.slide-counter.display(),   // just the slide number, no "/ total"
   )
   set text(font: "IBM Plex Sans", size: 20pt)
   show raw: set text(font: "IBM Plex Mono")
+  // grow the title-bar text a touch so the header reads taller and cleaner
+  show heading.where(level: 2): set text(size: 1.06em)
   show heading: set text(font: "IBM Plex Sans")
   set heading(numbering: none)
   show math.equation: set text(size: 19pt)

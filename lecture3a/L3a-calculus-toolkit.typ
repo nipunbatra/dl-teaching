@@ -106,7 +106,7 @@ $ (partial f)/(partial x) = 2x, quad quad (partial f)/(partial y) = 2y $
 
 == A partial is the slope of a slice #V
 
-#fig("/lecture3a/figures/surface_slices.svg", w: 38%)
+#fig("/lecture3a/figures/surface_slices.svg", w: 31%)
 #pause
 #notebox[For $f = x^2 + 3y^2$ at $(1, 2)$: $(partial f)/(partial x) = 2$, $(partial f)/(partial y) = 12$ — the function climbs *faster* along $y$.]
 
