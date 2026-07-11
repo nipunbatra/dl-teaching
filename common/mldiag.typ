@@ -13,6 +13,7 @@
 #import "@local/tensor-grid:0.1.0" as tg
 #import "@local/ml-plot:0.1.0" as mp
 #import "@local/ml-data:0.1.0" as md    // pandas-lite: md.frame(csv("x.csv")), md.xy(f, "a", "b")
+#import "@local/ml-dist:0.1.0" as dist  // distributions: dist.nll0(dist.normal(), r) — the TRUE loss
 #import "metropolis.typ": INK, ACC, TEAL, GREEN, BLUE, MUTED, RED
 
 // the deck theme: metropolis palette, teal→paper→orange diverging ramp

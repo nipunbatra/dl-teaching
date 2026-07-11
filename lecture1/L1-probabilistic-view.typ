@@ -271,9 +271,12 @@ $ ell_i = (y_i - mu_i)^2/(2 sigma^2) + 1/2 log sigma^2 + C $
     [#text(fill: GREEN, weight: 600)[Student-$t$]], [robust])
    #v(3pt) #text(fill: MUTED)[$r = y - hat(y)$ · colours match the curves]],
   align(center, lines(
-    // Gaussian r², Laplace |r|, Student-t ln(1+r²) — each the closed-form NLL, sampled
-    fn: (r => r * r, r => 1.6 * calc.abs(r), r => 2.2 * calc.ln(1 + r * r)),
-    domain: (-3, 3), samples: 60,
+    // the TRUE negative log-likelihood of each noise model (ml-dist), shifted to
+    // min 0: Normal(σ=1/√2)→r², Laplace(b=1)→|r|, Student-t(ν=2)→robust/tail-flat.
+    fn: (r => dist.nll0(dist.normal(sigma: 1 / calc.sqrt(2)), r),
+         r => dist.nll0(dist.laplace(b: 1.0), r),
+         r => dist.nll0(dist.student-t(nu: 2.0), r)),
+    domain: (-3, 3), samples: 80,
     colors: (ACC, TEAL, GREEN),
     markers: false,
     // Uniform "hard interval" walls at r = ±2.2 (the fn/series data channels are
