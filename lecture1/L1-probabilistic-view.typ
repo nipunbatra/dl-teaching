@@ -157,7 +157,22 @@ $ Y tilde cal(N)(mu, sigma^2) quad quad p(y) = 1/sqrt(2 pi sigma^2) exp(-(y-mu)^
 
 $ theta tilde cal(N)(mu, Sigma) quad -log p(theta) = 1/2 (theta - mu)^top Sigma^(-1) (theta - mu) + C $
 #pause
-#fig("/lecture1/figures/mvn_triptych.svg", w: 74%)
+// native: each panel is the real N(0, Σ) density, with Σ⁻¹ computed in-deck (ml-field)
+#let _mvn(S) = {
+  let (a, b, c, d) = (S.at(0).at(0), S.at(0).at(1), S.at(1).at(0), S.at(1).at(1))
+  let det = a * d - b * c
+  let (ia, io, id) = (d / det, -(b + c) / det, a / det)   // Σ⁻¹ entries: [ia, io/2; io/2, id]
+  (x, y) => calc.exp(-0.5 * (ia * x * x + io * x * y + id * y * y))
+}
+#let _covs = (
+  ([$Sigma = tau^2 I$], ((1.0, 0.0), (0.0, 1.0))),
+  ([diagonal $Sigma$], ((2.2, 0.0), (0.0, 0.55))),
+  ([full $Sigma$], ((1.4, 0.95), (0.95, 1.0))),
+)
+#align(center, stack(dir: ltr, spacing: 6mm,
+  .._covs.map(cv => contour(_mvn(cv.at(1)), xlim: (-3, 3), ylim: (-3, 3),
+    samples: 50, levels: 6, size: (37mm, 37mm), color: ACC, title: cv.at(0))),
+))
 #align(center, text(size: 17pt)[Covariance says *which directions in parameter space are plausible.*])
 
 == Independence turns products into sums

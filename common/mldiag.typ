@@ -41,6 +41,7 @@
 #let contour = fld.contour.with(theme: dl-theme)
 #let heatmap = fld.heatmap.with(theme: dl-theme)
 #let surface = fld.surface.with(theme: dl-theme)
+#let descent = fld.descent   // compute a GD/momentum trajectory in-deck → contour(paths:)
 
 // ── the math helpers (figures + prose can share one computation) ──
 #let conv2d        = tg.conv2d

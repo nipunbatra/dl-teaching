@@ -252,7 +252,14 @@ Compare a smooth full-batch path with the small random deviations of minibatches
 
 Ill-conditioned loss $cal(L) = x^2 + 100 y^2$: steep across, shallow along.
 #pause
-#fig("/lecture5/figures/ravine.svg", w: 72%)
+// native: the contour of L and the ACTUAL GD iterates, computed in-deck (ml-field)
+#let _rav-grad(p) = (2.0 * p.at(0), 200.0 * p.at(1))
+#align(center, contour(
+  (x, y) => x * x + 100.0 * y * y, xlim: (-2.6, 2.6), ylim: (-0.55, 0.55),
+  samples: 60, levels: 10, size: (108mm, 32mm), color: TEAL,
+  paths: (descent(_rav-grad, start: (-2.3, 0.45), lr: 0.0090, steps: 34),),
+  marks: ((0, 0, [min], RED),),
+))
 #align(center, text(size: 16pt, fill: MUTED)[GD must use a *tiny* $eta$ to stay stable in $y$ — so it *zigzags* and crawls in $x$])
 
 == The idea: keep a velocity
@@ -281,7 +288,17 @@ $ v_t = g_t + beta g_(t-1) + beta^2 g_(t-2) + beta^3 g_(t-3) + dots $
 
 == Why momentum helps #V
 
-#fig("/lecture5/figures/momentum_vs_gd.svg", w: 82%)
+// native: same ravine, GD vs momentum — both trajectories computed in-deck (ml-field)
+#let _rav-grad(p) = (2.0 * p.at(0), 200.0 * p.at(1))
+#let _rav(title, path) = contour(
+  (x, y) => x * x + 100.0 * y * y, xlim: (-2.6, 2.6), ylim: (-0.55, 0.55),
+  samples: 60, levels: 10, size: (72mm, 24mm), color: TEAL,
+  paths: (path,), marks: ((0, 0, [min], RED),), title: title,
+)
+#align(center, stack(dir: ltr, spacing: 9mm,
+  _rav([plain GD], descent(_rav-grad, start: (-2.3, 0.45), lr: 0.0090, steps: 34)),
+  _rav([with momentum], descent(_rav-grad, start: (-2.3, 0.45), lr: 0.0035, steps: 34, method: "momentum")),
+))
 #pause
 - *oscillating* directions ($y$) → gradients flip sign → they *cancel* in $v_t$;
 #pause

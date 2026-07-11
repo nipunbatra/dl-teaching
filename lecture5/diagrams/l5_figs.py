@@ -81,43 +81,10 @@ def f_batch_noise():
         ax.set_aspect('equal'); ax.set_xticks([]); ax.set_yticks([]); ax.set_title(ttl,fontsize=12)
     save(fig,'batch_noise')
 
-# ── 4 — ravine: elongated contours with GD zigzag ──
-def f_ravine():
-    a,b=1.0,100.0; eta=0.0090
-    gx=np.linspace(-2.6,2.6,260); gy=np.linspace(-0.55,0.55,260); X,Y=np.meshgrid(gx,gy); Z=a*X**2+b*Y**2
-    fig,ax=plt.subplots(figsize=(6.4,2.6))
-    ax.contour(X,Y,Z,levels=12,colors=[TEAL],linewidths=.7,alpha=.75)
-    p=np.array([-2.3,0.45]); pts=[p.copy()]
-    for _ in range(34):
-        p=p-eta*np.array([2*a*p[0],2*b*p[1]]); pts.append(p.copy())
-    pts=np.array(pts); ax.plot(pts[:,0],pts[:,1],'-o',color=ACC,ms=3,lw=1.4)
-    ax.scatter([0],[0],marker='*',s=150,color=RED,zorder=5)
-    ax.set_xlim(-2.6,2.6); ax.set_ylim(-0.55,0.55)
-    ax.set_xticks([]); ax.set_yticks([]); ax.set_title(r'ravine  $L=x^2+100\,y^2$  — GD zigzags',fontsize=12)
-    save(fig,'ravine')
-
-# ── 5 — momentum vs plain GD on the ravine ──
-def f_momentum_vs_gd():
-    a,b=1.0,100.0
-    gx=np.linspace(-2.6,2.6,260); gy=np.linspace(-0.55,0.55,260); X,Y=np.meshgrid(gx,gy); Z=a*X**2+b*Y**2
-    def grad(p): return np.array([2*a*p[0],2*b*p[1]])
-    def gd(eta=0.0090,steps=34):
-        p=np.array([-2.3,0.45]); pts=[p.copy()]
-        for _ in range(steps): p=p-eta*grad(p); pts.append(p.copy())
-        return np.array(pts)
-    def mom(eta=0.0035,beta=0.9,steps=34):
-        p=np.array([-2.3,0.45]); v=np.zeros(2); pts=[p.copy()]
-        for _ in range(steps):
-            v=beta*v+grad(p); p=p-eta*v; pts.append(p.copy())
-        return np.array(pts)
-    fig,axes=plt.subplots(1,2,figsize=(8.6,2.6))
-    for ax,(pts,ttl,c) in zip(axes,[(gd(),'plain GD',ACC),(mom(),'+ momentum',GREEN)]):
-        ax.contour(X,Y,Z,levels=12,colors=[TEAL],linewidths=.7,alpha=.7)
-        ax.plot(pts[:,0],pts[:,1],'-o',color=c,ms=3,lw=1.4)
-        ax.scatter([0],[0],marker='*',s=150,color=RED,zorder=5)
-        ax.set_xlim(-2.6,2.6); ax.set_ylim(-0.55,0.55)
-        ax.set_xticks([]); ax.set_yticks([]); ax.set_title(ttl,fontsize=12)
-    save(fig,'momentum_vs_gd')
+# ── 4 & 5 — ravine / momentum_vs_gd — RETIRED.
+# Both are now native ml-field: contour(L) with the descent() trajectory computed
+# in-deck (GD zigzag, and GD-vs-momentum side by side). Same ravine L=x²+100y².
+# See lecture5/L5-optimization.typ ("The problem: ravines" / "Why momentum helps").
 
 # ── 6 — optimizer comparison on L = x^2 + 50 y^2 ──
 def f_optimizer_compare():
@@ -216,7 +183,7 @@ def f_sharp_flat():
     ax.set_title('flat minima resist parameter / data shift',fontsize=12)
     save(fig,'sharp_flat')
 
-for f in [f_landscape,f_lr_trajectories,f_batch_noise,f_ravine,f_momentum_vs_gd,
+for f in [f_landscape,f_lr_trajectories,f_batch_noise,
           f_optimizer_compare,f_lr_schedules,f_sharp_flat,f_momentum_vector]:
     f(); print('ok',f.__name__)
 print('done ->',OUT)

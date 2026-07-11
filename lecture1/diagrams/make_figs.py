@@ -87,19 +87,10 @@ def f_g2s():
     fig.text(0.5,-0.02,'Gaussian  →  log  →  negative log  →  squared error',ha='center',color=MUTED,fontsize=11)
     save(fig,'gaussian_to_square')
 
-# 6 mvn_triptych
-def f_mvn():
-    fig,axes=plt.subplots(1,3,figsize=(8.4,2.9))
-    g=np.linspace(-3,3,120); X,Y=np.meshgrid(g,g)
-    covs=[('$\\Sigma=\\tau^2 I$',np.array([[1,0],[0,1.]])),
-          ('diagonal $\\Sigma$',np.array([[2.2,0],[0,0.55]])),
-          ('full $\\Sigma$',np.array([[1.4,0.95],[0.95,1.0]]))]
-    for ax,(t,C) in zip(axes,covs):
-        Ci=np.linalg.inv(C); Z=np.exp(-0.5*(Ci[0,0]*X**2+2*Ci[0,1]*X*Y+Ci[1,1]*Y**2))
-        ax.contour(X,Y,Z,levels=6,colors=ACC,linewidths=1.3)
-        ax.set_title(t,fontsize=12); ax.set_aspect('equal'); ax.set_xticks([]); ax.set_yticks([])
-        ax.axhline(0,color=MUTED,lw=.6); ax.axvline(0,color=MUTED,lw=.6)
-    save(fig,'mvn_triptych')
+# 6 mvn_triptych — RETIRED.
+# Now computed natively in the deck: three ml-field contour(_mvn(Σ)) panels with
+# Σ⁻¹ inverted in-deck (spherical / diagonal / full covariance).
+# See lecture1/L1-probabilistic-view.typ, "Multivariate Gaussian geometry".
 
 # 7 regression_conditionals
 def f_regconds():
@@ -231,7 +222,7 @@ def f_postsamp():
     ax.set_xticks([]); ax.set_yticks([]); ax.set_xlabel('x'); ax.set_ylabel('y'); ax.set_ylim(-1.8,1.8)
     save(fig,'posterior_samples')
 
-for fn in [f_net,f_density_area,f_uniform,f_gaussian_params,f_g2s,f_mvn,f_regconds,f_resloss,
+for fn in [f_net,f_density_area,f_uniform,f_gaussian_params,f_g2s,f_regconds,f_resloss,
            f_softpipe,f_sigmoid,f_softbars,f_neglog,f_gradbars,f_bayes,f_priors,f_overfit,
            f_postsamp]:
     try: fn(); print('ok',fn.__name__)
