@@ -157,20 +157,14 @@ $ Y tilde cal(N)(mu, sigma^2) quad quad p(y) = 1/sqrt(2 pi sigma^2) exp(-(y-mu)^
 
 $ theta tilde cal(N)(mu, Sigma) quad -log p(theta) = 1/2 (theta - mu)^top Sigma^(-1) (theta - mu) + C $
 #pause
-// native: each panel is the real N(0, Σ) density, with Σ⁻¹ computed in-deck (ml-field)
-#let _mvn(S) = {
-  let (a, b, c, d) = (S.at(0).at(0), S.at(0).at(1), S.at(1).at(0), S.at(1).at(1))
-  let det = a * d - b * c
-  let (ia, io, id) = (d / det, -(b + c) / det, a / det)   // Σ⁻¹ entries: [ia, io/2; io/2, id]
-  (x, y) => calc.exp(-0.5 * (ia * x * x + io * x * y + id * y * y))
-}
+// native: each panel is the real N(0, Σ) density — dist.gaussian-2d inverts Σ
 #let _covs = (
   ([$Sigma = tau^2 I$], ((1.0, 0.0), (0.0, 1.0))),
   ([diagonal $Sigma$], ((2.2, 0.0), (0.0, 0.55))),
   ([full $Sigma$], ((1.4, 0.95), (0.95, 1.0))),
 )
 #align(center, stack(dir: ltr, spacing: 6mm,
-  .._covs.map(cv => contour(_mvn(cv.at(1)), xlim: (-3, 3), ylim: (-3, 3),
+  .._covs.map(cv => contour(dist.gaussian-2d(sigma: cv.at(1)), xlim: (-3, 3), ylim: (-3, 3),
     samples: 50, levels: 6, size: (37mm, 37mm), color: ACC, title: cv.at(0))),
 ))
 #align(center, text(size: 17pt)[Covariance says *which directions in parameter space are plausible.*])
@@ -608,10 +602,10 @@ _Before seeing this dataset, which parameter values are plausible?_
 
 $ p(theta | cal(D)) = (p(cal(D) | theta) thin p(theta)) / p(cal(D)) $
 #pause
-// native: real Gaussian likelihood × prior → posterior contours (ml-field).
+// native: real Gaussian likelihood × prior → posterior contours (dist.gaussian-2d).
 // posterior sits between the MLE and the prior mean 0 = MAP = regularisation.
-#let _lik(t1, t2)   = calc.exp(-((t1 - 2.0) * (t1 - 2.0) + (t2 - 1.5) * (t2 - 1.5)) / (2 * 0.8 * 0.8))
-#let _prior(t1, t2) = calc.exp(-(t1 * t1 + t2 * t2) / (2 * 1.2 * 1.2))
+#let _lik   = dist.gaussian-2d(mu: (2.0, 1.5), sigma: ((0.64, 0), (0, 0.64)))   // σ = 0.8
+#let _prior = dist.gaussian-2d(mu: (0, 0), sigma: ((1.44, 0), (0, 1.44)))       // σ = 1.2
 #align(center, contour(
   (_lik, _prior, (t1, t2) => _lik(t1, t2) * _prior(t1, t2)),
   xlim: (-2.5, 4), ylim: (-2, 3.5), samples: 64, levels: 4,
