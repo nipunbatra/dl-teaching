@@ -257,13 +257,13 @@ $ "Var"(g_t) approx 1/B "Var"(nabla ell_i) $
 
 Same bowl, three noise levels (full / mini / tiny batch):
 #pause
-// native: SGD with seeded gradient noise — one loss, gradient via grad2d
-#let bowl(x, y) = x * x + 3.0 * y * y
+// native: SGD with seeded gradient noise — one string loss, exact gradient (autodiff)
+#let bowl = ad.expr("x^2 + 3*y^2", ("x", "y"))
 #let _batches = (([full batch], 0.0), ([minibatch], 2.2), ([tiny batch], 6.0))
 #align(center, stack(dir: ltr, spacing: 6mm,
-  .._batches.map(cf => contour(bowl, xlim: (-2.6, 2.6), ylim: (-2.6, 2.6),
+  .._batches.map(cf => contour(ad.fn2(bowl), xlim: (-2.6, 2.6), ylim: (-2.6, 2.6),
     samples: 46, levels: 9, size: (37mm, 37mm), color: TEAL,
-    paths: (sgd(grad2d(bowl), (-2.2, 2.0), lr: 0.10, noise: cf.at(1), seed: 3, steps: 40),),
+    paths: (sgd(ad.grad-fn(bowl), (-2.2, 2.0), lr: 0.10, noise: cf.at(1), seed: 3, steps: 40),),
     marks: ((0, 0, [min], RED),), title: cf.at(0))),
 ))
 #align(center, text(size: 16pt, fill: MUTED)[full batch glides · minibatch jitters toward the minimum · tiny batch bounces])
@@ -283,12 +283,12 @@ Compare a smooth full-batch path with the small random deviations of minibatches
 
 Ill-conditioned loss $cal(L) = x^2 + 100 y^2$: steep across, shallow along.
 #pause
-// native: the loss is written ONCE — it draws the contour AND (via grad2d) the
-// gradient for the ACTUAL GD iterates, so they can't disagree.
-#let ravine(x, y) = x * x + 100.0 * y * y
-#align(center, contour(ravine, xlim: (-2.6, 2.6), ylim: (-0.55, 0.55),
+// native: the loss is a string written ONCE — autodiff draws the contour AND
+// gives the EXACT gradient for the descent, so they can't disagree.
+#let ravine = ad.expr("x^2 + 100*y^2", ("x", "y"))
+#align(center, contour(ad.fn2(ravine), xlim: (-2.6, 2.6), ylim: (-0.55, 0.55),
   samples: 60, levels: 10, size: (108mm, 32mm), color: TEAL,
-  paths: (gd(grad2d(ravine), (-2.3, 0.45), lr: 0.0090, steps: 34),),
+  paths: (gd(ad.grad-fn(ravine), (-2.3, 0.45), lr: 0.0090, steps: 34),),
   marks: ((0, 0, [min], RED),),
 ))
 #align(center, text(size: 16pt, fill: MUTED)[GD must use a *tiny* $eta$ to stay stable in $y$ — so it *zigzags* and crawls in $x$])
@@ -319,15 +319,15 @@ $ v_t = g_t + beta g_(t-1) + beta^2 g_(t-2) + beta^3 g_(t-3) + dots $
 
 == Why momentum helps #V
 
-// native: same ravine, GD vs momentum — one loss, gradient via grad2d
-#let ravine(x, y) = x * x + 100.0 * y * y
-#let _rav(title, path) = contour(ravine, xlim: (-2.6, 2.6), ylim: (-0.55, 0.55),
+// native: same ravine, GD vs momentum — one string loss, exact gradient (autodiff)
+#let ravine = ad.expr("x^2 + 100*y^2", ("x", "y"))
+#let _rav(title, path) = contour(ad.fn2(ravine), xlim: (-2.6, 2.6), ylim: (-0.55, 0.55),
   samples: 60, levels: 10, size: (72mm, 24mm), color: TEAL,
   paths: (path,), marks: ((0, 0, [min], RED),), title: title,
 )
 #align(center, stack(dir: ltr, spacing: 9mm,
-  _rav([plain GD], gd(grad2d(ravine), (-2.3, 0.45), lr: 0.0090, steps: 34)),
-  _rav([with momentum], momentum(grad2d(ravine), (-2.3, 0.45), lr: 0.0035, steps: 34)),
+  _rav([plain GD], gd(ad.grad-fn(ravine), (-2.3, 0.45), lr: 0.0090, steps: 34)),
+  _rav([with momentum], momentum(ad.grad-fn(ravine), (-2.3, 0.45), lr: 0.0035, steps: 34)),
 ))
 #pause
 - *oscillating* directions ($y$) → gradients flip sign → they *cancel* in $v_t$;
@@ -556,12 +556,12 @@ $ theta_(t+1) = theta_t - eta thin underbrace(hat(m)_t, "which way") / underbrac
 
 $cal(L) = x^2 + 50 y^2$, identical start point:
 #pause
-// native: four real optimizer trajectories on one loss surface — loss + start
-// written once, gradient via grad2d
-#let loss(x, y) = x * x + 50.0 * y * y
-#let g = grad2d(loss)
+// native: four real optimizer trajectories on one loss surface — one string
+// loss, exact gradient (autodiff), start written once
+#let loss = ad.expr("x^2 + 50*y^2", ("x", "y"))
+#let g = ad.grad-fn(loss)
 #let x0 = (-2.4, 0.85)
-#align(center, contour(loss, xlim: (-2.7, 2.7), ylim: (-1.0, 1.0),
+#align(center, contour(ad.fn2(loss), xlim: (-2.7, 2.7), ylim: (-1.0, 1.0),
   samples: 60, levels: 12, size: (100mm, 38mm), color: MUTED, marks: ((0, 0, [·], RED),),
   paths: (
     gd(g, x0, lr: 0.014, steps: 60),                       // green — crawls
