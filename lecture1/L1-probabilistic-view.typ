@@ -88,14 +88,12 @@ For a continuous $Y$, probability comes from *area*:
 $ P(a <= Y <= b) = integral_a^b p(y) dif y $
 #pause
 #alertbox[$p(y) != P(Y=y)$ — a density can *exceed 1*; only _integrals_ are probabilities.]
-// native: a real N(0,1) density with the interval [a,b] shaded to show the area
+// native: a real N(0,1) density; the interval [a,b] shaded to show the area
 #let _dg = dist.normal(mu: 0.0, sigma: 1.0)
-#let _curve = range(0, 121).map(i => { let x = -4.0 + i * 8.0 / 120; (x, dist.pdf(_dg, x)) })
-#let _shade = range(0, 41).map(i => { let x = -1.0 + i * 2.0 / 40; (x, dist.pdf(_dg, x)) })
 #align(center, lines(
-  (_curve, _shade),
-  fill-under: (1, ACC.transparentize(60%)),
-  markers: false, colors: (INK, ACC), y-ticks: false,
+  fn: x => dist.pdf(_dg, x), domain: (-4, 4), samples: 120,
+  fill-under: (from: -1, to: 1, color: ACC.transparentize(60%)),
+  markers: false, colors: (INK,), y-ticks: false,
   vlines: ((-1.0, [$a$], MUTED), (1.0, [$b$], MUTED)),
   x-label: [$y$], y-label: [$p(y)$],
   size: (68mm, 30mm),
