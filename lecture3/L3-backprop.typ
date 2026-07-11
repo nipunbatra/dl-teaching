@@ -5,6 +5,7 @@
 // Theme, palette, helpers and diagram builders live in common/metropolis.typ.
 
 #import "../common/metropolis.typ": *
+#import "@local/autodiff:0.1.0" as ad   // our own reverse-mode AD — used live on the scalar example
 #show: metropolis-deck.with(
   title: [Computation Graphs, Backpropagation and Autodiff],
   subtitle: [How gradients flow through neural networks],
@@ -581,6 +582,24 @@ print(w.grad, b.grad)    # tensor(-18.)  tensor(-6.)
 ```]
 #pause
 #result[matches our hand computation exactly]
+
+== The same graph, in *this* deck #I
+
+Our own toolkit ships a tiny reverse-mode autodiff (chalkdust `autodiff`) — build the
+expression, get *every* gradient in one backward pass. This slide runs it:
+#pause
+// computed live — these ARE the numbers rendered below (un-fakeable)
+#let L = ad.expr("(w*x + b - y)^2", ("w", "x", "b", "y"))
+#let gr = ad.grad(L, (2, 3, 1, 10)).map(g => int(calc.round(g)))
+#codebox[```typ
+#import "@local/autodiff:0.1.0" as ad
+#let L = ad.expr("(w*x + b - y)^2", ("w", "x", "b", "y"))
+#ad.value(L, (2, 3, 1, 10))   // the loss
+#ad.grad(L,  (2, 3, 1, 10))   // (w̄, x̄, b̄, ȳ), one backward pass
+```]
+#pause
+#result[computed live in this slide: $cal(L) = #int(calc.round(ad.value(L, (2, 3, 1, 10))))$, #h(0.6em)
+  $overline(w) = #gr.at(0), thick overline(x) = #gr.at(1), thick overline(b) = #gr.at(2), thick overline(y) = #gr.at(3)$ — the same four numbers, by hand, by PyTorch, and by our own graph.]
 
 == Gradients accumulate in frameworks
 
