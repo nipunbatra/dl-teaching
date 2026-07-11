@@ -140,7 +140,30 @@ $ theta_3 = 1.08 - 0.1 dot (-3.84) = 1.464 $
 
 Same curve $cal(L) = (theta - 3)^2$, four choices of $eta$:
 #pause
-#fig("/lecture5/figures/lr_trajectories.svg", w: 88%)
+// native: the ACTUAL GD iterates at each η (ml-plot) — the diverging case really diverges
+#let _para(t) = calc.pow(t - 3.0, 2)
+#let _gd1(eta) = {
+  let t = 0.0
+  let pts = ((t, _para(t)),)
+  for _ in range(12) {
+    t = t - eta * 2.0 * (t - 3.0)
+    let tc = calc.max(-1.5, calc.min(7.5, t))   // clip to the frame like the curve
+    pts.push((tc, _para(tc)))
+  }
+  pts
+}
+#let _bowl = range(0, 61).map(i => { let t = -1.5 + 9.0 * i / 60.0; (t, _para(t)) })
+#let _cfgs = (
+  (0.05, [$eta = 0.05$ · too small], TEAL),
+  (0.4, [$eta = 0.4$ · good], GREEN),
+  (0.9, [$eta = 0.9$ · oscillates], ACC),
+  (1.05, [$eta = 1.05$ · diverges], RED),
+)
+#align(center, stack(dir: ltr, spacing: 4mm,
+  .._cfgs.map(cf => lines((_bowl, _gd1(cf.at(0))),
+    colors: (INK, cf.at(2)), markers: (false, true), y-ticks: false,
+    size: (37mm, 30mm), title: cf.at(1))),
+))
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[too small crawls · good converges fast · large oscillates · $eta > 1$ diverges])
 

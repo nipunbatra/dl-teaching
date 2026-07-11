@@ -44,23 +44,10 @@ def f_landscape():
     ax2.set_aspect('equal'); ax2.set_xticks([]); ax2.set_yticks([]); ax2.set_title('contours + gradient step',fontsize=12)
     save(fig,'landscape')
 
-# ── 2 — learning-rate: four GD trajectories on L=(theta-3)^2 ──
-def f_lr_trajectories():
-    L=lambda t:(t-3)**2; grad=lambda t:2*(t-3)
-    cfgs=[(0.05,'too small',TEAL),(0.4,'good',GREEN),(0.9,'large (oscillates)',ACC),(1.05,'diverges',RED)]
-    fig,axes=plt.subplots(1,4,figsize=(9.4,2.5))
-    for ax,(eta,ttl,c) in zip(axes,cfgs):
-        th=np.linspace(-1.5,7.5,300); ax.plot(th,L(th),color=INK,lw=2.0,alpha=.8)
-        t=0.0; pts=[t]
-        for _ in range(12):
-            t=t-eta*grad(t); pts.append(t)
-            if abs(t)>1e3: break
-        pts=np.array(pts); pts=np.clip(pts,-1.5,7.5)
-        ax.plot(pts,L(np.clip(pts,-1.5,7.5)),'-o',color=c,ms=4,lw=1.4)
-        ax.scatter([3],[0],marker='*',s=130,color=RED,zorder=5)
-        ax.set_title(f'$\\eta$={eta}\n{ttl}',fontsize=11)
-        ax.set_xticks([]); ax.set_yticks([]); ax.set_ylim(-3,26)
-    save(fig,'lr_trajectories')
+# ── 2 — lr_trajectories — RETIRED.
+# Now native ml-plot: four panels, each the parabola L=(θ-3)² plus the ACTUAL GD
+# iterates at that η (markers-per-series), computed in-deck — so the diverging
+# case genuinely climbs out. See lecture5/L5-optimization.typ ("learning rate matters").
 
 # ── 3 — batch-size noise: full / mini / tiny batch paths on a bowl ──
 def f_batch_noise():
@@ -183,7 +170,7 @@ def f_sharp_flat():
     ax.set_title('flat minima resist parameter / data shift',fontsize=12)
     save(fig,'sharp_flat')
 
-for f in [f_landscape,f_lr_trajectories,f_batch_noise,
+for f in [f_landscape,f_batch_noise,
           f_optimizer_compare,f_lr_schedules,f_sharp_flat,f_momentum_vector]:
     f(); print('ok',f.__name__)
 print('done ->',OUT)
