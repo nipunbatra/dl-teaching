@@ -681,7 +681,7 @@ $ t_"cat", quad t_"dog", quad t_"car" quad quad #text(size: 15pt, fill: MUTED)[(
 
 Encode the image once, then score it against every class text:
 #pause
-$ v = f_"img"(I), quad quad s_c = v^top t_c \/ tau $
+$ v = f_"img"(I), quad quad s_c = hat(v)^top hat(t)_c \/ tau quad (hat(v), hat(t)_c "unit-normalized, as in training") $
 #pause
 $ p(c | I) = "softmax"_c (s_c) $
 #pause

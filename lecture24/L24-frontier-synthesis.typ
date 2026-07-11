@@ -522,7 +522,7 @@ For each system, ask: *what is automatically checkable? where is process feedbac
 
 Every Transformer block *reads* a representation and *adds* to it:
 #pause
-$ h_(ell+1) = h_ell + "Attn"(h_ell) + "MLP"(h_ell) $
+$ h_(ell+1) = h_ell + "Attn"(h_ell) + "MLP"(h_ell + "Attn"(h_ell)) $
 #pause
 #residstream
 #pause

@@ -132,7 +132,7 @@ $ theta_2 = 0.6 - 0.1 dot (-4.8) = 1.08 $
 *Step 3* — gradient at $1.08$ is $2(1.08 - 3) = -3.84$:
 $ theta_3 = 1.08 - 0.1 dot (-3.84) = 1.464 $
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[$0 -> 0.6 -> 1.08 -> 1.464 -> dots -> 3$ — each step covers $80%$ of the remaining gap.])
+#align(center, text(size: 16pt, fill: MUTED)[$0 -> 0.6 -> 1.08 -> 1.464 -> dots -> 3$ — each step closes $20%$ of the remaining gap ($80%$ is left, the factor $0.8$).])
 #pause
 #notebox[The distance to the minimum obeys $(theta_t - 3) -> (1 - 2 eta)(theta_t - 3)$; here $1 - 2 eta = 0.8$, a clean geometric decay.]
 

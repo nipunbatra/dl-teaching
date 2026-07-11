@@ -462,7 +462,7 @@ $ W_Q, W_K, W_V, W_O in RR^(512 times 512) $
 #pause
 $ 4 times 512^2 = 4 times "262,144" = $ #text(fill: ACC, weight: 600)[$"1,048,576"$] #text(size: 15pt, fill: MUTED)[parameters]
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[$approx 1.05$ M — this is one attention sublayer; the FFN typically adds a few times more])
+#align(center, text(size: 16pt, fill: MUTED)[$approx 1.05$ M — this is one attention sublayer; a $512 -> 2048 -> 512$ FFN adds $approx 2.1$ M, about twice as much])
 
 == The multi-head block #V
 

@@ -116,7 +116,7 @@
   node((5.4, 0), align(center, text(size: 9pt)[weighted \ sum $-> y$]), shape: rect, corner-radius: 4pt, inset: 7pt, stroke: 0.9pt + GREEN, fill: GREEN.lighten(82%))
   edge((3.4, 2.1), (5.4, 0), "-|>", stroke: 1.2pt + ACC)
   edge((3.4, -0.7), (5.4, 0), "-|>", stroke: 1.2pt + ACC)
-  node((3.4, -3.1), text(size: 9pt, fill: MUTED)[top-2 of 4 fire $-> $ 25% of expert FLOPs], stroke: none, fill: none)
+  node((3.4, -3.1), text(size: 9pt, fill: MUTED)[top-2 of 4 fire $-> $ 50% of expert FLOPs], stroke: none, fill: none)
 }))
 
 // ── (G) speculative decoding: draft proposes, target verifies in one pass ──

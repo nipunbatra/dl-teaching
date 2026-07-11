@@ -339,7 +339,7 @@ $ w <- 2 - 0.1(-18) = 3.8, quad quad b <- 1 - 0.1(-6) = 1.6. $
 #pause
 New prediction: $hat(y) = 3.8 dot 3 + 1.6 = 13$.
 #pause
-#notebox[Target is $y = 10$; we jumped from $6$ to $13$ — we *overshot*. Lecture 4 is about choosing $eta$ and the update rule so this is stable.]
+#notebox[Target is $y = 10$; we jumped from $7$ to $13$ — we *overshot* (both are off by $3$). Lecture 4 is about choosing $eta$ and the update rule so this is stable.]
 
 == Interactive: the computation graph #I
 

@@ -229,7 +229,7 @@ $ "smooth"_(L_1)(r) = cases(
 
 == Worked example: localization loss #D
 
-True box $b = (0.5, 0.5, 0.4, 0.2)$, prediction $hat(b) = (0.6, 0.45, 0.5, 0.3)$ (normalized).
+True box $b = (0.5, 0.5, 0.4, 0.2)$, prediction $hat(b) = (0.6, 0.45, 0.5, 0.3)$ (center-size $(x_c, y_c, w, h)$, normalized).
 #pause
 Per-coordinate absolute residuals:
 #pause
