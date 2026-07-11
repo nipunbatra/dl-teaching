@@ -13,6 +13,20 @@
 
 #let IA = "https://nipunbatra.github.io/interactive-articles/"
 
+// ── native 1-D Bayes-classifier maths (shared by the generative-classifier slides) ──
+// Two class-conditional Gaussians and the EXACT posterior p(Y=1 | x) from Bayes' rule,
+// all computed in Typst so the picture cannot disagree with the math on the slide.
+#let BC0 = dist.normal(mu: 0.0, sigma: 1.2)     // p(x | Y=0)
+#let BC1 = dist.normal(mu: 3.0, sigma: 1.2)     // p(x | Y=1)
+#let bc-post(pr, x) = {                          // posterior p(Y=1 | x)
+  let a = pr * dist.pdf(BC1, x)
+  let b = (1.0 - pr) * dist.pdf(BC0, x)
+  a / (a + b)
+}
+// decision boundary (posterior = 0.5). Equal variances ⇒ closed form:
+//   x* = (μ0+μ1)/2 + σ²/(μ1−μ0) · ln((1−π)/π)
+#let bc-boundary(pr) = 1.5 + (1.44 / 3.0) * calc.ln((1.0 - pr) / pr)
+
 #title-slide()
 
 // ══════════════════════════════ PART I ══════════════════════════════
@@ -74,7 +88,19 @@ For a continuous $Y$, probability comes from *area*:
 $ P(a <= Y <= b) = integral_a^b p(y) dif y $
 #pause
 #alertbox[$p(y) != P(Y=y)$ — a density can *exceed 1*; only _integrals_ are probabilities.]
-#fig("/lecture1/figures/density_area.svg", w: 42%)
+// native: a real N(0,1) density with the interval [a,b] shaded to show the area
+#let _dg = dist.normal(mu: 0.0, sigma: 1.0)
+#let _curve = range(0, 121).map(i => { let x = -4.0 + i * 8.0 / 120; (x, dist.pdf(_dg, x)) })
+#let _shade = range(0, 41).map(i => { let x = -1.0 + i * 2.0 / 40; (x, dist.pdf(_dg, x)) })
+#align(center, lines(
+  (_curve, _shade),
+  fill-under: (1, ACC.transparentize(60%)),
+  markers: false, colors: (INK, ACC), y-ticks: false,
+  vlines: ((-1.0, [$a$], MUTED), (1.0, [$b$], MUTED)),
+  x-label: [$y$], y-label: [$p(y)$],
+  size: (68mm, 30mm),
+))
+#align(center, text(size: 15pt, fill: MUTED)[the shaded area is $P(a <= Y <= b)$])
 
 == Uniform distribution: support matters
 #stag(V)
@@ -83,7 +109,14 @@ $ P(a <= Y <= b) = integral_a^b p(y) dif y $
   [$ Y tilde cal(U)(a, b) quad p(y) = cases(1\/(b-a) & quad a <= y <= b, 0 & quad "otherwise") $
    #v(4pt)
    #notebox[A likelihood can impose a *hard constraint*.]],
-  fig("/lecture1/figures/uniform.svg", w: 96%),
+  align(center, lines(
+    // the TRUE Uniform(a,b) density — a box, zero outside its support
+    fn: x => dist.pdf(dist.uniform(a: -1.0, b: 2.0), x),
+    domain: (-3, 4), samples: 140, markers: false, colors: (INK,),
+    vlines: ((-1.0, [$a$], MUTED), (2.0, [$b$], MUTED)), y-ticks: false,
+    x-label: [$y$], y-label: [$p(y)$],
+    size: (58mm, 40mm),
+  )),
 )
 
 == Checkpoint: uniform support #Q
@@ -105,7 +138,18 @@ $ P(a <= Y <= b) = integral_a^b p(y) dif y $
 
 $ Y tilde cal(N)(mu, sigma^2) quad quad p(y) = 1/sqrt(2 pi sigma^2) exp(-(y-mu)^2/(2 sigma^2)) $
 #pause
-#fig("/lecture1/figures/gaussian_params.svg", w: 56%)
+// native: three real Normal densities — μ shifts location, σ sets the scale/height
+#align(center, lines(
+  fn: (x => dist.pdf(dist.normal(mu: 0.0, sigma: 1.0), x),
+       x => dist.pdf(dist.normal(mu: 0.0, sigma: 1.8), x),
+       x => dist.pdf(dist.normal(mu: -1.5, sigma: 1.0), x)),
+  domain: (-6, 6), samples: 120, markers: false,
+  colors: (INK, ACC, TEAL),
+  labels: ([$mu=0, sigma=1$], [$mu=0, sigma=1.8$], [$mu=-1.5, sigma=1$]),
+  legend: "tr", y-ticks: false,
+  x-label: [$y$], y-label: [$p(y)$],
+  size: (82mm, 46mm),
+))
 #align(center)[Only two knobs: *location* $mu$ and *scale* $sigma$.]
 
 == Multivariate Gaussian geometry
@@ -335,7 +379,14 @@ $ p = sigma(z) = 1/(1 + e^(-z)) $
 #two(r: (1fr, 1.2fr),
   [$z -> -infinity: p -> 0$ \ $z = 0: p = 0.5$ \ $z -> +infinity: p -> 1$
    #v(4pt) #text(size: 16pt, fill: MUTED)[In practice sigmoid + BCE are fused for numerical stability.]],
-  fig("/lecture1/figures/sigmoid.svg", w: 80%),
+  align(center, lines(
+    // the TRUE logistic sigmoid; the dot reads off σ(0)=0.5, dashed lines are the 0/1 asymptotes
+    fn: z => dist.sigmoid(z), domain: (-6, 6), samples: 120, markers: false, colors: (ACC,),
+    hlines: ((0.0, none, MUTED), (1.0, none, MUTED)),
+    points: ((0.0, 0.5, [$0.5$]),),
+    x-label: [$z$], y-label: [$sigma(z)$],
+    size: (66mm, 46mm),
+  )),
 )
 
 == Logistic regression = Bernoulli MLE
@@ -469,14 +520,47 @@ $ hat(y) = arg max_k p(x | y=k) thin p(y=k) $
 
 $ X | Y=0 tilde cal(N)(mu_0, sigma_0^2), quad X | Y=1 tilde cal(N)(mu_1, sigma_1^2) $
 #pause
-#fig("/lecture1/figures/bayes_classifier.svg", w: 50%)
-#align(center, text(size: 16pt, fill: MUTED)[Two class-conditional densities, a test point $x^star$, and its likelihood under each class.])
+// native EXACT Bayes classifier: μ0=0, μ1=3, σ=1.2, prior π=0.5 (helpers at top of file)
+#let pr = 0.5
+#two(
+  align(center, lines(
+    fn: (x => (1.0 - pr) * dist.pdf(BC0, x), x => pr * dist.pdf(BC1, x)),
+    domain: (-4, 7), samples: 140, markers: false, colors: (TEAL, ACC),
+    labels: ([$(1-pi) p_0$], [$pi p_1$]), legend: "tr",
+    vlines: ((bc-boundary(pr), none, INK),), y-ticks: false,
+    x-label: [$x$], y-label: [density],
+    size: (60mm, 40mm),
+  )),
+  align(center, lines(
+    fn: x => bc-post(pr, x),
+    domain: (-4, 7), samples: 140, markers: false, colors: (BLUE,),
+    hlines: ((0.5, [$0.5$], MUTED),),
+    vlines: ((bc-boundary(pr), [boundary], INK),),
+    x-label: [$x$], y-label: [$p(Y=1 | x)$],
+    size: (60mm, 40mm),
+  )),
+)
+#align(center, text(size: 16pt, fill: MUTED)[Prior-weighted class densities (left) and the *exact* posterior $p(Y=1|x)$ (right); the dashed line is the decision boundary, where the posterior crosses $0.5$.])
 
 == Priors move the decision boundary
 #stag(V)
 
 #two(notebox[*Balanced* $p(Y=1) = 0.5$], notebox[*Rare* $p(Y=1) = 0.1$])
-#fig("/lecture1/figures/priors_shift_boundary.svg", w: 54%)
+// native: same two class-conditionals, boundary vline COMPUTED from each prior — it moves right
+#two(
+  align(center, lines(
+    fn: (x => dist.pdf(BC0, x), x => dist.pdf(BC1, x)),
+    domain: (-4, 7), samples: 140, markers: false, colors: (TEAL, ACC),
+    vlines: ((bc-boundary(0.5), [boundary], INK),), y-ticks: false,
+    x-label: [$x$], size: (58mm, 34mm),
+  )),
+  align(center, lines(
+    fn: (x => dist.pdf(BC0, x), x => dist.pdf(BC1, x)),
+    domain: (-4, 7), samples: 140, markers: false, colors: (TEAL, ACC),
+    vlines: ((bc-boundary(0.1), [boundary], INK),), y-ticks: false,
+    x-label: [$x$], size: (58mm, 34mm),
+  )),
+)
 #result[posterior $prop$ likelihood $times$ prior]
 
 == Interactive: Bayes classifier
