@@ -277,8 +277,8 @@ $ theta_(t+1) = (1 - 2 eta lambda) thin theta_t - eta thin nabla cal(L)_"data" $
 
 == Why "weight decay"?
 
-Each step first *shrinks* the weight toward zero, then applies the gradient:
-$ theta_t arrow.r.bar (1 - eta lambda') thin theta_t $
+Each step first *shrinks* the weight toward zero, then applies the gradient (write $lambda' = 2 lambda$ to fold the $2$ into the decay rate):
+$ theta_t arrow.r.bar (1 - eta lambda') thin theta_t, quad quad lambda' = 2 lambda $
 #pause
 #notebox[Absent any gradient, weights *decay* geometrically toward $0$ — hence the name. $ell_2$ regularization and weight decay are the same mechanism (for SGD).]
 

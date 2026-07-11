@@ -205,6 +205,8 @@ $ x thick arrow.r.long^(f_phi) thick z thick arrow.r.long^(g_theta) thick hat(x)
 #aediag
 #pause
 #align(center, text(size: 14pt, fill: MUTED)[*encoder* $f_phi$ maps $x -> z$; *decoder* $g_theta$ maps $z -> hat(x)$; train to make $hat(x) approx x$])
+#pause
+#align(center, text(size: 13pt, fill: MUTED)[(VAE convention: $theta$ is the *generative / decoder* side, $phi$ the encoder — the reverse of the classifier's $f_theta -> g_phi$ in L18)])
 
 == The bottleneck intuition #D
 
@@ -467,7 +469,7 @@ The opposite failure — the model *ignores* the latent entirely:
 #pause
 #fig("/lecture19/figures/posterior_collapse.svg", w: 62%)
 #pause
-#alertbox[A very powerful decoder can predict $x$ from context alone, so $q_phi (z | x) -> p(z)$ for every $x$. The latent becomes *unused* — not magically regularized.]
+#alertbox[Two routes to the same failure: an over-powerful *autoregressive* decoder can predict $x$ from its own context alone, and — more often for a plain feed-forward decoder like ours — the KL term simply dominates. Either way $q_phi (z | x) -> p(z)$ for every $x$ and the latent goes *unused* — not magically regularized.]
 
 == VAE versus deterministic autoencoder #V
 

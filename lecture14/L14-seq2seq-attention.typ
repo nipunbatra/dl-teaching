@@ -598,6 +598,8 @@ $ s_u = f_"dec" (s_(u-1), e(y_(u-1)), c_(u-1)) $
 $ e_(u t) = "score"(s_u, h_t), quad quad alpha_(u t) = "softmax"_t (e_(u t)), quad quad c_u = sum_(t=1)^T alpha_(u t) h_t $
 #pause
 $ p(y_u | dot) = "softmax"(W_o thin [s_u; c_u] + b_o) $
+#pause
+#align(center, text(size: 15pt, fill: MUTED)[this is the Luong *input-feeding* form (query $s_u$, previous context $c_(u-1)$ fed back in); earlier we scored with the Bahdanau query $s_(u-1)$])
 
 == The full model #V
 

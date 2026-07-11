@@ -567,8 +567,10 @@ $ nabla_h cal(L) = W_o^top thin nabla_z cal(L) quad quad #text(size: 14pt, fill:
 Through the ReLU — only the units that *fired* in the forward pass pass a gradient:
 $ nabla_a cal(L) = nabla_h cal(L) dot.o "ReLU"'(W_h c) $
 #pause
-Then back to the concatenated context $c$:
+Then back to the concatenated context $c$ (numbers for a specific small $W_o, W_h$ — the *pattern* is the point):
 $ nabla_c cal(L) = W_h^top thin nabla_a cal(L) = mat(-0.234, 0, 0, -0.234) $
+#pause
+#align(center, text(size: 15pt, fill: MUTED)[the off ReLU unit zeroes its block; only the two live coordinates of $c$ get a gradient])
 #pause
 #align(center, text(size: 15pt, fill: MUTED)[the two *zeros* are the coordinates the switched-off hidden unit never touched])
 

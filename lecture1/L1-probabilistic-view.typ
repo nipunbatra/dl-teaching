@@ -227,11 +227,11 @@ $ L(theta) = product_i p(x_i | theta) = theta^(n_H) (1 - theta)^(n_T) = theta^4 
 == Coin flips: maximise the (log-)likelihood
 #stag(D)
 
-Logs turn the product into a sum:
-$ cal(L)(theta) = log L(theta) = n_H log theta + n_T log(1 - theta) $
+Logs turn the product into a sum (we *maximise* the log-likelihood $log L$ — reserve $cal(L)$ for the loss we *minimise*):
+$ log L(theta) = n_H log theta + n_T log(1 - theta) $
 #pause
 Set the derivative to zero:
-$ (dif cal(L))/(dif theta) = n_H / theta - n_T / (1 - theta) = 0 $
+$ (dif)/(dif theta) log L(theta) = n_H / theta - n_T / (1 - theta) = 0 $
 #pause
 $ ==> theta_"MLE" = n_H / (n_H + n_T) = 4/10 = 0.4 $
 #pause

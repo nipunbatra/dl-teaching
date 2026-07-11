@@ -614,9 +614,9 @@ $ c_t = f_t dot.o c_(t-1) + i_t dot.o tilde(c)_t, quad quad h_t = o_t dot.o tanh
 
 == Why additive memory helps #D
 
-The cell state's step-to-step Jacobian is just the *forget gate* — no weight matrix:
+The cell state's step-to-step Jacobian *along the direct path* is just the *forget gate* — no weight matrix (the gates also depend on $c_(t-1)$ through $h_(t-1)$, but this direct highway dominates):
 #pause
-$ (partial c_t)/(partial c_(t-1)) = "diag"(f_t) $
+$ (partial c_t)/(partial c_(t-1)) approx "diag"(f_t) $
 #pause
 So over many steps the gradient along the cell highway is a product of *gates*:
 $ (partial c_T)/(partial c_k) = product_(j=k+1)^T "diag"(f_j) $

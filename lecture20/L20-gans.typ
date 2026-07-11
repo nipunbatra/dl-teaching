@@ -208,7 +208,7 @@ $ min_G max_D thin V(D, G) $
 #pause
 $ V(D, G) = EE_(x ~ p_"data") [log D(x)] + EE_(z ~ p(z)) [log(1 - D(G(z)))] $
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[the detective *maximizes*, the counterfeiter *minimizes* — the same scalar])
+#align(center, text(size: 16pt, fill: MUTED)[the detective *maximizes*, the counterfeiter *minimizes* — the same scalar (Goodfellow et al., 2014)])
 
 == Board sketch: alternating steps #I
 

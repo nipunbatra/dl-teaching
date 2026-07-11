@@ -255,6 +255,8 @@ $ r_t = e_t + p_t + s_t $
   [position], [$p_t$], [where it sits],
   [segment], [$s_t$], [sentence A vs B],
 ))
+#pause
+#align(center, text(size: 15pt, fill: MUTED)[the two-sentence format feeds a second pre-training task, *Next-Sentence Prediction* (NSP): from `[CLS]`, predict whether B really follows A])
 
 == The `[CLS]` representation #D
 
@@ -400,7 +402,7 @@ Put a few *demonstrations* directly in the context, then the query:
 `loved every minute =>` #h(0.4em) *?*
 ]
 #pause
-#notebox[No weights change. The model *reads the pattern* from the examples in its context window and continues it — "in-context learning".]
+#notebox[No weights change. The model *reads the pattern* from the examples in its context window and continues it — "in-context learning" (GPT-3; Brown et al., 2020).]
 
 == Interactive: in-context learning #I
 

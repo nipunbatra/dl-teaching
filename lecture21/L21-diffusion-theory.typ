@@ -347,6 +347,14 @@ for t = T, ..., 1:
 return x_0
 ```]
 
+== The reverse step, written out #D
+
+`reverse_step` is one Gaussian sample: a mean built from the predicted noise, plus a little fresh noise.
+#pause
+$ x_(t-1) = 1/sqrt(alpha_t) (x_t - (1 - alpha_t)/sqrt(1 - overline(alpha)_t) thin epsilon_theta(x_t, t)) + sigma_t thin z, quad quad z ~ cal(N)(0, I) $
+#pause
+#notebox[The *mean* is just $hat(x)_0$'s information re-expressed as a small step toward $t-1$; $sigma_t^2 = beta_t$ (or the exact posterior variance) sets how much fresh noise to re-inject. Setting $z = 0$ gives the deterministic (DDIM-style) step.]
+
 == Interactive: forward and reverse #I
 
 #interbox(link-to: IA + "diffusion-denoise")[

@@ -492,9 +492,9 @@ Training maps $theta in RR^P -> cal(L) in RR$ (many inputs, one output).
 
 == Non-scalar output needs a seed vector #D
 
-If $y = f(x) in RR^m$, `backward()` must know *which* scalar to differentiate — you supply a vector $v$ and it returns
+If $y = f(x) in RR^m$, `backward()` must know *which* scalar to differentiate — you supply a vector $v$ and it returns (same vector as the $J^top overline(y)$ above, shaped like $x$)
 #pause
-$ v^top J. $
+$ J^top v. $
 #pause
 #notebox[This is why PyTorch errors on `.backward()` of a non-scalar tensor without a `gradient=` argument.]
 
@@ -510,7 +510,7 @@ def f(x):
 
 J = torch.autograd.functional.jacobian(f, x)   # full 2x2 Jacobian
 v = torch.tensor([1.0, 3.0])
-f(x).backward(v)                                # x.grad == v^T J  (a VJP)
+f(x).backward(v)                                # x.grad == J^T v  (a VJP)
 ```]
 #pause
 #align(center, text(size: 15pt, fill: MUTED)[`jacobian` forms the whole matrix; `backward(v)` returns only $v^top J$.])
