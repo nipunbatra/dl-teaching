@@ -211,26 +211,10 @@ def f_overfit():
     ax.set_ylim(-1.8,2.0); ax.set_xticks([]); ax.set_yticks([]); ax.legend(frameon=False,fontsize=9,loc='upper right')
     save(fig,'overfit_polynomial')
 
-# 17 prior_likelihood_posterior
-def f_plp():
-    fig,ax=plt.subplots(figsize=(5.2,3.2)); g=np.linspace(-3,4,150); X,Y=np.meshgrid(g,g)
-    def blob(mx,my,s): return np.exp(-((X-mx)**2+(Y-my)**2)/(2*s**2))
-    ax.contour(X,Y,blob(0,0,1.2),levels=4,colors=TEAL,linewidths=1.2)
-    ax.contour(X,Y,blob(2.2,1.6,0.8),levels=4,colors=ACC,linewidths=1.2)
-    ax.contour(X,Y,blob(1.4,1.0,0.7),levels=4,colors=GREEN,linewidths=1.6)
-    # peaks marked, named in a clear corner legend (no labels over the rings)
-    ax.plot(0,0,'o',color=TEAL,ms=7,label='prior')
-    ax.plot(2.2,1.6,'o',color=ACC,ms=7,label='likelihood (MLE)')
-    ax.plot(1.4,1.0,'o',color=GREEN,ms=8,label='posterior (MAP)')
-    ax.legend(loc='lower right',frameon=True,framealpha=0.88,facecolor='white',edgecolor='none',
-              fontsize=10,handletextpad=0.4,borderaxespad=0.2)
-    ax.set_xlabel(r'$\theta_1$'); ax.set_ylabel(r'$\theta_2$'); ax.set_aspect('equal'); ax.set_xticks([]); ax.set_yticks([])
-    save(fig,'prior_likelihood_posterior')
-
-# 17b mle_map_contours (for the MAP interactive slide, optional reuse)
-def f_mlemap():
-    f_plp()  # same content
-    import shutil; shutil.copy(f'{OUT}/prior_likelihood_posterior.svg',f'{OUT}/mle_map_contours.svg')
+# 17 prior_likelihood_posterior / mle_map_contours — RETIRED.
+# Now computed natively in the deck from real Gaussians via chalkdust ml-field:
+#   contour((likelihood, prior, posterior), marks: (MLE, MAP, 0))
+# See lecture1/L1-probabilistic-view.typ, "Bayes' rule over parameters".
 
 # 18 posterior_samples
 def f_postsamp():
@@ -249,7 +233,7 @@ def f_postsamp():
 
 for fn in [f_net,f_density_area,f_uniform,f_gaussian_params,f_g2s,f_mvn,f_regconds,f_resloss,
            f_softpipe,f_sigmoid,f_softbars,f_neglog,f_gradbars,f_bayes,f_priors,f_overfit,
-           f_plp,f_mlemap,f_postsamp]:
+           f_postsamp]:
     try: fn(); print('ok',fn.__name__)
     except Exception as e: print('FAIL',fn.__name__,e)
 print('done')

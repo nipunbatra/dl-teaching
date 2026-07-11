@@ -14,6 +14,7 @@
 #import "@local/ml-plot:0.1.0" as mp
 #import "@local/ml-data:0.1.0" as md    // pandas-lite: md.frame(csv("x.csv")), md.xy(f, "a", "b")
 #import "@local/ml-dist:0.1.0" as dist  // distributions: dist.nll0(dist.normal(), r) — the TRUE loss
+#import "@local/ml-field:0.1.0" as fld  // 2-D/3-D fields: contour/heatmap/surface of f(x,y)
 #import "metropolis.typ": INK, ACC, TEAL, GREEN, BLUE, MUTED, RED
 
 // the deck theme: metropolis palette, teal→paper→orange diverging ramp
@@ -35,6 +36,11 @@
 // ── plots (ml-plot), palette-locked ──
 #let bars  = mp.bars.with(theme: dl-theme)
 #let lines = mp.lines.with(theme: dl-theme)
+
+// ── 2-D / 3-D fields (ml-field), palette-locked ──
+#let contour = fld.contour.with(theme: dl-theme)
+#let heatmap = fld.heatmap.with(theme: dl-theme)
+#let surface = fld.surface.with(theme: dl-theme)
 
 // ── the math helpers (figures + prose can share one computation) ──
 #let conv2d        = tg.conv2d

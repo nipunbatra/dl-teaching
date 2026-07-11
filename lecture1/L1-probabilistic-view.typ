@@ -593,8 +593,21 @@ _Before seeing this dataset, which parameter values are plausible?_
 
 $ p(theta | cal(D)) = (p(cal(D) | theta) thin p(theta)) / p(cal(D)) $
 #pause
-#fig("/lecture1/figures/prior_likelihood_posterior.svg", w: 34%)
-#align(center, text(size: 17pt)[$p(cal(D)) = integral p(cal(D) | theta) p(theta) dif theta$ — the evidence (we stop here).])
+// native: real Gaussian likelihood × prior → posterior contours (ml-field).
+// posterior sits between the MLE and the prior mean 0 = MAP = regularisation.
+#let _lik(t1, t2)   = calc.exp(-((t1 - 2.0) * (t1 - 2.0) + (t2 - 1.5) * (t2 - 1.5)) / (2 * 0.8 * 0.8))
+#let _prior(t1, t2) = calc.exp(-(t1 * t1 + t2 * t2) / (2 * 1.2 * 1.2))
+#align(center, contour(
+  (_lik, _prior, (t1, t2) => _lik(t1, t2) * _prior(t1, t2)),
+  xlim: (-2.5, 4), ylim: (-2, 3.5), samples: 64, levels: 4,
+  colors: (ACC, BLUE, GREEN),
+  marks: ((2.0, 1.5, [MLE], ACC), (1.4, 1.04, [MAP], GREEN), (0.0, 0.0, [0], BLUE)),
+  size: (58mm, 42mm), x-label: [$theta_1$], y-label: [$theta_2$],
+))
+#align(center, text(size: 15pt)[
+  #text(fill: ACC, weight: 600)[likelihood] $times$ #text(fill: BLUE, weight: 600)[prior] $arrow.r$ #text(fill: GREEN, weight: 600)[posterior] — the MAP is pulled from the MLE toward the prior mean $0$.
+])
+#align(center, text(size: 14pt, fill: MUTED)[$p(cal(D)) = integral p(cal(D) | theta) p(theta) dif theta$ — the evidence (we stop here).])
 
 == MAP estimation
 #stag(D)
