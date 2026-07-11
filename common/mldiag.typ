@@ -53,6 +53,7 @@
 #let adam     = opt.adam
 #let sgd      = opt.sgd
 #let numgrad  = opt.numgrad
+#let grad2d   = opt.grad2d   // gradient of a loss f(x,y) → no hand-derived ∇ on the slide
 
 // ── the math helpers (figures + prose can share one computation) ──
 #let conv2d        = tg.conv2d
