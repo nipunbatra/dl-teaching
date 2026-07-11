@@ -17,6 +17,7 @@
 #import "@local/field:0.1.0" as fld     // 2-D/3-D fields: contour/heatmap/surface of f(x,y)
 #import "@local/optim:0.1.0" as opt     // optimizers: opt.gd/momentum/adam(grad, x0) → trajectory
 #import "@local/rand:0.1.0" as rnd      // seeded PRNG: rnd.randn(seed, i), rnd.shuffle(seed, arr)
+#import "@local/autodiff:0.1.0" as ad   // reverse-mode autodiff: ad.grad(f, x) exact; ad.grad-fn/fn2 for optim+contour
 #import "metropolis.typ": INK, ACC, TEAL, GREEN, BLUE, MUTED, RED
 
 // the deck theme: metropolis palette, teal→paper→orange diverging ramp
