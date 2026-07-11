@@ -49,66 +49,12 @@ def f_landscape():
 # iterates at that η (markers-per-series), computed in-deck — so the diverging
 # case genuinely climbs out. See lecture5/L5-optimization.typ ("learning rate matters").
 
-# ── 3 — batch-size noise: full / mini / tiny batch paths on a bowl ──
-def f_batch_noise():
-    rng=np.random.default_rng(3)
-    g=np.linspace(-2.6,2.6,220); X,Y=np.meshgrid(g,g); Z=X**2+3*Y**2
-    def run(sigma,eta=0.10,steps=40):
-        p=np.array([-2.2,2.0]); pts=[p.copy()]
-        for _ in range(steps):
-            noise=rng.normal(0,sigma,2)
-            p=p-eta*(np.array([2*p[0],6*p[1]])+noise); pts.append(p.copy())
-        return np.array(pts)
-    fig,axes=plt.subplots(1,3,figsize=(9.4,3.0))
-    cfgs=[(0.0,'full batch',TEAL),(2.2,'minibatch',ACC),(6.0,'tiny batch',RED)]
-    for ax,(s,ttl,c) in zip(axes,cfgs):
-        ax.contour(X,Y,Z,levels=9,colors=[MUTED],linewidths=.6,alpha=.6)
-        pts=run(s); ax.plot(pts[:,0],pts[:,1],'-o',color=c,ms=2.4,lw=1.2,alpha=.9)
-        ax.scatter([0],[0],marker='*',s=140,color=INK,zorder=5)
-        ax.set_aspect('equal'); ax.set_xticks([]); ax.set_yticks([]); ax.set_title(ttl,fontsize=12)
-    save(fig,'batch_noise')
-
-# ── 4 & 5 — ravine / momentum_vs_gd — RETIRED.
-# Both are now native ml-field: contour(L) with the descent() trajectory computed
-# in-deck (GD zigzag, and GD-vs-momentum side by side). Same ravine L=x²+100y².
-# See lecture5/L5-optimization.typ ("The problem: ravines" / "Why momentum helps").
-
-# ── 6 — optimizer comparison on L = x^2 + 50 y^2 ──
-def f_optimizer_compare():
-    a,b=1.0,50.0
-    def grad(p): return np.array([2*a*p[0],2*b*p[1]])
-    p0=np.array([-2.4,0.85]); N=60
-    rng=np.random.default_rng(0)
-    def gd(eta=0.014):
-        p=p0.copy(); P=[p.copy()]
-        for _ in range(N): p=p-eta*grad(p); P.append(p.copy())
-        return np.array(P)
-    def sgd(eta=0.014,sig=6.0):
-        p=p0.copy(); P=[p.copy()]
-        for _ in range(N): p=p-eta*(grad(p)+rng.normal(0,sig,2)); P.append(p.copy())
-        return np.array(P)
-    def momentum(eta=0.006,beta=0.9):
-        p=p0.copy(); v=np.zeros(2); P=[p.copy()]
-        for _ in range(N):
-            v=beta*v+grad(p); p=p-eta*v; P.append(p.copy())
-        return np.array(P)
-    def adam(eta=0.16,b1=0.9,b2=0.999,eps=1e-8):
-        p=p0.copy(); m=np.zeros(2); v=np.zeros(2); P=[p.copy()]
-        for t in range(1,N+1):
-            g=grad(p); m=b1*m+(1-b1)*g; v=b2*v+(1-b2)*g*g
-            mh=m/(1-b1**t); vh=v/(1-b2**t)
-            p=p-eta*mh/(np.sqrt(vh)+eps); P.append(p.copy())
-        return np.array(P)
-    gx=np.linspace(-2.7,2.7,260); gy=np.linspace(-1.0,1.0,260); X,Y=np.meshgrid(gx,gy); Z=a*X**2+b*Y**2
-    fig,ax=plt.subplots(figsize=(7.6,3.2))
-    ax.contour(X,Y,Z,levels=12,colors=[MUTED],linewidths=.55,alpha=.55)
-    for pts,lbl,c in [(gd(),'GD',INK),(sgd(),'SGD',TEAL),(momentum(),'Momentum',BLUE),(adam(),'Adam',ACC)]:
-        ax.plot(pts[:,0],pts[:,1],'-o',color=c,ms=2.2,lw=1.5,label=lbl,alpha=.92)
-    ax.scatter([0],[0],marker='*',s=170,color=RED,zorder=6)
-    ax.set_xlim(-2.7,2.7); ax.set_ylim(-1.0,1.0); ax.set_aspect('equal')
-    ax.set_xticks([]); ax.set_yticks([]); ax.set_title(r'$L=x^2+50\,y^2$',fontsize=12)
-    ax.legend(frameon=False,fontsize=11,loc='upper right',ncol=2)
-    save(fig,'optimizer_compare')
+# ── 3 & 6 — batch_noise / optimizer_compare — RETIRED.
+# Both are now native ml-field contours with real ml-optim trajectories computed
+# in-deck: batch_noise = three seeded SGD runs (noise 0/2.2/6) on x²+3y²;
+# optimizer_compare = gd / sgd / momentum / adam on x²+50y². The seeded PRNG
+# (ml-random) makes the stochastic jitter reproducible.
+# See lecture5/L5-optimization.typ ("Batch size shapes the noise" / "four optimizers").
 
 # ── 7 — learning-rate schedules ──
 def f_lr_schedules():
@@ -170,7 +116,6 @@ def f_sharp_flat():
     ax.set_title('flat minima resist parameter / data shift',fontsize=12)
     save(fig,'sharp_flat')
 
-for f in [f_landscape,f_batch_noise,
-          f_optimizer_compare,f_lr_schedules,f_sharp_flat,f_momentum_vector]:
+for f in [f_landscape,f_lr_schedules,f_sharp_flat,f_momentum_vector]:
     f(); print('ok',f.__name__)
 print('done ->',OUT)

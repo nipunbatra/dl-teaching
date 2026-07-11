@@ -257,7 +257,15 @@ $ "Var"(g_t) approx 1/B "Var"(nabla ell_i) $
 
 Same bowl, three noise levels (full / mini / tiny batch):
 #pause
-#fig("/lecture5/figures/batch_noise.svg", w: 82%)
+// native: SGD with seeded gradient noise (ml-optim) — the jitter is real, computed
+#let _bowl-grad(p) = (2.0 * p.at(0), 6.0 * p.at(1))
+#let _batches = (([full batch], 0.0), ([minibatch], 2.2), ([tiny batch], 6.0))
+#align(center, stack(dir: ltr, spacing: 6mm,
+  .._batches.map(cf => contour((x, y) => x * x + 3.0 * y * y, xlim: (-2.6, 2.6), ylim: (-2.6, 2.6),
+    samples: 46, levels: 9, size: (37mm, 37mm), color: TEAL,
+    paths: (sgd(_bowl-grad, (-2.2, 2.0), lr: 0.10, noise: cf.at(1), seed: 3, steps: 40),),
+    marks: ((0, 0, [min], RED),), title: cf.at(0))),
+))
 #align(center, text(size: 16pt, fill: MUTED)[full batch glides · minibatch jitters toward the minimum · tiny batch bounces])
 
 == Interactive: SGD noise #I
@@ -280,7 +288,7 @@ Ill-conditioned loss $cal(L) = x^2 + 100 y^2$: steep across, shallow along.
 #align(center, contour(
   (x, y) => x * x + 100.0 * y * y, xlim: (-2.6, 2.6), ylim: (-0.55, 0.55),
   samples: 60, levels: 10, size: (108mm, 32mm), color: TEAL,
-  paths: (descent(_rav-grad, start: (-2.3, 0.45), lr: 0.0090, steps: 34),),
+  paths: (gd(_rav-grad, (-2.3, 0.45), lr: 0.0090, steps: 34),),
   marks: ((0, 0, [min], RED),),
 ))
 #align(center, text(size: 16pt, fill: MUTED)[GD must use a *tiny* $eta$ to stay stable in $y$ — so it *zigzags* and crawls in $x$])
@@ -319,8 +327,8 @@ $ v_t = g_t + beta g_(t-1) + beta^2 g_(t-2) + beta^3 g_(t-3) + dots $
   paths: (path,), marks: ((0, 0, [min], RED),), title: title,
 )
 #align(center, stack(dir: ltr, spacing: 9mm,
-  _rav([plain GD], descent(_rav-grad, start: (-2.3, 0.45), lr: 0.0090, steps: 34)),
-  _rav([with momentum], descent(_rav-grad, start: (-2.3, 0.45), lr: 0.0035, steps: 34, method: "momentum")),
+  _rav([plain GD], gd(_rav-grad, (-2.3, 0.45), lr: 0.0090, steps: 34)),
+  _rav([with momentum], momentum(_rav-grad, (-2.3, 0.45), lr: 0.0035, steps: 34)),
 ))
 #pause
 - *oscillating* directions ($y$) → gradients flip sign → they *cancel* in $v_t$;
@@ -549,8 +557,21 @@ $ theta_(t+1) = theta_t - eta thin underbrace(hat(m)_t, "which way") / underbrac
 
 $cal(L) = x^2 + 50 y^2$, identical start point:
 #pause
-#fig("/lecture5/figures/optimizer_compare.svg", w: 68%)
-#align(center, text(size: 16pt, fill: MUTED)[GD crawls · SGD jitters · momentum overshoots then settles · Adam cuts across])
+// native: four real optimizer trajectories (ml-optim) on one loss surface
+#let _oc-grad(p) = (2.0 * p.at(0), 100.0 * p.at(1))
+#let _x0 = (-2.4, 0.85)
+#align(center, contour((x, y) => x * x + 50.0 * y * y, xlim: (-2.7, 2.7), ylim: (-1.0, 1.0),
+  samples: 60, levels: 12, size: (100mm, 38mm), color: MUTED, marks: ((0, 0, [·], RED),),
+  paths: (
+    gd(_oc-grad, _x0, lr: 0.014, steps: 60),          // green — crawls
+    sgd(_oc-grad, _x0, lr: 0.014, noise: 6.0, seed: 0, steps: 60),  // teal — jitters
+    momentum(_oc-grad, _x0, lr: 0.006, steps: 60),    // orange — overshoots
+    adam(_oc-grad, _x0, lr: 0.16, steps: 60),         // red — cuts across
+  ),
+))
+#align(center, text(size: 16pt)[
+  #text(fill: GREEN, weight: 600)[GD] crawls · #text(fill: TEAL, weight: 600)[SGD] jitters · #text(fill: ACC, weight: 600)[momentum] overshoots then settles · #text(fill: RED, weight: 600)[Adam] cuts across
+])
 
 == Summary table
 

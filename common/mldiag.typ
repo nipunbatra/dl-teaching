@@ -9,12 +9,14 @@
 //    #attn-matrix(("the","cat","sat"), mask: "causal")
 // ═══════════════════════════════════════════════════════════════════
 
-#import "@local/ml-theme:0.1.0": theme
-#import "@local/tensor-grid:0.1.0" as tg
-#import "@local/ml-plot:0.1.0" as mp
-#import "@local/ml-data:0.1.0" as md    // pandas-lite: md.frame(csv("x.csv")), md.xy(f, "a", "b")
-#import "@local/ml-dist:0.1.0" as dist  // distributions: dist.nll0(dist.normal(), r) — the TRUE loss
-#import "@local/ml-field:0.1.0" as fld  // 2-D/3-D fields: contour/heatmap/surface of f(x,y)
+#import "@local/theme:0.1.0": theme
+#import "@local/convgrid:0.1.0" as tg   // conv/pool/attention grids (was tensor-grid)
+#import "@local/plot:0.1.0" as mp       // bar & line plots
+#import "@local/frame:0.1.0" as md      // pandas-lite: md.frame(csv("x.csv")), md.xy(f, "a", "b")
+#import "@local/dist:0.1.0" as dist     // distributions: dist.nll0(dist.normal(), r) — the TRUE loss
+#import "@local/field:0.1.0" as fld     // 2-D/3-D fields: contour/heatmap/surface of f(x,y)
+#import "@local/optim:0.1.0" as opt     // optimizers: opt.gd/momentum/adam(grad, x0) → trajectory
+#import "@local/rand:0.1.0" as rnd      // seeded PRNG: rnd.randn(seed, i), rnd.shuffle(seed, arr)
 #import "metropolis.typ": INK, ACC, TEAL, GREEN, BLUE, MUTED, RED
 
 // the deck theme: metropolis palette, teal→paper→orange diverging ramp
@@ -41,7 +43,16 @@
 #let contour = fld.contour.with(theme: dl-theme)
 #let heatmap = fld.heatmap.with(theme: dl-theme)
 #let surface = fld.surface.with(theme: dl-theme)
-#let descent = fld.descent   // compute a GD/momentum trajectory in-deck → contour(paths:)
+
+// ── optimizers (ml-optim) — pure numerics, no theme; feed the path to contour(paths:) ──
+#let minimize = opt.minimize
+#let gd       = opt.gd
+#let momentum = opt.momentum
+#let nesterov = opt.nesterov
+#let rmsprop  = opt.rmsprop
+#let adam     = opt.adam
+#let sgd      = opt.sgd
+#let numgrad  = opt.numgrad
 
 // ── the math helpers (figures + prose can share one computation) ──
 #let conv2d        = tg.conv2d
