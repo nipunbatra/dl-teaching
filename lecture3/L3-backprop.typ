@@ -6,6 +6,10 @@
 
 #import "../common/metropolis.typ": *
 #import "@local/autodiff:0.1.0" as ad   // our own reverse-mode AD — used live on the scalar example
+#import "@local/theme:0.1.0": theme as chalk-theme
+// palette-locked computation-graph drawer + the scalar loss, both reused below
+#let cgraph = ad.graph.with(theme: chalk-theme(ink: INK, accent: ACC, accent2: TEAL, muted: MUTED))
+#let scalar-loss = ad.expr("(w*x + b - y)^2", ("w", "x", "b", "y"))
 #show: metropolis-deck.with(
   title: [Computation Graphs, Backpropagation and Autodiff],
   subtitle: [How gradients flow through neural networks],
@@ -54,33 +58,8 @@
   edge((4.2,-0.3),(5.6,-0.3), $e$, "-|>", stroke: 0.8pt + INK)
 }))
 
-// scalar graph, BACKWARD: adjoint values flow right -> left (upstream x local)
-#let scalarback = align(center, diagram(spacing: (17mm, 9mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  node((0,2),  $w$, radius: 5.5mm)
-  node((0,1),  $x$, radius: 5.5mm)
-  node((0,0),  $b$, radius: 5.5mm)
-  node((0,-1.4), $y$, radius: 5.5mm)
-  node((1.4,1.5), $times$, radius: 6mm, fill: rgb("#E6F0F0"), stroke: 0.9pt + TEAL)
-  node((2.8,0.7), $+$, radius: 6mm, fill: rgb("#E6F0F0"), stroke: 0.9pt + TEAL)
-  node((4.2,-0.3), $-$, radius: 6mm, fill: rgb("#E6F0F0"), stroke: 0.9pt + TEAL)
-  node((5.6,-0.3), [$(dot)^2$], radius: 7mm, fill: rgb("#FDECD6"), stroke: 0.9pt + ACC)
-  // seed at the loss
-  node((6.7,-0.3), text(size: 15pt, fill: ACC)[$overline(cal(L))=1$], stroke: none, fill: none)
-  // final adjoint for each input, placed to its left (out of the way of the arrows)
-  node((-1.25,2),   text(size: 14pt, fill: ACC)[$overline(w)=-18$], stroke: none, fill: none)
-  node((-1.25,1),   text(size: 14pt, fill: ACC)[$overline(x)=-12$], stroke: none, fill: none)
-  node((-1.25,0),   text(size: 14pt, fill: ACC)[$overline(b)=-6$],  stroke: none, fill: none)
-  node((-1.25,-1.4),text(size: 14pt, fill: ACC)[$overline(y)=6$],   stroke: none, fill: none)
-  // op-chain backward edges carry the propagating adjoint (upstream x local)
-  edge((5.6,-0.3),(4.2,-0.3), text(size: 14pt)[$overline(e)=-6$], "-|>", stroke: 1pt + ACC, label-side: right)
-  edge((4.2,-0.3),(2.8,0.7), text(size: 14pt)[$overline(a)=-6$], "-|>", stroke: 1pt + ACC, label-side: left)
-  edge((2.8,0.7),(1.4,1.5), text(size: 14pt)[$overline(m)=-6$], "-|>", stroke: 1pt + ACC, label-side: right)
-  // branch-off backward edges to the inputs (plain orange arrows)
-  edge((4.2,-0.3),(0,-1.4), "-|>", stroke: 1pt + ACC)
-  edge((2.8,0.7),(0,0), "-|>", stroke: 1pt + ACC)
-  edge((1.4,1.5),(0,2), "-|>", stroke: 1pt + ACC)
-  edge((1.4,1.5),(0,1), "-|>", stroke: 1pt + ACC)
-}))
+// (the backward graph is now auto-drawn by ad.graph from the real computation —
+//  see "The backward pass, visualized")
 
 // two-layer MLP forward chain
 #let mlpforward = align(center, diagram(spacing: 12mm, node-stroke: 0.9pt + INK, node-fill: white, {
@@ -337,11 +316,11 @@ $ overline(x) = overline(m) dot w = -6 dot 2 = -12 $
 
 == The backward pass, visualized #V
 
-Seed $overline(cal(L)) = 1$ at the loss; each #text(fill: ACC)[orange arrow] carries *upstream $times$ local* one node to the left:
+Each node shows its forward value and its backward adjoint, *drawn by our autodiff from the real computation* — nothing typed by hand:
 #pause
-#scalarback
+#cgraph(scalar-loss, (2, 3, 1, 10), names: ("w", "x", "b", "y"))
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[same graph as the forward pass — every arrow reversed, adjoints filling in right to left])
+#align(center, text(size: 15pt, fill: MUTED)[$overline(w) = -18, overline(x) = -12, overline(b) = -6, overline(y) = 6$ — one reverse sweep, right to left])
 
 == Check with direct calculus #D
 
@@ -589,7 +568,7 @@ Our own toolkit ships a tiny reverse-mode autodiff (chalkdust `autodiff`) — bu
 expression, get *every* gradient in one backward pass. This slide runs it:
 #pause
 // computed live — these ARE the numbers rendered below (un-fakeable)
-#let L = ad.expr("(w*x + b - y)^2", ("w", "x", "b", "y"))
+#let L = scalar-loss
 #let gr = ad.grad(L, (2, 3, 1, 10)).map(g => int(calc.round(g)))
 #codebox[```typ
 #import "@local/autodiff:0.1.0" as ad
