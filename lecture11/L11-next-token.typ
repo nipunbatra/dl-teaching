@@ -149,7 +149,7 @@ $ p_theta (x_(t+1) = v | x_(1:t)) quad "for every" v in V $
 
 Our anchor all lecture: a *character-level name generator*.
 #pause
-- predict the next *character* of a name: `emma`, `olivia`, `ava`, `noah`;
+- predict the next *character* of a name: `naveen`, `aarav`, `diya`, `arjun`;
 #pause
 - tiny vocabulary — 26 letters plus one special token;
 #pause
@@ -202,19 +202,21 @@ $ cal(L) = - sum_(t=1)^T log p_theta (x_t | x_(<t)) $
 
 == Every position is a training example #D
 
-One name yields *many* supervised (context $->$ target) pairs. For `emma`:
+One name yields *many* supervised (context $->$ target) pairs. For `naveen`:
 #pause
 #align(center, table(
   columns: 2, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 5.5pt), align: (left, left),
   table.header([*context* $x_(<t)$], [*target* $x_t$]),
-  [`.` #text(fill: MUTED)[(start)]], [`e`],
-  [`. e`], [`m`],
-  [`. e m`], [`m`],
-  [`. e m m`], [`a`],
-  [`. e m m a`], [`.` #text(fill: MUTED)[(end)]],
+  [`.` #text(fill: MUTED)[(start)]], [`n`],
+  [`. n`], [`a`],
+  [`. n a`], [`v`],
+  [`. n a v`], [`e`],
+  [`. n a v e`], [`e`],
+  [`. n a v e e`], [`n`],
+  [`. n a v e e n`], [`.` #text(fill: MUTED)[(end)]],
 ))
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[one 4-letter name $-> 5$ training pairs. A corpus gives *millions*.])
+#align(center, text(size: 16pt, fill: MUTED)[one 6-letter name $-> 7$ training pairs. A corpus gives *millions*.])
 
 == Causal / autoregressive #V
 
@@ -387,16 +389,18 @@ $ p_theta (x_t | x_(<t)) approx p_theta (x_t | x_(t-k : t-1)) $
 
 == The sliding-window dataset #D
 
-Slide a window of length $k$ over each name to make (context $->$ target) pairs. `emma`, $k = 3$:
+Slide a window of length $k$ over each name to make (context $->$ target) pairs. `naveen`, $k = 3$:
 #pause
 #align(center, table(
   columns: 2, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 5.5pt), align: (left, left),
   table.header([*context* ($k = 3$)], [*target*]),
-  [`. . .`], [`e`],
-  [`. . e`], [`m`],
-  [`. e m`], [`m`],
-  [`e m m`], [`a`],
-  [`m m a`], [`.` #text(fill: MUTED)[(end)]],
+  [`. . .`], [`n`],
+  [`. . n`], [`a`],
+  [`. n a`], [`v`],
+  [`n a v`], [`e`],
+  [`a v e`], [`e`],
+  [`v e e`], [`n`],
+  [`e e n`], [`.` #text(fill: MUTED)[(end)]],
 ))
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[pad the start with `.`; every window is one supervised example])
@@ -715,7 +719,7 @@ $ hat(x)_(t+1) ~ "Categorical"(p_t) $
 #pause
 - makemore sampling character-by-character gives *new* plausible names.
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[`. -> e -> m -> m -> a -> .` yields `emma`; a different draw yields `elian`, `amara`, …])
+#align(center, text(size: 16pt, fill: MUTED)[`. -> n -> a -> v -> e -> e -> n -> .` yields `naveen`; a different draw yields `aarav`, `meera`, …])
 
 == Temperature #V
 
