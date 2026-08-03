@@ -251,10 +251,11 @@ def regression_conditionals():
     rng = np.random.default_rng(3)
 
     def f(x):
-        return 1.4 * np.sin(0.9 * x) + 0.25 * x
+        # A line keeps attention on the conditional output distribution.
+        return 1.2 + 0.28 * x
 
     xg = np.linspace(0, 10, 400)
-    ax.plot(xg, f(xg), color=INK, lw=2.2, zorder=3, label=r'$f(x)$')
+    ax.plot(xg, f(xg), color=INK, lw=2.2, zorder=3, label=r'$f_{\boldsymbol{\theta}}(x)$')
 
     sigma = 0.55
     # noisy scatter

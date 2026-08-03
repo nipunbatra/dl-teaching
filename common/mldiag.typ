@@ -9,15 +9,16 @@
 //    #attn-matrix(("the","cat","sat"), mask: "causal")
 // ═══════════════════════════════════════════════════════════════════
 
-#import "@local/theme:0.1.0": theme
-#import "@local/convgrid:0.1.0" as tg   // conv/pool/attention grids (was tensor-grid)
-#import "@local/plot:0.1.0" as mp       // bar & line plots
-#import "@local/frame:0.1.0" as md      // pandas-lite: md.frame(csv("x.csv")), md.xy(f, "a", "b")
-#import "@local/dist:0.1.0" as dist     // distributions: dist.nll0(dist.normal(), r) — the TRUE loss
-#import "@local/field:0.1.0" as fld     // 2-D/3-D fields: contour/heatmap/surface of f(x,y)
-#import "@local/optim:0.1.0" as opt     // optimizers: opt.gd/momentum/adam(grad, x0) → trajectory
-#import "@local/rand:0.1.0" as rnd      // seeded PRNG: rnd.randn(seed, i), rnd.shuffle(seed, arr)
-#import "@local/autodiff:0.1.0" as ad   // reverse-mode autodiff: ad.grad(f, x) exact; ad.grad-fn/fn2 for optim+contour
+#import "@local/chalkdust-theme:0.1.0": theme
+#import "@local/chalkdust-convgrid:0.1.0" as tg   // conv/pool/attention grids (was tensor-grid)
+#import "@local/chalkdust-plot:0.1.0" as mp       // bar & line plots
+#import "@local/chalkdust-frame:0.1.0" as md      // pandas-lite: md.frame(csv("x.csv")), md.xy(f, "a", "b")
+#import "@local/chalkdust-dist:0.1.0" as dist     // distributions: dist.nll0(dist.normal(), r) — the TRUE loss
+#import "@local/chalkdust-field:0.1.0" as fld     // 2-D/3-D fields: contour/heatmap/surface of f(x,y)
+#import "@local/chalkdust-optim:0.1.0" as opt     // optimizers: opt.gd/momentum/adam(grad, x0) → trajectory
+#import "@local/chalkdust-rand:0.1.0" as rnd      // seeded PRNG: rnd.randn(seed, i), rnd.shuffle(seed, arr)
+#import "@local/chalkdust-learn:0.1.0" as ml      // in-Typst fitting: linear/logistic regression, PCA, k-means
+#import "@local/chalkdust-autodiff:0.1.0" as ad   // reverse-mode autodiff: ad.grad(f, x) exact; ad.grad-fn/fn2 for optim+contour
 #import "metropolis.typ": INK, ACC, TEAL, GREEN, BLUE, MUTED, RED
 
 // the deck theme: metropolis palette, teal→paper→orange diverging ramp
@@ -55,6 +56,10 @@
 #let sgd      = opt.sgd
 #let numgrad  = opt.numgrad
 #let grad2d   = opt.grad2d   // gradient of a loss f(x,y) → no hand-derived ∇ on the slide
+
+// ── small fitted models (computed in Typst; feed predictions straight to lines) ──
+#let linreg-fit     = ml.linreg-fit
+#let linreg-predict = ml.linreg-predict
 
 // ── the math helpers (figures + prose can share one computation) ──
 #let conv2d        = tg.conv2d

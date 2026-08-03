@@ -95,8 +95,10 @@ def f_g2s():
 # 7 regression_conditionals
 def f_regconds():
     fig,ax=plt.subplots(figsize=(6.4,3.2)); x=np.linspace(0,10,200)
-    f=lambda t: 2+1.6*np.sin(0.6*t)+0.12*t
-    ax.plot(x,f(x),color=ACC,lw=2.6,zorder=3,label=r'$f_\theta(x)$')
+    # Keep the mean function deliberately simple: the teaching point is the
+    # vertical conditional noise, not the expressiveness of the regressor.
+    f=lambda t: 1.2+0.28*t
+    ax.plot(x,f(x),color=ACC,lw=2.6,zorder=3,label=r'$f_{\boldsymbol{\theta}}(x)$')
     rng=np.random.default_rng(1)
     xs=rng.uniform(0.5,9.5,26); ax.scatter(xs,f(xs)+rng.normal(0,0.5,xs.size),s=16,color=INK,alpha=.55,zorder=2)
     for xc in [1.5,4,6.5,9]:

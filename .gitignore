@@ -19,6 +19,7 @@ labs/*.html
 # Generated slides (built locally or by CI)
 html/
 pdf/
+slides-review/
 
 # Node modules
 node_modules/
