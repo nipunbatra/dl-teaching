@@ -1,0 +1,810 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23267f7b'/%3E%3Cpath d='M10 44c12 0 12-27 22-27s10 27 22 27' fill='none' stroke='%23fffdf8' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
+  <title>Activation Function Explorer | ES 667</title>
+  <style>
+    :root {
+      --paper: #f5f3ed;
+      --surface: #fffdf8;
+      --ink: #203b40;
+      --muted: #6d7d7e;
+      --line: #cbd4d0;
+      --grid: #dfe5e1;
+      --teal: #267f7b;
+      --orange: #e77b17;
+      --orange-soft: #faead9;
+      --teal-soft: #e3f0ed;
+      --danger: #bb4b55;
+      --shadow: 0 18px 48px rgba(32, 59, 64, 0.09);
+      --sans: "Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif;
+      --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { color-scheme: light; }
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      color: var(--ink);
+      background:
+        linear-gradient(rgba(32, 59, 64, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(32, 59, 64, 0.025) 1px, transparent 1px),
+        var(--paper);
+      background-size: 28px 28px;
+      font-family: var(--sans);
+      line-height: 1.5;
+    }
+
+    button, input { font: inherit; }
+    button:focus-visible, input:focus-visible, canvas:focus-visible {
+      outline: 3px solid rgba(231, 123, 23, 0.3);
+      outline-offset: 3px;
+    }
+
+    .shell {
+      width: min(1440px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 34px 0 48px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+      gap: 42px;
+      align-items: end;
+      padding: 22px 0 28px;
+      border-bottom: 2px solid var(--ink);
+    }
+    .eyebrow {
+      margin: 0 0 9px;
+      color: var(--orange);
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      font-weight: 750;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      max-width: 880px;
+      font-size: clamp(2.2rem, 5vw, 4.8rem);
+      font-weight: 760;
+      letter-spacing: -0.055em;
+      line-height: 0.98;
+    }
+    header p {
+      margin: 0;
+      max-width: 48ch;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    .activation-picker {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      padding: 22px 0;
+    }
+    .activation-button {
+      min-height: 58px;
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(255, 253, 248, 0.86);
+      color: var(--ink);
+      text-align: left;
+      cursor: pointer;
+      transition: transform 180ms cubic-bezier(.16, 1, .3, 1), border-color 180ms ease, background 180ms ease;
+    }
+    .activation-button:hover { transform: translateY(-2px); border-color: var(--teal); }
+    .activation-button:active { transform: translateY(0) scale(0.985); }
+    .activation-button[aria-pressed="true"] {
+      border-color: var(--orange);
+      background: var(--orange-soft);
+    }
+    .activation-button strong { display: block; font-size: 0.96rem; }
+    .activation-button span { display: block; margin-top: 2px; color: var(--muted); font-size: 0.78rem; }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1.62fr) minmax(315px, 0.68fr);
+      gap: 18px;
+      align-items: start;
+    }
+    .plot-panel, .control-panel, .readout-panel, .insight-panel {
+      border: 1px solid rgba(32, 59, 64, 0.16);
+      border-radius: 16px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .plot-panel { overflow: hidden; }
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: baseline;
+      padding: 18px 22px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    .panel-head h2, .control-panel h2, .readout-panel h2 {
+      margin: 0;
+      font-size: 1.05rem;
+      letter-spacing: -0.018em;
+    }
+    .plot-mode {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.75rem;
+    }
+    .canvas-wrap { padding: 10px 12px 4px; }
+    canvas {
+      display: block;
+      width: 100%;
+      height: clamp(430px, 60vh, 660px);
+      border-radius: 10px;
+      touch-action: none;
+      cursor: crosshair;
+    }
+    canvas.compare { height: clamp(560px, 72vh, 760px); }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      padding: 4px 22px 17px;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    .legend-item { display: inline-flex; align-items: center; gap: 7px; }
+    .swatch { width: 25px; height: 3px; border-radius: 99px; background: var(--orange); }
+    .swatch.derivative {
+      height: 0;
+      border-top: 2px dashed var(--teal);
+      background: none;
+    }
+    .swatch.cursor {
+      width: 2px;
+      height: 17px;
+      background: var(--ink);
+      opacity: 0.6;
+    }
+
+    .side { display: grid; gap: 18px; }
+    .control-panel, .readout-panel { padding: 20px; }
+    .control-panel h2, .readout-panel h2 { margin-bottom: 16px; }
+    .field { display: grid; gap: 8px; margin-top: 17px; }
+    .field:first-of-type { margin-top: 0; }
+    .field label, .option-title {
+      color: var(--ink);
+      font-size: 0.8rem;
+      font-weight: 730;
+      letter-spacing: 0.025em;
+    }
+    .field-help {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.77rem;
+    }
+    .slider-row { display: grid; grid-template-columns: minmax(0, 1fr) 70px; gap: 12px; align-items: center; }
+    input[type="range"] { width: 100%; accent-color: var(--orange); cursor: pointer; }
+    output {
+      min-width: 64px;
+      padding: 6px 8px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--paper);
+      color: var(--orange);
+      font-family: var(--mono);
+      font-weight: 750;
+      text-align: right;
+    }
+    .options {
+      display: grid;
+      gap: 11px;
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+    .check {
+      display: flex;
+      gap: 9px;
+      align-items: flex-start;
+      color: var(--muted);
+      font-size: 0.84rem;
+      font-weight: 620;
+      cursor: pointer;
+    }
+    .check input { width: 18px; height: 18px; margin: 1px 0 0; accent-color: var(--teal); }
+    .reset {
+      width: 100%;
+      margin-top: 20px;
+      padding: 10px 12px;
+      border: 1px solid var(--ink);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--ink);
+      font-weight: 720;
+      cursor: pointer;
+      transition: transform 160ms ease, background 160ms ease;
+    }
+    .reset:hover { background: var(--teal-soft); }
+    .reset:active { transform: scale(0.985); }
+
+    .formula {
+      min-height: 58px;
+      margin: 0 0 16px;
+      padding: 11px 12px;
+      border-left: 3px solid var(--orange);
+      background: var(--orange-soft);
+      font-family: var(--mono);
+      font-size: 0.86rem;
+      line-height: 1.55;
+      overflow-wrap: anywhere;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 9px 15px;
+      margin: 0;
+    }
+    .metrics dt { color: var(--muted); font-size: 0.84rem; }
+    .metrics dd { margin: 0; font-family: var(--mono); font-weight: 730; text-align: right; }
+    .metrics dd.undefined { color: var(--danger); font-size: 0.78rem; }
+    .state-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 27px;
+      margin-top: 16px;
+      padding: 4px 9px;
+      border: 1px solid var(--line);
+      border-radius: 99px;
+      background: var(--teal-soft);
+      color: var(--teal);
+      font-family: var(--mono);
+      font-size: 0.74rem;
+      font-weight: 750;
+    }
+
+    .insight-panel {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+      margin-top: 18px;
+      padding: 20px 22px;
+      border-left: 4px solid var(--teal);
+    }
+    .insight-index {
+      color: var(--orange);
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .insight-panel p { margin: 0; max-width: 82ch; font-size: 0.97rem; }
+    .keyboard-note {
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-align: center;
+    }
+    kbd {
+      padding: 1px 5px;
+      border: 1px solid var(--line);
+      border-bottom-width: 2px;
+      border-radius: 4px;
+      background: var(--surface);
+      color: var(--ink);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+    }
+
+    @media (max-width: 900px) {
+      .shell { width: min(100% - 28px, 760px); padding-top: 18px; }
+      header, .workspace { grid-template-columns: 1fr; }
+      header { gap: 16px; }
+      .activation-picker { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .side { grid-template-columns: 1fr 1fr; }
+      canvas { height: 470px; }
+      canvas.compare { height: 660px; }
+    }
+
+    @media (max-width: 620px) {
+      .shell { width: calc(100% - 20px); }
+      h1 { font-size: clamp(2rem, 12vw, 3.2rem); }
+      .activation-picker, .side { grid-template-columns: 1fr; }
+      .panel-head { display: block; }
+      .plot-mode { display: block; margin-top: 5px; }
+      .canvas-wrap { padding-inline: 4px; }
+      canvas { height: 430px; }
+      canvas.compare { height: 780px; }
+      .legend { padding-inline: 14px; }
+      .insight-panel { grid-template-columns: 1fr; gap: 7px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <p class="eyebrow">ES 667 · activation laboratory</p>
+        <h1>See what an activation does at one input.</h1>
+      </div>
+      <p>Move <strong>z</strong> through the function. Compare output values and local slopes before connecting these slopes to gradient flow.</p>
+    </header>
+
+    <nav class="activation-picker" aria-label="Choose an activation function">
+      <button class="activation-button" type="button" data-activation="sigmoid" aria-pressed="true">
+        <strong>Sigmoid</strong><span>bounded probability gate</span>
+      </button>
+      <button class="activation-button" type="button" data-activation="tanh" aria-pressed="false">
+        <strong>tanh</strong><span>zero-centred saturating gate</span>
+      </button>
+      <button class="activation-button" type="button" data-activation="relu" aria-pressed="false">
+        <strong>ReLU</strong><span>piecewise-linear hinge</span>
+      </button>
+      <button class="activation-button" type="button" data-activation="gelu" aria-pressed="false">
+        <strong>GELU</strong><span>smooth input-dependent gate</span>
+      </button>
+    </nav>
+
+    <section class="workspace" aria-label="Activation function workspace">
+      <section class="plot-panel" aria-labelledby="plot-title">
+        <div class="panel-head">
+          <h2 id="plot-title">Function and local slope</h2>
+          <span class="plot-mode" id="plot-mode">one function · honest scale</span>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="activation-canvas" tabindex="0" role="img" aria-describedby="canvas-description"></canvas>
+        </div>
+        <div class="legend" aria-hidden="true">
+          <span class="legend-item"><span class="swatch"></span>φ(z)</span>
+          <span class="legend-item" id="derivative-legend"><span class="swatch derivative"></span>φ′(z), right scale</span>
+          <span class="legend-item"><span class="swatch cursor"></span>chosen z</span>
+        </div>
+        <p id="canvas-description" class="keyboard-note">Drag or tap the plot to set z. With the plot focused, use <kbd>←</kbd> and <kbd>→</kbd>; hold Shift for larger steps.</p>
+      </section>
+
+      <div class="side">
+        <section class="control-panel" aria-labelledby="controls-title">
+          <h2 id="controls-title">Controls</h2>
+          <div class="field">
+            <label for="z-slider">Input z</label>
+            <div class="slider-row">
+              <input id="z-slider" type="range" min="-6" max="6" step="0.05" value="0" aria-describedby="z-help">
+              <output id="z-output" for="z-slider">0.00</output>
+            </div>
+            <p class="field-help" id="z-help">Keyboard: arrow keys change z; Page Up/Down changes it by 1.</p>
+          </div>
+          <div class="options" aria-label="Plot options">
+            <span class="option-title">Plot options</span>
+            <label class="check" for="show-derivative">
+              <input id="show-derivative" type="checkbox" checked>
+              <span>Show the derivative on its own right-hand scale</span>
+            </label>
+            <label class="check" for="compare-all">
+              <input id="compare-all" type="checkbox">
+              <span>Compare all four functions as small multiples</span>
+            </label>
+          </div>
+          <button class="reset" id="reset" type="button">Reset explorer</button>
+        </section>
+
+        <section class="readout-panel" aria-labelledby="readout-title" aria-live="polite">
+          <h2 id="readout-title">At the chosen input</h2>
+          <p class="formula" id="formula"></p>
+          <dl class="metrics">
+            <dt>Input z</dt><dd id="metric-z">0.000</dd>
+            <dt>Output φ(z)</dt><dd id="metric-value">0.500</dd>
+            <dt>Local slope φ′(z)</dt><dd id="metric-derivative">0.250</dd>
+          </dl>
+          <span class="state-chip" id="state-chip">transition region</span>
+        </section>
+      </div>
+    </section>
+
+    <aside class="insight-panel" aria-live="polite">
+      <span class="insight-index">Notice</span>
+      <p id="insight"></p>
+    </aside>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const SQRT_2_OVER_PI = Math.sqrt(2 / Math.PI);
+      const activations = {
+        sigmoid: {
+          label: "Sigmoid",
+          short: "σ",
+          formula: "σ(z) = 1 / (1 + e⁻ᶻ)",
+          range: [-0.12, 1.12],
+          ticks: [0, 0.5, 1],
+          fn: z => 1 / (1 + Math.exp(-z)),
+          derivative(z) { const y = this.fn(z); return y * (1 - y); },
+          insight: "Sigmoid maps every real input to (0, 1). Its largest slope is 0.25 at z = 0; far into either tail, the output saturates and the derivative approaches zero."
+        },
+        tanh: {
+          label: "tanh",
+          short: "tanh",
+          formula: "tanh(z) = (eᶻ − e⁻ᶻ) / (eᶻ + e⁻ᶻ)",
+          range: [-1.18, 1.18],
+          ticks: [-1, 0, 1],
+          fn: z => Math.tanh(z),
+          derivative(z) { const y = this.fn(z); return 1 - y * y; },
+          insight: "tanh is zero-centred and maps to (−1, 1). It has slope 1 at z = 0, but its two tails still saturate and can shrink gradients."
+        },
+        relu: {
+          label: "ReLU",
+          short: "ReLU",
+          formula: "ReLU(z) = max(0, z)",
+          range: [-0.65, 6.45],
+          ticks: [0, 3, 6],
+          fn: z => Math.max(0, z),
+          derivative: z => z < 0 ? 0 : (z > 0 ? 1 : NaN),
+          insight: "ReLU is flat for negative inputs and has slope 1 for positive inputs. At z = 0 it has a kink, so the mathematical derivative is undefined; software usually chooses a subgradient such as 0."
+        },
+        gelu: {
+          label: "GELU",
+          short: "GELU",
+          formula: "GELU(z) ≈ ½z[1 + tanh(√(2/π)(z + 0.044715z³))]",
+          range: [-0.65, 6.45],
+          ticks: [0, 3, 6],
+          fn(z) {
+            const u = SQRT_2_OVER_PI * (z + 0.044715 * z * z * z);
+            return 0.5 * z * (1 + Math.tanh(u));
+          },
+          derivative(z) {
+            const u = SQRT_2_OVER_PI * (z + 0.044715 * z * z * z);
+            const t = Math.tanh(u);
+            const du = SQRT_2_OVER_PI * (1 + 3 * 0.044715 * z * z);
+            return 0.5 * (1 + t) + 0.5 * z * (1 - t * t) * du;
+          },
+          insight: "GELU is a smooth gate: large positive inputs pass through, large negative inputs are suppressed, and values near zero change gradually. Its smoothness avoids ReLU's sharp kink."
+        }
+      };
+
+      const colors = {
+        ink: "#203b40",
+        muted: "#6d7d7e",
+        line: "#cbd4d0",
+        grid: "#dfe5e1",
+        teal: "#267f7b",
+        orange: "#e77b17",
+        orangeSoft: "#faead9",
+        surface: "#fffdf8"
+      };
+      const state = { selected: "sigmoid", z: 0, derivative: true, compare: false };
+
+      const canvas = document.getElementById("activation-canvas");
+      const ctx = canvas.getContext("2d");
+      const slider = document.getElementById("z-slider");
+      const zOutput = document.getElementById("z-output");
+      const derivativeToggle = document.getElementById("show-derivative");
+      const compareToggle = document.getElementById("compare-all");
+      const derivativeLegend = document.getElementById("derivative-legend");
+      const formula = document.getElementById("formula");
+      const metricZ = document.getElementById("metric-z");
+      const metricValue = document.getElementById("metric-value");
+      const metricDerivative = document.getElementById("metric-derivative");
+      const stateChip = document.getElementById("state-chip");
+      const insight = document.getElementById("insight");
+      const plotMode = document.getElementById("plot-mode");
+      let plotAreas = [];
+      let dragging = false;
+
+      function clamp(value, low, high) { return Math.max(low, Math.min(high, value)); }
+      function formatNumber(value, digits = 3) {
+        if (!Number.isFinite(value)) return "undefined at kink";
+        if (Math.abs(value) < 0.0005) return "0.000";
+        return value.toFixed(digits);
+      }
+
+      function describeState(key, z, derivative) {
+        if (key === "relu" && Math.abs(z) < 1e-9) return "kink · derivative undefined";
+        if (key === "relu") return z < 0 ? "inactive region · slope 0" : "active region · slope 1";
+        if (Math.abs(derivative) < 0.05) return "saturated region · tiny slope";
+        if (Math.abs(z) < 0.75) return "transition region · strong slope";
+        return "transitioning · nonzero slope";
+      }
+
+      function updateReadout() {
+        const activation = activations[state.selected];
+        const value = activation.fn(state.z);
+        const derivative = activation.derivative(state.z);
+        zOutput.value = state.z.toFixed(2);
+        metricZ.textContent = state.z.toFixed(3);
+        metricValue.textContent = formatNumber(value);
+        metricDerivative.textContent = formatNumber(derivative);
+        metricDerivative.classList.toggle("undefined", !Number.isFinite(derivative));
+        formula.textContent = activation.formula;
+        insight.textContent = activation.insight;
+        stateChip.textContent = describeState(state.selected, state.z, derivative);
+        plotMode.textContent = state.compare ? "four functions · independent scales" : "one function · honest scale";
+        derivativeLegend.hidden = !state.derivative;
+        canvas.classList.toggle("compare", state.compare);
+        canvas.setAttribute(
+          "aria-label",
+          `${activation.label} activation at z ${state.z.toFixed(2)}: output ${formatNumber(value)}, derivative ${formatNumber(derivative)}.`
+        );
+      }
+
+      function line(ctx, x1, y1, x2, y2, color, width = 1, dash = []) {
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        ctx.setLineDash(dash);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function textAt(ctx, text, x, y, options = {}) {
+        ctx.save();
+        ctx.fillStyle = options.color || colors.muted;
+        ctx.font = `${options.weight || 550} ${options.size || 12}px ${options.mono ? "ui-monospace, Menlo, monospace" : '"Avenir Next", Arial, sans-serif'}`;
+        ctx.textAlign = options.align || "center";
+        ctx.textBaseline = options.baseline || "middle";
+        ctx.fillText(text, x, y);
+        ctx.restore();
+      }
+
+      function drawPanel(panel, key, selected) {
+        const activation = activations[key];
+        const compact = state.compare;
+        const margin = {
+          left: compact ? 43 : 59,
+          right: state.derivative ? (compact ? 38 : 54) : (compact ? 17 : 24),
+          top: compact ? 34 : 43,
+          bottom: compact ? 31 : 40
+        };
+        const plot = {
+          x: panel.x + margin.left,
+          y: panel.y + margin.top,
+          w: panel.w - margin.left - margin.right,
+          h: panel.h - margin.top - margin.bottom,
+          key
+        };
+        const [yMin, yMax] = activation.range;
+        const xMin = -6;
+        const xMax = 6;
+        const dMin = -0.25;
+        const dMax = 1.25;
+        const px = x => plot.x + ((x - xMin) / (xMax - xMin)) * plot.w;
+        const py = y => plot.y + plot.h - ((y - yMin) / (yMax - yMin)) * plot.h;
+        const pdy = d => plot.y + plot.h - ((d - dMin) / (dMax - dMin)) * plot.h;
+
+        ctx.save();
+        ctx.fillStyle = selected ? "rgba(250, 234, 217, 0.25)" : colors.surface;
+        ctx.fillRect(panel.x + 0.5, panel.y + 0.5, panel.w - 1, panel.h - 1);
+        ctx.strokeStyle = selected ? colors.orange : colors.line;
+        ctx.lineWidth = selected ? 1.7 : 1;
+        ctx.strokeRect(panel.x + 0.5, panel.y + 0.5, panel.w - 1, panel.h - 1);
+        ctx.restore();
+
+        textAt(ctx, activation.label, panel.x + 13, panel.y + 17, {
+          align: "left", color: selected ? colors.orange : colors.ink,
+          weight: 750, size: compact ? 13 : 16
+        });
+
+        [-6, -3, 0, 3, 6].forEach(tick => {
+          const x = px(tick);
+          line(ctx, x, plot.y, x, plot.y + plot.h, tick === 0 ? colors.line : colors.grid, tick === 0 ? 1.3 : 1);
+          textAt(ctx, String(tick).replace("-", "−"), x, plot.y + plot.h + 17, { size: compact ? 9 : 11 });
+        });
+        activation.ticks.forEach(tick => {
+          const y = py(tick);
+          line(ctx, plot.x, y, plot.x + plot.w, y, Math.abs(tick) < 1e-9 ? colors.line : colors.grid, Math.abs(tick) < 1e-9 ? 1.3 : 1);
+          textAt(ctx, String(tick).replace("-", "−"), plot.x - 8, y, { align: "right", size: compact ? 9 : 11 });
+        });
+        line(ctx, plot.x, plot.y, plot.x, plot.y + plot.h, colors.ink, 1.3);
+        line(ctx, plot.x, plot.y + plot.h, plot.x + plot.w, plot.y + plot.h, colors.ink, 1.3);
+
+        ctx.save();
+        ctx.strokeStyle = selected ? colors.orange : colors.ink;
+        ctx.lineWidth = selected ? (compact ? 2.4 : 3.2) : 2;
+        ctx.lineJoin = "round";
+        ctx.beginPath();
+        const samples = Math.max(260, Math.round(plot.w));
+        for (let i = 0; i <= samples; i++) {
+          const z = xMin + (i / samples) * (xMax - xMin);
+          const x = px(z);
+          const y = py(activation.fn(z));
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        if (state.derivative) {
+          [0, 0.5, 1].forEach(tick => {
+            const y = pdy(tick);
+            textAt(ctx, tick.toFixed(tick === 0 ? 0 : 1), plot.x + plot.w + 8, y, {
+              align: "left", color: colors.teal, size: compact ? 8 : 10
+            });
+          });
+          ctx.save();
+          ctx.strokeStyle = colors.teal;
+          ctx.lineWidth = selected ? (compact ? 1.7 : 2.2) : 1.45;
+          ctx.setLineDash([7, 5]);
+          ctx.beginPath();
+          let drawing = false;
+          for (let i = 0; i <= samples; i++) {
+            const z = xMin + (i / samples) * (xMax - xMin);
+            const d = activation.derivative(z);
+            if (!Number.isFinite(d)) { drawing = false; continue; }
+            const x = px(z);
+            const y = pdy(d);
+            if (!drawing) { ctx.moveTo(x, y); drawing = true; } else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+          ctx.restore();
+          textAt(ctx, "φ′", plot.x + plot.w + (compact ? 20 : 27), plot.y - 14, {
+            color: colors.teal, weight: 750, size: compact ? 10 : 12
+          });
+        }
+
+        const cursorX = px(state.z);
+        const valueY = py(activation.fn(state.z));
+        line(ctx, cursorX, plot.y, cursorX, plot.y + plot.h, colors.ink, 1.2, [4, 4]);
+        ctx.save();
+        ctx.fillStyle = selected ? colors.orange : colors.ink;
+        ctx.beginPath();
+        ctx.arc(cursorX, valueY, selected ? 5.2 : 3.8, 0, Math.PI * 2);
+        ctx.fill();
+        if (state.derivative) {
+          const d = activation.derivative(state.z);
+          if (Number.isFinite(d)) {
+            ctx.fillStyle = colors.teal;
+            ctx.beginPath();
+            ctx.arc(cursorX, pdy(d), selected ? 4.6 : 3.4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        ctx.restore();
+
+        if (!compact) {
+          textAt(ctx, "input z", plot.x + plot.w / 2, panel.y + panel.h - 10, { color: colors.ink, weight: 650, size: 12 });
+          ctx.save();
+          ctx.translate(panel.x + 14, plot.y + plot.h / 2);
+          ctx.rotate(-Math.PI / 2);
+          textAt(ctx, "output φ(z)", 0, 0, { color: colors.ink, weight: 650, size: 12 });
+          ctx.restore();
+        }
+
+        plot.px = px;
+        plotAreas.push(plot);
+      }
+
+      function render() {
+        const rect = canvas.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        const dpr = Math.min(window.devicePixelRatio || 1, 3);
+        const width = Math.round(rect.width);
+        const height = Math.round(rect.height);
+        const targetWidth = Math.round(width * dpr);
+        const targetHeight = Math.round(height * dpr);
+        if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+          canvas.width = targetWidth;
+          canvas.height = targetHeight;
+        }
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = colors.surface;
+        ctx.fillRect(0, 0, width, height);
+        plotAreas = [];
+
+        if (state.compare) {
+          const gap = width < 560 ? 9 : 12;
+          const columns = width < 560 ? 1 : 2;
+          const rows = columns === 1 ? 4 : 2;
+          const panelWidth = (width - gap * (columns - 1)) / columns;
+          const panelHeight = (height - gap * (rows - 1)) / rows;
+          Object.keys(activations).forEach((key, index) => {
+            const col = index % columns;
+            const row = Math.floor(index / columns);
+            drawPanel({
+              x: col * (panelWidth + gap),
+              y: row * (panelHeight + gap),
+              w: panelWidth,
+              h: panelHeight
+            }, key, key === state.selected);
+          });
+        } else {
+          drawPanel({ x: 0, y: 0, w: width, h: height }, state.selected, true);
+        }
+      }
+
+      function setZ(value) {
+        state.z = clamp(Math.round(value * 20) / 20, -6, 6);
+        slider.value = String(state.z);
+        updateReadout();
+        render();
+      }
+
+      function setZFromPointer(event) {
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        let plot = plotAreas.find(area => x >= area.x && x <= area.x + area.w && y >= area.y && y <= area.y + area.h);
+        if (!plot) plot = plotAreas.find(area => x >= area.x && x <= area.x + area.w);
+        if (!plot) return;
+        const value = -6 + ((x - plot.x) / plot.w) * 12;
+        setZ(value);
+      }
+
+      document.querySelectorAll(".activation-button").forEach(button => {
+        button.addEventListener("click", () => {
+          state.selected = button.dataset.activation;
+          document.querySelectorAll(".activation-button").forEach(item => {
+            item.setAttribute("aria-pressed", String(item === button));
+          });
+          updateReadout();
+          render();
+        });
+      });
+      slider.addEventListener("input", event => setZ(Number(event.target.value)));
+      derivativeToggle.addEventListener("change", event => {
+        state.derivative = event.target.checked;
+        updateReadout();
+        render();
+      });
+      compareToggle.addEventListener("change", event => {
+        state.compare = event.target.checked;
+        updateReadout();
+        requestAnimationFrame(render);
+      });
+      document.getElementById("reset").addEventListener("click", () => {
+        state.selected = "sigmoid";
+        state.z = 0;
+        state.derivative = true;
+        state.compare = false;
+        slider.value = "0";
+        derivativeToggle.checked = true;
+        compareToggle.checked = false;
+        document.querySelectorAll(".activation-button").forEach(button => {
+          button.setAttribute("aria-pressed", String(button.dataset.activation === "sigmoid"));
+        });
+        updateReadout();
+        requestAnimationFrame(render);
+      });
+
+      canvas.addEventListener("pointerdown", event => {
+        dragging = true;
+        canvas.setPointerCapture(event.pointerId);
+        setZFromPointer(event);
+      });
+      canvas.addEventListener("pointermove", event => {
+        if (dragging) setZFromPointer(event);
+      });
+      canvas.addEventListener("pointerup", event => {
+        dragging = false;
+        if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+      });
+      canvas.addEventListener("pointercancel", () => { dragging = false; });
+      canvas.addEventListener("keydown", event => {
+        const step = event.shiftKey ? 0.5 : 0.1;
+        if (event.key === "ArrowLeft" || event.key === "ArrowDown") { event.preventDefault(); setZ(state.z - step); }
+        if (event.key === "ArrowRight" || event.key === "ArrowUp") { event.preventDefault(); setZ(state.z + step); }
+        if (event.key === "Home") { event.preventDefault(); setZ(-6); }
+        if (event.key === "End") { event.preventDefault(); setZ(6); }
+      });
+
+      const resizeObserver = new ResizeObserver(() => render());
+      resizeObserver.observe(canvas);
+      updateReadout();
+      render();
+    })();
+  </script>
+</body>
+</html>

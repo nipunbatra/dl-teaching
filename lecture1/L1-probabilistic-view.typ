@@ -572,7 +572,7 @@ $ log L(1.5) approx -2.09, quad log L(0) approx -4.34. $
 
 == Companion notebook: likelihood from one example to a dataset #I
 
-#interbox(link-to: "https://github.com/nipunbatra/dl-teaching/blob/master/notebooks/L01/00_likelihood_iid_worked_examples.ipynb")[
+#interbox(link-to: "https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L01/00_likelihood_iid_worked_examples.ipynb")[
   Compute and plot single-observation likelihoods, multiply independent Bernoulli and Gaussian terms, compare candidate parameters, and verify that log-likelihood is a sum.
 ]
 #pause

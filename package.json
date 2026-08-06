@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "description": "ES 667: Deep Learning — IIT Gandhinagar · Aug 2026 · Prof. Nipun Batra",
   "scripts": {
+    "audit:interactives": "python3 scripts/audit_l1_l2_interactives.py",
+    "audit:interactives:live": "python3 scripts/audit_l1_l2_interactives.py --live --timeout 10",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

@@ -10,6 +10,7 @@ project:
   resources:
     - "slides-pdf/**"
     - "notebooks/**/*.ipynb"
+    - "interactives/**"
 
 website:
   title: "ES 667: Deep Learning"

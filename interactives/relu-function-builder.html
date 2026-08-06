@@ -145,6 +145,10 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    button:focus-visible, select:focus-visible, input:focus-visible {
+      outline: 3px solid rgba(40, 127, 123, 0.34);
+      outline-offset: 3px;
+    }
 
     .canvas-wrap { position: relative; padding: 12px 14px 6px; }
     canvas { display: block; width: 100%; height: 520px; }
@@ -223,10 +227,11 @@
     .tip strong { color: var(--ink); }
 
     .network-panel { margin-top: 18px; padding: 20px 22px 22px; }
-    .network-panel h2 { margin-bottom: 14px; }
+    .network-panel h2 { margin-bottom: 5px; }
+    .network-note { margin: 0 0 16px; color: var(--muted); font-size: 0.86rem; line-height: 1.45; }
     .network {
       display: grid;
-      grid-template-columns: 92px 1fr 92px;
+      grid-template-columns: 82px 1fr 108px 82px;
       gap: 18px;
       align-items: center;
     }
@@ -243,11 +248,26 @@
       aspect-ratio: 1;
     }
     .io-node.output { background: var(--accent); }
+    .sum-node {
+      display: grid;
+      place-items: center;
+      min-height: 70px;
+      padding: 8px;
+      border: 2px solid var(--accent);
+      border-radius: 14px;
+      background: var(--accent-soft);
+      color: var(--ink);
+      text-align: center;
+      font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+      font-size: 0.76rem;
+      font-weight: 760;
+      line-height: 1.35;
+    }
     .hidden-stack { display: grid; gap: 7px; }
     .unit {
       position: relative;
       display: grid;
-      grid-template-columns: 48px 1fr auto;
+      grid-template-columns: 42px minmax(130px, 0.8fr) minmax(150px, 1fr) auto;
       gap: 10px;
       align-items: center;
       min-height: 43px;
@@ -272,6 +292,7 @@
     .unit.selected { border-color: var(--accent); background: var(--accent-soft); }
     .unit-name { color: var(--teal); font-weight: 760; }
     .unit-eq { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-size: 0.79rem; }
+    .unit-activation { color: var(--muted); font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-size: 0.78rem; }
     .unit-weight { color: var(--accent); font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-weight: 760; }
     .base-path {
       margin: 13px 0 0 110px;
@@ -304,9 +325,20 @@
       .shell { width: min(100% - 24px, 760px); padding-top: 14px; }
       header, .workspace { grid-template-columns: 1fr; }
       header { gap: 16px; }
+      .plot-head { align-items: flex-start; flex-direction: column; gap: 6px; }
+      .formula {
+        max-width: 100%;
+        text-align: left;
+        white-space: normal;
+        overflow-wrap: anywhere;
+      }
       .preset-nav { grid-template-columns: repeat(2, 1fr); }
       canvas { height: 400px; }
       .network { grid-template-columns: 58px 1fr 58px; gap: 12px; }
+      .sum-node { grid-column: 2; }
+      .io-node.output { grid-column: 3; grid-row: 2; }
+      .unit { grid-template-columns: 36px 1fr; }
+      .unit-activation, .unit-weight { grid-column: 2; }
       .base-path { margin-left: 70px; }
     }
   </style>
@@ -323,7 +355,7 @@
 
     <nav class="preset-nav" aria-label="Teaching sequence">
       <button class="preset" data-preset="hinge" aria-pressed="true"><strong>1 · One hinge</strong><span>Start with ReLU(x)</span></button>
-      <button class="preset" data-preset="tent" aria-pressed="false"><strong>2 · Tent</strong><span>Three hidden units</span></button>
+      <button class="preset" data-preset="tent" aria-pressed="false"><strong>2 · Tent</strong><span>Output weights 1, −2, 1</span></button>
       <button class="preset" data-preset="peaks" aria-pressed="false"><strong>3 · Two peaks</strong><span>Five hidden units</span></button>
       <button class="preset" data-preset="sine" aria-pressed="false"><strong>4 · Smooth target</strong><span>More knots, smaller gap</span></button>
     </nav>
@@ -365,16 +397,18 @@
             <input id="count" type="range" min="1" max="12" step="1" value="1">
           </div>
           <label class="check"><input id="showComponents" type="checkbox" checked> Show individual weighted hinges</label>
-          <p class="tip"><strong>Try this.</strong> In the tent preset, change the middle unit’s weight from −2 toward 0. Which side of the tent changes slope?</p>
+          <p class="tip"><strong>Where does −2 come from?</strong> The hidden unit computes <code>h₂ = ReLU(x − 1)</code>. Its outgoing connection multiplies that activation by <code>a₂ = −2</code> before the output node adds all three terms.</p>
         </section>
       </aside>
     </section>
 
     <section class="network-panel">
-      <h2>The corresponding one-hidden-layer network</h2>
+      <h2>Hidden layer makes hinges; output layer weights and adds them</h2>
+      <p class="network-note">Each row separates the two operations: first compute <em>z</em>, then apply ReLU to obtain <em>h</em>. The orange coefficient belongs to the outgoing edge into the final sum.</p>
       <div class="network">
         <div class="io-node">x</div>
         <div class="hidden-stack" id="hiddenStack"></div>
+        <div class="sum-node">Σ a<sub>j</sub>h<sub>j</sub><br>+ base</div>
         <div class="io-node output">f(x)</div>
       </div>
       <div class="base-path" id="basePath">output base: 0</div>
@@ -472,9 +506,13 @@
       const terms = [];
       if (Math.abs(state.baseOffset) > 0.001) terms.push(fmt(state.baseOffset));
       if (Math.abs(state.baseSlope) > 0.001) terms.push(`${fmt(state.baseSlope)}x`);
-      state.units.forEach((u, i) => {
-        const sign = u.a >= 0 && terms.length ? '+' : '';
-        terms.push(`${sign}${fmt(u.a)}ReLU(x ${u.t >= 0 ? '−' : '+'} ${fmt(Math.abs(u.t))})`);
+      state.units.forEach(u => {
+        if (Math.abs(u.a) < 0.0005) return;
+        const sign = u.a < 0 ? '−' : terms.length ? '+' : '';
+        const magnitude = Math.abs(u.a);
+        const coefficient = Math.abs(magnitude - 1) < 0.0005 ? '' : `${fmt(magnitude)} `;
+        const inside = Math.abs(u.t) < 0.0005 ? 'x' : `x ${u.t > 0 ? '−' : '+'} ${fmt(Math.abs(u.t))}`;
+        terms.push(`${sign}${sign ? ' ' : ''}${coefficient}ReLU(${inside})`);
       });
       return `f(x) = ${terms.join(' ') || '0'}`;
     }
@@ -507,7 +545,9 @@
       state.units.forEach((u, i) => {
         const button = document.createElement('button');
         button.className = `unit${i === state.selected ? ' selected' : ''}`;
-        button.innerHTML = `<span class="unit-name">h${i + 1}</span><span class="unit-eq">ReLU(x − ${fmt(u.t)})</span><span class="unit-weight">× ${fmt(u.a)}</span>`;
+        const inside = Math.abs(u.t) < 0.0005 ? 'x' : `x ${u.t > 0 ? '−' : '+'} ${fmt(Math.abs(u.t))}`;
+        button.innerHTML = `<span class="unit-name">unit ${i + 1}</span><span class="unit-eq">z${i + 1} = ${inside}</span><span class="unit-activation">h${i + 1} = ReLU(z${i + 1})</span><span class="unit-weight">a${i + 1} = ${fmt(u.a)}</span>`;
+        button.setAttribute('aria-label', `Select hidden unit ${i + 1}: z ${i + 1} equals ${inside}; output weight ${fmt(u.a)}`);
         button.addEventListener('click', () => { state.selected = i; syncControls(); render(); });
         stack.appendChild(button);
       });

@@ -261,7 +261,7 @@ Let $z=bold(w)^top bold(x)+b$. The output interpretation chooses the last step:
 
 == Interactive: activation functions #I
 
-#interbox(link-to: IA + "vanishing-gradients")[
+#interbox(link-to: "https://nipunbatra.github.io/dl-teaching/interactives/activation-explorer.html")[
   Compare activations and their *derivatives*, and see where gradients vanish.
   Controls: activation type · input $z$ · show derivative · compare saturation.
 ]
@@ -572,8 +572,8 @@ $ bold(z) = bold(W)_L bold(h)^((L - 1)) + bold(b)_L $
 == Interactive: MLP decision boundaries #I
 
 #interbox(link-to: IA + "mlp-decision-boundary")[
-  train a small MLP on *linear / XOR / circles / spirals* and watch the boundary form.
-  Controls: hidden units · layers · activation · learning rate · steps.
+  Train a linear classifier or a small MLP on *XOR / circles / spirals / moons* and watch the boundary form.
+  Controls: dataset · linear/MLP · hidden width · one/two layers · activation · train/reset/resample.
 ]
 #pause
 Compare wider layers (more features at one stage) with deeper layers (more composed stages).
