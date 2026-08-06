@@ -78,25 +78,41 @@
 #let two(a, b, r: (1fr, 1fr)) = grid(columns: r, gutter: 20pt, align(horizon, a), align(horizon, b))
 
 // ── native diagrams (fletcher) — vector, no resvg issues ─────────────
-// A single neuron:  inputs → (Σ+b) → φ → a
+// A single neuron: inputs → [1. weighted sum + bias → 2. activation] → output
 #let neuron-diagram(d: 3) = align(center, diagram(
-  spacing: (11mm, 8mm), node-stroke: 0.9pt + INK, node-fill: white,
+  spacing: (20mm, 9mm), node-stroke: 0.9pt + INK, node-fill: white,
   {
     let xy(i) = (0, i - (d - 1)/2)
     for i in range(d) {
       let lbl = if i == d - 1 { $x_d$ } else { [$x_#(i+1)$] }
       node(xy(i), lbl, radius: 7mm)
     }
-    node((2, 0), [$Sigma + b$], radius: 9mm, fill: rgb("#EFEEEB"))
-    node((3.4, 0), $phi$, radius: 7mm, fill: rgb("#FDECD6"), stroke: 0.9pt + ACC)
-    node((4.7, 0), $a$, radius: 6mm)
-    for i in range(d) { edge(xy(i), (2, 0), "-|>", stroke: 0.7pt + MUTED) }
-    edge((2, 0), (3.4, 0), "-|>", stroke: 0.9pt + INK)
-    edge((3.4, 0), (4.7, 0), "-|>", stroke: 0.9pt + INK)
+    let stages = [
+      #align(center)[
+        #text(size: 11pt, weight: 700, fill: TEAL)[ONE NEURON]
+        #v(4pt)
+        #grid(
+          columns: (auto, auto, auto),
+          gutter: 10pt,
+          align: horizon,
+          [#text(size: 10.5pt, weight: 700, fill: INK)[1 · WEIGHTED SUM + BIAS] \
+           #text(size: 15pt)[$z = bold(w)^top bold(x) + b$]],
+          [#text(size: 19pt, fill: MUTED)[$arrow.r$]],
+          [#text(size: 10.5pt, weight: 700, fill: ACC)[2 · ACTIVATION] \
+           #text(size: 15pt)[$a = phi(z)$]],
+        )
+      ]
+    ]
+    node((3.2, 0), stages, shape: fletcher.shapes.rect,
+      fill: rgb("#F7F8F6"), stroke: 1.1pt + TEAL, inset: 10pt)
+    node((6.4, 0), $a$, radius: 7mm, stroke: 0.9pt + ACC)
+    for i in range(d) { edge(xy(i), (3.2, 0), "-|>", stroke: 0.7pt + MUTED) }
+    edge((3.2, 0), (6.4, 0), "-|>", stroke: 0.9pt + INK)
   }))
 
 // A fully-connected MLP for layer sizes like (3, 4, 4, 2).
-#let mlp-diagram(sizes, hl: 1) = align(center, diagram(
+// Optional labels name the symbolic width of each illustrated column.
+#let mlp-diagram(sizes, hl: 1, labels: none) = align(center, diagram(
   spacing: (20mm, 6.5mm),
   {
     let coord(li, i, n) = (li, i - (n - 1)/2)
@@ -111,6 +127,13 @@
     for (li, n) in sizes.enumerate() {
       let col = if li == 0 { INK } else if li == sizes.len() - 1 { ACC } else { TEAL }
       for i in range(n) { node(coord(li, i, n), none, radius: 3.2mm, fill: col, stroke: none) }
+    }
+    if labels != none {
+      assert(labels.len() == sizes.len(), message: "mlp-diagram needs one label per layer")
+      let label-y = calc.max(..sizes) / 2 + 0.9
+      for (li, label) in labels.enumerate() {
+        node((li, label-y), text(size: 11pt, weight: 600, fill: MUTED, label), stroke: none)
+      }
     }
   }))
 

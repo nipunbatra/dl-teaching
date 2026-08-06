@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ReLU Function Builder</title>
+  <style>
+    :root {
+      --paper: #f7f5ef;
+      --surface: #fffdf8;
+      --ink: #213b40;
+      --muted: #6f7f80;
+      --line: #cfd6d2;
+      --teal: #287f7b;
+      --accent: #e97b12;
+      --accent-soft: #f8e5d2;
+      --danger: #c94b56;
+      --shadow: 0 18px 48px rgba(33, 59, 64, 0.10);
+    }
+
+    * { box-sizing: border-box; }
+    html { color-scheme: light; }
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      color: var(--ink);
+      background:
+        linear-gradient(rgba(33, 59, 64, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(33, 59, 64, 0.025) 1px, transparent 1px),
+        var(--paper);
+      background-size: 28px 28px;
+      font-family: "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+    }
+
+    button, input { font: inherit; }
+    button:focus-visible, input:focus-visible {
+      outline: 3px solid rgba(233, 123, 18, 0.28);
+      outline-offset: 2px;
+    }
+
+    .shell {
+      width: min(1450px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 34px 0 48px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.6fr);
+      gap: 42px;
+      align-items: end;
+      padding: 26px 0 28px;
+      border-bottom: 2px solid var(--ink);
+    }
+
+    .eyebrow {
+      margin: 0 0 9px;
+      color: var(--accent);
+      font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+      font-size: 0.78rem;
+      font-weight: 750;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 880px;
+      font-size: clamp(2.2rem, 5vw, 4.9rem);
+      line-height: 0.98;
+      letter-spacing: -0.055em;
+      font-weight: 760;
+    }
+
+    header p {
+      margin: 0;
+      max-width: 48ch;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.55;
+    }
+
+    .preset-nav {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      padding: 22px 0;
+    }
+
+    .preset {
+      min-height: 58px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(255, 253, 248, 0.78);
+      color: var(--ink);
+      text-align: left;
+      cursor: pointer;
+      transition: transform 180ms cubic-bezier(.16, 1, .3, 1), border-color 180ms ease, background 180ms ease;
+    }
+    .preset:hover { transform: translateY(-2px); border-color: var(--teal); }
+    .preset:active { transform: translateY(0) scale(0.985); }
+    .preset[aria-pressed="true"] {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .preset strong { display: block; font-size: 0.92rem; }
+    .preset span { display: block; margin-top: 3px; color: var(--muted); font-size: 0.78rem; }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1.55fr) minmax(310px, 0.65fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .plot-panel, .control-panel, .network-panel {
+      background: var(--surface);
+      border: 1px solid rgba(33, 59, 64, 0.16);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .plot-panel { overflow: hidden; }
+    .plot-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: baseline;
+      padding: 18px 22px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    .plot-head h2, .control-panel h2, .network-panel h2 {
+      margin: 0;
+      font-size: 1.06rem;
+      letter-spacing: -0.018em;
+    }
+    .formula {
+      max-width: 64%;
+      color: var(--muted);
+      font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+      font-size: 0.82rem;
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .canvas-wrap { position: relative; padding: 12px 14px 6px; }
+    canvas { display: block; width: 100%; height: 520px; }
+    .readout {
+      position: absolute;
+      pointer-events: none;
+      min-width: 112px;
+      padding: 8px 10px;
+      border: 1px solid rgba(33, 59, 64, 0.17);
+      border-radius: 8px;
+      background: rgba(255, 253, 248, 0.94);
+      color: var(--ink);
+      box-shadow: 0 8px 24px rgba(33, 59, 64, 0.12);
+      font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+      font-size: 0.76rem;
+      opacity: 0;
+      transform: translate(12px, -50%);
+      transition: opacity 120ms ease;
+    }
+    .readout.visible { opacity: 1; }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      padding: 6px 22px 17px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+    .key { display: inline-flex; align-items: center; gap: 7px; }
+    .swatch { width: 24px; height: 3px; border-radius: 99px; background: var(--accent); }
+    .swatch.target { background: var(--ink); }
+    .swatch.component { background: var(--teal); opacity: 0.55; }
+
+    .side { display: grid; gap: 18px; }
+    .control-panel { padding: 20px; }
+    .control-panel h2 { margin-bottom: 17px; }
+    .field { display: grid; gap: 7px; margin-top: 15px; }
+    .field:first-of-type { margin-top: 0; }
+    label { font-size: 0.78rem; font-weight: 720; letter-spacing: 0.02em; }
+    .value {
+      float: right;
+      color: var(--accent);
+      font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+      font-weight: 700;
+    }
+    input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+    select {
+      width: 100%;
+      min-height: 42px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--ink);
+      background: white;
+    }
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 0.84rem;
+      font-weight: 600;
+    }
+    .check input { width: 18px; height: 18px; accent-color: var(--teal); }
+
+    .tip {
+      margin: 20px 0 0;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.5;
+    }
+    .tip strong { color: var(--ink); }
+
+    .network-panel { margin-top: 18px; padding: 20px 22px 22px; }
+    .network-panel h2 { margin-bottom: 14px; }
+    .network {
+      display: grid;
+      grid-template-columns: 92px 1fr 92px;
+      gap: 18px;
+      align-items: center;
+    }
+    .io-node {
+      display: grid;
+      place-items: center;
+      min-height: 58px;
+      border-radius: 50%;
+      color: white;
+      background: var(--ink);
+      font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+      font-size: 1.15rem;
+      font-weight: 750;
+      aspect-ratio: 1;
+    }
+    .io-node.output { background: var(--accent); }
+    .hidden-stack { display: grid; gap: 7px; }
+    .unit {
+      position: relative;
+      display: grid;
+      grid-template-columns: 48px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      min-height: 43px;
+      padding: 7px 11px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #f4f7f4;
+      cursor: pointer;
+      transition: transform 160ms cubic-bezier(.16, 1, .3, 1), border-color 160ms ease;
+    }
+    .unit::before, .unit::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      width: 18px;
+      height: 1px;
+      background: var(--line);
+    }
+    .unit::before { left: -19px; }
+    .unit::after { right: -19px; }
+    .unit:hover { transform: translateX(3px); border-color: var(--teal); }
+    .unit.selected { border-color: var(--accent); background: var(--accent-soft); }
+    .unit-name { color: var(--teal); font-weight: 760; }
+    .unit-eq { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-size: 0.79rem; }
+    .unit-weight { color: var(--accent); font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-weight: 760; }
+    .base-path {
+      margin: 13px 0 0 110px;
+      color: var(--muted);
+      font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+      font-size: 0.79rem;
+    }
+
+    .takeaway {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 14px;
+      align-items: start;
+      margin-top: 18px;
+      padding: 18px 20px;
+      border-left: 4px solid var(--accent);
+      background: var(--accent-soft);
+    }
+    .takeaway span {
+      color: var(--accent);
+      font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .takeaway p { margin: 0; font-size: 0.94rem; line-height: 1.5; }
+
+    @media (max-width: 920px) {
+      .shell { width: min(100% - 24px, 760px); padding-top: 14px; }
+      header, .workspace { grid-template-columns: 1fr; }
+      header { gap: 16px; }
+      .preset-nav { grid-template-columns: repeat(2, 1fr); }
+      canvas { height: 400px; }
+      .network { grid-template-columns: 58px 1fr 58px; gap: 12px; }
+      .base-path { margin-left: 70px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <p class="eyebrow">Lecture 2 · function approximation</p>
+        <h1>Build a curve from ReLU hinges</h1>
+      </div>
+      <p>Each hidden unit contributes one shifted hinge. Move its breakpoint, change its output weight, and watch the weighted sum change locally.</p>
+    </header>
+
+    <nav class="preset-nav" aria-label="Teaching sequence">
+      <button class="preset" data-preset="hinge" aria-pressed="true"><strong>1 · One hinge</strong><span>Start with ReLU(x)</span></button>
+      <button class="preset" data-preset="tent" aria-pressed="false"><strong>2 · Tent</strong><span>Three hidden units</span></button>
+      <button class="preset" data-preset="peaks" aria-pressed="false"><strong>3 · Two peaks</strong><span>Five hidden units</span></button>
+      <button class="preset" data-preset="sine" aria-pressed="false"><strong>4 · Smooth target</strong><span>More knots, smaller gap</span></button>
+    </nav>
+
+    <section class="workspace">
+      <article class="plot-panel">
+        <div class="plot-head">
+          <h2 id="plotTitle">One hidden unit contributes one hinge</h2>
+          <div class="formula" id="formula">f(x) = ReLU(x)</div>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="plot" aria-label="Plot of the ReLU components, weighted sum, and optional target"></canvas>
+          <div class="readout" id="readout"></div>
+        </div>
+        <div class="legend">
+          <span class="key"><span class="swatch"></span>weighted sum</span>
+          <span class="key" id="targetKey" hidden><span class="swatch target"></span>target</span>
+          <span class="key" id="componentKey"><span class="swatch component"></span>individual hidden-unit contributions</span>
+        </div>
+      </article>
+
+      <aside class="side">
+        <section class="control-panel">
+          <h2>Edit the selected hidden unit</h2>
+          <div class="field">
+            <label for="unitSelect">Hidden unit</label>
+            <select id="unitSelect"></select>
+          </div>
+          <div class="field">
+            <label for="hinge">Hinge location t <span class="value" id="hingeValue">0.00</span></label>
+            <input id="hinge" type="range" min="-3.2" max="4.5" step="0.05" value="0">
+          </div>
+          <div class="field">
+            <label for="weight">Output weight a <span class="value" id="weightValue">1.00</span></label>
+            <input id="weight" type="range" min="-3" max="3" step="0.05" value="1">
+          </div>
+          <div class="field">
+            <label for="count">Hidden-unit count <span class="value" id="countValue">1</span></label>
+            <input id="count" type="range" min="1" max="12" step="1" value="1">
+          </div>
+          <label class="check"><input id="showComponents" type="checkbox" checked> Show individual weighted hinges</label>
+          <p class="tip"><strong>Try this.</strong> In the tent preset, change the middle unit’s weight from −2 toward 0. Which side of the tent changes slope?</p>
+        </section>
+      </aside>
+    </section>
+
+    <section class="network-panel">
+      <h2>The corresponding one-hidden-layer network</h2>
+      <div class="network">
+        <div class="io-node">x</div>
+        <div class="hidden-stack" id="hiddenStack"></div>
+        <div class="io-node output">f(x)</div>
+      </div>
+      <div class="base-path" id="basePath">output base: 0</div>
+    </section>
+
+    <div class="takeaway">
+      <span>Read the plot</span>
+      <p id="takeaway">Before the hinge, the unit contributes zero. After the hinge, it changes the slope of the total function.</p>
+    </div>
+  </main>
+
+  <script>
+    const COLORS = {
+      paper: '#fffdf8', ink: '#213b40', muted: '#6f7f80', line: '#cfd6d2',
+      teal: '#287f7b', accent: '#e97b12', danger: '#c94b56'
+    };
+
+    const canvas = document.querySelector('#plot');
+    const ctx = canvas.getContext('2d');
+    const readout = document.querySelector('#readout');
+    const state = {
+      preset: 'hinge', selected: 0, showComponents: true,
+      baseSlope: 0, baseOffset: 0, units: [{ t: 0, a: 1 }],
+      domain: [-1.2, 4.8], yDomain: [-1.4, 2.2], target: null
+    };
+
+    const copy = {
+      hinge: {
+        title: 'One hidden unit contributes one hinge',
+        takeaway: 'Before the hinge, the unit contributes zero. After the hinge, it changes the slope of the total function.'
+      },
+      tent: {
+        title: 'Three hidden units combine into a tent',
+        takeaway: 'The first hinge creates an upward slope, the second reverses it, and the third cancels the remaining slope.'
+      },
+      peaks: {
+        title: 'Five hidden units create two peaks',
+        takeaway: 'Every additional hinge changes one local slope. The output layer combines those changes into a more detailed function.'
+      },
+      sine: {
+        title: 'Piecewise-linear segments follow a smooth target',
+        takeaway: 'The approximation remains piecewise linear. Increasing hidden units adds breakpoints and narrows the visible gap.'
+      }
+    };
+
+    function makeSine(unitCount) {
+      const left = -Math.PI;
+      const right = Math.PI;
+      const knotCount = unitCount + 2;
+      const step = (right - left) / (knotCount - 1);
+      const xs = Array.from({ length: knotCount }, (_, i) => left + i * step);
+      const ys = xs.map(Math.sin);
+      const slopes = xs.slice(0, -1).map((x, i) => (ys[i + 1] - ys[i]) / step);
+      const units = [];
+      for (let i = 1; i < knotCount - 1; i += 1) {
+        units.push({ t: xs[i], a: slopes[i] - slopes[i - 1] });
+      }
+      return {
+        units,
+        baseSlope: slopes[0],
+        baseOffset: ys[0] - slopes[0] * xs[0]
+      };
+    }
+
+    function setPreset(name) {
+      state.preset = name;
+      state.selected = 0;
+      state.target = null;
+      if (name === 'hinge') {
+        Object.assign(state, { units: [{ t: 0, a: 1 }], baseSlope: 0, baseOffset: 0, domain: [-1.2, 3.2], yDomain: [-0.3, 3.2] });
+      } else if (name === 'tent') {
+        Object.assign(state, { units: [{ t: 0, a: 1 }, { t: 1, a: -2 }, { t: 2, a: 1 }], baseSlope: 0, baseOffset: 0, domain: [-1, 3], yDomain: [-0.35, 1.35] });
+      } else if (name === 'peaks') {
+        Object.assign(state, { units: [{ t: 0, a: 1 }, { t: 1, a: -2 }, { t: 2, a: 2 }, { t: 3, a: -2 }, { t: 4, a: 1 }], baseSlope: 0, baseOffset: 0, domain: [-0.6, 4.6], yDomain: [-0.35, 1.35] });
+      } else {
+        const sine = makeSine(5);
+        Object.assign(state, { ...sine, domain: [-Math.PI, Math.PI], yDomain: [-1.35, 1.35], target: Math.sin });
+      }
+      document.querySelectorAll('.preset').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.preset === name)));
+      syncControls();
+      render();
+    }
+
+    function functionValue(x) {
+      return state.baseOffset + state.baseSlope * x + state.units.reduce((sum, unit) => sum + unit.a * Math.max(0, x - unit.t), 0);
+    }
+
+    function componentValue(unit, x) { return unit.a * Math.max(0, x - unit.t); }
+    function fmt(value) {
+      const rounded = Math.abs(value) < 0.0005 ? 0 : value;
+      return rounded.toFixed(2).replace(/\.00$/, '');
+    }
+
+    function formulaText() {
+      const terms = [];
+      if (Math.abs(state.baseOffset) > 0.001) terms.push(fmt(state.baseOffset));
+      if (Math.abs(state.baseSlope) > 0.001) terms.push(`${fmt(state.baseSlope)}x`);
+      state.units.forEach((u, i) => {
+        const sign = u.a >= 0 && terms.length ? '+' : '';
+        terms.push(`${sign}${fmt(u.a)}ReLU(x ${u.t >= 0 ? '−' : '+'} ${fmt(Math.abs(u.t))})`);
+      });
+      return `f(x) = ${terms.join(' ') || '0'}`;
+    }
+
+    function syncControls() {
+      const select = document.querySelector('#unitSelect');
+      select.innerHTML = state.units.map((_, i) => `<option value="${i}">h${i + 1}</option>`).join('');
+      state.selected = Math.min(state.selected, state.units.length - 1);
+      select.value = String(state.selected);
+      const unit = state.units[state.selected];
+      document.querySelector('#hinge').value = unit.t;
+      document.querySelector('#weight').value = unit.a;
+      document.querySelector('#hingeValue').textContent = fmt(unit.t);
+      document.querySelector('#weightValue').textContent = fmt(unit.a);
+      document.querySelector('#count').value = state.units.length;
+      document.querySelector('#countValue').textContent = String(state.units.length);
+      document.querySelector('#showComponents').checked = state.showComponents;
+      document.querySelector('#plotTitle').textContent = copy[state.preset].title;
+      document.querySelector('#takeaway').textContent = copy[state.preset].takeaway;
+      document.querySelector('#formula').textContent = formulaText();
+      document.querySelector('#formula').title = formulaText();
+      document.querySelector('#targetKey').hidden = !state.target;
+      document.querySelector('#componentKey').hidden = !state.showComponents;
+      renderNetwork();
+    }
+
+    function renderNetwork() {
+      const stack = document.querySelector('#hiddenStack');
+      stack.innerHTML = '';
+      state.units.forEach((u, i) => {
+        const button = document.createElement('button');
+        button.className = `unit${i === state.selected ? ' selected' : ''}`;
+        button.innerHTML = `<span class="unit-name">h${i + 1}</span><span class="unit-eq">ReLU(x − ${fmt(u.t)})</span><span class="unit-weight">× ${fmt(u.a)}</span>`;
+        button.addEventListener('click', () => { state.selected = i; syncControls(); render(); });
+        stack.appendChild(button);
+      });
+      document.querySelector('#basePath').textContent = `output base path: ${fmt(state.baseOffset)} ${state.baseSlope >= 0 ? '+' : '−'} ${fmt(Math.abs(state.baseSlope))}x`;
+    }
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return { width: rect.width, height: rect.height };
+    }
+
+    function render() {
+      const { width, height } = resizeCanvas();
+      const pad = { left: 68, right: 28, top: 26, bottom: 56 };
+      const innerW = width - pad.left - pad.right;
+      const innerH = height - pad.top - pad.bottom;
+      const [xmin, xmax] = state.domain;
+      const [ymin, ymax] = state.yDomain;
+      const sx = x => pad.left + (x - xmin) / (xmax - xmin) * innerW;
+      const sy = y => pad.top + (ymax - y) / (ymax - ymin) * innerH;
+
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = COLORS.paper;
+      ctx.fillRect(0, 0, width, height);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      const xTicks = state.preset === 'sine' ? [-Math.PI, -Math.PI / 2, 0, Math.PI / 2, Math.PI] : Array.from({ length: Math.floor(xmax - xmin) + 1 }, (_, i) => Math.ceil(xmin) + i).filter(x => x <= xmax);
+      const yTicks = state.preset === 'hinge' ? [0, 1, 2, 3] : [-1, -0.5, 0, 0.5, 1].filter(y => y >= ymin && y <= ymax);
+
+      ctx.strokeStyle = COLORS.line;
+      ctx.lineWidth = 1;
+      yTicks.forEach(y => {
+        ctx.beginPath(); ctx.moveTo(pad.left, sy(y)); ctx.lineTo(width - pad.right, sy(y)); ctx.stroke();
+        ctx.fillStyle = COLORS.muted; ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillText(fmt(y), pad.left - 10, sy(y));
+      });
+      xTicks.forEach(x => {
+        ctx.beginPath(); ctx.moveTo(sx(x), pad.top); ctx.lineTo(sx(x), height - pad.bottom); ctx.strokeStyle = 'rgba(207,214,210,.45)'; ctx.stroke();
+        ctx.fillStyle = COLORS.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        const label = state.preset === 'sine' ? (Math.abs(x) < .01 ? '0' : x < -3 ? '−π' : x > 3 ? 'π' : x < 0 ? '−π/2' : 'π/2') : fmt(x);
+        ctx.fillText(label, sx(x), height - pad.bottom + 10);
+      });
+
+      ctx.strokeStyle = COLORS.ink;
+      ctx.lineWidth = 1.8;
+      ctx.beginPath(); ctx.moveTo(pad.left, sy(0)); ctx.lineTo(width - pad.right, sy(0)); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sx(0), pad.top); ctx.lineTo(sx(0), height - pad.bottom); ctx.stroke();
+      ctx.fillStyle = COLORS.ink; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.font = '600 14px Avenir Next, Arial, sans-serif'; ctx.fillText('input x', pad.left + innerW / 2, height - 27);
+      ctx.save(); ctx.translate(18, pad.top + innerH / 2); ctx.rotate(-Math.PI / 2); ctx.fillText('output f(x)', 0, 0); ctx.restore();
+
+      function drawCurve(fn, color, widthPx, dash = []) {
+        ctx.beginPath();
+        const samples = 480;
+        for (let i = 0; i <= samples; i += 1) {
+          const x = xmin + (xmax - xmin) * i / samples;
+          const y = fn(x);
+          if (i === 0) ctx.moveTo(sx(x), sy(y)); else ctx.lineTo(sx(x), sy(y));
+        }
+        ctx.strokeStyle = color; ctx.lineWidth = widthPx; ctx.setLineDash(dash); ctx.stroke(); ctx.setLineDash([]);
+      }
+
+      if (state.showComponents) {
+        state.units.forEach((unit, i) => {
+          const color = i === state.selected ? 'rgba(201,75,86,.72)' : 'rgba(40,127,123,.28)';
+          drawCurve(x => componentValue(unit, x), color, i === state.selected ? 2.2 : 1.35, i === state.selected ? [7, 5] : []);
+          ctx.strokeStyle = i === state.selected ? COLORS.danger : 'rgba(40,127,123,.32)';
+          ctx.lineWidth = i === state.selected ? 1.5 : 1;
+          ctx.setLineDash([4, 5]); ctx.beginPath(); ctx.moveTo(sx(unit.t), pad.top); ctx.lineTo(sx(unit.t), height - pad.bottom); ctx.stroke(); ctx.setLineDash([]);
+        });
+      }
+      if (state.target) drawCurve(state.target, COLORS.ink, 3.2);
+      drawCurve(functionValue, COLORS.accent, 3.6, state.target ? [10, 6] : []);
+
+      canvas._plot = { sx, sy, xmin, xmax, ymin, ymax, pad, width, height, functionValue };
+    }
+
+    document.querySelectorAll('.preset').forEach(button => button.addEventListener('click', () => setPreset(button.dataset.preset)));
+    document.querySelector('#unitSelect').addEventListener('change', event => { state.selected = Number(event.target.value); syncControls(); render(); });
+    document.querySelector('#hinge').addEventListener('input', event => {
+      state.units[state.selected].t = Number(event.target.value);
+      document.querySelector('#hingeValue').textContent = fmt(state.units[state.selected].t);
+      document.querySelector('#formula').textContent = formulaText();
+      document.querySelector('#formula').title = formulaText(); renderNetwork(); render();
+    });
+    document.querySelector('#weight').addEventListener('input', event => {
+      state.units[state.selected].a = Number(event.target.value);
+      document.querySelector('#weightValue').textContent = fmt(state.units[state.selected].a);
+      document.querySelector('#formula').textContent = formulaText();
+      document.querySelector('#formula').title = formulaText(); renderNetwork(); render();
+    });
+    document.querySelector('#count').addEventListener('input', event => {
+      const count = Number(event.target.value);
+      if (state.preset === 'sine') {
+        Object.assign(state, makeSine(count));
+      } else if (count > state.units.length) {
+        while (state.units.length < count) state.units.push({ t: state.units.length, a: 0 });
+      } else {
+        state.units = state.units.slice(0, count);
+      }
+      state.selected = Math.min(state.selected, state.units.length - 1);
+      syncControls(); render();
+    });
+    document.querySelector('#showComponents').addEventListener('change', event => {
+      state.showComponents = event.target.checked;
+      document.querySelector('#componentKey').hidden = !state.showComponents;
+      render();
+    });
+
+    canvas.addEventListener('pointermove', event => {
+      const plot = canvas._plot;
+      if (!plot) return;
+      const rect = canvas.getBoundingClientRect();
+      const px = event.clientX - rect.left;
+      const py = event.clientY - rect.top;
+      if (px < plot.pad.left || px > plot.width - plot.pad.right || py < plot.pad.top || py > plot.height - plot.pad.bottom) {
+        readout.classList.remove('visible'); return;
+      }
+      const x = plot.xmin + (px - plot.pad.left) / (plot.width - plot.pad.left - plot.pad.right) * (plot.xmax - plot.xmin);
+      const y = functionValue(x);
+      readout.innerHTML = `x = ${fmt(x)}<br>f(x) = ${fmt(y)}`;
+      readout.style.left = `${px}px`; readout.style.top = `${plot.sy(y)}px`;
+      readout.classList.add('visible');
+    });
+    canvas.addEventListener('pointerleave', () => readout.classList.remove('visible'));
+    window.addEventListener('resize', render, { passive: true });
+
+    setPreset('hinge');
+  </script>
+</body>
+</html>

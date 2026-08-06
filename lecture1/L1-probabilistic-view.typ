@@ -13,6 +13,10 @@
 
 #let IA = "https://nipunbatra.github.io/interactive-articles/"
 
+// One consistent, readable legend treatment for all lecture figures. Keep
+// legends outside plotting areas so curves and reference lines remain clear.
+#let plot-swatch(color, label) = box(width: 12pt, height: 3pt, fill: color, radius: 1pt) + h(4pt) + label
+
 #title-slide()
 
 // ══════════════════════════════ PART I ══════════════════════════════
@@ -34,8 +38,8 @@ $ cal(L)_"total" = cal(L)_"data" + lambda norm(bold(theta))_2^2 quad #text(fill:
 Two probabilistic assumptions determine the two halves of the objective.
 #v(4pt)
 #align(center, text(size: 17pt, fill: MUTED)[
-  We will define the predictive distribution $p_(bold(theta))(y|bold(x))$, likelihood, log-likelihood, and NLL; \
-  then the prior $p(bold(theta))$ and MAP.
+  We will define the predictive distribution and likelihood; use i.i.d. to move from one example to a dataset; \
+  then introduce log-likelihood, NLL, the prior $p(bold(theta))$, and MAP.
 ])
 #pause
 #v(6pt)
@@ -85,6 +89,7 @@ Two probabilistic assumptions determine the two halves of the objective.
     ))
   ],
   [
+    #pause
     #text(font: "IBM Plex Mono", size: 12pt, fill: TEAL, weight: 700)[BINARY CLASSIFICATION · $Y in {0,1}$]
     #v(4pt)
     #text(size: 14.5pt, fill: MUTED)[Point prediction: mode of $Y | bold(X)=bold(x)$]
@@ -105,6 +110,7 @@ Two probabilistic assumptions determine the two halves of the objective.
   ],
 )
 
+#pause
 #place(bottom + center, dy: -2pt, block(
   fill: rgb("#FDECD6"), inset: (x: 12pt, y: 6pt), radius: 4pt,
   stroke: 1.2pt + ACC,
@@ -138,6 +144,7 @@ Two probabilistic assumptions determine the two halves of the objective.
   ],
 )
 #v(7pt)
+#pause
 #result[Exact values can have nonzero probability: here $P(Y=1)=0.75$.]
 
 == Continuous distributions assign density across a support
@@ -164,6 +171,7 @@ Two probabilistic assumptions determine the two halves of the objective.
     #align(center, text(size: 15pt, fill: MUTED)[the total area under a PDF is 1])
   ],
 )
+#pause
 #place(bottom + center, dy: -2pt,
   result[For continuous $Y$, probability comes from *area* under the density.])
 
@@ -209,15 +217,25 @@ $ P(a <= Y <= b) = integral_a^b p_Y(y) dif y $
 $ Y tilde cal(N)(mu, sigma^2) quad quad p(y) = 1/sqrt(2 pi sigma^2) exp(-(y-mu)^2/(2 sigma^2)) $
 #pause
 // native: three real Normal densities — μ shifts location, σ sets the scale/height
+#align(center, text(size: 14pt)[
+  #plot-swatch(INK, [$mu=0, sigma=1$]) #h(14pt)
+  #plot-swatch(ACC, [$mu=0, sigma=1.8$]) #h(14pt)
+  #plot-swatch(TEAL, [$mu=-1.5, sigma=1$])
+])
+#v(2pt)
 #align(center, lines(
   fn: (x => dist.pdf(dist.normal(mu: 0.0, sigma: 1.0), x),
        x => dist.pdf(dist.normal(mu: 0.0, sigma: 1.8), x),
        x => dist.pdf(dist.normal(mu: -1.5, sigma: 1.0), x)),
   domain: (-6, 6), samples: 120, markers: false,
   colors: (INK, ACC, TEAL),
-  labels: ([$mu=0, sigma=1$], [$mu=0, sigma=1.8$], [$mu=-1.5, sigma=1$]),
-  legend: "tr", y-ticks: false,
-  annotations: ((-3.0, 0.018, [$-3$]), (0.0, 0.018, [$0$]), (3.0, 0.018, [$3$])),
+  y-ticks: false,
+  // Put interior tick labels below the baseline so they do not sit on the curves.
+  annotations: (
+    (-3.0, -0.022, text(size: 7.5pt, fill: MUTED)[−3]),
+    (0.0, -0.022, text(size: 7.5pt, fill: MUTED)[0]),
+    (3.0, -0.022, text(size: 7.5pt, fill: MUTED)[3]),
+  ),
   x-label: [$y$], y-label: [$p(y)$],
   size: (82mm, 46mm),
 ))
@@ -231,6 +249,7 @@ $ Y tilde cal(N)(mu, sigma^2) quad quad p(y) = 1/sqrt(2 pi sigma^2) exp(-(y-mu)^
 
 #align(center, text(size: 28pt, weight: 600)[$p_(bold(theta))(y | bold(x))$])
 #v(7pt)
+#pause
 #align(center, table(
   columns: (31mm, 1fr), stroke: 0.5pt + MUTED, inset: (x: 10pt, y: 4pt),
   align: (center, left),
@@ -239,6 +258,7 @@ $ Y tilde cal(N)(mu, sigma^2) quad quad p(y) = 1/sqrt(2 pi sigma^2) exp(-(y-mu)^
   [$bold(theta)$], [the *parameter vector* — the model's learned weights and biases],
   [$p_(bold(theta))(y | bold(x))$], [the probability (discrete $Y$) or density (continuous $Y$) assigned to $y$, *given* $bold(x)$],
 ))
+#pause
 #place(bottom + center, dy: -2pt,
   result[Read aloud: “model $bold(theta)$'s probability or density for $y$, given $bold(x)$.”])
 
@@ -247,6 +267,7 @@ $ Y tilde cal(N)(mu, sigma^2) quad quad p(y) = 1/sqrt(2 pi sigma^2) exp(-(y-mu)^
 
 Example: $Y in {0,1}$. Fix the input $bold(x)^star$ and one parameter setting $bold(theta)_A$.
 #v(8pt)
+#pause
 #two(r: (1.1fr, 1fr),
   [
     $ p_(bold(theta)_A)(Y=0 | bold(x)^star) = 0.20 $
@@ -264,16 +285,18 @@ Example: $Y in {0,1}$. Fix the input $bold(x)^star$ and one parameter setting $b
     ))
   ],
 )
+#pause
 #place(bottom + center, dy: -2pt,
   result[$hat(y)(bold(x)^star) = arg max_y p_(bold(theta)_A)(y | bold(x)^star) = 1$])
 
-== Likelihood fixes data and varies the model
+== One observed label gives one likelihood score
 #stag(D)
 
 Now observe $y^star = 1$ for the input $bold(x)^star$, so $cal(D) = {(bold(x)^star, 1)}$.
 #v(5pt)
 $ L(bold(theta); cal(D)) = p_(bold(theta))(y^star = 1 | bold(x)^star) $
 #v(7pt)
+#pause
 #two(r: (1.08fr, 1fr),
   [
     *Candidate A:* $L(bold(theta)_A; cal(D)) = 0.80$ \
@@ -290,8 +313,270 @@ $ L(bold(theta); cal(D)) = p_(bold(theta))(y^star = 1 | bold(x)^star) $
     ))
   ],
 )
+#pause
 #place(bottom + center, dy: -2pt,
   alertbox[Likelihood is a *score as a function of* $bold(theta)$; the scores need not sum to $1$ over parameter settings.])
+
+== One continuous observation gives a likelihood too
+#stag(D)
+
+Suppose $Y | mu tilde cal(N)(mu, 1)$ and we observe the fixed value $y^star=1$.
+#v(4pt)
+$ L(mu; y^star=1) = p(y^star=1 | mu) = 1/sqrt(2 pi) exp(-(1-mu)^2/2). $
+#v(5pt)
+#pause
+#two(r: (1fr, 1.08fr),
+  [
+    *Candidate $mu=1$:* $L(1) approx 0.399$ \
+    *Candidate $mu=0$:* $L(0) approx 0.242$
+    #v(8pt)
+    #notebox[$mu=1$ centres the Gaussian at $y^star=1$ and gives the largest *density*.]
+  ],
+  align(center, lines(
+    fn: mu => dist.pdf(dist.normal(mu: mu, sigma: 1), 1),
+    domain: (-2, 4), samples: 160, markers: false,
+    colors: (ACC,), fill-under: (0, ACC.transparentize(84%)),
+    points: ((1, dist.pdf(dist.normal(mu: 1, sigma: 1), 1)), (0, dist.pdf(dist.normal(mu: 0, sigma: 1), 1))),
+    vlines: ((1, [$mu=1$], ACC),),
+    x-label: [$mu$], y-label: [$L(mu)$], y-ticks: false,
+    size: (59mm, 38mm),
+  )),
+)
+#pause
+#place(bottom + center, dy: -2pt,
+  result[Discrete or continuous: fix what was observed, then ask which parameter values explain it better.])
+
+== A dataset needs a joint likelihood
+#stag(Q)
+
+For two observations, the likelihood starts as a *joint* probability or density:
+$ L(bold(theta); cal(D)) = p_(bold(theta))(y_1, y_2 | bold(x)_1, bold(x)_2). $
+#v(8pt)
+#pause
+We may write a product only after making an assumption about how the observations relate.
+#v(10pt)
+#align(center, block(
+  fill: rgb("#EFEEEB"), stroke: 0.8pt + INK, radius: 4pt,
+  inset: (x: 18pt, y: 10pt),
+  align(center, [
+    *Question:* when is $p(y_1,y_2 | bold(theta)) = p(y_1 | bold(theta))p(y_2 | bold(theta))$ valid?
+  ]),
+))
+#pause
+#place(bottom + center, dy: -2pt,
+  alertbox[The product is a consequence of *conditional independence*; it is not automatic.])
+
+== Independent means “no extra information”
+#stag(D)
+
+After fixing $bold(theta)$, observing one outcome does not change the distribution of another:
+$ p(y_2 | y_1, bold(theta)) = p(y_2 | bold(theta)). $
+#pause
+The chain rule then becomes
+$ p(y_1,y_2 | bold(theta)) = p(y_1 | bold(theta)) p(y_2 | y_1,bold(theta)) = p(y_1 | bold(theta)) p(y_2 | bold(theta)). $
+#v(7pt)
+#pause
+#notebox[*Coin-flip example.* If $P(H | theta)=theta$ and the flips are independent, then $P(H,H | theta)=theta^2$.]
+#pause
+#place(bottom + center, dy: -2pt,
+  result[Independence is what licenses multiplication.])
+
+== Identically distributed means “the same sampling rule”
+#stag(D)
+
+#two(r: (1fr, 1.08fr),
+  [
+    *Coin flips* \
+    $Y_i | theta tilde "Bernoulli"(theta)$ for every $i$. \
+    Each flip uses the same bias $theta$.
+  ],
+  [
+    *Supervised learning* \
+    The pairs $(bold(X)_i,Y_i)$ come from the same population, and one shared $bold(theta)$ defines $p_(bold(theta))(y_i | bold(x)_i)$.
+  ],
+)
+#v(8pt)
+#pause
+#notebox[“Independent” and “identically distributed” are two separate claims; one can hold without the other.]
+#pause
+#place(bottom + center, dy: -2pt,
+  result[*i.i.d.* = independent observations + one common data-generating rule.])
+
+== Independence and identical distribution can fail separately
+#stag(D)
+
+#two(r: (1fr, 1fr),
+  [
+    *Not independent: daily weather* \
+    Tomorrow's weather depends on today's. A first-order Markov model writes
+    #v(4pt)
+    #align(center, text(size: 16pt)[
+      $p(y_(1:T) | theta) = p(y_1 | theta) product_(t=2)^T p(y_t | y_(t-1), theta).$
+    ])
+    #v(5pt)
+    The factors are *conditional on the previous day*, not independent marginals.
+  ],
+  [
+    #pause
+    *Independent but not identical: two sensors* \
+    Two sensors measure the same temperature $mu$ independently, but have different noise levels:
+    #v(4pt)
+    #align(center, text(size: 16pt)[
+      $Y_i | mu tilde cal(N)(mu, sigma_i^2), quad sigma_1 != sigma_2.$
+    ])
+    #v(5pt)
+    The likelihood is a product, but its factors use different $sigma_i$.
+  ],
+)
+#pause
+#place(bottom + center, dy: -2pt,
+  result[i.i.d. is a useful special case—not a universal law.])
+
+== Worked example: dependence changes the product
+#stag(D)
+
+Let $R_1$ mean “rain today” and $R_2$ mean “rain tomorrow”. Suppose
+#v(3pt)
+#align(center, text(size: 18pt)[
+  $P(R_1)=0.4, quad P(R_2|R_1)=0.8, quad P(R_2|not R_1)=0.2.$
+])
+#v(8pt)
+#two(r: (1fr, 1fr),
+  [
+    #text(fill: ACC, weight: 700)[1. Use the conditional rule]
+    #v(5pt)
+    #align(center, text(size: 19pt, weight: 650)[
+      $P(R_1,R_2)=P(R_1)P(R_2|R_1)$ \
+      $=0.4 times 0.8=0.32.$
+    ])
+    #v(8pt)
+    Both days are rainy with probability $0.32$.
+  ],
+  [
+    #pause
+    #text(fill: TEAL, weight: 700)[2. Test independence]
+    #v(5pt)
+    $P(R_2)=0.4 times 0.8 + 0.6 times 0.2=0.44.$
+    #v(8pt)
+    If the days were independent,
+    #v(3pt)
+    #align(center, text(size: 18pt, fill: RED, weight: 650)[
+      $P(R_1)P(R_2)=0.4 times 0.44=0.176,$
+    ])
+    not $0.32$.
+  ],
+)
+#pause
+#place(bottom + center, dy: -2pt,
+  result[Dependence does not forbid multiplication: use a *conditional* probability.])
+
+== Worked example: independent does not mean identical
+#stag(D)
+
+Given smoke $S$, two alarms act independently, but their sensitivities differ:
+#v(3pt)
+#align(center, text(size: 19pt)[
+  $P(A_1=1|S)=0.9, quad P(A_2=1|S)=0.6.$
+])
+#v(10pt)
+#two(r: (1fr, 1fr),
+  [
+    #text(fill: TEAL, weight: 700)[Independence]
+    #v(5pt)
+    Both alarms ring with probability
+    #v(4pt)
+    #align(center, text(size: 19pt, fill: GREEN, weight: 650)[
+      $P(A_1=1,A_2=1|S)$ \
+      $=0.9 times 0.6=0.54.$
+    ])
+    #v(6pt)
+    The product is valid.
+  ],
+  [
+    #pause
+    #text(fill: ACC, weight: 700)[Not identically distributed]
+    #v(5pt)
+    Alarm 1 detects smoke $90%$ of the time; Alarm 2 detects it $60%$ of the time.
+    #v(8pt)
+    #align(center, text(size: 19pt, fill: RED, weight: 650)[
+      $0.9 != 0.6$
+    ])
+    #v(6pt)
+    We cannot reuse one common factor for both alarms.
+  ],
+)
+#pause
+#place(bottom + center, dy: -2pt,
+  result[Independent says “multiply”; identical says “reuse the same sampling rule”.])
+
+== IID turns the joint likelihood into per-example factors
+#stag(D)
+
+For i.i.d. supervised examples, treat the observed inputs as fixed. Conditional independence gives
+$ p(cal(D) | bold(theta)) = product_(i=1)^n p_(bold(theta))(y_i | bold(x)_i). $
+#pause
+Taking logs turns the product into the sum used by every training loop:
+$ log p(cal(D) | bold(theta)) = sum_(i=1)^n log p_(bold(theta))(y_i | bold(x)_i). $
+#v(7pt)
+#align(center, text(size: 14pt, fill: MUTED)[The *factorization* comes from independence; the shared factor form comes from the common model $p_(bold(theta))$.])
+#pause
+#place(bottom + center, dy: -2pt,
+  result[This is the bridge from one-example likelihood to a dataset loss.])
+
+== Work two tiny Bernoulli datasets
+#stag(D)
+
+Compare a fair coin $theta=0.5$ with a head-biased coin $theta=0.8$.
+#v(6pt)
+#pause
+#align(center, table(
+  columns: (32mm, 39mm, 39mm, 1fr), stroke: 0.5pt + MUTED,
+  inset: (x: 8pt, y: 6pt), align: (center, center, center, left),
+  table.header([*Observed data*], [*$L(0.5)$*], [*$L(0.8)$*], [*Which explains it better?*]),
+  [$H,T$], [$0.5(0.5)=0.25$], [$0.8(0.2)=0.16$], [fair coin],
+  [$H,H$], [$0.5^2=0.25$], [$0.8^2=0.64$], [head-biased coin],
+))
+#v(8pt)
+#pause
+#notebox[Same candidate models, different fixed data. Likelihood ranks candidates by how well they explain the observations actually seen.]
+#pause
+#place(bottom + center, dy: -2pt,
+  result[Multiply one Bernoulli term per independent flip.])
+
+== Two Gaussian measurements: multiply densities
+#stag(D)
+
+Let $Y_i | mu tilde cal(N)(mu,1)$ independently, and observe $y_1=1$, $y_2=2$.
+#v(7pt)
+#pause
+#two(
+  notebox[
+    *Candidate $mu=1.5$* \
+    $p(y_1|mu) approx 0.352$ \
+    $p(y_2|mu) approx 0.352$ \
+    $L(1.5) approx 0.352 times 0.352 = 0.124$
+  ],
+  notebox[
+    *Candidate $mu=0$* \
+    $p(y_1|mu) approx 0.242$ \
+    $p(y_2|mu) approx 0.054$ \
+    $L(0) approx 0.242 times 0.054 = 0.013$
+  ],
+)
+#v(6pt)
+#pause
+$ log L(1.5) approx -2.09, quad log L(0) approx -4.34. $
+#pause
+#place(bottom + center, dy: -2pt,
+  result[For continuous data we multiply *densities*; $mu=1.5$ gives the larger likelihood.])
+
+== Companion notebook: likelihood from one example to a dataset #I
+
+#interbox(link-to: "https://github.com/nipunbatra/dl-teaching/blob/master/notebooks/L01/00_likelihood_iid_worked_examples.ipynb")[
+  Compute and plot single-observation likelihoods, multiply independent Bernoulli and Gaussian terms, compare candidate parameters, and verify that log-likelihood is a sum.
+]
+#pause
+*In class:* predict the winning parameter first; then run the cell and explain why the curve peaks there.
 
 == Coin flips: a likelihood you can compute
 #stag(D)
@@ -302,9 +587,11 @@ $ L(bold(theta); cal(D)) = p_(bold(theta))(y^star = 1 | bold(x)^star) $
     *Observed:* $H, H, T, T, T, H, H, T, T, T$ \
     Hence $n_H = 4$ and $n_T = 6$.
     #v(7pt)
+    #pause
     *Model:* $p(H | theta) = theta$, $p(T | theta) = 1 - theta$.
     #v(7pt)
-    Independence gives
+    #pause
+    Because the flips are i.i.d.,
     $ L(theta) = product_i p(x_i | theta) $
     $ = theta^(n_H) (1 - theta)^(n_T) $
     $ = theta^4 (1 - theta)^6 $
@@ -326,6 +613,7 @@ $ L(bold(theta); cal(D)) = p_(bold(theta))(y^star = 1 | bold(x)^star) $
     ])
   ],
 )
+#pause
 #place(bottom + center, dy: -2pt,
   result[The likelihood peaks at $theta = 0.4$ — the observed head fraction $4/10$.])
 
@@ -335,7 +623,8 @@ $ L(bold(theta); cal(D)) = p_(bold(theta))(y^star = 1 | bold(x)^star) $
 The *log-likelihood* is the logarithm of the likelihood — not a different model:
 #v(4pt)
 $ ell(theta) := log L(theta) = log [theta^4 (1-theta)^6] = 4 log theta + 6 log(1-theta) $
-#v(9pt)
+#v(4pt)
+#pause
 #two(
   notebox[
     *Candidate $theta=0.4$* \
@@ -349,7 +638,9 @@ $ ell(theta) := log L(theta) = log [theta^4 (1-theta)^6] = 4 log theta + 6 log(1
   ],
 )
 #v(7pt)
+#pause
 #align(center, text(size: 15pt, fill: MUTED)[Likelihoods below $1$ have negative logs; among them, $-6.73$ is the larger value.])
+#pause
 #place(bottom + center, dy: -2pt,
   result[The observed sequence has higher log-likelihood at $theta=0.4$.])
 
@@ -359,6 +650,7 @@ $ ell(theta) := log L(theta) = log [theta^4 (1-theta)^6] = 4 log theta + 6 log(1
 The logarithm is *strictly increasing* on positive numbers:
 $ a > b > 0 quad ==> quad log a > log b $
 #v(6pt)
+#pause
 Therefore it preserves the ordering of all positive likelihood values:
 #v(7pt)
 #align(center, block(
@@ -371,7 +663,9 @@ Therefore it preserves the ordering of all positive likelihood values:
   ]),
 ))
 #v(8pt)
+#pause
 $ arg max_theta L(theta) = arg max_theta log L(theta) $
+#pause
 #place(bottom + center, dy: -2pt,
   result[Both likelihood and log-likelihood rank $theta=0.4$ above $theta=0.7$.])
 
@@ -383,6 +677,7 @@ $ arg max_theta L(theta) = arg max_theta log L(theta) $
 
 Suppose $Y tilde "Poisson"(lambda)$ and the observed count is $y=3$.
 #v(4pt)
+#pause
 #two(r: (1fr, 1fr),
   [
     #align(center, text(size: 16pt, fill: ACC, weight: 700)[LIKELIHOOD])
@@ -411,6 +706,7 @@ Suppose $Y tilde "Poisson"(lambda)$ and the observed count is $y=3$.
     ))
   ],
 )
+#pause
 #place(bottom + center, dy: -2pt,
   result[Both curves peak at $hat(lambda)_"MLE"=3$: the log changes the vertical scale, not the maximizing parameter.])
 
@@ -420,6 +716,7 @@ Suppose $Y tilde "Poisson"(lambda)$ and the observed count is $y=3$.
 For independent observations,
 $ L(bold(theta)) = product_i p_(bold(theta))(y_i | bold(x)_i) quad ==> quad log L(bold(theta)) = sum_i log p_(bold(theta))(y_i | bold(x)_i) $
 #v(10pt)
+#pause
 *Worked numerical example.* Suppose 200 observed outcomes each receive probability $0.01$.
 #v(5pt)
 #align(center, table(
@@ -432,6 +729,7 @@ $ L(bold(theta)) = product_i p_(bold(theta))(y_i | bold(x)_i) quad ==> quad log 
 #align(center, text(size: 13.5pt, fill: MUTED)[
   Float64 range: $plus.minus 1.80 times 10^308$ · smallest positive normal $2.23 times 10^(-308)$ · smallest subnormal $4.94 times 10^(-324)$.
 ])
+#pause
 #place(bottom + center, dy: -2pt,
   result[Logs make optimization easier *and* prevent numerical underflow.])
 
@@ -482,8 +780,10 @@ $ = arg min_(bold(theta)) (-sum_i log p_(bold(theta))(y_i | bold(x)_i)) $
 
 In ML, *risk* means expected loss. Because the data-generating distribution is unknown, we estimate it from the observed training set.
 #v(6pt)
+#pause
 #notebox[*Empirical risk* = average loss on $cal(D) = {(bold(x)_i, y_i)}_(i=1)^n$.]
 #v(7pt)
+#pause
 #align(center, table(
   columns: (37mm, 1fr), stroke: 0.5pt + MUTED,
   inset: (x: 9pt, y: 6pt), align: (center, left),
@@ -492,6 +792,7 @@ In ML, *risk* means expected loss. Because the data-generating distribution is u
 ))
 #v(6pt)
 #align(center, text(size: 14pt, fill: MUTED)[The final equality uses conditional independence: $p(cal(D)|bold(theta)) = product_i p_(bold(theta))(y_i|bold(x)_i)$.])
+#pause
 #place(bottom + center, dy: -2pt,
   result[Minimizing empirical NLL is maximum likelihood; $1/n$ only rescales the objective.])
 
@@ -630,18 +931,45 @@ If $tilde(bold(X))^top tilde(bold(X))$ is invertible,
 #place(bottom + center, dy: -2pt,
   notebox[Linear regression has a closed form; neural networks keep the MSE objective but use iterative optimization.])
 
-== What role does $sigma^2$ play?
-#stag(OPT)
+== Why earlier ML courses could ignore $sigma^2$
+#stag(Q)
 
-$ ell_i = (y_i - mu_i)^2/(2 sigma^2) + 1/2 log sigma^2 + C $
+$sigma^2$ is the observation-noise variance: the expected squared spread of targets around the mean prediction.
+#v(6pt)
+For $n$ Gaussian observations, write $r_i = y_i - mu_i$. The dataset NLL is
+$ cal(L)(bold(theta); sigma^2) = 1/(2 sigma^2) sum_i r_i^2 + n/2 log sigma^2 + C. $
 #pause
-- one global $sigma^2$ for every example → *homoscedastic* regression
+If one global $sigma^2$ is fixed, then $n/2 log sigma^2$ is constant and $1/(2 sigma^2)$ is only a positive scale factor:
+$ arg min_(bold(theta)) cal(L)(bold(theta); sigma^2) = arg min_(bold(theta)) sum_i r_i^2. $
 #pause
-- small $sigma$: errors penalized *strongly*
-#pause
-- large $sigma$: errors deemed *less surprising*
 #place(bottom + center, dy: -2pt,
-  notebox[With fixed $sigma^2$, every input has the same predicted noise width.])
+  result[For point predictions, fixed-variance Gaussian MLE gives the same fitted model as MSE.])
+
+== How is $sigma^2$ chosen in practice?
+#stag(D)
+
+#grid(
+  columns: (1fr, 1fr), column-gutter: 26pt,
+  [
+    *One global noise level.* \
+    Fit the mean model, then estimate the residual spread:
+    $ hat(sigma)^2_"MLE" = 1/n sum_(i=1)^n (y_i - hat(mu)_i)^2. $
+    #v(5pt)
+    #text(size: 16pt, fill: MUTED)[Use this when a residual plot has roughly the same vertical width across inputs.]
+  ],
+  [
+    #pause
+    *Input-dependent noise.* \
+    Let the network predict both
+    $ (mu_i, s_i) = f_(bold(theta))(bold(x)_i), $
+    $ s_i = log sigma_i^2, quad sigma_i^2 = e^(s_i) > 0. $
+    #v(5pt)
+    #text(size: 16pt, fill: MUTED)[Use this when residual spread changes with the input—for example, a funnel shape.]
+  ],
+)
+#pause
+#place(bottom + center, dy: -2pt,
+  result[Fit both cases with Gaussian NLL; validate whether uncertainty intervals attain their promised coverage.])
 
 == Homoscedastic vs input-dependent uncertainty
 #stag(V)
@@ -671,6 +999,7 @@ $ ell_i = (y_i - mu_i)^2/(2 sigma^2) + 1/2 log sigma^2 + C $
     ])
   ],
   [
+    #pause
     #align(center, text(font: "IBM Plex Mono", size: 12pt, fill: ACC, weight: 700)[HETEROSCEDASTIC])
     #v(5pt)
     #align(center, diagram(
@@ -696,10 +1025,11 @@ $ ell_i = (y_i - mu_i)^2/(2 sigma^2) + 1/2 log sigma^2 + C $
     ])
   ],
 )
+#pause
 #place(bottom + center, dy: -2pt,
   result[Predict *log-variance* so every real $s_i$ maps to a positive variance $e^(s_i)$.])
 
-== Different noise, different loss
+== The noise model determines how errors are penalized
 #stag(V)
 
 #two(r: (1fr, 1.25fr),
@@ -721,7 +1051,8 @@ $ ell_i = (y_i - mu_i)^2/(2 sigma^2) + 1/2 log sigma^2 + C $
     table.hline(stroke: 0.8pt + INK),
   )
    #v(6pt) #text(size: 15pt, fill: MUTED)[$r = y - hat(y)$ · swatches match plot]],
-  align(center, lines(
+  [#pause
+   #align(center, lines(
     // the TRUE negative log-likelihood of each noise model (ml-dist), shifted to
     // min 0: Normal(σ=1/√2)→r², Laplace(b=1)→|r|, Student-t(ν=2)→robust/tail-flat.
     fn: (r => dist.nll0(dist.normal(sigma: 1 / calc.sqrt(2)), r),
@@ -734,9 +1065,16 @@ $ ell_i = (y_i - mu_i)^2/(2 sigma^2) + 1/2 log sigma^2 + C $
     // mutually exclusive, so the walls ride along as vertical reference lines)
     vlines: ((-2.2, none, MUTED), (2.2, none, MUTED)),
     x-label: [residual $r$], y-label: [$-log p(r)$],
-    size: (64mm, 44mm),
-  )),
+    size: (70mm, 48mm),
+  ))],
 )
+#v(4pt)
+#align(center, text(size: 15.5pt)[
+  At $r=0$, prediction equals target. Farther horizontally = larger error; higher vertically = larger NLL penalty.
+])
+#pause
+#place(bottom + center, dy: -2pt,
+  result[Gaussian penalizes large errors most; Student-$t$ is more robust. The dashed Uniform boundaries mark an infinite penalty outside the allowed interval.])
 
 == Interactive: likelihood → loss
 #stag(I)
@@ -762,7 +1100,7 @@ $ p_(bold(theta))(Y=k | bold(x)) >= 0, quad quad sum_(k=1)^K p_(bold(theta))(Y=k
     text(size: 16pt)[$bold(x)$]),
   text(size: 20pt, fill: MUTED)[$arrow.r$],
   block(fill: TEAL, radius: 4pt, inset: 8pt,
-    text(size: 15pt, fill: white, weight: 650)[neural network $f_(bold(theta))$]),
+    text(size: 15pt, fill: white, weight: 650)[score model $f_(bold(theta))$]),
   text(size: 20pt, fill: MUTED)[$arrow.r$],
   grid(
     columns: (1fr, auto, 1fr), column-gutter: 9pt, align: horizon,
@@ -777,7 +1115,10 @@ $ p_(bold(theta))(Y=k | bold(x)) >= 0, quad quad sum_(k=1)^K p_(bold(theta))(Y=k
     )),
   ),
 ))
-#align(center)[*logits* $z_k in RR$ → *probabilities* $p_k in [0,1]$.]
+#align(center, text(size: 15.5pt)[
+  $f_(bold(theta))$ may be *linear* (softmax regression) or *nonlinear* (a neural network). \
+  It produces *logits* $z_k in RR$; softmax converts them to *probabilities* $p_k in [0,1]$.
+])
 
 == Binary classification: Bernoulli model
 
@@ -848,6 +1189,7 @@ $ J(bold(theta)) = -sum_(i=1)^n [y_i log p_i + (1-y_i) log(1-p_i)] $
     $ p_(bold(theta))(bold(y) | bold(x)) = product_(k=1)^K p_k^(y_k) $
   ],
   [
+    #pause
     #align(center, text(font: "IBM Plex Mono", size: 12pt, fill: ACC, weight: 700)[NETWORK PARAMETERIZATION])
     #v(7pt)
     $ bold(z) = f_(bold(theta))(bold(x)), quad p_k = e^(z_k)/(sum_j e^(z_j)) $
@@ -855,6 +1197,7 @@ $ J(bold(theta)) = -sum_(i=1)^n [y_i log p_i + (1-y_i) log(1-p_i)] $
     #align(center, bars((2, 1, -0.5), labels: ("1", "2", "3"), softmax: true, title: [softmax probabilities], size: (58mm, 36mm)))
   ],
 )
+#pause
 #place(bottom + center, dy: -2pt,
   result[Softmax guarantees $p_k>0$ and $sum_k p_k=1$, as a categorical model requires.])
 
@@ -898,24 +1241,46 @@ Read off the loss at three confidences for the *true* class:
 
 #mcq-answer([B], [The true-class probability is near zero], [The negative log grows without bound as $p_y$ approaches zero, matching the fact that the model declared the observed class nearly impossible.])
 
-== Interactive: logits → softmax → cross-entropy
-#stag(I)
-
-#interbox(link-to: IA + "softmax-cross-entropy")[*`softmax-cross-entropy.html`* — controls $z_1, z_2, z_3$, the true class, and temperature $T$; presets for *correct & confident / correct & unsure / wrong & unsure / wrong & confident*. Shows $bold(z) -> "softmax"(bold(z)\/T) -> -log p_y$.]
-#pause
-*Ask students to predict the loss before it is revealed.*
-
-== Why not MSE for classification?
+== A binary label takes only two values
 #stag(OPT)
 
-MSE is not _impossible_, but it usually corresponds to a *mismatched observation model* for class indicators.
+For one observed example, let the target be $y=1$ and the model predict
+#v(2pt)
+#align(center, text(size: 20pt, weight: 650)[$p = P(Y=1|bold(x))=0.8.$])
+#v(8pt)
 #pause
-#two(
-  notebox[*Gaussian view* $Y_k = p_k + epsilon_k, epsilon_k tilde cal(N)(0, sigma^2)$],
-  notebox[*Categorical view* $Y tilde "Categorical"(bold(p))$],
+#two(r: (1fr, 1fr),
+  [
+    #text(fill: ACC, weight: 700)[Squared error]
+    #v(4pt)
+    #align(center, text(size: 20pt)[$ell_"MSE"=(y-p)^2=(1-0.8)^2=0.04.$])
+    #v(8pt)
+    Its usual likelihood interpretation is Gaussian:
+    #v(3pt)
+    #align(center, text(size: 18pt)[$Y|bold(x) tilde cal(N)(0.8,sigma^2).$])
+    #v(7pt)
+    #align(center, text(size: 18pt, fill: RED, weight: 650)[
+      Permits all real $Y$—not just labels.
+    ])
+  ],
+  [
+    #pause
+    #text(fill: TEAL, weight: 700)[Binary cross-entropy]
+    #v(4pt)
+    #align(center, text(size: 20pt)[$ell_"CE"=-log p=-log 0.8 approx 0.223.$])
+    #v(8pt)
+    Its likelihood is Bernoulli:
+    #v(3pt)
+    #align(center, text(size: 18pt)[$Y|bold(x) tilde "Bernoulli"(0.8).$])
+    #v(7pt)
+    #align(center, text(size: 18pt, fill: GREEN, weight: 650)[
+      Permits only $Y=0$ or $Y=1$.
+    ])
+  ],
 )
 #pause
-#align(center, text(size: 17pt)[Cross-entropy also gives *stronger gradients* on confident errors (where MSE's gradient vanishes).])
+#place(bottom + center, dy: -2pt,
+  result[MSE is possible; cross-entropy is the negative log-likelihood matched to a binary observation.])
 
 // ══════════════════════════════ PART VI ══════════════════════════════
 = Bayes' rule for learning
@@ -936,6 +1301,7 @@ MSE is not _impossible_, but it usually corresponds to a *mismatched observation
     #text(size: 16pt, fill: MUTED)[Examples: disease given a test; urn given a sampled colour.]
   ],
   [
+    #pause
     #align(center, text(font: "IBM Plex Mono", size: 12pt, fill: ACC, weight: 700)[MACHINE / DEEP LEARNING])
     #v(7pt)
     #align(center, text(size: 23pt)[$p(bold(theta) | cal(D)) = (p(cal(D) | bold(theta)) p(bold(theta))) / p(cal(D))$])
@@ -946,6 +1312,7 @@ MSE is not _impossible_, but it usually corresponds to a *mismatched observation
     #text(size: 16pt, fill: MUTED)[Question: which parameter settings remain plausible after seeing the data?]
   ],
 )
+#pause
 #place(bottom + center, dy: -2pt,
   result[Replace $A$ by $bold(theta)$ and $B$ by $cal(D)$: the algebra is unchanged; the interpretation changes.])
 
@@ -954,64 +1321,82 @@ MSE is not _impossible_, but it usually corresponds to a *mismatched observation
 
 Let $theta = P(H)$ and suppose the first three flips are $cal(D) = (H,H,H)$.
 #v(4pt)
+#pause
 #two(r: (1.05fr, 0.95fr),
   [
     #align(center, text(size: 35pt, weight: 700, fill: ACC)[H · H · H])
-    #v(3pt)
+    #v(2pt)
+    #align(center, text(size: 18pt, weight: 600)[$L(theta) = theta^3$])
+    #v(2pt)
     #align(center, lines(
-      fn: t => t * t * t,
+      // The invisible second series gives the maximum a little headroom, so the
+      // curve and boundary marker are not clipped against the top frame.
+      fn: (t => t * t * t, t => 1.10),
       domain: (0, 1), samples: 100, markers: false,
-      colors: (ACC,), labels: ([likelihood $L(theta)=theta^3$],), legend: "tl",
+      colors: (ACC, white.transparentize(100%)),
       x-label: [$theta$], y-label: [$L(theta)$], y-ticks: false,
-      vlines: ((1, [MLE], ACC),), size: (66mm, 43mm),
+      vlines: ((1, none, ACC),), size: (70mm, 42mm),
     ))
   ],
   [
     $ L(theta; cal(D)) = p(cal(D) | theta) = theta^3 $
     #v(9pt)
+    #pause
     $ hat(theta)_"MLE" = arg max_(0 <= theta <= 1) theta^3 = 1 $
     #v(13pt)
     #notebox[Did we learn that the coin *always* lands heads—or did a merely head-biased coin produce a lucky run?]
   ],
 )
+#pause
 #place(bottom + center, dy: -2pt,
   result[MLE identifies the best-fitting $theta$; it does *not* make $theta=1$ certain.])
 
 == A prior tempers the conclusion from three flips
 #stag(V)
 
-Take a mild prior centred on a fair coin: $theta tilde "Beta"(2,2)$.
-#two(r: (0.92fr, 1.08fr),
+Choose a smooth prior on $theta in [0,1]$, highest near the fair-coin value $0.5$.
+#two(r: (0.88fr, 1.12fr),
   [
-    *Prior* \
-    $p(theta) = 6 theta(1-theta)$
-    #v(8pt)
-    *Likelihood of $H,H,H$* \
+    #text(fill: BLUE, weight: 700)[Prior] \
+    $p(theta) = 6 theta(1-theta)$ \
+    #v(4pt)
+    #pause
+    #text(fill: ACC, weight: 700)[Likelihood of $H,H,H$] \
     $p(cal(D) | theta) = theta^3$
-    #v(8pt)
-    *Posterior* \
-    $p(theta | cal(D)) prop theta^3 p(theta)$ \
-    $quad = "Beta"(5,2)$
-    #v(8pt)
-    $hat(theta)_"MLE" = 1, quad hat(theta)_"MAP" = 4/5 = 0.8$
+    #v(4pt)
+    #pause
+    #text(fill: GREEN, weight: 700)[Posterior] \
+    $p(theta | cal(D)) prop theta^3 p(theta) prop theta^4(1-theta)$
+    #v(5pt)
+    #text(size: 15.5pt)[
+      #text(fill: ACC, weight: 650)[Likelihood peak (MLE):] $theta = 1$ \
+      #text(fill: GREEN, weight: 650)[Posterior peak:] $theta = 4/5 = 0.8$
+    ]
   ],
   [
+    #align(center, text(size: 14pt)[
+      #plot-swatch(BLUE, [prior]) #h(14pt)
+      #plot-swatch(ACC, [likelihood]) #h(14pt)
+      #plot-swatch(GREEN, [posterior])
+    ])
+    #v(2pt)
     #align(center, lines(
       fn: (
-        t => 6 * t * (1 - t),
+        // Each curve is rescaled to peak at one: compare shapes, not heights.
+        t => 4 * t * (1 - t),
         t => t * t * t,
-        t => 30 * t * t * t * t * (1 - t),
+        t => (t * t * t * t * (1 - t)) / 0.08192,
+        t => 1.08,
       ),
       domain: (0, 1), samples: 140, markers: false,
-      colors: (BLUE, ACC, GREEN),
-      labels: ([prior], [likelihood], [posterior]), legend: "tl",
-      dashes: ("dashed", "dotted", "solid"),
+      colors: (BLUE, ACC, GREEN, white.transparentize(100%)),
+      dashes: ("dashed", "dotted", "solid", "solid"),
       x-label: [$theta = P(H)$], y-label: [relative support], y-ticks: false,
-      vlines: ((0.8, [MAP], GREEN),), size: (70mm, 45mm),
+      vlines: ((0.8, none, GREEN),), size: (78mm, 46mm),
     ))
-    #align(center, text(size: 15pt, fill: MUTED)[The posterior moves toward heads, but remains spread over many possible coins.])
   ],
 )
+#pause
 #place(bottom + center, dy: -2pt,
   result[With little data, the prior matters; as observations accumulate, the likelihood increasingly dominates.])
 
@@ -1023,6 +1408,7 @@ Take a mild prior centred on a fair coin: $theta tilde "Beta"(2,2)$.
 
 When several predictors fit the training data, the learner still needs a preference for *unseen inputs*. That preference is its *inductive bias*.
 #v(6pt)
+#pause
 #align(center, text(size: 16pt)[
   #table(
     columns: (38mm, 128mm), stroke: none,
@@ -1042,8 +1428,76 @@ When several predictors fit the training data, the learner still needs a prefere
     table.hline(stroke: 0.8pt + INK),
   )
 ])
+#pause
 #place(bottom + center, dy: -2pt,
   result[A prior is one explicit inductive bias; the model class, features, architecture, and optimization add others.])
+
+== The same evidence can start from different priors
+#stag(D)
+
+Suppose only two coins are possible: *fair* $F: theta=0.5$ or *heads-biased* $B: theta=0.9$.
+#pause
+#align(center, text(size: 17pt)[
+  Observe $cal(D)=(H,H,H)$: #h(8pt)
+  $P(cal(D)|F)=0.5^3=0.125$ #h(14pt)
+  $P(cal(D)|B)=0.9^3=0.729$.
+])
+#v(15pt)
+#two(r: (1fr, 1fr),
+  [
+    #text(fill: BLUE, weight: 700)[Prior A: probably fair] \
+    $P(F)=0.90, quad P(B)=0.10$
+    #v(12pt)
+    #pause
+    #text(size: 15pt, fill: MUTED)[prior $times$ likelihood]
+    #text(size: 17pt)[
+      $F: quad 0.90 times 0.125 = 0.1125$ \
+      $B: quad 0.10 times 0.729 = 0.0729$
+    ]
+  ],
+  [
+    #pause
+    #text(fill: ACC, weight: 700)[Prior B: probably biased] \
+    $P(F)=0.10, quad P(B)=0.90$
+    #v(12pt)
+    #text(size: 15pt, fill: MUTED)[prior $times$ likelihood]
+    #text(size: 17pt)[
+      $F: quad 0.10 times 0.125 = 0.0125$ \
+      $B: quad 0.90 times 0.729 = 0.6561$
+    ]
+  ],
+)
+#pause
+#place(bottom + center, dy: -2pt,
+  result[Bayes' rule first forms a weight for each hypothesis: prior $times$ likelihood.])
+
+== Normalize the weights to obtain the posterior
+#stag(V)
+
+Divide each weight by the sum of the two weights so the posterior probabilities add to $1$.
+#v(12pt)
+#two(r: (1fr, 1fr),
+  [
+    #text(fill: BLUE, weight: 700)[Prior A: probably fair]
+    #v(5pt)
+    #align(center, bars(
+      (0.61, 0.39), labels: ([fair $F$], [biased $B$]), highlight: 0,
+      size: (58mm, 35mm), title: [posterior],
+    ))
+  ],
+  [
+    #pause
+    #text(fill: ACC, weight: 700)[Prior B: probably biased]
+    #v(5pt)
+    #align(center, bars(
+      (0.02, 0.98), labels: ([fair $F$], [biased $B$]), highlight: 1,
+      size: (58mm, 35mm), title: [posterior],
+    ))
+  ],
+)
+#pause
+#place(bottom + center, dy: -2pt,
+  result[The observation is identical; with little data, different priors produce different posteriors.])
 
 == A neural-network prior ranks plausible parameter vectors
 #stag(V)
@@ -1059,16 +1513,22 @@ When several predictors fit the training data, the learner still needs a prefere
     It can prefer small or sparse weights, smooth functions, and correlated parameters.
   ],
   [
+    #align(center, text(size: 14pt)[
+      #plot-swatch(ACC, [narrow $sigma=0.55$]) #h(14pt)
+      #plot-swatch(BLUE, [broad $sigma=1.55$])
+    ])
+    #v(2pt)
     #align(center, lines(
       fn: (t => dist.pdf(_prior-narrow, t), t => dist.pdf(_prior-broad, t)),
       domain: (-4, 4), samples: 140, markers: false,
-      colors: (ACC, BLUE), labels: ([narrow prior], [broad prior]), legend: "tr",
+      colors: (ACC, BLUE),
       x-label: [$theta_j$], y-label: [$p(theta_j)$], y-ticks: false,
-      size: (62mm, 43mm),
+      size: (68mm, 43mm),
     ))
     #align(center, text(size: 15pt, fill: MUTED)[narrow = stronger preference near $0$])
   ],
 )
+#pause
 #place(bottom + center, dy: -2pt,
   result[A prior makes part of the model's inductive bias explicit as a probability distribution.])
 
@@ -1096,6 +1556,7 @@ When several predictors fit the training data, the learner still needs a prefere
     #align(center, text(size: 16pt, fill: MUTED)[Before seeing data, flatter linear predictions are more plausible.])
   ],
   [
+    #pause
     #align(center, text(font: "IBM Plex Mono", size: 12pt, fill: ACC, weight: 700)[BINARY CLASSIFICATION])
     #v(4pt)
     #align(center, text(size: 16pt)[$p_(bold(theta))(Y=1 | bold(x)) = sigma(bold(theta)^top tilde(bold(x)))$])
@@ -1114,6 +1575,7 @@ When several predictors fit the training data, the learner still needs a prefere
     #align(center, text(size: 16pt, fill: MUTED)[Before seeing data, extremely confident predictions are less plausible.])
   ],
 )
+#pause
 #place(bottom + center, dy: -2pt,
   result[The prior acts on parameters; its visible effect depends on how those parameters enter the model.])
 
@@ -1164,42 +1626,224 @@ Fit the same eight observations by least squares; only the polynomial degree cha
 #grid(
   columns: (1fr, 1fr, 1fr), column-gutter: 9pt,
   _over-panel(1, [underfit]),
-  _over-panel(3, [captures the main trend]),
-  _over-panel(7, [overfit]),
+  [#pause
+   #_over-panel(3, [captures the main trend])],
+  [#pause
+   #_over-panel(7, [overfit])],
 )
+#pause
 #place(bottom + center, dy: -2pt,
   notebox[Higher degree lowers training error, but degree 7 chases the noisy observation and becomes unstable. Priors and regularization can prefer smoother solutions.])
 
-== Bayes' rule over parameters
+// A four-point regression example reused across the next four slides.
+#let _lr-xs = (-1.0, 0.0, 1.0, 2.0)
+#let _lr-ys = (-0.8, 1.8, 5.3, 7.9)
+#let _lr-data = _lr-xs.zip(_lr-ys).map(p => (p,))
+#let _lr-grid = range(101).map(i => {
+  let x = -1.2 + 3.4 * i / 100.0
+  (x, 2 + 3 * x)
+})
+#let _lr-fit = range(101).map(i => {
+  let x = -1.2 + 3.4 * i / 100.0
+  (x, 2.07 + 2.96 * x)
+})
+#let _lr-mapfit = range(101).map(i => {
+  let x = -1.2 + 3.4 * i / 100.0
+  (x, 1.794 + 2.616 * x)
+})
+#let _lr-bounds = ((-1.2, -1.6), (2.2, 8.6))
+// Representative lines with coefficients plausible under N(0, 0.5^2 I).
+#let _lr-prior-lines = (
+  (-0.35, 0.10),
+  (0.25, -0.30),
+  (0.05, 0.42),
+  (-0.20, -0.24),
+  (0.40, 0.05),
+).map(par => range(101).map(i => {
+  let x = -1.2 + 3.4 * i / 100.0
+  (x, par.at(0) + par.at(1) * x)
+}))
+// With known noise sigma=0.5, the Gaussian likelihood covariance is
+// sigma^2 (X^T X)^-1 = ((0.075,-0.025),(-0.025,0.05)).
+#let _lr-lik = dist.gaussian-2d(
+  mu: (2.07, 2.96), sigma: ((0.075, -0.025), (-0.025, 0.05)))
+#let _lr-prior = dist.gaussian-2d(
+  mu: (0, 0), sigma: ((0.25, 0), (0, 0.25)))
+// Product of the Gaussian likelihood and N(0, 0.5^2 I) prior.
+#let _lr-post = dist.gaussian-2d(
+  mu: (1.794, 2.616),
+  sigma: ((0.05645, -0.01613), (-0.01613, 0.04032)))
 
-$ p(bold(theta) | cal(D)) = (p(cal(D) | bold(theta)) thin p(bold(theta))) / p(cal(D)) $
+== Start with four noisy points from a straight line
+#stag(V)
+
+The data were generated from $f_"true"(x)=2+3x$ with small measurement noise.
+#v(7pt)
+#two(r: (0.82fr, 1.18fr),
+  [
+    #align(center, table(
+      columns: (22mm, 31mm, 30mm), stroke: 0.5pt + MUTED,
+      inset: (x: 7pt, y: 5pt), align: (center, center, center),
+      table.header([*$x$*], [*$f_"true"(x)$*], [*observed $y$*]),
+      [$-1$], [$-1$], [$-0.8$],
+      [$0$], [$2$], [$1.8$],
+      [$1$], [$5$], [$5.3$],
+      [$2$], [$8$], [$7.9$],
+    ))
+  ],
+  [
+    #pause
+    #align(center, lines(
+      (_lr-grid,) + _lr-data,
+      colors: (MUTED,) + range(_lr-data.len()).map(_ => INK),
+      markers: (false,) + range(_lr-data.len()).map(_ => true),
+      dashes: ("dashed",) + range(_lr-data.len()).map(_ => "solid"),
+      x-label: [$x$], y-label: [$y$], size: (76mm, 48mm),
+    ))
+    #align(center, text(size: 14pt, fill: MUTED)[grey line = generating rule · dots = observed data])
+  ],
+)
 #pause
-// native: real Gaussian likelihood × prior → posterior contours (dist.gaussian-2d).
-// posterior sits between the MLE and the prior mean 0 = MAP = regularisation.
-#let _lik   = dist.gaussian-2d(mu: (2.0, 1.5), sigma: ((0.64, 0), (0, 0.64)))   // σ = 0.8
-#let _prior = dist.gaussian-2d(mu: (0, 0), sigma: ((1.44, 0), (0, 1.44)))       // σ = 1.2
+#place(bottom + center, dy: -2pt,
+  result[The learner sees only the four observations and must infer the intercept $b$ and slope $w$.])
+
+== The likelihood peaks near the generating line
+#stag(D)
+
+Model each observation as
+#align(center, text(size: 19pt)[$Y_i|x_i,b,w tilde cal(N)(b+w x_i,0.5^2).$])
+#v(5pt)
+#two(r: (1fr, 1fr),
+  [
+    #text(fill: ACC, weight: 700)[The data score each candidate line]
+    #v(4pt)
+    $L(b,w) prop exp(-1/(2(0.5)^2) sum_i (y_i-b-w x_i)^2).$
+    #v(7pt)
+    #align(center, text(size: 16pt)[
+      #table(
+        columns: (34mm, 38mm), stroke: 0.5pt + MUTED,
+        inset: (x: 7pt, y: 3pt), align: (center, center),
+        table.header([*candidate $(b,w)$*], [*squared error*]),
+        [$(2,3)$], [$0.180$],
+        [$(0,1)$], [$56.580$],
+        [*MLE $(2.07,2.96)$*], [*$0.162$*],
+      )
+    ])
+  ],
+  [
+    #pause
+    #align(center, contour(
+      (_lr-lik,), xlim: (1.3, 2.8), ylim: (2.25, 3.65),
+      samples: 64, levels: 5, colors: (ACC,),
+      marks: ((2.07, 2.96, [MLE], ACC),),
+      size: (72mm, 54mm), x-label: [intercept $b$], y-label: [slope $w$],
+    ))
+  ],
+)
+#pause
+#place(bottom + center, dy: -2pt,
+  result[The observed data make intercepts near $2$ and slopes near $3$ most plausible.])
+
+== Before data, the prior prefers parameters near zero
+#stag(V)
+
+Choose a simple Gaussian prior over the two regression parameters:
+#align(center, text(size: 20pt)[$bold(theta)=(b,w) tilde cal(N)(bold(0),0.5^2 bold(I)).$])
+#v(5pt)
+#two(r: (1.06fr, 0.94fr),
+  [
+    #pause
+    #align(center, contour(
+      (_lr-prior,), xlim: (-3.5, 3.5), ylim: (-3.5, 3.5),
+      samples: 64, levels: 5, colors: (BLUE,),
+      marks: ((0, 0, [prior mean], BLUE),),
+      size: (78mm, 54mm), x-label: [intercept $b$], y-label: [slope $w$],
+    ))
+  ],
+  [
+    #text(fill: BLUE, weight: 700)[What does it express?]
+    #v(5pt)
+    $-log p(b,w) = 1/(2(0.5)^2)(b^2+w^2)+C = 2(b^2+w^2)+C.$
+    #v(9pt)
+    Before seeing this dataset:
+    #v(3pt)
+    - $b approx 0$: intercept near zero
+    - $w approx 0$: a flatter line
+    - farther from $(0,0)$: less prior density
+  ],
+)
+#pause
+#place(bottom + center, dy: -2pt,
+  result[The likelihood says “fit these data”; the prior says “prefer smaller coefficients”.])
+
+== Bayes combines the regression likelihood and prior
+
+$ p(b,w | cal(D)) = (p(cal(D) | b,w) thin p(b,w)) / p(cal(D)) $
+#pause
 #v(3pt)
 #align(center, contour(
-  (_lik, _prior, (t1, t2) => _lik(t1, t2) * _prior(t1, t2)),
-  xlim: (-2.5, 4), ylim: (-2, 3.5), samples: 64, levels: 4,
+  (_lr-lik, _lr-prior, _lr-post),
+  xlim: (-2.5, 4), ylim: (-2, 4.5), samples: 64, levels: 4,
   colors: (ACC, BLUE, GREEN),
-  // Empty labels keep the three point markers clear; the legend below names them.
-  marks: ((2.0, 1.5, [], ACC), (1.4, 1.04, [], GREEN), (0.0, 0.0, [], BLUE)),
-  size: (92mm, 54mm), x-label: [$theta_1$], y-label: [$theta_2$],
+  marks: ((2.07, 2.96, [], ACC), (1.794, 2.616, [], GREEN), (0.0, 0.0, [], BLUE)),
+  size: (92mm, 54mm), x-label: [intercept $b$], y-label: [slope $w$],
 ))
 #v(4pt)
 #align(center, text(size: 14pt)[
-  Contours: #text(fill: ACC, weight: 650)[likelihood] #h(11pt)
-  #text(fill: BLUE, weight: 650)[prior] #h(11pt)
-  #text(fill: GREEN, weight: 650)[posterior]
+  Contours: #plot-swatch(BLUE, [prior]) #h(13pt)
+  #plot-swatch(ACC, [likelihood]) #h(13pt)
+  #plot-swatch(GREEN, [posterior])
 ])
 #align(center, text(size: 14pt)[
-  #text(fill: ACC, weight: 700)[●] MLE #h(16pt)
-  #text(fill: GREEN, weight: 700)[●] MAP #h(16pt)
-  #text(fill: BLUE, weight: 700)[●] prior mean
+  #text(fill: ACC, weight: 700)[●] MLE $(2.07,2.96)$ #h(12pt)
+  #text(fill: GREEN, weight: 700)[●] posterior peak $(1.79,2.62)$ #h(12pt)
+  #text(fill: BLUE, weight: 700)[●] prior mean $(0,0)$
 ])
 #v(3pt)
-#align(center, text(size: 13.5pt, fill: MUTED)[The posterior combines likelihood and prior; $p(cal(D))$ normalizes it, and its mode is the MAP.])
+#align(center, text(size: 13.5pt, fill: MUTED)[The narrower prior visibly pulls the posterior peak away from the MLE and toward zero.])
+
+== The prior changes the fitted line
+#stag(V)
+
+#let _lr-line-panel(title, subtitle, curves, colors, markers) = [
+  #align(center, text(size: 15pt, weight: 700)[#title])
+  #align(center, text(size: 12.5pt, fill: MUTED)[#subtitle])
+  #v(2pt)
+  #align(center, lines(
+    curves,
+    colors: colors,
+    markers: markers,
+    dashes: range(curves.len()).map(_ => "solid"),
+    x-label: [$x$], y-ticks: false, size: (50mm, 34mm),
+  ))
+]
+
+#grid(
+  columns: (1fr, 1fr, 1fr), column-gutter: 8pt,
+  _lr-line-panel(
+    [Prior before data], [possible lines; not fitted],
+    (_lr-bounds,) + _lr-prior-lines,
+    (white.transparentize(100%),) + range(_lr-prior-lines.len()).map(_ => BLUE.transparentize(48%)),
+    range(_lr-prior-lines.len() + 1).map(_ => false),
+  ),
+  [#pause
+   #_lr-line-panel(
+     [MLE], [$hat(y)=2.07+2.96x$],
+     (_lr-bounds, _lr-fit) + _lr-data,
+     (white.transparentize(100%), ACC) + range(_lr-data.len()).map(_ => INK),
+     (false, false) + range(_lr-data.len()).map(_ => true),
+   )],
+  [#pause
+   #_lr-line-panel(
+     [MAP], [$hat(y)=1.79+2.62x$],
+     (_lr-bounds, _lr-mapfit) + _lr-data,
+     (white.transparentize(100%), GREEN) + range(_lr-data.len()).map(_ => INK),
+     (false, false) + range(_lr-data.len()).map(_ => true),
+   )],
+)
+#pause
+#place(bottom + center, dy: -2pt,
+  result[MLE follows these observations most closely; MAP accepts a little more error to honour the prior preference for smaller coefficients.])
 
 == MAP estimation
 #stag(D)
@@ -1239,9 +1883,9 @@ $ => quad cal(L)_"MAP" = "NLL" + underbrace(1/(2 tau^2), lambda) norm(bold(theta
   #text(fill: MUTED)[(a shrinkage factor between 0 and 1)]
 ])
 #align(center, text(size: 13.5pt)[
-  #text(fill: ACC, weight: 650)[··· likelihood] #h(14pt)
-  #text(fill: BLUE, weight: 650)[– – prior] #h(14pt)
-  #text(fill: GREEN, weight: 650)[— posterior]
+  #plot-swatch(BLUE, [prior]) #h(14pt)
+  #plot-swatch(ACC, [likelihood]) #h(14pt)
+  #plot-swatch(GREEN, [posterior])
 ])
 #let _prior-map-panel(heading, tau, map-value, map-label) = {
   let s = 0.6
@@ -1267,11 +1911,14 @@ $ => quad cal(L)_"MAP" = "NLL" + underbrace(1/(2 tau^2), lambda) norm(bold(theta
   ]
 }
 #v(1pt)
+#pause
 #grid(
   columns: (1fr, 1fr), column-gutter: 16pt,
   _prior-map-panel([Broad prior: $tau=2, lambda=0.125$], 2.0, 1.83, [$"MAP" approx 1.83$]),
-  _prior-map-panel([Narrow prior: $tau=0.5, lambda=2$], 0.5, 0.82, [$"MAP" approx 0.82$]),
+  [#pause
+   #_prior-map-panel([Narrow prior: $tau=0.5, lambda=2$], 0.5, 0.82, [$"MAP" approx 0.82$])],
 )
+#pause
 #place(bottom + center, dy: -2pt,
   result[The narrower prior gives the larger $lambda$ and pulls MAP farther from the MLE toward zero.])
 
@@ -1300,20 +1947,90 @@ $ bold(theta) tilde cal(N)(bold(mu), bold(Sigma)) quad -log p(bold(theta)) = 1/2
   #text(fill: ACC, weight: 650)[Colour = prior density $p(bold(theta))$:] pale outer regions are less plausible; darker centres are more plausible.
 ])
 #v(4pt)
+#pause
 #align(center, text(size: 17pt)[Covariance says *which directions in parameter space are plausible.*])
 
-== A Laplace prior is $L_1$ regularization
-#stag(OPT)
+== Laplace is sharper at zero than a Normal prior
+#stag(V)
 
-Assume the parameter components are independent, with
-$ p(theta_j) = 1/(2b) exp(-abs(theta_j)/b). $
+Compare zero-centred priors with the *same variance*, $1$:
+#v(4pt)
+#two(r: (1.12fr, 0.88fr),
+  [
+    #align(center, text(size: 14pt)[
+      #plot-swatch(BLUE, [Normal: $sigma=1$]) #h(14pt)
+      #plot-swatch(ACC, [Laplace: $b=1/sqrt(2)$])
+    ])
+    #v(3pt)
+    #align(center, lines(
+      fn: (
+        t => calc.exp(-0.5 * t * t) / calc.sqrt(2 * calc.pi),
+        t => calc.exp(-calc.sqrt(2) * calc.abs(t)) / calc.sqrt(2),
+      ),
+      domain: (-4, 4), samples: 180, markers: false,
+      colors: (BLUE, ACC),
+      x-label: [$theta$], y-label: [prior density], y-ticks: false,
+      vlines: ((0, none, MUTED),), size: (84mm, 51mm),
+    ))
+  ],
+  [
+    #pause
+    #text(fill: BLUE, weight: 700)[Normal prior]
+    #v(3pt)
+    - smooth around $theta=0$
+    - lighter tails
+    #v(10pt)
+    #text(fill: ACC, weight: 700)[Laplace prior]
+    #v(3pt)
+    - a sharp peak at $theta=0$
+    - heavier tails
+  ],
+)
 #pause
-$ p(bold(theta)) = product_j p(theta_j). $
-#pause
-Taking negative logs gives
-$ -log p(bold(theta)) = 1/b sum_j abs(theta_j) + C = underbrace(1/b, lambda) norm(bold(theta))_1 + C. $
 #place(bottom + center, dy: -2pt,
-  result[$lambda = 1/b$: a narrower Laplace prior gives stronger $L_1$ regularization; its sharp peak at zero promotes *sparsity*.])
+  result[The Laplace peak creates a *corner* in the negative log-prior—the source of $L_1$ sparsity.])
+
+== The $L_1$ corner can set a coefficient exactly to zero
+#stag(D)
+
+For one coefficient, let the data term be $D(theta)=1/2(theta-0.6)^2$, centred at $z=0.6$.
+#v(4pt)
+#two(r: (1fr, 1fr),
+  [
+    #text(fill: BLUE, weight: 700)[Normal prior $arrow.r L_2$]
+    #v(3pt)
+    $J_2(theta)=D(theta)+1/2 theta^2.$
+    #v(3pt)
+    #align(center, text(size: 17pt)[$hat(theta)_"MAP"=0.6/(1+1)=0.3.$])
+    #v(4pt)
+    #align(center, lines(
+      fn: (t => 0.5 * (t - 0.6) * (t - 0.6) + 0.5 * t * t,),
+      domain: (-1.2, 1.5), samples: 150, markers: false,
+      colors: (BLUE,), vlines: ((0.3, [MAP], BLUE),),
+      y-label: [$J_2(theta)$], y-ticks: false,
+      size: (67mm, 22mm),
+    ))
+  ],
+  [
+    #pause
+    #text(fill: ACC, weight: 700)[Laplace prior $arrow.r L_1$]
+    #v(3pt)
+    $J_1(theta)=D(theta)+abs(theta).$
+    #v(3pt)
+    #align(center, text(size: 17pt)[$hat(theta)_"MAP"="sign"(z) max(abs(z)-1,0)=0.$])
+    #v(4pt)
+    #align(center, lines(
+      fn: (t => 0.5 * (t - 0.6) * (t - 0.6) + calc.abs(t),),
+      domain: (-1.2, 1.5), samples: 151, markers: false,
+      colors: (ACC,), vlines: ((0, [MAP], ACC),),
+      y-label: [$J_1(theta)$], y-ticks: false,
+      size: (67mm, 22mm),
+    ))
+  ],
+)
+#pause
+#place(bottom + center, dy: -2pt,
+  result[Applied coefficient by coefficient, $L_1$ can make many MAP estimates *exactly zero*: sparsity.])
 
 == Prior strength controls underfitting and overfitting
 #stag(V)
@@ -1334,6 +2051,7 @@ For the summed-NLL convention used above, $lambda = 1/(2 tau^2)$:
   }
 ))
 #v(12pt)
+#pause
 #grid(
   columns: (1fr, 1fr, 1fr), column-gutter: 20pt,
   [
@@ -1364,6 +2082,7 @@ For the summed-NLL convention used above, $lambda = 1/(2 tau^2)$:
     ]
   ],
 )
+#pause
 #place(bottom + center, dy: -2pt,
   result[Regularization trades variance for bias; *more is not always better*.])
 
@@ -1409,6 +2128,7 @@ $ p(y^star | bold(x)^star, cal(D)) = integral p_(bold(theta))(y^star | bold(x)^s
   annotations: ((0.78, 1.1, [posterior model samples]),),
   x-label: [$x^star$], y-label: [$y^star$], y-ticks: false, size: (82mm, 43mm),
 ))
+#pause
 #notebox[Bayesian prediction *averages over plausible models* — and reports uncertainty.]
 
 == Why DL usually uses point estimates
