@@ -206,10 +206,40 @@ h2 {
 /* Smooth transitions */
 body {
   transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+}
+
+main.content,
+.page-columns,
+.cell,
+.cell-output,
+.cell-output-display {
+  min-width: 0;
+  max-width: 100%;
+}
+
+main.content {
+  overflow-x: hidden;
+}
+
+.cell-output-display,
+.math.display {
+  overflow-x: auto;
+}
+
+pre {
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
+  h1,
+  .quarto-title-block .title {
+    font-size: 1.7rem;
+    overflow-wrap: anywhere;
+  }
+
   .table {
     font-size: 0.85em;
   }

@@ -3,36 +3,24 @@ title: "ES 667 · Deep Learning"
 subtitle: "IIT Gandhinagar · August 2026 · Prof. Nipun Batra"
 ---
 
-::: {.hero-section}
+This site contains the lecture materials for ES 667. Course dates, grading, and announcements are on the [August 2026 course page](https://nipunbatra.github.io/dl-2026/).
 
-A concept-first deep-learning course: start from probability and gradients, build convolutional and sequence models, then reach Transformers, representation learning, multimodal systems, and generative models.
+## Current material
 
-The public course site is intentionally small. Use it for the current lecture decks, the few notebooks that matter, assignments, and a compact reading list.
+**Lecture 1 · Where Deep Learning Losses Come From**
 
-:::
+- [Slides (PDF)](slides-pdf/L1.pdf)
+- [Companion notebook (HTML)](notebooks/L01/00_likelihood_iid_worked_examples.html)
+- [Notebook source (IPYNB)](https://raw.githubusercontent.com/nipunbatra/dl-teaching/master/notebooks/L01/00_likelihood_iid_worked_examples.ipynb)
 
-```{=html}
-<div class="entry-grid">
-<a class="entry-card" href="syllabus.html"><span class="entry-title">Course guide →</span><span class="entry-desc">The 25-meeting arc, how the parts fit together, and how to use the materials.</span></a>
-<a class="entry-card" href="slides.html"><span class="entry-title">Lecture decks →</span><span class="entry-desc">The canonical Typst PDFs, grouped by module.</span></a>
-<a class="entry-card" href="notebooks.html"><span class="entry-title">Notebooks →</span><span class="entry-desc">Small, runnable companions for the worked mechanisms.</span></a>
-<a class="entry-card" href="labs/index.html"><span class="entry-title">Assignments →</span><span class="entry-desc">Programming work, each grown from a lecture notebook.</span></a>
-<a class="entry-card" href="https://nipunbatra.github.io/dl-2026/"><span class="entry-title">Logistics &amp; grading ↗</span><span class="entry-desc">Schedule, grading, deadlines, and FAQ for the Aug 2026 offering.</span></a>
-</div>
-```
+The notebook uses `torch.distributions` to work through probability mass and density, i.i.d. observations, maximum likelihood, linear regression, binary classification, and MAP estimation.
 
-## Course at a glance
+## Course materials
 
-- **25 meetings** — including a compact calculus bridge before backpropagation.
-- **One through-line** — model a distribution, define a loss, compute gradients, and learn representations that generalize.
-- **Two working modes** — concise lecture decks for ideas; notebooks and assignments for implementation.
-- **Current materials only** — the lecture-deck page is the source of truth for the sequence and PDFs.
+- [Lecture decks](slides.qmd)
+- [Notebooks](notebooks.qmd)
+- [Assignments](labs/index.qmd)
+- [Course guide](syllabus.qmd)
+- [References](resources.qmd)
 
-## A practical rhythm
-
-1. Preview the short reading or reference for the week.
-2. Work through the lecture deck; the checkpoint MCQs expose a common misconception before the answer slide.
-3. Run the linked notebook or interactive when a mechanism needs to be seen, not merely described.
-4. Use assignments to turn a small implementation into evidence-backed analysis.
-
-The course [Slack workspace](https://join.slack.com/t/dl26workspace/shared_invite/zt-43b3v79vb-bVZl1_sJVCrBkVMDsq5TYA) is the place for questions, clarifications, and announcements.
+Questions and announcements are handled in the [course Slack workspace](https://join.slack.com/t/dl26workspace/shared_invite/zt-43b3v79vb-bVZl1_sJVCrBkVMDsq5TYA).

@@ -1,14 +1,14 @@
 ---
 title: "Notebooks"
-subtitle: "A small set of runnable companions"
 ---
 
-These notebooks are **downloads, not a parallel website**. They are deliberately few: each makes one lecture mechanism executable without asking you to navigate a forest of generated notebook pages.
+Use the rendered version for reading and the `.ipynb` file for running or modifying the code.
 
 ## Foundations and training
 
-| Notebook | Best after | What it makes concrete |
+| Notebook | Lecture | Format / purpose |
 |---|:---:|---|
+| Probability models, MLE, and MAP in PyTorch | L1 | [HTML](notebooks/L01/00_likelihood_iid_worked_examples.html) · [IPYNB](https://raw.githubusercontent.com/nipunbatra/dl-teaching/master/notebooks/L01/00_likelihood_iid_worked_examples.ipynb) |
 | [micrograd-mlp](notebooks/01-micrograd-mlp.ipynb) | L2–L4 | scalar autodiff, backpropagation, and a small MLP |
 | [optimizers](notebooks/05-optimizers.ipynb) | L5 | SGD, momentum, and Adam on the same loss surface |
 | [cnn-shape-tour](notebooks/07-cnn-shape-tour.ipynb) | L8 | convolutional tensor shapes, parameters, and receptive fields |
