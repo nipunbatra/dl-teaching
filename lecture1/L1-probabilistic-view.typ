@@ -6,6 +6,7 @@
 
 #import "../common/metropolis.typ": *
 #import "../common/mldiag.typ": *
+#import "@preview/lilaq:0.4.0" as lq
 #show: metropolis-deck.with(
   title: [Where Deep Learning Losses Come From],
   subtitle: [Likelihood, cross-entropy, and regularization from probability],
@@ -570,13 +571,18 @@ $ log L(1.5) approx -2.09, quad log L(0) approx -4.34. $
 #place(bottom + center, dy: -2pt,
   result[For continuous data we multiply *densities*; $mu=1.5$ gives the larger likelihood.])
 
-== Companion notebook: likelihood from one example to a dataset #I
+== Companion notebook: distributions, MLE, and MAP in PyTorch #I
 
 #interbox(link-to: "https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L01/00_likelihood_iid_worked_examples.ipynb")[
-  Compute and plot single-observation likelihoods, multiply independent Bernoulli and Gaussian terms, compare candidate parameters, and verify that log-likelihood is a sum.
+  Explore `torch.distributions`, `log_prob`, sampling, i.i.d. factorization, coin-toss MLE, Gaussian regression, Bernoulli classification, and MAP with Gaussian, Laplace, and Student-$t$ priors.
+]
+#v(5pt)
+#pause
+#interbox(link-to: "https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L01/03_robust_linear_regression.ipynb")[
+  *Short companion:* fit the same line with Gaussian/MSE, Laplace/MAE, and Student-$t$ losses; then see which observations control each estimate.
 ]
 #pause
-*In class:* predict the winning parameter first; then run the cell and explain why the curve peaks there.
+*In class:* predict each result before running the cell; then connect the code to the matching derivation in the slides.
 
 == Coin flips: a likelihood you can compute
 #stag(D)
@@ -1029,6 +1035,331 @@ $ arg min_(bold(theta)) cal(L)(bold(theta); sigma^2) = arg min_(bold(theta)) sum
 #place(bottom + center, dy: -2pt,
   result[Predict *log-variance* so every real $s_i$ maps to a positive variance $e^(s_i)$.])
 
+== A few unusual observations can dominate a fitted line
+#stag(Q)
+
+#let _robust-inliers = (
+  (-3.0, -2.8), (-2.4, -2.2), (-1.8, -1.9), (-1.2, -0.9), (-0.6, -0.5),
+  (0.0, 0.2), (0.7, 0.8), (1.4, 1.2), (2.0, 2.2), (2.6, 2.4),
+)
+#let _robust-outliers = ((-2.2, 3.3), (2.2, -3.2))
+#let _robust-line-xs = range(101).map(i => -3.4 + 6.8 * i / 100)
+#let _robust-typical-fit = _robust-line-xs.map(x => 0.955 * x + 0.070)
+#let _robust-all-fit = _robust-line-xs.map(x => 0.397 * x - 0.040)
+#let _robust-laplace-fit = _robust-line-xs.map(x => 0.906 * x + 0.044)
+#let _robust-student-fit = _robust-line-xs.map(x => 0.882 * x + 0.053)
+#let _robust-student-nu1-fit = _robust-line-xs.map(x => 0.928 * x + 0.064)
+#let _robust-student-nu30-fit = _robust-line-xs.map(x => 0.581 * x - 0.014)
+
+#two(r: (1.18fr, 0.82fr),
+  [
+    #align(center, {
+      set text(size: 13.5pt)
+      lq.diagram(
+        width: 91mm, height: 54mm,
+        xlim: (-3.5, 3.5), ylim: (-4, 4), margin: 0%,
+        xlabel: [$x$], ylabel: [$y$],
+        grid: (stroke: 0.35pt + MUTED.transparentize(76%)),
+        xaxis: (ticks: (-3, 0, 3), subticks: none, mirror: false),
+        yaxis: (ticks: (-3, 0, 3), subticks: none, mirror: false),
+        lq.plot(
+          _robust-line-xs, _robust-typical-fit,
+          stroke: (paint: TEAL, thickness: 1.9pt, dash: "dashed"), mark: none,
+        ),
+        lq.plot(
+          _robust-line-xs, _robust-all-fit,
+          stroke: ACC + 2.5pt, mark: none,
+        ),
+        lq.scatter(
+          _robust-inliers.map(p => p.at(0)), _robust-inliers.map(p => p.at(1)),
+          color: INK, size: 4.4pt,
+        ),
+        lq.scatter(
+          _robust-outliers.map(p => p.at(0)), _robust-outliers.map(p => p.at(1)),
+          color: RED, size: 7pt,
+        ),
+      )
+    })
+    #v(3pt)
+    #align(center, text(size: 13.5pt)[
+      #plot-swatch(TEAL, [fit to the ten typical points]) #h(12pt)
+      #plot-swatch(ACC, [MSE fit after adding two outliers])
+    ])
+  ],
+  [
+    #text(weight: 700, fill: TEAL)[Ten typical observations] lie near one linear trend.
+    #v(10pt)
+    #pause
+    #text(weight: 700, fill: RED)[Two unusual observations] have large vertical errors.
+    #v(10pt)
+    #pause
+    #notebox[The squared-error fit becomes much flatter. How can two points change the fitted line so strongly?]
+  ],
+)
+#place(bottom + center, dy: -2pt,
+  result[Robust regression asks for a noise model that allows occasional large residuals without letting them dominate the fit.])
+
+== Tails are easier to compare on a log scale
+#stag(V)
+
+For a fitted mean $hat(y)$, the residual is $r=y-hat(y)$. Compare three unit-scale models for that residual.
+#v(3pt)
+#align(center, text(size: 13.5pt)[
+  #plot-swatch(ACC, [Gaussian]) #h(14pt)
+  #plot-swatch(TEAL, [Laplace]) #h(14pt)
+  #plot-swatch(GREEN, [Student-$t$, $nu=3$])
+])
+#v(2pt)
+#two(r: (1fr, 1fr),
+  [
+    #align(center, text(size: 15pt, weight: 650)[Density $p(r)$])
+    #align(center, lines(
+      fn: (r => dist.pdf(dist.normal(sigma: 1.0), r),
+           r => dist.pdf(dist.laplace(b: 1.0), r),
+           r => dist.pdf(dist.student-t(nu: 3.0), r)),
+      domain: (-5, 5), samples: 150, markers: false,
+      colors: (ACC, TEAL, GREEN), x-label: [residual $r$], y-label: [$p(r)$],
+      vlines: ((4.0, [$r=4$], MUTED),), y-ticks: false, size: (76mm, 41mm),
+    ))
+    #align(center, text(size: 13.5pt, fill: MUTED)[Near the centre, all three look plausible.])
+  ],
+  [
+    #pause
+    #align(center, text(size: 15pt, weight: 650)[Relative log-density $log p(r)-log p(0)$])
+    #align(center, lines(
+      fn: (r => -r * r / 2,
+           r => -calc.abs(r),
+           r => -2 * calc.ln(1 + r * r / 3)),
+      domain: (-5, 5), samples: 150, markers: false,
+      colors: (ACC, TEAL, GREEN), x-label: [residual $r$], y-label: [relative $log p(r)$],
+      vlines: ((4.0, [$r=4$], MUTED),), size: (76mm, 41mm),
+    ))
+    #align(center, text(size: 13.5pt, fill: MUTED)[The Gaussian tail falls much faster.])
+  ],
+)
+#place(bottom + center, dy: -2pt,
+  result[Heavy tails assign more density—and therefore less surprise—to an occasional large residual.])
+
+== A large residual is less surprising under heavy tails
+#stag(D)
+
+Evaluate the three densities at the same residual, $r=4$, using unit scale parameters.
+#v(8pt)
+#grid(
+  columns: (1fr, 1fr, 1fr), column-gutter: 12pt,
+  [#block(fill: rgb("#FFF4E7"), stroke: 1pt + ACC, radius: 5pt, inset: 10pt)[
+    #text(weight: 700, fill: ACC)[Gaussian]
+    #v(5pt)
+    density $approx 0.000134$
+    #v(5pt)
+    #text(size: 15pt, fill: MUTED)[The model finds this residual extremely surprising.]
+  ]],
+  [#block(fill: rgb("#EAF6F5"), stroke: 1pt + TEAL, radius: 5pt, inset: 10pt)[
+    #text(weight: 700, fill: TEAL)[Laplace]
+    #v(5pt)
+    density $approx 0.00916$
+    #v(5pt)
+    #text(size: 15pt, fill: MUTED)[More tail density makes the same residual less surprising.]
+  ]],
+  [#block(fill: rgb("#ECF8EF"), stroke: 1pt + GREEN, radius: 5pt, inset: 10pt)[
+    #text(weight: 700, fill: GREEN)[Student-$t$, $nu=3$]
+    #v(5pt)
+    density $approx 0.00916$
+    #v(5pt)
+    #text(size: 15pt, fill: MUTED)[Heavy tails explicitly allow occasional extreme errors.]
+  ]],
+)
+#v(10pt)
+#align(center, text(size: 19pt, weight: 700)[
+  Laplace and Student-$t$ assign about $68 times$ the Gaussian density here.
+])
+#place(bottom + center, dy: -2pt,
+  result[The observation is not discarded; the assumed noise process simply says that such an error can occur.])
+
+== One observation contributes one gradient signal
+#stag(D)
+
+For observation $i$, the model predicts $hat(y)_i$ and leaves residual $r_i=y_i-hat(y)_i$.
+#v(7pt)
+#align(center, diagram(
+  spacing: (18mm, 7mm), node-stroke: 1pt,
+  {
+    node((0,0), [$hat(y)_i$], shape: fletcher.shapes.rect, fill: rgb("#EFEEEB"), stroke: INK, inset: 7pt)
+    node((1,0), [$r_i=y_i-hat(y)_i$], shape: fletcher.shapes.rect, fill: rgb("#EAF6F5"), stroke: TEAL, inset: 7pt)
+    node((2,0), [$ell_i=-log p(r_i)$], shape: fletcher.shapes.rect, fill: rgb("#FFF4E7"), stroke: ACC, inset: 7pt)
+    node((3,0), [$abs(ell_i'(r_i))$], shape: fletcher.shapes.rect, fill: rgb("#ECF8EF"), stroke: GREEN, inset: 7pt)
+    edge((0,0),(1,0), "-|>", stroke: 1pt + MUTED)
+    edge((1,0),(2,0), "-|>", stroke: 1pt + MUTED)
+    edge((2,0),(3,0), "-|>", stroke: 1pt + MUTED)
+  }
+))
+#v(9pt)
+#two(
+  [
+    #text(weight: 700, fill: ACC)[Loss value $ell_i$]
+    #v(3pt)
+    says how incompatible this observation is with the current prediction.
+  ],
+  [
+    #pause
+    #text(weight: 700, fill: GREEN)[Gradient magnitude $abs(ell_i'(r_i))$]
+    #v(3pt)
+    says how strongly this observation scales the next parameter update.
+  ],
+)
+#v(9pt)
+#pause
+#align(center, block(fill: rgb("#EFEEEB"), stroke: 0.8pt + INK, radius: 4pt, inset: (x: 12pt, y: 7pt))[
+  $nabla_(bold(theta)) ell_i = -ell_i'(r_i) nabla_(bold(theta)) hat(y)_i$
+])
+#place(bottom + center, dy: -3pt,
+  result[The sign gives the correction direction; $abs(ell_i'(r_i))$ gives the size of this observation's gradient factor.])
+
+== Residual density $arrow.r$ NLL $arrow.r$ parameter gradient
+#stag(D)
+
+For one observation, $hat(y)_i=f_(bold(theta))(bold(x)_i)$ and $r_i=y_i-hat(y)_i$.
+#v(5pt)
+#align(center, diagram(
+  spacing: (18mm, 7mm), node-stroke: 1pt,
+  {
+    node((0,0), [$p_R(r_i)$], shape: fletcher.shapes.rect, fill: rgb("#E8EEF6"), stroke: BLUE, inset: 7pt)
+    node((1,0), [$ell_i=-log p_R(r_i)$], shape: fletcher.shapes.rect, fill: rgb("#FFF4E7"), stroke: ACC, inset: 7pt)
+    node((2,0), [$psi(r_i)=(dif ell)/(dif r)|_(r_i)$], shape: fletcher.shapes.rect, fill: rgb("#EAF6F5"), stroke: TEAL, inset: 7pt)
+    node((3,0), [$nabla_(bold(theta)) ell_i$], shape: fletcher.shapes.rect, fill: rgb("#ECF8EF"), stroke: GREEN, inset: 7pt)
+    edge((0,0),(1,0), "-|>", stroke: 1pt + MUTED)
+    edge((1,0),(2,0), "-|>", stroke: 1pt + MUTED)
+    edge((2,0),(3,0), "-|>", stroke: 1pt + MUTED)
+  }
+))
+#v(7pt)
+#align(center, text(size: 18pt)[
+  $psi(r) = - dif/(dif r) log p_R(r)$
+])
+#pause
+#align(center, block(fill: rgb("#EFEEEB"), stroke: 0.8pt + INK, radius: 4pt, inset: (x: 12pt, y: 7pt))[
+  $
+    nabla_(bold(theta)) ell_i
+    = psi(r_i) nabla_(bold(theta)) r_i
+    = -psi(r_i) nabla_(bold(theta)) f_(bold(theta))(bold(x)_i).
+  $
+])
+#align(center, text(size: 13.5pt, fill: MUTED)[residual derivative $times$ residual-to-model derivative])
+#v(5pt)
+#pause
+#align(center, text(size: 17pt)[For $f_(bold(theta))(x)=b+w x$ with $bold(theta)=(b,w)$:])
+#align(center, text(size: 20pt)[$nabla_(bold(theta)) ell_i=-psi(r_i)(1,x_i)^top.$])
+#place(bottom + center, dy: -3pt,
+  result[The density chooses $psi(r)$; the model supplies $nabla_(bold(theta)) f$. Their product is the observation's parameter gradient.])
+
+== Gaussian and Laplace residuals: the full chain
+#stag(D)
+
+#set text(size: 15.5pt)
+#align(center, table(
+  columns: (28mm, 55mm, 55mm, 43mm), stroke: none,
+  inset: (x: 6pt, y: 8pt), align: (left, center, center, center),
+  table.header(
+    [#text(weight: 700)[Noise]],
+    [#text(weight: 700)[Residual density $p_R(r)$]],
+    [#text(weight: 700)[NLL $ell(r)$]],
+    [#text(weight: 700)[$psi(r)=ell'(r)$]],
+  ),
+  table.hline(stroke: 1.3pt + INK),
+  [#text(fill: ACC, weight: 700)[Gaussian]],
+  [$1/(sqrt(2 pi) sigma) e^(-r^2/(2 sigma^2))$],
+  [$r^2/(2 sigma^2)+C$],
+  [$r/sigma^2$],
+  table.hline(stroke: 0.45pt + MUTED.transparentize(45%)),
+  [#text(fill: TEAL, weight: 700)[Laplace]],
+  [$1/(2b)e^(-abs(r)/b)$],
+  [$abs(r)/b+C$],
+  [$"sign"(r)/b$],
+  table.hline(stroke: 0.8pt + INK),
+))
+#v(9pt)
+#pause
+#align(center, text(size: 17pt)[
+  $nabla_(bold(theta)) ell_i=-psi(r_i)nabla_(bold(theta)) f_(bold(theta))(bold(x)_i)$
+])
+#v(7pt)
+#align(center, notebox[At $r=0$, Laplace uses the subgradient interval $[-1/b,1/b]$. Away from zero, its gradient magnitude is capped at $1/b$.])
+#place(bottom + center, dy: -3pt,
+  result[Gaussian influence grows with $abs(r)$; Laplace influence has constant magnitude.])
+
+== Student-$t$ residual: the full chain
+#stag(D)
+
+For degrees of freedom $nu$ and scale $s$:
+#v(7pt)
+#grid(
+  columns: (32mm, 1fr), row-gutter: 10pt, column-gutter: 12pt,
+  align: (right + horizon, left + horizon),
+  [#text(fill: GREEN, weight: 700)[density]],
+  [$p_R(r)=c_(nu,s)(1+r^2/(nu s^2))^(-(nu+1)/2)$],
+  [#text(fill: ACC, weight: 700)[NLL]],
+  [$ell(r)=(nu+1)/2 log(1+r^2/(nu s^2))+C$],
+  [#text(fill: TEAL, weight: 700)[$r$ derivative]],
+  [$psi(r)=dif ell/(dif r)=(nu+1)r/(nu s^2+r^2)$],
+  [#text(fill: BLUE, weight: 700)[$bold(theta)$ gradient]],
+  [$nabla_(bold(theta)) ell_i=-(nu+1)r_i/(nu s^2+r_i^2) nabla_(bold(theta)) f_(bold(theta))(bold(x)_i)$],
+)
+#v(9pt)
+#pause
+#align(center, text(size: 15pt, fill: MUTED)[
+  Near zero, $psi(r) approx ((nu+1)/(nu s^2))r$; for $abs(r)$ very large, $psi(r) approx (nu+1)/r arrow.r 0$.
+])
+#place(bottom + center, dy: -3pt,
+  result[Student-$t$ treats small residuals approximately quadratically, but an extreme residual's gradient contribution eventually decreases.])
+
+== Large residuals create different gradient magnitudes
+#stag(V)
+
+#two(r: (1.2fr, 0.8fr),
+  [
+    #align(center, {
+      set text(size: 13.5pt)
+      let rs = range(121).map(i => 5.0 * i / 120)
+      lq.diagram(
+        width: 91mm, height: 55mm,
+        xlim: (0, 5), ylim: (0, 5), margin: 0%,
+        xlabel: [$abs(r)$], ylabel: [magnitude],
+        grid: (stroke: 0.35pt + MUTED.transparentize(76%)),
+        xaxis: (ticks: (0, 2, 4), subticks: none, mirror: false),
+        yaxis: (ticks: (0, 1, 2, 3, 4), subticks: none, mirror: false),
+        lq.plot(rs, rs, stroke: ACC + 2.4pt, mark: none),
+        lq.plot(rs, rs.map(r => if r == 0 { 0 } else { 1 }), stroke: TEAL + 2.4pt, mark: none),
+        lq.plot(rs, rs.map(r => 4 * r / (3 + r * r)), stroke: GREEN + 2.4pt, mark: none),
+        lq.scatter((4,), (4,), color: ACC, size: 5.5pt),
+        lq.scatter((4,), (1,), color: TEAL, size: 5.5pt),
+        lq.scatter((4,), (16/19,), color: GREEN, size: 5.5pt),
+      )
+    })
+    #v(3pt)
+    #align(center, text(size: 13.5pt)[
+      #plot-swatch(ACC, [Gaussian]) #h(14pt)
+      #plot-swatch(TEAL, [Laplace]) #h(14pt)
+      #plot-swatch(GREEN, [Student-$t$, $nu=3$])
+    ])
+  ],
+  [
+    #text(weight: 700)[At $r=4$, the gradient factor is:]
+    #v(6pt)
+    #text(weight: 700, fill: ACC)[Gaussian] \
+    $abs(ell'(4))=4$
+    #v(5pt)
+    #pause
+    #text(weight: 700, fill: TEAL)[Laplace] \
+    $abs(ell'(4))=1$
+    #v(5pt)
+    #pause
+    #text(weight: 700, fill: GREEN)[Student-$t$] \
+    $abs(ell'(4))=16/19 approx 0.84$
+  ],
+)
+#place(bottom + center, dy: -3pt,
+  result[Robust fitting keeps every observation, while limiting the gradient contribution of an extreme residual.])
+
 == The noise model determines how errors are penalized
 #stag(V)
 
@@ -1075,6 +1406,119 @@ $ arg min_(bold(theta)) cal(L)(bold(theta); sigma^2) = arg min_(bold(theta)) sum
 #pause
 #place(bottom + center, dy: -2pt,
   result[Gaussian penalizes large errors most; Student-$t$ is more robust. The dashed Uniform boundaries mark an infinite penalty outside the allowed interval.])
+
+== Fit the same data under three noise models
+#stag(V)
+
+#two(r: (1.25fr, 0.75fr),
+  [
+    #align(center, {
+      set text(size: 13.5pt)
+      lq.diagram(
+        width: 108mm, height: 58mm,
+        xlim: (-3.5, 3.5), ylim: (-4, 4), margin: 0%,
+        xlabel: [$x$], ylabel: [$y$],
+        grid: (stroke: 0.35pt + MUTED.transparentize(76%)),
+        xaxis: (ticks: (-3, 0, 3), subticks: none, mirror: false),
+        yaxis: (ticks: (-3, 0, 3), subticks: none, mirror: false),
+        lq.plot(_robust-line-xs, _robust-all-fit, stroke: ACC + 2.3pt, mark: none),
+        lq.plot(_robust-line-xs, _robust-laplace-fit, stroke: TEAL + 2.3pt, mark: none),
+        lq.plot(_robust-line-xs, _robust-student-fit, stroke: GREEN + 2.3pt, mark: none),
+        lq.scatter(
+          _robust-inliers.map(p => p.at(0)), _robust-inliers.map(p => p.at(1)),
+          color: INK, size: 4.2pt,
+        ),
+        lq.scatter(
+          _robust-outliers.map(p => p.at(0)), _robust-outliers.map(p => p.at(1)),
+          color: RED, size: 7pt,
+        ),
+      )
+    })
+    #v(3pt)
+    #align(center, text(size: 13pt)[
+      #plot-swatch(ACC, [Gaussian]) #h(12pt)
+      #plot-swatch(TEAL, [Laplace]) #h(12pt)
+      #plot-swatch(GREEN, [Student-$t$])
+    ])
+  ],
+  [
+    #text(weight: 700)[Learned $hat(y)=b+w x$]
+    #v(5pt)
+    #table(
+      columns: (1fr, 38mm), stroke: none,
+      inset: (x: 4pt, y: 4pt), align: (left, center, center),
+      table.header([*model*], [*fitted $(b,w)$*]),
+      table.hline(stroke: 1pt + INK),
+      [#text(fill: ACC)[Gaussian]], [$(-0.040,0.397)$],
+      [#text(fill: TEAL)[Laplace]], [$(0.044,0.906)$],
+      [#text(fill: GREEN)[Student-$t$]], [$(0.053,0.882)$],
+      table.hline(stroke: 0.7pt + INK),
+    )
+    #align(center, text(size: 11.5pt, fill: MUTED)[$sigma=1$ · $b=1$ · $(nu,s)=(3,1)$])
+    #v(7pt)
+    #pause
+    #notebox[All twelve observations are retained. The models differ only in the residual likelihood optimized.]
+  ],
+)
+#place(bottom + center, dy: -3pt,
+  result[The Gaussian fit is pulled flat by the two red points; Laplace and Student-$t$ stay close to the trend supported by the ten typical points.])
+
+== Student-$t$ hyperparameters control robustness
+#stag(V)
+
+#two(r: (1.12fr, 0.88fr),
+  [
+    #align(center, {
+      set text(size: 13pt)
+      lq.diagram(
+        width: 92mm, height: 55mm,
+        xlim: (-3.5, 3.5), ylim: (-4, 4), margin: 0%,
+        xlabel: [$x$], ylabel: [$y$],
+        grid: (stroke: 0.35pt + MUTED.transparentize(76%)),
+        xaxis: (ticks: (-3, 0, 3), subticks: none, mirror: false),
+        yaxis: (ticks: (-3, 0, 3), subticks: none, mirror: false),
+        lq.plot(_robust-line-xs, _robust-student-nu1-fit, stroke: BLUE + 2.2pt, mark: none),
+        lq.plot(_robust-line-xs, _robust-student-fit, stroke: GREEN + 2.2pt, mark: none),
+        lq.plot(_robust-line-xs, _robust-student-nu30-fit, stroke: ACC + 2.2pt, mark: none),
+        lq.scatter(
+          _robust-inliers.map(p => p.at(0)), _robust-inliers.map(p => p.at(1)),
+          color: INK, size: 4pt,
+        ),
+        lq.scatter(
+          _robust-outliers.map(p => p.at(0)), _robust-outliers.map(p => p.at(1)),
+          color: RED, size: 6.5pt,
+        ),
+      )
+    })
+    #align(center, text(size: 12.5pt)[
+      #plot-swatch(BLUE, [$nu=1$]) #h(12pt)
+      #plot-swatch(GREEN, [$nu=3$]) #h(12pt)
+      #plot-swatch(ACC, [$nu=30$]) #h(12pt) (all $s=1$)
+    ])
+  ],
+  [
+    #text(weight: 700)[Learned coefficients]
+    #v(3pt)
+    #table(
+      columns: (16mm, 16mm, 38mm), stroke: none,
+      inset: (x: 4pt, y: 3pt), align: center,
+      table.header([*$nu$*], [*$s$*], [*fitted $(b,w)$*]),
+      table.hline(stroke: 1pt + INK),
+      [$1$], [$1$], [$(0.064,0.928)$],
+      [$3$], [$0.5$], [$(0.065,0.934)$],
+      [$3$], [$1$], [$(0.053,0.882)$],
+      [$3$], [$1.5$], [$(0.036,0.807)$],
+      [$30$], [$1$], [$(-0.014,0.581)$],
+      table.hline(stroke: 0.7pt + INK),
+    )
+    #v(4pt)
+    #text(size: 14pt)[Smaller $nu$ gives heavier tails. Larger $s$ delays the transition from quadratic to tail-robust behaviour.]
+  ],
+)
+#pause
+#align(center, text(size: 13.5pt, fill: MUTED)[For unregularized Gaussian and Laplace fits, changing the fixed scale only rescales the objective and leaves $(b,w)$ unchanged; Student-$t$ scale changes relative residual weights.])
+#place(bottom + center, dy: -3pt,
+  result[$nu$ and $s$ are modelling choices: cross-validation or domain knowledge should choose how quickly an observation is treated as a tail event.])
 
 == Interactive: likelihood → loss
 #stag(I)
@@ -1432,72 +1876,154 @@ When several predictors fit the training data, the learner still needs a prefere
 #place(bottom + center, dy: -2pt,
   result[A prior is one explicit inductive bias; the model class, features, architecture, and optimization add others.])
 
-== The same evidence can start from different priors
+== Step 1: the evidence gives the same likelihoods
 #stag(D)
 
-Suppose only two coins are possible: *fair* $F: theta=0.5$ or *heads-biased* $B: theta=0.9$.
+Suppose we consider only two possible coins.
+#v(6pt)
+#two(r: (1fr, 1fr),
+  [#block(fill: rgb("#EAF1FB"), stroke: 1pt + BLUE, radius: 5pt, inset: 10pt)[
+    #text(fill: BLUE, weight: 700)[Fair coin $F$]
+    #v(3pt)
+    $P(H|F)=0.5$
+  ]],
+  [#block(fill: rgb("#FFF4E7"), stroke: 1pt + ACC, radius: 5pt, inset: 10pt)[
+    #text(fill: ACC, weight: 700)[Heads-biased coin $B$]
+    #v(3pt)
+    $P(H|B)=0.9$
+  ]],
+)
+#v(8pt)
 #pause
-#align(center, text(size: 17pt)[
-  Observe $cal(D)=(H,H,H)$: #h(8pt)
-  $P(cal(D)|F)=0.5^3=0.125$ #h(14pt)
-  $P(cal(D)|B)=0.9^3=0.729$.
+#align(center, text(size: 27pt, weight: 700, fill: INK)[Observed data: H · H · H])
+#v(8pt)
+#pause
+#two(r: (1fr, 1fr),
+  [#align(center, text(size: 20pt)[$P(H,H,H|F)=0.5^3=0.125$])],
+  [#align(center, text(size: 20pt)[$P(H,H,H|B)=0.9^3=0.729$])],
+)
+#v(10pt)
+#align(center, text(size: 18pt)[
+  likelihood ratio $= 0.729 / 0.125 approx 5.83$
 ])
-#v(15pt)
+#place(bottom + center, dy: -2pt,
+  result[HHH favours $B$ over $F$ by a factor of $5.83$. These likelihoods do not depend on the prior.])
+
+== Step 2: update a prior that favours the fair coin
+#stag(D)
+
+Before seeing the flips, suppose our starting belief is $P(F)=0.90$ and $P(B)=0.10$.
+#v(8pt)
+#align(center, table(
+  columns: (46mm, 34mm, 42mm, 46mm), stroke: none,
+  inset: (x: 8pt, y: 6pt), align: (left, center, center, center),
+  table.header(
+    [#text(weight: 700)[Hypothesis]],
+    [#text(weight: 700)[Prior]],
+    [#text(weight: 700)[Likelihood]],
+    [#text(weight: 700)[Prior $times$ likelihood]],
+  ),
+  table.hline(stroke: 1.4pt + INK),
+  [#text(fill: BLUE, weight: 700)[Fair $F$]], [$0.90$], [$0.125$], [$0.90 times 0.125 = 0.1125$],
+  table.hline(stroke: 0.5pt + MUTED.transparentize(45%)),
+  [#text(fill: ACC, weight: 700)[Biased $B$]], [$0.10$], [$0.729$], [$0.10 times 0.729 = 0.0729$],
+  table.hline(stroke: 0.8pt + INK),
+))
+#v(8pt)
+#pause
+#align(center, text(size: 16pt, fill: MUTED)[
+  $w_F=0.1125$ and $w_B=0.0729$ are *weights*, not probabilities yet.
+])
+#place(bottom + center, dy: -2pt,
+  result[Bayes first scores each hypothesis by prior $times$ likelihood. The two scores need not add to $1$.])
+
+== Step 3: normalize the weights into probabilities
+#stag(D)
+
+The normalizing constant is the sum of the two weights:
+#align(center, text(size: 21pt)[$P(cal(D)) = w_F+w_B = 0.1125+0.0729 = 0.1854.$])
+#v(8pt)
+#pause
 #two(r: (1fr, 1fr),
   [
-    #text(fill: BLUE, weight: 700)[Prior A: probably fair] \
-    $P(F)=0.90, quad P(B)=0.10$
-    #v(12pt)
-    #pause
-    #text(size: 15pt, fill: MUTED)[prior $times$ likelihood]
-    #text(size: 17pt)[
-      $F: quad 0.90 times 0.125 = 0.1125$ \
-      $B: quad 0.10 times 0.729 = 0.0729$
-    ]
+    #align(center, text(fill: BLUE, weight: 700)[Fair coin])
+    #align(center, text(size: 20pt)[$P(F|cal(D)) = 0.1125/0.1854 approx 0.607$])
   ],
   [
-    #pause
-    #text(fill: ACC, weight: 700)[Prior B: probably biased] \
-    $P(F)=0.10, quad P(B)=0.90$
-    #v(12pt)
-    #text(size: 15pt, fill: MUTED)[prior $times$ likelihood]
-    #text(size: 17pt)[
-      $F: quad 0.10 times 0.125 = 0.0125$ \
-      $B: quad 0.90 times 0.729 = 0.6561$
-    ]
+    #align(center, text(fill: ACC, weight: 700)[Heads-biased coin])
+    #align(center, text(size: 20pt)[$P(B|cal(D)) = 0.0729/0.1854 approx 0.393$])
   ],
 )
+#v(10pt)
 #pause
+#align(center, notebox[
+  The normalized values now add to $1$: $0.607+0.393=1$. They are the *posterior* probabilities—our beliefs after observing HHH.
+])
 #place(bottom + center, dy: -2pt,
-  result[Bayes' rule first forms a weight for each hypothesis: prior $times$ likelihood.])
+  result[HHH raises belief in $B$ from $0.10$ to $0.393$, but it does not overturn the strong fair-coin prior.])
 
-== Normalize the weights to obtain the posterior
+== Step 4: start instead from a biased-coin prior
+#stag(D)
+
+Now use the *same hypotheses and the same HHH*, but start from $P(F)=0.10$ and $P(B)=0.90$.
+#v(7pt)
+#align(center, table(
+  columns: (42mm, 38mm, 45mm, 48mm), stroke: none,
+  inset: (x: 8pt, y: 5pt), align: (left, center, center, center),
+  table.header(
+    [#text(weight: 700)[Hypothesis]], [#text(weight: 700)[Prior]],
+    [#text(weight: 700)[Likelihood]], [#text(weight: 700)[Weight]],
+  ),
+  table.hline(stroke: 1.4pt + INK),
+  [#text(fill: BLUE, weight: 700)[Fair $F$]], [$0.10$], [$0.125$], [$0.0125$],
+  table.hline(stroke: 0.5pt + MUTED.transparentize(45%)),
+  [#text(fill: ACC, weight: 700)[Biased $B$]], [$0.90$], [$0.729$], [$0.6561$],
+  table.hline(stroke: 0.8pt + INK),
+))
+#v(9pt)
+#pause
+#align(center, text(size: 19pt)[
+  $P(cal(D))=0.0125+0.6561=0.6686$
+])
+#align(center, text(size: 20pt)[
+  $P(F|cal(D)) approx 0.019, quad P(B|cal(D)) approx 0.981$
+])
+#place(bottom + center, dy: -2pt,
+  result[The data again favours $B$ by the same factor $5.83$; this time the prior already favoured $B$.])
+
+== What changed—and what stayed fixed?
 #stag(V)
 
-Divide each weight by the sum of the two weights so the posterior probabilities add to $1$.
-#v(12pt)
-#two(r: (1fr, 1fr),
-  [
-    #text(fill: BLUE, weight: 700)[Prior A: probably fair]
-    #v(5pt)
-    #align(center, bars(
-      (0.61, 0.39), labels: ([fair $F$], [biased $B$]), highlight: 0,
-      size: (58mm, 35mm), title: [posterior],
-    ))
-  ],
-  [
-    #pause
-    #text(fill: ACC, weight: 700)[Prior B: probably biased]
-    #v(5pt)
-    #align(center, bars(
-      (0.02, 0.98), labels: ([fair $F$], [biased $B$]), highlight: 1,
-      size: (58mm, 35mm), title: [posterior],
-    ))
-  ],
-)
+#align(center, table(
+  columns: (62mm, 48mm, 58mm), stroke: none,
+  inset: (x: 9pt, y: 6pt), align: (left, center, center),
+  table.header(
+    [#text(weight: 700)[Starting belief]],
+    [#text(weight: 700)[Prior $P(B)$]],
+    [#text(weight: 700)[Posterior $P(B|H,H,H)$]],
+  ),
+  table.hline(stroke: 1.4pt + INK),
+  [Probably fair], [$0.10$], [#text(fill: ACC, weight: 700)[$0.393$]],
+  table.hline(stroke: 0.5pt + MUTED.transparentize(45%)),
+  [Probably biased], [$0.90$], [#text(fill: ACC, weight: 700)[$0.981$]],
+  table.hline(stroke: 0.8pt + INK),
+))
+#v(14pt)
 #pause
+#grid(columns: (1fr, 1fr), column-gutter: 18pt,
+  [#notebox[
+    *Fixed:* the observations and likelihoods. In both analyses, HHH multiplies the odds for $B$ by $5.83$.
+  ]],
+  [#notebox[
+    *Changed:* the prior. Different starting beliefs therefore lead to different posterior probabilities.
+  ]],
+)
+#v(12pt)
+#align(center, text(size: 21pt, weight: 700)[
+  posterior odds $=$ prior odds $times$ likelihood ratio
+])
 #place(bottom + center, dy: -2pt,
-  result[The observation is identical; with little data, different priors produce different posteriors.])
+  result[Bayes does not erase the prior; it updates it with exactly the same evidence. More data makes the likelihood increasingly dominant.])
 
 == A neural-network prior ranks plausible parameter vectors
 #stag(V)
@@ -1535,6 +2061,8 @@ Divide each weight by the sum of the two weights so the posterior probabilities 
 == Parameter priors have visible consequences
 #stag(V)
 
+#align(center, text(size: 15pt, fill: MUTED)[Example: a zero-centred prior makes parameter values near $bold(theta)=bold(0)$ more plausible before seeing data.])
+#v(4pt)
 #grid(
   columns: (1fr, 1fr), column-gutter: 30pt,
   [
@@ -1545,15 +2073,13 @@ Divide each weight by the sum of the two weights so the posterior probabilities 
     #align(center, diagram(
       spacing: (18mm, 10mm), node-stroke: 0.9pt,
       {
-        node((0,0), text(size: 14pt)[$p(bold(theta))$], shape: fletcher.shapes.rect, fill: rgb("#EFEEEB"), stroke: INK, inset: 5pt)
+        node((0,0), text(size: 14pt)[$p(bold(theta))$ centred at $bold(0)$], shape: fletcher.shapes.rect, fill: rgb("#EFEEEB"), stroke: INK, inset: 5pt)
         node((0,1), text(size: 14pt)[small $norm(bold(theta))$], shape: fletcher.shapes.rect, fill: rgb("#FDECD6"), stroke: ACC, inset: 5pt)
-        node((0,2), text(size: 14pt)[smaller slopes], shape: fletcher.shapes.rect, fill: white, stroke: TEAL, inset: 5pt)
+        node((0,2), text(size: 14pt)[smaller slopes and intercept], shape: fletcher.shapes.rect, fill: white, stroke: TEAL, inset: 5pt)
         edge((0,0),(0,1), "-|>", stroke: 0.9pt + MUTED)
         edge((0,1),(0,2), "-|>", stroke: 0.9pt + MUTED)
       }
     ))
-    #v(7pt)
-    #align(center, text(size: 16pt, fill: MUTED)[Before seeing data, flatter linear predictions are more plausible.])
   ],
   [
     #pause
@@ -1564,20 +2090,18 @@ Divide each weight by the sum of the two weights so the posterior probabilities 
     #align(center, diagram(
       spacing: (18mm, 10mm), node-stroke: 0.9pt,
       {
-        node((0,0), text(size: 14pt)[$p(bold(theta))$], shape: fletcher.shapes.rect, fill: rgb("#EFEEEB"), stroke: INK, inset: 5pt)
-        node((0,1), text(size: 14pt)[small logits], shape: fletcher.shapes.rect, fill: rgb("#FDECD6"), stroke: ACC, inset: 5pt)
-        node((0,2), text(size: 14pt)[$p$ nearer $0.5$], shape: fletcher.shapes.rect, fill: white, stroke: TEAL, inset: 5pt)
+        node((0,0), text(size: 14pt)[$bold(theta) approx bold(0)$], shape: fletcher.shapes.rect, fill: rgb("#EFEEEB"), stroke: INK, inset: 5pt)
+        node((0,1), text(size: 14pt)[$z=bold(theta)^top tilde(bold(x)) approx 0$], shape: fletcher.shapes.rect, fill: rgb("#FDECD6"), stroke: ACC, inset: 5pt)
+        node((0,2), text(size: 14pt)[$p=sigma(z) approx sigma(0)=0.5$], shape: fletcher.shapes.rect, fill: white, stroke: TEAL, inset: 5pt)
         edge((0,0),(0,1), "-|>", stroke: 0.9pt + MUTED)
         edge((0,1),(0,2), "-|>", stroke: 0.9pt + MUTED)
       }
     ))
-    #v(7pt)
-    #align(center, text(size: 16pt, fill: MUTED)[Before seeing data, extremely confident predictions are less plausible.])
   ],
 )
 #pause
 #place(bottom + center, dy: -2pt,
-  result[The prior acts on parameters; its visible effect depends on how those parameters enter the model.])
+  result[This conclusion depends on the prior: a prior centred elsewhere can prefer probabilities away from $0.5$.])
 
 == Model complexity: underfitting to overfitting
 
@@ -1651,6 +2175,10 @@ Fit the same eight observations by least squares; only the polynomial degree cha
   let x = -1.2 + 3.4 * i / 100.0
   (x, 1.794 + 2.616 * x)
 })
+#let _lr-strong-mapfit = range(101).map(i => {
+  let x = -1.2 + 3.4 * i / 100.0
+  (x, 0.443 + 0.678 * x)
+})
 #let _lr-bounds = ((-1.2, -1.6), (2.2, 8.6))
 // Representative lines with coefficients plausible under N(0, 0.5^2 I).
 #let _lr-prior-lines = (
@@ -1673,6 +2201,63 @@ Fit the same eight observations by least squares; only the polynomial degree cha
 #let _lr-post = dist.gaussian-2d(
   mu: (1.794, 2.616),
   sigma: ((0.05645, -0.01613), (-0.01613, 0.04032)))
+
+#let contour-with-ticks(
+  fs,
+  xlim: none,
+  ylim: none,
+  x-ticks: (),
+  y-ticks: (),
+  samples: 64,
+  levels: 5,
+  colors: (ACC,),
+  marks: (),
+  size: (60mm, 60mm),
+) = {
+  let plot-w = size.at(0)
+  let plot-h = size.at(1)
+  let x-strip = box(width: plot-w, height: 5mm)[
+    #for tick in x-ticks {
+      let dx = tick.at(0) * plot-w
+      place(top + left, dx: dx - 5mm,
+        box(width: 10mm)[#align(center, text(size: 9pt, fill: MUTED, tick.at(1)))])
+    }
+  ]
+  let y-strip = box(width: 9mm, height: plot-h)[
+    #for tick in y-ticks {
+      let dy = (1 - tick.at(0)) * plot-h
+      place(top + left, dy: dy - 2.5mm,
+        box(width: 8mm, height: 5mm)[#align(right + horizon, text(size: 9pt, fill: MUTED, tick.at(1)))])
+    }
+  ]
+  grid(
+    columns: (5mm, 9mm, plot-w),
+    rows: (plot-h, 5mm, 5mm),
+    column-gutter: 1pt,
+    row-gutter: 1pt,
+    align: center + horizon,
+    rotate(-90deg, text(size: 9pt, fill: MUTED, [slope $w$])),
+    y-strip,
+    contour(
+      fs,
+      xlim: xlim,
+      ylim: ylim,
+      samples: samples,
+      levels: levels,
+      colors: colors,
+      marks: marks,
+      size: size,
+      x-label: [],
+      y-label: [],
+    ),
+    [],
+    [],
+    x-strip,
+    [],
+    [],
+    text(size: 9pt, fill: MUTED, [intercept $b$]),
+  )
+}
 
 == Start with four noisy points from a straight line
 #stag(V)
@@ -1732,12 +2317,18 @@ Model each observation as
   ],
   [
     #pause
-    #align(center, contour(
-      (_lr-lik,), xlim: (1.3, 2.8), ylim: (2.25, 3.65),
+    #align(center, contour-with-ticks(
+      (_lr-lik,), xlim: (-2, 4), ylim: (-2, 4),
+      x-ticks: ((0/6, [$-2$]), (2/6, [$0$]), (4/6, [$2$]), (5/6, [$3$]), (6/6, [$4$])),
+      y-ticks: ((0/6, [$-2$]), (2/6, [$0$]), (4/6, [$2$]), (5/6, [$3$]), (6/6, [$4$])),
       samples: 64, levels: 5, colors: (ACC,),
-      marks: ((2.07, 2.96, [MLE], ACC),),
-      size: (72mm, 54mm), x-label: [intercept $b$], y-label: [slope $w$],
+      marks: ((2.0, 3.0, [], BLUE), (2.07, 2.96, [], ACC)),
+      size: (55mm, 55mm),
     ))
+    #align(center, text(size: 11.5pt, fill: MUTED)[
+      #text(fill: BLUE, weight: 700)[●] true $(2,3)$ #h(8pt)
+      #text(fill: ACC, weight: 700)[●] MLE $(2.07,2.96)$
+    ])
   ],
 )
 #pause
@@ -1753,11 +2344,13 @@ Choose a simple Gaussian prior over the two regression parameters:
 #two(r: (1.06fr, 0.94fr),
   [
     #pause
-    #align(center, contour(
-      (_lr-prior,), xlim: (-3.5, 3.5), ylim: (-3.5, 3.5),
+    #align(center, contour-with-ticks(
+      (_lr-prior,), xlim: (-2, 4), ylim: (-2, 4),
+      x-ticks: ((0/6, [$-2$]), (2/6, [$0$]), (4/6, [$2$]), (5/6, [$3$]), (6/6, [$4$])),
+      y-ticks: ((0/6, [$-2$]), (2/6, [$0$]), (4/6, [$2$]), (5/6, [$3$]), (6/6, [$4$])),
       samples: 64, levels: 5, colors: (BLUE,),
       marks: ((0, 0, [prior mean], BLUE),),
-      size: (78mm, 54mm), x-label: [intercept $b$], y-label: [slope $w$],
+      size: (58mm, 58mm),
     ))
   ],
   [
@@ -1781,12 +2374,15 @@ Choose a simple Gaussian prior over the two regression parameters:
 $ p(b,w | cal(D)) = (p(cal(D) | b,w) thin p(b,w)) / p(cal(D)) $
 #pause
 #v(3pt)
-#align(center, contour(
+#align(center, contour-with-ticks(
   (_lr-lik, _lr-prior, _lr-post),
-  xlim: (-2.5, 4), ylim: (-2, 4.5), samples: 64, levels: 4,
+  xlim: (-2, 4), ylim: (-2, 4),
+  x-ticks: ((0/6, [$-2$]), (2/6, [$0$]), (4/6, [$2$]), (5/6, [$3$]), (6/6, [$4$])),
+  y-ticks: ((0/6, [$-2$]), (2/6, [$0$]), (4/6, [$2$]), (5/6, [$3$]), (6/6, [$4$])),
+  samples: 64, levels: 4,
   colors: (ACC, BLUE, GREEN),
   marks: ((2.07, 2.96, [], ACC), (1.794, 2.616, [], GREEN), (0.0, 0.0, [], BLUE)),
-  size: (92mm, 54mm), x-label: [intercept $b$], y-label: [slope $w$],
+  size: (54mm, 54mm),
 ))
 #v(4pt)
 #align(center, text(size: 14pt)[
@@ -1805,7 +2401,7 @@ $ p(b,w | cal(D)) = (p(cal(D) | b,w) thin p(b,w)) / p(cal(D)) $
 == The prior changes the fitted line
 #stag(V)
 
-#let _lr-line-panel(title, subtitle, curves, colors, markers) = [
+#let _lr-line-panel(title, subtitle, curves, colors, markers, dashes) = [
   #align(center, text(size: 15pt, weight: 700)[#title])
   #align(center, text(size: 12.5pt, fill: MUTED)[#subtitle])
   #v(2pt)
@@ -1813,37 +2409,41 @@ $ p(b,w | cal(D)) = (p(cal(D) | b,w) thin p(b,w)) / p(cal(D)) $
     curves,
     colors: colors,
     markers: markers,
-    dashes: range(curves.len()).map(_ => "solid"),
-    x-label: [$x$], y-ticks: false, size: (50mm, 34mm),
+    dashes: dashes,
+    x-label: [$x$], y-ticks: false, size: (68mm, 39mm),
   ))
 ]
 
+#align(center, text(size: 13.5pt)[
+  #plot-swatch(ACC, [MLE, dashed]) #h(16pt)
+  #plot-swatch(GREEN, [MAP, solid])
+])
+#v(2pt)
 #grid(
-  columns: (1fr, 1fr, 1fr), column-gutter: 8pt,
+  columns: (1fr, 1fr), column-gutter: 14pt,
   _lr-line-panel(
-    [Prior before data], [possible lines; not fitted],
-    (_lr-bounds,) + _lr-prior-lines,
-    (white.transparentize(100%),) + range(_lr-prior-lines.len()).map(_ => BLUE.transparentize(48%)),
-    range(_lr-prior-lines.len() + 1).map(_ => false),
+    [Moderate prior: $tau=0.5$], [MAP: $hat(y)=1.79+2.62x$],
+    (_lr-bounds, _lr-fit, _lr-mapfit) + _lr-data,
+    (white.transparentize(100%), ACC, GREEN) + range(_lr-data.len()).map(_ => INK),
+    (false, false, false) + range(_lr-data.len()).map(_ => true),
+    ("solid", "dashed", "solid") + range(_lr-data.len()).map(_ => "solid"),
   ),
   [#pause
    #_lr-line-panel(
-     [MLE], [$hat(y)=2.07+2.96x$],
-     (_lr-bounds, _lr-fit) + _lr-data,
-     (white.transparentize(100%), ACC) + range(_lr-data.len()).map(_ => INK),
-     (false, false) + range(_lr-data.len()).map(_ => true),
-   )],
-  [#pause
-   #_lr-line-panel(
-     [MAP], [$hat(y)=1.79+2.62x$],
-     (_lr-bounds, _lr-mapfit) + _lr-data,
-     (white.transparentize(100%), GREEN) + range(_lr-data.len()).map(_ => INK),
-     (false, false) + range(_lr-data.len()).map(_ => true),
+     [Much stronger prior: $tau=0.1$], [MAP: $hat(y)=0.44+0.68x$],
+     (_lr-bounds, _lr-fit, _lr-strong-mapfit) + _lr-data,
+     (white.transparentize(100%), ACC, GREEN) + range(_lr-data.len()).map(_ => INK),
+     (false, false, false) + range(_lr-data.len()).map(_ => true),
+     ("solid", "dashed", "solid") + range(_lr-data.len()).map(_ => "solid"),
    )],
 )
+#v(4pt)
+#align(center, text(size: 15pt)[
+  $(b,w): quad (2.07,2.96)_"MLE" arrow.r (1.79,2.62)_"moderate" arrow.r (0.44,0.68)_"strong"$
+])
 #pause
 #place(bottom + center, dy: -2pt,
-  result[MLE follows these observations most closely; MAP accepts a little more error to honour the prior preference for smaller coefficients.])
+  result[Reducing $tau$ puts more prior mass near the origin and moves both MAP coefficients much closer to zero.])
 
 == MAP estimation
 #stag(D)
@@ -1871,6 +2471,32 @@ $ -log p(bold(theta)) = 1/(2 tau^2) norm(bold(theta))_2^2 + C $
 $ => quad cal(L)_"MAP" = "NLL" + underbrace(1/(2 tau^2), lambda) norm(bold(theta))_2^2 + C $
 #v(6pt)
 #result[$lambda = 1/(2 tau^2)$: smaller $tau$ $arrow.r$ larger $lambda$ $arrow.r$ stronger shrinkage toward $bold(0)$.]
+
+== Gaussian MAP gives ridge shrinkage, step by step
+#stag(D)
+
+For one coefficient, summarize the data likelihood by $z=hat(theta)_"MLE"$:
+#align(center, text(size: 17pt)[$p(cal(D)|theta) prop exp(-(theta-z)^2/(2s^2)), quad p(theta) prop exp(-theta^2/(2tau^2)).$])
+#v(5pt)
+#pause
+#align(center, text(size: 18pt)[$J_2(theta)=underbrace((theta-z)^2/(2s^2), "data NLL") + underbrace(theta^2/(2tau^2), "Gaussian prior NLL").$])
+#v(5pt)
+#pause
+#align(center, text(size: 18pt)[$
+  dif J_2/(dif theta)=(theta-z)/s^2+theta/tau^2=0
+$])
+#pause
+#align(center, text(size: 18pt)[$
+  tau^2(theta-z)+s^2 theta=0
+  quad arrow.r quad
+  (tau^2+s^2)theta=tau^2 z
+$])
+#pause
+#align(center, block(fill: rgb("#E8EEF6"), stroke: 1pt + BLUE, radius: 5pt, inset: (x: 12pt, y: 7pt))[
+  $hat(theta)_"MAP"=alpha z, quad alpha=tau^2/(tau^2+s^2) in (0,1).$
+])
+#place(bottom + center, dy: -3pt,
+  result[If $z=0.6$ and $s=tau$, then $alpha=1/2$ and MAP $=0.3$. Ridge reaches exactly zero only when $z=0$.])
 
 == Prior width controls how far MAP moves
 #stag(V)
@@ -1990,7 +2616,84 @@ Compare zero-centred priors with the *same variance*, $1$:
 #place(bottom + center, dy: -2pt,
   result[The Laplace peak creates a *corner* in the negative log-prior—the source of $L_1$ sparsity.])
 
-== The $L_1$ corner can set a coefficient exactly to zero
+== Laplace MAP gives an $L_1$ objective
+#stag(D)
+
+Use the same scalar likelihood, centred at $z=hat(theta)_"MLE"$, and a zero-centred Laplace prior with scale $a$:
+#align(center, text(size: 18pt)[$
+  p(cal(D)|theta) prop e^(-(theta-z)^2/(2s^2)),
+  quad
+  p(theta)=1/(2a)e^(-abs(theta)/a).
+$])
+#v(5pt)
+#pause
+#align(center, text(size: 18pt)[$
+  -log p(theta)=abs(theta)/a+log(2a).
+$])
+#v(4pt)
+#pause
+#align(center, text(size: 18pt)[$
+  J_1(theta)=(theta-z)^2/(2s^2)+abs(theta)/a+C.
+$])
+#pause
+Multiply by the positive constant $s^2$; the minimizer does not change:
+#align(center, block(fill: rgb("#FFF4E7"), stroke: 1pt + ACC, radius: 5pt, inset: (x: 12pt, y: 7pt))[
+  $tilde(J)_1(theta)=1/2(theta-z)^2+lambda abs(theta), quad lambda=s^2/a.$
+])
+#place(bottom + center, dy: -3pt,
+  result[The Laplace negative log-prior is proportional to $abs(theta)$, so MAP becomes an $L_1$-regularized optimization problem.])
+
+== Soft thresholding follows from three cases
+#stag(D)
+
+Differentiate $tilde(J)_1(theta)=1/2(theta-z)^2+lambda abs(theta)$ on either side of the corner.
+#v(5pt)
+#grid(
+  columns: (1fr, 1fr, 1fr), column-gutter: 10pt,
+  [#block(fill: rgb("#EAF6F5"), stroke: 0.8pt + TEAL, radius: 5pt, inset: 9pt)[
+    #text(size: 16pt, fill: TEAL, weight: 700)[Case 1: $theta>0$]
+    #v(4pt)
+    #text(size: 15pt)[$tilde(J)_1'=theta-z+lambda$]
+    #v(4pt)
+    #text(size: 15pt)[$0=theta-z+lambda$]
+    #v(4pt)
+    #text(size: 15pt)[$theta=z-lambda$, valid if $z>lambda$]
+  ]],
+  [#block(fill: rgb("#E8EEF6"), stroke: 0.8pt + BLUE, radius: 5pt, inset: 9pt)[
+    #text(size: 16pt, fill: BLUE, weight: 700)[Case 2: $theta<0$]
+    #v(4pt)
+    #text(size: 15pt)[$tilde(J)_1'=theta-z-lambda$]
+    #v(4pt)
+    #text(size: 15pt)[$0=theta-z-lambda$]
+    #v(4pt)
+    #text(size: 15pt)[$theta=z+lambda$, valid if $z < -lambda$]
+  ]],
+  [#block(fill: rgb("#FFF4E7"), stroke: 0.8pt + ACC, radius: 5pt, inset: 9pt)[
+    #text(size: 16pt, fill: ACC, weight: 700)[Case 3: $theta=0$]
+    #v(4pt)
+    #text(size: 15pt)[$partial abs(theta)|_0=[-1,1]$]
+    #v(4pt)
+    #text(size: 15pt)[$0 in -z+lambda[-1,1]$]
+    #v(4pt)
+    #text(size: 15pt)[valid iff $abs(z)<=lambda$]
+  ]],
+)
+#v(6pt)
+#pause
+#align(center, block(fill: rgb("#FFF4E7"), stroke: 1pt + ACC, radius: 5pt, inset: (x: 12pt, y: 7pt))[
+  #grid(
+    columns: (1fr, 1fr, 1fr), column-gutter: 10pt, align: center + horizon,
+    [#text(size: 14pt)[$z>lambda$ \ $hat(theta)_"MAP"=z-lambda$]],
+    [#text(size: 14pt)[$abs(z)<=lambda$ \ $hat(theta)_"MAP"=0$]],
+    [#text(size: 14pt)[$z < -lambda$ \ $hat(theta)_"MAP"=z+lambda$]],
+  )
+  #v(3pt)
+  #align(center, text(size: 17pt)[$hat(theta)_"MAP"="sign"(z) max(abs(z)-lambda,0).$])
+])
+#place(bottom + center, dy: -3pt,
+  result[Values inside the threshold band $[-lambda,lambda]$ map exactly to zero; values outside are pulled toward zero by $lambda$.])
+
+== Ridge shrinks; $L_1$ can threshold to exactly zero
 #stag(D)
 
 For one coefficient, let the data term be $D(theta)=1/2(theta-0.6)^2$, centred at $z=0.6$.
@@ -1999,9 +2702,9 @@ For one coefficient, let the data term be $D(theta)=1/2(theta-0.6)^2$, centred a
   [
     #text(fill: BLUE, weight: 700)[Normal prior $arrow.r L_2$]
     #v(3pt)
-    $J_2(theta)=D(theta)+1/2 theta^2.$
+    $J_2(theta)=D(theta)+1/2 theta^2$
     #v(3pt)
-    #align(center, text(size: 17pt)[$hat(theta)_"MAP"=0.6/(1+1)=0.3.$])
+    #align(center, text(size: 17pt)[$hat(theta)_"MAP"=z/(1+1)=0.3$])
     #v(4pt)
     #align(center, lines(
       fn: (t => 0.5 * (t - 0.6) * (t - 0.6) + 0.5 * t * t,),
@@ -2015,9 +2718,9 @@ For one coefficient, let the data term be $D(theta)=1/2(theta-0.6)^2$, centred a
     #pause
     #text(fill: ACC, weight: 700)[Laplace prior $arrow.r L_1$]
     #v(3pt)
-    $J_1(theta)=D(theta)+abs(theta).$
+    $J_1(theta)=D(theta)+abs(theta)$
     #v(3pt)
-    #align(center, text(size: 17pt)[$hat(theta)_"MAP"="sign"(z) max(abs(z)-1,0)=0.$])
+    #align(center, text(size: 17pt)[$hat(theta)_"MAP"="sign"(z) max(abs(z)-1,0)=0$])
     #v(4pt)
     #align(center, lines(
       fn: (t => 0.5 * (t - 0.6) * (t - 0.6) + calc.abs(t),),
