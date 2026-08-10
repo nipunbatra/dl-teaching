@@ -8,6 +8,7 @@ project:
     - "*.qmd"
     - "labs/*.qmd"
     - "notebooks/L01/00_likelihood_iid_worked_examples.ipynb"
+    - "notebooks/L01/03_robust_linear_regression.ipynb"
   resources:
     - "slides-pdf/**"
     - "notebooks/**/*.ipynb"
