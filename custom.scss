@@ -222,6 +222,25 @@ main.content {
   overflow-x: hidden;
 }
 
+/* Notebook pages benefit from a wider reading canvas than prose pages.  The
+   selector is deliberately content-aware, so the course homepage and guide
+   retain their compact academic measure. */
+#quarto-content:has(main.content .cell) main.content {
+  grid-column: screen-start / screen-end;
+  justify-self: center;
+  width: min(1180px, calc(100vw - 4rem));
+}
+
+/* Keep multi-panel figures legible without letting them dominate the page. */
+#quarto-content:has(main.content .cell) .cell-output-display img {
+  display: block;
+  width: auto;
+  max-width: min(100%, 900px);
+  max-height: 560px;
+  margin-inline: auto;
+  object-fit: contain;
+}
+
 .cell-output-display,
 .math.display {
   overflow-x: auto;
@@ -234,6 +253,10 @@ pre {
 
 /* Responsive */
 @media (max-width: 768px) {
+  #quarto-content:has(main.content .cell) main.content {
+    width: calc(100vw - 1.25rem);
+  }
+
   h1,
   .quarto-title-block .title {
     font-size: 1.7rem;
