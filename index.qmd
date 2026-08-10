@@ -11,9 +11,13 @@ This site contains the lecture materials for ES 667. Course dates, grading, and 
 
 - [Slides (PDF)](slides-pdf/L1.pdf)
 - [Companion notebook (HTML)](notebooks/L01/00_likelihood_iid_worked_examples.html)
+- [Companion notebook (Colab)](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L01/00_likelihood_iid_worked_examples.ipynb)
 - [Notebook source (IPYNB)](https://raw.githubusercontent.com/nipunbatra/dl-teaching/master/notebooks/L01/00_likelihood_iid_worked_examples.ipynb)
+- [Robust regression notebook (HTML)](notebooks/L01/03_robust_linear_regression.html)
+- [Robust regression notebook (Colab)](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L01/03_robust_linear_regression.ipynb)
+- [Robust regression source (IPYNB)](https://raw.githubusercontent.com/nipunbatra/dl-teaching/master/notebooks/L01/03_robust_linear_regression.ipynb)
 
-The notebook uses `torch.distributions` to work through probability mass and density, i.i.d. observations, maximum likelihood, linear regression, binary classification, and MAP estimation.
+The main notebook uses `torch.distributions` to work through probability mass and density, i.i.d. observations, maximum likelihood, linear regression, binary classification, and MAP estimation. The shorter robust-regression notebook compares Gaussian/MSE, Laplace/MAE, and Student-t observation models on the same data.
 
 ## Course materials
 
