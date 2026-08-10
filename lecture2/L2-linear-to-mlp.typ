@@ -20,6 +20,16 @@
 }
 #let _relu(z) = calc.max(0, z)
 #let _gelu(z) = z * _sigmoid(1.702 * z)
+#let _activation-panel(f, plot-title, color, y-range) = {
+  let (y-min, y-max) = y-range
+  lines(
+    fn: (f, z => y-min, z => y-max), domain: (-4, 4), samples: 140,
+    markers: (false, false, false),
+    colors: (color, color.transparentize(100%), color.transparentize(100%)),
+    hlines: ((0, none, MUTED),),
+    x-label: [$z$], y-label: [$phi(z)$], title: plot-title, size: (78mm, 32mm),
+  )
+}
 #let _sin-pwl(x, knots: 7) = {
   let left = -3.14
   let right = 3.14
@@ -187,35 +197,16 @@ Let $z=bold(w)^top bold(x)+b$. The output interpretation chooses the last step:
 
 == Common activation functions #V
 
-#grid(
-  columns: (1fr, 1fr, 1fr, 1fr),
-  gutter: 9pt,
-  align(center, lines(
-    fn: _sigmoid, domain: (-4, 4), samples: 140,
-    markers: false, colors: (BLUE,), y-ticks: false,
-    x-label: [$z$], y-label: [$phi(z)$], title: [sigmoid], size: (50mm, 37mm),
-  )),
-  align(center, lines(
-    fn: _tanh, domain: (-4, 4), samples: 140,
-    markers: false, colors: (TEAL,), y-ticks: false,
-    hlines: ((0, none, MUTED),),
-    x-label: [$z$], y-label: [$phi(z)$], title: [tanh], size: (50mm, 37mm),
-  )),
-  align(center, lines(
-    fn: _relu, domain: (-4, 4), samples: 140,
-    markers: false, colors: (ACC,), y-ticks: false,
-    x-label: [$z$], y-label: [$phi(z)$], title: [ReLU], size: (50mm, 37mm),
-  )),
-  align(center, lines(
-    fn: _gelu, domain: (-4, 4), samples: 140,
-    markers: false, colors: (GREEN,), y-ticks: false,
-    hlines: ((0, none, MUTED),),
-    x-label: [$z$], y-label: [$phi(z)$], title: [GELU], size: (50mm, 37mm),
-  )),
-)
+#align(center, grid(
+  columns: (1fr, 1fr), column-gutter: 14pt, row-gutter: 7pt,
+  align(center, _activation-panel(_sigmoid, [sigmoid], BLUE, (-1, 1))),
+  align(center, _activation-panel(_tanh, [tanh], TEAL, (-1, 1))),
+  align(center, _activation-panel(_relu, [ReLU], ACC, (-1, 4))),
+  align(center, _activation-panel(_gelu, [GELU], GREEN, (-1, 4))),
+))
 #pause
-#v(6pt)
-#align(center, text(size: 16.5pt)[sigmoid → gates/probabilities · tanh → zero-centred · *ReLU* → common hidden unit · GELU → Transformers])
+#place(bottom + center, dy: -2pt,
+  result[Numeric axes are visible; plots in each row share a $y$-scale for honest shape comparison.])
 
 == Question: do more linear layers create new shapes? #Q
 
@@ -402,89 +393,206 @@ For classification, $bold(p) = "softmax"(bold(z))$. This is a *one-hidden-layer 
 
 == First see the complete $2 arrow.r 2 arrow.r 1$ network #V
 
-#two(r: (1.05fr, 1fr),
-  [#align(center, diagram(spacing: (15mm, 13mm), node-stroke: 0.9pt, {
-    let pos = (
-      (0, -0.65), (0, 0.65),
-      (2, -0.65), (2, 0.65),
-      (3.25, 0),
-    )
-    // Connections first, so they remain behind the units.
-    for i in range(2) { for j in range(2) {
-      edge(pos.at(i), pos.at(2 + j), "-|>", stroke: 0.7pt + MUTED)
-    } }
-    for j in range(2) {
-      edge(pos.at(2 + j), pos.at(4), "-|>", stroke: 0.8pt + MUTED)
-    }
-    node(pos.at(0), text(fill: white)[$x_1$], radius: 5.5mm, fill: INK, stroke: none)
-    node(pos.at(1), text(fill: white)[$x_2$], radius: 5.5mm, fill: INK, stroke: none)
-    node(pos.at(2), text(fill: white)[$h_1$], radius: 5.5mm, fill: TEAL, stroke: none)
-    node(pos.at(3), text(fill: white)[$h_2$], radius: 5.5mm, fill: TEAL, stroke: none)
-    node(pos.at(4), text(fill: white)[$p$], radius: 5.5mm, fill: ACC, stroke: none)
+#align(center, diagram(spacing: (25mm, 15mm), node-stroke: 0.9pt, {
+  let x1 = (0, -0.75)
+  let x2 = (0, 0.75)
+  let h1 = (2, -0.75)
+  let h2 = (2, 0.75)
+  let out = (3.65, 0)
 
-    node((0.2, -1.55), text(size: 10.5pt, weight: 700, fill: INK)[INPUT], stroke: none)
-    node((2, -1.55), text(size: 10.5pt, weight: 700, fill: TEAL)[HIDDEN · ReLU], stroke: none)
-    node((3.1, -1.55), text(size: 10.5pt, weight: 700, fill: ACC)[OUTPUT · SIGMOID], stroke: none)
-    node((0.35, 1.55), text(size: 11pt, fill: MUTED)[$bold(x)=(2,-1)$], stroke: none)
-    node((2, 1.55), text(size: 11pt, fill: MUTED)[$bold(h)=(3,0.5)$], stroke: none)
-    node((3.0, 1.55), text(size: 10.5pt, fill: MUTED)[$p approx 0.769$], stroke: none)
+  edge(x1, h1, text(size: 12pt, weight: 700, fill: BLUE)[$+1$],
+    "-|>", stroke: 1.15pt + BLUE, label-side: left)
+  edge(x2, h1, text(size: 12pt, weight: 700, fill: BLUE)[$-1$],
+    "-|>", stroke: 1.15pt + BLUE, label-side: left)
+  edge(x1, h2, text(size: 12pt, weight: 700, fill: GREEN)[$+0.5$],
+    "-|>", stroke: 1.15pt + GREEN, label-side: right)
+  edge(x2, h2, text(size: 12pt, weight: 700, fill: GREEN)[$+1$],
+    "-|>", stroke: 1.15pt + GREEN, label-side: right)
+  edge(h1, out, text(size: 12pt, weight: 700, fill: BLUE)[$+0.8$],
+    "-|>", stroke: 1.15pt + BLUE, label-side: left)
+  edge(h2, out, text(size: 12pt, weight: 700, fill: GREEN)[$-0.4$],
+    "-|>", stroke: 1.15pt + GREEN, label-side: right)
+
+  node(x1, text(fill: white)[$x_1$], radius: 6.2mm, fill: INK, stroke: none)
+  node(x2, text(fill: white)[$x_2$], radius: 6.2mm, fill: INK, stroke: none)
+  node(h1, text(fill: white)[$h_1$], radius: 6.2mm, fill: BLUE, stroke: none)
+  node(h2, text(fill: white)[$h_2$], radius: 6.2mm, fill: GREEN, stroke: none)
+  node(out, text(fill: white)[$p$], radius: 6.4mm, fill: ACC, stroke: none)
+
+  node((2, -1.55), text(size: 11pt, weight: 700, fill: BLUE)[$b_(h_1)=0$], stroke: none)
+  node((2, 1.55), text(size: 11pt, weight: 700, fill: GREEN)[$b_(h_2)=0.5$], stroke: none)
+  node((3.65, 1.15), text(size: 11pt, weight: 700, fill: ACC)[$b_("out")=-1$], stroke: none)
+  node((0, -1.42), text(size: 11pt, fill: INK)[$x_1=2$], stroke: none)
+  node((0, 1.42), text(size: 11pt, fill: INK)[$x_2=-1$], stroke: none)
+}))
+#v(3pt)
+#grid(
+  columns: (1fr, 1fr), column-gutter: 14pt,
+  block(inset: 5pt, fill: BLUE.lighten(94%), stroke: 0.8pt + BLUE, radius: 4pt,
+    align(center, text(size: 14.5pt, fill: BLUE, weight: 650)[
+      matrix row 1: $(1,-1)$ · bias $0$ · output $+0.8$
+    ])),
+  block(inset: 5pt, fill: GREEN.lighten(95%), stroke: 0.8pt + GREEN, radius: 4pt,
+    align(center, text(size: 14.5pt, fill: GREEN, weight: 650)[
+      matrix row 2: $(0.5,1)$ · bias $0.5$ · output $-0.4$
+    ])),
+)
+#pause
+#place(bottom + center, dy: -2pt,
+  result[Arrow colours match the matrix rows and the output weights we will calculate.])
+
+== Compute the blue hidden feature #D
+
+#two(r: (0.72fr, 1.28fr),
+  [#align(center, diagram(spacing: (26mm, 14mm), node-stroke: 0.9pt, {
+    edge((0, -0.65), (1, 0), text(size: 14pt, weight: 700, fill: BLUE)[$+1$],
+      "-|>", stroke: 1.3pt + BLUE, label-side: left)
+    edge((0, 0.65), (1, 0), text(size: 14pt, weight: 700, fill: BLUE)[$-1$],
+      "-|>", stroke: 1.3pt + BLUE, label-side: right)
+    node((0, -0.65), text(fill: white)[$2$], radius: 6mm, fill: INK, stroke: none)
+    node((0, 0.65), text(fill: white)[$-1$], radius: 6mm, fill: INK, stroke: none)
+    node((1, 0), text(fill: white)[$h_1$], radius: 7mm, fill: BLUE, stroke: none)
+    node((1, 0.9), text(size: 12pt, weight: 700, fill: BLUE)[bias $0$], stroke: none)
   }))],
-  [#pause
-   *Hidden layer*
-   $ bold(W)_1 = mat(1, -1; 0.5, 1), quad bold(b)_1=(0,0.5) $
+  [*Pre-activation*
+   #v(5pt)
+   $ u_1 = mat(1, -1) mat(2; -1) + 0 $
+   $ u_1 = 1(2) + (-1)(-1) + 0 $
+   $ u_1 = 2 + 1 = 3. $
+   #pause
    #v(7pt)
-   *Output layer*
-   $ bold(w)_2=(0.8,-0.4), quad b_2=-1 $
+   *Activation*
+   $ h_1 = "ReLU"(u_1) = max(0,3) = 3. $],
+)
+#pause
+#place(bottom + center, dy: -2pt,
+  result[The blue unit computes the concrete feature $h_1(bold(x))="ReLU"(x_1-x_2)$.])
+
+== Compute the green hidden feature #D
+
+#two(r: (0.72fr, 1.28fr),
+  [#align(center, diagram(spacing: (26mm, 14mm), node-stroke: 0.9pt, {
+    edge((0, -0.65), (1, 0), text(size: 14pt, weight: 700, fill: GREEN)[$+0.5$],
+      "-|>", stroke: 1.3pt + GREEN, label-side: left)
+    edge((0, 0.65), (1, 0), text(size: 14pt, weight: 700, fill: GREEN)[$+1$],
+      "-|>", stroke: 1.3pt + GREEN, label-side: right)
+    node((0, -0.65), text(fill: white)[$2$], radius: 6mm, fill: INK, stroke: none)
+    node((0, 0.65), text(fill: white)[$-1$], radius: 6mm, fill: INK, stroke: none)
+    node((1, 0), text(fill: white)[$h_2$], radius: 7mm, fill: GREEN, stroke: none)
+    node((1, 0.9), text(size: 12pt, weight: 700, fill: GREEN)[bias $+0.5$], stroke: none)
+  }))],
+  [*Pre-activation*
+   #v(5pt)
+   $ u_2 = mat(0.5, 1) mat(2; -1) + 0.5 $
+   $ u_2 = 0.5(2) + 1(-1) + 0.5 $
+   $ u_2 = 1 - 1 + 0.5 = 0.5. $
+   #pause
    #v(7pt)
-   *Training example*
-   $ y=1, quad cal(L)=-log p $
+   *Activation*
+   $ h_2 = "ReLU"(u_2) = max(0,0.5) = 0.5. $],
+)
+#pause
+#place(bottom + center, dy: -2pt,
+  result[The green unit computes $h_2(bold(x))="ReLU"(0.5x_1+x_2+0.5)$.])
+
+== Check both hidden calculations in matrix form #D
+
+#align(center, text(size: 20pt)[
+  $bold(u)=bold(W)_1 bold(x)+bold(b)_1$
+])
+#v(5pt)
+#align(center, text(size: 18pt)[
+  $= mat(1,-1;0.5,1) mat(2;-1) + mat(0;0.5).$
+])
+#v(6pt)
+#grid(
+  columns: (1fr, 1fr), column-gutter: 14pt,
+  block(inset: 8pt, fill: BLUE.lighten(93%), stroke: 0.9pt + BLUE, radius: 4pt,
+    align(center, text(size: 16.5pt, fill: BLUE, weight: 650)[
+      $u_1=1(2)+(-1)(-1)+0=3$
+    ])),
+  block(inset: 8pt, fill: GREEN.lighten(94%), stroke: 0.9pt + GREEN, radius: 4pt,
+    align(center, text(size: 16.5pt, fill: GREEN, weight: 650)[
+      $u_2=0.5(2)+1(-1)+0.5=0.5$
+    ])),
+)
+#pause
+#v(6pt)
+#align(center, text(size: 21pt)[
+  $bold(h)="ReLU"(bold(u))
+    = mat(max(0,3); max(0,0.5))
+    = mat(3;0.5).$
+])
+#pause
+#place(bottom + center, dy: -2pt,
+  result[Rows of $bold(W)_1$ are neurons: each row computes one pre-activation, then ReLU acts elementwise.])
+
+== Combine the two features, then compute probability and loss #D
+
+#two(r: (0.78fr, 1.22fr),
+  [#align(center, diagram(spacing: (26mm, 14mm), node-stroke: 0.9pt, {
+    edge((0, -0.65), (1, 0), text(size: 14pt, weight: 700, fill: BLUE)[$+0.8$],
+      "-|>", stroke: 1.3pt + BLUE, label-side: left)
+    edge((0, 0.65), (1, 0), text(size: 14pt, weight: 700, fill: GREEN)[$-0.4$],
+      "-|>", stroke: 1.3pt + GREEN, label-side: right)
+    edge((1, 0), (2, 0), "-|>", stroke: 1.0pt + ACC)
+    node((0, -0.65), text(fill: white)[$h_1=3$], radius: 7mm, fill: BLUE, stroke: none)
+    node((0, 0.65), text(fill: white)[$h_2=0.5$], radius: 7mm, fill: GREEN, stroke: none)
+    node((1, 0), text(fill: white)[$z$], radius: 6mm, fill: ACC, stroke: none)
+    node((2, 0), text(fill: white)[$p$], radius: 6mm, fill: ACC, stroke: none)
+    node((1, 0.9), text(size: 12pt, weight: 700, fill: ACC)[bias $-1$], stroke: none)
+  }))],
+  [#set text(size: 16.5pt)
+   *Score* \
+   $ z = mat(0.8,-0.4) mat(3;0.5)-1 = 0.8(3)-0.4(0.5)-1 = 1.2. $
+   #pause
+   *Probability* \
+   $ p=sigma(1.2)=frac(1,1+exp(-1.2)) approx 0.769. $
+   #pause
+   *Binary cross-entropy for $y=1$* \
+   $ cal(L)=-[1 log p + 0 log(1-p)] =-log(0.769) approx 0.262. $],
+)
+#pause
+#place(bottom + center, dy: -2pt,
+  result[$bold(x) arrow.r bold(u) arrow.r bold(h) arrow.r z arrow.r p arrow.r cal(L)$ is one complete forward pass.])
+
+== What exact features did the two hidden units learn? #V
+
+#grid(
+  columns: (1fr, 1fr), column-gutter: 14pt,
+  block(inset: 10pt, fill: BLUE.lighten(92%), stroke: 1pt + BLUE, radius: 4pt)[
+    #text(size: 18pt, weight: 700, fill: BLUE)[BLUE FEATURE]
+    #v(5pt)
+    $h_1(bold(x))="ReLU"(x_1-x_2)$
+    #v(5pt)
+    Boundary: $x_2=x_1$ #linebreak()
+    Active side: $x_1>x_2$
+    #v(7pt)
+    $h_1(2,-1)=3$ *on* #linebreak()
+    $h_1(0,1)=0$ *off*
+  ],
+  block(inset: 10pt, fill: GREEN.lighten(93%), stroke: 1pt + GREEN, radius: 4pt)[
+    #text(size: 18pt, weight: 700, fill: GREEN)[GREEN FEATURE]
+    #v(5pt)
+    $h_2(bold(x))="ReLU"(0.5x_1+x_2+0.5)$
+    #v(5pt)
+    Boundary: $x_2=-0.5x_1-0.5$ #linebreak()
+    Active side: points above this line
+    #v(7pt)
+    $h_2(2,-1)=0.5$ *on* #linebreak()
+    $h_2(0,-1)=0$ *off*
   ],
 )
 #pause
 #v(7pt)
-#align(center, text(size: 17pt)[
-  $bold(x) arrow.r bold(u)=bold(W)_1 bold(x)+bold(b)_1 arrow.r bold(h)="ReLU"(bold(u))$
-  $arrow.r z=bold(w)_2^top bold(h)+b_2 arrow.r p=sigma(z) arrow.r cal(L)$
+#align(center, text(size: 18pt)[
+  At $bold(x)=(2,-1)$, the output receives
+  #text(fill: BLUE, weight: 700)[$0.8h_1=2.4$] and
+  #text(fill: GREEN, weight: 700)[$-0.4h_2=-0.2$].
 ])
 #pause
 #place(bottom + center, dy: -2pt,
-  result[Now calculate the same network from left to right.])
-
-== Work a $2 arrow.r 2$ hidden layer by hand
-#stag(D)
-
-Let $bold(x)=(2,-1)$ and
-$ bold(W)_1 = mat(1, -1; 0.5, 1), quad bold(b)_1=(0,0.5). $
-#pause
-The hidden pre-activation is
-$ bold(u) = bold(W)_1 bold(x)+bold(b)_1 = (3,0.5). $
-#pause
-Apply ReLU elementwise:
-$ bold(h) = "ReLU"(bold(u)) = (3,0.5). $
-#pause
-#result[The hidden layer converts the raw input into two learned features.]
-
-== The output layer turns hidden features into a prediction
-#stag(D)
-
-For binary classification, choose $bold(w)_2=(0.8,-0.4)$ and $b_2=-1$.
-#pause
-$ z = bold(w)_2^top bold(h)+b_2 = 0.8(3)-0.4(0.5)-1 = 1.2. $
-#pause
-$ p = sigma(1.2) approx 0.769. $
-#pause
-If $y=1$, then $cal(L)=-log(0.769) approx 0.262$.
-#pause
-#result[$bold(x) arrow.r bold(h) arrow.r z arrow.r p arrow.r cal(L)$ is one complete forward pass.]
-
-== Each hidden neuron creates one learned feature
-
-$ h_j = phi(bold(w)_j^top bold(x) + b_j) $
-#pause
-- the first layer *learns features*;
-- the output layer *combines* them.
-#pause
-For ReLU, $h_j = max(0, bold(w)_j^top bold(x) + b_j)$ — each unit is active on one side of a hyperplane.
+  result[A learned feature is a concrete input-dependent number—not an abstract label.])
 
 == The feature-transformation view #V
 
@@ -542,44 +650,33 @@ $ bold(z) = bold(W)_L bold(h)^((L - 1)) + bold(b)_L $
 #place(bottom + center, dy: -2pt,
   result[Each hidden layer transforms the previous representation. The output layer then produces task-specific scores or predictions.])
 
-== Width and depth enlarge a network differently #V
+// ═══════════════════════════ PART VII — Universal approximation ═══════════════════════════
+= Universal approximation
 
-#two(
-  [
-    #align(center, [
-      #text(size: 20pt, weight: 700, fill: ACC)[WIDER]
-      #v(3pt)
-      #text(size: 16pt)[One hidden layer, *six neurons*]
-      #v(7pt)
-      #mlp-diagram((2, 6, 1))
-    ])
-  ],
-  [
-    #pause
-    #align(center, [
-      #text(size: 20pt, weight: 700, fill: TEAL)[DEEPER]
-      #v(3pt)
-      #text(size: 16pt)[Two hidden layers, *three neurons each*]
-      #v(7pt)
-      #mlp-diagram((2, 3, 3, 1))
-    ])
-  ],
+== Universal approximation asks a precise question #Q
+
+#two(r: (1.08fr, 0.92fr),
+  [Choose:
+   #v(6pt)
+   - a *continuous target* $f$;
+   - a *closed, bounded input region* $D$;
+   - an error tolerance $epsilon>0$.
+   #pause
+   #v(7pt)
+   Can a finite neural network $g$ make
+   $ abs(f(x)-g(x)) < epsilon $
+   for *every* $x in D$?],
+  [#pause
+   #notebox[
+     *Universal-approximation theorem* \
+     With a suitable nonlinear activation, a one-hidden-layer network can approximate every continuous $f$ on $D$ as closely as requested.
+   ]
+   #v(8pt)
+   #alertbox[This first says a network *exists*. It does not yet say that training will find it.]],
 )
 #pause
 #place(bottom + center, dy: -2pt,
-  result[*Width* adds neurons within a layer. *Depth* adds successive transformations.])
-
-== Interactive: MLP decision boundaries #I
-
-#interbox(link-to: IA + "mlp-decision-boundary")[
-  Train a linear classifier or a small MLP on *XOR / circles / spirals / moons* and watch the boundary form.
-  Controls: dataset · linear/MLP · hidden width · one/two layers · activation · train/reset/resample.
-]
-#pause
-Compare wider layers (more features at one stage) with deeper layers (more composed stages).
-
-// ═══════════════════════════ PART VII — Universal approximation ═══════════════════════════
-= Why MLPs represent complex functions
+  result[We will build the intuition with ReLU hinges, then read the formal claim carefully.])
 
 == A ReLU contributes one hinge #V
 
@@ -690,7 +787,7 @@ Compare wider layers (more features at one stage) with deeper layers (more compo
       #lines(
         fn: x => calc.max(0, x),
         domain: (-1, 3), samples: 100, markers: false, colors: (BLUE,),
-        points: ((0, 0, [$0$]),), y-ticks: false,
+        points: ((0, 0, [$(0,0)$]), (2.5, 2.5, [$(2.5,2.5)$])),
         x-label: [$x$], y-label: [$g_1(x)$], size: (47mm, 36mm),
       )
       #v(5pt)
@@ -705,7 +802,7 @@ Compare wider layers (more features at one stage) with deeper layers (more compo
       #lines(
         fn: x => -2 * calc.max(0, x - 1),
         domain: (-1, 3), samples: 100, markers: false, colors: (RED,),
-        points: ((1, 0, [$1$]),), y-ticks: false,
+        points: ((1, 0, [$(1,0)$]), (2.5, -3, [$(2.5,-3)$])),
         x-label: [$x$], y-label: [$g_2(x)$], size: (47mm, 36mm),
       )
       #v(5pt)
@@ -720,7 +817,7 @@ Compare wider layers (more features at one stage) with deeper layers (more compo
       #lines(
         fn: x => calc.max(0, x - 2),
         domain: (-1, 3), samples: 100, markers: false, colors: (GREEN,),
-        points: ((2, 0, [$2$]),), y-ticks: false,
+        points: ((2, 0, [$(2,0)$]), (2.5, 0.5, [$(2.5,0.5)$])),
         x-label: [$x$], y-label: [$g_3(x)$], size: (47mm, 36mm),
       )
       #v(5pt)
@@ -822,14 +919,49 @@ Compare wider layers (more features at one stage) with deeper layers (more compo
 #place(bottom + center, dy: -2pt,
   result[Adding hidden units adds breakpoints and reduces the approximation gap.])
 
-== Interactive: build functions from ReLU hinges #I
+== Learned ReLU units are the theorem's building blocks #D
 
-#interbox(link-to: "https://nipunbatra.github.io/dl-teaching/interactives/relu-function-builder.html")[
-  Recreate the sequence: inspect one hinge, combine three into a tent, add two more for a two-peak function, then increase the number of knots used to approximate $sin x$.
-  Controls: preset · hidden-unit count · hinge location · output weight · show components.
-]
+For a one-dimensional input, a trained hidden unit has the form
+$ h_j(x)="ReLU"(w_j x+b_j), quad g(x)=c+sum_j v_j h_j(x). $
 #pause
-#align(center, text(size: 17pt)[Predict which local slope will change *before* moving a hinge or its output weight.])
+#v(5pt)
+#align(center, {
+  set text(size: 14pt)
+  table(
+    columns: (15mm, 24mm, 24mm, 24mm, 34mm, 58mm),
+    stroke: 0.5pt + MUTED, inset: (x: 6pt, y: 5pt),
+    align: (center, center, center, center, center, left),
+    table.header([$j$], [hinge $t_j$], [$w_j$], [$b_j$], [output $v_j$], [signed component $v_j h_j(x)$]),
+    [1], [$0$], [$1$], [$0$], [#text(fill: BLUE, weight: 700)[$+1$]], [#text(fill: BLUE)[$+"ReLU"(x)$]],
+    [2], [$1$], [$1$], [$-1$], [#text(fill: RED, weight: 700)[$-2$]], [#text(fill: RED)[$-2"ReLU"(x-1)$]],
+    [3], [$2$], [$1$], [$-2$], [#text(fill: GREEN, weight: 700)[$+1$]], [#text(fill: GREEN)[$+"ReLU"(x-2)$]],
+  )
+})
+#pause
+#place(bottom + center, dy: -2pt,
+  result[Training learns hinge locations and signed contributions; universal approximation says enough such units can make the remaining gap arbitrarily small.])
+
+== Interactive: inspect the hidden units, not only the final curve #I
+
+#two(r: (1.06fr, 0.94fr),
+  [#interbox(link-to: "https://nipunbatra.github.io/dl-teaching/interactives/relu-function-builder.html")[
+    Recreate one hinge, the three-unit tent, the five-unit two-peak function, and a piecewise-linear approximation to $sin x$.
+  ]],
+  [*Translate every control into a parameter:*
+   #v(6pt)
+   - hinge location $t_j arrow.r b_j=-w_j t_j$;
+   - hidden slope $w_j arrow.r$ orientation/scale;
+   - output weight $v_j arrow.r$ sign and slope change;
+   - show components $arrow.r v_j h_j(x)$ and their sum.],
+)
+#pause
+#v(7pt)
+#align(center, text(size: 17pt)[
+  For each preset, read off the *set of units* $(w_j,b_j,v_j)$ first; then verify that their coloured signed components add to the displayed network output.
+])
+#pause
+#place(bottom + center, dy: -2pt,
+  result[The builder is a parameter-level view of the same finite network used in the theorem.])
 
 == First fix the target and the input region #V
 
@@ -856,39 +988,63 @@ Compare wider layers (more features at one stage) with deeper layers (more compo
 #place(bottom + center, dy: -2pt,
   result[Approximation begins with one target function on one specified input region.])
 
-== “Within $epsilon$” means close at every input #V
+== First measure the vertical gap at one input #V
 
-#grid(
-  columns: (1fr, 1fr), column-gutter: 18pt,
-  [
-    #align(center, lines(
-      fn: (x => calc.sin(x), x => _sin-pwl(x, knots: 13)),
-      domain: (-3.14, 3.14), samples: 220,
-      labels: ([$f(x)$: target], [$g(x)$: network]),
-      colors: (INK, ACC), dashes: ("solid", "dashed"), markers: (false, false),
-      legend: "tl", x-label: [$x$], y-label: [output],
-      title: [target and approximation], size: (84mm, 49mm),
-    ))
-  ],
-  [
-    #pause
-    #align(center, lines(
-      fn: (x => calc.abs(calc.sin(x) - _sin-pwl(x, knots: 13)), x => 0.05),
-      domain: (-3.14, 3.14), samples: 220,
-      labels: ([$abs(f(x)-g(x))$], [$epsilon=0.05$]),
-      colors: (ACC, RED), dashes: ("solid", "dashed"), markers: (false, false),
-      legend: "tr", x-label: [$x$], y-label: [error],
-      title: [pointwise error], size: (84mm, 49mm),
-    ))
-  ],
+#two(r: (1.12fr, 0.88fr),
+  align(center, lines(
+    fn: (x => calc.sin(x), x => _sin-pwl(x, knots: 7)),
+    domain: (-3.14, 3.14), samples: 220,
+    labels: ([$f(x)$ target], [$g(x)$ network]),
+    colors: (INK, ACC), dashes: ("solid", "dashed"), markers: (false, false),
+    legend: "tl", vlines: ((1.57, [$x_0$], MUTED),),
+    points: ((1.57, calc.sin(1.57), [$f(x_0)$]),
+      (1.57, _sin-pwl(1.57, knots: 7), [$g(x_0)$])),
+    x-label: [$x$], y-label: [output], title: [compare at $x_0=1.57$],
+    size: (93mm, 55mm),
+  )),
+  [At one selected input $x_0$:
+   #v(9pt)
+   $ e(x_0)=abs(f(x_0)-g(x_0)). $
+   #pause
+   #v(9pt)
+   Here,
+   $ f(1.57) approx 1.00, $
+   $ g(1.57) approx 0.87, $
+   $ e(1.57) approx 0.13. $
+   #v(8pt)
+   #notebox[Pointwise error is the vertical distance between the two curves at one $x$.]],
 )
 #pause
-#align(center, text(size: 17pt, fill: MUTED)[
-  $sup_(x in D) abs(f(x)-g(x))$ is the *largest vertical gap* anywhere on $D$.
-])
+#place(bottom + center, dy: -2pt,
+  result[Universal approximation requires controlling this gap at every input—not just at one convenient point.])
+
+== “sup” means the worst gap over the whole region #V
+
+#two(r: (0.9fr, 1.1fr),
+  [#set text(size: 16pt)
+   #text(size: 19pt)[$sup_(x in D) abs(f(x)-g(x))$]
+   #v(5pt)
+   *sup* means *supremum*: the smallest number at least as large as every pointwise error.
+   #pause
+   #v(5pt)
+   Here the error is continuous and $D=[-pi,pi]$ is closed and bounded, so a highest error exists. In this plot, read *sup* as *maximum*.
+   #v(6pt)
+   *$sup < epsilon$*: no input in $D$ crosses the tolerance.],
+  [#pause
+   #align(center, lines(
+     fn: (x => calc.abs(calc.sin(x) - _sin-pwl(x, knots: 13)), x => 0.06),
+     domain: (-3.14, 3.14), samples: 220,
+     colors: (ACC, ACC.transparentize(100%)),
+     dashes: ("solid", "solid"), markers: (false, false),
+     hlines: ((0.05, [$epsilon=0.05$], RED),),
+     points: ((1.31, 0.0329, [worst gap $approx 0.033$]),),
+     x-label: [$x$], y-label: [$abs(f(x)-g(x))$],
+     title: [error only], size: (88mm, 55mm),
+   ))],
+)
 #pause
 #place(bottom + center, dy: -2pt,
-  result[The guarantee is uniform: no input in the interval may exceed the chosen tolerance.])
+  result[The entire orange error curve stays below $epsilon=0.05$, so the uniform guarantee is satisfied.])
 
 == More hinges reduce the largest approximation error #V
 
@@ -990,116 +1146,206 @@ Universal approximation does *not* promise:
 #pause
 #result[expressivity $eq.not$ trainability $eq.not$ generalization]
 
-== Composition means feeding one result into the next #V
+// ═══════════════════════════ PART VIII — Depth versus width ═══════════════════════════
+= Depth versus width
 
-Start with two small functions:
-$ f_1(x) = 2x + 1, quad f_2(u) = u^2. $
-#pause
-#v(8pt)
-#align(center, diagram(spacing: (13mm, 10mm), node-stroke: 0.9pt, {
-  edge((0, 0), (1, 0), "-|>", stroke: 0.9pt + MUTED)
-  edge((1, 0), (2, 0), "-|>", stroke: 0.9pt + MUTED)
-  edge((2, 0), (3, 0), "-|>", stroke: 0.9pt + MUTED)
-  edge((3, 0), (4, 0), "-|>", stroke: 0.9pt + MUTED)
+== Width and depth enlarge a network differently #V
 
-  node((0, 0), text(fill: white)[$x=1$], radius: 7mm, fill: INK, stroke: none)
-  node((1, 0), [$f_1(x)=2x+1$], shape: fletcher.shapes.rect,
-    fill: TEAL.lighten(84%), stroke: TEAL, inset: 8pt)
-  node((2, 0), text(fill: white)[$u=3$], radius: 7mm, fill: TEAL, stroke: none)
-  node((3, 0), [$f_2(u)=u^2$], shape: fletcher.shapes.rect,
-    fill: ACC.lighten(86%), stroke: ACC, inset: 8pt)
-  node((4, 0), text(fill: white)[$y=9$], radius: 7mm, fill: ACC, stroke: none)
-}))
-#pause
-#v(10pt)
-#align(center, text(size: 23pt)[
-  $y = f_2(f_1(x)) = (2x+1)^2$
-])
-#pause
-#notebox[The value $u$ is an *intermediate feature*: the second stage uses what the first stage computed.]
-#pause
-#place(bottom + center, dy: -2pt,
-  result[Composition is sequential reuse: $f = f_2 compose f_1$.])
-
-== A deep model can build features in stages #V
-
-Consider recognizing a handwritten *8* from an image:
-#pause
-#v(11pt)
-#align(center, diagram(spacing: (18mm, 12mm), node-stroke: 0.9pt, {
-  edge((0, 0), (1, 0), "-|>", stroke: 0.9pt + MUTED)
-  edge((1, 0), (2, 0), "-|>", stroke: 0.9pt + MUTED)
-  edge((2, 0), (3, 0), "-|>", stroke: 0.9pt + MUTED)
-
-  node((0, 0), align(center)[
-    *PIXELS* #linebreak()
-    #text(size: 15pt, fill: MUTED)[28 $times$ 28 intensities]
-  ], shape: fletcher.shapes.rect, fill: INK.lighten(91%), stroke: INK, inset: 10pt)
-  node((1, 0), align(center)[
-    *STROKES* #linebreak()
-    #text(size: 15pt, fill: MUTED)[curves and short edges]
-  ], shape: fletcher.shapes.rect, fill: TEAL.lighten(86%), stroke: TEAL, inset: 10pt)
-  node((2, 0), align(center)[
-    *PARTS* #linebreak()
-    #text(size: 15pt, fill: MUTED)[upper and lower loops]
-  ], shape: fletcher.shapes.rect, fill: ACC.lighten(87%), stroke: ACC, inset: 10pt)
-  node((3, 0), align(center)[
-    *CLASS* #linebreak()
-    #text(size: 23pt, weight: 750, fill: ACC)[8]
-  ], shape: fletcher.shapes.rect, fill: ACC.lighten(92%), stroke: ACC, inset: 10pt)
-}))
-#pause
-#v(12pt)
-#grid(
-  columns: (1fr, 1fr, 1fr), column-gutter: 12pt,
-  notebox[*Layer 1* detects local contrast.],
-  notebox[*Layer 2* combines strokes into loops.],
-  notebox[*Output* combines parts into a class score.],
+#two(
+  [#align(center, [
+    #text(size: 21pt, weight: 700, fill: ACC)[WIDER]
+    #v(3pt)
+    #text(size: 16pt)[one hidden layer · six parallel features]
+    #v(4pt)
+    #scale(x: 72%, y: 72%, reflow: true)[#mlp-diagram((2, 6, 1))]
+  ])],
+  [#pause
+   #align(center, [
+    #text(size: 21pt, weight: 700, fill: TEAL)[DEEPER]
+    #v(3pt)
+    #text(size: 16pt)[two hidden layers · three features per stage]
+    #v(4pt)
+    #scale(x: 72%, y: 72%, reflow: true)[#mlp-diagram((2, 3, 3, 1))]
+  ])],
 )
 #pause
 #place(bottom + center, dy: -2pt,
-  result[Later features are functions of earlier features: depth mirrors a hierarchy.])
+  result[*Width* adds parallel features; *depth* adds successive transformations. Universal approximation does not say width is always the most efficient organization.])
 
-== Depth can match a compositional problem #V
+== Width buys more basis functions at one stage #V
 
-Suppose the target itself combines eight inputs in stages:
-#pause
-#align(center, text(size: 15pt, weight: 650, fill: MUTED)[
-  INPUTS $arrow.r$ PAIR FEATURES $arrow.r$ GROUP FEATURES $arrow.r$ OUTPUT
-])
-#v(4pt)
-#align(center, diagram(spacing: (18mm, 9mm), node-stroke: 0.8pt, {
-  // Connections first so they stay behind the nodes.
-  for i in range(4) {
-    edge((0, i), (1, i), "-|>", stroke: 0.65pt + MUTED)
-  }
-  for i in range(4) {
-    edge((1, i), (2, calc.floor(i / 2)), "-|>", stroke: 0.8pt + TEAL)
-  }
-  edge((2, 0), (3, 0), "-|>", stroke: 0.9pt + ACC)
-  edge((2, 1), (3, 0), "-|>", stroke: 0.9pt + ACC)
-
-  node((0, 0), [$(x_1,x_2)$], shape: fletcher.shapes.rect,
-    fill: INK.lighten(93%), stroke: INK, inset: 6pt)
-  node((0, 1), [$(x_3,x_4)$], shape: fletcher.shapes.rect,
-    fill: INK.lighten(93%), stroke: INK, inset: 6pt)
-  node((0, 2), [$(x_5,x_6)$], shape: fletcher.shapes.rect,
-    fill: INK.lighten(93%), stroke: INK, inset: 6pt)
-  node((0, 3), [$(x_7,x_8)$], shape: fletcher.shapes.rect,
-    fill: INK.lighten(93%), stroke: INK, inset: 6pt)
-  for i in range(4) {
-    node((1, i), [$h_#(i+1)$], radius: 4.7mm, fill: TEAL.lighten(82%), stroke: TEAL)
-  }
-  for i in range(2) {
-    node((2, i), [$q_#(i+1)$], radius: 5.2mm, fill: ACC.lighten(86%), stroke: ACC)
-  }
-  node((3, 0), text(fill: white)[$y$], radius: 6mm, fill: ACC, stroke: none)
-}))
+#two(r: (0.92fr, 1.08fr),
+  [For a one-hidden-layer ReLU network,
+   $ g(x)=c+sum_(j=1)^m v_j "ReLU"(w_j x+b_j). $
+   #pause
+   #v(8pt)
+   Increasing width $m$ adds:
+   - another learned hinge;
+   - another signed component $v_j h_j$;
+   - potentially another breakpoint.
+   ],
+  [#pause
+   #grid(columns: 1, row-gutter: 9pt,
+     block(inset: 7pt, fill: ACC.lighten(93%), stroke: 0.9pt + ACC, radius: 4pt)[
+       *Width 3* $arrow.r$ three hinges $arrow.r$ one tent
+       #v(3pt)
+       $"ReLU"(x)-2"ReLU"(x-1)+"ReLU"(x-2)$
+     ],
+     block(inset: 7pt, fill: TEAL.lighten(93%), stroke: 0.9pt + TEAL, radius: 4pt)[
+       *Greater width* $arrow.r$ more hinges $arrow.r$ finer curve
+       #v(3pt)
+       $g(x) approx sin x$ on $[-pi,pi]$
+     ],
+   )],
+)
 #pause
 #place(bottom + center, dy: -2pt,
-  result[Each node combines two values, yet $y$ depends on all eight. For some compositional functions, a shallow network needs far more units.])
+  result[Width gives a larger dictionary of features in one layer—the mechanism used in our universal-approximation construction.])
 
-// ═══════════════════════════ PART VIII — Connecting to practice ═══════════════════════════
+== Depth means feeding one learned result into the next #V
+
+#align(center, diagram(spacing: (18mm, 11mm), node-stroke: 0.9pt, {
+  edge((0, 0), (1, 0), "-|>", stroke: 1.0pt + MUTED)
+  edge((1, 0), (2, 0), "-|>", stroke: 1.0pt + TEAL)
+  edge((2, 0), (3, 0), "-|>", stroke: 1.0pt + MUTED)
+  edge((3, 0), (4, 0), "-|>", stroke: 1.0pt + ACC)
+
+  node((0, 0), align(center)[*RAW INPUT* #linebreak() $x=0.25$],
+    shape: fletcher.shapes.rect, fill: INK.lighten(92%), stroke: INK, inset: 9pt)
+  node((1, 0), align(center)[*LAYER 1* #linebreak() $f_1(x)="ReLU"(2x+1)$],
+    shape: fletcher.shapes.rect, fill: TEAL.lighten(90%), stroke: TEAL, inset: 9pt)
+  node((2, 0), text(fill: white)[$h_1=1.5$], radius: 7mm, fill: TEAL, stroke: none)
+  node((3, 0), align(center)[*LAYER 2* #linebreak() $f_2(h)="ReLU"(2-h)$],
+    shape: fletcher.shapes.rect, fill: ACC.lighten(90%), stroke: ACC, inset: 9pt)
+  node((4, 0), text(fill: white)[$h_2=0.5$], radius: 7mm, fill: ACC, stroke: none)
+}))
+#pause
+#v(9pt)
+#align(center, text(size: 21pt)[
+  $h_2=f_2(f_1(x)) = "ReLU"(2-"ReLU"(2x+1)).$
+])
+#pause
+#two(
+  notebox[Layer 1 turns the raw input into the intermediate feature $h_1$.],
+  notebox[Layer 2 never sees raw $x$ directly here; it transforms the learned value $h_1$.],
+)
+#pause
+#place(bottom + center, dy: -2pt,
+  result[Composition is sequential reuse: $f=f_2 compose f_1$. This is what added depth changes.])
+
+== Depth can reuse intermediate computations #V
+
+#two(r: (1.18fr, 0.82fr),
+  [#align(center, diagram(spacing: (17mm, 8mm), node-stroke: 0.8pt, {
+    for i in range(4) {
+      edge((0, i), (1, i), "-|>", stroke: 0.7pt + MUTED)
+      edge((1, i), (2, calc.floor(i / 2)), "-|>", stroke: 0.9pt + TEAL)
+    }
+    edge((2, 0), (3, 0), "-|>", stroke: 1.0pt + ACC)
+    edge((2, 1), (3, 0), "-|>", stroke: 1.0pt + ACC)
+
+    for i in range(4) {
+      node((0, i), [$(x_#(2*i+1),x_#(2*i+2))$], shape: fletcher.shapes.rect,
+        fill: INK.lighten(93%), stroke: INK, inset: 5pt)
+      node((1, i), [$h_#(i+1)$], radius: 4.7mm, fill: TEAL.lighten(82%), stroke: TEAL)
+    }
+    for i in range(2) {
+      node((2, i), [$r_#(i+1)$], radius: 5.2mm, fill: ACC.lighten(86%), stroke: ACC)
+    }
+    node((3, 0), text(fill: white)[$y$], radius: 6mm, fill: ACC, stroke: none)
+  }))],
+  [*Three stages*
+   #v(4pt)
+   $h_1=q(x_1,x_2), dots, h_4=q(x_7,x_8)$
+   #v(6pt)
+   $r_1=q(h_1,h_2), quad r_2=q(h_3,h_4)$
+   #v(6pt)
+   $y=q(r_1,r_2)$
+   #pause
+   #v(8pt)
+   Every small result is computed once, passed forward, and reused by the next stage.],
+)
+#pause
+#place(bottom + center, dy: -2pt,
+  result[When the target has a compositional structure, depth can mirror it; a flat layer must model the full interaction in one step.])
+
+== Concrete feature hierarchies across three tasks #V
+
+#grid(
+  columns: (1fr, 1fr, 1fr), column-gutter: 10pt,
+  block(inset: 8pt, fill: BLUE.lighten(94%), stroke: 0.9pt + BLUE, radius: 4pt)[
+    #align(center, text(size: 34pt, weight: 750, fill: BLUE)[8])
+    #align(center, text(size: 17pt, weight: 700)[VISION])
+    #v(5pt)
+    pixels $arrow.r$ curved strokes $arrow.r$ two loops $arrow.r$ digit 8
+    #v(7pt)
+    #text(size: 13.5pt, fill: MUTED)[edge unit $=2.1$ $arrow.r$ upper-loop unit $=0.8$]
+  ],
+  block(inset: 8pt, fill: TEAL.lighten(94%), stroke: 0.9pt + TEAL, radius: 4pt)[
+    #align(center, lines(
+      fn: x => calc.sin(5*x), domain: (0, 3.14), samples: 90,
+      markers: false, colors: (TEAL,), y-ticks: false, size: (46mm, 15mm),
+    ))
+    #align(center, text(size: 17pt, weight: 700)[AUDIO])
+    #v(5pt)
+    samples $arrow.r$ tones/onsets $arrow.r$ phoneme $arrow.r$ word
+    #v(7pt)
+    #text(size: 13.5pt, fill: MUTED)[$440$ Hz unit $=0.82$ $arrow.r$ onset unit is on]
+  ],
+  block(inset: 8pt, fill: ACC.lighten(94%), stroke: 0.9pt + ACC, radius: 4pt)[
+    #align(center, grid(columns: (auto, auto), column-gutter: 5pt,
+      box(inset: 5pt, fill: white, stroke: 0.7pt + ACC)[not],
+      box(inset: 5pt, fill: white, stroke: 0.7pt + ACC)[good],
+    ))
+    #v(7pt)
+    #align(center, text(size: 17pt, weight: 700)[TEXT])
+    #v(5pt)
+    tokens $arrow.r$ phrase pattern $arrow.r$ sentiment $arrow.r$ class
+    #v(7pt)
+    #text(size: 13.5pt, fill: MUTED)[“not + good” unit $=1.7$ $arrow.r$ negative evidence]
+  ],
+)
+#pause
+#place(bottom + center, dy: -2pt,
+  result[These labels are interpretations of learned numeric responses; later layers combine earlier responses into task-relevant evidence.])
+
+== Depth and width are complementary design choices #D
+
+#align(center, {
+  set text(size: 14.5pt)
+  table(
+    columns: (43mm, 83mm, 83mm), stroke: 0.5pt + MUTED,
+    inset: (x: 8pt, y: 5.5pt), align: (left, left, left),
+    table.header([*Question*], [*Increase width*], [*Increase depth*]),
+    [What is added?], [More parallel features in a layer.], [More successive feature transformations.],
+    [Natural picture], [A larger basis / more ReLU hinges.], [A pipeline or hierarchy of reusable parts.],
+    [Useful when…], [Many patterns must be detected at the same abstraction level.], [The target is naturally compositional or hierarchical.],
+    [Main cost], [Large activations and weight matrices within a layer.], [Longer forward/backward paths and harder optimization.],
+  )
+})
+#pause
+#v(6pt)
+#notebox[There is no universally best shape. Architecture, data, optimization, and compute budget interact; compare models under a meaningful resource budget.]
+#pause
+#place(bottom + center, dy: -2pt,
+  result[Modern networks usually use both: enough width per stage and enough depth to compose stages.])
+
+== Interactive: compare width and depth on the same task #I
+
+#interbox(link-to: IA + "mlp-decision-boundary")[
+  Train a linear classifier or a small MLP on *XOR / circles / spirals / moons*. Compare one versus two hidden layers, then adjust width while watching the learned boundary.
+  Controls: dataset · linear/MLP · hidden width · one/two layers · activation · train/reset/resample.
+]
+#pause
+#v(7pt)
+#align(center, text(size: 17pt)[
+  Hold the dataset fixed. First add width within one layer; then redistribute a similar number of hidden units across two layers. Which boundary appears sooner and which trains more reliably?
+])
+#pause
+#place(bottom + center, dy: -2pt,
+  result[The comparison is empirical: width and depth change both representational structure and optimization behaviour.])
+
+// ═══════════════════════════ PART IX — Connecting to practice ═══════════════════════════
 = Connecting to deep-learning practice
 
 == A forward pass transforms one input, step by step #V
