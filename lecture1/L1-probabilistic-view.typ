@@ -39,8 +39,8 @@ $ cal(L)_"total" = cal(L)_"data" + lambda norm(bold(theta))_2^2 quad #text(fill:
 Two probabilistic assumptions determine the two halves of the objective.
 #v(4pt)
 #align(center, text(size: 17pt, fill: MUTED)[
-  We will define the predictive distribution and likelihood; use i.i.d. to move from one example to a dataset; \
-  then introduce log-likelihood, NLL, the prior $p(bold(theta))$, and MAP.
+  The labels below are signposts, not assumed vocabulary. We proceed in order: predictive distribution and likelihood; \
+  i.i.d. data; log-likelihood and NLL; then the prior $p(bold(theta))$ and MAP.
 ])
 #pause
 #v(6pt)
@@ -61,62 +61,6 @@ Two probabilistic assumptions determine the two halves of the objective.
 
 // ══════════════════════════════ PART II ══════════════════════════════
 = Probability primer
-
-== A point prediction summarizes a distribution
-#stag(V)
-
-#grid(
-  columns: (1fr, 1fr), column-gutter: 28pt,
-  [
-    #text(font: "IBM Plex Mono", size: 12pt, fill: TEAL, weight: 700)[REGRESSION · $Y in RR$]
-    #v(4pt)
-    #text(size: 14.5pt, fill: MUTED)[Point prediction: mean of $Y | bold(X)=bold(x)$]
-    #v(1pt)
-    #text(size: 18pt)[$hat(y)(bold(x)) = bb(E)_(bold(theta))[Y | bold(X)=bold(x)] = mu_(bold(theta))(bold(x))$]
-    #v(5pt)
-    #text(size: 14.5pt, fill: MUTED)[Full predictive distribution]
-    #v(1pt)
-    #align(center, text(size: 16.5pt)[
-      $Y | bold(X) = bold(x)$ \
-      $tilde cal(N)(mu_(bold(theta))(bold(x)), sigma_(bold(theta))^2(bold(x)))$
-    ])
-    #v(4pt)
-    #align(center, lines(
-      fn: y => dist.pdf(dist.normal(mu: 0.0, sigma: 1.0), y),
-      domain: (-3.2, 3.2), samples: 100, markers: false, colors: (ACC,),
-      fill-under: (0, ACC.transparentize(82%)), y-ticks: false,
-      vlines: ((0.0, [$mu_(bold(theta))(bold(x))$], MUTED),),
-      x-label: [$y$], size: (51mm, 20mm),
-    ))
-  ],
-  [
-    #pause
-    #text(font: "IBM Plex Mono", size: 12pt, fill: TEAL, weight: 700)[BINARY CLASSIFICATION · $Y in {0,1}$]
-    #v(4pt)
-    #text(size: 14.5pt, fill: MUTED)[Point prediction: mode of $Y | bold(X)=bold(x)$]
-    #v(1pt)
-    #text(size: 18pt)[$hat(y)(bold(x)) = bold(1)[p_(bold(theta))(bold(x)) >= 0.5]$]
-    #v(5pt)
-    #text(size: 14.5pt, fill: MUTED)[Full predictive distribution]
-    #v(1pt)
-    #align(center, text(size: 16.5pt)[
-      $Y | bold(X) = bold(x)$ \
-      $tilde "Bernoulli"(p_(bold(theta))(bold(x)))$
-    ])
-    #v(4pt)
-    #align(center, bars(
-      (0.25, 0.75), labels: ([$Y=0$], [$Y=1$]), highlight: 1,
-      size: (48mm, 20mm), title: [example: $p_(bold(theta))(bold(x)) = 0.75$],
-    ))
-  ],
-)
-
-#pause
-#place(bottom + center, dy: -2pt, block(
-  fill: rgb("#FDECD6"), inset: (x: 12pt, y: 6pt), radius: 4pt,
-  stroke: 1.2pt + ACC,
-  text(size: 17pt, weight: 600)[Neural network: $bold(x) arrow.r$ distribution parameters. Prediction: $hat(y) =$ mean or mode.],
-))
 
 == Discrete distributions assign probability to outcomes
 #stag(V)
@@ -216,6 +160,7 @@ $ P(a <= Y <= b) = integral_a^b p_Y(y) dif y $
 #stag(V)
 
 $ Y tilde cal(N)(mu, sigma^2) quad quad p(y) = 1/sqrt(2 pi sigma^2) exp(-(y-mu)^2/(2 sigma^2)) $
+#align(center, text(size: 15pt, fill: MUTED)[$mu$ is the mean; $sigma>0$ is the standard deviation (scale); $sigma^2$ is the variance.])
 #pause
 // native: three real Normal densities — μ shifts location, σ sets the scale/height
 #align(center, text(size: 14pt)[
@@ -262,6 +207,62 @@ $ Y tilde cal(N)(mu, sigma^2) quad quad p(y) = 1/sqrt(2 pi sigma^2) exp(-(y-mu)^
 #pause
 #place(bottom + center, dy: -2pt,
   result[Read aloud: “model $bold(theta)$'s probability or density for $y$, given $bold(x)$.”])
+
+== A point prediction summarizes a distribution
+#stag(V)
+
+#grid(
+  columns: (1fr, 1fr), column-gutter: 28pt,
+  [
+    #text(font: "IBM Plex Mono", size: 12pt, fill: TEAL, weight: 700)[REGRESSION · $Y in RR$]
+    #v(4pt)
+    #text(size: 14.5pt, fill: MUTED)[Point prediction: mean of $Y | bold(X)=bold(x)$]
+    #v(1pt)
+    #text(size: 18pt)[$hat(y)(bold(x)) = bb(E)_(bold(theta))[Y | bold(X)=bold(x)] = mu_(bold(theta))(bold(x))$]
+    #v(5pt)
+    #text(size: 14.5pt, fill: MUTED)[Full predictive distribution]
+    #v(1pt)
+    #align(center, text(size: 16.5pt)[
+      $Y | bold(X) = bold(x)$ \
+      $tilde cal(N)(mu_(bold(theta))(bold(x)), sigma_(bold(theta))^2(bold(x)))$
+    ])
+    #v(4pt)
+    #align(center, lines(
+      fn: y => dist.pdf(dist.normal(mu: 0.0, sigma: 1.0), y),
+      domain: (-3.2, 3.2), samples: 100, markers: false, colors: (ACC,),
+      fill-under: (0, ACC.transparentize(82%)), y-ticks: false,
+      vlines: ((0.0, [$mu_(bold(theta))(bold(x))$], MUTED),),
+      x-label: [$y$], size: (51mm, 20mm),
+    ))
+  ],
+  [
+    #pause
+    #text(font: "IBM Plex Mono", size: 12pt, fill: TEAL, weight: 700)[BINARY CLASSIFICATION · $Y in {0,1}$]
+    #v(4pt)
+    #text(size: 14.5pt, fill: MUTED)[Point prediction: most probable outcome (mode)]
+    #v(1pt)
+    #text(size: 18pt)[$hat(y)(bold(x)) = bold(1)[p_(bold(theta))(bold(x)) >= 0.5]$]
+    #v(5pt)
+    #text(size: 14.5pt, fill: MUTED)[Full predictive distribution]
+    #v(1pt)
+    #align(center, text(size: 16.5pt)[
+      $Y | bold(X) = bold(x)$ \
+      $tilde "Bernoulli"(p_(bold(theta))(bold(x)))$
+    ])
+    #v(4pt)
+    #align(center, bars(
+      (0.25, 0.75), labels: ([$Y=0$], [$Y=1$]), highlight: 1,
+      size: (48mm, 20mm), title: [example: $p_(bold(theta))(bold(x)) = 0.75$],
+    ))
+  ],
+)
+
+#pause
+#place(bottom + center, dy: -2pt, block(
+  fill: rgb("#FDECD6"), inset: (x: 12pt, y: 6pt), radius: 4pt,
+  stroke: 1.2pt + ACC,
+  text(size: 17pt, weight: 600)[Neural network: $bold(x) arrow.r$ distribution parameters. Prediction: $hat(y) =$ mean or mode.],
+))
 
 == Prediction fixes the model and varies the outcome
 #stag(V)
@@ -323,7 +324,7 @@ $ L(bold(theta); cal(D)) = p_(bold(theta))(y^star = 1 | bold(x)^star) $
 
 Suppose $Y | mu tilde cal(N)(mu, 1)$ and we observe the fixed value $y^star=1$.
 #v(4pt)
-$ L(mu; y^star=1) = p(y^star=1 | mu) = 1/sqrt(2 pi) exp(-(1-mu)^2/2). $
+$ L(mu; y^star=1) = [p_Y(y | mu)]_(y=1) = 1/sqrt(2 pi) exp(-(1-mu)^2/2). $
 #v(5pt)
 #pause
 #two(r: (1fr, 1.08fr),
@@ -345,7 +346,7 @@ $ L(mu; y^star=1) = p(y^star=1 | mu) = 1/sqrt(2 pi) exp(-(1-mu)^2/2). $
 )
 #pause
 #place(bottom + center, dy: -2pt,
-  result[Discrete or continuous: fix what was observed, then ask which parameter values explain it better.])
+  result[For continuous $Y$, this is a density value—not $P(Y=1)$. Fix the observation, then compare parameter values.])
 
 == A dataset needs a joint likelihood
 #stag(Q)
@@ -516,10 +517,9 @@ Given smoke $S$, two alarms act independently, but their sensitivities differ:
 For i.i.d. supervised examples, treat the observed inputs as fixed. Conditional independence gives
 $ p(cal(D) | bold(theta)) = product_(i=1)^n p_(bold(theta))(y_i | bold(x)_i). $
 #pause
-Taking logs turns the product into the sum used by every training loop:
-$ log p(cal(D) | bold(theta)) = sum_(i=1)^n log p_(bold(theta))(y_i | bold(x)_i). $
+The *factorization* comes from independence; the shared factor form comes from the common model $p_(bold(theta))$.
 #v(7pt)
-#align(center, text(size: 14pt, fill: MUTED)[The *factorization* comes from independence; the shared factor form comes from the common model $p_(bold(theta))$.])
+#align(center, text(size: 14pt, fill: MUTED)[Next we compute this product, then introduce a transform that makes it easier to optimize.])
 #pause
 #place(bottom + center, dy: -2pt,
   result[This is the bridge from one-example likelihood to a dataset loss.])
@@ -564,12 +564,15 @@ Let $Y_i | mu tilde cal(N)(mu,1)$ independently, and observe $y_1=1$, $y_2=2$.
     $L(0) approx 0.242 times 0.054 = 0.013$
   ],
 )
-#v(6pt)
-#pause
-$ log L(1.5) approx -2.09, quad log L(0) approx -4.34. $
 #pause
 #place(bottom + center, dy: -2pt,
   result[For continuous data we multiply *densities*; $mu=1.5$ gives the larger likelihood.])
+
+== Maximum likelihood estimation
+
+$ hat(bold(theta))_"MLE" = arg max_(bold(theta)) p(cal(D) | bold(theta)) $
+#pause
+#notebox[*Maximum likelihood estimation (MLE).* Choose the parameter values that assign the highest likelihood to the observed dataset.]
 
 == Companion notebook: distributions, MLE, and MAP in PyTorch #I
 
@@ -581,8 +584,6 @@ $ log L(1.5) approx -2.09, quad log L(0) approx -4.34. $
 #interbox(link-to: "https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L01/03_robust_linear_regression.ipynb")[
   *Short companion:* fit the same line with Gaussian/MSE, Laplace/MAE, and Student-$t$ losses; then see which observations control each estimate.
 ]
-#pause
-*In class:* predict each result before running the cell; then connect the code to the matching derivation in the slides.
 
 == Coin flips: a likelihood you can compute
 #stag(D)
@@ -764,13 +765,7 @@ $ (dif^2)/(dif theta^2) log L(theta) < 0 $
 At the stationary point $theta^star=0.4$,
 $ -4/(0.4)^2 - 6/(0.6)^2 = -25 - 16.67 approx -41.67 < 0 $
 #place(bottom + center, dy: -2pt,
-  result[Strict concavity $+$ stationary point $arrow.r$ unique global maximum: $hat(theta)_"MLE" = theta^star = 4/10 = 0.4$.])
-
-== Maximum likelihood estimation
-
-$ hat(bold(theta))_"MLE" = arg max_(bold(theta)) p(cal(D) | bold(theta)) $
-#pause
-#notebox[*Interpretation.* Choose the parameter values that assign the *highest likelihood* to the observed dataset.]
+  result[The second derivative is negative everywhere, so the curve bends downward (is strictly concave). Its one stationary point is the unique global maximum: $hat(theta)_"MLE"=0.4$.])
 
 == Maximizing likelihood = minimizing NLL
 #stag(D)
@@ -922,7 +917,7 @@ $ hat(bold(theta))_"MLE" = arg min_(bold(theta)) sum_i underbrace(r_i^2, "square
 Stack the augmented inputs into $tilde(bold(X)) = [bold(1) quad bold(X)]$. Then
 $ hat(bold(y)) = tilde(bold(X)) bold(theta), quad J(bold(theta)) = norm(bold(y) - tilde(bold(X)) bold(theta))_2^2 $
 #pause
-Differentiate and set the gradient to zero:
+The gradient $nabla_(bold(theta))J$ collects one partial derivative per parameter. Set it to zero:
 #align(center, text(size: 17.5pt)[
   $nabla_(bold(theta)) J = 2 tilde(bold(X))^top (tilde(bold(X)) bold(theta) - bold(y)) = bold(0)$
 ])
@@ -975,7 +970,7 @@ $ arg min_(bold(theta)) cal(L)(bold(theta); sigma^2) = arg min_(bold(theta)) sum
 )
 #pause
 #place(bottom + center, dy: -2pt,
-  result[Fit both cases with Gaussian NLL; validate whether uncertainty intervals attain their promised coverage.])
+  result[Fit both cases with Gaussian NLL; validate interval *coverage*: the fraction of targets contained by intervals claiming a stated probability.])
 
 == Homoscedastic vs input-dependent uncertainty
 #stag(V)
@@ -1102,7 +1097,7 @@ $ arg min_(bold(theta)) cal(L)(bold(theta); sigma^2) = arg min_(bold(theta)) sum
 == Tails are easier to compare on a log scale
 #stag(V)
 
-For a fitted mean $hat(y)$, the residual is $r=y-hat(y)$. Compare three unit-scale models for that residual.
+For residual $r=y-hat(y)$, compare unit-scale Gaussian, Laplace, and Student-$t$; $nu=3$ is its degrees of freedom.
 #v(3pt)
 #align(center, text(size: 13.5pt)[
   #plot-swatch(ACC, [Gaussian]) #h(14pt)
@@ -1121,7 +1116,6 @@ For a fitted mean $hat(y)$, the residual is $r=y-hat(y)$. Compare three unit-sca
       colors: (ACC, TEAL, GREEN), x-label: [residual $r$], y-label: [$p(r)$],
       vlines: ((4.0, [$r=4$], MUTED),), y-ticks: false, size: (76mm, 41mm),
     ))
-    #align(center, text(size: 13.5pt, fill: MUTED)[Near the centre, all three look plausible.])
   ],
   [
     #pause
@@ -1134,11 +1128,10 @@ For a fitted mean $hat(y)$, the residual is $r=y-hat(y)$. Compare three unit-sca
       colors: (ACC, TEAL, GREEN), x-label: [residual $r$], y-label: [relative $log p(r)$],
       vlines: ((4.0, [$r=4$], MUTED),), size: (76mm, 41mm),
     ))
-    #align(center, text(size: 13.5pt, fill: MUTED)[The Gaussian tail falls much faster.])
   ],
 )
 #place(bottom + center, dy: -2pt,
-  result[Heavy tails assign more density—and therefore less surprise—to an occasional large residual.])
+  result[Smaller $nu$ means heavier Student-$t$ tails. Heavy tails make an occasional large residual less surprising.])
 
 == A large residual is less surprising under heavy tails
 #stag(D)
@@ -1232,23 +1225,16 @@ For one observation, $hat(y)_i=f_(bold(theta))(bold(x)_i)$ and $r_i=y_i-hat(y)_i
     edge((2,0),(3,0), "-|>", stroke: 1pt + MUTED)
   }
 ))
-#v(7pt)
-#align(center, text(size: 18pt)[
-  $psi(r) = - dif/(dif r) log p_R(r)$
-])
+#v(3pt)
+#align(center, text(size: 15.5pt)[$ell(r)=-log p_R(r) quad arrow.r quad psi(r)=dif ell/(dif r)=-1/(p_R(r)) dif p_R(r)/(dif r)$])
 #pause
-#align(center, block(fill: rgb("#EFEEEB"), stroke: 0.8pt + INK, radius: 4pt, inset: (x: 12pt, y: 7pt))[
-  $
-    nabla_(bold(theta)) ell_i
-    = psi(r_i) nabla_(bold(theta)) r_i
-    = -psi(r_i) nabla_(bold(theta)) f_(bold(theta))(bold(x)_i).
-  $
+#align(center, block(fill: rgb("#EFEEEB"), stroke: 0.8pt + INK, radius: 4pt, inset: (x: 10pt, y: 5pt))[
+  #text(size: 16pt)[$nabla_(bold(theta)) ell_i=psi(r_i)nabla_(bold(theta))r_i=-psi(r_i)nabla_(bold(theta))f_(bold(theta))(bold(x)_i).$]
 ])
-#align(center, text(size: 13.5pt, fill: MUTED)[residual derivative $times$ residual-to-model derivative])
-#v(5pt)
+#align(center, text(size: 13pt, fill: MUTED)[chain rule: residual-loss derivative $times$ residual-to-model derivative])
+#v(3pt)
 #pause
-#align(center, text(size: 17pt)[For $f_(bold(theta))(x)=b+w x$ with $bold(theta)=(b,w)$:])
-#align(center, text(size: 20pt)[$nabla_(bold(theta)) ell_i=-psi(r_i)(1,x_i)^top.$])
+#align(center, text(size: 16pt)[Linear example: $f_(bold(theta))(x)=theta_0+theta_1x quad arrow.r quad nabla_(bold(theta))ell_i=-psi(r_i)(1,x_i)^top.$])
 #place(bottom + center, dy: -3pt,
   result[The density chooses $psi(r)$; the model supplies $nabla_(bold(theta)) f$. Their product is the observation's parameter gradient.])
 
@@ -1272,9 +1258,9 @@ For one observation, $hat(y)_i=f_(bold(theta))(bold(x)_i)$ and $r_i=y_i-hat(y)_i
   [$r/sigma^2$],
   table.hline(stroke: 0.45pt + MUTED.transparentize(45%)),
   [#text(fill: TEAL, weight: 700)[Laplace]],
-  [$1/(2b)e^(-abs(r)/b)$],
-  [$abs(r)/b+C$],
-  [$"sign"(r)/b$],
+  [$1/(2s_L)e^(-abs(r)/s_L)$],
+  [$abs(r)/s_L+C$],
+  [$"sign"(r)/s_L$],
   table.hline(stroke: 0.8pt + INK),
 ))
 #v(9pt)
@@ -1283,7 +1269,7 @@ For one observation, $hat(y)_i=f_(bold(theta))(bold(x)_i)$ and $r_i=y_i-hat(y)_i
   $nabla_(bold(theta)) ell_i=-psi(r_i)nabla_(bold(theta)) f_(bold(theta))(bold(x)_i)$
 ])
 #v(7pt)
-#align(center, notebox[At $r=0$, Laplace uses the subgradient interval $[-1/b,1/b]$. Away from zero, its gradient magnitude is capped at $1/b$.])
+#align(center, notebox[At $r=0$, $abs(r)$ has no single derivative; optimization uses any slope in $[-1/s_L,1/s_L]$, called a *subgradient*. Away from zero, the gradient magnitude is $1/s_L$.])
 #place(bottom + center, dy: -3pt,
   result[Gaussian influence grows with $abs(r)$; Laplace influence has constant magnitude.])
 
@@ -1291,6 +1277,7 @@ For one observation, $hat(y)_i=f_(bold(theta))(bold(x)_i)$ and $r_i=y_i-hat(y)_i
 #stag(D)
 
 For degrees of freedom $nu$ and scale $s$:
+#align(center, text(size: 14pt, fill: MUTED)[$nu$ controls tail heaviness; $s>0$ sets residual scale; $c_(nu,s)>0$ normalizes the density to integrate to $1$.])
 #v(7pt)
 #grid(
   columns: (32mm, 1fr), row-gutter: 10pt, column-gutter: 12pt,
@@ -1442,19 +1429,19 @@ For degrees of freedom $nu$ and scale $s$:
     ])
   ],
   [
-    #text(weight: 700)[Learned $hat(y)=b+w x$]
+    #text(weight: 700)[Learned $hat(y)=theta_0+theta_1 x$]
     #v(5pt)
     #table(
       columns: (1fr, 38mm), stroke: none,
       inset: (x: 4pt, y: 4pt), align: (left, center, center),
-      table.header([*model*], [*fitted $(b,w)$*]),
+      table.header([*model*], [*fitted $(theta_0,theta_1)$*]),
       table.hline(stroke: 1pt + INK),
       [#text(fill: ACC)[Gaussian]], [$(-0.040,0.397)$],
       [#text(fill: TEAL)[Laplace]], [$(0.044,0.906)$],
       [#text(fill: GREEN)[Student-$t$]], [$(0.053,0.882)$],
       table.hline(stroke: 0.7pt + INK),
     )
-    #align(center, text(size: 11.5pt, fill: MUTED)[$sigma=1$ · $b=1$ · $(nu,s)=(3,1)$])
+    #align(center, text(size: 11.5pt, fill: MUTED)[$sigma=1$ · $s_L=1$ · $(nu,s)=(3,1)$])
     #v(7pt)
     #pause
     #notebox[All twelve observations are retained. The models differ only in the residual likelihood optimized.]
@@ -1502,7 +1489,7 @@ For degrees of freedom $nu$ and scale $s$:
     #table(
       columns: (16mm, 16mm, 38mm), stroke: none,
       inset: (x: 4pt, y: 3pt), align: center,
-      table.header([*$nu$*], [*$s$*], [*fitted $(b,w)$*]),
+      table.header([*$nu$*], [*$s$*], [*fitted $(theta_0,theta_1)$*]),
       table.hline(stroke: 1pt + INK),
       [$1$], [$1$], [$(0.064,0.928)$],
       [$3$], [$0.5$], [$(0.065,0.934)$],
@@ -1516,7 +1503,7 @@ For degrees of freedom $nu$ and scale $s$:
   ],
 )
 #pause
-#align(center, text(size: 13.5pt, fill: MUTED)[For unregularized Gaussian and Laplace fits, changing the fixed scale only rescales the objective and leaves $(b,w)$ unchanged; Student-$t$ scale changes relative residual weights.])
+#align(center, text(size: 13.5pt, fill: MUTED)[For unregularized Gaussian and Laplace fits, changing the fixed scale only rescales the objective and leaves $(theta_0,theta_1)$ unchanged; Student-$t$ scale changes relative residual weights.])
 #place(bottom + center, dy: -3pt,
   result[$nu$ and $s$ are modelling choices: cross-validation or domain knowledge should choose how quickly an observation is treated as a tail event.])
 
@@ -1535,6 +1522,7 @@ _Controls:_ Gaussian / Laplace / Uniform / Student-$t$ · noise scale · slope &
 
 For $K$ classes:
 $ p_(bold(theta))(Y=k | bold(x)) >= 0, quad quad sum_(k=1)^K p_(bold(theta))(Y=k | bold(x)) = 1 $
+#align(center, text(size: 14.5pt, fill: MUTED)[A network first produces unconstrained class scores, called *logits*; sigmoid or softmax converts them to probabilities. We derive both below.])
 #pause
 #let _logits = (1.4, 0.6, -0.8)
 #align(center, grid(
@@ -1559,16 +1547,14 @@ $ p_(bold(theta))(Y=k | bold(x)) >= 0, quad quad sum_(k=1)^K p_(bold(theta))(Y=k
     )),
   ),
 ))
-#align(center, text(size: 15.5pt)[
-  $f_(bold(theta))$ may be *linear* (softmax regression) or *nonlinear* (a neural network). \
-  It produces *logits* $z_k in RR$; softmax converts them to *probabilities* $p_k in [0,1]$.
-])
+#align(center, text(size: 15.5pt)[$f_(bold(theta))$ may be linear or nonlinear; the probability constraints come from the output transformation.])
 
 == Binary classification: Bernoulli model
 
 $ Y | bold(X) = bold(x) tilde "Bernoulli"(p_(bold(theta))(bold(x))) $
 #pause
 Compact one-line form:
+Write $p=p_(bold(theta))(bold(x))$. Then
 $ p_(bold(theta))(y | bold(x)) = p^y (1-p)^(1-y) $
 #pause
 #two(notebox[$y=1 => p(y)=p$], notebox[$y=0 => p(y)=1-p$])
@@ -1583,6 +1569,47 @@ $ = -y log p - (1-y) log(1-p) $
 #result[Binary cross-entropy = Bernoulli NLL.]
 #pause
 #notebox[*Check.* True label $y=1$: if $p=0.8$ the loss is $-log 0.8 approx 0.22$; if $p=0.2$ it is $-log 0.2 approx 1.61$.]
+
+== Why BCE matches a binary label better than MSE
+#stag(OPT)
+
+For one observed example, let the target be $y=1$ and the model predict
+#v(2pt)
+#align(center, text(size: 20pt, weight: 650)[$p = P(Y=1|bold(x))=0.8.$])
+#v(8pt)
+#pause
+#two(r: (1fr, 1fr),
+  [
+    #text(fill: ACC, weight: 700)[Squared error]
+    #v(4pt)
+    #align(center, text(size: 20pt)[$ell_"MSE"=(y-p)^2=(1-0.8)^2=0.04.$])
+    #v(8pt)
+    Its usual likelihood interpretation is Gaussian:
+    #v(3pt)
+    #align(center, text(size: 18pt)[$Y|bold(x) tilde cal(N)(0.8,sigma^2).$])
+    #v(7pt)
+    #align(center, text(size: 18pt, fill: RED, weight: 650)[
+      Permits all real $Y$—not just labels.
+    ])
+  ],
+  [
+    #pause
+    #text(fill: TEAL, weight: 700)[Binary cross-entropy]
+    #v(4pt)
+    #align(center, text(size: 20pt)[$ell_"BCE"=-log p=-log 0.8 approx 0.223.$])
+    #v(8pt)
+    Its likelihood is Bernoulli:
+    #v(3pt)
+    #align(center, text(size: 18pt)[$Y|bold(x) tilde "Bernoulli"(0.8).$])
+    #v(7pt)
+    #align(center, text(size: 18pt, fill: GREEN, weight: 650)[
+      Permits only $Y=0$ or $Y=1$.
+    ])
+  ],
+)
+#pause
+#place(bottom + center, dy: -2pt,
+  result[MSE is possible; BCE is the negative log-likelihood matched to a binary observation.])
 
 == Why use logits?
 #stag(V)
@@ -1685,47 +1712,6 @@ Read off the loss at three confidences for the *true* class:
 
 #mcq-answer([B], [The true-class probability is near zero], [The negative log grows without bound as $p_y$ approaches zero, matching the fact that the model declared the observed class nearly impossible.])
 
-== A binary label takes only two values
-#stag(OPT)
-
-For one observed example, let the target be $y=1$ and the model predict
-#v(2pt)
-#align(center, text(size: 20pt, weight: 650)[$p = P(Y=1|bold(x))=0.8.$])
-#v(8pt)
-#pause
-#two(r: (1fr, 1fr),
-  [
-    #text(fill: ACC, weight: 700)[Squared error]
-    #v(4pt)
-    #align(center, text(size: 20pt)[$ell_"MSE"=(y-p)^2=(1-0.8)^2=0.04.$])
-    #v(8pt)
-    Its usual likelihood interpretation is Gaussian:
-    #v(3pt)
-    #align(center, text(size: 18pt)[$Y|bold(x) tilde cal(N)(0.8,sigma^2).$])
-    #v(7pt)
-    #align(center, text(size: 18pt, fill: RED, weight: 650)[
-      Permits all real $Y$—not just labels.
-    ])
-  ],
-  [
-    #pause
-    #text(fill: TEAL, weight: 700)[Binary cross-entropy]
-    #v(4pt)
-    #align(center, text(size: 20pt)[$ell_"CE"=-log p=-log 0.8 approx 0.223.$])
-    #v(8pt)
-    Its likelihood is Bernoulli:
-    #v(3pt)
-    #align(center, text(size: 18pt)[$Y|bold(x) tilde "Bernoulli"(0.8).$])
-    #v(7pt)
-    #align(center, text(size: 18pt, fill: GREEN, weight: 650)[
-      Permits only $Y=0$ or $Y=1$.
-    ])
-  ],
-)
-#pause
-#place(bottom + center, dy: -2pt,
-  result[MSE is possible; cross-entropy is the negative log-likelihood matched to a binary observation.])
-
 // ══════════════════════════════ PART VI ══════════════════════════════
 = Bayes' rule for learning
 
@@ -1740,7 +1726,7 @@ For one observed example, let the target be $y=1$ and the model predict
     #align(center, text(size: 23pt)[$P(A | B) = (P(B | A) P(A)) / P(B)$])
     #v(8pt)
     $A$ — event or hypothesis to infer \
-    $B$ — observed evidence
+    $B$ — observed event or information
     #v(8pt)
     #text(size: 16pt, fill: MUTED)[Examples: disease given a test; urn given a sampled colour.]
   ],
@@ -1750,8 +1736,10 @@ For one observed example, let the target be $y=1$ and the model predict
     #v(7pt)
     #align(center, text(size: 23pt)[$p(bold(theta) | cal(D)) = (p(cal(D) | bold(theta)) p(bold(theta))) / p(cal(D))$])
     #v(8pt)
-    $bold(theta)$ — model parameters to infer \
-    $cal(D)$ — observed training dataset
+    $p(bold(theta))$ — prior before seeing the dataset \
+    $p(cal(D)|bold(theta))$ — likelihood of the fixed dataset \
+    $p(cal(D))$ — evidence (normalizing constant) \
+    $p(bold(theta)|cal(D))$ — posterior after seeing the dataset
     #v(8pt)
     #text(size: 16pt, fill: MUTED)[Question: which parameter settings remain plausible after seeing the data?]
   ],
@@ -1844,39 +1832,7 @@ Choose a smooth prior on $theta in [0,1]$, highest near the fair-coin value $0.5
 #place(bottom + center, dy: -2pt,
   result[With little data, the prior matters; as observations accumulate, the likelihood increasingly dominates.])
 
-// ══════════════════════════════ PART VII ══════════════════════════════
-= Priors, MAP and regularization
-
-== Every learner has an inductive bias
-#stag(V)
-
-When several predictors fit the training data, the learner still needs a preference for *unseen inputs*. That preference is its *inductive bias*.
-#v(6pt)
-#pause
-#align(center, text(size: 16pt)[
-  #table(
-    columns: (38mm, 128mm), stroke: none,
-    inset: (x: 8pt, y: 3.5pt), align: (left, left),
-    table.header(
-      [#text(fill: INK, weight: 700)[Model]],
-      [#text(fill: INK, weight: 700)[Built-in preference $arrow.r$ consequence]],
-    ),
-    table.hline(stroke: 1.5pt + INK),
-    [#text(weight: 650)[Linear regression]], [responses vary linearly with features $arrow.r$ line or plane extrapolation],
-    table.hline(stroke: 0.45pt + MUTED.transparentize(45%)),
-    [#text(weight: 650)[$k$-NN]], [nearby inputs tend to have similar outputs $arrow.r$ local prediction],
-    table.hline(stroke: 0.45pt + MUTED.transparentize(45%)),
-    [#text(weight: 650)[Decision tree]], [a few axis-aligned rules partition the space $arrow.r$ piecewise-constant regions],
-    table.hline(stroke: 0.45pt + MUTED.transparentize(45%)),
-    [#text(weight: 650)[CNN]], [useful local patterns repeat across positions $arrow.r$ shared filters recognize translations],
-    table.hline(stroke: 0.8pt + INK),
-  )
-])
-#pause
-#place(bottom + center, dy: -2pt,
-  result[A prior is one explicit inductive bias; the model class, features, architecture, and optimization add others.])
-
-== Step 1: the evidence gives the same likelihoods
+== Step 1: fixed data give fixed likelihoods
 #stag(D)
 
 Suppose we consider only two possible coins.
@@ -1942,6 +1898,7 @@ Before seeing the flips, suppose our starting belief is $P(F)=0.90$ and $P(B)=0.
 
 The normalizing constant is the sum of the two weights:
 #align(center, text(size: 21pt)[$P(cal(D)) = w_F+w_B = 0.1125+0.0729 = 0.1854.$])
+#align(center, text(size: 14pt, fill: MUTED)[$P(cal(D))$ is the *evidence* (also called marginal likelihood); it makes posterior probabilities sum to $1$.])
 #v(8pt)
 #pause
 #two(r: (1fr, 1fr),
@@ -2019,11 +1976,56 @@ Now use the *same hypotheses and the same HHH*, but start from $P(F)=0.10$ and $
   ]],
 )
 #v(12pt)
+#align(center, text(size: 15pt, fill: MUTED)[Odds for $B$ versus $F$ mean $P(B)/P(F)$.])
 #align(center, text(size: 21pt, weight: 700)[
   posterior odds $=$ prior odds $times$ likelihood ratio
 ])
 #place(bottom + center, dy: -2pt,
-  result[Bayes does not erase the prior; it updates it with exactly the same evidence. More data makes the likelihood increasingly dominant.])
+  result[Bayes does not erase the prior; it updates it with the same observations. More data makes the likelihood increasingly dominant.])
+
+== Maximum a posteriori (MAP) estimation
+#stag(D)
+
+$ hat(bold(theta))_"MAP" = arg max_(bold(theta)) p(bold(theta) | cal(D)) = arg max_(bold(theta)) p(cal(D) | bold(theta)) thin p(bold(theta)) $
+#pause
+The evidence $p(cal(D))$ is constant with respect to $bold(theta)$, so it does not change the maximizing parameter.
+#pause
+Take negative logs:
+$ hat(bold(theta))_"MAP" = arg min_(bold(theta)) (underbrace(-log p(cal(D) | bold(theta)), "NLL") + underbrace(-log p(bold(theta)), "negative log-prior")) $
+#pause
+#result[MAP objective: NLL $+$ negative log-prior. In ML language: data loss $+$ regularization.]
+
+// ══════════════════════════════ PART VII ══════════════════════════════
+= Priors, MAP and regularization
+
+== Every learner has an inductive bias
+#stag(V)
+
+When several predictors fit the training data, the learner still needs a preference for *unseen inputs*. That preference is its *inductive bias*.
+#v(6pt)
+#pause
+#align(center, text(size: 16pt)[
+  #table(
+    columns: (38mm, 128mm), stroke: none,
+    inset: (x: 8pt, y: 3.5pt), align: (left, left),
+    table.header(
+      [#text(fill: INK, weight: 700)[Model]],
+      [#text(fill: INK, weight: 700)[Built-in preference $arrow.r$ consequence]],
+    ),
+    table.hline(stroke: 1.5pt + INK),
+    [#text(weight: 650)[Linear regression]], [responses vary linearly with features $arrow.r$ line or plane extrapolation],
+    table.hline(stroke: 0.45pt + MUTED.transparentize(45%)),
+    [#text(weight: 650)[$k$-NN]], [nearby inputs tend to have similar outputs $arrow.r$ local prediction],
+    table.hline(stroke: 0.45pt + MUTED.transparentize(45%)),
+    [#text(weight: 650)[Decision tree]], [a few axis-aligned rules partition the space $arrow.r$ piecewise-constant regions],
+    table.hline(stroke: 0.45pt + MUTED.transparentize(45%)),
+    [#text(weight: 650)[CNN]], [useful local patterns repeat across positions $arrow.r$ shared filters recognize translations],
+    table.hline(stroke: 0.8pt + INK),
+  )
+])
+#pause
+#place(bottom + center, dy: -2pt,
+  result[A prior is one explicit inductive bias; the model class, features, architecture, and optimization add others.])
 
 == A neural-network prior ranks plausible parameter vectors
 #stag(V)
@@ -2036,7 +2038,7 @@ Now use the *same hypotheses and the same HHH*, but start from $P(F)=0.10$ and $
     #v(7pt)
     For a neural network, $bold(theta)$ contains all weights and biases. Before using the current dataset, a prior states which settings are more plausible.
     #v(8pt)
-    It can prefer small or sparse weights, smooth functions, and correlated parameters.
+    It can prefer small or sparse weights (*sparse* = many weights at or near zero), smooth functions, and correlated parameters.
   ],
   [
     #align(center, text(size: 14pt)[
@@ -2339,7 +2341,8 @@ Model each observation as
 #stag(V)
 
 Choose a simple Gaussian prior over the two regression parameters:
-#align(center, text(size: 20pt)[$bold(theta)=(b,w) tilde cal(N)(bold(0),0.5^2 bold(I)).$])
+#align(center, text(size: 20pt)[$bold(theta)=(b,w) tilde cal(N)(bold(0),tau^2 bold(I)), quad "here" tau=0.5.$])
+#align(center, text(size: 13.5pt, fill: MUTED)[$tau$ is the prior standard deviation; $bold(I)$ makes $b$ and $w$ independent with equal scale.])
 #v(5pt)
 #two(r: (1.06fr, 0.94fr),
   [
@@ -2356,12 +2359,11 @@ Choose a simple Gaussian prior over the two regression parameters:
   [
     #text(fill: BLUE, weight: 700)[What does it express?]
     #v(5pt)
-    $-log p(b,w) = 1/(2(0.5)^2)(b^2+w^2)+C = 2(b^2+w^2)+C.$
+    $-log p(b,w) = 1/(2tau^2)(b^2+w^2)+C = 2(b^2+w^2)+C quad "when" tau=0.5.$
     #v(9pt)
     Before seeing this dataset:
     #v(3pt)
-    - $b approx 0$: intercept near zero
-    - $w approx 0$: a flatter line
+    - $b approx 0$ and $w approx 0$: small-intercept, flatter lines
     - farther from $(0,0)$: less prior density
   ],
 )
@@ -2445,17 +2447,6 @@ $ p(b,w | cal(D)) = (p(cal(D) | b,w) thin p(b,w)) / p(cal(D)) $
 #place(bottom + center, dy: -2pt,
   result[Reducing $tau$ puts more prior mass near the origin and moves both MAP coefficients much closer to zero.])
 
-== MAP estimation
-#stag(D)
-
-$ hat(bold(theta))_"MAP" = arg max_(bold(theta)) p(bold(theta) | cal(D)) = arg max_(bold(theta)) p(cal(D) | bold(theta)) thin p(bold(theta)) $
-#pause
-Take negative logs:
-$ hat(bold(theta))_"MAP" = arg min_(bold(theta)) (underbrace(-log p(cal(D) | bold(theta)), "NLL") + underbrace(-log p(bold(theta)), "negative log-prior")) $
-#pause
-#result[MAP objective: NLL $+$ negative log-prior]
-#align(center, text(size: 14pt, fill: MUTED)[In ML language: data loss $+$ regularization.])
-
 == A Gaussian prior is $L_2$ regularization
 #stag(D)
 
@@ -2467,6 +2458,7 @@ $ bold(theta) tilde cal(N)(bold(0), tau^2 bold(I)). $
 ])
 #pause
 $ -log p(bold(theta)) = 1/(2 tau^2) norm(bold(theta))_2^2 + C $
+#align(center, text(size: 14pt, fill: MUTED)[$norm(bold(theta))_2^2=sum_j theta_j^2$ is the sum of squared coefficients.])
 #pause
 $ => quad cal(L)_"MAP" = "NLL" + underbrace(1/(2 tau^2), lambda) norm(bold(theta))_2^2 + C $
 #v(6pt)
@@ -2475,12 +2467,12 @@ $ => quad cal(L)_"MAP" = "NLL" + underbrace(1/(2 tau^2), lambda) norm(bold(theta
 == Gaussian MAP gives ridge shrinkage, step by step
 #stag(D)
 
-For one coefficient, summarize the data likelihood by $z=hat(theta)_"MLE"$:
+For one coefficient, let $z=hat(theta)_"MLE"$ be the likelihood centre and $s$ its width:
 #align(center, text(size: 17pt)[$p(cal(D)|theta) prop exp(-(theta-z)^2/(2s^2)), quad p(theta) prop exp(-theta^2/(2tau^2)).$])
-#v(5pt)
+#v(2pt)
 #pause
 #align(center, text(size: 18pt)[$J_2(theta)=underbrace((theta-z)^2/(2s^2), "data NLL") + underbrace(theta^2/(2tau^2), "Gaussian prior NLL").$])
-#v(5pt)
+#v(2pt)
 #pause
 #align(center, text(size: 18pt)[$
   dif J_2/(dif theta)=(theta-z)/s^2+theta/tau^2=0
@@ -2492,9 +2484,7 @@ $])
   (tau^2+s^2)theta=tau^2 z
 $])
 #pause
-#align(center, block(fill: rgb("#E8EEF6"), stroke: 1pt + BLUE, radius: 5pt, inset: (x: 12pt, y: 7pt))[
-  $hat(theta)_"MAP"=alpha z, quad alpha=tau^2/(tau^2+s^2) in (0,1).$
-])
+#align(center, text(size: 18pt, fill: BLUE)[$hat(theta)_"MAP"=alpha z, quad alpha=tau^2/(tau^2+s^2) in (0,1).$])
 #place(bottom + center, dy: -3pt,
   result[If $z=0.6$ and $s=tau$, then $alpha=1/2$ and MAP $=0.3$. Ridge reaches exactly zero only when $z=0$.])
 
@@ -2552,6 +2542,7 @@ $])
 #stag(V)
 
 $ bold(theta) tilde cal(N)(bold(mu), bold(Sigma)) quad -log p(bold(theta)) = 1/2 (bold(theta) - bold(mu))^top bold(Sigma)^(-1) (bold(theta) - bold(mu)) + C $
+#align(center, text(size: 14pt, fill: MUTED)[$bold(Sigma)$ is the covariance matrix; $bold(Sigma)^(-1)$ is the precision matrix, which determines how strongly each direction is penalized.])
 #pause
 // native: each panel is the real N(0, Σ) density — dist.gaussian-2d inverts Σ
 #let _covs = (
@@ -2585,7 +2576,7 @@ Compare zero-centred priors with the *same variance*, $1$:
   [
     #align(center, text(size: 14pt)[
       #plot-swatch(BLUE, [Normal: $sigma=1$]) #h(14pt)
-      #plot-swatch(ACC, [Laplace: $b=1/sqrt(2)$])
+      #plot-swatch(ACC, [Laplace: $a=1/sqrt(2)$])
     ])
     #v(3pt)
     #align(center, lines(
@@ -2614,32 +2605,30 @@ Compare zero-centred priors with the *same variance*, $1$:
 )
 #pause
 #place(bottom + center, dy: -2pt,
-  result[The Laplace peak creates a *corner* in the negative log-prior—the source of $L_1$ sparsity.])
+  result[The Laplace peak creates a *corner* in the negative log-prior. Next we derive why that corner can set coefficients exactly to zero.])
 
 == Laplace MAP gives an $L_1$ objective
 #stag(D)
 
-Use the same scalar likelihood, centred at $z=hat(theta)_"MLE"$, and a zero-centred Laplace prior with scale $a$:
+Use the scalar likelihood centred at $z=hat(theta)_"MLE"$ and a zero-centred Laplace prior with scale $a$:
 #align(center, text(size: 18pt)[$
   p(cal(D)|theta) prop e^(-(theta-z)^2/(2s^2)),
   quad
   p(theta)=1/(2a)e^(-abs(theta)/a).
 $])
-#v(5pt)
+#v(1pt)
 #pause
 #align(center, text(size: 18pt)[$
   -log p(theta)=abs(theta)/a+log(2a).
 $])
-#v(4pt)
+#v(1pt)
 #pause
 #align(center, text(size: 18pt)[$
   J_1(theta)=(theta-z)^2/(2s^2)+abs(theta)/a+C.
 $])
 #pause
-Multiply by the positive constant $s^2$; the minimizer does not change:
-#align(center, block(fill: rgb("#FFF4E7"), stroke: 1pt + ACC, radius: 5pt, inset: (x: 12pt, y: 7pt))[
-  $tilde(J)_1(theta)=1/2(theta-z)^2+lambda abs(theta), quad lambda=s^2/a.$
-])
+#text(size: 15.5pt)[For vectors, $norm(bold(theta))_1=sum_j abs(theta_j)$. Multiply by $s^2$; the minimizer does not change:]
+#align(center, text(size: 18pt, fill: ACC)[$tilde(J)_1(theta)=1/2(theta-z)^2+lambda abs(theta), quad lambda=s^2/a.$])
 #place(bottom + center, dy: -3pt,
   result[The Laplace negative log-prior is proportional to $abs(theta)$, so MAP becomes an $L_1$-regularized optimization problem.])
 
@@ -2733,7 +2722,7 @@ For one coefficient, let the data term be $D(theta)=1/2(theta-0.6)^2$, centred a
 )
 #pause
 #place(bottom + center, dy: -2pt,
-  result[Applied coefficient by coefficient, $L_1$ can make many MAP estimates *exactly zero*: sparsity.])
+  result[When the quadratic data term separates by coefficient—as with orthogonal features—$L_1$ applies this threshold coordinate by coordinate and can produce *sparsity*: many exact zeros.])
 
 == Prior strength controls underfitting and overfitting
 #stag(V)
@@ -2763,7 +2752,7 @@ For the summed-NLL convention used above, $lambda = 1/(2 tau^2)$:
     #align(center)[
       flexible model
       #linebreak()
-      #text(fill: RED, weight: 650)[high variance · overfit]
+      #text(fill: RED, weight: 650)[sensitive to this sample · overfit]
     ]
   ],
   [
@@ -2781,13 +2770,13 @@ For the summed-NLL convention used above, $lambda = 1/(2 tau^2)$:
     #align(center)[
       weights forced small
       #linebreak()
-      #text(fill: BLUE, weight: 650)[high bias · underfit]
+      #text(fill: BLUE, weight: 650)[too rigid · underfit]
     ]
   ],
 )
 #pause
 #place(bottom + center, dy: -2pt,
-  result[Regularization trades variance for bias; *more is not always better*.])
+  result[Regularization trades flexibility for stability; *more is not always better*.])
 
 == Interactive: likelihood, prior, MAP
 #stag(I)
@@ -2846,10 +2835,11 @@ Common practical choices:
 #pause
 - *dropout*-based approximations
 #pause
-- *variational* inference
+- *variational inference*: fit a tractable approximate posterior
 
 == The standard supervised DL objective
 
+#align(center, text(size: 15pt, fill: MUTED)[$B$ is the current minibatch; $abs(B)$ is its number of examples.])
 #align(center, text(size: 21pt)[
   $ min_(bold(theta)) underbrace(1/(|B|) sum_(i in B) -log p_(bold(theta))(y_i | bold(x)_i), "likelihood / data fit") + underbrace(lambda norm(bold(theta))_2^2, "prior / regularization") $
 ])
