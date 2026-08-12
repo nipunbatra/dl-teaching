@@ -1,863 +1,977 @@
 // Making Deep Networks Trainable — Lecture 6 · ES 667 Deep Learning
-// Compile from the repo root:
-//   typst compile --root . lecture6/L6-trainability.typ /tmp/L6.pdf
-//   typst compile --root . --input handout=true lecture6/L6-trainability.typ /tmp/L6h.pdf
-// Theme, palette, helpers and diagram builders live in common/metropolis.typ.
+// Compile from the repository root:
+//   typst compile --root . --input handout=true lecture6/L6-trainability.typ /tmp/L6-handout.pdf
+//   typst compile --root . lecture6/L6-trainability.typ /tmp/L6-presentation.pdf
 
 #import "../common/metropolis.typ": *
-#import "../common/mldiag.typ": *
 #show: metropolis-deck.with(
   title: [Making Deep Networks Trainable],
-  subtitle: [Initialization, activations, normalization and residual connections],
+  subtitle: [Activations → initialization → normalization → residual connections],
 )
 
-#let IA = "https://nipunbatra.github.io/interactive-articles/"
+#let NB = "https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L06/"
+#let RESNET = "https://openaccess.thecvf.com/content_cvpr_2016/html/He_Deep_Residual_Learning_CVPR_2016_paper.html"
 
-// ── local fletcher diagrams ──────────────────────────────────────────
-// deep chain: signals forward, gradients backward
-#let deepchain = align(center, diagram(spacing: (12mm, 10mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  let labs = ($x$, $h^((1))$, $h^((2))$, $dots.c$, $h^((L))$, $cal(L)$)
-  for (i, l) in labs.enumerate() {
-    let c = if i == labs.len() - 1 { ACC } else if i == 0 { INK } else { TEAL }
-    node((i, 0), l, radius: 6.5mm, stroke: 0.9pt + c)
-  }
-  for i in range(labs.len() - 1) { edge((i, 0), (i + 1, 0), "-|>", stroke: 0.8pt + MUTED) }
-  edge((0, 1.3), (5, 1.3), "-|>", stroke: 1.3pt + TEAL, label: text(fill: TEAL)[signals forward], label-side: left)
-  edge((5, 2.4), (0, 2.4), "-|>", stroke: 1.3pt + ACC, label: text(fill: ACC)[gradients backward], label-side: left)
-}))
+// Semantic grammar: TEAL = forward signal · BLUE = backward gradient
+// ACC = scale/gate being chosen · GREEN = preserved/identity path · RED = failure.
+#let note(body, color: TEAL) = block(
+  width: 100%, inset: (left: 10pt, right: 2pt, top: 4pt, bottom: 4pt),
+  stroke: (left: 1.2pt + color), [#body],
+)
+#let caption(body) = align(center, text(size: 14.5pt, fill: MUTED)[#body])
+#let punch(body) = align(center, text(size: 19pt, weight: 650, fill: INK)[#body])
+#let hairline(title, body, color: TEAL) = block(width: 100%, inset: 2pt, [
+  #text(size: 14pt, weight: 700, fill: color)[#title]
+  #v(2pt)
+  #line(length: 100%, stroke: 0.7pt + color)
+  #v(5pt)
+  #body
+])
+#let swatch(color, body) = box(width: 12pt, height: 3pt, fill: color, radius: 1pt) + h(4pt) + body
 
-// residual block: two weight layers + activation, with an identity shortcut to the add
-#let residualblock = align(center, diagram(spacing: (14mm, 10mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  node((0, 0), $x_ell$, radius: 6mm)
-  node((1, 0), [weight], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 7pt, fill: rgb("#E6F0F0"), stroke: 0.9pt + TEAL)
-  node((2, 0), $phi$, radius: 6mm, fill: rgb("#FDECD6"), stroke: 0.9pt + ACC)
-  node((3, 0), [weight], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 7pt, fill: rgb("#E6F0F0"), stroke: 0.9pt + TEAL)
-  node((4, 0), $plus$, radius: 5.5mm, stroke: 1pt + INK)
-  node((5, 0), $x_(ell+1)$, radius: 7mm, stroke: 0.9pt + ACC)
-  edge((0, 0), (1, 0), "-|>", stroke: 0.9pt + INK)
-  edge((1, 0), (2, 0), "-|>", stroke: 0.9pt + INK)
-  edge((2, 0), (3, 0), "-|>", stroke: 0.9pt + INK)
-  edge((3, 0), (4, 0), $F_ell (x_ell)$, "-|>", stroke: 0.9pt + INK)
-  edge((4, 0), (5, 0), "-|>", stroke: 0.9pt + ACC)
-  edge((0, 0), (4, 0), text(fill: GREEN)[identity], "-|>", bend: -50deg, stroke: 1.1pt + GREEN)
-}))
+#let semantic-legend = align(center, text(size: 13pt)[
+  #swatch(TEAL, [forward signal]) #h(16pt)
+  #swatch(BLUE, [backward gradient]) #h(16pt)
+  #swatch(ACC, [chosen gain / reset]) #h(16pt)
+  #swatch(GREEN, [preserved / identity]) #h(16pt)
+  #swatch(RED, [failure])
+])
 
-// backward through a residual block: upstream grad splits into identity + residual paths, then adds
-#let residback = align(center, diagram(spacing: (18mm, 12mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  node((3.4, 0), $overline(x)_(ell+1)$, radius: 8mm, stroke: 0.9pt + ACC)
-  node((1.7, 1.15), text(size: 14pt)[$(partial F_ell)/(partial x_ell)$], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 7pt, fill: rgb("#E6F0F0"), stroke: 0.9pt + TEAL)
-  node((1, 0), $+$, radius: 5.5mm, stroke: 1pt + INK)
-  node((0, 0), $overline(x)_ell$, radius: 8mm, stroke: 0.9pt + INK)
-  // residual path — through the branch Jacobian (can shrink)
-  edge((3.4, 0), (1.7, 1.15), "-|>", stroke: 1pt + TEAL)
-  edge((1.7, 1.15), (1, 0), text(size: 13pt, fill: TEAL)[residual term], "-|>", stroke: 1pt + TEAL, label-side: left)
-  // identity path — straight through, no matmul (green)
-  edge((3.4, 0), (1, 0), text(fill: GREEN)[identity $times I$], "-|>", stroke: 1.1pt + GREEN, label-side: right)
-  edge((1, 0), (0, 0), "-|>", stroke: 0.9pt + INK)
-}))
+#let anchor = block(
+  width: 100%, fill: rgb("#F3F6F5"), stroke: (left: 3pt + TEAL),
+  inset: (x: 11pt, y: 6pt), radius: 3pt,
+  text(size: 14.5pt)[
+    *ANCHOR* · five width-$4$ layers · ReLU after every affine map ·
+    #text(fill: TEAL)[$q_0=1$] · #text(fill: BLUE)[$g_5=1$]
+  ],
+)
 
-// axes grid: a B×D table of dots; highlight one COLUMN (BN) or one ROW (LN)
-#let axesgrid(mode) = {
-  let B = 4; let D = 5
+#let chain = align(center, diagram(
+  spacing: (18mm, 10mm), node-stroke: 0.9pt + INK, node-fill: white,
+  {
+    for ell in range(6) {
+      let col = if ell == 0 { TEAL } else if ell == 5 { BLUE } else { INK }
+      node((ell, 0), [$h_#ell$], radius: 6.2mm, stroke: 1pt + col)
+    }
+    for ell in range(5) {
+      edge((ell, 0), (ell + 1, 0), "-|>", stroke: 0.9pt + MUTED,
+        label: text(size: 10pt)[$W_#(ell+1)$ + ReLU], label-sep: 4pt)
+    }
+    edge((0, 1.25), (5, 1.25), "-|>", stroke: 1.25pt + TEAL,
+      label: text(size: 11pt, fill: TEAL, weight: 650)[signal], label-side: left)
+    edge((5, 2.25), (0, 2.25), "-|>", stroke: 1.25pt + BLUE,
+      label: text(size: 11pt, fill: BLUE, weight: 650)[gradient], label-side: left)
+  },
+))
+
+#let causal-map = align(center, diagram(
+  spacing: (25mm, 12mm), node-stroke: 0.9pt + INK, node-fill: white,
+  {
+    let labels = ([activation gate], [matched init], [normalization], [residual path])
+    for (i, label) in labels.enumerate() {
+      node((i, 0), label, shape: fletcher.shapes.rect, corner-radius: 3pt,
+        inset: 8pt, stroke: 1.1pt + if i == 3 { GREEN } else { ACC })
+    }
+    for i in range(3) { edge((i, 0), (i + 1, 0), "-|>", stroke: 0.9pt + MUTED) }
+  },
+))
+
+#let residual-block = align(center, diagram(
+  spacing: (18mm, 11mm), node-stroke: 0.9pt + INK, node-fill: white,
+  {
+    node((0, 0), $x_ell$, radius: 6.5mm)
+    node((1.4, 0), $F_ell$, shape: fletcher.shapes.rect, corner-radius: 3pt,
+      inset: 9pt, fill: rgb("#FDECD6"), stroke: 1pt + ACC)
+    node((2.8, 0), $+$, radius: 5.5mm)
+    node((4.0, 0), $x_(ell+1)$, radius: 7mm, stroke: 1pt + TEAL)
+    edge((0, 0), (1.4, 0), "-|>", stroke: 1pt + INK)
+    edge((1.4, 0), (2.8, 0), "-|>", stroke: 1pt + ACC)
+    edge((2.8, 0), (4.0, 0), "-|>", stroke: 1pt + TEAL)
+    edge((0, 0), (2.8, 0), "-|>", bend: -48deg, stroke: 1.3pt + GREEN,
+      label: text(size: 11pt, fill: GREEN, weight: 650)[identity $I$], label-side: left)
+  },
+))
+
+#let residual-backward = align(center, diagram(
+  spacing: (24mm, 13mm), node-stroke: 0.9pt + INK, node-fill: white,
+  {
+    node((3.2, 0), $nabla_"up"$, radius: 8mm, stroke: 1.1pt + BLUE)
+    node((1.7, -0.75), [$I$], shape: fletcher.shapes.rect, corner-radius: 3pt,
+      inset: 7pt, stroke: 1.1pt + GREEN)
+    node((1.7, 0.75), $J_(F_ell)^T$, shape: fletcher.shapes.rect, corner-radius: 3pt,
+      inset: 7pt, stroke: 1.1pt + ACC)
+    node((0.5, 0), $+$, radius: 5.5mm)
+    node((-0.7, 0), $nabla_(x_ell) cal(L)$, radius: 9mm, stroke: 1.1pt + BLUE)
+    edge((3.2, 0), (1.7, -0.75), "-|>", stroke: 1.2pt + GREEN)
+    edge((3.2, 0), (1.7, 0.75), "-|>", stroke: 1.1pt + ACC)
+    edge((1.7, -0.75), (0.5, 0), "-|>", stroke: 1.2pt + GREEN,
+      label: text(size: 10.5pt, fill: GREEN)[$nabla_"up"$], label-side: right)
+    edge((1.7, 0.75), (0.5, 0), "-|>", stroke: 1.1pt + ACC,
+      label: text(size: 10.5pt, fill: ACC)[$J_F^T nabla_"up"$], label-side: left)
+    edge((0.5, 0), (-0.7, 0), "-|>", stroke: 1.1pt + BLUE)
+  },
+))
+
+#let axes-grid(mode) = {
+  let B = 4
+  let D = 5
   let cell(r, c) = {
-    let hi = if mode == "col" { c == 2 } else { r == 1 }
-    circle(radius: 5pt, fill: if hi { ACC } else { rgb("#C9D4D4") }, stroke: none)
+    let selected = if mode == "batch" { c == 2 } else { r == 1 }
+    circle(radius: 5pt, fill: if selected { ACC } else { rgb("#C9D4D4") }, stroke: none)
   }
   stack(dir: ttb, spacing: 6pt,
     ..range(B).map(r => stack(dir: ltr, spacing: 6pt, ..range(D).map(c => cell(r, c)))))
 }
 
+#let ledger(activation: [pending], init: [pending], norm: [pending], residual: [pending]) = block(
+  width: 100%, fill: rgb("#F8F8F6"), inset: 8pt, radius: 3pt,
+  stroke: 0.6pt + rgb("#D7DDDC"), [
+    #text(size: 11pt, weight: 700, fill: MUTED, tracking: 0.8pt)[GAUGE LEDGER · SAME FIVE-LAYER ANCHOR]
+    #v(4pt)
+    #set text(size: 13.2pt)
+    #table(
+      columns: (25%, 75%), stroke: 0.35pt + rgb("#D7DDDC"), inset: (x: 7pt, y: 4pt),
+      align: (left, left),
+      table.header([control], [evidence / status · squared $q,g$; RMS $r,s$ where shown]),
+      [activation], activation,
+      [initialization], init,
+      [normalization], norm,
+      [residual path], residual,
+    )
+  ],
+)
+
 #title-slide()
 
-// ═══════════════════════════ PART I — Why depth breaks naive nets ═══════════════════════════
-= Why depth breaks naive networks
+// ═══════════════════════════ OPENING · CORE ═══════════════════════════
+== Backprop found the gradients; depth may erase them
 
-== The spine of this lecture #V
-
-#align(center, text(size: 20pt, fill: INK)[
-  A deep network must preserve useful *signals* forward \
-  and useful *gradients* backward.
-])
-#pause
-#v(4pt)
-#deepchain
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[everything today keeps these two flows from collapsing or exploding])
-
-== We have the ingredients — so why stall?
-
-We can already build a net (neurons, nonlinearities), get exact *gradients* (backprop), and *use* them (SGD / Adam). So why not stack 100 layers?
-#pause
-#alertbox[Stack many layers with textbook choices (sigmoid, small random weights) and training *stalls or blows up*. A 100-layer plain net often does *worse* than a 10-layer one — not overfitting, it will not *optimize*.]
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[the problem is in the *forward and backward signals*, before optimization even begins])
-
-== The deep-net experiment #V
-
-Push a signal through $L$ layers and *track two numbers* per layer:
-#pause
-$ q_ell = "Var"(h^((ell))) quad "(activation scale, forward)", quad quad g_ell = norm(partial cal(L) \/ partial h^((ell)))^2 quad "(gradient scale, backward)" $
-#pause
-#notebox[With naive init, *both* $q_ell$ and $g_ell$ drift *exponentially* with depth — either $-> 0$ (vanish) or $-> infinity$ (explode). A healthy net keeps them $approx$ constant.]
-
-== Four failure modes #V
-
-#fig("/lecture6/figures/failure_modes.svg", w: 60%)
-#pause
-#align(center, text(size: 15pt, fill: MUTED)[activations and gradients can each *vanish* or *explode* — four ways depth breaks])
-
-== The forward and backward recurrences #D
-
-*Forward* — each layer applies a linear map then a nonlinearity:
-$ z^((ell)) = W_ell thin h^((ell-1)), quad quad h^((ell)) = phi(z^((ell))). $
-#pause
-*Backward* — backprop pushes the adjoint through the transpose and the local slope:
-$ overline(h)^((ell-1)) = W_ell^top (overline(h)^((ell)) dot.o phi'(z^((ell)))). $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[$overline(h)^((ell)) := partial cal(L) \/ partial h^((ell))$ — the same $W$ and $phi'$ control *both* directions])
-
-== A product of Jacobians #D
-
-Compose the per-layer Jacobians $J_ell = partial h^((ell)) \/ partial h^((ell-1))$:
-$ (partial h^((L)))/(partial x) = J_L thin J_(L-1) dots.c J_1. $
-#pause
-A product of $L$ matrices is governed by its *singular values* $s$:
-#pause
-#two(
-  alertbox[$s < 1$ at each layer ⇒ product $-> 0$ ⇒ *vanishing*.],
-  alertbox[$s > 1$ at each layer ⇒ product $-> infinity$ ⇒ *exploding*.],
-)
-#pause
-#result[we need each layer's Jacobian to have singular values $approx 1$]
-
-== Four interventions, one goal #V
-
-#align(center, table(
-  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 7pt), align: (left, left),
-  table.header([*Problem*], [*Intervention*]),
-  [#pause wrong *starting* scale of signals], [#pause *initialization* — set $"Var"(w)$],
-  [#pause local slope kills the gradient],    [#pause *activations* — shape the Jacobian $phi'$],
-  [#pause scale *drifts during* training],    [#pause *normalization* — re-standardize each layer],
-  [#pause gradient path too *long*],          [#pause *residual connections* — add identity shortcuts],
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
+  hairline([L4 · BACKPROP], [computes $nabla_theta cal(L)$], color: BLUE),
+  hairline([L5 · OPTIMIZATION], [chooses the parameter update], color: ACC),
+  hairline([L6 · TRAINABILITY], [asks whether signals and gradients survive depth], color: TEAL),
 ))
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[all four exist to keep $q_ell$ and $g_ell$ near constant with depth])
 
-// ═══════════════════════════ PART II — Activations & gradient flow ═══════════════════════════
-= Activations and gradient flow
+#pause
+#v(10pt)
+#chain
 
-== What an activation must do
+#pause
+#result[Today the computation rule stays fixed; we redesign how information travels through it.]
 
-A good activation $phi$ has to be three things at once:
-#pause
-- *nonlinear* — else a stack of layers collapses to one linear map;
-#pause
-- *gradient-friendly* — $phi'$ not tiny, so backprop survives depth;
-#pause
-- *cheap* — evaluated billions of times per step.
-#pause
-#alertbox[If $phi'$ is small over most of its range, deep gradients *vanish* — the activation itself becomes the bottleneck.]
+== Commit: which start survives five ReLU layers? #Q
 
-== Sigmoid #V
-
-$ sigma(z) = 1/(1 + e^(-z)), quad quad sigma'(z) = sigma(z)(1 - sigma(z)). $
-#pause
-#fig("/lecture6/figures/sigmoid_saturation.svg", w: 52%)
-#pause
-#align(center, text(size: 15pt, fill: MUTED)[the derivative peaks at $1\/4$ and is $approx 0$ once $|z|$ is large — *saturation*])
-
-== Why sigmoid breaks depth #D
-
-The peak slope is only $1\/4$, so a chain of sigmoids can only *shrink* gradients:
-$ product_(ell=1)^L sigma'(z_ell) <= (1/4)^L. $
-#pause
-For $L = 10$: #h(0.5em) $(1\/4)^10 approx 9.5 times 10^(-7)$ — gradients are essentially gone.
-#pause
-#alertbox[Sigmoid is also *not zero-centred* (outputs in $(0,1)$): activations are all-positive, biasing gradients and slowing learning.]
-
-== Tanh #D
-
-$ tanh(z) = (e^z - e^(-z))/(e^z + e^(-z)), quad quad tanh'(z) = 1 - tanh^2(z). $
-#pause
-- *zero-centred* — outputs in $(-1, 1)$, fixing sigmoid's bias problem;
-#pause
-- max derivative is $1$ (not $1\/4$) — gradients survive a bit longer.
-#pause
-#alertbox[Still *saturates* for large $|z|$: $tanh' -> 0$. Better than sigmoid, but deep tanh stacks still vanish.]
-
-== ReLU #V
-
-$ "ReLU"(z) = max(0, z), quad quad "ReLU"'(z) = bb(1)[z > 0] in {0, 1}. $
-#pause
-- *no positive saturation* — for $z > 0$ the slope is exactly $1$, so gradients pass *unattenuated*;
-#pause
-- *sparse* — about half the units output $0$;
-#pause
-- *cheap* — a single comparison.
-#pause
-#result[the default hidden activation for MLPs and CNNs]
-
-== Dead ReLUs #D
-
-If a unit's pre-activation is *always* negative, it is stuck:
-$ z < 0 quad ⇒ quad h = 0, quad partial h \/ partial z = 0 quad ("no gradient, ever"). $
-#pause
-Causes: too-large learning rate, bad init, or a large *negative bias* pushing $z$ below $0$.
-#pause
-#alertbox[A *dead* ReLU never recovers — its gradient is zero, so it is never updated. Watch the *fraction of zero activations* as a diagnostic.]
-
-== Leaky ReLU and PReLU
-
-Give the negative side a small slope so the unit can recover:
-$ "LeakyReLU"(z) = cases(z & z > 0, a z & z <= 0), quad a approx 0.01. $
-#pause
-- the negative branch has slope $a > 0$ ⇒ *nonzero gradient* ⇒ no permanent death;
-#pause
-- *PReLU* makes $a$ a *learned* parameter per channel.
-#pause
-#notebox[A cheap insurance policy against dead units, at the cost of one extra hyperparameter (or parameter).]
-
-== Smooth modern activations #D
-
-Gate the input by a smooth probability instead of a hard step:
-$ "GELU"(z) = z thin Phi(z), quad quad "SiLU"(z) = z thin sigma(z), $
-where $Phi$ is the standard-normal CDF.
-#pause
-- smooth everywhere ⇒ well-behaved second-order behaviour;
-#pause
-- *nonzero gradient* for small negative $z$ (unlike ReLU);
-#pause
-- the default in *Transformers* (GELU) and many modern CNNs (SiLU / Swish).
-
-== The activation zoo #V
-
-#fig("/lecture6/figures/activation_zoo.svg", w: 66%)
-#align(center, text(size: 15pt, fill: MUTED)[solid $phi$, dashed $phi'$ — ReLU/Leaky/GELU/SiLU keep a healthy slope where sigmoid/tanh flatten])
-
-== Choosing an activation #V
-
-#align(center, table(
-  columns: 5, stroke: 0.5pt + MUTED, inset: (x: 8pt, y: 6pt), align: (left, center, center, center, left),
-  table.header([*Activation*], [*0-centred*], [*Saturates*], [*Neg. grad*], [*Typical use*]),
-  [sigmoid],       [no],  [both sides], [$approx 0$],   [gates, binary output],
-  [tanh],          [yes], [both sides], [small],        [older RNN hidden],
-  [ReLU],          [no],  [no (pos.)],  [$0$ (dies)],   [CNN / MLP default],
-  [Leaky / PReLU], [no],  [no],         [$a z$ (alive)],[avoid dead units],
-  [GELU / SiLU],   [$approx$],[no],     [smooth],       [Transformers, modern CNNs],
-))
-#pause
-#align(center, text(size: 15pt, fill: MUTED)[rule of thumb: ReLU/GELU by default; tanh/sigmoid only where you specifically want a bounded output])
-
-== Interactive: activation lab #I
-
-#interbox(link-to: IA + "vanishing-gradients")[
-  Swap the activation and sweep depth; watch the gradient that reaches layer $0$ collapse for sigmoid/tanh and survive for ReLU/GELU.
-]
-#pause
-Compare the gradient-scale traces for a saturating activation and a modern activation.
-
-== Checkpoint: rescuing a deep sigmoid net #Q
+#anchor
+#v(8pt)
 
 #mcq(
-  [Which pair most directly improves gradient flow in a deep sigmoid network?],
-  [More sigmoid layers and larger negative biases],
-  [A gradient-friendly activation and variance-preserving initialization],
-  [Smaller batches and no initialization],
-  [Remove all nonlinearities],
+  [Which zero-mean weight distribution should keep both end-to-end RMS gauges closest to $1$ at initialization?],
+  [Xavier normal with $"Var"(w)=1/4$],
+  [Xavier uniform with the same variance $1/4$],
+  [He normal with $"Var"(w)=1/2$],
+  [All weights equal to zero],
 )
 
-== Answer: rescuing a deep sigmoid net #A
+== Keep your bet; every section updates one ledger
 
-#mcq-answer([B], [A gradient-friendly activation and variance-preserving initialization], [ReLU/GELU-like slopes avoid widespread saturation, and Xavier/He-style scaling prevents signal scale from compounding badly at the start.])
+#chain
 
-// ═══════════════════════════ PART III — Initialization ═══════════════════════════
-= Initialization: the starting scale
-
-== Why not initialize to all zeros? #D
-
-Set every weight equal (e.g. all zero). Two units in a layer see the *same* input and the same weights, so:
 #pause
-$ "same activation" quad ⇒ quad "same gradient" quad ⇒ quad "same update" quad ("forever"). $
+#align(center, text(size: 18pt)[We will calculate the same chain, then add one control at a time:])
+#v(8pt)
+#causal-map
+
 #pause
-#alertbox[*Symmetry* is never broken — every unit in a layer stays identical, so the layer has the expressive power of *one* unit.]
+#note(color: ACC)[Do not change your answer yet. We return to it after the activation gate determines the matching initialization.]
+
+== The student contract and 80-minute route #V
+
+By the end, you should be able to *predict*, *measure*, and *repair* a depth failure using one shared gauge.
+
+#v(8pt)
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
+  hairline([CORE · 55 min], [activation gate → matched init → normalization → residual path], color: TEAL),
+  hairline([SHOULD COVER · 15 min], [contrast BN/LN axes → diagnose one network], color: GREEN),
+  hairline([OPTIONAL · 10 min], [RMSNorm, projection shortcuts, placement, provenance], color: MUTED),
+))
+
+#v(9pt)
+#semantic-legend
+
+== One gauge, two directions, no width drift #V
+
+For width $d_ell$, average over coordinates—not a raw vector norm:
+
+$ q_ell := 1/d_ell sum_i (h_(ell,i))^2, quad r_ell:=sqrt(q_ell) $
+$ g_ell := 1/d_ell sum_i (overline(h)_(ell,i))^2, quad s_ell:=sqrt(g_ell). $
+
 #pause
-#notebox[*Random* weights break the symmetry. *Biases* can safely start at $0$ — the random weights already differentiate the units.]
+#align(center, grid(columns: (1fr, 1fr), gutter: 24pt,
+  hairline([#text(fill: TEAL)[FORWARD]], [$r_ell$ is activation RMS; $q_ell$ is its squared ledger], color: TEAL),
+  hairline([#text(fill: BLUE)[BACKWARD]], [$s_ell$ is gradient RMS; $g_ell$ is its squared ledger], color: BLUE),
+))
 
-== A single linear neuron #D
-
-Study one pre-activation with $n$ zero-mean, independent inputs and weights:
-$ z = sum_(i=1)^n w_i x_i. $
 #pause
-With $EE[w_i] = 0$ and $w perp x$:
-$ EE[z] = sum_(i=1)^n EE[w_i] EE[x_i] = 0. $
-#pause
-#result[zero-mean weights ⇒ zero-mean pre-activations — now control the *variance*]
+#anchor
 
-== Forward-variance derivation #D
+== A harmless local factor becomes a depth failure
 
-Variance of a sum of independent, zero-mean terms:
-$ "Var"(z) = sum_(i=1)^n "Var"(w_i x_i) = sum_(i=1)^n "Var"(w) "Var"(x). $
-#pause
-All $n$ terms are identical, so
-$ "Var"(z) = n thin "Var"(w) thin "Var"(x). $
-#pause
-#result[$"Var"(z) = n_"in" thin "Var"(w) thin "Var"(x)$]
+If one layer multiplies a *squared* gauge by $c$, then five layers multiply it by $c^5$.
 
-== Variance preservation #D
-
-To keep the signal scale *unchanged* across a layer we need $"Var"(z) = "Var"(x)$:
-$ n_"in" thin "Var"(w) approx 1 quad ⇒ quad "Var"(w) approx 1/n_"in". $
-#pause
-#notebox[Scale the weights by the *fan-in*. Too big amplifies each layer; too small attenuates each layer.]
-
-== The wrong scale compounds #V
-
-Write $c = n_"in" "Var"(w)$. Across $L$ layers the variance is *multiplied* $L$ times:
-$ "Var"(h^((L))) approx c^L thin "Var"(x). $
-#pause
-#two(
-  fig("/lecture6/figures/variance_compound.svg", w: 92%),
-  [
-    $c = 0.5, L = 20:$ #h(0.3em) $0.5^20 approx 9.5 times 10^(-7)$
-    #linebreak()
-    $c = 2, L = 20:$ #h(0.3em) $2^20 approx 1.0 times 10^6$
-    #v(5pt)
-    #text(size: 15pt, fill: MUTED)[only $c = 1$ survives depth; a small miss is fatal after 20 layers]
-  ],
-)
-
-== The backward constraint #D
-
-Backprop multiplies by $W^top$, so the *gradient* variance follows the same law with fan-*out*:
-$ "Var"(overline(h)^((ell-1))) approx n_"out" thin "Var"(w) thin "Var"(overline(h)^((ell))). $
-#pause
-Preserving the *backward* signal wants
-$ "Var"(w) approx 1/n_"out". $
-#pause
-#alertbox[Forward wants $1\/n_"in"$, backward wants $1\/n_"out"$ — and usually $n_"in" != n_"out"$. We cannot satisfy both exactly.]
-
-== Xavier / Glorot initialization #D
-
-Compromise between the two constraints — take the *harmonic-style* average:
-$ "Var"(w) = 2/(n_"in" + n_"out"). $
-#pause
-Two equivalent samplers:
-$ w ~ cal(N)(0, thin 2/(n_"in" + n_"out")), quad quad w ~ cal(U)(-sqrt(6/(n_"in" + n_"out")), thin sqrt(6/(n_"in" + n_"out"))). $
-#pause
-#result[Xavier balances forward and backward variance — designed for tanh / linear layers]
-
-== Why ReLU changes the constant #D
-
-Xavier assumes $phi$ is linear near $0$. ReLU *zeros out half* the inputs:
-$ h = "ReLU"(z) quad ⇒ quad EE[h^2] approx 1/2 EE[z^2]. $
-#pause
-So a ReLU layer *halves* the signal variance — Xavier's $c$ becomes $approx 0.5$, and the signal decays.
-#pause
-#notebox[We must put the lost factor of $2$ *back* into the weight variance.]
-
-== He / Kaiming initialization #D
-
-Demand variance preservation *through* the ReLU:
-$ 1/2 thin n_"in" thin "Var"(w) approx 1 quad ⇒ quad "Var"(w) = 2/n_"in", quad quad "Std"(w) = sqrt(2/n_"in"). $
-#pause
-#result[He init: $"Std"(w) = sqrt(2 \/ n_"in")$ — the default for ReLU networks]
-#pause
-Generalized for a leaky slope $a$:
-$ "Var"(w) = 2/((1 + a^2) thin n_"in"). $
-
-== Signal flow under three inits #V
-
-#fig("/lecture6/figures/signal_flow.svg", w: 58%)
-#align(center, text(size: 15pt, fill: MUTED)[He holds the activation scale flat through a deep ReLU net; a tiny $sigma$ collapses; Xavier drifts down])
-
-== Init example: the two failures #D
-
-Layer with $n_"in" = 100$, unit-variance inputs, so $"Var"(z) = 100 thin "Var"(w)$.
-#pause
-Case (A), too small — $"Std"(w) = 0.01$, so $"Var"(w) = 10^(-4)$:
-$ "Var"(z) = 100 dot 10^(-4) = 0.01 quad ("shrinks" 100 times) $
-#pause
-Case (B), too large — $"Std"(w) = 1$, so $"Var"(w) = 1$:
-$ "Var"(z) = 100 dot 1 = 100 quad ("explodes" 100 times) $
-#pause
-#align(center, text(size: 15pt, fill: MUTED)[off by $100 times$ in *one* layer; over $20$ layers that compounds to $100^(plus.minus 20)$ — hopeless.])
-
-== Fully worked init example #D
-
-Same layer ($n_"in" = 100$, $"Var"(z) = 100 thin "Var"(w)$) — now compare all four schemes:
 #pause
 #align(center, table(
-  columns: 4, stroke: 0.5pt + MUTED, inset: (x: 10pt, y: 6pt), align: (left, center, center, left),
-  table.header([*Scheme*], [$"Var"(w)$], [$"Var"(z)$], [*Effect*]),
-  [(A) $"Std" = 0.01$],   [$10^(-4)$], [$0.01$], [shrinks $100 times$ — vanishes],
-  [(B) $"Std" = 1$],      [$1$],       [$100$],  [explodes $100 times$],
-  [(C) Xavier $1\/100$],  [$0.01$],    [$1$],    [preserved (linear)],
-  [(D) He $2\/100$],      [$0.02$],    [$2$],    [pre-ReLU $2$, post-ReLU $EE[h^2] approx 1$],
-))
-#pause
-#align(center, text(size: 15pt, fill: MUTED)[(A)/(B) are off by $100 times$ in one layer; (C)/(D) preserve the scale — all verified numerically])
-
-== Initialization for convolutions #D
-
-For a conv layer the fan-in counts *every input that feeds one output*:
-$ n_"in" = k_h dot k_w dot C_"in". $
-#pause
-A $3 times 3$ kernel over $64$ input channels:
-$ n_"in" = 3 dot 3 dot 64 = 576, quad quad "Std"_"He" = sqrt(2/576) approx 0.0589. $
-#pause
-#result[same rule, correct fan-in — the constant just changes]
-
-== Initialization is not a guarantee #I
-
-Good init makes training *start* in a healthy regime — but only at $t = 0$.
-#pause
-#alertbox[The derivations assume zero-mean, independent, unit-scale inputs. During training weights *shift*, correlations build, and the guarantees *erode*.]
-#pause
-#interbox(link-to: IA + "vanishing-gradients")[
-  Sweep the init scale and watch the per-layer activation std light up green (healthy) or red (vanishing / exploding) across a deep stack.
-]
-
-// ═══════════════════════════ PART IV — Normalization ═══════════════════════════
-= Normalization: scale during training
-
-== Init only controls the first step #D
-
-Initialization sets the signal scale at $t = 0$; then optimization moves the weights and the guarantee erodes. We need to *re-standardize* activations at *every* step.
-#pause
-For a batch of a quantity $x$, subtract the mean and divide by the std:
-$ mu = 1/B sum_(i=1)^B x_i, quad sigma^2 = 1/B sum_(i=1)^B (x_i - mu)^2, quad hat(x) = (x - mu)/sqrt(sigma^2 + epsilon). $
-#pause
-#result[$hat(x)$ has mean $0$ and variance $1$ — a controlled scale, by construction]
-#pause
-#align(center, text(size: 15pt, fill: MUTED)[$epsilon approx 10^(-5)$ guards against dividing by zero])
-
-== Why the learnable $gamma, beta$ #D
-
-Forcing mean $0$, variance $1$ can be *too* restrictive. Add a learnable affine map back:
-$ y = gamma thin hat(x) + beta. $
-#pause
-- $gamma$ rescales, $beta$ re-shifts — both *learned*;
-#pause
-- the network can *recover the identity* ($gamma = sqrt(sigma^2 + epsilon)$, $beta = mu$) if normalizing hurt.
-#pause
-#result[normalize for a stable scale, then let the model choose the scale it wants]
-
-== Which axis do we normalize over? #V
-
-Given a batch of activations $X in RR^(B times D)$ ($B$ examples, $D$ features), we can normalize:
-#pause
-- *down each feature* (over the batch) → *BatchNorm*;
-- *across each example* (over the features) → *LayerNorm*.
-#pause
-#alertbox[The *axis you reduce over* is the entire difference between the normalization schemes.]
-
-== BatchNorm for an MLP #D
-
-Normalize *each feature* $j$ using statistics *over the batch*:
-$ mu_j = 1/B sum_(i=1)^B x_(i j), quad sigma_j^2 = 1/B sum_(i=1)^B (x_(i j) - mu_j)^2, quad y_(i j) = gamma_j hat(x)_(i j) + beta_j. $
-#pause
-#notebox[One $(mu_j, sigma_j, gamma_j, beta_j)$ *per feature*. Each column of the batch matrix is standardized independently.]
-
-== BatchNorm normalizes down each feature #V
-
-#align(center, two(
-  [#axesgrid("col")],
-  [
-    #text(fill: ACC, weight: 600)[orange column] = one feature $j$,
-    normalized using its mean/variance *over the whole batch*.
-    #v(5pt)
-    #text(size: 15pt, fill: MUTED)[rows = examples in the batch ($B$) \ columns = features ($D$) \ reduce *down* each column]
-  ],
+  columns: 4, stroke: 0.5pt + MUTED, inset: (x: 13pt, y: 7pt), align: center,
+  table.header([per-layer $c$], [$c^1$], [$c^5$], [RMS factor $sqrt(c^5)$]),
+  [$0.5$], [$0.5$], [$0.03125$], [$0.17678$],
+  [$1$], [$1$], [$1$], [$1$],
+  [$2$], [$2$], [$32$], [$5.65685$],
 ))
 
-== BatchNorm for a conv layer #D
+#pause
+#result[Depth turns a small scale mismatch into a visible vanishing or exploding trace.]
 
-Treat every spatial location as another sample. Normalize *per channel* over $(B, H, W)$:
-$ mu_c, sigma_c^2 quad "computed over all" B dot H dot W "activations of channel" c. $
-#pause
-#notebox[One statistic *per channel*, shared across space — this is why BatchNorm is so natural in CNNs.]
+== The repair order follows causality #V
 
-== Train vs inference #D
-
-At *training* time BatchNorm uses the *batch* statistics. At *inference* a single example has no batch — so keep a *running average*:
-$ mu_"run" <- rho thin mu_"run" + (1 - rho) thin mu_B, quad quad sigma_"run"^2 <- rho thin sigma_"run"^2 + (1 - rho) thin sigma_B^2. $
-#pause
-#alertbox[`model.train()` uses batch stats; `model.eval()` uses the frozen running stats. Forgetting to switch is a classic bug.]
-
-== Worked BatchNorm #D
-
-Feature values $x = [1, 2, 3, 4]$ across a batch of $4$, learnable $gamma = 2, beta = 1$.
-#pause
-Mean — average over the batch:
-$ mu = (1 + 2 + 3 + 4)/4 = 2.5 $
-#pause
-Variance — average squared deviation from $mu$:
-$ sigma^2 = 1/4 (2.25 + 0.25 + 0.25 + 2.25) = 1.25 $
-#pause
-#align(center, text(size: 15pt, fill: MUTED)[next: standardize with these stats, then apply the learnable $gamma, beta$.])
-
-== Worked BatchNorm (cont.) #D
-
-Standardize each value with $mu = 2.5$, $sigma^2 = 1.25$ (so $sqrt(sigma^2) approx 1.118$):
-#pause
-$ hat(x) = (x - 2.5)/sqrt(1.25) approx [-1.342, thin -0.447, thin 0.447, thin 1.342]. $
-#pause
-Apply the learnable affine $y = gamma hat(x) + beta = 2 hat(x) + 1$:
-$ y approx [-1.683, thin 0.106, thin 1.894, thin 3.683]. $
-#pause
-#align(center, text(size: 15pt, fill: MUTED)[$hat(x)$ is mean-$0$ / var-$1$; $gamma, beta$ then place it where the network wants — verified numerically])
-
-== Why does BatchNorm help? #D
-
-The original story was *"reducing internal covariate shift"* — the layer-input distribution moving during training.
-#pause
-#alertbox[Later work found that explanation *does not hold up*: the better-supported reason is that BN makes the optimization *landscape smoother* (well-conditioned), so larger, more stable steps are possible.]
-#pause
-#notebox[Teach it as *smoother optimization + a controlled scale*, not as "fixing covariate shift".]
-
-== BatchNorm's limitations
-
-BatchNorm couples every example in the batch:
-#pause
-- *batch-dependent* — an example's output depends on *who else* is in the batch;
-#pause
-- *small-batch noise* — statistics are unreliable for tiny batches;
-#pause
-- *train $!=$ inference* — needs running stats and a mode switch;
-#pause
-- *awkward for sequences* — variable lengths, per-step statistics.
-#pause
-#result[these are exactly the cases where LayerNorm wins]
-
-== LayerNorm #D
-
-Normalize *each example over its own features* — no batch involved:
-$ mu_i = 1/D sum_(j=1)^D x_(i j), quad sigma_i^2 = 1/D sum_(j=1)^D (x_(i j) - mu_i)^2, quad y_(i j) = gamma_j hat(x)_(i j) + beta_j. $
-#pause
-- *batch-independent* — identical result for batch size $1$ or $1000$;
-#pause
-- *train $=$ inference* — no running statistics needed.
-
-== LayerNorm normalizes across each example #V
-
-#align(center, two(
-  [#axesgrid("row")],
-  [
-    #text(fill: ACC, weight: 600)[orange row] = one example $i$,
-    normalized using the mean/variance *of its own features*.
-    #v(5pt)
-    #text(size: 15pt, fill: MUTED)[reduce *across* each row — the batch axis is never touched]
-  ],
-))
-
-== BatchNorm vs LayerNorm #V
+#causal-map
+#v(10pt)
 
 #align(center, table(
-  columns: 3, stroke: 0.5pt + MUTED, inset: (x: 11pt, y: 6pt), align: (left, left, left),
-  table.header([*Aspect*], [*BatchNorm*], [*LayerNorm*]),
-  [normalize over],       [batch (per feature)], [features (per example)],
-  [batch-dependent?],     [yes],                 [no],
-  [train $=$ inference?],  [no (running stats)],  [yes],
-  [small batch],          [noisy / unstable],    [unaffected],
-  [sequences],            [awkward],             [natural],
-  [typical use],          [CNNs],                [Transformers, RNNs],
+  columns: 2, stroke: 0.45pt + MUTED, inset: (x: 13pt, y: 6pt), align: (left, left),
+  [activation], [sets the local nonlinear gate],
+  [initialization], [matches weight gain to that gate at $t=0$],
+  [normalization], [re-establishes a reference scale while training],
+  [residual connection], [adds a short signal and gradient route],
 ))
 
-== RMSNorm #OPT
-
-Drop the mean-centring; rescale by the root-mean-square only:
-$ "RMS"(x) = sqrt(1/D sum_(j=1)^D x_j^2), quad quad y = gamma thin x/("RMS"(x)). $
 #pause
-#notebox[Cheaper than LayerNorm (no mean, no subtraction), and works about as well — common in recent large language models.]
+#punch[Activation comes first because its gate determines the scale that initialization must match.]
 
-== Interactive: normalization axes #I
+// ═══════════════════════════ ACTIVATIONS · CORE ═══════════════════════════
+= The activation is a gradient gate
 
-#interbox(link-to: IA + "norm-comparison")[
-  Toggle Batch / Layer / RMS norm on the same $B times D$ tensor and watch which axis gets reduced — then compare train-time vs eval-time behaviour for BatchNorm.
-]
+== Every nonlinearity acts in both passes #V
+
+#align(center, diagram(spacing: (23mm, 12mm), node-stroke: 1pt + INK, node-fill: white, {
+  node((0, 0), $u_ell$, radius: 7mm, stroke: 1pt + TEAL)
+  node((1, 0), $phi$, radius: 7mm, fill: rgb("#FDECD6"), stroke: 1pt + ACC)
+  node((2, 0), $h_ell$, radius: 7mm, stroke: 1pt + TEAL)
+  edge((0, 0), (1, 0), "-|>", stroke: 1pt + TEAL)
+  edge((1, 0), (2, 0), "-|>", stroke: 1pt + TEAL, label: [$h_ell=phi(u_ell)$])
+  edge((2, 1.25), (0, 1.25), "-|>", stroke: 1.25pt + BLUE,
+    label: text(fill: BLUE)[$overline(u)_ell=phi'(u_ell)overline(h)_ell$], label-side: left)
+}))
+
 #pause
-Compare normalizing one example's features with normalizing each feature across a batch.
+#result[The curve shapes the representation; its derivative gates the returning gradient.]
 
-// ═══════════════════════════ PART V — Residual connections ═══════════════════════════
-= Residual connections: short paths
+== Sigmoid becomes nearly flat in either tail
 
-== The degradation problem #V
+$ sigma(u)=1/(1+e^(-u)), quad sigma'(u)=sigma(u)(1-sigma(u)). $
 
-He et al. (2015): a *56-layer* plain net had *higher training error* than a *20-layer* one.
 #pause
-#two(
-  alertbox[Not overfitting — the *training* error is worse, not just the test error.],
-  notebox[It is an *optimization* failure: the deeper net *cannot even fit* the data the shallow one fits.],
+#align(center, table(
+  columns: 5, stroke: 0.45pt + MUTED, inset: (x: 11pt, y: 6pt), align: center,
+  table.header([$u$], [$-5$], [$0$], [$5$], [meaning]),
+  [$sigma(u)$], [$0.0067$], [$0.5$], [$0.9933$], [bounded output],
+  [$sigma'(u)$], [$0.00665$], [$0.25$], [$0.00665$], [gradient gate],
+))
+
+#pause
+#note(color: RED)[Even its best slope is only $1/4$; saturation makes the slope far smaller.]
+
+== One saturated sigmoid blocks more than 99% #D
+
+Take $u=5$ and upstream gradient $overline(h)=1$.
+
+#pause
+$ h=sigma(5) approx 0.9933 $
+#pause
+$ sigma'(5)=h(1-h) approx 0.00665 $
+#pause
+$ overline(u)=overline(h)sigma'(u)=1(0.00665)=0.00665. $
+
+#pause
+#result[Only $0.665%$ of the arriving gradient magnitude crosses this activation.]
+
+== ReLU keeps one side linear
+
+$ "ReLU"(u)=max(0,u), quad "ReLU"'(u)=cases(0 & u<0, 1 & u>0). $
+
+#pause
+#align(center, table(
+  columns: 4, stroke: 0.45pt + MUTED, inset: (x: 13pt, y: 7pt), align: center,
+  table.header([$u$], [$overline(h)$], [$h$], [$overline(u)$]),
+  [$2.3$], [$0.7$], [$2.3$], [$0.7$],
+  [$-2.3$], [$0.7$], [$0$], [$0$],
+))
+
+#pause
+#result[ReLU passes the active-side gradient unchanged and blocks the inactive side.]
+
+== The anchor is half active in expectation #D
+
+#anchor
+#v(6pt)
+
+For a symmetric zero-mean pre-activation $z$, positive and negative values are equally likely:
+
+$ EE["ReLU"(z)^2] approx 1/2 EE[z^2]. $
+
+#pause
+The same Bernoulli gate appears in the backward squared gauge:
+
+$ EE[("ReLU"'(z)overline(h))^2] approx 1/2 EE[overline(h)^2]. $
+
+#pause
+#punch[The gate contributes $1/2$ to both squared-gauge multipliers.]
+
+== “Dead ReLU” means inactive on every current example
+
+A unit is dead on the current dataset if
+
+$ u_i=w^T x_i+b<0 quad "for every example" i. $
+
+#pause
+Then its incoming parameter gradients are zero because every $"ReLU"'(u_i)=0$.
+
+#pause
+#align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
+  hairline([SUSPECT], [large negative bias, overly large update, or poor input scale], color: RED),
+  hairline([TEST], [count examples active for each unit—not only the global zero fraction], color: BLUE),
+))
+
+#pause
+#note[Changing upstream representations may revive it; “can never recover” is too strong.]
+
+== A compact activation catalogue is enough #V
+
+#align(center, table(
+  columns: 4, stroke: 0.45pt + MUTED, inset: (x: 9pt, y: 6pt), align: (left, left, left, left),
+  table.header([gate], [useful property], [failure to watch], [matched-init clue]),
+  [sigmoid], [bounded gate/probability], [two saturated tails], [not a default deep hidden gate],
+  [tanh], [zero-centred near origin], [two saturated tails], [Xavier is plausible near zero],
+  [ReLU], [simple active linear side], [all-example inactivity], [restore its lost factor $2$],
+  [leaky / GELU / SiLU], [negative-side or smooth route], [gain differs by gate], [use framework gain/default],
+))
+
+#pause
+#result[Choose the activation for representation; choose initialization to match its gain.]
+
+== Ledger 1 — the gate is now known #V
+
+#ledger(
+  activation: [$c_"gate"=1/2$ in both squared gauges],
+  init: [not chosen; weight gain still unknown],
+  norm: [not yet added],
+  residual: [not yet added],
 )
+
 #pause
-#result[deeper should be at least as easy — yet plain stacks get *harder* to optimize]
+#anchor
 
-== Learn the residual, not the map #D
+// ═══════════════════════════ INITIALIZATION · CORE ═══════════════════════════
+= Initialization must match the gate
 
-A deep block should be able to represent the *identity* easily. Reparameterize the target $H(x)$:
-$ F(x) := H(x) - x quad ⇒ quad H(x) = x + F(x). $
+== Fan-in gives the reproducible scale derivation #D
+
+For one pre-activation $z=sum_(i=1)^n w_i x_i$, assume independent, zero-mean weights and inputs.
+
 #pause
-Instead of learning $H$ from scratch, the block learns the *residual* $F$ — the *change* to apply.
+$ EE[z^2] = EE[(sum_i w_i x_i)^2] $
 #pause
-#notebox[If the best thing to do is "nothing", the block only needs $F approx 0$ — far easier than learning $H approx "identity"$ from random weights.]
-
-== The residual block #D
-
-Stack of blocks, each adding its output to its input:
-$ x_(ell+1) = x_ell + F_ell (x_ell). $
+$ = sum_i EE[w_i^2]EE[x_i^2] + underbrace(sum_(i != j) EE[w_i]EE[w_j]EE[x_i x_j], 0) $
 #pause
-#residualblock
+$ = n_"in" thin "Var"(w) thin EE[x^2]. $
+
 #pause
-#align(center, text(size: 15pt, fill: MUTED)[the #text(fill: GREEN)[green identity shortcut] carries $x_ell$ straight to the addition, skipping the branch])
+#result[An affine layer multiplies the squared signal gauge by $n_"in" "Var"(w)$.]
 
-== The forward information path #D
+== The gate tells us which weight variance to choose
 
-Unroll the recurrence from layer $ell$ to layer $L$:
-$ x_L = x_ell + sum_(i=ell)^(L-1) F_i (x_i). $
+#anchor
+#v(6pt)
+
+For width $4$ followed by ReLU,
+
+$ c = underbrace(4 "Var"(w), "affine gain") times underbrace(1/2, "ReLU gate") = 2 "Var"(w). $
+
 #pause
-#result[every layer has a *direct, additive* contribution to the output]
+#align(center, table(
+  columns: 4, stroke: 0.45pt + MUTED, inset: (x: 13pt, y: 7pt), align: center,
+  table.header([scheme], [$"Var"(w)$], [one-layer $c$], [five-layer $c^5$]),
+  [Xavier], [$1/4$], [$0.5$], [$0.03125$],
+  [He], [$2/4=1/2$], [$1$], [$1$],
+))
+
 #pause
-#align(center, text(size: 15pt, fill: MUTED)[the input reaches the top through the identity path, never multiplied away])
+#punch[The same half-active gate that lost energy supplies the missing factor of $2$.]
 
-== The backward gradient path #D
+== Answer: He keeps the anchor gauges near one #A
 
-Differentiate $x_(ell+1) = x_ell + F_ell (x_ell)$:
-$ (partial cal(L))/(partial x_ell) = (partial cal(L))/(partial x_(ell+1)) (I + (partial F_ell)/(partial x_ell)) = underbrace((partial cal(L))/(partial x_(ell+1)), "identity term") + underbrace((partial cal(L))/(partial x_(ell+1)) (partial F_ell)/(partial x_ell), "residual term"). $
-#pause
-#result[the identity term passes the gradient through with *no* matrix multiply]
-#pause
-#align(center, text(size: 15pt, fill: MUTED)[even if the branch Jacobian vanishes, the $I$ keeps a clean path back])
-
-== The gradient's two paths #V
-
-Backward, the upstream gradient $overline(x)_(ell+1)$ splits and *adds* at the input:
-#pause
-#residback
-#pause
-#align(center, text(size: 15pt, fill: MUTED)[the #text(fill: GREEN)[green identity path] delivers $overline(x)_(ell+1)$ untouched — so $overline(x)_ell$ stays alive even if the #text(fill: TEAL)[residual term] shrinks])
-
-== Residuals keep gradients alive #V
-
-#fig("/lecture6/figures/residual_vs_plain.svg", w: 56%)
-#align(center, text(size: 15pt, fill: MUTED)[plain net: gradient decays with depth · residual net: the identity path holds it flat])
-
-== Worked scalar residual #D
-
-Take a scalar block $y = x + w x^2$ with the shortcut. Differentiate:
-$ (dif y)/(dif x) = 1 + 2 w x. $
-#pause
-At $w = 0.1, x = 2$: #h(0.5em) $1 + 2(0.1)(2) = 1.4$.
-#pause
-*Without* the shortcut ($y = w x^2$): #h(0.5em) $(dif y)/(dif x) = 2 w x = 0.4$.
-#pause
-#result[the identity keeps a $bold(1)$ in the gradient — it cannot vanish below that]
-
-== Dimension-changing shortcuts #D
-
-When $F_ell$ changes width or resolution, the identity no longer fits. Project it:
-$ x_(ell+1) = P_ell thin x_ell + F_ell (x_ell). $
-#pause
-- $P_ell$ is a learned *linear projection* (a $1 times 1$ conv in CNNs, or a stride to downsample);
-#pause
-- used only at the blocks where dimensions change; elsewhere $P_ell = I$.
-
-== Pre- vs post-activation blocks #OPT
-
-Where does the activation (and norm) sit relative to the add?
-#pause
-#two(
-  notebox[*Post-activation* (original ResNet): #h(0.2em) $x_(ell+1) = phi(x_ell + F_ell(x_ell))$.],
-  notebox[*Pre-activation*: #h(0.2em) norm and $phi$ go *inside* $F_ell$, keeping the shortcut a *clean* identity.],
+#mcq-answer(
+  [C],
+  [He normal with $"Var"(w)=1/2$],
+  [For width $4$, affine gain $4(1/2)=2$ and the ReLU gate contributes $1/2$, so the net squared-gauge factor is $c=1$.],
 )
-#pause
-#result[pre-activation keeps the skip path unobstructed — better for very deep nets]
 
-== Residuals are not magic
-
-A shortcut alone does not fix everything:
 #pause
-- the branch still needs sensible *scale and init* (start $F approx 0$);
-#pause
-- *norm placement* around the block matters (pre- vs post-);
-#pause
-- the *learning rate* still interacts with everything.
-#pause
-#notebox[*Fixup* init trains deep ResNets *without* normalization — by carefully scaling the residual branches. Init, norm and residuals are three *coupled* knobs, not independent fixes.]
+#note(color: ACC)[Xavier normal and Xavier uniform share a variance, so both give $c=0.5$ here. Their samples are variance-matched alternatives, not identical distributions.]
 
-== Interactive: residual gradient flow #I
+== Xavier loses half the squared gauge per ReLU layer #D
 
-#interbox(link-to: IA + "resnet")[
-  Toggle the skip connections on and off in a deep net and watch the backward gradient norm go from decaying (plain) to flat (residual), layer by layer.
-]
+#anchor
+#v(6pt)
+
+With $"Var"(w)=1/4$,
+
+$ q_5=(0.5)^5 q_0=0.03125, quad g_0=(0.5)^5 g_5=0.03125. $
+
 #pause
-Trace the identity and residual contributions separately as the gradient moves backward.
+Read the same ledger in the primary RMS gauge:
 
-== Checkpoint: residual gradient path #Q
+$ r_5=sqrt(q_5)=0.17678, quad s_0=sqrt(g_0)=0.17678. $
 
+#pause
+#result[Xavier preserves the affine pre-activation scale, but ReLU then removes half the second moment.]
+
+== He preserves the second moment through ReLU #D
+
+#anchor
+#v(6pt)
+
+With $"Var"(w)=2/n_"in"=1/2$,
+
+$ c=4(1/2)(1/2)=1. $
+
+#pause
+$ q_5=1^5q_0=1, quad g_0=1^5g_5=1, quad r_5=s_0=1. $
+
+#pause
+#result[Under the mean-field assumptions, He preserves activation and gradient RMS through the ReLU stack.]
+
+== The computed trace stays on one honest scale #V
+
+#anchor
+#v(6pt)
+
+#align(center, table(
+  columns: 6, stroke: 0.45pt + MUTED, inset: (x: 10pt, y: 6pt), align: center,
+  table.header([squared gauge], [$ell=0$], [$1$], [$2$], [$3$], [$5$]),
+  [Xavier $0.5^ell$], [$1$], [$0.5$], [$0.25$], [$0.125$], [$0.03125$],
+  [He $1^ell$], [$1$], [$1$], [$1$], [$1$], [$1$],
+))
+
+#pause
+#caption[Both rows share the same exact $0$–$1$ scale; no trajectory falls below or leaves the shown range.]
+
+== Xavier samplers match variance, not samples
+
+For $n_"in"=n_"out"=4$, Xavier targets $"Var"(w)=2/(4+4)=1/4$.
+
+#pause
+#align(center, grid(columns: (1fr, 1fr), gutter: 24pt,
+  hairline([NORMAL ALTERNATIVE], [$w ~ cal(N)(0,1/4)$ · unbounded · most mass near $0$], color: ACC),
+  hairline([UNIFORM ALTERNATIVE], [$w ~ cal(U)(-sqrt(3/4),sqrt(3/4))$ · bounded · flat density], color: ACC),
+))
+
+#pause
+They have the same mean and variance, so the second-moment calculation matches; higher moments and individual draws do not.
+
+#pause
+#result[“Variance-matched” is the useful equivalence; the distributions themselves are different.]
+
+== Convolutions use the fan-in of one output
+
+For a convolution,
+
+$ n_"in"=k_h k_w C_"in". $
+
+#pause
+A $3 times 3$ kernel with $64$ input channels has
+
+$ n_"in"=3 dot 3 dot 64=576, quad "Std"_"He"=sqrt(2/576) approx 0.0589. $
+
+#pause
+#note[Stride changes output resolution, not how many input values feed one output. A projection shortcut may use a $1 times 1$ convolution with stride $>1$ when it must downsample.]
+
+== Initialization controls only the start
+
+The derivation assumes independent coordinates, symmetric pre-activations, and unchanged weight statistics.
+
+#pause
+Training breaks these assumptions: correlations grow, weights move, activation means shift, and data are not idealized.
+
+#pause
+#align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
+  hairline([PROMISE], [a sensible RMS scale at $t=0$], color: GREEN),
+  hairline([NOT A PROMISE], [exact preservation for every layer, example, or training step], color: RED),
+))
+
+#pause
+#punch[Initialization earns a healthy start; measurement tells us whether it stays healthy.]
+
+== Ledger 2 — the anchor starts balanced #V
+
+#ledger(
+  activation: [ReLU gate contributes $1/2$],
+  init: [Xavier: $q_5=g_0=.03125$; He: $q_5=g_0=1$],
+  norm: [not yet added],
+  residual: [not yet added],
+)
+
+#pause
+#caption[Primary RMS reading: Xavier $r_5=s_0=.17678$; He $r_5=s_0=1$.]
+
+// ═══════════════════════════ NORMALIZATION · CORE ═══════════════════════════
+= Normalization resets a reference scale
+
+== A normalization layer defines its own measuring group
+
+For values in one chosen group,
+
+$ mu=1/N sum_i x_i, quad sigma^2=1/N sum_i (x_i-mu)^2 $
+$ hat(x)_i=(x_i-mu)/sqrt(sigma^2+epsilon), quad y_i=gamma hat(x)_i+beta. $
+
+#pause
+#align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
+  hairline([RESET], [$hat(x)$ has mean near $0$ and variance near $1$ over that group], color: ACC),
+  hairline([LEARN], [$gamma,beta$ restore any useful affine scale and shift], color: GREEN),
+))
+
+#pause
+#result[The key design question is not “normalize?” but “which entries share one statistic?”]
+
+== BatchNorm and LayerNorm choose different axes #V
+
+For $X in RR^(B times D)$, rows are examples and columns are features.
+
+#v(8pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 34pt,
+  [#align(center, axes-grid("batch"))
+   #v(8pt)
+   #align(center, text(size: 16pt, weight: 650)[BatchNorm: down one feature])
+   #caption[reduce over the batch axis $B$]],
+  [#align(center, axes-grid("layer"))
+   #v(8pt)
+   #align(center, text(size: 16pt, weight: 650)[LayerNorm: across one example])
+   #caption[reduce over that example's $D$ features]],
+))
+
+== Commit: normalize the slice before calculating #Q
+
+For one BatchNorm feature across four examples,
+
+$ x=[1,2,3,4], quad gamma=2, quad beta=1, quad epsilon approx 0. $
+
+#v(8pt)
 #mcq(
-  [In a residual block, which term supplies the direct gradient path?],
-  [The identity term $partial cal(L) / partial x_(ell+1)$],
-  [Only the residual Jacobian $partial F_ell / partial x_ell$],
-  [The learning-rate multiplier],
-  [The batch mean],
+  [What are the batch mean and population variance used on this slide?],
+  [$mu=2.5, sigma^2=1.25$],
+  [$mu=2.5, sigma^2=5/3$],
+  [$mu=10, sigma^2=5$],
+  [$mu=0, sigma^2=1$],
 )
 
-== Answer: residual gradient path #A
+== Answer: build the whole BatchNorm slice #A
 
-#mcq-answer([A], [The identity term], [Differentiating $x_(ell+1)=x_ell+F_ell(x_ell)$ gives an additive identity contribution, so the branch need not carry the whole gradient.])
+$ mu=(1+2+3+4)/4=2.5. $
+#pause
+$ sigma^2=((1-2.5)^2+(2-2.5)^2+(3-2.5)^2+(4-2.5)^2)/4=1.25. $
+#pause
+$ hat(x)=(x-2.5)/sqrt(1.25) approx [-1.342,-0.447,0.447,1.342]. $
+#pause
+$ y=2hat(x)+1 approx [-1.683,0.106,1.894,3.683]. $
 
-// ═══════════════════════════ PART VI — Putting it together ═══════════════════════════
-= Putting it together
+#pause
+#result[Correct: *A* — the normalized slice has mean $0$, variance $1$, and RMS $1$ before $gamma,beta$.]
 
-== A 50-layer ablation #V
+== Learnable scale is allowed to move the gauge
 
-Same 50-layer net and data, six recipes stacked from naive to modern:
+For the normalized slice,
+
+$ 1/4 sum_i hat(x)_i^2 approx 1 quad ⇒ quad "RMS"(hat(x)) approx 1. $
+
+#pause
+After $y=2hat(x)+1$,
+
+$ 1/4 sum_i y_i^2 approx 5 quad ⇒ quad "RMS"(y) approx sqrt(5). $
+
+#pause
+#note(color: ACC)[Normalization supplies a stable coordinate system; it does not force the learned output RMS to remain $1$.]
+
+== BatchNorm inference must ignore the current batch
+
+During training, BatchNorm uses the current batch and updates running estimates.
+
+#pause
+During inference, it uses frozen running mean and variance:
+
+$ y=gamma (x-mu_"run")/sqrt(sigma_"run"^2+epsilon)+beta. $
+
+#pause
+#align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
+  hairline([ALLOWED], [inference may process one example or a batch for efficiency], color: GREEN),
+  hairline([FORBIDDEN], [an example's prediction changing because current batch-mates changed], color: RED),
+))
+
+#pause
+#caption[`model.eval()` selects running statistics; “inference is always unbatched” is not the rule.]
+
+== LayerNorm avoids batch dependence
+
+LayerNorm computes one mean and variance from each example's feature vector:
+
+$ mu_i=1/D sum_j x_(i j), quad sigma_i^2=1/D sum_j (x_(i j)-mu_i)^2. $
+
 #pause
 #align(center, table(
-  columns: 4, stroke: 0.5pt + MUTED, inset: (x: 9pt, y: 5.5pt), align: (left, left, left, left),
-  table.header([*Activation*], [*Init*], [*Extras*], [*Outcome*]),
-  [sigmoid], [$cal(N)(0,1)$], [—],              [dead — no learning],
-  [sigmoid], [Xavier],         [—],              [learns, very slow],
-  [tanh],    [Xavier],         [—],              [trains, still slow],
-  [ReLU],    [He],             [—],              [trains reliably],
-  [ReLU],    [He],             [BatchNorm],      [faster, stable],
-  [ReLU],    [He],             [BN + residual],  [fastest, deepest],
+  columns: 3, stroke: 0.45pt + MUTED, inset: (x: 12pt, y: 6pt), align: (left, left, left),
+  table.header([property], [BatchNorm], [LayerNorm]),
+  [normalizes over], [examples per feature], [features per example],
+  [depends on batch-mates?], [training: yes], [no],
+  [train / inference stats], [batch / running], [same computation],
+  [common home], [CNN feature channels], [sequence/token models],
 ))
+
 #pause
-#align(center, text(size: 15pt, fill: MUTED)[each intervention removes a different obstacle to optimization])
+#result[Choose the axis from the invariance you need, not from the layer's name.]
 
-== The ablation, as curves #V
+== Ledger 3 — the BN slice supplies a scale reset #V
 
-// native ml-plot: train loss = floor + (start−floor)·e^(−t/τ) (mirrors l6_figs.py f_ablation_curves)
-// each ablation is a closed-form settling curve; ab-curve returns the fn of the step t
-#let ab-curve(start, floor, tau) = t => floor + (start - floor) * calc.exp(-t / tau)
-#align(center, lines(
-  fn: (
-    ab-curve(2.35, 2.15, 120),
-    ab-curve(2.30, 1.15, 90),
-    ab-curve(2.30, 0.62, 55),
-    ab-curve(2.30, 0.34, 38),
-    ab-curve(2.30, 0.17, 24),
-    ab-curve(2.30, 0.08, 16),
-  ),
-  domain: (0, 295), samples: 59,
-  colors: (RED, ACC, BLUE, TEAL, GREEN, INK),
-  markers: false,
-  x-label: [training step], y-label: [training loss],
-  size: (86mm, 44mm),
+#ledger(
+  activation: [ReLU gate contributes $1/2$],
+  init: [He gives $q_5=g_0=1$ at $t=0$],
+  norm: [$[1,2,3,4]$: $mu=2.5$, $sigma^2=1.25$, $"RMS"(hat(x))=1$],
+  residual: [not yet added],
+)
+
+#pause
+#caption[The reset is defined over the selected axis; learned $gamma,beta$ may deliberately move the post-normalization RMS.]
+
+// ═══════════════════════════ RESIDUALS · CORE ═══════════════════════════
+= Residual connections shorten the route
+
+== Greater depth can make the training error worse #V
+
+In the original ResNet experiment on CIFAR-10, a 56-layer *plain* network had higher training error than a 20-layer plain network.
+
+#pause
+#align(center, diagram(spacing: (27mm, 13mm), node-stroke: 1pt + INK, node-fill: white, {
+  node((0, 0), [20-layer plain], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 9pt, stroke: 1pt + TEAL)
+  node((1, 0), [lower training error], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 9pt, stroke: 1pt + GREEN)
+  node((0, 1), [56-layer plain], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 9pt, stroke: 1pt + RED)
+  node((1, 1), [higher training error], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 9pt, stroke: 1pt + RED)
+  edge((0, 0), (1, 0), "-|>", stroke: 1pt + GREEN)
+  edge((0, 1), (1, 1), "-|>", stroke: 1pt + RED)
+}))
+
+#pause
+#caption[#link(RESNET)[He et al., “Deep Residual Learning for Image Recognition,” CVPR 2016, Fig. 1].]
+
+== Learning a correction makes “do nothing” easy
+
+Reparameterize a desired map $H_ell$ as
+
+$ F_ell(x):=H_ell(x)-x quad ⇒ quad H_ell(x)=x+F_ell(x). $
+
+#pause
+#residual-block
+
+#pause
+#result[If the useful transformation is close to identity, the branch only has to learn the small correction $F_ell$.]
+
+== Column-gradient convention fixes the transpose #D
+
+Let $J_(F_ell)=partial F_ell(x_ell)/partial x_ell$ and store gradients as column vectors.
+
+#pause
+$ x_(ell+1)=x_ell+F_ell(x_ell) $
+#pause
+$ nabla_(x_ell) cal(L)=(I+J_(F_ell))^T nabla_(x_(ell+1))cal(L) $
+#pause
+$ =underbrace(nabla_(x_(ell+1))cal(L), "identity contribution") + underbrace(J_(F_ell)^T nabla_(x_(ell+1))cal(L), "residual contribution"). $
+
+#pause
+#result[Backward applies the transposed local Jacobian; the two contributions add at the block input.]
+
+== The arriving gradient splits into two contributions #V
+
+#residual-backward
+
+#pause
+#align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
+  hairline([#text(fill: GREEN)[IDENTITY]], [$nabla_"up"$ arrives without a branch matrix multiply], color: GREEN),
+  hairline([#text(fill: ACC)[RESIDUAL]], [$J_F^T nabla_"up"$ may reinforce or cancel it], color: ACC),
 ))
-#align(center, text(size: 14pt)[#text(fill: RED)[sigmoid + $cal(N)(0,1)$] · #text(fill: ACC)[sigmoid + Xavier] · #text(fill: BLUE)[tanh + Xavier] · #text(fill: TEAL)[ReLU + He] · #text(fill: GREEN)[\+ BatchNorm] · #text(fill: INK)[\+ residual]])
-#align(center, text(size: 15pt, fill: MUTED)[naive sigmoid never moves; each added technique lowers and speeds the loss])
 
-== What each technique changes
+#pause
+#punch[A shortcut adds a route; it does not guarantee that every total gradient is large.]
+
+== Commit: compare five plain and residual blocks #Q
+
+Let one scalar branch have $F'(x)=-0.1$ and let the top gradient magnitude be $1$.
+
+#v(8pt)
+#mcq(
+  [After five blocks, which pair of input-gradient magnitudes is correct?],
+  [plain $0.5$; residual $1.5$],
+  [plain $10^(-5)$; residual $0.9^5$],
+  [plain $0.1$; residual $0.9$],
+  [plain $0$; residual $1$ exactly],
+)
+
+== Answer: the shortcut changes the local multiplier #A
 
 #align(center, table(
-  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 6.5pt), align: (left, left),
-  table.header([*Technique*], [*What it controls*]),
-  [initialization], [the *starting* distribution of signals],
-  [activation],     [the *local* nonlinearity and its derivative $phi'$],
-  [normalization],  [the *scale and parameterization* during training],
-  [residual],       [the *path length* for signal and gradient],
+  columns: 4, stroke: 0.45pt + MUTED, inset: (x: 12pt, y: 6pt), align: center,
+  table.header([path], [one block], [five-block magnitude], [squared gauge]),
+  [plain branch $F$], [$|-0.1|$], [$|-0.1|^5=0.00001$], [$10^(-10)$],
+  [residual $I+F$], [$|1-0.1|=0.9$], [$0.9^5=0.59049$], [$0.59049^2=0.34868$],
 ))
 
-== These knobs are coupled
+#pause
+#result[Correct: *B* — the residual RMS magnitude is $0.59049$; its squared ledger is $0.3487$.]
 
-They are *not* independent tricks:
-#pause
-- ReLU ⇒ use *He*, not Xavier (the factor of $2$);
-#pause
-- BatchNorm *reduces* but does not *remove* init sensitivity;
-#pause
-- residual branches want *smaller* init (start near $0$);
-#pause
-- LayerNorm *placement* changes the residual stream;
-#pause
-- the *learning rate* interacts with all of the above.
-#pause
-#alertbox[Change one and you often have to retune another — treat them as a *system*, not a checklist.]
+== Residual structure improves the route, not every ingredient
 
-== A diagnostic dashboard #I
+#align(center, table(
+  columns: 3, stroke: 0.45pt + MUTED, inset: (x: 10pt, y: 6pt), align: (left, left, left),
+  table.header([failure], [why shortcut alone is insufficient], [check]),
+  [branch explodes], [$J_F$ can dominate the identity], [branch/output RMS],
+  [branch cancels identity], [$J_F approx -I$ in a direction], [identity vs residual contribution],
+  [shape changes], [$x$ and $F(x)$ cannot be added], [projection shape/stride],
+  [training diverges], [learning rate still controls update size], [update-to-weight RMS],
+))
 
-When a deep net will not train, *log per layer* and look for the outlier:
 #pause
+#note[Initialization, normalization, residual scaling, and learning rate remain coupled design choices.]
+
+== Ledger 4 — the short path completes the anchor #V
+
+#ledger(
+  activation: [ReLU gate contributes $1/2$],
+  init: [He gives $q_5=g_0=1$ at $t=0$],
+  norm: [$mu=2.5$, $sigma^2=1.25$, normalized RMS $=1$],
+  residual: [$F'=-.1$: plain RMS $10^(-5)$; residual RMS $.59049$ ($g=.3487$)],
+)
+
+#pause
+#result[Each intervention answers a different reason the gauges can drift.]
+
+// ═══════════════════════════ SYNTHESIS · SHOULD COVER ═══════════════════════════
+= Measure the system, not the slogan
+
+== One ledger connects all four controls #V
+
+#causal-map
+#v(6pt)
+
+#align(center, table(
+  columns: 4, stroke: 0.45pt + MUTED, inset: (x: 8pt, y: 5.5pt), align: (left, left, left, left),
+  table.header([control], [mechanism], [anchor evidence], [what it does not guarantee]),
+  [activation], [local gate], [ReLU contributes $1/2$], [no dead units],
+  [initialization], [starting gain], [He changes $c:.5→1$], [scale later in training],
+  [normalization], [axis-wise reset], [$[1,2,3,4]→"RMS"=1$], [post-$gamma,beta$ RMS],
+  [residual], [short additive route], [$10^(-5)→.59049$], [no cancellation/explosion],
+))
+
+#pause
+#punch[Use the ledger to explain a mechanism, then measure the actual network.]
+
+== Diagnose with symptom → suspect → test
+
+#align(center, table(
+  columns: 3, stroke: 0.45pt + MUTED, inset: (x: 9pt, y: 5.5pt), align: (left, left, left),
+  table.header([symptom], [first suspect], [smallest informative test]),
+  [activation RMS shrinks by depth], [gate/init mismatch], [log pre/post RMS by layer],
+  [early gradient RMS is tiny], [saturation or long path], [log gradient RMS and shortcut terms],
+  [many inactive ReLU units], [bias/update/input scale], [active-example count per unit],
+  [train/eval predictions differ], [BatchNorm statistics], [same input in both modes],
+  [first non-finite value], [scale or update explosion], [locate first bad layer and step],
+))
+
+#pause
+#caption[Change one cause-relevant control at a time so the experiment can identify the cause.]
+
+== Measure the same RMS gauges in code #I
+
 #codebox(size: 13pt)[```python
+def rms(x):
+    return x.detach().float().square().mean().sqrt().item()
+
 for name, h in activations.items():
-    log(name, h.mean(), h.std(), h.min(), h.max())     # signal scale
-    log(name, (h == 0).float().mean())                  # % dead (ReLU)
+    print(name, "activation_rms", rms(h))
+
 for name, p in model.named_parameters():
-    log(name, p.grad.norm() / (p.norm() + 1e-8))        # grad-to-weight ratio
-    log(name, (~torch.isfinite(p.grad)).any())          # NaN / Inf guard
+    if p.grad is not None:
+        print(name, "gradient_rms", rms(p.grad),
+              "finite", bool(p.grad.isfinite().all()))
 ```]
-#pause
-#align(center, text(size: 15pt, fill: MUTED)[healthy: std $approx$ const with depth, grad/weight ratio $approx 10^(-2)$ to $10^(-3)$ everywhere, no NaNs])
 
-== Symptom → issue → fix #V
+#pause
+#caption[`square().mean().sqrt()` matches $r_ell,s_ell$; a raw `norm()` would grow with width and break the ledger.]
+
+== Three labs, one predict → run → explain loop #I
 
 #align(center, table(
-  columns: 3, stroke: 0.5pt + MUTED, inset: (x: 9pt, y: 5.5pt), align: (left, left, left),
-  table.header([*Symptom*], [*Likely issue*], [*Fix*]),
-  [activation std $-> 0$ with depth], [init too small / saturation], [He init, ReLU/GELU],
-  [activation std $-> infinity$ / NaN], [init too large / no norm], [scale down, clip, add norm],
-  [high \% zero activations],          [dead ReLU (LR / neg bias)],  [lower LR, LeakyReLU],
-  [tiny grad in early layers],         [vanishing gradient],         [residual, norm, ReLU],
-  [loss diverges in first steps],      [LR too high / no warmup],    [warmup, lower LR, clip],
+  columns: (30%, 70%), stroke: 0.45pt + MUTED, inset: (x: 10pt, y: 7pt), align: (left, left),
+  [*1 · autopsy*], [#link(NB + "01_signal_gradient_autopsy.ipynb")[01_signal_gradient_autopsy.ipynb]],
+  [*2 · propagate*], [#link(NB + "02_variance_propagation.ipynb")[02_variance_propagation.ipynb]],
+  [*3 · compare*], [#link(NB + "03_xavier_vs_he.ipynb")[03_xavier_vs_he.ipynb]],
 ))
 
-== Practical recipes #V
+#pause
+#align(center, text(size: 18pt)[For each notebook: *commit to a trace → run → compare with the ledger → explain any mismatch*.])
+
+#pause
+#note(color: GREEN)[The three filenames above are direct Colab links to the public repository.]
+
+== Misconception check: which claim survives? #Q
+
+#mcq(
+  [Which statement is defensible without extra assumptions?],
+  [He exactly preserves every layer's variance throughout training],
+  [BatchNorm inference must contain only one example],
+  [Residual shortcuts guarantee gradients cannot vanish],
+  [Each control targets a mechanism; the actual gauges must still be measured],
+)
+
+== Answer: mechanisms guide; measurements decide #A
+
+#mcq-answer(
+  [D],
+  [Each control targets a mechanism; the actual gauges must still be measured],
+  [He is an initialization approximation, inference may be batched, and a residual branch can reinforce or cancel the identity contribution.],
+)
+
+== Revisit your opening bet
+
+#anchor
+#v(6pt)
 
 #align(center, table(
-  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 7pt), align: (left, left),
-  table.header([*Setting*], [*Sensible default recipe*]),
-  [MLP],         [ReLU / GELU + He init + (optional LayerNorm)],
-  [CNN],         [He init + ReLU / SiLU + BatchNorm + residual],
-  [Transformer], [LayerNorm / RMSNorm + residual + GELU / SiLU + warmup],
-))
-#pause
-#align(center, text(size: 15pt, fill: MUTED)[start here, then adjust — these are starting points, not laws])
-
-== What *not* to overclaim
-
-#pause
-- BatchNorm does *not* "solve internal covariate shift" — it smooths optimization;
-#pause
-- residuals do *not* prevent *all* vanishing — they add a path, not a guarantee;
-#pause
-- ReLU *can* effectively *die* — watch the zero fraction;
-#pause
-- He does *not* preserve variance *exactly* — it is an approximation that erodes;
-#pause
-- normalization is *not always* required (Fixup, careful init);
-#pause
-- *deeper is not always better* — depth has to be earned.
-
-== Retrieval exercise #V
-
-Say the fix out loud before you read it:
-#pause
-#align(center, table(
-  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 6pt), align: (left, left),
-  table.header([*Cue*], [*Recall*]),
-  [tanh / sigmoid],           [saturation ⇒ vanishing gradients],
-  [ReLU on the negative side], [zero gradient ⇒ can die],
-  [$"Var"(W) = 1\/n_"in"$],     [Xavier (linear / tanh)],
-  [$"Var"(W) = 2\/n_"in"$],     [He (ReLU)],
-  [$x + F(x)$],               [residual block ⇒ identity gradient path],
+  columns: 3, stroke: 0.45pt + MUTED, inset: (x: 13pt, y: 7pt), align: center,
+  table.header([choice], [five-layer squared gauges], [five-layer RMS gauges]),
+  [Xavier normal / uniform], [$q_5=g_0=.03125$], [$r_5=s_0=.17678$],
+  [He normal], [$q_5=g_0=1$], [$r_5=s_0=1$],
+  [all-zero weights], [symmetry is unbroken], [units learn the same feature],
 ))
 
-== Final mental model — four moves
+#pause
+#result[The winning bet was He because ReLU's half-active gate required twice Xavier's variance.]
 
-#align(center, text(size: 20pt)[
-  *initialization* = start in a trainable regime \
-  *activations* = preserve a nonlinear gradient \
-  *normalization* = stabilize scale + optimization \
-  *residuals* = shorten the signal / gradient paths
-  #v(6pt)
-  #text(size: 16pt, fill: MUTED)[all four keep signals alive forward and gradients alive backward]
-])
+== Exit ticket: prescribe the smallest repair
+
+For a 30-layer ReLU MLP, you observe activation RMS $1.0→0.6→0.35→dots.c$ and early-layer gradient RMS near zero.
+
+#pause
+Write three lines:
+
+1. *symptom:* which gauge drifts, and in which direction?
+2. *suspect:* which local multiplier could explain it?
+3. *test:* which single controlled change or measurement distinguishes the cause?
+
+#pause
+#note(color: TEAL)[A strong answer names the activation/init pair first, verifies per-layer RMS, then considers normalization or a shorter residual route.]
 
 #focus-slide[
-  Now the network can be *optimized*.
+  Depth is trainable when signal and gradient RMS remain usable along the routes that matter.
   #v(12pt)
   #set text(size: 22pt)
-  Next: keeping it from fitting the training data too well — *regularization and generalization*.
+  Next: L7 asks whether a trainable network also *generalizes*—regularization and the train/test gap.
 ]
+
+// ═══════════════════════════ OPTIONAL APPENDIX · 10 MIN ═══════════════════════════
+= Optional appendix · modern variants and provenance
+
+== RMSNorm resets magnitude without mean subtraction #OPT
+
+For one example with $D$ features,
+
+$ "RMS"(x)=sqrt(1/D sum_(j=1)^D x_j^2+epsilon), quad y_j=gamma_j x_j/"RMS"(x). $
+
+#pause
+#align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
+  hairline([KEEPS], [feature-wise learned scale and RMS denominator], color: GREEN),
+  hairline([DROPS], [mean subtraction and learned shift in the basic form], color: MUTED),
+))
+
+#pause
+#note[$epsilon>0$ prevents division by zero and limits amplification when the input RMS is extremely small.]
+
+== Projection shortcuts can change width and resolution #OPT
+
+If $F_ell(x_ell)$ and $x_ell$ have different shapes, use
+
+$ x_(ell+1)=P_ell x_ell+F_ell(x_ell). $
+
+#pause
+In CNNs, $P_ell$ is often a learned $1 times 1$ convolution:
+
+- stride $1$ can change channel count;
+- stride $>1$ can change channels *and* downsample spatial resolution.
+
+#pause
+#result[The shortcut must match shape before addition; it need not be a literal identity tensor.]
+
+== Placement decides whether the shortcut is truly clean #OPT
+
+#align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
+  hairline([POST-ACTIVATION], [$x_(ell+1)=phi(x_ell+F_ell(x_ell))$; the final $phi'$ gates both paths], color: ACC),
+  hairline([PRE-ACTIVATION], [norm and activation live in $F_ell$; the additive route stays unobstructed], color: GREEN),
+))
+
+#pause
+#note[Fixup is a separate carefully scaled initialization strategy that trains deep residual networks without normalization; it is evidence that these controls are coupled, not mandatory in one fixed recipe.]
+
+== BatchNorm for convolution reduces over $B,H,W$ #OPT
+
+For $X in RR^(B times C times H times W)$, BatchNorm computes one mean and variance per channel:
+
+$ mu_c, sigma_c^2 quad "over" B dot H dot W " values of channel " c. $
+
+#pause
+#align(center, table(
+  columns: 3, stroke: 0.45pt + MUTED, inset: (x: 12pt, y: 7pt), align: (left, left, left),
+  table.header([axis], [reduced?], [meaning]),
+  [batch $B$], [yes], [examples share channel statistics],
+  [channel $C$], [no], [one statistic pair per channel],
+  [space $H,W$], [yes], [locations act as additional samples],
+))
+
+#pause
+#caption[At inference the frozen per-channel running statistics are used, regardless of inference batch size.]
+
+== Generalized He gain handles a leaky slope #OPT
+
+For $phi(u)=max(u,a u)$ with a symmetric pre-activation,
+
+$ EE[phi(z)^2] approx (1+a^2)/2 EE[z^2]. $
+
+#pause
+Matching the affine gain gives
+
+$ "Var"(w)=2/((1+a^2)n_"in"). $
+
+#pause
+#align(center, table(
+  columns: 3, stroke: 0.45pt + MUTED, inset: (x: 13pt, y: 7pt), align: center,
+  table.header([negative slope $a$], [gain factor], [$"Var"(w)$]),
+  [$0$], [$1/2$], [$2/n_"in"$],
+  [$0.1$], [$0.505$], [$2/(1.01n_"in")$],
+  [$1$], [$1$], [$1/n_"in"$],
+))
+
+== Primary references and provenance #OPT
+
+#set text(size: 15pt)
+
+- Glorot & Bengio (2010), #link("https://proceedings.mlr.press/v9/glorot10a.html")[Understanding the difficulty of training deep feedforward neural networks].
+- He et al. (2015), #link("https://openaccess.thecvf.com/content_iccv_2015/html/He_Delving_Deep_into_ICCV_2015_paper.html")[Delving Deep into Rectifiers].
+- Ioffe & Szegedy (2015), #link("https://proceedings.mlr.press/v37/ioffe15.html")[Batch Normalization].
+- Ba, Kiros & Hinton (2016), #link("https://arxiv.org/abs/1607.06450")[Layer Normalization].
+- He et al. (2016), #link(RESNET)[Deep Residual Learning for Image Recognition].
+- Zhang & Sennrich (2019), #link("https://arxiv.org/abs/1910.07467")[Root Mean Square Layer Normalization].
+
+#v(8pt)
+#caption[All lecture diagrams, tables, and numeric traces are native Typst vectors computed from the equations shown; no raster figures are embedded.]
