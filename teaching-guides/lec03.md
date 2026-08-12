@@ -1,47 +1,150 @@
-# Lecture 3 · Training Deep Networks in Practice · Teaching Guide
-*First-time-instructor companion. Audience: undergrads, one ML course.*
+# Lecture 3 · Calculus Toolkit · Teaching Guide
+*Instructor companion for `lecture3a/L3a-calculus-toolkit.typ`. Audience: undergraduates who know basic algebra and matrix multiplication; no multivariable-calculus course is assumed.*
 
-## The spine (say this in 2 sentences)
-Unlike ES 335 where `model.fit` finishes in seconds and bugs throw errors, deep-learning bugs are *silent* — the loss just sits flat — so success is a matter of *discipline*, not theory: a clean training loop, a non-bottlenecked data pipeline, and a fixed debugging order. The one habit that subsumes the rest: before tuning anything, try to **overfit a single batch of ~4 examples** — if you can't drive that to zero loss, the bug is in the wiring, and no learning rate, optimizer, or architecture change will save you.
+## The spine
+
+A derivative is a **local linear model**. The derivative, gradient, Jacobian, and Hessian are the same idea for different input/output shapes; backpropagation is the efficient repeated application of vector-Jacobian products.
+
+By the end, students should be able to look at a function signature and answer three questions: **What derivative object has the right shape? What local change does it predict? Which product does autodiff actually compute?**
 
 ## Where it sits
-Builds on … L1 (the forward · loss · zero_grad · backward · step recipe; the double-softmax / logits-vs-probabilities trap) · L2 (He init, ReLU, ResNets — the things that make depth trainable in the first place) · ES 335 (`model.fit`, train/val splits, the metric you actually care about).
-Sets up … L04–L05 (the optimizer and LR finder used here get opened up properly) · every later lecture (this is the lab discipline they'll run on CNNs, Transformers, everything).
 
-## 80-minute plan
-- ⭐ Core (~45 min): the **debugging ladder** and *why you never skip a rung* · overfit-one-batch as rung 3 · the debug checklist (LR too high/low, double softmax, forgot `zero_grad`, dead ReLUs, wrong label dtype, unnormalized data) · the **LR finder** (sweep LR geometrically, read the steepest-descent region, pick ~3–10× below the minimum) · loss ≠ metric.
-- ⭐⭐ Should-cover (~25 min): `nn.Module` + `nn.Parameter`/`register_buffer` registration footgun · the batch contract (shape/dtype/range asserts) · DataLoader flags + "is the GPU waiting?" · BF16 mixed precision (range > precision) · gradient accumulation (grad of a sum = sum of grads) · gradient clipping (rescale, preserve direction) · error analysis (Ng: bucket 100 mistakes before scaling).
-- ⭐⭐⭐ Optional / skip-if-tight: the autograd "baking-a-cake tape" analogy + by-hand graph · ceiling analysis for pipelines · the reproducibility stack / determinism flags · the validation-leakage and distribution-shift tables (important but can be assigned as reading).
-- **Do live on the board:** the **gradient-accumulation numeric** (`L = (wx−y)²`, η=0.1, K=2, w₀=0). Micro-batch 1 (x=2,y=1) → grad −2 (no step); micro-batch 2 (x=3,y=2) → grad accumulates to −8; one step → w = 0 − 0.1·(−8) = 0.8. Then show this is the *exact* update of one big batch of {(2,1),(3,2)}. It lands because it makes "grad of a sum = sum of grads" concrete and demystifies the divide-by-K — the two details everyone gets wrong.
+- **Builds on Lecture 1:** losses as scalar objectives and parameters as quantities we optimize.
+- **Builds on Lecture 2:** a linear layer `z = Wx + b`, elementwise activations, and vector/matrix shapes.
+- **Sets up Lecture 4:** computation graphs, reverse-mode autodiff, and backpropagation as a chain of VJPs.
+- **Returns in Lectures 5–7:** gradient descent, conditioning, learning rates, momentum/Adam, trainability, and regularization.
 
-## Teach it like this
-Open with the flat-loss pop quiz — lower the LR? switch to AdamW? overfit one batch? add depth? — and tell them the *correct* answer is the one most students reach for last. Make the emotional pivot explicit: in ES 335 a bug crashes with a stack trace; here a bug just gives you a flat loss curve for three hours, so you need a *procedure*, not intuition. Walk the ladder rung by rung, dwelling on rung 3 (overfit one batch) as the single highest-leverage move, and use the debug checklist as the menu of what's actually broken when rung 3 fails. The LR finder is the payoff for "LR is the most important hyperparameter" — show them how to read the plot. Close by revisiting the pop quiz: the answer was (c), and *until you can overfit one batch every other tweak is guessing.*
+## Prerequisites and room setup
 
-## Heads-up for YOU (subtle points to get right)
-- **The learning rate is THE most important hyperparameter — full stop, before architecture or optimizer.** State it plainly and act on it: the LR finder runs *before* you touch model size or swap optimizers. Too high → loss → NaN; too low → loss barely moves; the goal is the *highest stable* LR. A first-time instructor often treats LR as one knob among many — it isn't; it's the one that decides whether *anything* works.
-- **On the LR-finder plot, do NOT pick the minimum — pick ~3–10× below it.** The loss minimum on the LR sweep is already on the edge of divergence; training *at* it is unstable. The right pick is in the *steepest-descent* region, roughly 3–10× smaller than where the loss bottoms out. If you tell students "pick the LR with lowest loss," they'll pick the one that blows up in the real run.
-- **BF16 beats FP16 because of *range*, not precision — and it does NOT need loss scaling.** BF16 has FP32-like range (±10³⁸) with fewer mantissa bits; FP16 has fine precision but a tiny range (±65,504) and needs *loss scaling* to stop gradients from *underflowing* to zero. The slide is precise: FP16's problem is underflow (hence scaling), not just overflow. For DL, range matters more than ultra-fine precision, so BF16 is the 2026 default on Ampere+. Don't say "BF16 is more precise" — it's *less* precise, more robust.
-- **`self.foo = torch.tensor(...)` silently un-registers the tensor.** It gets no gradient, doesn't move with `.to(device)`, and isn't saved in `state_dict`. Learnable → `nn.Parameter`; non-learnable but device-bound (running stats, positional codes) → `register_buffer`. This is a classic silent failure — the parameter just never trains and nothing errors.
-- **Gradient clipping rescales the *whole gradient vector* to preserve direction — it is not per-parameter clamping.** Compute the global L2 norm `‖g‖`; if it exceeds `max_norm`, multiply *every* component by `max_norm/‖g‖`. Direction is preserved, only step size is capped. `clip_grad_norm_` (global) ≠ `clip_grad_value_` (per-element clamp) — the latter distorts direction. Worked numeric: g=[3,4], ‖g‖=5, max_norm=1 → scale 0.2 → [0.6, 0.8], norm exactly 1.
-- **Gradient accumulation needs the loss divided by K, and `step`/`zero_grad` only every K micro-batches.** `.backward()` *adds* into `.grad`, so K micro-batches sum their gradients automatically; dividing the loss by K turns that sum into the *mean*, matching a real batch of K·B. Forget the `/K` and your effective LR is K× too large; call `step()` every micro-batch and you've defeated the entire point.
+Students need:
 
-## Where students stumble (and the fix)
-- **Reaching for LR/optimizer/architecture changes when the loss is flat.** The fix is the ladder: rung 3 (overfit one batch) *isolates* whether the bug is wiring vs. tuning. If 4 examples won't go to ~0 loss, stop tuning and debug the wiring. This is the lecture's thesis — drill it.
-- **Blaming the model when the GPU is starved.** Symptom: GPU utilization sawtooths. Fix order: benchmark the *loader alone* first (time 100 batches), then `num_workers↑`, `pin_memory=True`, `persistent_workers=True`. A bigger model or better optimizer never fixes a data bottleneck.
-- **Reporting accuracy on an imbalanced problem.** Loss ≠ metric: 95%-majority data gives 95% accuracy from predicting the majority class. Choose the metric (F1/AUROC/per-class) *before* training, or you'll optimize the convenient loss and discover too late it doesn't match the objective.
-- **`torch.save(model)` instead of `state_dict`.** Pickling the whole object ties the checkpoint to the exact class definition and breaks across refactors. Always save `model.state_dict()` (and `weights_only=True` on load). Pair with: `model.eval()` (changes BN/dropout behavior) is *not* the same as `torch.no_grad()` (stops tape construction) — you usually want both at eval time.
-- **Trusting a great validation curve that's secretly leaking.** Same patient / adjacent video frames / random split on time-series → train and val are near-duplicates, so the score is a mirage. Check the *split* matches the deployment question before celebrating.
+- scalar functions and function composition;
+- vectors, matrices, transposes, dot products, and matrix multiplication;
+- the idea that a matrix maps one vector to another;
+- enough Python to read a short NumPy or PyTorch cell.
 
-## If a student asks…
-- "Why overfit one batch instead of just lowering the LR first?" → Because overfit-one-batch *isolates the failure class*. If 4 examples can't reach ~0 loss, the bug is structural (wiring, label dtype, double softmax, frozen params, dead ReLUs) and no LR change touches it. Lowering the LR only helps if the *sole* problem was divergence — a narrow case. The ladder tests cheap, decisive hypotheses in order.
-- "I doubled batch_size and it diverged — why?" → Bigger batch → smaller gradient noise → the old LR is now effectively too timid *or* too aggressive depending on direction; the standard rule is *linear scaling*: 2× batch ⇒ ~2× LR (up to a critical batch size, beyond which you need warmup). You changed the batch but kept the LR — they're coupled.
-- "Why does FP16 need loss scaling but BF16 doesn't?" → FP16's tiny range means small gradients *underflow* to zero; loss scaling multiplies the loss (and thus gradients) up into representable range, then unscales before the step. BF16 keeps FP32's range, so gradients rarely underflow/overflow — no scaling needed. The trade is BF16 has fewer mantissa bits (less precision), which DL tolerates fine.
-- "Is `model.eval()` enough, or do I also need `torch.no_grad()`?" → You need both, and they do different jobs. `eval()` switches BatchNorm to use running stats and turns off dropout (correctness). `no_grad()` stops autograd from building the tape (speed + memory). A concrete case: validation — wrong stats *and* wasted memory if you skip either.
-- "My train loss is 0.02 but val loss is 0.6 — what now?" → That's overfitting (the *opposite* signature from L2's degradation). Cheapest-first: add regularization/augmentation/weight decay and early-stop; then reduce model size; then collect more data. But first rule out *leakage* in the val split — sometimes a great-looking gap is the split, not the model.
-- "Why benchmark the loader separately — can't I just look at total epoch time?" (hard) → Because total time mixes compute and data, and you can't tell which is the bottleneck. Timing the loader *alone* (100 batches, no model) gives you batches/sec for the data path; if that's already slow, optimizing the model is wasted effort. Isolate, then attack the actual constraint — same philosophy as overfit-one-batch.
+Before class:
 
-## If you're short on time
-Cut: the autograd cake-tape analogy + by-hand graph (they saw backprop in L1), ceiling analysis, the reproducibility/determinism flags, and assign the leakage + distribution-shift tables as reading. Never cut: the **debugging ladder** (especially overfit-one-batch) and the **LR finder + how to read the plot**. Those two are the operational core — everything else is supporting hygiene.
+1. Open the deck and the two exact companion notebooks:
+   - [`03_gradient_descent_on_quadratics.ipynb`](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03A/03_gradient_descent_on_quadratics.ipynb)
+   - [`05_jacobian_vjp_hessian_pytorch.ipynb`](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03A/05_jacobian_vjp_hessian_pytorch.ipynb)
+2. Keep a board area for a running **shape ledger**: `R→R`, `R^d→R`, `R^n→R^m`, and `R^d→R` again for second derivatives.
+3. Do not begin with notation. Begin with the training update `theta_(t+1) = theta_t - eta nabla L(theta_t)` and ask what information the gradient must provide.
+
+## Honest 80-minute route: 55 + 15 + 10
+
+### 0–55 min · Core conceptual route
+
+- **0–8 · One idea, five objects.** Use “Why a calculus lecture?” and “The big picture.” Establish that every object is a local linear description whose shape follows from the function shape.
+- **8–17 · Scalar derivative.** Derivative as slope, then immediately upgrade the definition to `f(x + Δx) ≈ f(x) + f'(x)Δx`. Work the `x²` at `x=3` numeric check. Use the local-linearization checkpoint.
+- **17–25 · Partials and gradient.** A partial is a one-dimensional slice; the gradient stacks all coordinate sensitivities. Keep asking for shapes before formulas.
+- **25–34 · Gradient geometry.** Work the directional derivative, Cauchy–Schwarz argument, contour orthogonality, and one gradient-descent update. The key sentence is: **the gradient points uphill; its negative is the locally steepest downhill direction.**
+- **34–43 · Hessian and conditioning.** Derive the Hessian of `x² + 3y²`, connect its eigenvalues to curvature, classify a saddle, and use elongated contours to explain zigzagging. Do not turn this into a full eigenvalue lecture.
+- **43–55 · Jacobian, chain rule, VJP.** Start from `R^n→R^m`, build the 2→2 Jacobian row by row, check matrix shapes in the chain rule, and end with `x_bar = J^T y_bar`. This is the bridge to Lecture 4.
+
+If time slips, omit “Where each object shows up in deep learning” and the optional Hessian/Jacobian application slides. Never cut the local-linear-model idea, shape ledger, worked 2→2 Jacobian, or VJP bridge.
+
+### 55–70 min · Two notebook demonstrations
+
+Run these prediction-first. The notebooks are small enough that students should reason before execution rather than watch a coding performance.
+
+#### Notebook A · Quadratic gradient descent (7 minutes)
+
+1. Show the two objectives before running: `x² + y²` and `x² + 10y²`.
+2. Ask students to predict which path is straight and which changes sign along one coordinate.
+3. For `gamma=10, eta=0.09`, calculate the `y` multiplier on the board: `1 - 2 eta gamma = -0.8`. The negative multiplier predicts the zigzag.
+4. Run both cells. Connect the trajectory to Hessian eigenvalues `(2, 2gamma)` and condition number `gamma`.
+5. Change only `eta` or `gamma`; ask for a prediction before rerunning.
+
+#### Notebook B · Jacobian, VJP, Hessian (8 minutes)
+
+1. Before execution, derive the first Jacobian row for `f(x) = [x0² + x1, sin(x0 x1)]` at `(1,2)`.
+2. Ask for the Jacobian shape and the shapes of `v`, `J^T v`, and `x.grad`.
+3. Run the Jacobian cell and reconcile the second row with `cos(2)`.
+4. Predict whether `backward(v)` forms the full Jacobian. Run the VJP cell and verify `x.grad == v @ J` (the row-vector form of `J^T v`).
+5. Derive `H=[[2,1],[1,6]]` for the scalar `g`, then use PyTorch only as a check.
+
+### 70–80 min · Checks and exit ticket
+
+- **70–74 · Shape check.** Give `f: R^3→R^5` and scalar `L(f(x))`. Students write `J_f in R^(5×3)`, `nabla_f L in R^5`, and `nabla_x L = J_f^T nabla_f L in R^3`.
+- **74–77 · Geometry check.** Ask why `nabla f` is perpendicular to a contour and why `nabla f=0` does not guarantee a minimum.
+- **77–80 · Exit ticket.** For each of `f: R→R`, `f: R^d→R`, and `f: R^n→R^m`, name the derivative object, its shape, and one DL use. Final prompt: “Why does backprop use products instead of full Jacobians?”
+
+## Teach the deck like this
+
+Keep returning to one table:
+
+| Function | Derivative object | Shape | Local model |
+|---|---|---:|---|
+| `R→R` | derivative | scalar | `f(x+Δx) ≈ f(x)+f'(x)Δx` |
+| `R^d→R` | gradient | `d` | `f(x+Δx) ≈ f(x)+nabla f^T Δx` |
+| `R^n→R^m` | Jacobian | `m×n` | `f(x+Δx) ≈ f(x)+JΔx` |
+| `R^d→R` | Hessian | `d×d` | adds `1/2 Δx^T H Δx` |
+
+The table should feel inevitable, not memorized. Ask “input shape? output shape?” before revealing every derivative shape. On the Jacobian slides, read rows as output coordinates and columns as input coordinates. On the VJP slide, narrate from the scalar loss backward: the upstream vector arrives at a layer and multiplication by `J^T` sends sensitivity to that layer’s inputs.
+
+## Board derivations worth doing
+
+### 1. Local linearization
+
+For `f(x)=x²` at `x=3`, use `Δx=0.1`:
+
+- linear prediction: `9 + 6(0.1) = 9.6`;
+- true value: `3.1² = 9.61`;
+- error: `0.01`.
+
+Then use `Δx=1` to show why “local” matters: prediction `15`, truth `16`.
+
+### 2. Gradient and directional derivative
+
+For `f(x,y)=x²+y²` at `(1,2)`, `nabla f=(2,4)`. With unit `u=(3/5,4/5)`, compute `nabla f^T u=4.4`, then compare with `||nabla f||=sqrt(20)≈4.47`. This makes “steepest” quantitative.
+
+### 3. Jacobian and VJP
+
+For `f(x1,x2)=[x1²+x2, sin(x1x2)]`, derive
+
+`J = [[2x1, 1], [x2 cos(x1x2), x1 cos(x1x2)]]`.
+
+At `(1,2)`, use `v=(1,3)` and compute `J^T v`. This exact example is reproduced in Notebook B, so the code verifies the board rather than introducing new arithmetic.
+
+## Checks for understanding
+
+Use these before moving on:
+
+1. **Local model:** Why is a derivative more than the slope of a tangent line?
+2. **Gradient:** If `u` is tangent to a contour, what is `nabla f^T u`?
+3. **Stationary point:** Give one example with `nabla f=0` that is not a minimum.
+4. **Hessian:** For `H=diag(2,20)`, which coordinate constrains a stable learning rate more strongly?
+5. **Jacobian:** If `f: R^4→R^7`, what is the shape of `J`?
+6. **Chain rule:** If `x∈R^2`, `h∈R^3`, and `y∈R^4`, which multiplication order produces `J_(y,x)`?
+7. **VJP:** Why does a scalar training loss make reverse mode attractive when there are millions of parameters?
+
+Expected short answers: local change prediction; zero; e.g. `x²-y²` at the origin; the second coordinate; `7×4`; `J_(y,h) J_(h,x)`; one reverse sweep returns the full parameter gradient without materializing layer Jacobians.
+
+## Where students stumble
+
+- **Derivative, gradient, and Jacobian are treated as unrelated formulas.** Return to the local-linear-model table and function shapes.
+- **Jacobian orientation is transposed.** Say “rows are outputs, columns are inputs,” then check `JΔx` has output shape.
+- **Gradient direction is confused with the direction to the global minimum.** It is only the locally steepest ascent direction. Elongated quadratic contours make the distinction visible.
+- **`nabla f=0` is called a minimum.** Use `x²-y²` and mixed Hessian eigenvalue signs.
+- **`v^T J` versus `J^T v` looks contradictory.** They are row- and column-vector notations for the same VJP; PyTorch stores the result with the input’s shape.
+- **Autodiff is described as symbolic or numerical differentiation.** It applies exact local derivative rules to the executed computation graph.
+
+## If a student asks
+
+- **“Why does backprop transpose the Jacobian?”** The forward perturbation maps as `Δy=JΔx`. Sensitivities are covectors: preserving the scalar change `y_bar^T Δy = x_bar^T Δx` gives `x_bar=J^T y_bar`.
+- **“Does PyTorch ever form a Jacobian?”** It can when explicitly asked for one in a small diagnostic, as the notebook does. Ordinary scalar-loss `.backward()` computes VJPs and avoids the full matrix.
+- **“Why not use the Hessian for every update?”** With `P` parameters, the gradient has `P` entries but the dense Hessian has `P²`; forming, storing, and inverting it is usually prohibitive.
+- **“Why does bad conditioning cause zigzagging?”** One shared step size must be small enough for the high-curvature direction, so progress along the low-curvature direction is slow; near the stability limit the steep coordinate alternates signs.
+
+## Instructor verification checklist
+
+- The public Lecture 3 row points to `slides-pdf/L3A.pdf`, not the separate backprop deck used for public Lecture 4.
+- Both public Colab links use the exact `notebooks/L03A/` filenames listed above.
+- The deck’s local arithmetic matches the notebook outputs: the Jacobian second row at `(1,2)` is `[2 cos(2), cos(2)]≈[-0.8323,-0.4161]`; with `v=(1,3)`, the VJP is approximately `[-0.4969,-0.2484]`; the Hessian is `[[2,1],[1,6]]`.
+- The notebooks execute top to bottom with no errors.
+- The handout and progressive PDF render without clipped text, broken links, or unreadable equations.
 
 ## Closing line
-"Theory tells you the network *can* learn; this lecture is the discipline that catches it when it silently doesn't. Climb the ladder, never skip a rung — and if you can't overfit one batch, nothing else matters."
+
+“One idea changes shape: slope for a scalar, direction for a scalar field, a local map for a vector function, curvature for a scalar field — and backprop moves those sensitivities backward without building the maps.”

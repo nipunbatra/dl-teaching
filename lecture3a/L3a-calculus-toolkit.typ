@@ -10,6 +10,8 @@
 )
 
 #let IA = "https://nipunbatra.github.io/interactive-articles/"
+#let NB-GD = "https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03A/03_gradient_descent_on_quadratics.ipynb"
+#let NB-AUTODIFF = "https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03A/05_jacobian_vjp_hessian_pytorch.ipynb"
 // chain-rule graph  x -> u -> v
 #let chain3 = align(center, diagram(spacing: 16mm, node-stroke: 0.9pt + INK, node-fill: white, {
   node((0,0), $x$, radius: 6mm); node((1,0), $u$, radius: 6mm, stroke: 0.9pt + TEAL); node((2,0), $v$, radius: 6mm, stroke: 0.9pt + ACC)
@@ -340,6 +342,7 @@ The gradient picks a *direction*, but curvature decides a good *step size*.
 ]
 #pause
 Observe how one shared step size alternately overshoots the steep direction and creeps along the flat one.
+#align(center, text(size: 14pt, fill: MUTED)[Follow-along: #link(NB-GD)[exact quadratic GD Colab] — predict both trajectories before running.])
 
 // ═══════════════════════════ PART VI — Jacobian ═══════════════════════════
 = The Jacobian
@@ -525,6 +528,7 @@ H = torch.autograd.functional.hessian(g, x)     # -> [[2, 1], [1, 6]]
 ```]
 #pause
 #align(center)[$H = mat(2, 1; 1, 6)$ — matches the second partials by hand.]
+#align(center, text(size: 14pt, fill: MUTED)[Follow-along: #link(NB-AUTODIFF)[exact Jacobian / VJP / Hessian Colab] — calculate first, then verify.])
 
 // ═══════════════════════════ PART IX — Summary ═══════════════════════════
 = Summary
