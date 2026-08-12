@@ -2,7 +2,11 @@
 title: "Lecture decks"
 ---
 
-These **25 canonical PDFs** are the course sequence. Each is a one-slide-per-page handout built in Typst; `[Q]`, `[V]`, `[D]`, and `[I]` mark short checkpoints, visuals, derivations, and optional interactives. Start with L1 if you are new to the sequence, or use this page as the authoritative map of the course.
+These **25 canonical PDFs** are the course sequence. Each `PDF` is a compact,
+one-slide-per-page Typst handout; `Present` retains the progressive classroom
+builds where available. `[Q]`, `[V]`, `[D]`, and `[I]` mark short checkpoints,
+visuals, derivations, and optional interactives. Start with L1 if you are new to
+the sequence, or use this page as the authoritative map of the course.
 
 ```{=html}
 <div class="mod-head"><span class="mod-name">Module 1 · Foundations</span><span class="mod-ng">losses → models → calculus → backprop</span></div>
@@ -15,7 +19,7 @@ These **25 canonical PDFs** are the course sequence. Each is a one-slide-per-pag
 
 <div class="mod-head"><span class="mod-name">Module 2 · Optimization &amp; Training</span><span class="mod-ng">use the gradients well</span></div>
 <div class="lec-list">
-  <div class="lec"><span class="lec-num">5</span><span><span class="lec-title">Optimization for Deep Learning</span><span class="lec-sub">GD from Taylor, SGD as an unbiased estimator, momentum, Adam, LR schedules</span></span><span class="lec-links"><a href="slides-pdf/L5.pdf">PDF</a></span></div>
+  <div class="lec"><span class="lec-num">5</span><span><span class="lec-title">Optimization for Deep Learning</span><span class="lec-sub">gradient estimates → momentum → AdaGrad / RMSProp → AdamW, with warmup + cosine</span></span><span class="lec-links"><a href="slides-pdf/L5.pdf">PDF</a><span class="sep">·</span><a href="slides-pdf/L5-presentation.pdf">Present</a><span class="sep">·</span><a href="https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L05/01_gd_quadratic.ipynb">GD Colab</a><span class="sep">·</span><a href="https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L05/06_optimizer_comparison_pytorch.ipynb">Optimizer Colab</a></span></div>
   <div class="lec"><span class="lec-num">6</span><span><span class="lec-title">Making Deep Networks Trainable</span><span class="lec-sub">initialization (Xavier / He), activations, batch / layer norm, residual connections</span></span><span class="lec-links"><a href="slides-pdf/L6.pdf">PDF</a></span></div>
   <div class="lec"><span class="lec-num">7</span><span><span class="lec-title">Generalization &amp; Regularization</span><span class="lec-sub">the gap, early stopping, weight decay / AdamW, dropout, augmentation, label smoothing</span></span><span class="lec-links"><a href="slides-pdf/L7.pdf">PDF</a></span></div>
 </div>

@@ -1,776 +1,978 @@
-// Optimization for Deep Learning — Lecture 5 · ES 667 Deep Learning
-// Compile from the repo root:
-//   typst compile --root . lecture5/L5-optimization.typ
-//   typst compile --root . --input handout=true lecture5/L5-optimization.typ
-// Theme, palette, helpers and diagram builders live in common/metropolis.typ.
+// Optimization for Deep Learning - Lecture 5 · ES 667 Deep Learning
+// Compile from the repository root:
+//   typst compile --root . --input handout=true lecture5/L5-optimization.typ slides-pdf/L5.pdf
+//   typst compile --root . lecture5/L5-optimization.typ slides-pdf/L5-presentation.pdf
 
 #import "../common/metropolis.typ": *
 #import "../common/mldiag.typ": *
 #show: metropolis-deck.with(
   title: [Optimization for Deep Learning],
-  subtitle: [SGD, Momentum, Adam, and Learning-Rate Schedules],
+  subtitle: [How gradients become reliable parameter updates],
 )
 
 #let IA = "https://nipunbatra.github.io/interactive-articles/"
-// the update loop: gradient -> optimizer -> new parameters
-#let updateloop = align(center, diagram(spacing: (23mm, 9mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  node((0,0), $theta_t$, radius: 7mm, stroke: 0.9pt + INK)
-  node((1,0), text(size: 14pt)[backprop], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 7pt, fill: rgb("#EFEEEB"))
-  node((2,0), $g_t$, radius: 7mm, stroke: 0.9pt + TEAL)
-  node((3,0), text(size: 14pt)[optimizer], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 7pt, fill: rgb("#FDECD6"), stroke: 0.9pt + ACC)
-  node((4,0), $theta_(t+1)$, radius: 7mm, stroke: 0.9pt + ACC)
-  edge((0,0),(1,0), "-|>", stroke: 0.8pt + MUTED)
-  edge((1,0),(2,0), "-|>", stroke: 0.8pt + MUTED)
-  edge((2,0),(3,0), "-|>", stroke: 0.8pt + MUTED)
-  edge((3,0),(4,0), "-|>", stroke: 0.8pt + MUTED)
-}))
+#let NB = "https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L05/"
+
+// Semantic colour grammar used throughout the lecture.
+// BLUE = measured gradient · TEAL = direction memory · GREEN = scale memory
+// ACC = applied update / learning-rate clock · RED = failure or warning.
+#let note(body, color: TEAL) = block(
+  width: 100%, inset: (left: 10pt, right: 2pt, top: 4pt, bottom: 4pt),
+  stroke: (left: 1.2pt + color), [#body],
+)
+#let warning(body) = note(body, color: RED)
+#let punch(body) = align(center, text(size: 18pt, weight: 650)[#body])
+#let caption(body) = align(center, text(size: 14.5pt, fill: MUTED)[#body])
+#let hairline(title, body, color: TEAL) = block(width: 100%, inset: 2pt, [
+  #text(size: 14pt, weight: 700, fill: color)[#title]
+  #v(2pt)
+  #line(length: 100%, stroke: 0.7pt + color)
+  #v(5pt)
+  #body
+])
+#let swatch(color, body) = box(width: 12pt, height: 3pt, fill: color, radius: 1pt) + h(4pt) + body
+
+#let semantic-legend = align(center, text(size: 13pt)[
+  #swatch(BLUE, [measured $g_t$]) #h(15pt)
+  #swatch(TEAL, [direction $m_t$]) #h(15pt)
+  #swatch(GREEN, [scale $v_t$ or $G_t$]) #h(15pt)
+  #swatch(ACC, [applied $Delta theta_t$])
+])
+
+// Geometry uses a separate, stable grammar: teal contours are the loss field,
+// amber paths are applied parameter motion, and red marks a target or failure.
+#let geometry-theme = theme(base: dl-theme, cycle: (INK, ACC, TEAL, GREEN, RED))
+
+#let update-loop = align(center, diagram(
+  spacing: (17mm, 11mm), node-stroke: 0.9pt + INK, node-fill: white,
+  {
+    node((0, 0), $theta_t$, radius: 6.2mm, stroke: 1pt + INK)
+    node((1, 0), text(size: 13pt)[forward + loss], shape: fletcher.shapes.rect,
+      corner-radius: 3pt, inset: 6pt, fill: rgb("#F1F4F4"), stroke: 0.9pt + MUTED)
+    node((2, 0), text(size: 13pt)[backprop], shape: fletcher.shapes.rect,
+      corner-radius: 3pt, inset: 6pt, fill: BLUE.lighten(92%), stroke: 1pt + BLUE)
+    node((3, 0), $g_t$, radius: 6.2mm, stroke: 1pt + BLUE)
+    node((4, 0), text(size: 13pt)[state + rule], shape: fletcher.shapes.rect,
+      corner-radius: 3pt, inset: 6pt, fill: TEAL.lighten(92%), stroke: 1pt + TEAL)
+    node((5, 0), $theta_(t+1)$, radius: 7mm, stroke: 1.1pt + ACC)
+    for i in range(5) { edge((i, 0), (i + 1, 0), "-|>", stroke: 0.9pt + MUTED) }
+  }
+))
+
+#let adam-pipeline = align(center, diagram(
+  spacing: (25mm, 12mm), node-stroke: 0.9pt + INK, node-fill: white,
+  {
+    node((0, 0), $g_t$, radius: 6mm, stroke: 1pt + BLUE)
+    node((1, -0.75), $m_t$, radius: 6mm, stroke: 1pt + TEAL)
+    node((1, 0.75), $v_t$, radius: 6mm, stroke: 1pt + GREEN)
+    node((2, 0), $Delta theta_t$, radius: 7mm, stroke: 1.1pt + ACC)
+    edge((0, 0), (1, -0.75), "-|>", stroke: 1pt + TEAL,
+      label: text(size: 10pt, fill: TEAL)[smooth sign + direction], label-sep: 5pt)
+    edge((0, 0), (1, 0.75), "-|>", stroke: 1pt + GREEN,
+      label: text(size: 10pt, fill: GREEN)[track squared size], label-sep: 5pt)
+    edge((1, -0.75), (2, 0), "-|>", stroke: 1pt + TEAL)
+    edge((1, 0.75), (2, 0), "-|>", stroke: 1pt + GREEN)
+  }
+))
 
 #title-slide()
 
-// ═══════════════════════════ PART I — From backprop to optimization ═══════════════════════════
-= From backprop to optimization
+// ═══════════════════════════ OPENING ═══════════════════════════
+== You already know the two ends of a training step
 
-== Where we are
+From backprop, you know how to compute every sensitivity
 
-Backprop gave us one thing: the *gradient* of the loss.
-#pause
-$ g_t = nabla_theta cal(L)(theta_t) $
-#pause
-But a gradient is only a *direction*. Training still has to decide:
-#pause
-#notebox[*How* do we turn a stream of gradients into good parameters? That is the job of the *optimizer*.]
+$ g_t = nabla_theta cal(L)_(cal(B)_t)(theta_t). $
 
-== The spine of this lecture
+#pause
+From gradient descent, you know the simplest parameter update
 
-#align(center, text(size: 23pt, fill: INK)[
-  Backprop gives gradients; \
-  *optimization decides how to use them.*
-])
-#pause
-#v(6pt)
-#updateloop
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[each step: current params → gradient → update rule → new params])
+$ theta_(t+1) = theta_t - eta g_t. $
 
-== The optimizer is a small function
+#pause
+Our first new idea—momentum—will remember recent gradients instead of trusting
+one minibatch at a time.
 
-Every method in this lecture has the same skeleton:
-$ theta_(t+1) = "update"(theta_t, g_t) $
-#pause
-They differ only in *what state they keep* and *how they scale the step*:
-#pause
-- plain GD keeps *nothing* — just $-eta g_t$;
-#pause
-- momentum keeps a *running direction*;
-#pause
-- Adam keeps a running *direction* and a running *magnitude*.
-
-== The loss landscape #V
-
-Training = descending a surface $cal(L)(theta)$ over millions of parameters.
-#pause
-#fig("/lecture5/figures/landscape.svg", w: 74%)
-#align(center, text(size: 16pt, fill: MUTED)[the gradient points *uphill*; we step along $-nabla cal(L)$, perpendicular to contours])
-
-== Gradient descent from a Taylor series #D
-
-Expand the loss around the current point $theta$ for a small step $Delta$:
-$ cal(L)(theta + Delta) approx cal(L)(theta) + nabla cal(L)(theta)^top Delta + 1/2 Delta^top H Delta $
-#pause
-Keep only the *first-order* term (small steps ⇒ curvature negligible):
-$ cal(L)(theta + Delta) approx cal(L)(theta) + nabla cal(L)(theta)^top Delta $
-
-== Steepest descent falls out #D
-
-Minimize the linear model over a *trust region* $norm(Delta) <= r$:
-$ min_(norm(Delta) <= r) thin nabla cal(L)(theta)^top Delta $
-#pause
-By Cauchy–Schwarz this is most negative when $Delta$ is *anti-parallel* to the gradient:
-$ Delta^star = -r thin (nabla cal(L)(theta))/norm(nabla cal(L)(theta)) quad prop quad -nabla cal(L)(theta) $
-#pause
-#result[$theta_(t+1) = theta_t - eta thin nabla cal(L)(theta_t)$]
-
-== What is the learning rate, really? #D
-
-Folding the trust-region radius into a single step size gives $eta$.
-#pause
-Compare with the *second-order* (Newton) step that also uses curvature:
-$ Delta_"Newton" = -H^(-1) nabla cal(L) $
-#pause
-#notebox[$eta$ plays the role of an *inverse-curvature* / trust-region size. A scalar $eta$ is a crude stand-in for $H^(-1)$ — too big overshoots sharp directions, too small crawls on flat ones.]
-
-== Basic gradient descent
-
-#result[$theta_(t+1) = theta_t - eta thin nabla cal(L)(theta_t)$]
-#pause
-- $eta$ — the *learning rate* (step size);
-#pause
-- $nabla cal(L)$ — the direction of steepest ascent, so $-nabla cal(L)$ descends;
-#pause
-- one hyperparameter, no memory — the simplest optimizer there is.
-
-== Worked example: 1-D quadratic #D
-
-Minimum is at $theta = 3$. Set up the loss, gradient, and starting point:
-#pause
-$ cal(L)(theta) = (theta - 3)^2, quad nabla cal(L) = 2(theta - 3), quad theta_0 = 0, quad eta = 0.1 $
-#pause
-*Step 1* — plug $theta_0 = 0$ into the update rule:
-$ theta_1 = 0 - 0.1 dot 2(0 - 3) $
-#pause
-$ theta_1 = 0 - 0.1 dot (-6) = 0.6 $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[the gradient $-6$ points left of the min, so the step moves us *right*, toward $3$.])
-
-== Worked example: 1-D quadratic (cont.) #D
-
-Recall $theta_1 = 0.6$, still with $eta = 0.1$ on $cal(L) = (theta - 3)^2$.
-#pause
-*Step 2* — gradient at $0.6$ is $2(0.6 - 3) = -4.8$:
-$ theta_2 = 0.6 - 0.1 dot (-4.8) = 1.08 $
-#pause
-*Step 3* — gradient at $1.08$ is $2(1.08 - 3) = -3.84$:
-$ theta_3 = 1.08 - 0.1 dot (-3.84) = 1.464 $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[$0 -> 0.6 -> 1.08 -> 1.464 -> dots -> 3$ — each step closes $20%$ of the remaining gap ($80%$ is left, the factor $0.8$).])
-#pause
-#notebox[The distance to the minimum obeys $(theta_t - 3) -> (1 - 2 eta)(theta_t - 3)$; here $1 - 2 eta = 0.8$, a clean geometric decay.]
-
-== The learning rate matters #V
-
-Same curve $cal(L) = (theta - 3)^2$, four choices of $eta$:
-#pause
-// native: the ACTUAL GD iterates at each η (ml-plot) — the diverging case really diverges
-#let _para(t) = calc.pow(t - 3.0, 2)
-#let _gd1(eta) = {
-  let t = 0.0
-  let pts = ((t, _para(t)),)
-  for _ in range(12) {
-    t = t - eta * 2.0 * (t - 3.0)
-    let tc = calc.max(-1.5, calc.min(7.5, t))   // clip to the frame like the curve
-    pts.push((tc, _para(tc)))
-  }
-  pts
-}
-#let _bowl = range(0, 61).map(i => { let t = -1.5 + 9.0 * i / 60.0; (t, _para(t)) })
-#let _cfgs = (
-  (0.05, [$eta = 0.05$ · too small], TEAL),
-  (0.4, [$eta = 0.4$ · good], GREEN),
-  (0.9, [$eta = 0.9$ · oscillates], ACC),
-  (1.05, [$eta = 1.05$ · diverges], RED),
-)
-#align(center, stack(dir: ltr, spacing: 4mm,
-  .._cfgs.map(cf => lines((_bowl, _gd1(cf.at(0))),
-    colors: (INK, cf.at(2)), markers: (false, true), y-ticks: false,
-    size: (37mm, 30mm), title: cf.at(1))),
-))
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[too small crawls · good converges fast · large oscillates · $eta > 1$ diverges])
-
-== Interactive: optimizer race #I
-
-#interbox(link-to: IA + "optimizer-race")[
-  Drop a start point on a loss surface and watch gradient descent trace its path as you sweep the learning rate — see crawl, converge, oscillate, and diverge live.
+#note[
+  Today's question is the missing middle: *what state should an optimizer remember, and how should that state shape the next step?*
 ]
-#pause
-Try values around the stability boundary and watch the error multiplier $1-2eta$.
 
-== Checkpoint: learning-rate stability #Q
+== Commit: one parameter is seen often; one is seen rarely #Q
+
+Two coordinates receive this minibatch-gradient history:
+
+#align(center, table(
+  columns: 4, stroke: 0.5pt + MUTED, inset: (x: 16pt, y: 8pt),
+  align: (left, center, center, center),
+  table.header([coordinate], [$g_1$], [$g_2$], [$g_3$]),
+  [#text(fill: BLUE, weight: 650)[dense $d$]], [$4$], [$4$], [$4$],
+  [#text(fill: GREEN, weight: 650)[rare $r$]], [$0$], [$0$], [$0.4$],
+))
+
+#v(8pt)
+#mcq(
+  [At step 3, which information could tell us that $r$ is rare?],
+  [only the current gradient $g_3$],
+  [the signs in $g_1,g_2,g_3$],
+  [past squared gradients per coordinate],
+  [a larger global learning rate],
+)
+
+== Keep your choice; we will earn the answer
+
+We start at $theta_0=(1,1)$ and repeatedly reuse the same stream:
+
+$ g_1=(4,0), quad g_2=(4,0), quad g_3=(4,0.4). $
+
+#pause
+#align(center, diagram(spacing: (28mm, 12mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0, 0), [current gradient], shape: fletcher.shapes.rect, corner-radius: 3pt,
+    inset: 7pt, stroke: 1pt + BLUE)
+  node((1, -0.65), [direction history], shape: fletcher.shapes.rect, corner-radius: 3pt,
+    inset: 7pt, stroke: 1pt + TEAL)
+  node((1, 0.65), [scale history], shape: fletcher.shapes.rect, corner-radius: 3pt,
+    inset: 7pt, stroke: 1pt + GREEN)
+  node((2, 0), [parameter update], shape: fletcher.shapes.rect, corner-radius: 3pt,
+    inset: 7pt, stroke: 1pt + ACC)
+  edge((0, 0), (1, -0.65), "-|>", stroke: 0.9pt + TEAL)
+  edge((0, 0), (1, 0.65), "-|>", stroke: 0.9pt + GREEN)
+  edge((1, -0.65), (2, 0), "-|>", stroke: 0.9pt + TEAL)
+  edge((1, 0.65), (2, 0), "-|>", stroke: 0.9pt + GREEN)
+}))
+
+#pause
+#punch[Every method today will be one new answer to: “what should the past change about this step?”]
+
+== The route for today #V
+
+#align(center, diagram(spacing: (23mm, 12mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0, 0), [SGD], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 7pt, stroke: 1pt + INK)
+  node((1, 0), [momentum], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 7pt, stroke: 1pt + TEAL)
+  node((2, 0), [AdaGrad], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 7pt, stroke: 1pt + GREEN)
+  node((3, 0), [RMSProp], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 7pt, stroke: 1pt + GREEN)
+  node((4, 0), [AdamW], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 7pt, stroke: 1pt + ACC)
+  for i in range(4) { edge((i, 0), (i + 1, 0), "-|>", stroke: 0.8pt + MUTED) }
+}))
+
+#v(10pt)
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
+  hairline([CORE · 55 min], [why each stored quantity exists], color: TEAL),
+  hairline([SHOULD COVER · 15 min], [calculate, predict, then run], color: GREEN),
+  hairline([OPTIONAL · 10 min], [geometry, diagnostics, sources], color: MUTED),
+))
+
+#semantic-legend
+
+// ═════════════════════ FROM GRADIENT TO UPDATE ═════════════════════
+= The optimizer is the middle of the loop
+
+== Backprop measures; the optimizer acts #V
+
+#update-loop
+
+#pause
+#v(8pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 20pt,
+  hairline([Backprop · #text(fill: BLUE)[$g_t$]], [What would a tiny parameter change do to this minibatch loss?], color: BLUE),
+  hairline([Optimizer · #text(fill: ACC)[$Delta theta_t$]], [Given this measurement and stored history, what change should we apply?], color: ACC),
+))
+
+#pause
+#punch[$theta_(t+1)=theta_t+Delta theta_t$ — the gradient and the update are not the same object.]
+
+== A learning rate converts sensitivity into distance
+
+For plain minibatch SGD,
+
+$ Delta theta_t=-eta g_t. $
+
+#pause
+On our recurring stream, with $eta=0.1$:
+
+#align(center, table(
+  columns: 4, stroke: 0.5pt + MUTED, inset: (x: 13pt, y: 7pt),
+  align: (center, center, center, center),
+  table.header([step], [$g_t$], [$Delta theta_t$], [$theta_t$]),
+  [$0$], [—], [—], [$(1,1)$],
+  [$1$], [$(4,0)$], [$(-0.4,0)$], [$(0.6,1)$],
+  [$2$], [$(4,0)$], [$(-0.4,0)$], [$(0.2,1)$],
+  [$3$], [$(4,0.4)$], [$(-0.4,-0.04)$], [$(-0.2,0.96)$],
+))
+
+#note[One global $eta$ preserves the $10 times$ magnitude gap in $g_3$. It knows nothing about how often each coordinate has appeared.]
+
+== Why the negative gradient is locally downhill #D #OPT
+
+For a small proposed step $Delta$, the first-order model is
+
+$ cal(L)(theta+Delta) approx cal(L)(theta)+g^top Delta. $
+
+#pause
+Among steps with $norm(Delta)<=r$, the smallest predicted change occurs at
+
+$ Delta^star=-r g/norm(g). $
+
+#pause
+#note[
+  The result is local and Euclidean: after moving we must measure a new gradient, and a change of parameterization changes what “steepest” means.
+]
+
+== One quadratic makes learning-rate behaviour predictable #D
+
+Let $cal(L)(theta)=(theta-3)^2$ and $e_t=theta_t-3$. Then
+
+$ e_(t+1)=(1-2eta)e_t. $
+
+#pause
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
+  hairline([$0<eta<0.5$], [positive multiplier: approach from one side], color: TEAL),
+  hairline([$0.5<eta<1$], [negative multiplier: alternate and shrink], color: ACC),
+  hairline([$eta>1$], [magnitude above one: diverge], color: RED),
+))
+
+#pause
+#punch[The loss surface stays fixed; the discrete step can crawl, settle, oscillate, or diverge.]
+
+== Predict before revealing the trajectory #Q
+
+For $cal(L)(theta)=(theta-3)^2$, which rate makes the signed error alternate while shrinking by half?
 
 #mcq(
-  [For $cal(L)=(theta-3)^2$, gradient descent diverges for which learning rates?],
-  [$eta < 0$ only],
-  [$0 < eta < 0.5$],
-  [$0.5 < eta < 1$],
-  [$eta > 1$],
+  [Solve $e_(t+1)=(1-2eta)e_t$ mentally.],
+  [$eta=0.25$],
+  [$eta=0.50$],
+  [$eta=0.75$],
+  [$eta=1.25$],
 )
 
-== Answer: learning-rate stability #A
+== Answer: the multiplier must be $-0.5$ #A
 
-#mcq-answer([D], [$eta>1$], [The error is multiplied by $1-2eta$ each step. Convergence requires its magnitude to be below one; beyond $eta=1$ it grows.])
+$1-2eta=-0.5 quad arrow.r quad eta=0.75.$
 
-// ═══════════════════════════ PART II — Batch vs SGD ═══════════════════════════
-= Full-batch vs stochastic gradient descent
-
-== The loss is an average
-
-Training loss is an *empirical risk* — a mean over $n$ examples:
-$ cal(L)(theta) = 1/n sum_(i=1)^n ell_i (theta), quad quad nabla cal(L)(theta) = 1/n sum_(i=1)^n nabla ell_i (theta) $
-#pause
-#notebox[The true gradient needs a pass over the *entire dataset*. For $n = 10^6$ that is a million backprops per step.]
-
-== Full-batch gradient descent
-
-$ theta_(t+1) = theta_t - eta dot 1/n sum_(i=1)^n nabla ell_i (theta_t) $
-#pause
-#two(
-  notebox[*Pro* — the exact gradient; smooth, deterministic descent.],
-  alertbox[*Con* — one step costs a *full epoch*; far too slow for large $n$.],
-)
-
-== Stochastic gradient descent (SGD)
-
-Sample one example $I ~ "Uniform"(1, dots, n)$ and step on *its* gradient:
-$ g_t = nabla ell_I (theta_t), quad quad theta_(t+1) = theta_t - eta thin g_t $
-#pause
-#result[one example per step — up to $n times$ more updates per epoch]
-
-== SGD is an unbiased estimator #D
-
-Take the expectation over the random index $I$:
-$ EE_I [g_t] = sum_(i=1)^n Pr(I = i) thin nabla ell_i (theta_t) = sum_(i=1)^n 1/n nabla ell_i (theta_t) $
-#pause
-$ EE_I [g_t] = 1/n sum_(i=1)^n nabla ell_i (theta_t) = nabla cal(L)(theta_t) $
-#pause
-#result[on average, SGD steps in the *true* gradient direction]
-
-== Unbiased, but noisy
-
-Write the stochastic gradient as the truth plus zero-mean noise:
-$ g_t = nabla cal(L)(theta_t) + epsilon_t, quad EE[epsilon_t] = 0, quad "Var"(epsilon_t) > 0 $
-#pause
-#notebox[Each step is right *on average* but wrong *individually*. The path jitters — that noise both hurts (never fully settles) and helps (escapes bad regions).]
-
-== Minibatch SGD — the practical middle
-
-Average the gradient over a *batch* $B_t$ of $B$ examples:
-$ g_t = 1/B sum_(i in B_t) nabla ell_i (theta_t) $
-#pause
-Still unbiased, $EE[g_t] = nabla cal(L)$, but the noise shrinks:
-$ "Var"(g_t) approx 1/B "Var"(nabla ell_i) $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[larger batch ⇒ $sqrt(B)$ times less gradient noise])
-
-== The batch-size tradeoff
-
-#align(center, table(
-  columns: 3, stroke: 0.5pt + MUTED, inset: (x: 11pt, y: 7pt), align: (left, left, left),
-  table.header([*Batch size*], [*Gradient*], [*Behaviour*]),
-  [small (1–32)], [very noisy], [cheap steps, explores, can escape saddles],
-  [medium (64–512)], [moderate], [the usual sweet spot],
-  [large (4k+)], [near-exact], [stable but costly; needs LR tuning],
-))
-#pause
-#notebox[Batch size is set as much by *GPU memory and throughput* as by optimization.]
-
-== Batch size shapes the noise #V
-
-Same bowl, three noise levels (full / mini / tiny batch):
-#pause
-// native: SGD with seeded gradient noise — one string loss, exact gradient (autodiff)
-#let bowl = ad.expr("x^2 + 3*y^2", ("x", "y"))
-#let _batches = (([full batch], 0.0), ([minibatch], 2.2), ([tiny batch], 6.0))
-#align(center, stack(dir: ltr, spacing: 6mm,
-  .._batches.map(cf => contour(ad.fn2(bowl), xlim: (-2.6, 2.6), ylim: (-2.6, 2.6),
-    samples: 46, levels: 9, size: (37mm, 37mm), color: TEAL,
-    paths: (sgd(ad.grad-fn(bowl), (-2.2, 2.0), lr: 0.10, noise: cf.at(1), seed: 3, steps: 40),),
-    marks: ((0, 0, [min], RED),), title: cf.at(0))),
-))
-#align(center, text(size: 16pt, fill: MUTED)[full batch glides · minibatch jitters toward the minimum · tiny batch bounces])
-
-== Interactive: SGD noise #I
-
-#interbox(link-to: IA + "optimizer-race")[
-  Switch between full-batch and stochastic updates and watch the trajectory go from a smooth glide to a noisy walk as the batch size shrinks.
-]
-#pause
-Compare a smooth full-batch path with the small random deviations of minibatches.
-
-// ═══════════════════════════ PART III — Momentum ═══════════════════════════
-= Momentum
-
-== The problem: ravines #V
-
-Ill-conditioned loss $cal(L) = x^2 + 100 y^2$: steep across, shallow along.
-#pause
-// native: the loss is a string written ONCE — autodiff draws the contour AND
-// gives the EXACT gradient for the descent, so they can't disagree.
-#let ravine = ad.expr("x^2 + 100*y^2", ("x", "y"))
-#align(center, contour(ad.fn2(ravine), xlim: (-2.6, 2.6), ylim: (-0.55, 0.55),
-  samples: 60, levels: 10, size: (108mm, 32mm), color: TEAL,
-  paths: (gd(ad.grad-fn(ravine), (-2.3, 0.45), lr: 0.0090, steps: 34),),
-  marks: ((0, 0, [min], RED),),
-))
-#align(center, text(size: 16pt, fill: MUTED)[GD must use a *tiny* $eta$ to stay stable in $y$ — so it *zigzags* and crawls in $x$])
-
-== The idea: keep a velocity
-
-Accumulate past gradients into a *velocity*, then step along it:
-$ v_t = beta thin v_(t-1) + g_t, quad quad theta_(t+1) = theta_t - eta thin v_t $
-#pause
-- $beta in [0, 1)$ — the *momentum* coefficient (typically $0.9$);
-#pause
-- $v_t$ is a running memory of *where we have been going*.
-
-== Momentum as a vector sum #V
-
-The update is a *vector addition*: the decayed velocity plus this step's gradient.
-#pause
-#fig("/lecture5/figures/momentum_vector.svg", w: 54%)
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[the long #text(fill: TEAL)[$beta v_(t-1)$] dominates; the cross-valley #text(fill: ACC)[$g_t$] is largely cancelled step to step])
-
-== Momentum is an exponential moving average #D
-
-Unroll the recursion $v_t = beta v_(t-1) + g_t$:
-$ v_t = g_t + beta g_(t-1) + beta^2 g_(t-2) + beta^3 g_(t-3) + dots $
-#pause
-#notebox[A *geometrically weighted sum* of all past gradients. Recent gradients dominate; old ones fade by $beta$ each step. It *remembers the direction*.]
-
-== Why momentum helps #V
-
-// native: same ravine, GD vs momentum — one string loss, exact gradient (autodiff)
-#let ravine = ad.expr("x^2 + 100*y^2", ("x", "y"))
-#let _rav(title, path) = contour(ad.fn2(ravine), xlim: (-2.6, 2.6), ylim: (-0.55, 0.55),
-  samples: 60, levels: 10, size: (72mm, 24mm), color: TEAL,
-  paths: (path,), marks: ((0, 0, [min], RED),), title: title,
-)
-#align(center, stack(dir: ltr, spacing: 9mm,
-  _rav([plain GD], gd(ad.grad-fn(ravine), (-2.3, 0.45), lr: 0.0090, steps: 34)),
-  _rav([with momentum], momentum(ad.grad-fn(ravine), (-2.3, 0.45), lr: 0.0035, steps: 34)),
-))
-#pause
-- *oscillating* directions ($y$) → gradients flip sign → they *cancel* in $v_t$;
-#pause
-- *consistent* directions ($x$) → gradients agree → they *accumulate* and accelerate;
-#pause
-- averaging also *smooths* stochastic noise.
-
-== Worked example: the EMA #D
-
-Use the *normalized* form $m_t = beta m_(t-1) + (1 - beta) g_t$ with $beta = 0.9$, start $m_0 = 0$, gradients $g = (10, 8, 11)$:
-#pause
-Step 1 — take $10%$ of the new gradient, keep $90%$ of the old average:
-$ m_1 = 0.9 dot 0 + 0.1 dot 10 = 1.0 $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[one gradient of $10$ only nudges the average to $1.0$ — the memory of $m_0 = 0$ still dominates.])
-
-== Worked example: the EMA (cont.) #D
-
-Carry $m_1 = 1.0$ forward; $beta = 0.9$, next gradients $8$ then $11$.
-#pause
-*Step 2* — carry $0.9 dot 1.0$ forward, add $0.1 dot 8$:
-$ m_2 = 0.9 dot 1.0 + 0.1 dot 8 = 0.9 + 0.8 = 1.7 $
-#pause
-*Step 3* — carry $0.9 dot 1.7$, add $0.1 dot 11$:
-$ m_3 = 0.9 dot 1.7 + 0.1 dot 11 = 1.53 + 1.1 = 2.63 $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[raw gradients average $~9.7$, but starting from $0$ the EMA is still climbing at $m_3 = 2.63$ — early averages are biased *low* (Adam will correct this).])
-
-== How much does momentum remember?
-
-The weights $beta^k$ decay geometrically; the *effective memory* is
-$ 1/(1 - beta) quad "steps." $
-#pause
-#align(center, table(
-  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 6pt), align: (center, center),
-  table.header([$beta$], [effective window]),
-  [$0.9$], [$~10$ steps],
-  [$0.99$], [$~100$ steps],
-  [$0.5$], [$~2$ steps],
-))
-#pause
-#notebox[Higher $beta$ = longer memory = more smoothing, but slower to react to a real change of direction.]
-
-== Interactive: momentum #I
-
-#interbox(link-to: IA + "optimizer-race")[
-  Turn momentum on and off in the ravine and sweep $beta$ — watch zigzags collapse into a smooth, accelerating glide down the valley.
-]
-
-// ═══════════════════════════ PART IV — Adaptive methods ═══════════════════════════
-= Adaptive learning rates
-
-== One global $eta$ is too blunt
-
-Different parameters live on different scales and see different gradient sizes.
-#pause
-- a rarely-active feature gets *tiny, infrequent* gradients — wants a *big* step;
-#pause
-- a hot feature gets *large, frequent* gradients — wants a *small* step.
-#pause
-#result[give every coordinate its *own* effective learning rate]
-
-== The adaptive form
-
-Scale each coordinate $j$ by the size of *its own* recent gradients:
-$ theta_(t+1, j) = theta_(t, j) - eta/(sqrt(s_(t, j)) + epsilon) thin g_(t, j) $
-#pause
-- $s_(t,j)$ — a running estimate of the *squared* gradient in coordinate $j$;
-#pause
-- $epsilon$ — a small constant ($~10^(-8)$) to avoid dividing by zero.
-
-== RMSProp: an EMA of squared gradients
-
-Keep an exponential average of $g^2$, *elementwise*:
-$ s_t = rho thin s_(t-1) + (1 - rho) thin g_t^2 $
-#pause
-$sqrt(s_t)$ is the *root-mean-square* of recent gradients — hence the name *RMSProp*.
-#pause
-#notebox[Big recent gradients ⇒ large $sqrt(s_t)$ ⇒ *smaller* step. Persistently small gradients ⇒ *larger* step. The step self-normalizes.]
-
-== Why divide by the RMS?
-
-Dividing by $sqrt(s_t)$ makes the update *scale-invariant* per coordinate:
-$ (g_(t,j))/(sqrt(s_(t,j))) approx plus.minus 1 $
-#pause
-#notebox[Steep and shallow directions get *comparable* step sizes — exactly what the ravine needed, without hand-tuning per axis.]
-
-== Worked example: RMSProp on two axes #D
-
-Steep axis sees $g = 10$, shallow axis sees $g = 0.1$; take $rho = 0.9$, $s_0 = 0$:
-#pause
-$ s_"steep" = 0.9 dot 0 + 0.1 dot 10^2 = 10, quad quad s_"shallow" = 0.9 dot 0 + 0.1 dot 0.1^2 = 0.001 $
-#pause
-Divide each gradient by its own $sqrt(s)$ (ignore $epsilon$):
-$ g_"steep"/sqrt(s_"steep") = 10/sqrt(10) approx 3.16, quad quad g_"shallow"/sqrt(s_"shallow") = 0.1/sqrt(0.001) approx 3.16 $
-#pause
-#result[a $100 times$ gap in raw gradient becomes the *same* effective step]
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[self-normalization: both axes move at rate $~eta$, so the ravine no longer zigzags.])
-
-// ═══════════════════════════ PART V — Adam ═══════════════════════════
-= Adam
-
-== Adam = momentum + adaptivity
-
-Keep *two* moving averages of the gradient:
-$ m_t = beta_1 m_(t-1) + (1 - beta_1) g_t quad quad "(1st moment — direction)" $
-$ v_t = beta_2 v_(t-1) + (1 - beta_2) g_t^2 quad quad "(2nd moment — magnitude)" $
-#pause
-#result[$m_t$ = smoothed *direction* · $v_t$ = smoothed *scale*]
-
-== A subtle bug: initialization bias #D
-
-We start $m_0 = 0$ and $v_0 = 0$. After one step with constant $g$:
-$ m_1 = (1 - beta_1) g = 0.1 g quad quad ("way below " g) $
-#pause
-#alertbox[Early moving averages are biased *toward zero* — worst at $t = 1$, since there is nothing yet to average.]
-
-== Bias correction
-
-Divide out the shrinkage factor $1 - beta^t$:
-$ hat(m)_t = m_t/(1 - beta_1^t), quad quad hat(v)_t = v_t/(1 - beta_2^t) $
-#pause
-Then take the RMSProp-style step with the *corrected* moments:
-$ theta_(t+1) = theta_t - eta thin hat(m)_t/(sqrt(hat(v)_t) + epsilon) $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[as $t -> infinity$, $beta^t -> 0$ and the correction fades away.])
-
-== Worked example: Adam step 1 #D
-
-$g_1 = 4$, $quad beta_1 = 0.9$, $beta_2 = 0.999$, $eta = 0.001$, start $m_0 = v_0 = 0$:
-#pause
-*1st moment* — EMA of the gradient (direction):
-$ m_1 = 0.9 dot 0 + 0.1 dot 4 = 0.4 $
-#pause
-*2nd moment* — EMA of the squared gradient (magnitude):
-$ v_1 = 0.999 dot 0 + 0.001 dot 16 = 0.016 $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[both are far *below* the true scale ($g = 4$, $g^2 = 16$) — biased toward $0$ by the cold start.])
-
-== Worked example: Adam step 1 (cont.) #D
-
-Undo the bias by dividing out $1 - beta^t$ (here $t = 1$):
-#pause
-$ hat(m)_1 = 0.4/(1 - 0.9) = 4 $
-#pause
-$ hat(v)_1 = 0.016/(1 - 0.999) = 16 $
-#pause
-Now take the RMSProp-style step with the corrected moments:
-$ Delta theta_1 = -eta thin hat(m)_1/sqrt(hat(v)_1) = -0.001 dot 4/sqrt(16) = -0.001 $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[bias correction rescues $m_1, v_1$ back to the true gradient scale — the step is exactly $-eta$.])
-
-== Worked example: Adam step 2 #D
-
-$g_2 = 6$ (now $t = 2$), carrying $m_1 = 0.4$, $v_1 = 0.016$ from before:
-#pause
-*1st moment* — decay the old average, add $10%$ of the new gradient:
-$ m_2 = 0.9 dot 0.4 + 0.1 dot 6 = 0.96 $
-#pause
-*2nd moment* — same, with the squared gradient $36$:
-$ v_2 = 0.999 dot 0.016 + 0.001 dot 36 = 0.051984 $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[the bias factor is now $1 - beta^2$, weaker than at $t = 1$ — the correction is already fading.])
-
-== Worked example: Adam step 2 (cont.) #D
-
-Bias-correct with $t = 2$, so divide by $1 - beta^2$:
-#pause
-$ hat(m)_2 = 0.96/(1 - 0.9^2) = 0.96/0.19 approx 5.05 $
-#pause
-$ hat(v)_2 = 0.051984/(1 - 0.999^2) approx 26.0 $
-#pause
-$ Delta theta_2 = -0.001 dot 5.05/sqrt(26.0) approx -0.000991 $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[each coordinate moves by roughly $plus.minus eta$, regardless of the raw gradient size.])
-
-== Adam intuition
-
-$ theta_(t+1) = theta_t - eta thin underbrace(hat(m)_t, "which way") / underbrace((sqrt(hat(v)_t) + epsilon), "how big") $
-#pause
-- numerator $hat(m)_t$ — a *momentum-smoothed direction*;
-#pause
-- denominator $sqrt(hat(v)_t)$ — a *per-coordinate magnitude* that self-normalizes;
-#pause
-- together: a smoothed, scale-free step in every coordinate.
-
-== Adam defaults
-
-#align(center, table(
-  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 7pt), align: (left, left),
-  table.header([*Hyperparameter*], [*Default*]),
-  [$beta_1$ (momentum)], [$0.9$],
-  [$beta_2$ (RMS)], [$0.999$],
-  [$epsilon$], [$10^(-8)$],
-  [$eta$ (learning rate)], [$10^(-3)$ (still tune this)],
-))
-#pause
-#notebox[These defaults "just work" on a huge range of problems — a big reason Adam is the default optimizer.]
-
-== Checkpoint: Adam's two memories #Q
-
-#mcq(
-  [What extra information does Adam keep beyond plain gradient descent?],
-  [Only the current loss value],
-  [A first-moment direction and a second-moment magnitude estimate],
-  [A full Hessian matrix],
-  [The complete training dataset],
-)
-
-== Answer: Adam's two memories #A
-
-#mcq-answer([B], [A first and a second moment], [The first moment smooths direction like momentum; the second tracks per-coordinate gradient scale for adaptive steps.])
-
-== Interactive: Adam vs the rest #I
-
-#interbox(link-to: IA + "optimizer-race")[
-  Race GD, SGD, momentum and Adam on the same surface. Watch Adam's per-coordinate scaling walk straight down a ravine that makes plain GD zigzag.
-]
-
-// ═══════════════════════════ PART VI — Comparison ═══════════════════════════
-= Putting the optimizers side by side
-
-== Same loss, four optimizers #V
-
-$cal(L) = x^2 + 50 y^2$, identical start point:
-#pause
-// native: four real optimizer trajectories on one loss surface — one string
-// loss, exact gradient (autodiff), start written once
-#let loss = ad.expr("x^2 + 50*y^2", ("x", "y"))
-#let g = ad.grad-fn(loss)
-#let x0 = (-2.4, 0.85)
-#align(center, contour(ad.fn2(loss), xlim: (-2.7, 2.7), ylim: (-1.0, 1.0),
-  samples: 60, levels: 12, size: (100mm, 38mm), color: MUTED, marks: ((0, 0, [·], RED),),
-  paths: (
-    gd(g, x0, lr: 0.014, steps: 60),                       // green — crawls
-    sgd(g, x0, lr: 0.014, noise: 6.0, seed: 0, steps: 60), // teal — jitters
-    momentum(g, x0, lr: 0.006, steps: 60),                 // orange — overshoots
-    adam(g, x0, lr: 0.16, steps: 60),                      // red — cuts across
-  ),
-))
-#align(center, text(size: 16pt)[
-  #text(fill: GREEN, weight: 600)[GD] crawls · #text(fill: TEAL, weight: 600)[SGD] jitters · #text(fill: ACC, weight: 600)[momentum] overshoots then settles · #text(fill: RED, weight: 600)[Adam] cuts across
+#align(center, text(size: 22pt, fill: ACC)[
+  $e_0 arrow.r -0.5e_0 arrow.r 0.25e_0 arrow.r -0.125e_0 arrow.r dots$
 ])
 
-== Summary table
+#mcq-answer([C], [$eta=0.75$], [the sign creates alternation; the magnitude $0.5$ creates geometric decay.])
 
+== Follow along: see the multiplier become a path #I
+
+#interbox(link-to: NB + "01_gd_quadratic.ipynb")[]
+
+Before each run:
+
+- predict the sign and magnitude of $1-2eta_t$;
+- calculate the next parameter value;
+- inspect both signed error and loss;
+- explain any disagreement between prediction and plot.
+
+#note[Complete the fixed-rate section now. Return to the warmup–cosine section after schedules are introduced.]
+
+// ═════════════════════════ DIRECTION MEMORY ═════════════════════════
+= Momentum remembers direction
+
+== Minibatches make a useful gradient noisy
+
+For a uniformly sampled minibatch $cal(B)_t$,
+
+$ g_t=1/abs(cal(B)_t) sum_(i in cal(B)_t) nabla ell_i(theta_t), quad EE[g_t | theta_t]=nabla cal(L)(theta_t). $
+
+#pause
+#align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
+  hairline([One update], [may point away from the full-batch downhill direction], color: RED),
+  hairline([Repeated sampling], [recovers the full gradient in expectation], color: TEAL),
+))
+
+#pause
+#note[“Unbiased” is an average statement, not a promise that every minibatch step lowers training loss.]
+
+== A ravine makes gradients alternate across one axis #V
+
+#let ravine = ad.expr("x^2 + 50*y^2", ("x", "y"))
+#let ravine-grad = ad.grad-fn(ravine)
+#let ravine-start = (-2.4, 0.85)
+
+#align(center, contour(ad.fn2(ravine),
+  xlim: (-2.7, 2.7), ylim: (-1.0, 1.0), samples: 58, levels: 11,
+  size: (142mm, 54mm), color: TEAL,
+  paths: (gd(ravine-grad, ravine-start, lr: 0.014, steps: 38),),
+  marks: ((-2.4, 0.85, [start], BLUE), (0, 0, [minimum], RED)),
+  x-label: [shallow coordinate], y-label: [steep coordinate],
+  theme: geometry-theme,
+))
+
+#caption[The plotted path is computed from the displayed loss. Stability along steep $y$ forces slow progress along shallow $x$.]
+
+== Momentum averages direction before stepping
+
+Using the normalized moving-average convention,
+
+$ m_t=beta m_(t-1)+(1-beta)g_t, quad Delta theta_t=-eta m_t. $
+
+#pause
+#align(center, diagram(spacing: (25mm, 12mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0, -0.65), $m_(t-1)$, radius: 7mm, stroke: 1pt + TEAL)
+  node((0, 0.65), $g_t$, radius: 6mm, stroke: 1pt + BLUE)
+  node((1, 0), $m_t$, radius: 7mm, stroke: 1.1pt + TEAL)
+  node((2, 0), $Delta theta_t$, radius: 7mm, stroke: 1.1pt + ACC)
+  edge((0, -0.65), (1, 0), "-|>", stroke: 1pt + TEAL, label: [$beta$], label-sep: 5pt)
+  edge((0, 0.65), (1, 0), "-|>", stroke: 1pt + BLUE, label: [$1-beta$], label-sep: 5pt)
+  edge((1, 0), (2, 0), "-|>", stroke: 1pt + ACC)
+}))
+
+#pause
+#punch[Alternating components cancel; persistent components accumulate.]
+
+== Work the memory before seeing its effect #D
+
+Take $beta=0.9$, $m_0=0$, and one coordinate with gradients $10,8,11$.
+
+#pause
 #align(center, table(
-  columns: 4, stroke: 0.5pt + MUTED, inset: (x: 10pt, y: 6pt), align: (left, center, center, left),
-  table.header([*Optimizer*], [*Memory*], [*Adaptive?*], [*Strength*]),
-  [GD], [none], [no], [exact gradient, stable],
-  [SGD], [none], [no], [cheap, noisy, explores],
-  [Momentum], [1st moment], [no], [smooths valleys, accelerates],
-  [Adam], [1st + 2nd], [yes], [robust default, per-coord scaling],
+  columns: 4, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 7pt),
+  align: (center, center, left, center),
+  table.header([$t$], [$g_t$], [$m_t=0.9m_(t-1)+0.1g_t$], [$m_t$]),
+  [$1$], [$10$], [$0.9(0)+0.1(10)$], [$1.00$],
+  [$2$], [$8$], [$0.9(1.00)+0.1(8)$], [$1.70$],
+  [$3$], [$11$], [$0.9(1.70)+0.1(11)$], [$2.63$],
 ))
 
-== When to use what
+#pause
+#note[The average starts low because its unobserved history is represented by zeros. This cold-start bias returns when Adam combines two moving averages.]
+
+== Momentum changes direction, not coordinate scale
+
+On our recurring stream, both coordinates use the same $beta$:
+
+$ m_t=beta m_(t-1)+(1-beta)g_t. $
 
 #pause
-- *Adam / AdamW* — the default. Fast, robust, forgiving of LR. Transformers, most research.
-#pause
-- *SGD + momentum* — often the *best final generalization*, especially in vision (ResNets, ConvNets) — but needs more LR tuning.
-#pause
-- *Either way, the LR schedule matters* as much as the optimizer choice.
-#pause
-#notebox[Pragmatic rule: start with AdamW + a cosine schedule; reach for SGD+momentum when you are chasing the last bit of test accuracy.]
-
-== AdamW: decoupled weight decay #OPT
-
-Classic Adam folds $ell_2$ regularization into the gradient — which then gets *rescaled* by $sqrt(hat(v))$, distorting it.
-#pause
-AdamW instead applies weight decay *directly* to the parameters:
-$ theta_(t+1) = theta_t - eta thin hat(m)_t/(sqrt(hat(v)_t) + epsilon) - eta lambda thin theta_t $
-#pause
-#result[decoupled decay ⇒ the modern default for training large models]
-
-// ═══════════════════════════ PART VII — Learning-rate schedules ═══════════════════════════
-= Learning-rate schedules
-
-== A fixed learning rate is rarely ideal
-
-#pause
-- *early* training: far from any minimum → want *large* steps to make progress;
-#pause
-- *late* training: near a minimum → want *small* steps to settle, not bounce.
-#pause
-#result[so *decay* the learning rate over training]
-
-== Common schedules #V
-
-// native ml-plot: five schedules on t∈[0,100), e0=1 (mirrors l5_figs.py f_lr_schedules)
-// each schedule is a closed-form fn of the step, sampled at every integer step 0..lr-T-1
-#let lr-T = 100
-#let sched-step = t => calc.pow(0.5, calc.floor(t / 30))
-#let sched-expo = t => calc.exp(-0.03 * t)
-#let sched-cos = t => 0.5 * (1 + calc.cos(calc.pi * t / lr-T))
-#let sched-wc = t => if t < 10 { t / 10 } else { 0.5 * (1 + calc.cos(calc.pi * (t - 10) / 90)) }
-#let sched-oc = t => calc.max(0, calc.min(1.05,
-  if t < 25 { 0.25 + 0.75 * t / 25 }
-  else if t < 90 { 1 - 0.85 * (t - 25) / 65 }
-  else { 0.15 * (1 - (t - 90) / 10) }))
-#align(center, lines(
-  fn: (sched-step, sched-expo, sched-cos, sched-wc, sched-oc),
-  domain: (0, lr-T - 1), samples: lr-T - 1,
-  colors: (TEAL, BLUE, GREEN, ACC, RED),
-  markers: false,
-  x-label: [training step], y-label: [learning rate $eta_t$],
-  size: (90mm, 46mm),
-))
-#pause
-#align(center, text(size: 16pt)[#text(fill: TEAL)[step] · #text(fill: BLUE)[exponential] · #text(fill: GREEN)[cosine] · #text(fill: ACC)[warmup+cosine] · #text(fill: RED)[one-cycle]])
-
-== Warmup
-
-Start from *near zero* and ramp up over the first $T_"warmup"$ steps, then decay:
-$ eta_t = eta_max dot t/T_"warmup" quad "for" t <= T_"warmup" $
-#pause
-#notebox[Early gradients are large and unreliable (moments not yet warmed up); a big LR then can *blow up* training. Warmup is near-essential for Transformers.]
-
-== Cosine decay + warmup — the modern default
-
-$ eta_t = 1/2 eta_max (1 + cos(pi thin (t - T_"warmup")/(T - T_"warmup"))) $
-#pause
-- smooth decay from $eta_max$ down to $~0$;
-#pause
-- no sharp drops (unlike step decay);
-#pause
-- pairs naturally with a short linear warmup.
-
-== Interactive: LR schedules #I
-
-#interbox(link-to: IA + "lr-schedule-visualizer")[
-  Compose warmup length, peak LR, and decay shape (step / exponential / cosine / one-cycle) and watch the resulting $eta_t$ curve — and how it changes the loss trajectory.
-]
-
-// ═══════════════════════════ PART VIII — Pathologies ═══════════════════════════
-= Optimization pathologies
-
-== Too much gradient noise
-
-SGD noise helps *explore* — but past a point it *prevents convergence*.
-#pause
-$ theta_(t+1) = theta_t - eta(nabla cal(L) + epsilon_t) $
-#pause
-#notebox[If $eta thin "Var"(epsilon_t)$ stays large, the iterate *bounces around* the minimum forever. Remedies: decay $eta$, grow the batch, or use momentum to average the noise out.]
-
-== Vanishing and exploding gradients
-
-Backprop multiplies Jacobians across layers:
-$ nabla_(theta_1) cal(L) = product_(ell) J_ell dot (dots) $
-#pause
-#two(
-  alertbox[*Vanishing* — factors $< 1$ ⇒ product $-> 0$ ⇒ early layers stop learning.],
-  alertbox[*Exploding* — factors $> 1$ ⇒ product blows up ⇒ NaNs / divergence.],
-)
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[fixes live in *architecture*: activation choice, init, normalization, residual connections, gradient clipping.])
-
-== Saddle points
-
-In high dimensions, most points with $nabla cal(L) = 0$ are *saddles*, not minima — the Hessian has *mixed-sign* eigenvalues.
-#pause
-#notebox[Plain gradient descent can *stall* on the flat directions of a saddle. SGD's noise is a feature here: it *kicks the iterate off* the saddle and lets training continue.]
-
-== Sharp vs flat minima #V #OPT
-
-#fig("/lecture5/figures/sharp_flat.svg", w: 56%)
-#pause
-#notebox[Flat minima are widely associated with *better generalization*: a small shift in parameters or data barely changes the loss. Small-batch SGD tends to prefer flatter minima. #text(fill: MUTED)[(an active, subtle research area)]]
-
-// ═══════════════════════════ PART IX — End-to-end + summary ═══════════════════════════
-= The training loop, end to end
-
-== One optimization step in PyTorch #I
-
-#codebox[```python
-for x, y in loader:                 # minibatch
-    optimizer.zero_grad()           # clear old gradients
-    logits = model(x)               # forward pass
-    loss   = loss_fn(logits, y)     # scalar loss
-    loss.backward()                 # backprop -> param.grad
-    optimizer.step()                # update rule uses grads
-```]
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[forward → loss → *backprop (gradients)* → *optimizer (update)* — every lecture so far, in six lines.])
-
-== The step, three ways #V
-
-#codebox(size: 13pt)[```python
-# SGD
-p -= lr * p.grad
-
-# SGD + momentum
-v = beta * v + p.grad
-p -= lr * v
-
-# Adam (per parameter)
-m = b1*m + (1-b1)*p.grad
-v = b2*v + (1-b2)*p.grad**2
-mhat = m/(1-b1**t); vhat = v/(1-b2**t)
-p -= lr * mhat / (vhat.sqrt() + eps)
-```]
-#pause
-#align(center, text(size: 15pt, fill: MUTED)[same loop — swap only what `optimizer.step()` does.])
-
-== Choosing an optimizer in one line
-
-#codebox[```python
-opt = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
-opt = torch.optim.AdamW(model.parameters(), lr=3e-4)
-
-sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=epochs)
-```]
-#pause
-#notebox[The optimizer and the schedule are *two knobs*; both matter. Defaults above are sane starting points.]
-
-== One-slide summary
-
-#align(center, table(
-  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 11pt, y: 6pt), align: (left, left),
-  table.header([*Method*], [*Core idea*]),
-  [GD], [full-dataset gradient — exact but slow],
-  [SGD], [sample a batch — unbiased, noisy, cheap],
-  [Momentum], [average gradients — smooth, accelerate],
-  [RMSProp], [divide by RMS gradient — per-coord scale],
-  [Adam], [momentum + adaptive scale + bias correction],
-  [LR schedule], [big early, small late (warmup + decay)],
-))
-
-== Final mental model — one idea
+It can smooth the dense coordinate's direction, but when the rare coordinate finally appears, its small gradient is still small.
 
 #align(center, text(size: 22pt)[
-  Backprop answers: *what direction?* \
-  Optimization answers: \
-  *how far, how smoothly, how adaptively?* \
-  #v(4pt)
-  #text(size: 18pt, fill: MUTED)[gradient = direction · optimizer = the art of the step]
+  #text(fill: TEAL)[$m_t$ remembers *sign and direction*]
+  #h(18pt) $!=$ #h(18pt)
+  #text(fill: GREEN)[a per-coordinate scale]
 ])
 
+#pause
+#punch[To recognize rarity, the optimizer must remember magnitude separately for every coordinate.]
+
+// ═══════════════════════ ADAPTIVE SCALE ═══════════════════════
+= AdaGrad remembers all squared gradients
+
+== Squared gradients form a per-coordinate activity ledger
+
+AdaGrad accumulates
+
+$ G_t=G_(t-1)+g_t^2 $
+
+elementwise, then, with small $epsilon>0$ preventing a zero denominator, updates
+
+$ Delta theta_t=-eta g_t/(sqrt(G_t)+epsilon). $
+
+#pause
+#align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
+  hairline([Frequently active], [$G_(t,j)$ grows; future steps shrink], color: BLUE),
+  hairline([Rarely active], [$G_(t,j)$ stays small; a rare signal keeps leverage], color: GREEN),
+))
+
+#pause
+#punch[AdaGrad turns gradient history into a separate effective rate for every coordinate.]
+
+== Build the ledger for our two coordinates #D
+
+$ g_1=(4,0), quad g_2=(4,0), quad g_3=(4,0.4). $
+
+#pause
+#align(center, table(
+  columns: 4, stroke: 0.5pt + MUTED, inset: (x: 11pt, y: 7pt),
+  align: (center, center, center, center),
+  table.header([$t$], [$g_t$], [$G_t=sum_(tau<=t)g_tau^2$], [$g_t/(sqrt(G_t)+epsilon)$]),
+  [$1$], [$(4,0)$], [$(16,0)$], [$(1,0)$],
+  [$2$], [$(4,0)$], [$(32,0)$], [$(0.707,0)$],
+  [$3$], [$(4,0.4)$], [$(48,0.16)$], [$(0.577,1)$],
+))
+
+#pause
+#note[At its first appearance, the rare coordinate receives normalized magnitude $1$ even though its raw gradient is $10 times$ smaller.]
+
+== AdaGrad answers the opening question #A
+
+With $eta=0.1$ and $theta_0=(1,1)$:
+
+#align(center, table(
+  columns: 4, stroke: 0.5pt + MUTED, inset: (x: 14pt, y: 7pt),
+  align: (center, center, center, center),
+  table.header([step], [dense update], [rare update], [$theta_t$]),
+  [$1$], [$-0.100$], [$0$], [$(0.900,1)$],
+  [$2$], [$-0.071$], [$0$], [$(0.829,1)$],
+  [$3$], [$-0.058$], [$-0.100$], [$(0.772,0.900)$],
+))
+
+#mcq-answer([C], [past squared gradients per coordinate], [only a coordinate-wise history distinguishes “small because rare” from “small on every batch.”])
+
+== The strength of AdaGrad becomes its failure
+
+$G_t$ only increases.
+
+#pause
+#align(center, grid(columns: (1fr, 18mm, 1fr), row-gutter: 8pt, align: horizon,
+  hairline([1 · Observe], [more nonzero gradients], color: BLUE),
+  align(center, text(size: 21pt, fill: MUTED)[$arrow.r$]),
+  hairline([2 · Accumulate], [larger $G_t=sum g_t^2$], color: GREEN),
+  hairline([4 · Consequence], [eventual near-freeze], color: RED),
+  align(center, text(size: 21pt, fill: MUTED)[$arrow.l$]),
+  hairline([3 · Normalize], [smaller effective rate $eta/sqrt(G_t)$], color: ACC),
+))
+
+#pause
+#warning[Old gradients keep equal voting rights forever. On a long nonstationary training run, useful step sizes can decay too aggressively.]
+
+// ═══════════════════════ RMSPROP ═══════════════════════
+= RMSProp lets old scale evidence fade
+
+== Replace the sum with a moving average
+
+RMSProp stores
+
+$ v_t=rho v_(t-1)+(1-rho)g_t^2 $
+
+and applies
+
+$ Delta theta_t=-eta g_t/(sqrt(v_t)+epsilon). $
+
+#pause
+#align(center, text(size: 21pt)[
+  AdaGrad: #text(fill: GREEN)[all squared gradients]
+  #h(18pt) $arrow.r$ #h(18pt)
+  RMSProp: #text(fill: GREEN)[recent squared gradients]
+])
+
+#pause
+#note[The approximate memory window is $1/(1-rho)$ steps: about $10$ for $rho=0.9$, about $100$ for $rho=0.99$.]
+
+== Recompute step 3 with a fading ledger #D
+
+For our stream, let $rho=0.9$ and $v_0=(0,0)$:
+
+#align(center, table(
+  columns: 3, stroke: 0.5pt + MUTED, inset: (x: 14pt, y: 7pt),
+  align: (center, center, center),
+  table.header([$t$], [$v_t$], [$g_t/(sqrt(v_t)+epsilon)$]),
+  [$1$], [$(1.600,0)$], [$(3.162,0)$],
+  [$2$], [$(3.040,0)$], [$(2.294,0)$],
+  [$3$], [$(4.336,0.016)$], [$(1.921,3.162)$],
+))
+
+#pause
+#note[The rare coordinate is still amplified relative to the dense one, but evidence now fades instead of accumulating forever.]
+
+== A zero start creates an artificially small denominator
+
+At the first nonzero gradient,
+
+$ v_1=(1-rho)g_1^2, quad g_1/sqrt(v_1)="sign"(g_1)/sqrt(1-rho). $
+
+#pause
+For $rho=0.9$, the normalized magnitude is $1/sqrt(0.1) approx 3.16$.
+
+#pause
+#warning[This is a cold-start effect, not evidence that the first gradient is exceptionally trustworthy. Adam will correct this missing moving-average mass explicitly.]
+
+== What $epsilon$ does—and does not do
+
+RMSProp and Adam divide by $sqrt(v_(t,j))+epsilon$.
+
+#align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
+  hairline([$sqrt(v_(t,j)) \gg epsilon$], [$epsilon$ has almost no effect], color: TEAL),
+  hairline([$sqrt(v_(t,j)) approx 0$], [the denominator stays nonzero and the step finite], color: RED),
+))
+
+#pause
+#note[$epsilon$ is numerical protection, but it can also change effective rates in extremely low-variance coordinates. It is part of the optimizer definition, not decorative notation.]
+
+// ═══════════════════════════ ADAM ═══════════════════════════
+= Adam combines direction and scale
+
+== Two memories solve two different problems #V
+
+#adam-pipeline
+
+#v(8pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
+  hairline([#text(fill: TEAL)[$m_t$ · first moment]], [smooth noisy signs and preserve persistent direction], color: TEAL),
+  hairline([#text(fill: GREEN)[$v_t$ · second raw moment]], [normalize coordinate-wise gradient scale], color: GREEN),
+))
+
+#pause
+#punch[Adam is momentum in the numerator and RMSProp-like scaling in the denominator.]
+
+== Write Adam as state, correction, update
+
+#align(center, table(
+  columns: (31mm, 1fr), stroke: 0.5pt + MUTED, inset: (x: 11pt, y: 6pt),
+  align: (left, left),
+  [#text(fill: TEAL, weight: 650)[direction]], [$m_t=beta_1m_(t-1)+(1-beta_1)g_t$],
+  [#text(fill: GREEN, weight: 650)[scale]], [$v_t=beta_2v_(t-1)+(1-beta_2)g_t^2$],
+  [#text(fill: INK, weight: 650)[correct]], [$hat(m)_t=m_t/(1-beta_1^t), quad hat(v)_t=v_t/(1-beta_2^t)$],
+  [#text(fill: ACC, weight: 650)[update]], [$Delta theta_t=-eta hat(m)_t/(sqrt(hat(v)_t)+epsilon)$],
+))
+
+#pause
+#semantic-legend
+
+== Why bias correction has exactly that denominator #D
+
+If $g_t=g$ is constant and $m_0=0$, unrolling gives
+
+$ m_t=(1-beta_1^t)g. $
+
+Similarly,
+
+$ v_t=(1-beta_2^t)g^2. $
+
+#pause
+Dividing by the missing mass restores the constant moments:
+
+$ hat(m)_t=g, quad hat(v)_t=g^2. $
+
+#pause
+#note[The correction removes initialization bias under a constant-gradient thought experiment; it does not make a noisy gradient statistically unbiased.]
+
+== Predict Adam's first update #Q
+
+Let $g_1=(4,0.4)$, $m_0=v_0=0$, $beta_1=0.9$, $beta_2=0.999$.
+
+#mcq(
+  [Ignoring $epsilon$, what is $hat(m)_1/sqrt(hat(v)_1)$?],
+  [$(4,0.4)$],
+  [$(1,1)$],
+  [$(0.1,0.001)$],
+  [$(0.4,0.00016)$],
+)
+
+== Answer: correction restores both scales #A
+
+$m_1=(0.4,0.04), quad v_1=(0.016,0.00016).$
+
+#pause
+$hat(m)_1=(4,0.4), quad hat(v)_1=(16,0.16).$
+
+#pause
+$hat(m)_1/sqrt(hat(v)_1)=(1,1).$
+
+#mcq-answer([B], [$(1,1)$], [on the first nonzero observation, bias-corrected Adam retains sign while normalizing coordinate magnitude.])
+
+== Carry our recurring stream through Adam #D
+
+For $g_1=(4,0), g_2=(4,0), g_3=(4,0.4)$:
+
+#align(center, table(
+  columns: 3, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 7pt),
+  align: (left, center, center),
+  table.header([quantity at $t=3$], [dense $d$], [rare $r$]),
+  [$m_3$], [$1.084$], [$0.040$],
+  [$hat(m)_3$], [$4.000$], [$0.148$],
+  [$v_3$], [$0.047952$], [$0.000160$],
+  [$hat(v)_3$], [$16.000$], [$0.05339$],
+  [$hat(m)_3/sqrt(hat(v)_3)$], [$1.000$], [$0.639$],
+))
+
+#pause
+#note[Scale normalization lifts the rare coordinate; direction memory tempers it because two previous batches contained zero evidence for that coordinate.]
+
+== AdamW keeps weight decay out of the adaptive denominator
+
+Adam supplies an adaptive data-gradient step. AdamW adds shrinkage separately:
+
+$ theta_(t+1)=theta_t - eta hat(m)_t/(sqrt(hat(v)_t)+epsilon) - eta lambda theta_t. $
+
+#pause
+#align(center, diagram(spacing: (28mm, 12mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0, -0.6), [data-gradient update], shape: fletcher.shapes.rect, corner-radius: 3pt,
+    inset: 7pt, stroke: 1pt + TEAL)
+  node((0, 0.6), [parameter shrinkage], shape: fletcher.shapes.rect, corner-radius: 3pt,
+    inset: 7pt, stroke: 1pt + ACC)
+  node((1, 0), $theta_(t+1)$, radius: 9mm, stroke: 1.1pt + INK)
+  edge((0, -0.6), (1, 0), "-|>", stroke: 1pt + TEAL)
+  edge((0, 0.6), (1, 0), "-|>", stroke: 1pt + ACC)
+}))
+
+#pause
+#note[Decoupling makes the intended shrinkage independent of Adam's coordinate-wise rescaling. Bias parameters and normalization gains are commonly excluded, but the correct choice is model- and recipe-dependent.]
+
+== Predict: should equal parameters shrink unequally? #Q
+
+Return to dense $d$ and rare $r$. Suppose
+
+$ theta=(1,1), quad hat(v)=(16,0.16), quad eta=0.01, quad lambda=0.1. $
+
+Hold $hat(v)$ fixed to isolate the geometry. If an L2 gradient $lambda theta$ is sent through Adam's adaptive denominator, its approximate contribution is
+
+$ -eta lambda theta / sqrt(hat(v)). $
+
+#mcq(
+  [How do the two coordinates' shrinkage contributions compare?],
+  [both are $-0.001$],
+  [dense shrinks $10 times$ more],
+  [rare shrinks $10 times$ more],
+  [both are $-0.01$],
+)
+
+== Answer: preconditioning changes the intended penalty #A
+
+#align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
+  hairline([L2 inside adaptive update], [
+    dense: $-0.01(0.1)/4=-0.00025$
+    #v(4pt)
+    rare: $-0.01(0.1)/0.4=-0.0025$
+  ], color: GREEN),
+  hairline([Decoupled AdamW], [
+    dense: $-eta lambda theta_d=-0.001$
+    #v(4pt)
+    rare: $-eta lambda theta_r=-0.001$
+  ], color: ACC),
+))
+
+#mcq-answer([C], [the rare coordinate shrinks $10 times$ more], [coupled L2 is filtered by the coordinate-wise preconditioner; AdamW applies the intended proportional shrinkage separately.])
+
+#caption[The coupled calculation holds $hat(v)$ fixed for interpretation. In an actual coupled optimizer, adding $lambda theta$ also changes the moment estimates.]
+
+== Compare mechanisms, not brand names
+
+#align(center, table(
+  columns: 4, stroke: 0.45pt + MUTED, inset: (x: 9pt, y: 6pt),
+  align: (left, center, center, left),
+  table.header([method], [direction memory], [scale memory], [mechanism]),
+  [SGD], [—], [—], [current minibatch gradient],
+  [momentum], [$m_t$], [—], [smooth direction],
+  [AdaGrad], [—], [$sum g_t^2$], [protect rare coordinates; rate only shrinks],
+  [RMSProp], [—], [EMA of $g_t^2$], [adapt to recent scale],
+  [Adam / AdamW], [$m_t$], [$v_t$], [combine both; optionally decouple decay],
+))
+
+#pause
+#warning[There is no universally best optimizer. Any comparison also changes learning rate, schedule, update budget, batch size, and often regularization.]
+
+== Same ravine, four explicitly different recipes #V
+
+#let path-panel(title, path) = contour(ad.fn2(ravine),
+  xlim: (-2.7, 2.7), ylim: (-1.0, 1.0), samples: 52, levels: 10,
+  size: (39mm, 39mm), color: MUTED, paths: (path,),
+  marks: ((0, 0, [], RED),), x-label: [$x$], y-label: [$y$], title: title,
+  theme: geometry-theme,
+)
+#align(center, stack(dir: ltr, spacing: 4.5mm,
+  path-panel([GD · $eta=0.014$], gd(ravine-grad, ravine-start, lr: 0.014, steps: 55)),
+  path-panel([Momentum · norm. $eta=0.06$], momentum(ravine-grad, ravine-start, lr: 0.006, steps: 55)),
+  path-panel([RMSProp · $eta=0.06$], rmsprop(ravine-grad, ravine-start, lr: 0.06, steps: 55)),
+  path-panel([Adam · $eta=0.10$], adam(ravine-grad, ravine-start, lr: 0.10, steps: 55)),
+))
+
+#caption[Same loss and start. Momentum's normalized $eta=0.06$ equals buffer
+rate $0.006$. Method-specific rates make this a mechanism illustration—not a ranking.]
+
+== Starting recipes depend on the model regime
+
+#set text(size: 15.5pt)
+#align(center, table(
+  columns: (38mm, 57mm, 1fr), stroke: 0.45pt + MUTED, inset: (x: 6pt, y: 3pt),
+  align: (left, left, left),
+  table.header([regime], [reasonable first baseline], [what to test next]),
+  [CNN from scratch], [established SGD + momentum or AdamW recipe], [sweep rate/schedule; compare equal update budgets],
+  [Transformer / sparse model], [established AdamW, normalization, and schedule recipe], [test peak rate, warmup, decay, exclusions],
+  [pretrained fine-tune], [task or adapter recipe; lower rate than pretraining], [test forgetting and layer/adapter rates],
+))
+
+#note[Starting hypotheses, not universal defaults: a validated architecture recipe plus a controlled rate sweep outranks a generic number.]
+
+== Make an optimizer comparison interpretable
+
+#align(center, table(
+  columns: 2, stroke: 0.45pt + MUTED, inset: (x: 12pt, y: 6pt),
+  align: (left, left),
+  table.header([discipline], [record or test]),
+  [record the complete recipe], [optimizer, base rate, betas, $epsilon$, decay, schedule, batch, update count, seeds],
+  [inspect the mechanism], [learning rate, gradient norm, update norm, train loss, validation metric],
+  [verify before scaling], [one-batch overfit and a controlled learning-rate sweep],
+))
+
+#pause
+#warning[Changing optimizer and learning-rate schedule together does not identify which change caused the result.]
+
+// ═════════════════════ LEARNING-RATE CLOCK ═════════════════════
+= The schedule changes the step scale over time
+
+== A fixed rate asks one number to do two jobs
+
+#align(center, diagram(spacing: (31mm, 14mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0, 0), [early training], shape: fletcher.shapes.rect, corner-radius: 3pt,
+    inset: 7pt, stroke: 1pt + TEAL)
+  node((1, 0), [late training], shape: fletcher.shapes.rect, corner-radius: 3pt,
+    inset: 7pt, stroke: 1pt + ACC)
+  node((0, 0.75), text(size: 11pt)[make useful progress], stroke: none, fill: none)
+  node((1, 0.75), text(size: 11pt)[refine without bouncing], stroke: none, fill: none)
+  edge((0, 0), (1, 0), "-|>", stroke: 0.9pt + MUTED, label: [training updates], label-sep: 6pt)
+}))
+
+#pause
+#punch[The optimizer chooses a direction and normalization; the schedule multiplies the overall step scale.]
+
+== Warmup limits abrupt early updates
+
+For $T_w$ warmup updates, one simple convention is
+
+$ eta_t=eta_max (t+1)/T_w, quad t=0,dots,T_w-1. $
+
+#pause
+#align(center, lines(
+  fn: (t => calc.min((t + 1)/10, 1.0),),
+  domain: (0, 30), samples: 61, colors: (ACC,), markers: false,
+  x-label: [optimizer update], y-label: [relative rate], size: (112mm, 46mm),
+))
+
+#pause
+#warning[Warmup reduces the initial applied scale; it does not repair a fundamentally unstable peak rate, bad data, or exploding activations.]
+
+== Cosine decay turns progress into refinement
+
+After warmup, let $u=(t-T_w)/(T-T_w)$ be progress from $0$ to $1$:
+
+$ eta_t=eta_min + 1/2(eta_max-eta_min)(1+cos(pi u)). $
+
+#pause
+#let sched-total = 100
+#let sched-warm = 10
+#let sched-warmcos = t => if t < sched-warm { calc.min((t + 1) / sched-warm, 1.0) } else {
+  0.5 * (1 + calc.cos(calc.pi * (t - sched-warm) / (sched-total - sched-warm)))
+}
+#align(center, lines(
+  fn: (sched-warmcos,), domain: (0, 100), samples: 101, colors: (ACC,), markers: false,
+  hlines: ((1, [$eta_max$], MUTED),),
+  x-label: [optimizer update], y-label: [relative rate], size: (120mm, 45mm),
+))
+
+#caption[Warmup changes the beginning; cosine decay changes the remainder. Neither replaces optimizer state.]
+
+== Calculate the clock before using it #D
+
+Let $eta_max=0.1$, $eta_min=0$, $T_w=10$, and $T=100$.
+
+#align(center, table(
+  columns: 3, stroke: 0.5pt + MUTED, inset: (x: 14pt, y: 7pt),
+  align: (center, left, center),
+  table.header([update], [phase], [rate]),
+  [$t=0$], [first warmup update], [$0.1(1/10)=0.01$],
+  [$t=4$], [fifth warmup update], [$0.1(5/10)=0.05$],
+  [$t=9$], [last warmup update], [$0.10$],
+  [$t=55$], [halfway through decay], [$0.05$],
+  [$t=100$], [unexecuted endpoint], [$0$],
+))
+
+#pause
+#note[With this convention, a 100-update run applies $eta_0,dots,eta_99$;
+$eta_100=0$ is the unexecuted endpoint. An off-by-one in warmup can silently
+change the first update from a small nonzero rate to no update at all.]
+
+== The schedule must count the same update boundary as the optimizer
+
+With gradient accumulation over $K$ microbatches:
+
+#align(center, diagram(spacing: (22mm, 13mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  for i in range(3) {
+    node((0, i - 1), [microbatch #str(i+1)], shape: fletcher.shapes.rect,
+      corner-radius: 3pt, inset: 5pt, stroke: 0.9pt + INK)
+    node((1, i - 1), $g_#(i+1)$, radius: 5mm, stroke: 0.9pt + BLUE)
+    edge((0, i - 1), (1, i - 1), "-|>", stroke: 0.8pt + BLUE)
+    edge((1, i - 1), (2, 0), "-|>", stroke: 0.8pt + MUTED)
+  }
+  node((2, 0), [accumulate], shape: fletcher.shapes.rect, corner-radius: 3pt,
+    inset: 7pt, stroke: 1pt + TEAL)
+  node((3, 0), [one optimizer step], shape: fletcher.shapes.rect, corner-radius: 3pt,
+    inset: 7pt, stroke: 1.1pt + ACC)
+  edge((2, 0), (3, 0), "-|>", stroke: 1pt + ACC)
+}))
+
+#pause
+#warning[Advancing an update-based scheduler on every microbatch makes its clock run $K times$ too fast.]
+
+== One reliable PyTorch update boundary #I
+
+#codebox(size: 18pt)[```python
+for x, y in loader:
+    optimizer.zero_grad(set_to_none=True)
+    loss = loss_fn(model(x), y)
+    loss.backward()
+    optimizer.step()
+    scheduler.step()       # for an update-based schedule
+```]
+
+#pause
+#caption[Log gradient/update norms at this boundary; clip only under a stated diagnostic or stability policy.]
+
+== Return to the quadratic: schedule and path together #I
+
+#interbox(link-to: NB + "01_gd_quadratic.ipynb")[]
+
+Now complete the warmup–cosine section:
+
+- predict the time-varying multiplier $1-2eta_t$;
+- compare signed error and loss, not loss alone;
+- test an overly large peak rate;
+- distinguish transient growth from eventual recovery under decay.
+
+== Inspect optimizer state, not only a final loss #I
+
+#interbox(link-to: NB + "06_optimizer_comparison_pytorch.ipynb")[]
+
+Use the common ravine and start point to:
+
+- calculate AdaGrad, RMSProp, and Adam state by hand;
+- inspect $m_t$, $v_t$, and actual parameter updates separately;
+- compare paths only with each method's rate visible;
+- reproduce the mechanisms with deterministic PyTorch tensors.
+
+// ═══════════════════════ DIAGNOSTICS ═══════════════════════
+= What breaks: symptom → suspect → test
+
+== Read the symptom before changing the optimizer
+
+#align(center, table(
+  columns: (35mm, 1fr, 1fr), stroke: 0.45pt + MUTED, inset: (x: 8pt, y: 6pt),
+  align: (left, left, left),
+  table.header([symptom], [first suspects], [controlled test]),
+  [loss becomes non-finite], [rate, bad batch, overflow, exploding gradients], [log batch ID, rate, gradient norm; rerun same batch],
+  [bounded zigzag], [rate too high for a steep direction], [lower only the rate; inspect signed updates],
+  [no progress], [rate too low, dead path, no gradients, saturated units], [overfit one batch; inspect per-layer gradient norms],
+  [train improves, validation worsens], [generalization—not necessarily optimization], [hold optimizer fixed; test regularization or data],
+))
+
+#pause
+#punch[Change one suspected cause at a time. “Try Adam” is an experiment, not a diagnosis.]
+
+== Gradient clipping caps a dangerous update #D #OPT
+
+Global-norm clipping replaces $g$ by
+
+$ tilde(g)=g min(1,c/norm(g)). $
+
+#pause
+For $g=(6,8)$, $norm(g)=10$. With $c=5$:
+
+$ tilde(g)=(6,8)(5/10)=(3,4), quad norm(tilde(g))=5. $
+
+#pause
+#warning[Clipping preserves direction and caps magnitude. It can prevent a single catastrophic step; it does not make an unstable learning rate appropriate or repair chronic exploding gradients.]
+
+== A loss spike deserves cause-relevant measurements
+
+#align(center, diagram(spacing: (25mm, 15mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0, 0), [loss spike], shape: fletcher.shapes.rect, corner-radius: 3pt,
+    inset: 7pt, stroke: 1.1pt + RED)
+  node((1, -1.0), [batch ID + data], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 5pt, stroke: 0.9pt + INK)
+  node((1, 0), [gradient norm], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 5pt, stroke: 0.9pt + BLUE)
+  node((1, 1.0), [learning rate], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 5pt, stroke: 0.9pt + ACC)
+  node((2, -0.5), [activation scale], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 5pt, stroke: 0.9pt + TEAL)
+  node((2, 0.5), [optimizer state], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 5pt, stroke: 0.9pt + GREEN)
+  for p in ((1,-1.0),(1,0),(1,1.0),(2,-0.5),(2,0.5)) { edge((0,0), p, "-|>", stroke: 0.75pt + MUTED) }
+}))
+
+#pause
+#note[For claims about generalization, use held-out performance. Raw “sharp versus flat” pictures depend on parameterization and do not establish generalization by themselves.]
+
+== Checkpoint: choose the smallest informative intervention #Q
+
+A run is stable for 2,000 updates. The loss then spikes on one minibatch, gradient norm jumps $40 times$, and the current rate is unchanged.
+
+#mcq(
+  [What should you do first?],
+  [switch immediately from AdamW to SGD],
+  [rerun and inspect that batch plus gradient/activation scales],
+  [increase weight decay],
+  [restart with a larger batch and change nothing else],
+)
+
+== Answer: preserve evidence before changing the algorithm #A
+
+#mcq-answer([B], [inspect and reproduce the triggering batch], [the correlated gradient-norm jump points to data or forward/backward scale; changing optimizer first destroys the cleanest evidence.])
+
+#pause
+#note[If the batch is valid and the spike is reproducible, then test one intervention—rate, clipping threshold, normalization, or architecture—while holding the rest fixed.]
+
+// ═══════════════════════ SYNTHESIS ═══════════════════════
+= Revisit, compress, hand off
+
+== Revisit the opening stream
+
+$ g_1=(4,0), quad g_2=(4,0), quad g_3=(4,0.4). $
+
+#align(center, table(
+  columns: (32mm, 1fr, 1fr), stroke: 0.45pt + MUTED, inset: (x: 9pt, y: 6pt),
+  align: (left, left, left),
+  table.header([method], [what history says], [step-3 consequence]),
+  [SGD], [nothing], [raw $10 times$ scale gap remains],
+  [momentum], [direction has been persistent for $d$], [smooths signs; does not identify rarity],
+  [AdaGrad], [$d$ has accumulated much more squared activity], [rare coordinate gets the larger normalized step],
+  [RMSProp], [recent squared activity], [same idea without permanent accumulation],
+  [Adam], [direction and scale histories], [rare signal is lifted, then tempered by its direction history],
+))
+
+#pause
+#punch[The opening answer was not “Adam.” It was the information Adam needs: coordinate-wise squared-gradient history.]
+
+== Every optimizer answers three questions
+
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
+  hairline([Direction], [current $g_t$ or smoothed $m_t$?], color: TEAL),
+  hairline([Scale], [global $eta$ or coordinate-wise $v_t$?], color: GREEN),
+  hairline([Clock], [fixed, warmup, decay—and which updates count?], color: ACC),
+))
+
+#pause
+#v(12pt)
+#align(center, text(size: 21pt, weight: 650)[
+  #text(fill: BLUE)[measure $g_t$]
+  #h(8pt) $arrow.r$ #h(8pt)
+  #text(fill: TEAL)[remember direction]
+  #h(8pt) $+$ #h(8pt)
+  #text(fill: GREEN)[remember scale]
+  #h(8pt) $arrow.r$ #h(8pt)
+  #text(fill: ACC)[apply a scheduled step]
+])
+
+== Practical exit ticket
+
+Before trusting a training run, can you answer all five?
+
+#align(center, grid(columns: (1fr, 1fr), gutter: 14pt,
+  note([*1.* What exactly does backprop measure?], color: BLUE),
+  note([*2.* What state does the optimizer store?], color: TEAL),
+  note([*3.* What is each coordinate's effective scale?], color: GREEN),
+  note([*4.* Which event advances the schedule?], color: ACC),
+  note([*5.* Which logged measurement would falsify your diagnosis?], color: RED),
+  note([*Reproduce:* seed, batch, update count, complete recipe.], color: INK),
+))
+
+#pause
+#punch[If you cannot answer these, the loss curve is a symptom without a mechanism.]
+
+== Primary references and provenance #OPT
+
+#set text(size: 16pt)
+
+- Duchi, Hazan & Singer (2011), #link("https://jmlr.org/papers/v12/duchi11a.html")[*Adaptive Subgradient Methods for Online Learning and Stochastic Optimization*].
+- Tieleman & Hinton (2012), *Lecture 6.5—RMSProp*, Neural Networks for Machine Learning.
+- Kingma & Ba (2015), #link("https://arxiv.org/abs/1412.6980")[*Adam: A Method for Stochastic Optimization*].
+- Loshchilov & Hutter (2019), #link("https://arxiv.org/abs/1711.05101")[*Decoupled Weight Decay Regularization*].
+- Vaswani et al. (2017), #link("https://arxiv.org/abs/1706.03762")[*Attention Is All You Need*]—a prominent warmup-and-decay recipe, not a claim that warmup is universally required.
+
+#v(8pt)
+#note[All trajectories in this deck are generated from the loss and update rules shown beside them. Notebook comparisons are deterministic mechanism tests, not benchmark claims.]
+
 #focus-slide[
-  Backprop gives the gradient; the optimizer turns it into learning.
+  Adam gives every parameter a history-dependent effective learning rate.
   #v(12pt)
-  #set text(size: 22pt)
-  Next: *regularization and generalization* — why the network that fits the training set also works on data it has never seen.
+  #set text(size: 20pt)
+  Next: make gradients and activations survive depth—initialization, normalization, and residual paths.
 ]
