@@ -1,0 +1,10 @@
+scope,image,a,b,intersection,union,iou_fraction,iou_decimal
+candidate-candidate,I1,A,B,1444,1756,361/439,0.822323462
+candidate-candidate,I1,A,E,225,1775,9/71,0.126760563
+candidate-candidate,I1,B,E,221,1779,221/1779,0.124227094
+candidate-ground-truth,I1,A,G1,1600,1600,1,1.000000000
+candidate-ground-truth,I1,B,G1,1444,1756,361/439,0.822323462
+candidate-ground-truth,I1,E,G1,225,1775,9/71,0.126760563
+candidate-candidate,I2,C,D,1026,1266,171/211,0.810426540
+candidate-ground-truth,I2,C,G2,1200,1200,1,1.000000000
+candidate-ground-truth,I2,D,G2,1026,1266,171/211,0.810426540

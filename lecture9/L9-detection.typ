@@ -19,9 +19,11 @@
 #let FOCAL = "https://arxiv.org/abs/1708.02002"
 #let FPN = "https://arxiv.org/abs/1612.03144"
 #let GIOU = "https://arxiv.org/abs/1902.09630"
+#let PETS = "https://www.robots.ox.ac.uk/~vgg/data/pets/"
+#let DET-EVIDENCE = "/shared/vision-evidence/oxford-iiit-pet/l9/"
 
 // Stable semantic grammar:
-// INK = given / evaluation · TEAL = TRAIN / truth · ACC = raw prediction
+// INK = given / evaluation · TEAL = TRAIN / truth · ACC = constructed candidate
 // BLUE = INFER / control · GREEN = survivor / TP · RED = suppressed / FP.
 #let swatch(color, body) = box(width: 13pt, height: 4pt, fill: color, radius: 1pt) + h(4pt) + body
 #let semantic-legend = align(center, text(size: 12.5pt)[
@@ -54,6 +56,14 @@
   width: 100%, inset: (left: 11pt, right: 5pt, top: 5pt, bottom: 5pt),
   stroke: (left: 2pt + color), fill: color.lighten(93%), radius: 2pt,
   [#body],
+)
+
+#let caption(body) = align(center, text(size: 13.5pt, fill: MUTED)[#body])
+
+#let evidence-image(name, width: auto, height: auto, fit: "contain") = block(
+  fill: white, stroke: 0.8pt + MUTED.lighten(35%), radius: 3pt,
+  inset: 2pt, clip: true,
+  image(DET-EVIDENCE + name, width: width, height: height, fit: fit),
 )
 
 #let _chip(lbl, word, col) = box(
@@ -129,19 +139,32 @@
   text(size: 10.5pt, weight: 750, fill: _pcol(mode, id), id),
 )
 
-#let held-scene(mode: "raw") = block(
+#let held-scene(mode: "raw", show-truth: true) = block(
   width: 108mm, height: 49mm, fill: rgb("#F4F2EE"),
   stroke: 0.7pt + MUTED,
   [
-    // truths are thick, so exact predictions A and C remain visible inside them.
-    #place(top + left, dx: 4mm + 10mm, dy: 4mm + 6.5mm,
-      rect(width: 40mm, height: 26mm, stroke: 3pt + TEAL))
-    #place(top + left, dx: 4mm + 60mm, dy: 4mm + 9.75mm,
-      rect(width: 30mm, height: 26mm, stroke: 3pt + TEAL))
-    #place(top + left, dx: 15mm, dy: 7mm,
-      box(fill: white, inset: 2pt, text(size: 10pt, weight: 700, fill: TEAL)[G1]))
-    #place(top + left, dx: 65mm, dy: 10mm,
-      box(fill: white, inset: 2pt, text(size: 10pt, weight: 700, fill: TEAL)[G2]))
+    // This strip juxtaposes two image-scoped canonical frames; it is not one
+    // scene. During INFER, the official truths and their labels are absent.
+    #place(top + left, dx: 6mm, dy: 2mm,
+      text(size: 9.5pt, weight: 700, fill: MUTED)[I1 · A/B/E])
+    #place(top + left, dx: 65mm, dy: 2mm,
+      text(size: 9.5pt, weight: 700, fill: MUTED)[I2 · C/D])
+    #place(top + left, dx: 61mm, dy: 3mm,
+      rect(width: 0.6pt, height: 42mm, fill: MUTED.lighten(55%)))
+    #if show-truth {
+      // Truths are thick, so exact candidates A and C remain visible inside.
+      place(top + left, dx: 4mm + 10mm, dy: 4mm + 6.5mm,
+        rect(width: 40mm, height: 26mm, stroke: 3pt + TEAL))
+      place(top + left, dx: 4mm + 60mm, dy: 4mm + 9.75mm,
+        rect(width: 30mm, height: 26mm, stroke: 3pt + TEAL))
+      place(top + left, dx: 15mm, dy: 7mm,
+        box(fill: white, inset: 2pt, text(size: 10pt, weight: 700, fill: TEAL)[G1]))
+      place(top + left, dx: 65mm, dy: 10mm,
+        box(fill: white, inset: 2pt, text(size: 10pt, weight: 700, fill: TEAL)[G2]))
+    } else {
+      place(top + right, dx: -3mm, dy: 2mm,
+        box(fill: white, inset: 2pt, text(size: 9pt, weight: 700, fill: BLUE)[GT HIDDEN]))
+    }
 
     #if mode != "truth" {
       place(top + left, dx: 14mm, dy: 10.5mm,
@@ -177,28 +200,23 @@
 // ───────────────────────────── 1 · BRIDGE + COMMIT ─────────────────────────────
 = L8B kept spatial features; detection must spend them
 
-== L8B answered “what”; today the head must preserve “where” #V
+== Two real images turn “where” into supervised geometry #V
 
-#align(center, grid(
-  columns: (1fr, 16mm, 1fr), gutter: 10pt, align: horizon,
-  card([L8B · CLASSIFICATION], [backbone $arrow.r 7 times 7 times 512 arrow.r$ global average $arrow.r$ one label], color: TEAL),
-  text(size: 26pt, fill: MUTED)[$arrow.r$],
-  card([L10 · DETECTION], [spatial features $arrow.r$ many class scores + many boxes $arrow.r$ a variable set], color: ACC),
-))
+#align(center, evidence-image("real-head-targets.png", width: 154mm, height: 86.6mm))
 #pause
-#v(10pt)
-#note([Global averaging buys image-level invariance by discarding location. Detection reuses the backbone, but changes the head, targets, geometry, and evaluation.], color: BLUE)
+#v(3pt)
+#note([OBSERVED pixels + official XML head boxes. Detection reuses the L8B backbone, but changes the head, targets, geometry, and evaluation.], color: BLUE)
 
 == Commit: which operations turn five candidates into trustworthy detections? #Q
 
-#case-strip([opening scene], [A dense head emits A $.95$, B $.90$, E $.89$, C $.88$, D $.75$ for two cup truths $G_1,G_2$.])
-#v(6pt)
-#align(center, held-scene(mode: "raw"))
+#case-strip([opening mini-batch], [CONSTRUCTED, not model output: A/B/E belong to I1; C/D belong to I2.])
+#v(3pt)
+#align(center, evidence-image("real-candidates.png", width: 100mm, height: 56.3mm))
 #pause
-#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 16pt,
-  hairline([A · THRESHOLD], [keep every high score; duplicates disappear automatically], color: INK),
-  hairline([B · GEOMETRY], [decode → score → NMS; then match for evaluation], color: INK),
-  hairline([C · LOSS], [run the training loss again at inference], color: INK),
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 12pt,
+  card([A · THRESHOLD], [score threshold alone], color: INK),
+  card([B · GEOMETRY], [decode → score → NMS → match], color: INK),
+  card([C · LOSS], [rerun loss at inference], color: INK),
 ))
 
 == The 80-minute route has one cumulative spine #V
@@ -257,20 +275,16 @@ By the end, you should be able to turn a dense output tensor into trained candid
 
 == Our coordinate convention prevents the silent “+1” bug #D
 
-#case-strip([box convention], [Every box is $[x_"min",y_"min",x_"max",y_"max"]$ with width $x_"max"-x_"min"$ and height $y_"max"-y_"min"$.])
-#v(7pt)
-#align(center, diagram(spacing: (25mm, 9mm), {
-  flow-node((0,0), [corner form\ $[x_0,y_0,x_1,y_1]$], color: TEAL, w: 46mm)
-  flow-node((2,0), [center-size\ $(x_c,y_c,w,h)$], color: BLUE, w: 45mm)
-  flow-arrow((0,0),(2,0), label: [convert explicitly])
-}))
+#case-strip([real annotation contract], [VOC XML uses one-based inclusive corners; the course converts once to zero-based half-open $[x_0,y_0,x_1,y_1)$.])
+#v(4pt)
+#align(center, evidence-image("real-head-targets.png", width: 110mm, height: 61.9mm))
 #pause
-#v(8pt)
-#alertbox[We use continuous boundaries—or equivalently half-open pixel boxes. Area is $(x_1-x_0)(y_1-y_0)$: there is no $+1$.]
+#v(3pt)
+#alertbox[Example I1: VOC $(333,72)$–$(425,158)$ becomes $[332,71,425,158)$, so area is $93 dot 87=8,091$. No later component adds $+1$.]
 
-== The held truths fix every later area calculation #D
+== The canonical truths fix every later area calculation #D
 
-#case-strip([ground truth], [$G_1=[10,10,50,50]$ and $G_2=[60,15,90,55]$ on a $100 times 80$ canvas.])
+#case-strip([constructed numeric spine], [$G_1=[10,10,50,50]$ in I1; $G_2=[60,15,90,55]$ in I2. Separate positive affine maps preserve IoU.])
 #v(6pt)
 #two(
   [*$G_1$*\
@@ -285,8 +299,6 @@ By the end, you should be able to turn a dense output tensor into trained candid
 #pause
 #v(5pt)
 #align(center, held-scene(mode: "truth"))
-#pause
-#align(center, text(size: 13pt, weight: 600, fill: ACC)[These exact rectangles anchor every later IoU, suppression decision, and match.])
 
 == A localization head shares evidence, then asks two questions #V
 
@@ -428,9 +440,9 @@ Target $t=(.20,-.10,.693,0)$; prediction $hat(t)=(.25,-.05,.60,.05)$. Let $p_"ob
 
 == IoU asks how much two regions agree #V
 
-#case-strip([held pair], [$A=G_1=[10,10,50,50]$ and $B=[12,12,52,52]$.])
-#v(7pt)
-#align(center, held-scene(mode: "raw"))
+#case-strip([same I1 pair], [$A=G_1=[10,10,50,50]$ and $B=[12,12,52,52]$ are affinely placed on the real Abyssinian head ROI.])
+#v(4pt)
+#align(center, evidence-image("real-candidates.png", width: 126mm, height: 70.9mm))
 #pause
 #align(center, text(size: 23pt)[$"IoU"(A,B)=frac(|A inter B|,|A union B|) in [0,1]$])
 #pause
@@ -603,15 +615,15 @@ Two predictions move one boundary by $10$ pixels.
 // ───────────────────────────── 5 · INFER ─────────────────────────────
 = INFER: score first, then suppress duplicates
 
-== The raw head cannot know which high score is redundant #V
+== The constructed raw ledger isolates the inference rule #V
 
 #clock-strip("infer")
 #v(6pt)
-#align(center, held-scene(mode: "raw"))
+#align(center, held-scene(mode: "raw", show-truth: false))
 #v(4pt)
 #align(center, text(size: 14pt)[A $.95$ #h(18pt) B $.90$ #h(18pt) E $.89$ #h(18pt) C $.88$ #h(18pt) D $.75$])
 #pause
-#note([A and B describe cup 1; C and D describe cup 2; E is a confident isolated false alarm. Inference does not have those truth labels.], color: BLUE)
+#note([A/B/E share (I1, head); C/D share (I2, head). These scores are pedagogical constructions, not model output. INFER sees neither XML truth nor TP/FP labels.], color: BLUE)
 
 == Score thresholding removes weak evidence—not duplicates #Q
 
@@ -649,7 +661,7 @@ Use a deliberately permissive score threshold $s >= .70$.
 
 #clock-strip("infer")
 #v(5pt)
-#align(center, held-scene(mode: "step1"))
+#align(center, held-scene(mode: "step1", show-truth: false))
 #pause
 #align(center, text(size: 19pt)[$"IoU"(A,B)=.822>.50 arrow.r$ keep A, suppress B])
 #pause
@@ -660,14 +672,14 @@ Use a deliberately permissive score threshold $s >= .70$.
 
 #clock-strip("infer")
 #v(5pt)
-#align(center, held-scene(mode: "step2"))
+#align(center, held-scene(mode: "step2", show-truth: false))
 #pause
 #align(center, text(size: 19pt)[$E=.89$ is now the highest remaining score; its IoU with every survivor is below $.50$.])
 #pause
 #v(5pt)
 #alertbox[Keep E. NMS removes duplicates around a stronger prediction; it does not remove isolated false alarms.]
 
-== Step 3: C claims the second cup neighbourhood #D
+== Step 3: C claims the I2 head neighbourhood #D
 
 #clock-strip("infer")
 #v(6pt)
@@ -681,20 +693,13 @@ $A_U=1,200+1,092-1,026=1,266$
 #pause
 #result[Keep C; suppress D. No candidates remain.]
 
-== NMS returns A, E, C—not the two truths #A
+== NMS returns A, E, C—not “the correct boxes” #A
 
 #clock-strip("infer")
-#v(5pt)
-#align(center, held-scene(mode: "final"))
+#v(3pt)
+#align(center, evidence-image("real-nms-trace.png", width: 153mm, height: 86.1mm))
 #pause
-#v(4pt)
-#score-ledger((
-  [A], [$.95$], [$[10,10,50,50]$], [#text(fill: GREEN)[kept]], [suppressed B],
-  [E], [$.89$], [$[35,5,55,25]$], [#text(fill: GREEN)[kept]], [isolated],
-  [C], [$.88$], [$[60,15,90,55]$], [#text(fill: GREEN)[kept]], [suppressed D],
-))
-#pause
-#note([Inference produced a *non-redundant* set. Whether every member is correct is an evaluation question.], color: ACC)
+#note([NMS is grouped by $("image_id", "class")$: A can never suppress C across images. The global returned score order is A, E, C; correctness waits for EVAL.], color: ACC)
 
 == Class-aware NMS prevents a cup from deleting a hand #Q
 
@@ -761,24 +766,15 @@ $A_U=1,200+1,092-1,026=1,266$
   [C], [$.88$], [$1.000$ with $G_2$], [$?$],
 ))
 #pause
-#note([Process the score order. A truth claimed by an earlier detection is unavailable to later detections.], color: BLUE)
+#note([Match only within image_id, then concatenate survivors into global score order. A truth claimed by an earlier detection is unavailable to later detections in that image.], color: BLUE)
 
 == Evaluation exposes the false alarm NMS could not see #A
 
 #clock-strip("eval")
-#v(5pt)
-#align(center, held-scene(mode: "eval"))
+#v(3pt)
+#align(center, evidence-image("real-eval-matching.png", width: 153mm, height: 86.1mm))
 #pause
-#align(center, table(
-  columns: (28mm, 40mm, 55mm, 40mm), stroke: 0.45pt + MUTED,
-  inset: (x: 10pt, y: 6pt), align: center,
-  table.header([*detection*], [*claim*], [*reason*], [*result*]),
-  [A], [$G_1$], [$"IoU"=1.000$], [#text(fill: GREEN)[TP]],
-  [E], [none], [$"IoU"=.127<.50$], [#text(fill: RED)[FP]],
-  [C], [$G_2$], [$"IoU"=1.000$], [#text(fill: GREEN)[TP]],
-))
-#pause
-#note([The final set has two TPs, one FP, and zero FNs. “Non-redundant” did not mean “all correct.”], color: ACC)
+#note([GT is revealed only now: A claims I1/G1, E is an I1 false alarm at $9/71$, and C claims I2/G2. Two TPs, one FP, zero FNs.], color: ACC)
 
 == Precision and recall evolve with the score ranking #D
 
@@ -964,8 +960,8 @@ $A_U=1,200+1,092-1,026=1,266$
 == Revisit the opening commitment before revealing it #Q
 
 #case-strip([same five candidates], [A $.95$, B $.90$, E $.89$, C $.88$, D $.75$; $tau_"NMS"=.50$, $tau_"eval"=.50$.])
-#v(5pt)
-#align(center, held-scene(mode: "raw"))
+#v(3pt)
+#align(center, evidence-image("real-candidates.png", width: 94mm, height: 52.9mm))
 #pause
 #align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 16pt,
   hairline([A · THRESHOLD], [all five pass $.70$], color: INK),
@@ -1036,5 +1032,19 @@ Given a new detector, ask in order:
   ], color: BLUE),
 ))
 #pause
-#v(8pt)
-#align(center, text(size: 15pt, fill: MUTED)[Use the papers for historical claims; use the held five-box ledger and exact notebooks for reproducible arithmetic.])
+#v(5pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 20pt,
+  hairline([REAL EVIDENCE], [
+    #link(PETS)[Oxford-IIIT Pet] · Parkhi et al. (CVPR 2012)\
+    I1 Abyssinian_1 · I2 Bengal_10\
+    official XML tight-head ROIs · CC BY-SA 4.0
+  ], color: GREEN),
+  hairline([REPRODUCIBILITY], [
+    `shared/vision-evidence/oxford-iiit-pet/l9/`\
+    builder + manifest + CSV decision ledgers\
+    A–E/scores = constructed · model output = none
+  ], color: ACC),
+))
+#pause
+#v(4pt)
+#caption[OBSERVED = photos/XML · CONSTRUCTED = crops/candidates/scores · COMPUTED = IoU/NMS/matching/AP]

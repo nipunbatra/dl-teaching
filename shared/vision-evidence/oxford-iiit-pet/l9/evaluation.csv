@@ -1,0 +1,4 @@
+rank,candidate,image,gt,iou_fraction,iou_decimal,result,cumulative_tp,cumulative_fp,precision,recall,ap
+1,A,I1,G1,1,1.000000000,TP,1,0,1,1/2,5/6
+2,E,I1,G1,9/71,0.126760563,FP,1,1,1/2,1/2,5/6
+3,C,I2,G2,1,1.000000000,TP,2,1,2/3,1,5/6

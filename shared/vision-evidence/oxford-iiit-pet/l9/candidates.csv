@@ -1,0 +1,6 @@
+id,image,gt,score,class,evidence_type,canonical_x0,canonical_y0,canonical_x1,canonical_y1,source_x0_exact,source_y0_exact,source_x1_exact,source_y1_exact,source_x0,source_y0,source_x1,source_y1
+A,I1,G1,0.95,head,constructed; not model output,10,10,50,50,332,71,425,158,332.0,71.0,425.0,158.0
+B,I1,G1,0.90,head,constructed; not model output,12,12,52,52,6733/20,1507/20,8593/20,3247/20,336.65,75.35,429.65,162.35
+E,I1,G1,0.89,head,constructed; not model output,35,5,55,25,3121/8,481/8,3493/8,829/8,390.125,60.125,436.625,103.625
+C,I2,G2,0.88,head,constructed; not model output,60,15,90,55,314,59,446,219,314.0,59.0,446.0,219.0
+D,I2,G2,0.75,head,constructed; not model output,63,17,91,56,1636/5,67,2252/5,223,327.2,67.0,450.4,223.0

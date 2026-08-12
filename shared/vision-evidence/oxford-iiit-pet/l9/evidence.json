@@ -1,0 +1,350 @@
+{
+  "build": {
+    "artifacts": {
+      "candidates.csv": {
+        "bytes": 735,
+        "sha256": "3a270c23854ed92d0870c796df7db2b1b33a73a69a1c39dee47be9bbd5d1d4fa"
+      },
+      "evaluation.csv": {
+        "bytes": 236,
+        "sha256": "b1cccbd5b1b0860a540e48715e4781f1922f0184059bb0d4527a0d1b189018e1"
+      },
+      "nms-trace.csv": {
+        "bytes": 375,
+        "sha256": "bc802ddfca8edfecf979c31088a60c8858ad02c1a2493968d90d777cba49a494"
+      },
+      "pairwise-iou.csv": {
+        "bytes": 583,
+        "sha256": "d3ed545bbdebce918f93162d631e44af1934fb6099042f882358d6afba213486"
+      },
+      "real-candidates.png": {
+        "bytes": 916482,
+        "sha256": "1ca4372b8c062c4e4cb183c060669bdf3ea99c7884f0ae13f822f65f4570cdb6"
+      },
+      "real-eval-matching.png": {
+        "bytes": 528634,
+        "sha256": "db6f20189f53afbc5a7a14c1075134e2729c05ad4053b40c552599579e58f25c"
+      },
+      "real-head-targets.png": {
+        "bytes": 889303,
+        "sha256": "4492e5bcda0b32f8a30923eead220f2d6381c7bc5b49fb7d48eb4f5cc1400217"
+      },
+      "real-nms-trace.png": {
+        "bytes": 329999,
+        "sha256": "7b53928e5d66469319adc69382d2fe1e17a08c95cd669b368c17180eb1b8c177"
+      }
+    },
+    "builder_sha256": "1e6d3312df89424974b1fab8ccdbc5e11963dd4b6d6c802d64d33b09380fb3e1",
+    "command": "uv run --with pillow==12.2.0 python shared/vision-evidence/oxford-iiit-pet/l9/build_detection_evidence.py",
+    "font_bold": "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+    "font_regular": "/System/Library/Fonts/Supplemental/Arial.ttf",
+    "pillow": "12.2.0",
+    "python": "3.11.11"
+  },
+  "candidates": {
+    "A": {
+      "canonical_box": [
+        10,
+        10,
+        50,
+        50
+      ],
+      "class": "head",
+      "evidence_type": "constructed; not model output",
+      "image": "I1",
+      "score": 0.95,
+      "source_box": [
+        332.0,
+        71.0,
+        425.0,
+        158.0
+      ],
+      "source_box_exact": [
+        "332",
+        "71",
+        "425",
+        "158"
+      ]
+    },
+    "B": {
+      "canonical_box": [
+        12,
+        12,
+        52,
+        52
+      ],
+      "class": "head",
+      "evidence_type": "constructed; not model output",
+      "image": "I1",
+      "score": 0.9,
+      "source_box": [
+        336.65,
+        75.35,
+        429.65,
+        162.35
+      ],
+      "source_box_exact": [
+        "6733/20",
+        "1507/20",
+        "8593/20",
+        "3247/20"
+      ]
+    },
+    "C": {
+      "canonical_box": [
+        60,
+        15,
+        90,
+        55
+      ],
+      "class": "head",
+      "evidence_type": "constructed; not model output",
+      "image": "I2",
+      "score": 0.88,
+      "source_box": [
+        314.0,
+        59.0,
+        446.0,
+        219.0
+      ],
+      "source_box_exact": [
+        "314",
+        "59",
+        "446",
+        "219"
+      ]
+    },
+    "D": {
+      "canonical_box": [
+        63,
+        17,
+        91,
+        56
+      ],
+      "class": "head",
+      "evidence_type": "constructed; not model output",
+      "image": "I2",
+      "score": 0.75,
+      "source_box": [
+        327.2,
+        67.0,
+        450.4,
+        223.0
+      ],
+      "source_box_exact": [
+        "1636/5",
+        "67",
+        "2252/5",
+        "223"
+      ]
+    },
+    "E": {
+      "canonical_box": [
+        35,
+        5,
+        55,
+        25
+      ],
+      "class": "head",
+      "evidence_type": "constructed; not model output",
+      "image": "I1",
+      "score": 0.89,
+      "source_box": [
+        390.125,
+        60.125,
+        436.625,
+        103.625
+      ],
+      "source_box_exact": [
+        "3121/8",
+        "481/8",
+        "3493/8",
+        "829/8"
+      ]
+    }
+  },
+  "coordinate_contract": {
+    "area": "(x1-x0)*(y1-y0); no +1",
+    "boundary": "continuous / 0-based half-open",
+    "format": "xyxy",
+    "invariance": "independent positive x/y scaling preserves IoU",
+    "maps": {
+      "I1": {
+        "x": "332 + (x-10)*93/40",
+        "y": "71 + (y-10)*87/40"
+      },
+      "I2": {
+        "x": "314 + (x-60)*132/30",
+        "y": "59 + (y-15)*160/40"
+      }
+    },
+    "rendering": "PNG boundaries are rounded for display only; decisions use exact canonical rational geometry."
+  },
+  "evaluation": {
+    "ap": 0.833333,
+    "ap_definition": "mean precision at the two TP ranks; equals the all-point precision-envelope area for this sequence",
+    "ap_fraction": "5/6",
+    "counts": {
+      "fn": 0,
+      "fp": 1,
+      "tp": 2
+    },
+    "ground_truth_count": 2,
+    "iou_threshold": 0.5,
+    "ranked_results": [
+      {
+        "candidate": "A",
+        "gt": "G1",
+        "image": "I1",
+        "iou": 1.0,
+        "iou_fraction": "1",
+        "precision": "1",
+        "rank": 1,
+        "recall": "1/2",
+        "result": "TP"
+      },
+      {
+        "candidate": "E",
+        "gt": "G1",
+        "image": "I1",
+        "iou": 0.126761,
+        "iou_fraction": "9/71",
+        "precision": "1/2",
+        "rank": 2,
+        "recall": "1/2",
+        "result": "FP"
+      },
+      {
+        "candidate": "C",
+        "gt": "G2",
+        "image": "I2",
+        "iou": 1.0,
+        "iou_fraction": "1",
+        "precision": "2/3",
+        "rank": 3,
+        "recall": "1",
+        "result": "TP"
+      }
+    ],
+    "teaching_scope": "fixed two-image mini-batch; not a benchmark"
+  },
+  "evidence_taxonomy": {
+    "computed": [
+      "IoU",
+      "per-image NMS",
+      "one-to-one matching",
+      "AP",
+      "overlays"
+    ],
+    "constructed": [
+      "two display crops",
+      "candidates A-E",
+      "scores",
+      "affine placement"
+    ],
+    "model_output": [],
+    "observed": [
+      "two original Oxford-IIIT Pet photographs",
+      "two official tight-head XML ROIs"
+    ],
+    "warning": "A-E and their scores are pedagogical constructions; no detector was run."
+  },
+  "nms": {
+    "iou_threshold": 0.5,
+    "kept_global_order": [
+      "A",
+      "E",
+      "C"
+    ],
+    "raw_global_order": [
+      "A",
+      "B",
+      "E",
+      "C",
+      "D"
+    ],
+    "scope": "within image and class",
+    "score_threshold": 0.7,
+    "suppressed": {
+      "B": {
+        "by": "A",
+        "iou": 0.822323
+      },
+      "D": {
+        "by": "C",
+        "iou": 0.810427
+      }
+    }
+  },
+  "schema_version": 2,
+  "source": {
+    "dataset": "Oxford-IIIT Pet",
+    "dataset_page": "https://www.robots.ox.ac.uk/~vgg/data/pets/",
+    "license": "CC BY-SA 4.0; copyright remains with the original image owners",
+    "paper": "Parkhi et al., Cats and Dogs, CVPR 2012",
+    "samples": {
+      "I1": {
+        "breed": "Abyssinian",
+        "gt_canonical_xyxy": [
+          10,
+          10,
+          50,
+          50
+        ],
+        "gt_id": "G1",
+        "gt_source_xyxy_half_open": [
+          332,
+          71,
+          425,
+          158
+        ],
+        "image_path": "../Abyssinian_1.jpg",
+        "image_sha256": "2533197401eebe9410ea4d063f86c43fbd2666f3e8165a38aca155c0d09c21be",
+        "image_size": [
+          600,
+          400
+        ],
+        "stem": "Abyssinian_1",
+        "xml_path": "../Abyssinian_1.xml",
+        "xml_sha256": "bea13ddcf1dc171e39da5ce2c134b1dc8c247a9f1bb21cc2056f37f7a423a51f",
+        "xml_voc_1_based_inclusive": [
+          333,
+          72,
+          425,
+          158
+        ]
+      },
+      "I2": {
+        "breed": "Bengal",
+        "gt_canonical_xyxy": [
+          60,
+          15,
+          90,
+          55
+        ],
+        "gt_id": "G2",
+        "gt_source_xyxy_half_open": [
+          314,
+          59,
+          446,
+          219
+        ],
+        "image_path": "Bengal_10.jpg",
+        "image_sha256": "4cc958fc6bb47738488fdc83a3053f01ce2937c9fbcaf5db2e649a1d612f8725",
+        "image_size": [
+          500,
+          375
+        ],
+        "stem": "Bengal_10",
+        "xml_path": "Bengal_10.xml",
+        "xml_sha256": "9a6e7d513d999b23cde839a6efce908e2e1472d14d69f13d671e9db9cdb09ae6",
+        "xml_voc_1_based_inclusive": [
+          315,
+          60,
+          446,
+          219
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+step,image,action,candidate,reference,iou_fraction,iou_decimal,reason
+1,I1,keep,A,,,,highest score remaining in this image
+2,I1,suppress,B,A,361/439,0.822323462,same image/class and IoU > 0.50
+3,I1,keep,E,,,,highest score remaining in this image
+4,I2,keep,C,,,,highest score remaining in this image
+5,I2,suppress,D,C,171/211,0.810426540,same image/class and IoU > 0.50
