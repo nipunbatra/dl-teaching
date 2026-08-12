@@ -46,6 +46,25 @@ zero on items 2, 4, 5, 8, or 9.
 - Treat L1–L14 as mastery and L15–L24 as literacy with one worked numeric; depth
   should serve the student contract rather than maximize topic count.
 
+## Visual-evidence contract
+
+- Prefer a real, properly licensed and attributed image when the lesson depends
+  on what a real object, scene, failure, or dataset looks like. Computer-vision
+  lectures should not teach image tasks entirely through abstract boxes.
+- Use a generated teaching image when a controlled scene, stable identity, or
+  licensing-safe counterfactual is more useful than a found photograph. Label it
+  as generated, preserve its prompt/provenance beside the asset, and reuse the
+  same scene through the numerical and conceptual spine.
+- Every image must do teaching work: support a prediction, expose a failure,
+  anchor a mask/box/feature calculation, or provide evidence for a claim. Avoid
+  decorative stock imagery and visual variety that breaks the persistent case.
+- Keep equations, plots, masks, arrows, and explanatory overlays code-native or
+  vector whenever practical. Raster images are acceptable for photographs and
+  generated scenes; vector-suitable charts and diagrams remain raster-free.
+- For deliberate rasters, inspect effective resolution at the actual slide size,
+  record the expected raster-instance count in QA, and reject accidental helper
+  conversions or low-resolution assets.
+
 ## Deliverables for one lecture commit
 
 - Canonical Typst source and only the figures it actually uses.
@@ -62,6 +81,9 @@ Before committing a lecture:
 
 1. Compile both handout and presentation modes from a clean command.
 2. Run `scripts/audit_typst_slides.py` on both PDFs.
+   Use a zero-raster limit unless the deck deliberately contains photographs or
+   generated scenes; in that case set the limit to the exact expected instance
+   count and verify those instances manually.
 3. Render every handout page and visually inspect the complete contact sheet.
 4. Inspect high-resolution pages for every audit candidate and every dense slide.
 5. Execute notebooks from a fresh kernel; reject errors, stale outputs, and claims
