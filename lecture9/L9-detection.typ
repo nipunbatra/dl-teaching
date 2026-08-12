@@ -1,701 +1,1040 @@
-// Localization and Object Detection — Lecture 9 · ES 667 Deep Learning
-// Compile from the repo root:
-//   typst compile --root . lecture9/L9-detection.typ /tmp/L9.pdf
-//   typst compile --root . --input handout=true lecture9/L9-detection.typ /tmp/L9h.pdf
-// Theme, palette, helpers and diagram builders live in common/metropolis.typ.
+// Localization and Object Detection — public Lecture 10 · ES 667 Deep Learning
+// Compile from the repository root:
+//   typst compile --root . --input handout=true lecture9/L9-detection.typ /private/tmp/L9-handout.pdf
+//   typst compile --root . lecture9/L9-detection.typ /private/tmp/L9-presentation.pdf
 
 #import "../common/metropolis.typ": *
 #import "../common/mldiag.typ": *
 #show: metropolis-deck.with(
   title: [Localization and Object Detection],
-  subtitle: [From one label to a variable set of boxes],
+  subtitle: [A fixed dense tensor becomes a scored set of boxes],
 )
 
-#let IA = "https://nipunbatra.github.io/interactive-articles/"
-#let OD = IA + "object-detection"
+#let NB-IOU = "https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L09/01_iou_and_bbox_losses.ipynb"
+#let NB-NMS = "https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L09/02_nms_from_scratch.ipynb"
+#let RCNN = "https://arxiv.org/abs/1311.2524"
+#let FAST = "https://arxiv.org/abs/1504.08083"
+#let FASTER = "https://arxiv.org/abs/1506.01497"
+#let YOLO = "https://arxiv.org/abs/1506.02640"
+#let FOCAL = "https://arxiv.org/abs/1708.02002"
+#let FPN = "https://arxiv.org/abs/1612.03144"
+#let GIOU = "https://arxiv.org/abs/1902.09630"
 
-// ── reusable native (fletcher) detector pipelines ───────────────────
-// rounded-rect nodes so multi-word labels sit fully inside; compact text
-#let pnode(pos, lbl, c: INK, fill: white) = node(pos, text(size: 15pt, lbl),
-  shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 7pt, stroke: 0.9pt + c, fill: fill)
-#let parrow(a, b) = edge(a, b, "-|>", stroke: 0.8pt + MUTED)
+// Stable semantic grammar:
+// INK = given / evaluation · TEAL = TRAIN / truth · ACC = raw prediction
+// BLUE = INFER / control · GREEN = survivor / TP · RED = suppressed / FP.
+#let swatch(color, body) = box(width: 13pt, height: 4pt, fill: color, radius: 1pt) + h(4pt) + body
+#let semantic-legend = align(center, text(size: 12.5pt)[
+  #swatch(INK, [given / eval]) #h(11pt)
+  #swatch(TEAL, [truth / train]) #h(11pt)
+  #swatch(ACC, [raw candidate]) #h(11pt)
+  #swatch(BLUE, [infer / control]) #h(11pt)
+  #swatch(GREEN, [survivor / TP]) #h(11pt)
+  #swatch(RED, [suppressed / FP])
+])
 
-// R-CNN: proposals -> warp -> CNN (once per region) -> two heads
-#let rcnn-pipe = align(center, diagram(spacing: (17mm, 11mm), {
-  pnode((0,0), [image], fill: rgb("#EFEEEB"))
-  pnode((1,0), [region\ proposals], c: TEAL)
-  pnode((2,0), [crop /\ warp], c: TEAL)
-  pnode((3,0), [CNN\ per region], c: ACC, fill: rgb("#FDECD6"))
-  pnode((4,0.85), [box reg.], c: BLUE)
-  pnode((4,-0.85), [class], c: BLUE)
-  parrow((0,0),(1,0)); parrow((1,0),(2,0)); parrow((2,0),(3,0))
-  parrow((3,0),(4,0.85)); parrow((3,0),(4,-0.85))
-}))
+#let hairline(title, body, color: TEAL) = block(
+  width: 100%, inset: 3pt,
+  [#text(size: 13.5pt, weight: 700, fill: color)[#upper(title)]
+   #v(2pt)
+   #line(length: 100%, stroke: 0.8pt + color)
+   #v(5pt)
+   #body],
+)
 
-// Fast R-CNN: one CNN over the image, RoI pooling per proposal, shared heads
-#let fast-pipe = align(center, diagram(spacing: (17mm, 11mm), {
-  pnode((0,0), [image], fill: rgb("#EFEEEB"))
-  pnode((1,0), [CNN\ (whole image)], c: ACC, fill: rgb("#FDECD6"))
-  pnode((2,0), [RoI\ pooling], c: TEAL)
-  pnode((3,0.85), [box reg.], c: BLUE)
-  pnode((3,-0.85), [class], c: BLUE)
-  node((2,1.5), text(size: 13pt, fill: MUTED)[proposals], stroke: none)
-  parrow((0,0),(1,0)); parrow((1,0),(2,0))
-  edge((2,1.5),(2,0), "-|>", stroke: (paint: MUTED, dash: "dashed", thickness: 0.7pt))
-  parrow((2,0),(3,0.85)); parrow((2,0),(3,-0.85))
-}))
+#let card(title, body, color: TEAL) = block(
+  width: 100%, inset: (x: 10pt, y: 8pt), fill: white,
+  stroke: 1pt + color, radius: 3pt,
+  [#text(size: 12.5pt, weight: 700, fill: color)[#upper(title)]
+   #v(4pt)
+   #body],
+)
 
-// Faster R-CNN: backbone -> RPN proposals -> RoI head, all sharing features
-#let faster-pipe = align(center, diagram(spacing: (18mm, 12mm), {
-  pnode((0,0), [image], fill: rgb("#EFEEEB"))
-  pnode((1,0), [backbone\ CNN], c: ACC, fill: rgb("#FDECD6"))
-  pnode((2,0.9), [RPN], c: GREEN, fill: rgb("#EAF6EC"))
-  pnode((2,-0.55), [RoI\ pooling], c: TEAL)
-  pnode((3.2,-0.55), [RoI head\ cls + box], c: BLUE)
-  parrow((0,0),(1,0)); parrow((1,0),(2,-0.55)); parrow((1,0),(2,0.9))
-  edge((2,0.9),(2,-0.55), "-|>", stroke: (paint: GREEN, dash: "dashed", thickness: 0.8pt))
-  parrow((2,-0.55),(3.2,-0.55))
-}))
+#let note(body, color: TEAL) = block(
+  width: 100%, inset: (left: 11pt, right: 5pt, top: 5pt, bottom: 5pt),
+  stroke: (left: 2pt + color), fill: color.lighten(93%), radius: 2pt,
+  [#body],
+)
 
-// YOLO: one network, dense grid predictions, then NMS
-#let yolo-pipe = align(center, diagram(spacing: (16mm, 8mm), {
-  pnode((0,0), [image], fill: rgb("#EFEEEB"))
-  pnode((1,0), [single\ CNN], c: ACC, fill: rgb("#FDECD6"))
-  pnode((2,0), [dense grid:\ boxes + classes], c: TEAL)
-  pnode((3.15,0), [NMS], c: GREEN, fill: rgb("#EAF6EC"))
-  pnode((4.15,0), [detections], c: BLUE)
-  parrow((0,0),(1,0)); parrow((1,0),(2,0)); parrow((2,0),(3.15,0)); parrow((3.15,0),(4.15,0))
-}))
+#let _chip(lbl, word, col) = box(
+  fill: col, inset: (x: 7pt, y: 3.5pt), radius: 4pt, baseline: 0.28em,
+  text(font: "IBM Plex Mono", size: 12pt, fill: white, weight: 700,
+    tracking: 0.4pt, [#lbl#h(5pt)#text(size: 9pt, weight: 500, tracking: 0.8pt)[#upper(word)]])
+)
+#let Q = [#h(1fr)#_chip("Q", "question", BLUE)]
+#let A = [#h(1fr)#_chip("A", "answer", GREEN)]
+#let V = [#h(1fr)#_chip("V", "visual", TEAL)]
+#let D = [#h(1fr)#_chip("D", "derivation", ACC)]
+#let I = [#h(1fr)#_chip("I", "interactive", GREEN)]
+#let OPT = [#h(1fr)#_chip(sym.star.filled, "optional", MUTED)]
+
+#let case-strip(stage, detail) = block(
+  width: 100%, inset: (x: 10pt, y: 6pt),
+  fill: rgb("#F3F6F5"), stroke: (left: 3pt + TEAL), radius: 3pt,
+  [#text(size: 11pt, weight: 700, fill: TEAL, tracking: 0.7pt)[HELD CASE · #upper(stage)]
+   #h(8pt)
+   #text(size: 13.5pt, fill: INK)[#detail]],
+)
+
+#let _clock(name, active, col, body) = block(
+  width: 100%, inset: (x: 8pt, y: 5pt), radius: 3pt,
+  fill: if active { col.lighten(88%) } else { rgb("#F2F1EE") },
+  stroke: if active { 1.2pt + col } else { 0.55pt + MUTED },
+  [#text(size: 11pt, weight: 750, fill: if active { col } else { MUTED })[#name]
+   #h(5pt)
+   #text(size: 11pt, fill: if active { INK } else { MUTED })[#body]],
+)
+
+#let clock-strip(active) = align(center, grid(
+  columns: (1fr, 1fr, 1fr), gutter: 9pt,
+  _clock([TRAIN], active == "train", TEAL, [candidate ↔ truth; losses]),
+  _clock([INFER], active == "infer", BLUE, [prediction ↔ prediction; NMS]),
+  _clock([EVAL], active == "eval", INK, [prediction ↔ truth; AP]),
+))
+
+#let flow-node(pos, body, color: INK, fill: white, w: 34mm) = node(
+  pos,
+  block(width: w, inset: 5pt, align(center, text(size: 12.5pt, body))),
+  shape: fletcher.shapes.rect, corner-radius: 3pt,
+  stroke: 0.9pt + color, fill: fill,
+)
+#let flow-arrow(a, b, color: MUTED, label: none) = edge(
+  a, b, "-|>", stroke: 0.85pt + color,
+  label: if label == none { none } else { text(size: 10.5pt, fill: color, label) },
+)
+#let round-node(pos, body, color: INK, fill: white, r: 10mm) = node(
+  pos,
+  box(width: 2*r, height: 2*r, align(center + horizon, text(size: 12pt, body))),
+  shape: fletcher.shapes.circle, stroke: 1pt + color, fill: fill,
+)
+
+// The scene uses one scale throughout: 1 x-unit = 1 mm, 1 y-unit = 0.65 mm.
+// Truths: G1=[10,10,50,50], G2=[60,15,90,55].
+// Predictions: A=G1, B=[12,12,52,52], E=[35,5,55,25], C=G2, D=[63,17,91,56].
+#let _pcol(mode, id) = {
+  if mode == "raw" { ACC }
+  else if mode == "step1" {
+    if id == "A" { GREEN } else if id == "B" { RED } else { ACC }
+  } else if mode == "step2" {
+    if id == "A" or id == "E" { GREEN } else if id == "B" { RED } else { ACC }
+  } else if mode == "final" {
+    if id == "A" or id == "E" or id == "C" { GREEN } else { RED }
+  } else if mode == "eval" {
+    if id == "A" or id == "C" { GREEN } else if id == "E" { RED } else { MUTED }
+  } else { ACC }
+}
+
+#let _plabel(id, mode) = box(
+  fill: white, inset: (x: 3pt, y: 1.5pt), radius: 2pt,
+  text(size: 10.5pt, weight: 750, fill: _pcol(mode, id), id),
+)
+
+#let held-scene(mode: "raw") = block(
+  width: 108mm, height: 49mm, fill: rgb("#F4F2EE"),
+  stroke: 0.7pt + MUTED,
+  [
+    // truths are thick, so exact predictions A and C remain visible inside them.
+    #place(top + left, dx: 4mm + 10mm, dy: 4mm + 6.5mm,
+      rect(width: 40mm, height: 26mm, stroke: 3pt + TEAL))
+    #place(top + left, dx: 4mm + 60mm, dy: 4mm + 9.75mm,
+      rect(width: 30mm, height: 26mm, stroke: 3pt + TEAL))
+    #place(top + left, dx: 15mm, dy: 7mm,
+      box(fill: white, inset: 2pt, text(size: 10pt, weight: 700, fill: TEAL)[G1]))
+    #place(top + left, dx: 65mm, dy: 10mm,
+      box(fill: white, inset: 2pt, text(size: 10pt, weight: 700, fill: TEAL)[G2]))
+
+    #if mode != "truth" {
+      place(top + left, dx: 14mm, dy: 10.5mm,
+        rect(width: 40mm, height: 26mm, stroke: 1.25pt + _pcol(mode, "A")))
+      place(top + left, dx: 16mm, dy: 11.8mm,
+        rect(width: 40mm, height: 26mm, stroke: 1.25pt + _pcol(mode, "B")))
+      place(top + left, dx: 39mm, dy: 7.25mm,
+        rect(width: 20mm, height: 13mm, stroke: 1.25pt + _pcol(mode, "E")))
+      place(top + left, dx: 64mm, dy: 13.75mm,
+        rect(width: 30mm, height: 26mm, stroke: 1.25pt + _pcol(mode, "C")))
+      place(top + left, dx: 67mm, dy: 15.05mm,
+        rect(width: 28mm, height: 25.35mm, stroke: 1.25pt + _pcol(mode, "D")))
+
+      place(top + left, dx: 16mm, dy: 33mm, _plabel("A", mode))
+      place(top + left, dx: 48mm, dy: 36mm, _plabel("B", mode))
+      place(top + left, dx: 43mm, dy: 7mm, _plabel("E", mode))
+      place(top + left, dx: 65mm, dy: 36mm, _plabel("C", mode))
+      place(top + left, dx: 88mm, dy: 38mm, _plabel("D", mode))
+    }
+  ],
+)
+
+#let score-ledger(rows) = align(center, table(
+  columns: (16mm, 23mm, 52mm, 42mm, 39mm),
+  stroke: 0.45pt + MUTED, inset: (x: 7pt, y: 4pt),
+  align: (center, center, center, center, center),
+  table.header([*ID*], [*score*], [*box $[x_0,y_0,x_1,y_1]$*], [*status now*], [*next comparison*]),
+  ..rows,
+))
 
 #title-slide()
 
-// ═══════════════════════════ PART I — Task taxonomy ═══════════════════════════
-= What task are we solving?
+// ───────────────────────────── 1 · BRIDGE + COMMIT ─────────────────────────────
+= L8B kept spatial features; detection must spend them
 
-== Where we are
+== L8B answered “what”; today the head must preserve “where” #V
 
-So far a network mapped an image to *one* answer:
+#align(center, grid(
+  columns: (1fr, 16mm, 1fr), gutter: 10pt, align: horizon,
+  card([L8B · CLASSIFICATION], [backbone $arrow.r 7 times 7 times 512 arrow.r$ global average $arrow.r$ one label], color: TEAL),
+  text(size: 26pt, fill: MUTED)[$arrow.r$],
+  card([L10 · DETECTION], [spatial features $arrow.r$ many class scores + many boxes $arrow.r$ a variable set], color: ACC),
+))
 #pause
-$ f_theta (x) -> hat(y), quad hat(y) = "softmax"(W h) in Delta^(K-1) $
+#v(10pt)
+#note([Global averaging buys image-level invariance by discarding location. Detection reuses the backbone, but changes the head, targets, geometry, and evaluation.], color: BLUE)
+
+== Commit: which operations turn five candidates into trustworthy detections? #Q
+
+#case-strip([opening scene], [A dense head emits A $.95$, B $.90$, E $.89$, C $.88$, D $.75$ for two cup truths $G_1,G_2$.])
+#v(6pt)
+#align(center, held-scene(mode: "raw"))
 #pause
-#notebox[Classification asks *what is in the image?* — a single label. But most real images contain *several* things, each *somewhere*. This lecture is about *what* and *where*, for a variable number of objects.]
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 16pt,
+  hairline([A · THRESHOLD], [keep every high score; duplicates disappear automatically], color: INK),
+  hairline([B · GEOMETRY], [decode → score → NMS; then match for evaluation], color: INK),
+  hairline([C · LOSS], [run the training loss again at inference], color: INK),
+))
 
-== The spine of this lecture
+== The 80-minute route has one cumulative spine #V
 
-#align(center, text(size: 22pt, fill: INK)[
-  Classification predicts *one label*. \
-  Detection predicts a *variable set of objects*, \
-  each with a *class* and a *box*.
-])
+By the end, you should be able to turn a dense output tensor into trained candidates, filtered detections, and a defensible AP number.
+#v(8pt)
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 17pt,
+  hairline([CORE · 55 min], [box contract → IoU → dense head → assignment + loss → NMS → matching + AP → revisit], color: TEAL),
+  hairline([SHOULD · 15 min], [Smooth $L_1$/GIoU → two-stage vs one-stage → FPN → COCO protocol], color: BLUE),
+  hairline([OPTIONAL · 10 min], [anchor-free heads → Soft-NMS / set prediction → primary provenance], color: MUTED),
+))
+#pause
+#v(8pt)
+#semantic-legend
+
+== Three clocks reuse boxes—but never the same comparison #V
+
+#clock-strip("train")
+#v(8pt)
+#clock-strip("infer")
+#v(8pt)
+#clock-strip("eval")
+#pause
+#v(8pt)
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
+  [#align(center)[#text(fill: TEAL, weight: 700)[TRAIN]
+   #v(2pt)
+   #text(size: 14.5pt)[assign candidate ↔ truth]]],
+  [#align(center)[#text(fill: BLUE, weight: 700)[INFER]
+   #v(2pt)
+   #text(size: 14.5pt)[compare prediction ↔ prediction]]],
+  [#align(center)[#text(fill: INK, weight: 700)[EVAL]
+   #v(2pt)
+   #text(size: 14.5pt)[match prediction ↔ truth]]],
+))
+#pause
+#result[The clock strip will remain visible whenever “IoU threshold” could otherwise mean three different things.]
+
+// ───────────────────────────── 2 · BOX + HEAD CONTRACT ─────────────────────────────
+= A box is four numbers with an explicit convention
+
+== Detection predicts a set, not a longer class vector #V
+
+#align(center, [classifier: $x arrow.r hat(p) in Delta^(K-1)$])
+#pause
+#v(7pt)
+#align(center, [detector: $x arrow.r { (hat(y)_i, hat(b)_i, s_i) }_(i=1)^N$])
+#v(7pt)
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
+  hairline([CLASS], [$hat(y)_i$: what is here?], color: ACC),
+  hairline([BOX], [$hat(b)_i in RR^4$: where is it?], color: BLUE),
+  hairline([SCORE], [$s_i$: how confident?], color: GREEN),
+))
+#pause
+#note([A fixed network tensor may contain many candidate triples; thresholding and NMS make the returned set variable-length.], color: ACC)
+
+== Our coordinate convention prevents the silent “+1” bug #D
+
+#case-strip([box convention], [Every box is $[x_"min",y_"min",x_"max",y_"max"]$ with width $x_"max"-x_"min"$ and height $y_"max"-y_"min"$.])
+#v(7pt)
+#align(center, diagram(spacing: (25mm, 9mm), {
+  flow-node((0,0), [corner form\ $[x_0,y_0,x_1,y_1]$], color: TEAL, w: 46mm)
+  flow-node((2,0), [center-size\ $(x_c,y_c,w,h)$], color: BLUE, w: 45mm)
+  flow-arrow((0,0),(2,0), label: [convert explicitly])
+}))
+#pause
+#v(8pt)
+#alertbox[We use continuous boundaries—or equivalently half-open pixel boxes. Area is $(x_1-x_0)(y_1-y_0)$: there is no $+1$.]
+
+== The held truths fix every later area calculation #D
+
+#case-strip([ground truth], [$G_1=[10,10,50,50]$ and $G_2=[60,15,90,55]$ on a $100 times 80$ canvas.])
+#v(6pt)
+#two(
+  [*$G_1$*\
+   $w=50-10=40$\
+   $h=50-10=40$\
+   $|G_1|=1,600$],
+  [*$G_2$*\
+   $w=90-60=30$\
+   $h=55-15=40$\
+   $|G_2|=1,200$],
+)
+#pause
+#v(5pt)
+#align(center, held-scene(mode: "truth"))
+#pause
+#align(center, text(size: 13pt, weight: 600, fill: ACC)[These exact rectangles anchor every later IoU, suppression decision, and match.])
+
+== A localization head shares evidence, then asks two questions #V
+
+#align(center, grid(columns: (1fr, 18mm, 1fr), gutter: 10pt, align: horizon,
+  card([SHARED LOCAL FEATURE], [$h=f_theta(x)$], color: TEAL),
+  text(size: 27pt, fill: MUTED)[$arrow.r$],
+  grid(columns: 1, gutter: 8pt,
+    card([CLASS HEAD], [$z=W_c h+b_c$], color: ACC),
+    card([BOX HEAD], [$t=W_b h+b_b in RR^4$], color: BLUE),
+  ),
+))
 #pause
 #v(6pt)
-#align(center, text(size: 16pt, fill: MUTED)[the output is no longer a fixed-size vector — it is a *set* whose size depends on the image.])
-
-== Classification: $x -> y$
-
-One image in, one categorical label out.
-#pause
-$ f_theta (x) = hat(y) in {1, dots, K} $
-#pause
-- output shape is *fixed*: a $K$-way distribution;
-#pause
-- no notion of *location* — the object could be anywhere;
-#pause
-- the whole image is assumed to be *about one thing*.
-
-== Localization: $x -> (y, b)$
-
-Now also report *where* the (single, dominant) object is:
-#pause
-$ f_theta (x) = (hat(y), hat(b)), quad hat(b) in RR^4 $
-#pause
-- $hat(y)$ — the class, as before;
-#pause
-- $hat(b)$ — *one* bounding box (four numbers);
-#pause
-- still *exactly one* object per image — the output is fixed-size.
-#pause
-#result[classification + a box regression head]
-
-== Detection: $x -> {(y_i, b_i, s_i)}_(i=1)^N$
-
-Report *every* object: a *variable-length set*.
-#pause
-$ f_theta (x) = { (hat(y)_i, hat(b)_i, s_i) }_(i=1)^N $
-#pause
-- $hat(y)_i$ — class of object $i$; #h(0.5em) $hat(b)_i$ — its box; #h(0.5em) $s_i$ — a confidence score;
-#pause
-- $N$ *varies per image* — 0 objects, 1, or dozens;
-#pause
-- this variable $N$ is what makes detection *fundamentally harder*.
-
-== One more task — but that is next time
-
-#notebox[
-*Segmentation* pushes further: a class label for *every pixel*, not just a box.
-That is *Lecture 10*. Today we stop at boxes.
-]
-#pause
-#align(center, table(
-  columns: 3, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 7pt), align: (left, center, left),
-  table.header([*Task*], [*Output*], [*Granularity*]),
-  [classification], [$hat(y)$], [whole image],
-  [localization], [$(hat(y), hat(b))$], [one object],
-  [detection], [${(hat(y)_i, hat(b)_i, s_i)}$], [many objects],
-  [segmentation], [pixel labels], [every pixel #text(fill: MUTED)[(L10)]],
-))
-
-== The same image, three tasks #V
-
-#fig("/lecture9/figures/task_taxonomy.svg", w: 92%)
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[one label · one box · a *set* of boxes — the output grows richer left to right.])
-
-// ═══════════════════════════ PART II — Bounding boxes & localization ═══════════════════════════
-= Bounding boxes and localization
-
-== What is a bounding box? #V
-
-A box is *four numbers* — two equivalent parameterizations:
-#pause
-#fig("/lecture9/figures/box_params.svg", w: 84%)
-#pause
-$ b = (x_min, y_min, x_max, y_max) quad "or" quad b = (x_c, y_c, w, h) $
-
-== Normalize the coordinates
-
-Raw pixel coordinates depend on image size. *Divide out* width $W$ and height $H$:
-#pause
-$ tilde(x) = x/W, quad tilde(y) = y/H, quad tilde(w) = w/W, quad tilde(h) = h/H $
-#pause
-#notebox[Normalized coordinates live in $[0,1]$ regardless of resolution — so the same network handles images of *any* size, and the regression targets are *well-scaled*.]
-
-== A localization network
-
-Reuse a classification backbone; add a *second head*.
-#pause
-$ h = f_theta (x) quad quad "(shared backbone features)" $
-#pause
-$ hat(p) = "softmax"(W_c thin h) quad quad "(classification head)" $
-$ hat(b) = W_b thin h quad quad "(box regression head)" $
-#pause
-#result[one backbone, *two heads* — a class distribution and four box numbers]
-
-== Training with two objectives
-
-The network must be *right about the class* and *tight around the object*:
-#pause
-$ cal(L) = cal(L)_"cls" + lambda thin cal(L)_"box" $
-#pause
-- $cal(L)_"cls"$ — cross-entropy on $hat(p)$ (Lecture 1);
-#pause
-- $cal(L)_"box"$ — a *regression* loss on $hat(b)$;
-#pause
-- $lambda$ — a weight balancing the two (they have different units/scales).
-#pause
-#notebox[This *multi-task loss* — a shared trunk with several weighted heads — recurs throughout detection.]
-
-== The box regression loss
-
-Penalize the difference between predicted and true box coordinates:
-#pause
-$ cal(L)_"box" = norm(hat(b) - b)_1 = sum_(j=1)^4 |hat(b)_j - b_j| quad quad (L_1) $
-#pause
-or the squared version:
-$ cal(L)_"box" = norm(hat(b) - b)_2^2 = sum_(j=1)^4 (hat(b)_j - b_j)^2 quad quad (L_2) $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[$L_2$ punishes large errors hard (sensitive to outliers); $L_1$ is steadier but kinks at 0.])
-
-== Smooth $L_1$: the best of both #D
-
-Quadratic near 0 (stable gradient), linear far out (robust to outliers):
-#pause
-$ "smooth"_(L_1)(r) = cases(
-  1/2 r^2 & "if" |r| < 1,
-  |r| - 1/2 & "otherwise"
-) $
-#pause
-- small residual $r = 0.5$ → quadratic branch: $1/2 (0.5)^2 = 0.125$;
-#pause
-- large residual $r = 3$ → linear branch: $|3| - 1/2 = 2.5$ (no quadratic blow-up).
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[$r = hat(b)_j - b_j$ is the per-coordinate residual — the pieces meet smoothly at $|r| = 1$.])
-
-== Smooth $L_1$ vs $L_1$ vs $L_2$ #V
-
-#fig("/lecture9/figures/smooth_l1.svg", w: 62%)
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[near 0 it curves like $L_2$ (no kink) · far out it grows like $L_1$ (no outlier blow-up).])
-
-== Worked example: localization loss #D
-
-True box $b = (0.5, 0.5, 0.4, 0.2)$, prediction $hat(b) = (0.6, 0.45, 0.5, 0.3)$ (center-size $(x_c, y_c, w, h)$, normalized).
-#pause
-Per-coordinate absolute residuals:
-#pause
-$ |0.6 - 0.5| = 0.10, quad |0.45 - 0.5| = 0.05 $
-#pause
-$ |0.5 - 0.4| = 0.10, quad |0.3 - 0.2| = 0.10 $
-#pause
-Sum the four coordinates:
-$ cal(L)_"box" = 0.10 + 0.05 + 0.10 + 0.10 = 0.35 $
-#pause
-#result[$L_1 = 0.35$]
-
-== Interactive: box-regression loss #I
-
-#interbox(link-to: IA + "bbox-loss")[
-  drag the predicted box around a fixed ground-truth box and watch $L_1$, $L_2$, and smooth-$L_1$ update coordinate-by-coordinate, and see where each loss's gradient is large or flat.
-]
-#pause
-*Q.* Coordinate losses treat all four numbers independently. What about the box do they *not* directly measure?
-
-// ═══════════════════════════ PART III — IoU & metrics ═══════════════════════════
-= IoU and detection metrics
-
-== Intersection over Union #V
-
-The standard measure of *box overlap* — area of overlap ÷ area of union:
-#pause
-$ "IoU"(A, B) = (|A inter B|)/(|A union B|) in [0, 1] $
-#pause
-#fig("/lecture9/figures/iou.svg", w: 46%)
-
-== Worked example: IoU #D
-
-Two boxes, each of area $100$; their overlap has area $25$.
-#pause
-Union by inclusion–exclusion:
-$ |A union B| = |A| + |B| - |A inter B| = 100 + 100 - 25 = 175 $
-#pause
-$ "IoU" = (|A inter B|)/(|A union B|) = 25/175 approx 0.143 $
-#pause
-#result[IoU $= 25\/175 approx 0.143$]
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[an overlap of $25$ on boxes of area $100$ still scores only $0.14$ — IoU is a *strict* measure.])
-
-== Why coordinate loss is not enough
-
-Smooth-$L_1$ drives the four numbers together — but that is *not the same* as overlap.
-#pause
-- two boxes can have *equal* coordinate error yet *very different* IoU;
-#pause
-- IoU is *scale-invariant*; a fixed pixel error matters more for a *small* box;
-#pause
-- the metric we *report* (IoU) differs from the loss we *optimize* (coordinates).
-#pause
-#result[so: optimize an *IoU-based* loss directly]
-
-== The trouble with plain IoU loss
-
-Use $cal(L)_"IoU" = 1 - "IoU"$? It works *when boxes overlap* — but:
-#pause
-#alertbox[If the boxes *do not overlap*, $"IoU" = 0$ for *all* non-overlapping configurations. The loss is flat — *zero gradient* — so it cannot pull a far-off box toward the target.]
-
-== GIoU: a gradient even with no overlap #OPT
-
-*Generalized IoU* adds a term using the smallest box $C$ enclosing both:
-#pause
-$ "GIoU" = "IoU" - (|C \\ (A union B)|)/(|C|) in [-1, 1] $
-#pause
-- when $A, B$ overlap, GIoU $approx$ IoU;
-#pause
-- when they are *apart*, the enclosing-box term *still varies with distance* — a usable gradient.
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[later variants (DIoU, CIoU) refine this further — all share the same fix: keep a signal when IoU is 0.])
-
-== Precision and recall
-
-To *score a detector*, first count matches (a prediction is a *hit* if IoU with a true box $> tau$):
-#pause
-$ "precision" = "TP"/("TP" + "FP") quad quad "recall" = "TP"/("TP" + "FN") $
-#pause
-- *precision* — of the boxes I predicted, how many were *right*?
-#pause
-- *recall* — of the objects that exist, how many did I *find*?
-#pause
-#notebox[Lowering the score threshold finds more objects (↑ recall) but admits more false alarms (↓ precision). There is a *tradeoff curve*.]
-
-== Average Precision (AP) #V
-
-Sweep the score threshold; plot precision vs recall; AP is the *area under it*:
-#pause
-#align(center, lines(
-  ((0, 1), (0.1, 1), (0.2, 0.96), (0.3, 0.9), (0.4, 0.86), (0.5, 0.8),
-   (0.6, 0.72), (0.7, 0.62), (0.8, 0.48), (0.9, 0.33), (1.0, 0.18)),
-  fill-under: 0, markers: false, size: (66mm, 44mm),
-  x-label: [recall], y-label: [precision],
-  annotations: ((0.42, 0.42, [*AP*]),),
-))
-#pause
-$ "AP" = integral_0^1 "precision"(r) thin d r quad in [0, 1] $
-
-== mean Average Precision (mAP)
-
-AP is *per class* at a *given* IoU threshold. Average to summarize a detector:
-#pause
-$ "mAP" = 1/K sum_(k=1)^K "AP"_k $
-#pause
-- average over all *classes* $k$ (car, person, dog, …);
-#pause
-- COCO-style benchmarks *also* average over IoU thresholds $tau in {0.5, 0.55, dots, 0.95}$;
-#pause
-- reported as e.g. *mAP\@0.5* or *mAP\@[.5:.95]*.
-#pause
-#result[mAP — one number summarizing detection quality]
-
-== Interactive: IoU and mAP #I
-
-#interbox(link-to: OD)[
-  Drag two boxes to see IoU update live; then move a score threshold along a PR curve and watch precision, recall, and the AP area respond.
-]
-#pause
-*Q.* A detector reports every object with *very low* confidence. What happens to its precision, and to its recall?
-
-// ═══════════════════════════ PART IV — Detection pipeline ═══════════════════════════
-= Building a detector
-
-== Why detection is hard
-
-Unlike classification, the output is a *set of unknown size*:
-#pause
-- *how many* objects? unknown, and it varies per image;
-#pause
-- *where / what scale*? anywhere, any size;
-#pause
-- *class imbalance* — the vast majority of image regions are *background*;
-#pause
-- *duplicates* — one object easily triggers *many* overlapping predictions.
-#pause
-#notebox[Every design choice below is a response to one of these four problems.]
-
-== The core idea: dense candidates
-
-Rather than guess $N$, *predict at many fixed locations and scales*, then filter.
-#pause
-- tile the image with a *dense grid* of candidate regions;
-#pause
-- at each, ask: *is there an object here? what class? what exact box?*
-#pause
-- most candidates say "background"; a few fire — then we *clean up duplicates*.
-#pause
-#result[turn a variable-size set problem into a *fixed, dense* prediction problem]
-
-== Anchor boxes #V
-
-Predefined *reference boxes* of assorted scales/aspect-ratios at every location:
-#pause
-$ a = (x_a, y_a, w_a, h_a) $
-#pause
-#fig("/lecture9/figures/anchors.svg", w: 34%)
-#align(center, text(size: 15pt, fill: MUTED)[the network *adjusts* an anchor rather than inventing a box from scratch.])
-
-== Predict box offsets, not raw coordinates #V
-
-The network outputs *corrections* to each anchor — easier to learn and well-scaled:
-#pause
 #two(
-  [
-    $ t_x = (x - x_a)/w_a $
-    $ t_y = (y - y_a)/h_a $
-    $ t_w = log(w/w_a) $
-    $ t_h = log(h/h_a) $
-    #v(6pt)
-    #text(size: 14pt, fill: MUTED)[centers in anchor-widths, sizes in log-scale; *all-zeros* reproduces the anchor exactly.]
-  ],
-  fig("/lecture9/figures/anchor_offset.svg", w: 100%),
-  r: (0.92fr, 1.08fr),
+  [#text(size: 14pt, fill: ACC)[what is here?]],
+  [#text(size: 14pt, fill: BLUE)[how should the reference move?]],
 )
+#pause
+#note([Detection is multi-task learning repeated at spatial locations—not a classifier with four unexplained extra outputs.], color: ACC)
 
-== Anchor offsets: a worked example #D
+== Commit: what offsets move this anchor to its matched truth? #Q
 
-Anchor $a = (x_a, y_a, w_a, h_a) = (50, 50, 40, 40)$; matched box $(x, y, w, h) = (58, 46, 80, 40)$:
-#pause
-- $t_x = (58 - 50) / 40 = 0.2$;
-#pause
-- $t_y = (46 - 50) / 40 = -0.1$;
-#pause
-- $t_w = log(80 / 40) = log 2 approx 0.69$;
-#pause
-- $t_h = log(40 / 40) = log 1 = 0$.
-#pause
-#result[the head regresses $(0.2, -0.1, 0.69, 0)$ — small, well-scaled numbers]
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[all-zero offsets would reproduce the anchor exactly; here the box shifts right, up, and doubles in width.])
-
-== What the detection head outputs
-
-Per anchor (at each grid location), the head emits:
-#pause
-- *objectness* $hat(o) in [0,1]$ — is there an object here at all?
-#pause
-- *class logits* — a $K$-way distribution *if* there is;
-#pause
-- *box offsets* $(t_x, t_y, t_w, t_h)$ — how to reshape the anchor.
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[for $A$ anchors and $K$ classes: $A times (1 + K + 4)$ numbers per location.])
-
-== The detection loss
-
-Sum the three jobs, over *positive* (object) and relevant anchors:
-#pause
-$ cal(L) = cal(L)_"obj" + cal(L)_"cls" + lambda thin cal(L)_"box" $
-#pause
-- $cal(L)_"obj"$ — objectness (object vs background), over *all* anchors;
-#pause
-- $cal(L)_"cls"$ — class cross-entropy, on *positive* anchors only;
-#pause
-- $cal(L)_"box"$ — smooth-$L_1$ on offsets, on *positive* anchors only.
-
-== Which anchors are positive? #D
-
-Assign each anchor a label by its IoU with the *ground-truth* boxes:
-#pause
-$ "IoU"(a, b_"gt") > tau_+ ==> "positive (an object)" $
-#pause
-$ "IoU"(a, b_"gt") < tau_- ==> "negative (background)" $
-#pause
-- anchors in between ($tau_- <= "IoU" <= tau_+$) are *ignored* (ambiguous);
-#pause
-- a positive anchor's box/class targets come from the matched $b_"gt"$;
-#pause
-- for a simple RPN-style rule, common teaching values are $tau_+ approx 0.7$, $tau_- approx 0.3$; modern detectors may use task-specific or learned assignment instead.
-
-== The class-imbalance problem
-
-With thousands of anchors per image, *almost all* are background.
-#pause
-#alertbox[A sea of easy negatives *drowns out* the gradient from the few real objects. Plain cross-entropy, summed over all anchors, is dominated by easy background.]
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[foreground : background can be *1 : 1000s* — the loss needs to *ignore the easy majority*.])
-
-== Focal loss #D
-
-Down-weight *easy, well-classified* examples by a factor $(1 - p_t)^gamma$:
-#pause
-$ "FL"(p_t) = -(1 - p_t)^gamma log p_t $
-#pause
-where $p_t$ is the predicted probability of the *true* class.
-#pause
-- $gamma = 0$ recovers *ordinary cross-entropy*;
-#pause
-- large $p_t$ (easy) ⇒ $(1-p_t)^gamma approx 0$ ⇒ *tiny* loss;
-#pause
-- small $p_t$ (hard) ⇒ factor $approx 1$ ⇒ loss *kept*.
-#pause
-#align(center, text(size: 15pt, fill: MUTED)[numeric ($gamma = 2$): an easy $p_t = 0.9$ scales its loss by $(1 - 0.9)^2 = 0.01$ — just *1%* of plain CE.])
-
-== Focal loss down-weights easy examples #V
-
-#align(center, lines(
-  fn: (
-    p => -calc.ln(p),
-    p => -(1 - p) * calc.ln(p),
-    p => -calc.pow(1 - p, 2) * calc.ln(p),
-    p => -calc.pow(1 - p, 5) * calc.ln(p),
-  ),
-  domain: (0.01, 1),
-  samples: 100,
-  colors: (INK, BLUE, ACC, RED),
-  markers: false,
-  x-label: [$p_t$ (prob. of true class)], y-label: [loss $"FL"(p_t)$],
-  size: (74mm, 46mm),
+#clock-strip("train")
+#v(7pt)
+#case-strip([positive anchor], [Reference $a=(50,50,40,40)$; matched target $b=(58,46,80,40)$, both in center-size form.])
+#v(8pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 24pt,
+  hairline([TRANSLATE], [$t_x=(x-x_a)/w_a$\ $t_y=(y-y_a)/h_a$], color: BLUE),
+  hairline([RESIZE], [$t_w=log(w/w_a)$\ $t_h=log(h/h_a)$], color: TEAL),
 ))
-#align(center, text(size: 15pt, weight: 600)[
-  #text(fill: INK)[$gamma = 0$ (CE)]#h(1.4em)#text(fill: BLUE)[$gamma = 1$]#h(1.4em)#text(fill: ACC)[$gamma = 2$]#h(1.4em)#text(fill: RED)[$gamma = 5$]])
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[higher $gamma$ ⇒ easy examples ($p_t -> 1$) contribute almost nothing — built for *dense one-stage* detectors.])
+#note([Calculate all four before the answer. Which offset must be zero? Which must be $log 2$?], color: BLUE)
 
-== Interactive: anchor assignment #I
+== The anchor target is a scaled correction, not an absolute box #A
 
-#interbox(link-to: IA + "anchor-assignment")[
-  drop a ground-truth box on an anchor grid and watch anchors light up *positive / ignored / negative* as you sweep $tau_+$ and $tau_-$.
+#clock-strip("train")
+#v(7pt)
+#two(
+  [$t_x=(58-50)/40=0.20$\
+   $t_y=(46-50)/40=-0.10$],
+  [$t_w=log(80/40)=log 2 approx 0.693$\
+   $t_h=log(40/40)=0$],
+)
+#pause
+#v(8pt)
+#align(center, text(size: 23pt, weight: 700, fill: ACC)[$t=(0.20,-0.10,0.693,0)$])
+#pause
+#result[Translations are measured in anchor sizes; log-scale changes keep decoded widths positive and make zero mean “unchanged.”]
+
+== Decoding must recover the same geometry #D
+
+#clock-strip("infer")
+#v(7pt)
+#two(
+  [$hat(x)=x_a+t_x w_a=50+0.20(40)=58$\
+   $hat(y)=y_a+t_y h_a=50-0.10(40)=46$],
+  [$hat(w)=w_a exp(t_w)=40 exp(0.693) approx 80$\
+   $hat(h)=h_a exp(t_h)=40 exp(0)=40$],
+)
+#pause
+#v(8pt)
+#align(center, diagram(spacing: (28mm, 9mm), {
+  flow-node((0,0), [anchor $a$], color: TEAL)
+  flow-node((1.7,0), [offsets $t$], color: ACC)
+  flow-node((3.4,0), [decoded $hat(b)$], color: GREEN)
+  flow-arrow((0,0),(1.7,0)); flow-arrow((1.7,0),(3.4,0), color: GREEN)
+}))
+#pause
+#result[Encode and decode are inverse contracts; a unit test should recover $b$ before any model is trained.]
+
+== A YOLO-style anchor head emits nine scalars per candidate #V
+
+#clock-strip("train")
+#v(7pt)
+#case-strip([head convention], [For this teaching ledger only: one objectness logit + $K=4$ class logits + four box offsets.])
+#v(8pt)
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
+  hairline([OBJECTNESS], [one logit\ is anything here?], color: BLUE),
+  hairline([CLASSES], [$K=4$ logits\ which class?], color: ACC),
+  hairline([OFFSETS], [four numbers\ how should the anchor move?], color: GREEN),
+))
+#pause
+#v(6pt)
+#align(center, text(size: 22pt, weight: 700)[$1+K+4=1+4+4=9$])
+#pause
+#align(center, text(size: 13pt, fill: MUTED)[Teaching convention only: other heads may fold background into classes or predict box sides.])
+
+== The dense tensor fixes capacity before the object count is known #D
+
+#clock-strip("train")
+#v(7pt)
+#case-strip([tensor ledger], [$20 times 20$ locations, $A=3$ anchors per location, $K=4$ classes, nine outputs per anchor.])
+#v(6pt)
+#align(center, table(
+  columns: (55mm, 55mm, 55mm), stroke: 0.45pt + MUTED,
+  inset: (x: 10pt, y: 7pt), align: center,
+  table.header([*quantity*], [*calculation*], [*count*]),
+  [candidate boxes], [$20 dot 20 dot 3$], [$1,200$],
+  [output scalars], [$20 dot 20 dot 3 dot 9$], [$10,800$],
+))
+#pause
+#v(8pt)
+#result[The head always emits $10,800$ scalars. Labels and post-processing decide which candidate records matter.]
+
+== Toy assignment says which candidates receive which losses #D
+
+#clock-strip("train")
+#v(7pt)
+For one truth, three anchors have IoUs $0.76$, $0.48$, and $0.12$. Use the declared *toy* policy $tau_+=0.70$, $tau_-=0.30$.
+#v(7pt)
+#align(center, table(
+  columns: (30mm, 44mm, 78mm), stroke: 0.45pt + MUTED,
+  inset: (x: 10pt, y: 6pt), align: (center, center, left),
+  table.header([*IoU*], [*assignment*], [*loss terms*]),
+  [$0.76$], [#text(fill: GREEN)[positive]], [objectness + class + box],
+  [$0.48$], [#text(fill: MUTED)[ignore]], [no gradient in this toy policy],
+  [$0.12$], [#text(fill: RED)[background]], [objectness only],
+))
+#pause
+#v(7pt)
+#note([Assignment is a training rule, not AP matching and not NMS. Real detectors use architecture-specific thresholds or dynamic matchers.], color: ACC)
+
+== One positive candidate produces a fully auditable loss #D
+
+#clock-strip("train")
+#v(6pt)
+Target $t=(.20,-.10,.693,0)$; prediction $hat(t)=(.25,-.05,.60,.05)$. Let $p_"obj"=.90$, $p_"cup"=.80$ and $lambda=2$.
+#v(5pt)
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 16pt,
+  [#uncover("2-")[#hairline([OBJECTNESS], [$-log .90 approx .105$], color: BLUE)]],
+  [#uncover("3-")[#hairline([CLASS], [$-log .80 approx .223$], color: ACC)]],
+  [#uncover("4-")[#hairline([BOX $L_1$], [$|.05|+|.05|+|-.093|+|.05|=.243$], color: GREEN)]],
+))
+#uncover("5-")[#align(center, text(size: 20pt, weight: 700, fill: ACC)[$cal(L)=.105+.223+2(.243) approx .815$])]
+#uncover("6-")[#result[Write the target, parameterization, reduction, and $lambda$. “Box loss” without those contracts is not reproducible.]]
+
+// ───────────────────────────── 3 · IoU ─────────────────────────────
+= IoU makes box quality geometric
+
+== IoU asks how much two regions agree #V
+
+#case-strip([held pair], [$A=G_1=[10,10,50,50]$ and $B=[12,12,52,52]$.])
+#v(7pt)
+#align(center, held-scene(mode: "raw"))
+#pause
+#align(center, text(size: 23pt)[$"IoU"(A,B)=frac(|A inter B|,|A union B|) in [0,1]$])
+#pause
+#v(6pt)
+#align(center, text(size: 15pt, fill: MUTED)[$0$: disjoint $quad$ $1$: identical $quad$ invariant to scaling the whole scene])
+
+== The held overlap is $0.822$, not a visual guess #D
+
+#case-strip([same pair], [$A=[10,10,50,50]$, $B=[12,12,52,52]$; both have area $1,600$.])
+#v(6pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 24pt,
+  [#uncover("2-")[$w_I=min(50,52)-max(10,12)=38$]
+   #v(5pt)
+   #uncover("3-")[$h_I=min(50,52)-max(10,12)=38$]],
+  [#uncover("4-")[$A_I=38 dot 38=1,444$]
+   #v(5pt)
+   #uncover("5-")[$A_U=1,600+1,600-1,444=1,756$]],
+))
+#uncover("6-")[#align(center, text(size: 23pt, weight: 700, fill: ACC)[$"IoU"(A,B)=frac(1 444, 1 756) approx 0.822$])]
+#uncover("7-")[#result[The same $0.822$ will later justify suppressing B around kept box A.]]
+
+== Safe IoU clamps disjoint intersections to zero #D
+
+#two(
+  [For each axis,
+   $w_I=max(0,min(x_1^A,x_1^B)-max(x_0^A,x_0^B))$
+   $h_I=max(0,min(y_1^A,y_1^B)-max(y_0^A,y_0^B))$],
+  [Then,
+   $A_I=w_I h_I$
+   $A_U=A_A+A_B-A_I$
+   $"IoU"=A_I/A_U$],
+)
+#pause
+#v(9pt)
+#alertbox[Without $max(0,dot)$, two disjoint boxes can produce two negative side lengths—and a meaningless positive “intersection.”]
+#pause
+#note([Also assert valid boxes: $x_1 >= x_0$, $y_1 >= y_0$, and define the zero-union case explicitly.], color: BLUE)
+
+== SHOULD · equal coordinate error can mean unequal overlap #Q
+
+Two predictions move one boundary by $10$ pixels.
+#v(8pt)
+#two(
+  [*Large object:* $200 times 200$\
+   a $10$-pixel error is $5%$ of its width.],
+  [*Small object:* $20 times 20$\
+   the same error is $50%$ of its width.],
+)
+#pause
+#v(10pt)
+#alertbox[Coordinate losses see four residuals. IoU sees the region those residuals create.]
+#pause
+#result[Use coordinate losses for a stable regression signal; report overlap-aware metrics for the geometry the task actually values.]
+
+== SHOULD · Smooth $L_1$ and GIoU repair different failures #D
+
+#align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
+  hairline([SMOOTH $L_1$ · $beta=1$], [quadratic near $0$; linear for large residuals\ $0.2 arrow.r 0.02$; $3 arrow.r 2.5$], color: BLUE),
+  hairline([GIoU], [$"GIoU"="IoU"-frac(|C \ (A union B)|,|C|)$\ $C$: smallest enclosing box], color: TEAL),
+))
+#pause
+#v(9pt)
+#note([Plain $1-"IoU"$ is flat while boxes are disjoint. GIoU changes with the enclosing gap; Smooth $L_1$ instead controls coordinate-residual robustness.], color: GREEN)
+#pause
+#align(center, text(size: 13pt, fill: MUTED)[#link(GIOU)[Rezatofighi et al. · Generalized IoU]])
+
+// ───────────────────────────── 4 · TRAIN ─────────────────────────────
+= TRAIN: dense candidates need selective supervision
+
+== Dense heads create a foreground–background imbalance #V
+
+#clock-strip("train")
+#v(7pt)
+#align(center, diagram(spacing: (13mm, 10mm), {
+  for x in range(8) {
+    for y in range(3) {
+      round-node((x,y), if x == 4 and y == 1 { [obj] } else { [bg] },
+        color: if x == 4 and y == 1 { GREEN } else { MUTED },
+        fill: if x == 4 and y == 1 { GREEN.lighten(90%) } else { rgb("#F4F2EE") }, r: 6.3mm)
+    }
+  }
+}))
+#pause
+#v(7pt)
+#alertbox[If thousands of easy background candidates contribute ordinary cross-entropy, their count can drown out the rare positives and hard negatives.]
+
+== Focal loss turns confidence into a gradient-volume control #D
+
+#clock-strip("train")
+#v(7pt)
+#align(center, text(size: 23pt)[$"FL"(p_t)=-alpha_t(1-p_t)^gamma log p_t$])
+#pause
+#v(8pt)
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
+  hairline([$p_t$], [probability assigned to the true binary label], color: TEAL),
+  hairline([$gamma$], [how strongly easy examples are down-weighted], color: BLUE),
+  hairline([$alpha_t$], [optional class-balance weight], color: ACC),
+))
+#pause
+#v(7pt)
+#note([The next numeric sets $alpha_t=1$ and $gamma=2$ to isolate the focusing factor.], color: MUTED)
+
+== With $gamma=2$, the hard example is about $978 times$ louder #D
+
+#clock-strip("train")
+#v(7pt)
+#two(
+  [*Easy:* $p_t=.9$\
+   $"CE"=-log .9 approx .10536$\
+   $(1-p_t)^2=.01$\
+   $"FL" approx .0010536$],
+  [*Hard:* $p_t=.2$\
+   $"CE"=-log .2 approx 1.60944$\
+   $(1-p_t)^2=.64$\
+   $"FL" approx 1.03004$],
+)
+#pause
+#align(center, text(size: 22pt, weight: 700, fill: ACC)[$1.03004/.0010536 approx 977.6 approx 978 times$])
+#pause
+#result[Focal loss does not delete easy examples; it makes already-correct examples quiet enough that rare mistakes remain audible.]
+
+== Diagnose training failures as symptom → suspect → test #V
+
+#clock-strip("train")
+#v(6pt)
+#set text(size: 13.5pt)
+#align(center, table(
+  columns: (57mm, 59mm, 71mm), stroke: 0.45pt + MUTED,
+  inset: (x: 7pt, y: 5pt), align: (left, left, left),
+  table.header([*symptom*], [*suspect*], [*smallest discriminating test*]),
+  [box loss falls; IoU stays near $0$], [box format / decode mismatch], [round-trip one known anchor and draw decoded boxes],
+  [almost no positive anchors], [assignment geometry too strict], [histogram best IoU per truth; inspect $tau_+$],
+  [objectness predicts background], [easy negatives dominate], [log pos/neg loss mass; compare focal or sampling],
+))
+#pause
+#result[Inspect geometry and assignment before changing the backbone: a model cannot learn targets that the pipeline encoded incorrectly.]
+
+== Follow along: boxes, IoU, matching, and anchor round-trips #I
+
+#clock-strip("train")
+#v(7pt)
+#interbox(link-to: NB-IOU)[
+  Open the exact Colab. Predict the $frac(1 444, 1 756)$ IoU, implement the clamp, verify the anchor encode/decode round-trip, and build the held matching ledger before reading its outputs.
 ]
 #pause
-*Q.* If you set $tau_+$ very high (say $0.9$), what happens to the number of positive anchors — and to training?
+#v(8pt)
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
+  hairline([BOX], [$[x_0,y_0,x_1,y_1]$; no $+1$], color: TEAL),
+  hairline([OVERLAP], [$"IoU"(A,B) approx .822$], color: BLUE),
+  hairline([ANCHOR], [$t=(.20,-.10,.693,0)$], color: ACC),
+))
 
-// ═══════════════════════════ PART V — R-CNN family ═══════════════════════════
-= Two-stage detectors: the R-CNN family
+== TRAIN closes with targets; inference opens without them #V
 
-== R-CNN: propose, then classify
-
-Stage 1 proposes regions (classic *selective search*); stage 2 runs a CNN on *each*.
+#clock-strip("train")
+#v(8pt)
+#align(center, diagram(spacing: (4mm, 10mm), {
+  flow-node((0,0), [$20 times 20 times 3 times 9$\ raw tensor], color: TEAL, w: 40mm)
+  flow-node((1.7,0), [assign\ targets], color: ACC, w: 30mm)
+  flow-node((3.3,0), [object + class + box\ losses], color: RED, w: 45mm)
+  flow-node((5.1,0), [update\ parameters], color: GREEN, w: 30mm)
+  flow-arrow((0,0),(1.7,0)); flow-arrow((1.7,0),(3.3,0)); flow-arrow((3.3,0),(5.1,0))
+}))
 #pause
-#rcnn-pipe
+#v(8pt)
+#clock-strip("infer")
 #pause
-#alertbox[A CNN forward pass *per region* (thousands of crops) — *slow*, and the multi-stage training (proposals, CNN, SVMs, regressors) is cumbersome.]
+#result[At inference there is no truth, no assignment, and no loss—only decoded boxes, scores, thresholds, and prediction-to-prediction suppression.]
 
-== Fast R-CNN: share the convolution
+// ───────────────────────────── 5 · INFER ─────────────────────────────
+= INFER: score first, then suppress duplicates
 
-Run the CNN *once* over the whole image; pool features *per proposal* (*RoI pooling*).
+== The raw head cannot know which high score is redundant #V
+
+#clock-strip("infer")
+#v(6pt)
+#align(center, held-scene(mode: "raw"))
+#v(4pt)
+#align(center, text(size: 14pt)[A $.95$ #h(18pt) B $.90$ #h(18pt) E $.89$ #h(18pt) C $.88$ #h(18pt) D $.75$])
 #pause
-#fast-pipe
-#pause
-#notebox[The expensive convolutions are computed *once* and *shared* across all proposals — a large speedup, and the heads train *end-to-end*.]
+#note([A and B describe cup 1; C and D describe cup 2; E is a confident isolated false alarm. Inference does not have those truth labels.], color: BLUE)
 
-== Faster R-CNN: learn the proposals too
+== Score thresholding removes weak evidence—not duplicates #Q
 
-Replace hand-crafted proposals with a *Region Proposal Network* (RPN) on the same features.
-#pause
-#faster-pipe
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[the RPN and the detection head *share the backbone* — proposals become *neural*, fast, and trainable.])
-
-== The two losses of Faster R-CNN
-
-Both stages carry an *objectness/class* term and a *box* term:
-#pause
-$ cal(L)_"RPN" = cal(L)_"obj" + lambda thin cal(L)_"box" quad quad "(is it an object? rough box)" $
-#pause
-$ cal(L)_"RoI" = cal(L)_"cls" + lambda thin cal(L)_"box" quad quad "(which class? refined box)" $
-#pause
-#result[trained jointly — one network, two stages, four loss terms]
-
-== The two-stage intuition
-
+#clock-strip("infer")
+#v(7pt)
+Use a deliberately permissive score threshold $s >= .70$.
+#v(7pt)
 #align(center, table(
-  columns: 3, stroke: 0.5pt + MUTED, inset: (x: 11pt, y: 8pt), align: (left, left, left),
-  table.header([*Stage*], [*Question*], [*Output*]),
-  [1 — RPN], [where *might* objects be?], [class-agnostic proposals + rough boxes],
-  [2 — RoI head], [*what* is it, exactly *where*?], [class + refined box per proposal],
+  columns: (22mm, 22mm, 22mm, 22mm, 22mm), stroke: 0.45pt + MUTED,
+  inset: (x: 12pt, y: 8pt), align: center,
+  [A $.95$], [B $.90$], [E $.89$], [C $.88$], [D $.75$],
 ))
 #pause
-#notebox[Stage 1 casts a wide net (high recall, coarse); stage 2 is precise (class + tight box). *Historically* this two-stage split gave strong localization.]
-
-// ═══════════════════════════ PART VI — YOLO / one-stage + NMS ═══════════════════════════
-= One-stage detectors and NMS
-
-== YOLO: detection in a single pass
-
-*You Only Look Once* — one network maps the image *directly* to boxes + classes.
+#v(9pt)
+#align(center, text(size: 22pt, weight: 700, fill: RED)[All five survive.])
 #pause
-#yolo-pipe
-#pause
-#notebox[No separate proposal stage: a *single* forward pass regresses all boxes and classes at once, then NMS removes duplicates. Simple and *fast*.]
+#result[Thresholding can drop low scores, but it cannot tell that two high-scoring boxes describe the same object.]
 
-== The grid intuition #V
+== NMS is a greedy prediction-to-prediction comparison #D
 
-Divide the image into an $S times S$ grid; each cell predicts boxes + classes:
+#clock-strip("infer")
+#v(7pt)
+#align(center, diagram(spacing: (4mm, 10mm), {
+  flow-node((0,0), [sort by\ score], color: BLUE, w: 29mm)
+  flow-node((1.6,0), [keep top\ box], color: GREEN, w: 29mm)
+  flow-node((3.4,0), [remove same-class neighbours\ with IoU $>tau_"NMS"$], color: RED, w: 51mm)
+  flow-node((5.5,0), [repeat], color: ACC, w: 25mm)
+  flow-arrow((0,0),(1.6,0)); flow-arrow((1.6,0),(3.4,0)); flow-arrow((3.4,0),(5.5,0))
+}))
 #pause
-#fig("/lecture9/figures/yolo_grid.svg", w: 44%)
-#align(center, text(size: 15pt, fill: MUTED)[the cell containing an object's *center* is responsible for predicting it.])
+#v(8pt)
+#note([No ground truth participates. Standard NMS has no learned parameter and no gradient; here $tau_"NMS"=.50$.], color: ACC)
 
-== The one-stage loss
+== Step 1: A claims its high-overlap neighbourhood #D
 
-The familiar three terms, over the *dense grid* (no proposal stage):
+#clock-strip("infer")
+#v(5pt)
+#align(center, held-scene(mode: "step1"))
 #pause
-$ cal(L) = cal(L)_"box" + cal(L)_"obj" + cal(L)_"cls" $
+#align(center, text(size: 19pt)[$"IoU"(A,B)=.822>.50 arrow.r$ keep A, suppress B])
 #pause
-- $cal(L)_"box"$ — box offset regression (smooth-$L_1$ / IoU-based);
-#pause
-- $cal(L)_"obj"$ — objectness / confidence per cell-anchor;
-#pause
-- $cal(L)_"cls"$ — class prediction for cells that contain an object.
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[same ingredients as Faster R-CNN — just predicted *all at once*, no region-proposal stage.])
+#v(5pt)
+#result[E, C, and D remain because none overlaps A above the NMS threshold.]
 
-== Speed vs accuracy — carefully
+== Step 2: E survives because NMS cannot test correctness #D
 
-#align(center, table(
-  columns: 3, stroke: 0.5pt + MUTED, inset: (x: 11pt, y: 7pt), align: (left, left, left),
-  table.header([], [*one-stage (YOLO)*], [*two-stage (Faster R-CNN)*]),
-  [passes], [single], [propose, then refine],
-  [speed], [faster, simpler], [heavier],
-  [localization], [historically weaker], [historically stronger],
+#clock-strip("infer")
+#v(5pt)
+#align(center, held-scene(mode: "step2"))
+#pause
+#align(center, text(size: 19pt)[$E=.89$ is now the highest remaining score; its IoU with every survivor is below $.50$.])
+#pause
+#v(5pt)
+#alertbox[Keep E. NMS removes duplicates around a stronger prediction; it does not remove isolated false alarms.]
+
+== Step 3: C claims the second cup neighbourhood #D
+
+#clock-strip("infer")
+#v(6pt)
+#case-strip([last pair], [$C=[60,15,90,55]$ and $D=[63,17,91,56]$.])
+#v(6pt)
+$A_I=(90-63)(55-17)=27 dot 38=1,026$
+#pause
+$A_U=1,200+1,092-1,026=1,266$
+#pause
+#align(center, text(size: 22pt, weight: 700, fill: ACC)[$"IoU"(C,D)=frac(1 026, 1 266) approx .810>.50$])
+#pause
+#result[Keep C; suppress D. No candidates remain.]
+
+== NMS returns A, E, C—not the two truths #A
+
+#clock-strip("infer")
+#v(5pt)
+#align(center, held-scene(mode: "final"))
+#pause
+#v(4pt)
+#score-ledger((
+  [A], [$.95$], [$[10,10,50,50]$], [#text(fill: GREEN)[kept]], [suppressed B],
+  [E], [$.89$], [$[35,5,55,25]$], [#text(fill: GREEN)[kept]], [isolated],
+  [C], [$.88$], [$[60,15,90,55]$], [#text(fill: GREEN)[kept]], [suppressed D],
 ))
 #pause
-#notebox[These are *historical* tendencies. Modern one-stage detectors (with focal loss, better assignment, stronger backbones) *close much of the gap* — the real ranking depends on implementation, data, and scale.]
+#note([Inference produced a *non-redundant* set. Whether every member is correct is an evaluation question.], color: ACC)
 
-== The duplicate problem
+== Class-aware NMS prevents a cup from deleting a hand #Q
 
-The dense grid fires *many* overlapping boxes for one object:
+#clock-strip("infer")
+#v(7pt)
+#align(center, diagram(spacing: (28mm, 11mm), {
+  round-node((0,0), [cup\ $.91$], color: TEAL)
+  round-node((1.8,0), [hand\ $.89$], color: ACC)
+  flow-arrow((0,0),(1.8,0), color: MUTED, label: [same location])
+}))
 #pause
-#fig("/lecture9/figures/nms.svg", w: 78%)
+#v(8pt)
+#result[Usually compare boxes within the same class. Cross-class overlap may describe two real, interacting objects.]
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[we want *one* box per object — a post-processing step must *suppress the duplicates*.])
+#note([A low NMS threshold can still merge two nearby objects of the *same* class. Increasing $tau_"NMS"$ often keeps more boxes for a fixed score order, but keep-count is not a global monotonic law across changed scores/classes/pipelines.], color: RED)
 
-== Non-Maximum Suppression (NMS) #D
+== Follow along: print every NMS decision, then break it #I
 
-A greedy filter run *per class*, on the raw boxes:
-#pause
-+ *sort* all boxes by confidence score;
-#pause
-+ *keep* the highest-scoring remaining box;
-#pause
-+ *suppress* every other box with $"IoU" > tau$ against it;
-#pause
-+ *repeat* on the boxes that survive.
-#pause
-#notebox[Each kept box "claims" its neighbourhood; overlapping lower-score boxes are discarded. Typical $tau approx 0.5$. (Soft-NMS *decays* scores instead of hard-removing.)]
-
-== Worked NMS example #D
-
-Three *cat* boxes, with IoU threshold $tau = 0.7$:
-#pause
-#align(center, table(
-  columns: 3, stroke: 0.5pt + MUTED, inset: (x: 11pt, y: 6pt), align: (left, left, left),
-  table.header([*box*], [*coordinates*], [*score*]),
-  [A], [$[10, 10, 50, 50]$], [$0.95$],
-  [B], [$[12, 12, 52, 52]$], [$0.90$],
-  [C], [$[70, 70, 100, 100]$], [$0.88$],
-))
-#pause
-$"IoU"(A,B) = 38 dot 38 \/ (1600 + 1600 - 38 dot 38) = 1444\/1756 approx 0.82 > 0.7$:
-keep A, suppress B.
-#pause
-$"IoU"(A,C) = 0 < 0.7$: C survives, so NMS returns $\{A, C\}$.
-#pause
-#result[NMS keeps the best box in each overlap cluster — but low $tau$ can wrongly merge two nearby objects.]
-
-== Interactive: NMS #I
-
-#interbox(link-to: OD)[
-  Start from a pile of overlapping candidate boxes with scores, then step NMS — sort, keep the top box, suppress its high-IoU neighbours — and sweep $tau$ to see over- vs under-suppression.
+#clock-strip("infer")
+#v(7pt)
+#interbox(link-to: NB-NMS)[
+  Open the exact Colab. Predict A, E, C; print the keep/suppress trace; verify class-aware NMS; then construct two distinct same-class objects that a low threshold wrongly merges.
 ]
 #pause
-*Q.* Two *distinct* objects of the same class stand very close together. What can NMS with a low $tau$ do wrong?
+#v(8pt)
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
+  hairline([KEEP], [A $.95$, E $.89$, C $.88$], color: GREEN),
+  hairline([SUPPRESS], [B by A; D by C], color: RED),
+  hairline([LIMIT], [isolated false alarm E survives], color: ACC),
+))
 
-// ═══════════════════════════ PART VII — Summary ═══════════════════════════
-= Summary
+// ───────────────────────────── 6 · EVAL ─────────────────────────────
+= EVAL: match the returned set to truth, one claim at a time
 
-== Tasks and their losses
+== Evaluation matching is not training assignment #V
 
+#clock-strip("eval")
+#v(7pt)
+#align(center, diagram(spacing: (4mm, 10mm), {
+  flow-node((0,0), [score-sorted\ detections], color: BLUE, w: 34mm)
+  flow-node((1.8,0), [same class +\ IoU $>=tau_"eval"$], color: ACC, w: 41mm)
+  flow-node((3.7,0), [claim one\ unmatched truth], color: GREEN, w: 36mm)
+  flow-node((5.5,-0.6), [TP], color: GREEN, w: 23mm)
+  flow-node((5.5,0.6), [FP], color: RED, w: 23mm)
+  flow-arrow((0,0),(1.8,0)); flow-arrow((1.8,0),(3.7,0));
+  flow-arrow((3.7,0),(5.5,-0.6), color: GREEN); flow-arrow((3.7,0),(5.5,0.6), color: RED)
+}))
+#pause
+#v(7pt)
+#result[At $tau_"eval"=.50$, each truth may be claimed once. A duplicate would be an FP even if its IoU were high.]
+
+== Commit: which of A, E, C are true positives? #Q
+
+#clock-strip("eval")
+#v(5pt)
+#align(center, held-scene(mode: "final"))
+#pause
 #align(center, table(
-  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 7pt), align: (left, left),
-  table.header([*Task*], [*Loss*]),
-  [classification], [cross-entropy],
-  [localization], [cross-entropy $+ lambda thin$ box],
-  [detection], [objectness $+$ class $+ lambda thin$ box],
+  columns: (30mm, 35mm, 57mm, 43mm), stroke: 0.45pt + MUTED,
+  inset: (x: 10pt, y: 6pt), align: center,
+  table.header([*detection*], [*score*], [*best same-class IoU*], [*commit*]),
+  [A], [$.95$], [$1.000$ with $G_1$], [$?$],
+  [E], [$.89$], [$.127$ with $G_1$], [$?$],
+  [C], [$.88$], [$1.000$ with $G_2$], [$?$],
 ))
 #pause
-#notebox[Every step adds a term, never removes one: detection is classification *plus* "is anything here?" *plus* "where exactly?"]
+#note([Process the score order. A truth claimed by an earlier detection is unavailable to later detections.], color: BLUE)
 
-== The detector families
+== Evaluation exposes the false alarm NMS could not see #A
 
+#clock-strip("eval")
+#v(5pt)
+#align(center, held-scene(mode: "eval"))
+#pause
 #align(center, table(
-  columns: 3, stroke: 0.5pt + MUTED, inset: (x: 10pt, y: 7pt), align: (left, left, left),
-  table.header([*Detector*], [*Key idea*], [*Stages*]),
-  [R-CNN], [region proposals → CNN per crop], [two (slow)],
-  [Fast R-CNN], [shared conv + RoI pooling], [two],
-  [Faster R-CNN], [neural proposals via RPN], [two],
-  [YOLO], [dense prediction in one pass], [one],
+  columns: (28mm, 40mm, 55mm, 40mm), stroke: 0.45pt + MUTED,
+  inset: (x: 10pt, y: 6pt), align: center,
+  table.header([*detection*], [*claim*], [*reason*], [*result*]),
+  [A], [$G_1$], [$"IoU"=1.000$], [#text(fill: GREEN)[TP]],
+  [E], [none], [$"IoU"=.127<.50$], [#text(fill: RED)[FP]],
+  [C], [$G_2$], [$"IoU"=1.000$], [#text(fill: GREEN)[TP]],
 ))
 #pause
-#align(center, text(size: 15pt, fill: MUTED)[all produce scored candidate boxes, but the candidate mechanism differs: hand-crafted proposals, learned proposals, or dense cells/anchors. NMS is the common post-processing pattern here.])
+#note([The final set has two TPs, one FP, and zero FNs. “Non-redundant” did not mean “all correct.”], color: ACC)
 
-== Final mental model — one idea
+== Precision and recall evolve with the score ranking #D
 
-#align(center, text(size: 22pt)[
-  Classification answers *what?* \
-  Detection answers *what + where*, \
-  for a *variable set* of objects. \
-  #v(4pt)
-  #text(size: 18pt, fill: MUTED)[boxes + scores from proposals or dense candidates, cleaned up by NMS]
-])
+#clock-strip("eval")
+#v(6pt)
+#align(center, table(
+  columns: (31mm, 30mm, 30mm, 39mm, 39mm), stroke: 0.45pt + MUTED,
+  inset: (x: 9pt, y: 6pt), align: center,
+  table.header([*after*], [*cum. TP*], [*cum. FP*], [*precision*], [*recall*]),
+  [A], [$1$], [$0$], [$1/1=1.000$], [$1/2=.500$],
+  [#uncover("2-")[E]], [#uncover("2-")[$1$]], [#uncover("2-")[$1$]], [#uncover("2-")[$1/2=.500$]], [#uncover("2-")[$1/2=.500$]],
+  [#uncover("3-")[C]], [#uncover("3-")[$2$]], [#uncover("3-")[$1$]], [#uncover("3-")[$2/3=.667$]], [#uncover("3-")[$2/2=1.000$]],
+))
+#uncover("4-")[#v(7pt)
+#result[Lowering the score threshold admitted E before C: precision fell, then recall rose when C arrived.]]
 
-#focus-slide[
-  Classification = *what*. Detection = *what + where*, as a set of boxes.
-  #v(12pt)
-  #set text(size: 22pt)
-  Next (*Lecture 10*): push to *every pixel* — *semantic and instance segmentation*, where the answer is a label map, not a box.
-]
+== The toy AP convention averages precision at TP ranks #D
+
+#clock-strip("eval")
+#v(7pt)
+#two(
+  [#align(center, lines(
+    (
+      ((0,1),(0.5,1),(0.5,0.5),(1,0.667)),
+      ((0,0),(1,0)),
+    ),
+    markers: (true, false),
+    colors: (INK, INK.transparentize(100%)),
+    points: ((0.5,1,[A]), (0.5,0.5,[E]), (1,0.667,[C])),
+    size: (74mm,46mm), x-label: [recall], y-label: [precision],
+  ))],
+  [At the two TP ranks:
+   #v(7pt)
+   $p_A=1$\
+   $p_C=2/3$
+   #v(7pt)
+   $"AP"_"toy"=frac(1+2/3,2)=5/6 approx .833$],
+  r: (1.05fr, .95fr),
+)
+#pause
+#align(center, text(size: 12.5pt, fill: MUTED)[After NMS: A, E, C; B and D were suppressed before evaluation. Axes run from $0$ to $1$.])
+#v(5pt)
+#result[This TP-rank average is a transparent teaching convention. It is not a claim about every benchmark’s interpolation rule.]
+
+== SHOULD · COCO AP fixes the full evaluation protocol #D
+
+#clock-strip("eval")
+#v(7pt)
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 17pt,
+  hairline([LOCALIZATION], [10 IoU thresholds $.50,.55,dots,.95$], color: TEAL),
+  hairline([INTERPOLATION], [101 recall thresholds $0,.01,dots,1$], color: BLUE),
+  hairline([AGGREGATION], [average over classes; declare area + max detections], color: ACC),
+))
+#pause
+#v(8pt)
+#note([Say AP50 for one IoU cutoff. “COCO AP” normally means the average across IoU thresholds; the official API also declares area ranges and maxDets.], color: GREEN)
+#pause
+#align(center, text(size: 13pt, fill: MUTED)[#link("https://github.com/cocodataset/cocoapi/blob/master/PythonAPI/pycocotools/cocoeval.py")[Official COCO evaluation implementation]])
+
+== Diagnose metric surprises on the correct clock #V
+
+#clock-strip("eval")
+#v(6pt)
+#set text(size: 13.5pt)
+#align(center, table(
+  columns: (58mm, 57mm, 72mm), stroke: 0.45pt + MUTED,
+  inset: (x: 7pt, y: 5pt), align: (left, left, left),
+  table.header([*symptom*], [*suspect*], [*smallest discriminating test*]),
+  [high scores; low AP], [ranking is confidently wrong], [inspect first FP for class, IoU, duplicate status],
+  [AP50 high; COCO AP low], [boxes are loose], [compare AP50 vs AP75; histogram matched IoU],
+  [recall caps below $1$], [thresholding / missing candidates], [lower score threshold before NMS; count unmatched truths],
+))
+#pause
+#result[Loss, NMS, and AP expose different failure surfaces. Name the clock before changing a threshold.]
+
+// ───────────────────────────── 7 · DETECTOR FAMILIES ─────────────────────────────
+= SHOULD: architectures rearrange the same evidence
+
+== SHOULD · two-stage means propose, then refine #V
+
+#align(center, diagram(spacing: (4mm, 11mm), {
+  flow-node((0,0), [image], fill: rgb("#EFEEEB"), w: 25mm)
+  flow-node((1.5,0), [shared\ backbone], color: TEAL, w: 31mm)
+  flow-node((3,-0.65), [RPN\ object proposals], color: GREEN, w: 38mm)
+  flow-node((3,0.65), [feature map], color: TEAL, w: 30mm)
+  flow-node((4.8,0), [RoI\ features], color: BLUE, w: 29mm)
+  flow-node((6.3,0), [class +\ refined box], color: ACC, w: 35mm)
+  flow-arrow((0,0),(1.5,0)); flow-arrow((1.5,0),(3,-0.65)); flow-arrow((1.5,0),(3,0.65));
+  flow-arrow((3,-0.65),(4.8,0)); flow-arrow((3,0.65),(4.8,0)); flow-arrow((4.8,0),(6.3,0))
+}))
+#pause
+#v(8pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
+  hairline([RPN], [Region Proposal Network: predicts objectness + proposal boxes densely.], color: GREEN),
+  hairline([RoI], [Region of Interest: samples a fixed-size feature for each proposal.], color: BLUE),
+))
+#pause
+#result[Stage 1 asks “where might an object be?” Stage 2 spends more computation to classify and refine a smaller proposal set.]
+
+== SHOULD · one-stage predicts every candidate directly #V
+
+#align(center, diagram(spacing: (4mm, 11mm), {
+  flow-node((0,0), [image], fill: rgb("#EFEEEB"), w: 25mm)
+  flow-node((1.7,0), [backbone +\ feature pyramid], color: TEAL, w: 42mm)
+  flow-node((3.6,0), [dense heads\ scores + boxes], color: ACC, w: 43mm)
+  flow-node((5.3,0), [NMS], color: GREEN, w: 24mm)
+  flow-node((6.5,0), [detections], color: BLUE, w: 31mm)
+  flow-arrow((0,0),(1.7,0)); flow-arrow((1.7,0),(3.6,0)); flow-arrow((3.6,0),(5.3,0)); flow-arrow((5.3,0),(6.5,0))
+}))
+#pause
+#v(9pt)
+#result[There is no learned proposal stage or per-RoI second head: classification and localization happen densely in one pass.]
+#pause
+#note([One-stage versus two-stage describes where proposal/refinement computation occurs—not a timeless guarantee about speed or accuracy.], color: MUTED)
+
+== SHOULD · FPN gives small and large objects strong features #V
+
+#align(center, diagram(spacing: (16mm, 8mm), {
+  let feat(p, body, col) = node(p, body, fill: col.lighten(87%), stroke: 0.9pt + col, corner-radius: 3pt, inset: 6pt)
+  feat((0,2.1), [$C_2: 56 times 56$], BLUE)
+  feat((0,0.7), [$C_3: 28 times 28$], TEAL)
+  feat((0,-0.7), [$C_4: 14 times 14$], GREEN)
+  feat((0,-2.1), [$C_5: 7 times 7$], ACC)
+  feat((2.2,2.1), [$P_2$], BLUE); feat((2.2,0.7), [$P_3$], TEAL)
+  feat((2.2,-0.7), [$P_4$], GREEN); feat((2.2,-2.1), [$P_5$], ACC)
+  for y in (2.1,0.7,-0.7,-2.1) { edge((0,y),(2.2,y),"-|>",stroke:0.8pt+MUTED) }
+  edge((2.2,-2.1),(2.2,-0.7),"-|>",stroke:1pt+ACC)
+  edge((2.2,-0.7),(2.2,0.7),"-|>",stroke:1pt+GREEN)
+  edge((2.2,0.7),(2.2,2.1),"-|>",stroke:1pt+TEAL)
+}))
+#pause
+#v(7pt)
+#align(center, text(size: 16pt)[FPN = *Feature Pyramid Network*: lateral $1 times 1$ projections + top-down upsampling + same-shape addition.])
+#pause
+#result[High-resolution levels localize small objects; top-down semantics make those levels useful for recognition.]
+
+== OPTIONAL · anchor-free heads change the box parameterization #V
+
+#align(center, grid(columns: (1fr, 1fr), gutter: 24pt,
+  hairline([ANCHOR-BASED], [start from $(x_a,y_a,w_a,h_a)$; regress normalized translations and log scales], color: TEAL),
+  hairline([ANCHOR-FREE], [predict a center/keypoint or distances to left, top, right, bottom sides], color: BLUE),
+))
+#pause
+#v(10pt)
+#result[Both still need spatial features, class evidence, box geometry, a training matcher, and an evaluation protocol.]
+
+== OPTIONAL · duplicate handling is a design choice, not a law #V
+
+#align(center, grid(columns: (1fr, 1fr), gutter: 24pt,
+  hairline([SOFT-NMS], [decay a neighbour’s score instead of deleting it; nearby objects may survive], color: BLUE),
+  hairline([SET PREDICTION], [train a fixed query set with one-to-one assignment; duplicate avoidance moves into learning], color: ACC),
+))
+#pause
+#v(9pt)
+#note([These alternatives change inference and training, but the evaluation clock still matches scored predictions to truths under a declared protocol.], color: GREEN)
+
+// ───────────────────────────── 8 · SYNTHESIS ─────────────────────────────
+= One pipeline, three clocks, one returned set
+
+== The complete pipeline changes what IoU is comparing #V
+
+#align(center, diagram(spacing: (3mm, 11mm), {
+  flow-node((0,0), [TRAIN\ assign + losses], color: TEAL, w: 36mm)
+  flow-node((1.7,0), [dense\ tensor], color: INK, w: 28mm)
+  flow-node((3.2,0), [INFER\ decode + score + NMS], color: BLUE, w: 45mm)
+  flow-node((5.2,0), [A, E, C], color: GREEN, w: 28mm)
+  flow-node((6.7,0), [EVAL\ match + AP], color: INK, w: 35mm)
+  flow-arrow((0,0),(1.7,0)); flow-arrow((1.7,0),(3.2,0)); flow-arrow((3.2,0),(5.2,0)); flow-arrow((5.2,0),(6.7,0))
+}))
+#pause
+#v(8pt)
+#align(center, table(
+  columns: (40mm, 53mm, 69mm), stroke: 0.45pt + MUTED,
+  inset: (x: 8pt, y: 5pt), align: (center, center, left),
+  table.header([*clock*], [*IoU compares*], [*decision*]),
+  [TRAIN], [candidate ↔ truth], [which targets and losses apply],
+  [INFER], [prediction ↔ prediction], [which neighbours are redundant],
+  [EVAL], [prediction ↔ truth], [TP / FP / FN and AP],
+))
+#pause
+#result[The formula is the same; the objects, threshold, and consequence are not.]
+
+== Revisit the opening commitment before revealing it #Q
+
+#case-strip([same five candidates], [A $.95$, B $.90$, E $.89$, C $.88$, D $.75$; $tau_"NMS"=.50$, $tau_"eval"=.50$.])
+#v(5pt)
+#align(center, held-scene(mode: "raw"))
+#pause
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 16pt,
+  hairline([A · THRESHOLD], [all five pass $.70$], color: INK),
+  hairline([B · GEOMETRY], [decode → score → NMS → evaluation match], color: INK),
+  hairline([C · LOSS], [requires truths unavailable at inference], color: INK),
+))
+#pause
+#note([Defend your original choice using the exact boxes and clocks—not a detector name.], color: BLUE)
+
+== Answer: B is complete—and still cannot remove E #A
+
+#align(center, grid(columns: (1fr, 16mm, 1fr, 16mm, 1fr), gutter: 6pt, align: horizon,
+  card([RAW], [A, B, E, C, D], color: BLUE),
+  text(size: 24pt, fill: MUTED)[$arrow.r$],
+  card([NMS], [A, E, C], color: GREEN),
+  text(size: 24pt, fill: MUTED)[$arrow.r$],
+  card([EVAL], [A = TP\ E = FP\ C = TP], color: INK),
+))
+#pause
+#v(9pt)
+#align(center, text(size: 21pt, weight: 700)[$"AP"_"toy"=5/6 approx .833$])
+#pause
+#result[Thresholds control admission, NMS controls redundancy, and matching measures correctness. No one operation can substitute for the others.]
+
+== Final detection checklist #Q
+
+Given a new detector, ask in order:
+#v(4pt)
+1. What box coordinate and area convention does every component use?
+2. What is the dense output shape, and what does each scalar mean?
+3. Which TRAIN matcher creates positive, ignored, and background targets?
+4. Which loss reduction and weights determine gradient mass?
+5. Which INFER score and NMS policies create the returned set?
+6. Which EVAL IoU, interpolation, class, area, and max-detection protocol defines AP?
+7. Which symptom → suspect → test check will distinguish geometry from learning failure?
+#pause
+#v(6pt)
+#result[A detector is trustworthy only when the tensor, geometry, three clocks, and metric protocol are all explicit.]
+
+== L11 handoff: boxes become a prediction at every pixel #V
+
+#align(center, grid(columns: (1fr, 18mm, 1fr), gutter: 10pt, align: horizon,
+  card([DETECTION], [variable set\ class + box + score], color: BLUE),
+  text(size: 27pt, fill: MUTED)[$arrow.r$],
+  card([SEGMENTATION], [dense spatial output\ class evidence at each pixel], color: ACC),
+))
+#pause
+#v(9pt)
+#note([Both reuse the L8B backbone. L11 will replace four-number rectangles with masks, then recover boundaries that pooling made coarse.], color: GREEN)
+#pause
+#result[Today asked “which objects, and where?” Next asks “which class owns every pixel—and which instance?”]
+
+== OPTIONAL · primary provenance and exact companions #V
+
+#set text(size: 13.5pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 20pt,
+  hairline([DETECTOR FAMILIES], [
+    #link(RCNN)[Girshick et al. · R-CNN]\
+    #link(FAST)[Girshick · Fast R-CNN]\
+    #link(FASTER)[Ren et al. · Faster R-CNN]\
+    #link(YOLO)[Redmon et al. · YOLO]
+  ], color: TEAL),
+  hairline([LOSSES, PYRAMIDS + CODE], [
+    #link(FOCAL)[Lin et al. · Focal Loss / RetinaNet]\
+    #link(FPN)[Lin et al. · Feature Pyramid Networks]\
+    #link(GIOU)[Rezatofighi et al. · GIoU]\
+    #link(NB-IOU)[Exact boxes / IoU Colab] · #link(NB-NMS)[Exact NMS Colab]
+  ], color: BLUE),
+))
+#pause
+#v(8pt)
+#align(center, text(size: 15pt, fill: MUTED)[Use the papers for historical claims; use the held five-box ledger and exact notebooks for reproducible arithmetic.])
