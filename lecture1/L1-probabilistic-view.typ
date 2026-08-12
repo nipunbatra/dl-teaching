@@ -18,6 +18,13 @@
 // legends outside plotting areas so curves and reference lines remain clear.
 #let plot-swatch(color, label) = box(width: 12pt, height: 3pt, fill: color, radius: 1pt) + h(4pt) + label
 
+// Evidence label for the deliberately small robust-regression teaching case.
+// The exact coordinates and every displayed coefficient are recomputed in the
+// executed appendix of notebooks/L01/03_robust_linear_regression.ipynb.
+#let synthetic-computed-note = align(center, text(size: 11.5pt, weight: 650, fill: MUTED)[
+  SYNTHETIC · COMPUTED · exact 12-point teaching case; reproduced in the executed robust-notebook appendix
+])
+
 #title-slide()
 
 // ══════════════════════════════ PART I ══════════════════════════════
@@ -1046,6 +1053,8 @@ $ arg min_(bold(theta)) cal(L)(bold(theta); sigma^2) = arg min_(bold(theta)) sum
 #let _robust-student-nu1-fit = _robust-line-xs.map(x => 0.928 * x + 0.064)
 #let _robust-student-nu30-fit = _robust-line-xs.map(x => 0.581 * x - 0.014)
 
+#synthetic-computed-note
+#v(2pt)
 #two(r: (1.18fr, 0.82fr),
   [
     #align(center, {
