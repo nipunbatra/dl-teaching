@@ -15,7 +15,9 @@
 #let VNET = "https://arxiv.org/abs/1606.04797"
 #let MASKRCNN = "https://arxiv.org/abs/1703.06870"
 #let PANOPTIC = "https://arxiv.org/abs/1801.00868"
+#let PETS = "https://www.robots.ox.ac.uk/~vgg/data/pets/"
 #let ORCHARD = "figures/orchard-two-touching-trees.png"
+#let SEG-EVIDENCE = "/shared/vision-evidence/oxford-iiit-pet/l10/"
 
 #let PALE-TEAL = rgb("#DCEBEB")
 #let PALE-BLUE = rgb("#E7F0FA")
@@ -59,6 +61,14 @@
   width: 100%, inset: (left: 11pt, right: 5pt, top: 5pt, bottom: 5pt),
   stroke: (left: 2pt + color), fill: color.lighten(93%), radius: 2pt,
   [#body],
+)
+
+#let caption(body) = align(center, text(size: 13.5pt, fill: MUTED)[#body])
+
+#let evidence-image(name, width: auto, height: auto, fit: "contain") = block(
+  fill: white, stroke: 0.8pt + MUTED.lighten(35%), radius: 3pt,
+  inset: 2pt, clip: true,
+  image(SEG-EVIDENCE + name, width: width, height: height, fit: fit),
 )
 
 #let case-strip(stage, detail) = block(
@@ -212,22 +222,18 @@
 // ───────────────────────── 1 · BRIDGE + COMMIT ─────────────────────────
 = Detection drew rectangles; segmentation must assign pixels
 
-== L10 returned a set of boxes; L11 changes the output support #V
+== One real photograph changes the supervision from a box to pixels #V
 
-#align(center, grid(columns: (1fr, 18mm, 1fr), gutter: 8pt, align: horizon,
-  card([PUBLIC L10 · DETECTION], [variable set \ $("class", "box", "score")$], color: BLUE),
-  [#align(center, text(size: 27pt, fill: MUTED)[$arrow.r$])],
-  card([PUBLIC L11 · SEGMENTATION], [class evidence at every pixel \ plus identity when objects must remain separate], color: ACC),
-))
+#align(center, evidence-image("real-trimap-contract.png", width: 154mm, height: 86.6mm))
 #pause
-#v(12pt)
-#result[The backbone still preserves spatial evidence; the head now predicts *shape*, not four box coordinates.]
+#v(3pt)
+#note([OBSERVED Oxford pixels + official GT trimap. Value 1 is foreground, 2 background, and 3 boundary/ignore; no model output appears here.], color: BLUE)
 
 == Commit: which output can answer both requirements? #Q
 
 #align(center, image(ORCHARD, width: 86mm, height: 30mm, fit: "cover"))
 #v(2pt)
-#case-strip([generated teaching scene], [Two touching crowns form one region. Report total canopy area *and* count two trees.])
+#case-strip([generated concept scene], [Two touching crowns form one region. Report total canopy area *and* count two trees.])
 #v(3pt)
 #align(center, grid(columns: (1fr, 1fr, 1fr, 1fr), gutter: 8pt,
   card([A], [one global class], color: INK),
@@ -261,20 +267,21 @@
 #v(7pt)
 #result[TRAIN compares with labels; INFER makes an output; EVAL scores that output under a declared protocol.]
 
-== The held truth is one semantic region made from two touching instances #V
+== The exact arithmetic case is constructed—not an orchard annotation #V
 
 #align(center, grid(columns: (1.25fr, .8fr, .8fr), gutter: 12pt, align: horizon,
-  [#align(center, text(size: 16pt, weight: 700)[orchard tile])
-   #v(5pt)#image(ORCHARD, width: 88mm, height: 48mm, fit: "cover")],
-  [#align(center, text(size: 16pt, weight: 700, fill: TEAL)[semantic truth $G$])
+  [#align(center, text(size: 16pt, weight: 700)[generated concept])
+   #v(5pt)#image(ORCHARD, width: 88mm, height: 48mm, fit: "cover")
+   #v(4pt)#align(center, text(size: 13pt, fill: MUTED)[not a measured orchard sample])],
+  [#align(center, text(size: 16pt, weight: 700, fill: TEAL)[constructed truth $G$])
    #v(5pt)#mask-grid(gt)
    #v(5pt)#align(center, text(size: 14pt)[$abs(G)=6$ pixels])],
-  [#align(center, text(size: 16pt, weight: 700)[latent identity])
+  [#align(center, text(size: 16pt, weight: 700)[constructed identities])
    #v(5pt)#mask-grid(ids, mode: "id")
    #v(5pt)#align(center, text(size: 14pt, fill: MUTED)[IDs withheld from $G$.])],
 ))
 #pause
-#result[One union supports area; two identities are required for counting.]
+#result[The $4 times 4$ ledger isolates the arithmetic: one union supports area; two identities support counting.]
 
 == Semantic, instance, and panoptic outputs answer different questions #V
 
@@ -355,7 +362,7 @@
 == The held foreground probabilities are now fixed #V
 
 #clock-strip("train")
-#case-strip([probability field], [$p_i$ is the foreground probability; blue cells satisfy $p_i >= .50$.])
+#case-strip([constructed probability field], [$p_i$ is a teaching construction—not model output; blue cells satisfy $p_i >= .50$.])
 #v(6pt)
 #mask-triplet(show-hard: false)
 #pause
@@ -397,7 +404,7 @@ $ approx 1.0536 + 1.2040 + 2.7489 + .1026 approx 5.1090. $
 ))
 #pause
 #v(8pt)
-#align(center, text(size: 21pt)[$Z[h,w,:] in RR^K arrow.r P[h,w,:] in [0,1]^K.$])
+#align(center, text(size: 21pt)[$Z[h,w,:] in RR^K arrow.r bold(p)[h,w,:] in [0,1]^K.$])
 #pause
 #result[Normalize over $k$; reduce the loss over valid $(h,w)$ locations.]
 
@@ -456,16 +463,10 @@ $ approx 1.0536 + 1.2040 + 2.7489 + .1026 approx 5.1090. $
 #pause
 #result[Downsample to understand *what surrounds a pixel*; upsample to decide *which pixel*.]
 
-== Downsampling helps recognition and hurts boundaries #V
+== A real boundary audit exposes what region overlap can hide #V
 
-#clock-strip("train")
-#two(
-  [#hairline([CONTEXT GAIN], [A deep feature can see road, kerb, and cars around one ambiguous grey patch.], color: TEAL)],
-  [#hairline([COORDINATE LOSS], [Stride merges nearby positions; “cat” may remain correct while the ear boundary shifts.], color: RED)],
-)
-#pause
-#v(12pt)
-#result[Dense prediction needs deep semantics *and* high-resolution evidence.]
+#clock-strip("eval")
+#align(center, evidence-image("region-boundary-audit.png", width: 143mm, height: 80.4mm))
 
 == Does a larger grid recreate discarded detail? #Q
 
@@ -558,6 +559,13 @@ $ U,E in RR^(64 times 64 times 128) quad arrow.r quad "concat"(U,E) in RR^(64 ti
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[Thresholding is nondifferentiable; it belongs to inference or metric computation, not the training path.])
 
+== The same clocks operate on actual pixels #V
+
+#align(center, evidence-image("constructed-probability-mask.png", width: 154mm, height: 86.6mm))
+#pause
+#v(3pt)
+#note([GT is official; $p$ is the declared +16 px construction; $P=1[p >= .50]$ is computed. No checkpoint was executed.], color: BLUE)
+
 == Count errors before naming a metric #D
 
 #clock-strip("eval")
@@ -593,6 +601,12 @@ $ "IoU" = frac(abs(P inter G),abs(P union G)) = frac("TP","TP"+"FP"+"FN"). $
 #align(center, text(size: 25pt, weight:700,fill:INK)[$"IoU"=frac(5,9) approx .556.$])
 #pause
 #result[Seven true-background pixels cannot inflate foreground IoU.]
+
+== Real pixels reveal where every region count lives #V
+
+#clock-strip("eval")
+#v(-1pt)
+#align(center, evidence-image("real-error-overlay.png", width: 155mm, height: 87.2mm))
 
 == Dice gives the intersection twice the weight #D
 
@@ -656,32 +670,31 @@ $ "IoU"_k=frac("TP"_k,"TP"_k+"FP"_k+"FN"_k), quad "mIoU"=frac(1,abs(K_"report"))
 
 == Diagnose a surprising score on the correct clock #V
 
-#clock-strip("eval")
 #align(center, table(
   columns:(55mm,64mm,72mm),stroke:.5pt+MUTED,inset:(x:7pt,y:6pt),
   table.header([*Symptom*],[*Suspect*],[*Smallest test*]),
   [99% accuracy; IoU $=0$],[rare foreground],[foreground recall; class counts],
   [loss falls; mIoU flat],[threshold or class collapse],[histogram $p$ by class; confusion],
-  [good box AP; poor mask AP],[boundary alignment],[compare box IoU with mask IoU],
+  [IoU $.811$; boundary F1 $.441$],[spatial displacement],[overlay FP/FN; inspect contour distances],
 ))
 #pause
-#result[Loss, inference policy, and evaluation protocol are three different levers.]
+#result[Region and boundary metrics interrogate different geometry; choose the diagnostic on EVAL, then inspect actual pixels.]
 
 // ───────────────────────── 5 · INSTANCE SEGMENTATION ─────────────────────────
 = One semantic region is not yet two objects
 
-== The held union cannot count its touching instances #V
+== A generated touching-object scene isolates the identity question #V
 
 #align(center, grid(columns: (1.25fr, .8fr, .8fr), gutter: 12pt, align: horizon,
-  [#align(center, text(size:16pt,weight:700)[same orchard tile])#v(5pt)
+  [#align(center, text(size:16pt,weight:700)[generated concept scene])#v(5pt)
    #image(ORCHARD, width:88mm,height:48mm,fit:"cover")],
-  [#align(center, text(size:16pt,weight:700)[semantic union])#v(5pt)#mask-grid(gt)
+  [#align(center, text(size:16pt,weight:700)[constructed union])#v(5pt)#mask-grid(gt)
    #v(5pt)#align(center, text(size:14pt,fill:MUTED)[one connected component])],
-  [#align(center, text(size:16pt,weight:700)[required identities])#v(5pt)#mask-grid(ids,mode:"id")
+  [#align(center, text(size:16pt,weight:700)[constructed identities])#v(5pt)#mask-grid(ids,mode:"id")
    #v(5pt)#align(center, text(size:14pt,fill:MUTED)[id 1 vs id 2])],
 ))
 #pause
-#result[Semantic class evidence answers area; instance identity answers count.]
+#result[Oxford supplies real semantic GT; this explicitly generated scene demonstrates why a semantic union cannot count touching instances.]
 
 == Instance segmentation returns a scored set—not one class grid #D
 
@@ -779,14 +792,12 @@ $ =frac(1,4)[.223+.511+.357+.105] approx .299. $
 == SHOULD · void pixels leave both the loss sum and denominator #D
 
 #clock-strip("train")
-Let $V$ be the valid labeled pixels:
-$ cal(L)_"CE"=-frac(1,abs(V)) sum_(i in V) log p_(i,y_i). $
-#pause
-#align(center, grid(columns:(1fr,1fr,1fr,1fr),gutter:8pt,
-  card([VALID], [include], color: GREEN),
-  card([VALID], [include], color: GREEN),
-  card([VOID], [exclude], color: MUTED),
-  card([VALID], [include], color: GREEN),
+#align(center, grid(columns: (104mm, 1fr), gutter: 14pt, align: horizon,
+  [#evidence-image("real-trimap-contract.png", width: 104mm, height: 58.5mm, fit: "cover")],
+  [Let $V$ be the valid labeled pixels:
+   $ cal(L)_"CE"=-frac(1,abs(V)) sum_(i in V) log p_(i,y_i). $
+   #v(7pt)
+   #text(size: 15pt)[Oxford values 1/2 are valid: $abs(V)=221,704$. Value 3 contributes $18,296$ ignored boundary pixels.]],
 ))
 #pause
 #result[Remove ignored pixels from CE, confusion counts, IoU, and Dice—not only from the numerator.]
@@ -856,17 +867,17 @@ $ f=.25(1)+.25(3)+.25(5)+.25(7)=4. $
 // ───────────────────────── 7 · OPTIONAL + SYNTHESIS ─────────────────────────
 == OPTIONAL · primary papers establish the architectural claims #V
 
-#block(width:100%)[
-  #set text(size:14pt)
-  #align(center, grid(columns:(1fr,1fr),gutter:10pt,
-    hairline([FCN · 2014], [#link(FCN)[Long, Shelhamer & Darrell] · pixels-to-pixels; coarse/deep plus fine/shallow fusion], color: TEAL),
-    hairline([U-NET · 2015], [#link(UNET)[Ronneberger, Fischer & Brox] · contracting context plus expanding localization], color: TEAL),
-    hairline([V-NET · 2016], [#link(VNET)[Milletari, Navab & Ahmadi] · Dice-based training objective for imbalance], color: BLUE),
-    hairline([MASK R-CNN · 2017], [#link(MASKRCNN)[He et al.] · parallel mask branch, RoIAlign, independent binary masks], color: ACC),
-    hairline([PANOPTIC · 2018], [#link(PANOPTIC)[Kirillov et al.] · unified stuff-and-things task and PQ], color: INK),
-    hairline([EXACT COMPANION], [#link(NB)[L10 toy-mask Colab] · retained logits, CE, held mask, IoU, Dice, and mask BCE], color: GREEN),
-  ))
-]
+#set text(size: 14pt)
+#align(center, grid(columns:(1fr,1fr),gutter:10pt,
+  hairline([FCN + U-NET], [#link(FCN)[Long et al.] · pixels-to-pixels; #link(UNET)[Ronneberger et al.] · context plus localization], color: TEAL),
+  hairline([V-NET + MASK R-CNN], [#link(VNET)[Milletari et al.] · Dice objective; #link(MASKRCNN)[He et al.] · mask branch + RoIAlign], color: BLUE),
+  hairline([PANOPTIC + COMPANION], [#link(PANOPTIC)[Kirillov et al.] · stuff + things; #link(NB)[exact L10 Colab] · toy and real ledgers], color: INK),
+  hairline([REAL EVIDENCE], [#link(PETS)[Oxford-IIIT Pet] · Abyssinian_1 · official trimap · CC BY-SA 4.0], color: GREEN),
+  hairline([REPRODUCIBILITY], [`shared/vision-evidence/oxford-iiit-pet/l10/` · builder + manifest + arrays + metric ledger], color: ACC),
+  hairline([HONEST CLAIM], [model output = none · measured performance = none · +16 px probability field = constructed], color: RED),
+))
+#v(4pt)
+#caption[OBSERVED = photo · GT = trimap · CONSTRUCTED = orchard / toy $p$ / shifted $p$ · COMPUTED = masks, errors, metrics]
 
 == OPTIONAL · variants change mechanisms, not the contract #V
 
@@ -888,7 +899,7 @@ $ f=.25(1)+.25(3)+.25(5)+.25(7)=4. $
 
 #align(center, image(ORCHARD, width: 78mm, height: 27mm, fit: "cover"))
 #v(2pt)
-#case-strip([same requirement], [Report total canopy area *and* count two touching trees.])
+#case-strip([same generated concept], [Report total canopy area *and* count two touching trees.])
 #v(2pt)
 #align(center, grid(columns:(1fr,1fr,1fr,1fr),gutter:8pt,
   card([A], [global class], color: INK),

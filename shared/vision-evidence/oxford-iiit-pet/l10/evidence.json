@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "source": {
+    "dataset": "Oxford-IIIT Pet",
+    "image_id": "Abyssinian_1",
+    "image_path": "../Abyssinian_1.jpg",
+    "trimap_path": "../Abyssinian_1-trimap.png",
+    "image_size_wh": [
+      600,
+      400
+    ],
+    "license": "CC BY-SA 4.0; copyright remains with the original image owner",
+    "dataset_page": "https://www.robots.ox.ac.uk/~vgg/data/pets/",
+    "source_sha256": {
+      "Abyssinian_1.jpg": "2533197401eebe9410ea4d063f86c43fbd2666f3e8165a38aca155c0d09c21be",
+      "Abyssinian_1-trimap.png": "a39ce8ec0363178918cb257844125e3aa7773a3acd4ca8b84780d62c1fa6f220"
+    }
+  },
+  "taxonomy": {
+    "observed": [
+      "original Oxford-IIIT Pet RGB pixels"
+    ],
+    "ground_truth": [
+      "official trimap values and masks"
+    ],
+    "constructed": [
+      "probability field: official foreground shifted 16 px right with zero fill"
+    ],
+    "computed": [
+      "hard mask",
+      "overlays",
+      "confusion counts",
+      "losses",
+      "region metrics",
+      "boundary diagnostics"
+    ],
+    "model_output": [],
+    "measured_performance": []
+  },
+  "mask_policy": {
+    "official_values": {
+      "1": "foreground",
+      "2": "background",
+      "3": "boundary / ignore"
+    },
+    "valid_values": [
+      1,
+      2
+    ],
+    "ignored_values": [
+      3
+    ],
+    "foreground_definition": "trimap == 1",
+    "background_definition": "trimap == 2",
+    "ignore_definition": "trimap == 3",
+    "region_rule": "exclude ignored pixels from BCE, Soft Dice, confusion, accuracy, IoU, and hard Dice",
+    "boundary_rule": "use official value-3 band as GT reference contour only for boundary-distance diagnostics"
+  },
+  "construction": {
+    "input": "binary GT foreground mask including all official value-1 pixels",
+    "shift_xy_px": [
+      16,
+      0
+    ],
+    "zero_fill_after_shift": true,
+    "foreground_probability": 0.9,
+    "background_probability": 0.1,
+    "threshold": 0.5,
+    "threshold_comparison": ">=",
+    "claim": "deterministic pedagogical construction; not model output"
+  },
+  "metrics": {
+    "valid_count": 221704,
+    "foreground_count": 22938,
+    "background_count": 198766,
+    "boundary_ignore_count": 18296,
+    "tp": 18736,
+    "fp": 170,
+    "fn": 4202,
+    "tn": 198596,
+    "threshold": 0.5,
+    "bce": 0.14868975578030472,
+    "soft_dice": 0.5738562785971858,
+    "iou": 0.8108014540418903,
+    "hard_dice": 0.89551668100564,
+    "accuracy": 0.9802800129902933,
+    "boundary_tolerance_px": 5.0,
+    "boundary_precision": 0.8097631012203876,
+    "boundary_recall": 0.30274376912986445,
+    "boundary_f1": 0.44071769783959525,
+    "assd_px": 6.940290903032207,
+    "hd95_px": 25.495097567963924,
+    "naive_boundary_as_background_tp": 18736,
+    "naive_boundary_as_background_fp": 4202,
+    "naive_boundary_as_background_fn": 4202,
+    "naive_boundary_as_background_tn": 212860,
+    "naive_boundary_as_background_iou": 0.690346352247605,
+    "naive_boundary_as_background_dice": 0.8168105327404307
+  },
+  "boundary_metric_policy": {
+    "predicted_contour": "one-pixel inner boundary: P AND NOT min_filter_3x3(P)",
+    "ground_truth_contour": "all official trimap value-3 pixels",
+    "distance": "exact Euclidean pixel-center distance",
+    "f1_tolerance_px": 5.0,
+    "assd": "mean of directed pred-to-GT mean and GT-to-pred mean",
+    "hd95": "maximum of the two directed 95th-percentile distances"
+  },
+  "deck_contract": {
+    "exact_4x4_spine": "separate constructed case in lecture source; not derived from this real image",
+    "role": "this bundle grounds masks, ignore policy, region errors, and boundary diagnostics in actual pixels/GT"
+  },
+  "arrays": {
+    "path": "real-mask-arrays.npz",
+    "compressed_npz": false,
+    "deterministic_zip_timestamp": "1980-01-01T00:00:00",
+    "members": {
+      "trimap": {
+        "dtype": "uint8",
+        "shape": [
+          400,
+          600
+        ],
+        "meaning": "official values 1/2/3"
+      },
+      "valid": {
+        "dtype": "bool",
+        "shape": [
+          400,
+          600
+        ],
+        "meaning": "trimap != 3"
+      },
+      "gt": {
+        "dtype": "bool",
+        "shape": [
+          400,
+          600
+        ],
+        "meaning": "trimap == 1"
+      },
+      "probability": {
+        "dtype": "float64",
+        "shape": [
+          400,
+          600
+        ],
+        "meaning": "constructed foreground probability"
+      },
+      "prediction": {
+        "dtype": "bool",
+        "shape": [
+          400,
+          600
+        ],
+        "meaning": "probability >= 0.50"
+      }
+    }
+  },
+  "build": {
+    "command": "uv run --with numpy==2.4.6 --with pillow==12.3.0 python shared/vision-evidence/oxford-iiit-pet/l10/build_segmentation_evidence.py",
+    "python": "3.11.11",
+    "numpy": "2.4.6",
+    "pillow": "12.3.0",
+    "font_regular": "/System/Library/Fonts/Supplemental/Arial.ttf",
+    "font_bold": "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+    "builder_sha256": "57c614da0ebada58293032064e8c4ad5c8d2c0e396d3bb8a91d1771ce06247d7",
+    "derived_sha256": {
+      "real-trimap-contract.png": "09cde7df41acdfed4d4d3842216a1dcc5e212e758919c68b85dd4fab307fea7b",
+      "constructed-probability-mask.png": "ed5ddf47ce115bb0ac0e989cce2cc19b8c2b96c7851844c26a90cf12e3e85fec",
+      "real-error-overlay.png": "21077905a234b32e542fcb340e4921704f6f55edde098d7e30162a1fe9ac8fc6",
+      "region-boundary-audit.png": "3e21b2f96068d9b85df7ee025906596e64a115c9a99eab555bbf6599f1223623",
+      "metrics.csv": "e4f50ebbc5b2a451495a40f601f2e34fe5fc025e7ed456e7f119c60d9e09d0ff",
+      "real-mask-arrays.npz": "47260e94e2704a0fc725ee65fbef0741c54c616113882429dde76324f4bb3906"
+    }
+  }
+}

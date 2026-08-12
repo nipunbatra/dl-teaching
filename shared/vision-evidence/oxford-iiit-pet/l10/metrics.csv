@@ -1,0 +1,27 @@
+metric,value,scope
+valid_count,221704,valid region
+foreground_count,22938,valid region
+background_count,198766,valid region
+boundary_ignore_count,18296,boundary diagnostic
+tp,18736,valid region
+fp,170,valid region
+fn,4202,valid region
+tn,198596,valid region
+threshold,0.5,valid region
+bce,0.14868975578030472,valid region
+soft_dice,0.5738562785971858,valid region
+iou,0.8108014540418903,valid region
+hard_dice,0.89551668100564,valid region
+accuracy,0.9802800129902933,valid region
+boundary_tolerance_px,5.0,boundary diagnostic
+boundary_precision,0.8097631012203876,boundary diagnostic
+boundary_recall,0.30274376912986445,boundary diagnostic
+boundary_f1,0.44071769783959525,boundary diagnostic
+assd_px,6.940290903032207,boundary diagnostic
+hd95_px,25.495097567963924,boundary diagnostic
+naive_boundary_as_background_tp,18736,valid region
+naive_boundary_as_background_fp,4202,valid region
+naive_boundary_as_background_fn,4202,valid region
+naive_boundary_as_background_tn,212860,valid region
+naive_boundary_as_background_iou,0.690346352247605,valid region
+naive_boundary_as_background_dice,0.8168105327404307,valid region
