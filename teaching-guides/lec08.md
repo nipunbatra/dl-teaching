@@ -44,7 +44,20 @@ By the end, students should be able to:
 
 ## The persistent board case
 
-Keep one exact image and kernel visible from the first convolution calculation through geometry, pooling, and receptive field:
+Begin with the real Oxford-IIIT Pet photograph, then state the bridge precisely.
+The zero-based photo crop $x\in[328,373)$, $y\in[120,165)$ is $45\times45$
+RGB. Convert it to grayscale, split its rows into five consecutive nine-row
+bands, and average each band on the raw 0–255 scale:
+
+\[
+(113.83,112.37,145.50,145.78,109.32).
+\]
+
+Threshold at 128 to obtain $(0,0,1,1,0)$, then repeat each bit across five
+columns. This is a **declared pedagogical quantization of an observed crop**,
+not a model output or an assertion that the photograph is binary. Keep the
+resulting exact image and kernel visible from the first convolution calculation
+through geometry, pooling, and receptive field:
 
 \[
 X=
@@ -112,12 +125,12 @@ Use this as a ledger rather than a sequence of unrelated examples. Every layer m
 
 ### ⭐ Core · exactly 55 minutes
 
-- L7 bridge, opening commitment, locality/sharing/hierarchy, and like-for-like dense comparison: 12 min.
-- Fixed $5\times5$/$3\times3$ convolution, first response, full map, and sharing graph: 10 min.
-- Multi-channel support, tensor axes, and the $73{,}856$-parameter checkpoint: 7 min.
+- L7 bridge, opening commitment, locality/sharing, and like-for-like dense comparison: 10 min.
+- Real crop → declared $5\times5$ teaching construction, fixed $3\times3$ convolution, first response, full map, and sharing graph: 10 min.
+- Multi-channel support, tensor axes, and the $73{,}856$-parameter checkpoint: 6 min.
 - Padding, stride, legal starts, and floor: 7 min.
-- Equivariance evidence, boundary caveat, and pooling on the same response map: 7 min.
-- Receptive-field recursion and the complete tiny-CNN ledger: 7 min.
+- Exact equivariance proof, computed real Sobel/shift evidence, boundary caveat, and pooling: 7 min.
+- Receptive-field recursion and the complete tiny-CNN ledger: 10 min.
 - Opening revisit, retrieval, and the Modern-CNN handoff: 5 min.
 
 ### ⭐⭐ Should cover · exactly 15 minutes
@@ -140,11 +153,11 @@ The labels sum to **55 core + 15 should-cover + 10 optional = 80 minutes**. The 
 |---|---|---|
 | 0–5 | ⭐ | Reuse the L7 handoff, state what remains fixed, and collect the ten-parameter commitment. |
 | 5–12 | ⭐ | Compare the position-specific dense map with the local shared map, including all biases. |
-| 12–22 | ⭐ | Introduce $X,K$, predict $Y[0,0]$, reveal $-3$, and build the exact $3\times3$ map. |
+| 12–22 | ⭐ | Show real crop → band means → threshold → $X$; predict $Y[0,0]$, reveal $-3$, and build the exact map. |
 | 22–29 | ⭐ | Add channels, name tensor axes, and calculate $73{,}856$ parameters. |
 | 29–36 | ⭐ | Count legal starts; separate padding from stride; make the floor unavoidable. |
-| 36–43 | ⭐ | Compute the shifted 1-D evidence, state the finite-boundary caveat, and pool the persistent map. |
-| 43–50 | ⭐ | Derive $(r,j)$ and complete the tiny-CNN shape/parameter/MAC/context ledger. |
+| 36–43 | ⭐ | Compute the shifted 1-D proof, inspect the real Sobel/+12-pixel/pooling composite, state the boundary caveat, and pool $Y$. |
+| 43–50 | ⭐ | Derive $(r,j)$, read theoretical support boxes on the photo, and complete the tiny-CNN ledger. |
 | 50–59 | ⭐⭐ | Work the shared-kernel and overlapping-input gradients completely. |
 | 59–64 | ⭐⭐ | Translate HWC→NCHW, separate training-state contracts, and run one diagnostic. |
 | 64–65 | ⭐⭐ | Launch the single Colab with the six prediction checkpoints visible. |
@@ -159,7 +172,7 @@ The lecture is one accumulating audit, not a catalogue of CNN facts:
 
 1. **Name the architectural bet.** Nearby pixels interact, useful detectors repeat across position, and depth composes local evidence.
 2. **Separate values from constraints.** Flattening retains values but does not impose image geometry on the next dense layer.
-3. **Ask one local question.** Use the fixed $K$ on the first patch, then reuse it at all nine legal starts.
+3. **Make the abstraction contract visible.** Derive $X$ from the declared real crop, call it a teaching construction, then use fixed $K$ at all nine legal starts.
 4. **Count three different things separately.** Shape counts legal positions; parameters count learned scalars; MACs count repeated work.
 5. **Audit movement.** The response moves with the input in the common interior, while finite boundaries and stride limit exact equivariance.
 6. **Track context backward.** Receptive field and jump explain what one later unit can depend on.
@@ -248,17 +261,23 @@ The important sentence is not “the edge detector outputs $-3$.” It is **the 
 
 ### 3 · Channels and parameter count
 
-For one $1\times1$ RGB example,
+Use the actual photo pixel at zero-based $(x,y)=(373,137)$. Its 8-bit value is
+$(131,66,60)$, hence
 
 \[
-x=(0.8,0.2,0.5),\qquad k=(0.5,-1,0.4),
+x=(131,66,60)/255\approx(0.513725,0.258824,0.235294),
+\qquad k=(0.5,-1,0.4),
 \]
 
 and
 
 \[
-y=0.8(0.5)+0.2(-1)+0.5(0.4)=0.4.
+y=0.513725(0.5)-0.258824+0.235294(0.4)
+=\frac{47}{510}\approx0.092157.
 \]
+
+The pixel is observed evidence; $k$ is an illustrative teaching parameter, not
+a trained filter.
 
 A $1\times1$ kernel is local in space but still spans all input channels. In board notation,
 
@@ -348,6 +367,23 @@ T_1f(x)=(0,1,-1,-1).
 
 Positions 1–3 agree; position 0 differs because valid cropping removed the output that would have shifted in from the left. This example is valuable precisely because it demonstrates the interior equality and finite-boundary failure together.
 
+Then inspect the secondary real-image evidence. The builder resizes the photo
+to $300\times200$, converts it to grayscale, and applies valid
+cross-correlation with the declared Sobel kernel
+
+\[
+\begin{bmatrix}-1&0&1\\-2&0&2\\-1&0&1\end{bmatrix}.
+\]
+
+It recomputes the response after a zero-filled 12-pixel right shift and applies
+$2\times2$, stride-2 max pooling to the absolute response. The two signed
+response panels use one shared 99th-percentile magnitude scale, so colours are
+comparable: blue is negative, white is zero, and orange is positive. The green
+panel separately pools the absolute **original** response and uses a clipped
+p1–p99 magnitude scale. Treat these as parallel deterministic audits from the
+same observed input—not a serial image→response→shift→pool pipeline. Call them
+**deterministic operator outputs**, not learned features or predictions.
+
 On an infinite grid, shared stride-one cross-correlation satisfies
 
 \[
@@ -395,6 +431,11 @@ The running stack is:
 | conv 2 | 3 | 1 | 8 | 2 |
 
 The second convolution adds four input pixels, not two, because adjacent inputs at that layer are already two original pixels apart. With dilation $d_\ell$, replace $(k_\ell-1)$ by $(k_\ell-1)d_\ell$. Padding affects boundary alignment, not the theoretical receptive-field size.
+
+The photo overlay draws $r=3,4,8$ with one common display scale of 16 pixels per
+input-support unit. These are theoretical supports: they show what *can*
+influence a unit, not saliency, attention, or evidence that the trained network
+used the cat's face.
 
 ### 7 · Tiny-CNN ledger
 
@@ -596,13 +637,18 @@ Use the direct public Colab link:
 
 [`01_convolution_shapes_params_from_scratch.ipynb`](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L08/01_convolution_shapes_params_from_scratch.ipynb)
 
-This single notebook is the minimal sufficient companion. It uses NumPy, Matplotlib, and PyTorch; generates synthetic arrays only; downloads no data; trains no model; retains outputs; and requires no separate HTML export.
+This single notebook remains the minimal sufficient companion. It uses NumPy,
+Matplotlib, and PyTorch; trains no model; and retains outputs. It should also
+recompute the photo-crop band means, actual RGB pixel, and real Sobel/shift/pool
+arrays from the exact SHA-checked source asset. Do not run the raster builder in
+the default Colab mainline: the committed composites are presentation assets,
+while the notebook's job is to verify their numerical evidence.
 
 ### Before running
 
 1. Predict the sign and exact value of $Y[0,0]$, then the full valid $3\times3$ response map.
 2. List legal starts for all four geometry cases and predict the three displayed padded/strided array shapes.
-3. Calculate the RGB $1\times1$ response, tiny-CNN parameters, MACs, pooling summaries, and receptive-field rows.
+3. Predict the crop's five threshold bits and calculate the actual RGB $1\times1$ response, tiny-CNN parameters, MACs, pooling summaries, and receptive-field rows.
 4. Predict which shifted output positions should agree and where the valid boundary should fail.
 5. Calculate $y$, $\nabla_k\mathcal L$, $\nabla_x\mathcal L$, and $\nabla_b\mathcal L$ before PyTorch.
 6. Translate the board input $32\times32\times3$ into PyTorch `(1, 3, 32, 32)` and predict every activation shape.
@@ -612,7 +658,8 @@ This single notebook is the minimal sufficient companion. It uses NumPy, Matplot
 - first response: $Y[0,0]=-3$;
 - full valid response: rows $(-3,-3,-3)$, $(-3,-3,-3)$, $(3,3,3)$;
 - output lengths for the four geometry cases: $3,5,4,3$;
-- RGB channel contributions: $(0.4,-0.2,0.2)$, sum $0.4$;
+- photo crop band means $(113.83,112.37,145.50,145.78,109.32)$ and threshold bits $(0,0,1,1,0)$;
+- actual RGB pixel $(131,66,60)$, normalized $(.513725,.258824,.235294)$, response $47/510\approx.092157$;
 - parameters: conv 1 $448$, conv 2 $4{,}640$, head $330$, total $5{,}418$;
 - MACs: $442{,}368$, $1{,}179{,}648$, $320$, total $1{,}622{,}336$;
 - shifted trace: the common interior agrees and the first valid-boundary position does not;
@@ -628,9 +675,10 @@ This single notebook is the minimal sufficient companion. It uses NumPy, Matplot
 - Parameters remain fixed when the image grows; repeated spatial uses increase MACs.
 - The equivariance assertion intentionally compares the common interior rather than claiming a false boundary equality.
 - The pooling array is a separate mechanism check; the deck's persistent pooling calculation stays on $Y$.
+- The real Sobel/+12-pixel/pool composite is deterministic evidence; it is not a learned feature map.
 - Shared kernel gradients sum across output uses; overlapping input gradients sum across patches.
 - The finite-difference check is independent of PyTorch autograd.
-- The final model does not train or download data; it verifies tensor contracts and counts only.
+- The final model cell trains nothing and performs no additional download; it verifies tensor contracts and counts only.
 
 ## Subtleties the instructor must state
 
@@ -645,6 +693,7 @@ This single notebook is the minimal sufficient companion. It uses NumPy, Matplot
 - **Pooling offers local robustness, not a universal invariance theorem.** It also discards the winning location.
 - **Receptive field is not kernel size.** It composes through every earlier kernel and stride.
 - **Theoretical receptive field is not effective influence.** The deck calculates which inputs can affect a unit, not how strongly trained weights use them.
+- **Evidence types are different contracts.** The Oxford box/trimap are ground-truth annotations; $X$ is a teaching construction; the Sobel panels are deterministic computations; no trained prediction is shown in Lecture 8.
 - **Global average pooling permits variable spatial maps in this architecture.** It does not mean every CNN with a flattened head accepts arbitrary resolution.
 - **Sharing creates a sum in backprop.** Do not average spatial contributions unless another explicit normalization does so.
 - **`model.eval()` is not `no_grad()`.** Mode and autograd are separate contracts.
@@ -682,7 +731,7 @@ This single notebook is the minimal sufficient companion. It uses NumPy, Matplot
 - **“Why not average the shared gradient over positions?”** The derivative of the stated loss is a sum over parameter uses. A framework may average over the batch because the loss reduction says so; spatial averaging is not implied by sharing itself.
 - **“Which tensor order is standard?”** There is no universal notation. This board uses HWC; PyTorch uses NCHW; other ecosystems may default to NHWC. Name axes explicitly.
 - **“Where are groups, dilation, and depthwise convolution?”** The general ideas are acknowledged, but modern efficient blocks belong in the next `L8B`/Modern-CNN lecture. Keep standard groups=1 and dilation=1 for this core arithmetic.
-- **“Why no dataset training in the notebook?”** This notebook isolates operator, geometry, count, and gradient contracts. Empirical CNN training introduces additional variance and belongs after these deterministic checks pass.
+- **“Why no dataset training in the notebook?”** The real image already tests operator and annotation contracts without confounding optimization. Empirical transfer evidence begins in the Modern-CNN lecture after these deterministic checks pass.
 
 ## If you are short on time
 
@@ -703,9 +752,23 @@ Assign the shared-gradient numeric and notebook autograd verification as follow-
 - PyTorch, [`torch.nn.Conv2d`](https://pytorch.org/docs/stable/generated/torch.nn.Conv2d.html) — operator, NCHW/weight shapes, stride, padding, dilation, and groups.
 - Dumoulin and Visin (2016), [*A guide to convolution arithmetic for deep learning*](https://arxiv.org/abs/1603.07285) — convolutional output geometry.
 - LeCun et al. (1998), [*Gradient-Based Learning Applied to Document Recognition*](https://ieeexplore.ieee.org/document/726791) — classic shared-weight CNN architecture.
+- Parkhi et al. (2012), [Oxford-IIIT Pet](https://www.robots.ox.ac.uk/~vgg/data/pets/) — the CC BY-SA real photo, head ROI, and trimap reused through public Lectures 8–11.
 - The exact public [L08 Colab notebook](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L08/01_convolution_shapes_params_from_scratch.ipynb) — deterministic slide numerics, from-scratch loops, PyTorch gradients, finite differences, and the NCHW model.
 
-All lecture diagrams and numeric traces are native Typst vectors. The examples are deterministic mechanism checks, not benchmark claims. Quote the displayed arrays and conventions rather than replacing them with a generic CNN diagram.
+The source assets and derivative contract live in
+`shared/vision-evidence/oxford-iiit-pet/`. Run `build_evidence.py` to regenerate
+the crop, annotation overlays, Sobel/shift/pool composite, and RF overlay;
+`derived/evidence.json` records exact coordinates, values, display scaling, and
+statuses. Real-image rasters are deliberate. Equations, grids, plots, and
+diagrams remain code-native/vector. None of the Lecture 8 evidence is a
+benchmark or trained-model claim.
+
+For this exact sample, the XML head box is VOC-style 1-based inclusive
+`(333,72,425,158)` and becomes zero-based half-open `[332,425) × [71,158)`
+for course arithmetic. The trimap contract is `1=foreground`, `2=background`,
+`3=boundary/ignore`. The Colab needs NumPy, Matplotlib, PyTorch, and Pillow;
+stdlib `urllib`, `hashlib`, and XML parsing fetch and verify only these three
+small companion assets. It does not run the presentation-raster builder.
 
 ## Closing line
 

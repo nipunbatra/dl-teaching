@@ -15,6 +15,8 @@
 #let PTCONV = "https://pytorch.org/docs/stable/generated/torch.nn.Conv2d.html"
 #let CONVARITH = "https://arxiv.org/abs/1603.07285"
 #let LENET = "https://ieeexplore.ieee.org/document/726791"
+#let PETS = "https://www.robots.ox.ac.uk/~vgg/data/pets/"
+#let EVIDENCE = "/shared/vision-evidence/oxford-iiit-pet/derived/"
 
 // Stable semantic grammar:
 // INK = input / known quantity · TEAL = learned shared parameter / operation
@@ -55,6 +57,12 @@
 
 #let caption(body) = align(center, text(size: 14pt, fill: MUTED)[#body])
 
+#let evidence-image(name, width: auto, height: auto, fit: "contain") = block(
+  fill: white, stroke: 0.8pt + MUTED.lighten(35%), radius: 3pt,
+  inset: 2pt, clip: true,
+  image(EVIDENCE + name, width: width, height: height, fit: fit),
+)
+
 #let flow-arrow(label: none, color: MUTED) = align(center, [
   #if label != none { text(size: 10.5pt, weight: 600, fill: color, label); linebreak() }
   #text(size: 24pt, fill: color)[$arrow.r$]
@@ -73,8 +81,9 @@
    #text(size: 13.5pt, fill: INK)[#detail]],
 )
 
-// One exact image/kernel pair anchors convolution, geometry, equivariance,
-// pooling, and the first receptive-field calculation.
+// One real annotated photo anchors the visual evidence. A declared crop from
+// that photo is quantized into the exact image/kernel pair below; X then
+// anchors convolution, geometry, pooling, and the first RF calculation.
 #let X = ((0, 0, 0, 0, 0),
           (0, 0, 0, 0, 0),
           (1, 1, 1, 1, 1),
@@ -103,21 +112,14 @@
 
 == L7 changed the training recipe; L8 changes the hypothesis class #V
 
-#align(center, grid(
-  columns: (55mm, 12mm, 55mm, 12mm, 55mm), gutter: 5pt, align: horizon,
-  card([L7 · GENERALIZE], [Keep train/validation/test roles fixed; change one intervention.], color: ACC),
-  flow-arrow(label: [today], color: BLUE),
-  card([IMAGE STRUCTURE], [Nearby pixels interact; useful patterns repeat across location.], color: INK),
-  flow-arrow(label: [encode], color: TEAL),
-  card([L8 · CNN], [Local connections and shared weights make those rules easy to express.], color: TEAL),
+#align(center, grid(columns: (102mm, 1fr), gutter: 16pt, align: horizon,
+  [#evidence-image("photo-head-roi.png", width: 102mm, height: 68mm, fit: "cover")
+   #v(2pt)
+   #caption[REAL PHOTO · actual ground-truth head ROI · not a model prediction]],
+  [#hairline([L7 · FIX THE PROTOCOL], [Keep loss, optimizer, split roles, and sealed test fixed.], color: ACC)
+   #v(7pt)
+   #hairline([L8 · CHANGE THE MAP], [Encode locality and reuse one learned question across positions because nearby pixels interact and useful patterns recur.], color: TEAL)],
 ))
-
-#pause
-#v(10pt)
-#note([
-  The loss, optimizer, split protocol, and sealed test stay fixed. The new lever is architectural inductive bias.
-  You know convolution mechanics from ES 335; today we audit the assumptions, arithmetic, and gradients.
-], color: GREEN)
 
 == Commit: can ten parameters produce 1,024 responses? #Q
 
@@ -195,15 +197,37 @@ Both maps produce $32 times 32=1024$ scalar outputs. The shared $3 times 3$ map 
 // ═══════════════════════ CONVOLUTION · CORE ═════════════════════════
 = One local question, reused across the image
 
-== Meet the fixed $5 times 5$ image and $3 times 3$ kernel #V
+== A declared real crop becomes the fixed $5 times 5$ teaching image #V
 
-#case-strip([input + parameter], [The image $X$ and kernel $K$ remain fixed through convolution, geometry, pooling, and receptive fields.])
+#case-strip([real → pedagogical], [Zero-based crop $x in [328,373)$, $y in [120,165)$ is observed evidence; five band means are quantized deliberately for hand calculation.])
+#v(5pt)
+#align(center, grid(columns: (65mm, 12mm, 63mm, 12mm, 55mm), gutter: 4pt, align: horizon,
+  [#evidence-image("real-crop-five-bands.png", width: 57mm, height: 57mm, fit: "cover")
+   #caption[REAL $45 times 45$ RGB crop]],
+  flow-arrow(label: [gray + band mean], color: BLUE),
+  [#set text(size: 12.5pt)
+   #align(center, table(columns: (23mm, 30mm), stroke: 0.4pt + MUTED,
+     inset: (x: 5pt, y: 3pt), align: center,
+     table.header([band], [mean $(0 dash 255)$]),
+     [$1$], [$113.83$], [$2$], [$112.37$], [$3$], [$145.50$], [$4$], [$145.78$], [$5$], [$109.32$],
+   ))],
+  flow-arrow(label: [$>=128$], color: TEAL),
+  [#align(center, tensor-grid(X, cell: 8.1mm, vmin: -1, vmax: 1))
+   #caption[$X$: teaching image]],
+))
+
+#pause
+#result[Quantization yields rows $(0,0,1,1,0)$; $X$ now stays fixed for exact arithmetic.]
+
+== Meet the shared $3 times 3$ question #V
+
+#case-strip([input + parameter], [$X$ is the declared teaching construction; $K$ is the shared parameter reused through convolution, geometry, pooling, and RF.])
 #v(7pt)
 #two(
-  [#align(center, tensor-grid(X, title: [$X$: input], cell: 10.5mm, vmin: -1, vmax: 1))],
+  [#align(center, tensor-grid(X, title: [$X$: constructed input], cell: 10.5mm, vmin: -1, vmax: 1))],
   [#align(center, tensor-grid(K, title: [$K$: shared kernel], cell: 12mm, vmin: -1, vmax: 1))
    #v(6pt)
-   #caption[INK = input values · TEAL = the learned kernel]],
+   #caption[INK = input values · TEAL = learned kernel]],
 )
 
 #pause
@@ -304,22 +328,22 @@ $ Y[0,0] =
 #pause
 #result[Outputs are numerous; learned questions are few. Backprop must therefore sum evidence from every use of $K$.]
 
-== A multi-channel kernel spans every input channel #D
+== One actual RGB pixel still spans every input channel #D
 
-At one RGB pixel, let $x=(0.8,0.2,0.5)$ and one $1 times 1$ kernel be $k=(0.5,-1,0.4)$.
-
-#pause
-$ y = 0.8(0.5)+0.2(-1)+0.5(0.4) = 0.4-0.2+0.2 = 0.4. $
-
-#pause
-#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
-  hairline([SPATIAL SUPPORT], [$1 times 1$: one pixel location], color: BLUE),
-  hairline([CHANNEL SUPPORT], [$C_"in"=3$: all RGB channels], color: INK),
-  hairline([ONE RESPONSE], [channel contributions sum to $0.4$], color: ACC),
+#align(center, grid(columns: (52mm, 1fr), gutter: 14pt, align: horizon,
+  [#evidence-image("actual-rgb-pixel.png", width: 43mm, height: 43mm, fit: "cover")
+   #caption[REAL PIXEL · photo coordinate $(373,137)$]],
+  [The observed 8-bit value is $(131,66,60)$, so
+   #v(5pt)
+   $x=(131,66,60)/255 approx (0.514,0.259,0.235).$
+   #v(5pt)
+   Let one illustrative $1 times 1$ kernel be $k=(0.5,-1,0.4)$.],
 ))
 
-#pause
-#note([A $3 times 3$ RGB kernel has $3 dot 3 dot 3=27$ weights for each output channel.], color: TEAL)
+$ y = 0.514(0.5)-0.259+0.235(0.4)
+      approx 0.257-0.259+0.094 = 0.092. $
+
+#result[$1 times 1$ fixes one observed location; $C_"in"=3$ spans all RGB channels; the declared teaching kernel returns one response. A $3 times 3$ RGB kernel has $27$ weights per output channel.]
 
 == Tensor shapes name every axis before we count #D
 
@@ -533,6 +557,13 @@ $ f(T_Delta X)=T_Delta f(X). $
 #pause
 #note([A stack with total stride $j$ is naturally aligned to translations by multiples of $j$; arbitrary one-pixel shifts need not commute exactly.], color: MUTED)
 
+== The same claims are visible on computed real-image responses #V
+
+#align(center, evidence-image("computed-conv-shift-pool.png", width: 157mm, height: 82mm, fit: "contain"))
+
+#pause
+#note([Two branches share the same observed image: Sobel(original) versus Sobel(zero-filled $+12$ px shifted input); separately, pool $abs("Sobel(original)")$ with $2 times 2$, stride 2. Blue = negative, white = zero, orange = positive on one shared clipped p99 scale; green shows pooled magnitude on a clipped p1–p99 scale. Deterministic computations—not learned features or predictions.], color: RED)
+
 == Pool the same response map #D
 
 #case-strip([pooling], [Apply $2 times 2$ max pooling with stride $1$ to the exact $Y$ already computed.])
@@ -597,22 +628,6 @@ $ f(T_Delta X)=T_Delta f(X). $
 // ═════════════════ RF + CLASSIFIER · CORE ═══════════════════════════
 = Compose local questions into a classifier
 
-== Receptive field needs both width and jump #D
-
-For layer $ell$, track:
-
-#pause
-#align(center, grid(columns: (1fr, 1fr), gutter: 24pt,
-  card([RECEPTIVE FIELD $r_ell$], [width of original-input region that can influence one unit], color: ACC),
-  card([JUMP $j_ell$], [spacing, in input pixels, between adjacent units at this layer], color: BLUE),
-))
-
-#pause
-#align(center, text(size: 22pt)[$r_0=1, quad j_0=1$])
-
-#pause
-#note([Kernel size describes one layer. Receptive field traces influence through every preceding layer.], color: GREEN)
-
 == Derive the receptive-field recursion #D
 
 Assume dilation $1$. A size-$k_ell$ kernel spans $k_ell-1$ gaps from the previous layer, and each gap is $j_(ell-1)$ input pixels.
@@ -646,6 +661,20 @@ $ j_ell=j_(ell-1)s_ell. $
 #pause
 #pause
 #result[The first pooled unit can depend on a $4 times 4$ anchor region; the next conv expands context to $8 times 8$.]
+
+== Receptive-field boxes show support, not importance #V
+
+#align(center, grid(columns: (108mm, 1fr), gutter: 18pt, align: horizon,
+  [#evidence-image("photo-rf-overlay.png", width: 108mm, height: 72mm, fit: "cover")],
+  [#hairline([$r=3$], [one local convolution], color: BLUE)
+   #v(6pt)
+   #hairline([$r=4$], [then $2 times 2$ pooling], color: ACC)
+   #v(6pt)
+   #hairline([$r=8$], [then the next $3 times 3$ convolution], color: TEAL)],
+))
+
+#pause
+#note([Track $r_ell$ = input-support width and $j_ell$ = input-pixel spacing; $r_0=j_0=1$. These boxes are not saliency, attention, or proof the model used the face.], color: RED)
 
 == Scale the rule into one $32 times 32$ classifier #V
 
@@ -941,7 +970,7 @@ $ partial cal(L)/partial K[u,v,c,o]
 ))
 
 #pause
-#caption[The notebook uses the exact slide numerics and retains deterministic outputs; no dataset download or training is required.]
+#caption[The notebook verifies one tiny SHA-checked companion image plus the exact slide numerics; it trains no model.]
 
 // ═══════════════════════════ CLOSE ══════════════════════════════════
 = Close the loop
@@ -986,17 +1015,22 @@ The position-specific dense map used $"1,049,600"$ parameters; the shared $3 tim
 
 == L9 handoff: make the local pipeline deep, efficient, and reusable #V
 
-#align(center, grid(
-  columns: (54mm, 12mm, 54mm, 12mm, 54mm), gutter: 5pt, align: horizon,
-  card([L8 · TODAY], [Build and audit one small CNN from exact arithmetic.], color: TEAL),
-  flow-arrow(label: [scale], color: BLUE),
-  card([NEW PROBLEM], [Depth, compute, and data make design and optimization harder.], color: RED),
-  flow-arrow(label: [next], color: ACC),
-  card([L9 · MODERN CNNs], [VGG, ResNet, efficient blocks, pretrained backbones, transfer.], color: ACC),
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 12pt, align: horizon,
+  [#evidence-image("photo-head-roi.png", width: 64mm, height: 43mm, fit: "cover")
+   #caption[GT ANNOTATION · head ROI]],
+  [#evidence-image("photo-trimap-overlay.png", width: 64mm, height: 43mm, fit: "cover")
+   #caption[GT TRIMAP · foreground + boundary/ignore]],
+  [#evidence-image("computed-conv-shift-pool.png", width: 64mm, height: 43mm, fit: "cover")
+   #caption[COMPUTED · declared operators]],
 ))
+#caption[TRIMAP KEY · green = foreground · orange hatched = boundary/ignore · uncolored = background]
 
 #pause
-#result[Today explained the local shared operator; next lecture asks how modern pipelines compose and reuse it.]
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 12pt,
+  hairline([L8 · TODAY], [distinguish input, annotation, construction, and computation], color: TEAL),
+  hairline([NOT YET], [no trained feature, saliency, detector, or classifier output], color: RED),
+  hairline([L9 · NEXT], [compose and reuse learned backbones; demand measured evidence], color: ACC),
+))
 
 #focus-slide[
   A convolution is a linear layer that confesses its assumptions.
@@ -1046,7 +1080,8 @@ $ underbrace(mat(2,1;1,3), "patch matrix") quad
 - #link(PTCONV)[PyTorch Conv2d documentation] — operator, shapes, groups, dilation, and framework convention.
 - #link(CONVARITH)[Dumoulin & Visin (2016), A guide to convolution arithmetic] — output geometry.
 - #link(LENET)[LeCun et al. (1998), Gradient-based learning applied to document recognition] — classic shared-weight CNN.
+- #link(PETS)[Oxford-IIIT Pet dataset] — the real photo, head ROI, trimap, and CC BY-SA 4.0 provenance used throughout the CV module.
 - #link(NB1)[Exact L08 Colab notebook] — deterministic slide numerics, gradients, and NCHW model.
 
 #v(5pt)
-#caption[All lecture diagrams and numeric traces are native Typst vectors; the deck embeds no raster figures.]
+#caption[Real-image derivatives are rebuilt by shared/vision-evidence/oxford-iiit-pet/build_evidence.py; all charts, equations, grids, and diagrams remain native/vector.]

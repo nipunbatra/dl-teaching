@@ -1,0 +1,155 @@
+{
+  "build": {
+    "command": "uv run --with numpy==2.3.5 --with pillow==12.2.0 python shared/vision-evidence/oxford-iiit-pet/build_evidence.py",
+    "python": "3.12.13",
+    "numpy": "2.3.5",
+    "pillow": "12.2.0",
+    "font_regular": "/System/Library/Fonts/Supplemental/Arial.ttf",
+    "font_bold": "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+    "builder_sha256": "73c91b36eba9d4f7169d3a3b10413a1b0a6b36766a85c0adc87d68d96f02b737",
+    "derived_sha256": {
+      "actual-rgb-pixel.png": "3febaa16eb1aa9be64e2856d4bfcf17ab92faad6c36ea63e488df11136061f6f",
+      "computed-conv-shift-pool.png": "546541c8a19a769ba9d15a9859e33cad684e22c76cbde29b8ef97d7ad612dc3e",
+      "head-roi-crop.png": "e0110db5101a42fc9986a378fff8679653c7867035ca824e82945fcae3e9ef81",
+      "photo-head-roi.png": "984279a0c014bf9e4ea4ba6efa779188f79a1a8159c72a1a58e1914811ca9ca1",
+      "photo-rf-overlay.png": "2ea7731ff6375eb2300db4caaa01cb77acf1bc680e1cacc716a09cf73b1ee5ce",
+      "photo-trimap-overlay.png": "58caeebed75a1cc9640f3b6e9208f0d8d6c01201f4478a9eb21cbd2f0a71d17e",
+      "real-crop-five-bands.png": "858d331adb5bf188ed336ca3565c9af2a78529abfffd72c90d649dce19b7265d"
+    }
+  },
+  "source": {
+    "image": "Abyssinian_1.jpg",
+    "trimap": "Abyssinian_1-trimap.png",
+    "xml": "Abyssinian_1.xml",
+    "license": "CC BY-SA 4.0; copyright remains with the original image owner"
+  },
+  "ground_truth": {
+    "head_roi_xml_voc_1_based_inclusive": [
+      333,
+      72,
+      425,
+      158
+    ],
+    "head_roi_xyxy_0_based_half_open": [
+      332,
+      71,
+      425,
+      158
+    ],
+    "trimap_values": {
+      "1": "foreground",
+      "2": "background",
+      "3": "boundary"
+    },
+    "trimap_counts": {
+      "1": 22938,
+      "2": 198766,
+      "3": 18296
+    }
+  },
+  "lecture8": {
+    "crop_xyxy": [
+      328,
+      120,
+      373,
+      165
+    ],
+    "crop_definition": "45x45 real RGB crop; grayscale bands are means of five consecutive 9-row strips",
+    "grayscale_band_means_0_255": [
+      113.82881,
+      112.371343,
+      145.503405,
+      145.776689,
+      109.324262
+    ],
+    "quantization_threshold_0_255": 128.0,
+    "quantized_binary_rows": [
+      0,
+      0,
+      1,
+      1,
+      0
+    ],
+    "pixel_xy": [
+      373,
+      137
+    ],
+    "pixel_rgb_0_255": [
+      131,
+      66,
+      60
+    ],
+    "pixel_rgb_0_1": [
+      0.513725,
+      0.258824,
+      0.235294
+    ],
+    "rgb_kernel": [
+      0.5,
+      -1.0,
+      0.4
+    ],
+    "rgb_response": 0.092157,
+    "computed_map": {
+      "resize": [
+        300,
+        200
+      ],
+      "grayscale": "0.299 R + 0.587 G + 0.114 B, divided by 255",
+      "kernel": [
+        [
+          -1.0,
+          0.0,
+          1.0
+        ],
+        [
+          -2.0,
+          0.0,
+          2.0
+        ],
+        [
+          -1.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "operator": "valid cross-correlation",
+      "signed_display_scale": {
+        "definition": "shared p99 absolute magnitude across original and shifted response; values clipped to [-1,1] for display",
+        "p99_absolute": 0.703607843137255,
+        "clipped_original_samples": 562,
+        "clipped_shifted_samples": 617,
+        "samples_per_response": 59004
+      },
+      "shift": "zero-filled +12 pixels horizontally",
+      "common_interior_check": {
+        "comparison": "shifted_response[:, 12:] versus response[:, :-12]",
+        "shape": [
+          198,
+          286
+        ],
+        "max_abs_error_floating_point": 1.3877787807814457e-17,
+        "expected_exact_linear_operator_equality": true,
+        "allclose_atol_1e_12": true
+      },
+      "pool": "2x2 max pool, stride 2, applied to absolute response",
+      "pooled_display_scale": {
+        "definition": "linear p1-p99 range, clipped to [0,1] for display",
+        "p1": 0.007843137254901905,
+        "p99": 1.000564705882353,
+        "clipped_low_samples": 147,
+        "clipped_high_samples": 148,
+        "samples": 14751
+      },
+      "response_shape": [
+        198,
+        298
+      ],
+      "pooled_shape": [
+        99,
+        149
+      ]
+    },
+    "rf_overlay": "theoretical support widths 3, 4, and 8, drawn with one 16-display-pixels-per-input-pixel scale as 48, 64, and 128 pixels; not saliency"
+  }
+}
