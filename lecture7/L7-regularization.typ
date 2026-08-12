@@ -1,681 +1,923 @@
 // Generalization and Regularization — Lecture 7 · ES 667 Deep Learning
-// Compile from the repo root:
-//   typst compile --root . lecture7/L7-regularization.typ /tmp/L7.pdf
-//   typst compile --root . --input handout=true lecture7/L7-regularization.typ /tmp/L7h.pdf
-// Theme, palette, helpers and diagram builders live in common/metropolis.typ.
+// Compile from the repository root:
+//   typst compile --root . --input handout=true lecture7/L7-regularization.typ /tmp/L7-handout.pdf
+//   typst compile --root . lecture7/L7-regularization.typ /tmp/L7-presentation.pdf
 
 #import "../common/metropolis.typ": *
 #import "../common/mldiag.typ": *
+
 #show: metropolis-deck.with(
   title: [Generalization and Regularization],
-  subtitle: [Making deep networks perform well on unseen data],
+  subtitle: [Diagnose the gap, change one lever, measure again],
 )
 
-#let IA = "https://nipunbatra.github.io/interactive-articles/"
+#let NB = "https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L07/"
+#let NB1 = NB + "01_overfitting_and_early_stopping.ipynb"
+#let NB2 = NB + "02_dropout_from_scratch.ipynb"
 
-// native ml-plot: double descent — test error (bias + variance spike at the
-// interpolation threshold c=1) and train error vs capacity (mirrors l7_figs.py
-// f_double_descent). Reused on two slides, so bound once here.
-#let dd-test = c => {
-  let bias = 0.35 * calc.exp(-2.5 * c)
-  let vf = if c < 1.0 { 1.0 } else { 0.55 }
-  let vari = 0.28 / (calc.abs(c - 1.0) + 0.14) * vf
-  calc.min(1.4, bias + vari * 0.35 + 0.12)
-}
-#let dd-train = c => calc.min(1.0, 0.9 * calc.exp(-2.2 * c))
-#let dd-c31 = 0.05 + 31 * (2.95 / 99)   // capacity at old sample index 31 (interp.-threshold read-off)
-#let double-descent-plot(size: (66mm, 42mm)) = lines(
-  fn: (dd-test, dd-train),
-  domain: (0.05, 3.0), samples: 99,
-  colors: (ACC, TEAL),
-  labels: ([test], [train]),
-  markers: false,
-  points: ((dd-c31, dd-test(dd-c31), [interp. threshold]),),
-  x-label: [model size / capacity], y-label: [error],
-  size: size,
+#let MEM = "https://arxiv.org/abs/1611.03530"
+#let ADAMW = "https://arxiv.org/abs/1711.05101"
+#let DROPOUT = "https://jmlr.org/papers/v15/srivastava14a.html"
+#let MIXUP = "https://arxiv.org/abs/1710.09412"
+#let SMOOTH = "https://openaccess.thecvf.com/content_cvpr_2016/html/Szegedy_Rethinking_the_Inception_CVPR_2016_paper.html"
+#let PTCE = "https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html"
+
+// Semantic grammar used on every slide:
+// TEAL = training / fitted parameters · BLUE = validation / selection
+// ACC = intervention / regularization knob · GREEN = accepted evidence
+// RED = observed failure · INK = sealed test / neutral structure.
+#let swatch(color, body) = box(width: 13pt, height: 4pt, fill: color, radius: 1pt) + h(4pt) + body
+#let semantic-legend = align(center, text(size: 13pt)[
+  #swatch(TEAL, [training]) #h(14pt)
+  #swatch(BLUE, [validation]) #h(14pt)
+  #swatch(ACC, [intervention]) #h(14pt)
+  #swatch(GREEN, [accepted evidence]) #h(14pt)
+  #swatch(RED, [failure]) #h(14pt)
+  #swatch(INK, [sealed test])
+])
+
+#let hairline(title, body, color: TEAL) = block(
+  width: 100%, inset: 3pt,
+  [#text(size: 13.5pt, weight: 700, fill: color)[#upper(title)]
+   #v(2pt)
+   #line(length: 100%, stroke: 0.8pt + color)
+   #v(5pt)
+   #body],
 )
 
-// ── dropout: an MLP with two hidden units zeroed (a sampled subnetwork) ──
-#let dropoutnet = align(center, diagram(spacing: (20mm, 4.5mm), {
-  let L(li, i, n) = (li, i - (n - 1)/2)
-  let dropped = (1, 3)
-  // edges only through surviving hidden units
-  for i in range(3) { for j in range(5) {
-    if not dropped.contains(j) { edge(L(0,i,3), L(1,j,5), stroke: 0.4pt + MUTED.lighten(20%)) }
-  }}
-  for j in range(5) { for k in range(2) {
-    if not dropped.contains(j) { edge(L(1,j,5), L(2,k,2), stroke: 0.4pt + MUTED.lighten(20%)) }
-  }}
-  // inputs
-  for i in range(3) { node(L(0,i,3), none, radius: 3mm, fill: INK, stroke: none) }
-  // hidden (dropped = dashed grey with ×)
-  for j in range(5) {
-    if dropped.contains(j) {
-      node(L(1,j,5), text(size: 10pt, fill: MUTED)[×], radius: 3.2mm, fill: rgb("#EFEEEB"),
-        stroke: (paint: MUTED, thickness: 0.7pt, dash: "dashed"))
-    } else {
-      node(L(1,j,5), none, radius: 3.2mm, fill: TEAL, stroke: none)
-    }
-  }
-  // outputs
-  for k in range(2) { node(L(2,k,2), none, radius: 3mm, fill: ACC, stroke: none) }
-}))
+#let card(title, body, color: TEAL, width: 100%) = block(
+  width: width, inset: (x: 10pt, y: 8pt), fill: white,
+  stroke: 1pt + color, radius: 3pt,
+  [#text(size: 12.5pt, weight: 700, fill: color)[#upper(title)]
+   #v(4pt)
+   #body],
+)
+
+#let flow-arrow(label: none, color: MUTED) = align(center, [
+  #if label != none { text(size: 10.5pt, weight: 600, fill: color, label); linebreak() }
+  #text(size: 24pt, fill: color)[$arrow.r$]
+])
+
+#let note(body, color: TEAL) = block(
+  width: 100%, inset: (left: 11pt, right: 4pt, top: 5pt, bottom: 5pt),
+  stroke: (left: 2pt + color), fill: color.lighten(93%), radius: 2pt,
+  [#body],
+)
+
+#let caption(body) = align(center, text(size: 14pt, fill: MUTED)[#body])
+
+#let anchor = block(
+  width: 100%, inset: (x: 11pt, y: 6pt),
+  fill: rgb("#F3F6F5"), stroke: (left: 3pt + TEAL), radius: 3pt,
+  text(size: 14.5pt)[
+    *RUNNING CASE · FIXED TEACHING TRACE* · five-class image classifier · chance $20%$ ·
+    #text(fill: TEAL)[train $99%$] · #text(fill: BLUE)[validation $72%$ on 100 examples] ·
+    #text(fill: RED)[gap $27$ points] · #text(fill: INK)[test sealed]
+  ],
+)
+
+#let ledger(
+  gap: [pending], checkpoint: [pending], weights: [pending],
+  dropout: [pending], data: [pending], targets: [pending],
+) = block(
+  width: 100%, inset: 8pt, fill: rgb("#F8F8F6"),
+  stroke: 0.6pt + rgb("#D7DDDC"), radius: 3pt,
+  [#text(size: 11pt, weight: 700, fill: MUTED, tracking: 0.8pt)[CASE LEDGER · OBSERVE → INTERVENE → MEASURE]
+   #v(4pt)
+   #set text(size: 12.8pt)
+   #table(
+     columns: (22%, 78%), stroke: 0.35pt + rgb("#D7DDDC"),
+     inset: (x: 7pt, y: 3.5pt), align: (left, left),
+     [gap / split], gap,
+     [checkpoint], checkpoint,
+     [weights], weights,
+     [representations], dropout,
+     [data], data,
+     [targets], targets,
+   )],
+)
+
+#let epochs = (1, 2, 3, 4, 5, 6)
+#let train-losses = (1.20, 0.80, 0.45, 0.32, 0.28, 0.25)
+#let val-losses = (1.25, 0.98, 0.82, 0.78, 0.84, 0.97)
+#let early-curves = lines(
+  x: epochs, y: (train-losses, val-losses),
+  labels: ([training], [validation]), colors: (TEAL, BLUE),
+  markers: true, vlines: ((4, [restore epoch 4], ACC),),
+  points: ((4, 0.78, [validation minimum = 0.78]),),
+  x-label: [epoch], y-label: [cross-entropy], size: (112mm, 47mm),
+)
 
 #title-slide()
 
-// ═══════════════════════════ PART I — The generalization problem ═══════════════════════════
-= The generalization problem
+// ═══════════════════════════ DIAGNOSE · CORE ═══════════════════════════
+= Diagnose before prescribing
 
-== Where we are
+== L6 made the network trainable; L7 asks what survives new data #V
 
-The last lectures gave us a network that *trains*:
-#pause
-$ f_theta (x) -> hat(y), quad cal(L)(theta) = 1/n sum_(i=1)^n ell(f_theta (x_i), y_i) $
-#pause
-$ g_t = nabla_theta cal(L)(theta_t), quad quad theta_(t+1) = theta_t - eta thin g_t $
-#pause
-#notebox[Backprop gives the gradient; the optimizer drives $cal(L)_"train"$ down. We can now make the *training loss* small.]
+#align(center, grid(
+  columns: (56mm, 13mm, 56mm, 13mm, 56mm), gutter: 4pt, align: horizon,
+  card([L6 · TRAINABILITY], [Signals and gradients remain usable through depth.], color: TEAL),
+  flow-arrow(label: [enables], color: TEAL),
+  card([OPTIMIZATION], [Parameters reach low training loss.], color: TEAL),
+  flow-arrow(label: [does not imply], color: RED),
+  card([L7 · GENERALIZATION], [Predictions remain useful on unseen examples.], color: BLUE),
+))
 
-== But is low training loss the goal? #Q
+#pause
+#v(12pt)
+#result[Today’s unit of reasoning is not a named trick: it is *symptom → suspect → controlled test*.]
+
+== Commit: what should we do with 99% train and 72% validation? #Q
+
+#anchor
+#v(9pt)
 
 #mcq(
-  [Does low training loss alone guarantee that a model will perform well on new data?],
-  [Yes; training loss is the only metric that matters],
-  [Yes, if the model has enough parameters],
-  [No; it may have memorized the training set],
-  [No; because gradient descent cannot reduce loss],
+  [Choose the first defensible action. Keep your answer until the closing revisit.],
+  [Deploy: $99%$ training accuracy shows the classifier is ready],
+  [Add every regularizer at once and keep the best test score],
+  [Inspect validation curves, preserve the test seal, then change one lever],
+  [Tune directly on the test set because validation is lower],
 )
 
-== Answer: training is not the goal #A
-
-#mcq-answer([C], [It may have memorized the training set], [We care about expected performance on unseen data. A small training loss can coexist with a large generalization gap.])
-
-== Train loss vs test loss #D
-
-*Training loss* — an empirical average over the data we happened to collect:
 #pause
-$ cal(L)_"train"(theta) = 1/n sum_(i=1)^n ell(f_theta (x_i), y_i) $
-#pause
-*Test loss* — the expectation over the *true* data distribution $p_"data"$:
-#pause
-$ cal(L)_"test"(theta) = EE_((x,y) ~ p_"data") [ell(f_theta (x), y)] $
-#pause
-#notebox[We only ever *see finite data*; $cal(L)_"train"$ is a noisy estimate of the quantity we actually want, $cal(L)_"test"$.]
+#note([Write *A, B, C,* or *D* plus one sentence of evidence. No answer is revealed yet.], color: BLUE)
 
-== The generalization gap
+== Keep the commitment; every section updates one ledger
 
-$ underbrace(cal(L)_"test" - cal(L)_"train", "generalization gap") $
-#pause
-#v(4pt)
-*Overfitting*: training loss keeps falling while validation loss *turns up*.
-#pause
-#fig("/lecture7/figures/train_val.svg", w: 60%)
+#anchor
+#v(7pt)
 
-== Overfitting can memorize
-
-Give a high-capacity net random labels $y -> y_pi$ (a fixed permutation): it can still drive $cal(L)_"train" -> 0$.
-#pause
-#alertbox[Validation remains at chance: fitting the training set is *not* evidence of a learned, general rule.]
-
-== The plan for this lecture
-
-We have networks that train. Now we must stop them from *memorizing*.
-#pause
-#align(center, table(
-  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 11pt, y: 6pt), align: (left, left),
-  table.header([*Lever*], [*What it controls*]),
-  [splits + early stopping], [when to stop],
-  [weight decay / $ell_2$], [size of the weights],
-  [dropout], [co-adaptation of units],
-  [data augmentation / mixup], [invariance, linearity],
-  [label smoothing], [overconfidence],
-  [implicit regularization], [SGD noise, architecture, init],
-))
-
-// ═══════════════════════════ PART II — Splits & early stopping ═══════════════════════════
-= Data splits and early stopping
-
-== Three splits, three jobs
-
-#align(center, table(
-  columns: 3, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 7pt), align: (left, left, left),
-  table.header([*Split*], [*Used to*], [*Touches weights?*]),
-  [*train*], [fit parameters $theta$], [yes — via gradients],
-  [*validation*], [select model / hyperparameters], [no — only choices],
-  [*test*], [final, unbiased estimate], [no — used *once*],
-))
-#pause
-#alertbox[*Never* tune on the test set. Every peek leaks information and inflates your reported number.]
-
-== Early stopping
-
-Monitor validation loss each epoch; keep the *best* checkpoint, not the last:
-$ t^star = arg min_t thin cal(L)_"val"(theta_t) $
-#pause
-#fig("/lecture7/figures/train_val.svg", w: 55%)
-#align(center, text(size: 16pt, fill: MUTED)[train keeps falling; validation is U-shaped — stop at the bottom.])
-
-== Worked example: early stopping #D
-
-Six epochs of training. Which checkpoint do we keep?
-#pause
-#align(center, table(
-  columns: 7, stroke: 0.5pt + MUTED, inset: (x: 9pt, y: 6pt), align: center,
-  table.header([*epoch*], [1], [2], [3], [4], [5], [6]),
-  [$cal(L)_"train"$], [1.20], [0.80], [0.45], [0.32], [0.28], [0.25],
-  [$cal(L)_"val"$], [1.25], [0.98], [0.82], [#text(fill: GREEN, weight: 700)[0.78]], [0.84], [0.97],
-))
-#pause
-#v(3pt)
-- Training loss is *lowest at epoch 6* — but that is not what we want;
-#pause
-- Validation loss bottoms out at *epoch 4* ($0.78$), then rises → overfitting.
-#pause
-#result[keep $theta_4$ — the *last epoch is the wrong choice*]
-
-== Early stopping as implicit regularization
-
-Why does stopping early help?
-#pause
-- Weights *grow* over training; stopping early keeps them *small*;
-#pause
-- fewer effective updates ⇒ a *simpler* function is explored;
-#pause
-#notebox[Early stopping limits *effective capacity* without changing the architecture — a free, always-on regularizer. It is the cheapest one you have.]
-
-== Interactive: train / val / overfit #I
-
-#interbox(link-to: IA + "double-descent")[
-  Sweep model capacity and training time and watch the train and validation curves separate — find the checkpoint where validation is lowest before the gap opens.
-]
-#pause
-Find the checkpoint with the lowest *validation* loss rather than the last or lowest-training-loss checkpoint.
-
-// ═══════════════════════════ PART III — Capacity, bias, variance ═══════════════════════════
-= Capacity, bias and variance
-
-== Three regimes
-
-#align(center, table(
-  columns: 4, stroke: 0.5pt + MUTED, inset: (x: 11pt, y: 7pt), align: (left, center, center, left),
-  table.header([*Regime*], [$cal(L)_"train"$], [$cal(L)_"val"$], [*Diagnosis*]),
-  [underfit], [high], [high], [too little capacity],
-  [good fit], [low], [low], [capacity \~ right],
-  [overfit], [low], [high], [memorizing train],
-))
-#pause
-#fig("/lecture7/figures/bias_variance_poly.svg", w: 74%)
-
-== Bias–variance decomposition
-
-Expected test error splits into three pieces:
-$ EE[("error")^2] approx underbrace("bias"^2, "too simple") + underbrace("variance", "too sensitive") + underbrace(sigma^2, "irreducible noise") $
-#pause
-- *high bias* — the model is too simple; misses the true pattern (underfit);
-#pause
-- *high variance* — the model is too sensitive to the particular sample (overfit).
-#pause
-#notebox[More capacity ↓ bias but ↑ variance. Classically we trade one against the other.]
-
-== Worked example: polynomial fits #V
-
-Fit $y = sin(2 pi x) + epsilon$ from noisy samples with polynomials of degree $d$:
-#pause
-#fig("/lecture7/figures/bias_variance_poly.svg", w: 82%)
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[$d = 1$ underfits (high bias) · $d = 5$ fits · $d = 15$ overfits (high variance)])
-
-== The deep-learning twist
-
-Classical wisdom: *bigger model ⇒ more overfitting*. Modern practice complicates this.
-#pause
-- huge over-parameterized nets often generalize *well*, not worse;
-#pause
-- what governs generalization: *optimization, data, architecture, implicit bias* — not just parameter count;
-#pause
-#align(center, double-descent-plot(size: (66mm, 40mm)))
-
-== Double descent
-
-#two(
-  double-descent-plot(size: (72mm, 46mm)),
-  [
-    Past the interpolation threshold, test error can *fall again* — the modern "second descent".
-    #v(6pt)
-    #notebox[Parameter count is a poor proxy for capacity in deep nets. #text(fill: MUTED)[(active research)]]
-  ],
+#ledger(
+  gap: [#uncover("2-")[#text(fill: RED)[observed] · $99-72=27$ points; cause not yet identified]],
+  checkpoint: [#uncover("3-")[validation curve not yet inspected; test remains sealed]],
 )
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[But *validation discipline is still non-negotiable* — it is how we know what is happening.])
 
-// ═══════════════════════════ PART IV — Weight decay & L2 ═══════════════════════════
-= Weight decay and $ell_2$ regularization
+#pause
+#pause
+#pause
 
-== Penalize large weights
+#note([The ledger separates *evidence already measured* from *the next intervention to test*.], color: ACC)
 
-Add a penalty on the *size* of the weights to the data loss:
-#pause
-$ cal(L)_"reg"(theta) = cal(L)_"data"(theta) + lambda norm(theta)^2 $
-#pause
-- $lambda > 0$ — the *regularization strength* (a hyperparameter);
-#pause
-- large weights ⇒ sharp, wiggly functions; the penalty prefers *smooth* ones.
-#pause
-#notebox[$ell_2$ regularization $<=>$ a *Gaussian prior* on the weights: MAP estimation with $theta ~ cal(N)(0, sigma^2 I)$ gives exactly this penalty.]
+== The student contract and 80-minute route #V
 
-== The gradient of the penalty #D
+By the end, you should be able to diagnose a gap, choose one matching remedy, and define the evidence that would justify keeping it.
 
-Differentiate $cal(L)_"reg" = cal(L)_"data" + lambda norm(theta)^2$:
-$ nabla cal(L)_"reg" = nabla cal(L)_"data" + 2 lambda thin theta $
-#pause
-Substitute into the SGD step:
-$ theta_(t+1) = theta_t - eta (nabla cal(L)_"data" + 2 lambda thin theta_t) $
-#pause
-$ theta_(t+1) = (1 - 2 eta lambda) thin theta_t - eta thin nabla cal(L)_"data" $
-#pause
-#result[a *multiplicative shrinkage* $(1 - 2 eta lambda)$ before the gradient step]
-
-== Why "weight decay"?
-
-Each step first *shrinks* the weight toward zero, then applies the gradient (write $lambda' = 2 lambda$ to fold the $2$ into the decay rate):
-$ theta_t arrow.r.bar (1 - eta lambda') thin theta_t, quad quad lambda' = 2 lambda $
-#pause
-#notebox[Absent any gradient, weights *decay* geometrically toward $0$ — hence the name. $ell_2$ regularization and weight decay are the same mechanism (for SGD).]
-
-== Worked example: one decay step #D
-
-$theta = 5$, gradient $g = 3$, learning rate $eta = 0.1$, decay $lambda' = 0.2$:
-#pause
-*Without* weight decay — a plain gradient step:
-$ theta^+ = theta - eta thin g = 5 - 0.1 dot 3 = 4.7 $
-#pause
-*With* weight decay, shrink first, then step: $theta^+ = (1 - eta lambda') theta - eta g$.
-#pause
-Step 1 — the shrink factor: #h(0.5em) $1 - eta lambda' = 1 - 0.1 dot 0.2 = 0.98$.
-#pause
-Step 2 — shrink the weight: #h(0.5em) $0.98 dot 5 = 4.9$.
-#pause
-Step 3 — subtract the gradient step: #h(0.5em) $4.9 - 0.1 dot 3 = 4.9 - 0.3 = 4.6$.
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[the extra $-0.1$ ($4.7$ vs $4.6$) is the shrinkage pulling the weight toward zero.])
-
-== Adam ≠ Adam + $ell_2$: AdamW #D
-
-For *SGD*, adding $lambda norm(theta)^2$ to the loss $equiv$ weight decay (up to scaling).
-#pause
-For *Adam* they *differ*: the $2 lambda theta$ term gets divided by $sqrt(hat(v))$ like any gradient — so decay is *distorted* per coordinate.
-#pause
-Loshchilov & Hutter *decoupled* it — apply decay directly to the weights:
-$ theta arrow.r.bar "AdamStep"(theta), quad quad theta arrow.r.bar (1 - eta lambda) thin theta $
-#pause
-#result[use *AdamW*, not Adam with naive $ell_2$]
-
-== When (and when not) to decay
-
-- Use it almost everywhere: *MLPs, CNNs, Transformers*, large models;
-#pause
-- typical $lambda$: $10^(-4)$ to $10^(-2)$ (tune on validation);
-#pause
-- *do not* decay *biases*, *norm* scale/shift, and often not *embeddings* — decaying them helps nothing and can hurt.
-#pause
-#notebox[Rule of thumb: decay the *weight matrices*, leave the *one-dimensional* parameters alone.]
-
-== Weight decay shrinks the weights #V
-
-Weight norm $norm(theta)$ over training for several $lambda$:
-#pause
-// native ml-plot: ‖θ‖ = 3(1−e^(−0.10 s))/(1+8λ) + 0.15 (mirrors l7_figs.py f_weight_decay)
-// closed-form settling of the weight norm; wd-series returns the fn of the step s
-#let wd-series(lam) = s => 3.0 * (1 - calc.exp(-0.10 * s)) * (1.0 / (1.0 + 8.0 * lam)) + 0.15
-#align(center, lines(
-  fn: (wd-series(0.0), wd-series(0.01), wd-series(0.05), wd-series(0.15)),
-  domain: (0, 59), samples: 59,
-  colors: (INK, BLUE, TEAL, ACC),
-  markers: false,
-  x-label: [training step], y-label: [weight norm $norm(theta)$],
-  size: (82mm, 46mm),
+#v(8pt)
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
+  hairline([CORE · 55 min], [gap and split → early stopping → weight decay → dropout], color: TEAL),
+  hairline([SHOULD COVER · 15 min], [task-valid augmentation → mixup → smoothing and calibration], color: BLUE),
+  hairline([OPTIONAL · 10 min], [optimizer nuance → implementation details → notebook traces], color: MUTED),
 ))
-#align(center, text(size: 15pt)[#text(fill: INK)[$lambda = 0$] · #text(fill: BLUE)[$lambda = 0.01$] · #text(fill: TEAL)[$lambda = 0.05$] · #text(fill: ACC)[$lambda = 0.15$]])
-#align(center, text(size: 16pt, fill: MUTED)[larger $lambda$ ⇒ smaller final weights ⇒ smoother function.])
 
-== Interactive: weight decay #I
+#v(10pt)
+#semantic-legend
 
-#interbox(link-to: IA + "weight-decay")[
-  sweep $lambda$ and watch the weight norm shrink and the decision boundary smooth out; too large and the model underfits.
-]
-#pause
-Compare the unchanged shrink factor with the doubled data-gradient step when $eta$ changes.
+== A gap is a diagnostic, not a verdict #D
 
-// ═══════════════════════════ PART V — Dropout ═══════════════════════════
-= Dropout
+#anchor
 
-== The idea
+#pause
+$ "gap" = "Acc"_"train" - "Acc"_"val" = 0.99 - 0.72 = 0.27. $
 
-During training, randomly *drop* each hidden unit with probability $1 - p$:
 #pause
-$ m_j ~ "Bernoulli"(p), quad quad tilde(h) = m dot.o h $
-#pause
-- a different random *subnetwork* is trained on every minibatch;
-#pause
-- units cannot rely on any single partner ⇒ less *co-adaptation*.
-#pause
-#fig("/lecture7/figures/dropout_mask.svg", w: 52%)
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
+  hairline([WHAT IT SAYS], [performance differs by $27$ percentage points on this fixed split], color: RED),
+  hairline([WHAT IT DOES NOT SAY], [which remedy will help, or whether $72%$ meets the deployment target], color: MUTED),
+  hairline([NEXT EVIDENCE], [training and validation loss by epoch, plus split integrity], color: BLUE),
+))
 
-== Inverted dropout: keep the scale #D
+#pause
+#result[Regularize only after the measurements distinguish *underfitting* from *overfitting*.]
 
-Dropping units shrinks the expected activation. *Rescale* by $1 / p$ during training:
-$ tilde(h) = (m dot.o h) / p $
-#pause
-Then the expected activation is *unchanged*:
-$ EE[tilde(h)_j] = 1/p dot (p dot h_j + (1-p) dot 0) = h_j $
-#pause
-#result[no test-time rescaling needed — at test time just use the full network]
+== Low training loss can coexist with memorization #V
 
-== Worked example: inverted dropout #D
+#align(center, grid(
+  columns: (52mm, 12mm, 52mm, 12mm, 52mm), gutter: 5pt, align: horizon,
+  card([TRAINING OBJECTIVE], [Rewards fitting the examples it receives.], color: TEAL),
+  flow-arrow(color: TEAL),
+  card([HIGH CAPACITY], [Can represent many rules consistent with those examples.], color: ACC),
+  flow-arrow(color: RED),
+  card([UNSEEN INPUTS], [Reveal which rule the learning process selected.], color: BLUE),
+))
 
-$h = [2, 4, 6, 8]$, keep prob $p = 0.5$, sampled mask $m = [1, 0, 1, 0]$:
 #pause
-Step 1 — apply the mask (units 2 and 4 are dropped): #h(0.4em) $m dot.o h = [2, 0, 6, 0]$.
-#pause
-Step 2 — rescale survivors by $1 \/ p = 2$:
-$ tilde(h) = (m dot.o h) / p = ([2, 0, 6, 0]) / 0.5 = [4, 0, 12, 0] $
-#pause
-Check the expectation (each unit kept w.p. $0.5$, scaled by $2$):
-$ EE[tilde(h)] = 0.5 dot (h / 0.5) = h = [2, 4, 6, 8] $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[surviving units are *doubled*, so the layer's expected output is preserved.])
+#v(10pt)
+#note([
+  Deep networks can fit random labels, so training fit alone does not identify a useful rule.
+  Evidence: #link(MEM)[Zhang et al. (2017), *Understanding deep learning requires rethinking generalization*].
+], color: RED)
 
-== Why it helps: model averaging
-
-Each mask trains a *different subnetwork* — dashed units are dropped this step:
 #pause
-#dropoutnet
+#caption[This claim motivates a measurement protocol; it does not claim that our five-class labels are random.]
+
+// ═══════════════════════ SPLITS + STOPPING · CORE ═════════════════════
+= Split the decisions, then stop on validation
+
+== Three splits have three different jobs #V
+
+#align(center, grid(
+  columns: (54mm, 12mm, 54mm, 12mm, 54mm), gutter: 5pt, align: horizon,
+  card([TRAIN · TEAL], [Gradient updates fit $theta$. Reused every epoch.], color: TEAL),
+  flow-arrow(label: [fit], color: TEAL),
+  card([VALIDATE · BLUE], [Select epoch, $lambda$, $p_"drop"$, and transforms.], color: BLUE),
+  flow-arrow(label: [freeze], color: BLUE),
+  card([TEST · INK], [One final report after all choices are frozen.], color: INK),
+))
+
 #pause
-We fit exponentially many subnetworks; at test the full net *approximates their average*.
-#pause
-#notebox[An *ensemble-like* effect from one model — but an intuition, not an exact Bayesian average. Do not overclaim it.]
-
-== Dropout caveats
-
-- Works best on *fully-connected* layers and *classifier heads*;
-#pause
-- less useful alongside strong *augmentation* and *normalization* (which already regularize);
-#pause
-- adds gradient noise ⇒ can *slow optimization*, needs more epochs;
-#pause
-- tune the *keep* rate $p approx 0.5$–$0.8$ (i.e. drop $20$–$50%$).
-
-== Interactive: dropout #I
-
-#interbox(link-to: IA + "dropout-playground")[
-  Toggle dropout on a small MLP, sweep the rate, and watch training vs validation loss — see how too much drop underfits and too little overfits.
-]
-
-// ═══════════════════════════ PART VI — Data augmentation ═══════════════════════════
-= Data augmentation
-
-== Regularize by enlarging the data
-
-Generate new *label-preserving* examples from the ones you have:
-$ (x, y) arrow.r.bar (T(x), y), quad quad T "preserves the label" $
-#pause
+#v(12pt)
 #align(center, table(
-  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 11pt, y: 6pt), align: (left, left),
-  table.header([*Domain*], [*Transforms $T$*]),
-  [images], [crop, flip, rotate, color jitter, noise],
-  [audio / time series], [time-shift, mask spans, add noise],
-  [text], [paraphrase, synonym swap, back-translation],
+  columns: (38mm, 58mm, 102mm), stroke: 0.45pt + MUTED,
+  inset: (x: 10pt, y: 6pt), align: (left, left, left),
+  table.header([split], [may affect], [must not affect]),
+  [#text(fill: TEAL)[train]], [weights], [final reported metric],
+  [#text(fill: BLUE)[validation]], [model and checkpoint choices], [gradient updates in the basic protocol],
+  [#text(fill: INK)[test]], [final report only], [weights, hyperparameters, or retry decisions],
 ))
 
-== Augmentation teaches invariance #V
-
-If $T$ preserves the label, we want the model to be *invariant* to it:
-$ f_theta (x) approx f_theta (T(x)) $
-#pause
-#fig("/lecture7/figures/augmentation.svg", w: 82%)
-#align(center, text(size: 16pt, fill: MUTED)[same object, many views — the network learns to ignore the nuisance transform.])
-
-== Bad augmentation encodes wrong knowledge
-
-Augmentation *injects domain knowledge* — the wrong $T$ injects the wrong knowledge:
-#pause
-- flipping a *6* into a *9* — the label changed;
-#pause
-- *time-reversing* speech or a heartbeat — no longer valid;
-#pause
-- *color* jitter when *color is the label* (ripe vs unripe fruit);
-#pause
-- *cropping out* the object you are trying to classify.
-#pause
-#alertbox[$T$ must preserve the label. Choosing $T$ *is* a modelling decision about what should not matter.]
-
-== Mixup: interpolate examples
-
-Blend two examples *and* their labels with $lambda ~ "Beta"(alpha, alpha)$:
-$ tilde(x) = lambda x_i + (1 - lambda) x_j, quad quad tilde(y) = lambda y_i + (1 - lambda) y_j $
-#pause
-#fig("/lecture7/figures/mixup.svg", w: 46%)
-#align(center, text(size: 16pt, fill: MUTED)[convex combinations encourage *linear* behaviour between examples.])
-
-== Worked example: mixup #D
-
-$x_A$ = cat, $y_A = [1, 0]$; $x_B$ = dog, $y_B = [0, 1]$; mix $lambda = 0.7$:
-#pause
-The complementary weight is $1 - lambda = 0.3$. Blend the inputs:
-$ tilde(x) = 0.7 thin x_A + 0.3 thin x_B $
-#pause
-Blend the labels the *same* way:
-$ tilde(y) = 0.7 [1, 0] + 0.3 [0, 1] = [0.7, 0.3] $
-#pause
-Train with the *soft* cross-entropy against this target:
-$ ell = - sum_k tilde(y)_k log p_k = -0.7 log p_1 - 0.3 log p_2 $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[the network is asked to be $70%$ cat, $30%$ dog — no hard boundary jump.])
-
-== Interactive: augmentation + mixup #I
-
-#interbox(link-to: IA + "augmentation-mixup")[
-  apply transforms and mixup to a 2-D dataset and watch the decision boundary become smoother and more invariant.
-]
-#pause
-Observe how soft targets discourage infinite-margin, overconfident logits.
-
-// ═══════════════════════════ PART VII — Label smoothing ═══════════════════════════
-= Label smoothing
-
-== Hard labels push to extremes
-
-With a one-hot target, cross-entropy keeps pushing $p_y -> 1$:
-$ ell = - log p_y quad ==> quad "logits" -> plus.minus infinity $
-#pause
-#notebox[The model is rewarded for *ever more extreme* confidence — even on ambiguous or mislabelled examples. This encourages *overconfidence*.]
-
-== Softening the target #D
-
-Move a little mass $epsilon$ off the correct class onto the rest:
-$ y_k^"smooth" = cases(1 - epsilon & "if " k = y, epsilon \/ (K - 1) & "otherwise") $
-#pause
-Equivalently, mix the one-hot with a uniform distribution over the *other* classes.
-#pause
-#fig("/lecture7/figures/label_smoothing.svg", w: 60%)
-
-== Worked example: label smoothing #D
-
-$K = 5$ classes, smoothing $epsilon = 0.1$, correct class $= 2$:
-#pause
-Correct class keeps most of the mass: #h(0.4em) $1 - epsilon = 0.9$.
-#pause
-The remaining $epsilon = 0.1$ is split over the $K - 1 = 4$ others: #h(0.4em) $epsilon/(K-1) = 0.1/4 = 0.025$.
-#pause
-Assemble the target vector:
-$ y^"smooth" = [0.025, 0.025, thick 0.9, thick 0.025, 0.025] $
-#pause
-Verify it is a distribution: #h(0.4em) $0.9 + 4 dot 0.025 = 1$.
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[still sums to $1$; the target is achievable with *finite* logits.])
-
-== Why it helps (and when it hurts)
-
-- *discourages extreme confidence* — logits stay bounded;
-#pause
-- improves *calibration* (predicted probabilities match accuracy);
-#pause
-- adds *robustness to noisy labels* and often improves generalization;
-#pause
-#alertbox[Can *hurt* when you need exact confidences — e.g. *knowledge distillation* or when downstream code reads calibrated probabilities.]
-
-== Interactive: label smoothing #I
-
-#interbox(link-to: IA + "calibration")[
-  Sweep $epsilon$ and watch the reliability diagram — see over-confident predictions pull back toward the diagonal as smoothing increases.
-]
-
-// ═══════════════════════════ PART VIII — Noise & implicit regularization ═══════════════════════════
-= Noise and implicit regularization
-
-== Noise is a regularizer
-
-Many effective regularizers work by *injecting noise* during training:
-#pause
-- *SGD* minibatch sampling — noisy gradients;
-#pause
-- *dropout* — noisy activations;
-#pause
-- *augmentation* — noisy inputs;
-#pause
-- *stochastic depth*, *label / input noise*.
-#pause
-#notebox[Noise prevents the network from building *brittle*, precise dependencies — it must be robust to the perturbation.]
-
-== Explicit vs implicit regularization
-
-#align(center, table(
-  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 7pt), align: (left, left),
-  table.header([*Explicit* (a term / operation)], [*Implicit* (a side effect)]),
-  [$+ lambda norm(theta)^2$ penalty], [SGD gradient noise],
-  [dropout], [architecture / optimizer bias],
-  [data augmentation], [early stopping],
-  [label smoothing], [normalization, initialization],
-))
-#pause
-#align(center, text(size: 17pt, fill: INK)[Regularization is *not only a penalty term*.])
-
-== Regularization changes the learned function #V
-
-Two models can both fit the training set to $cal(L)_"train" approx 0$ — yet differ:
-#pause
-#fig("/lecture7/figures/decision_boundary_reg.svg", w: 76%)
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[regularization *picks* the smoother boundary — smaller norm, more invariance, less confidence, better val.])
-
-// ═══════════════════════════ PART IX — Practical workflow ═══════════════════════════
-= A practical workflow
-
-== First: debug before you regularize #Q
+== Why does repeated test checking leak information? #Q
 
 #mcq(
-  [Both training and validation loss are high. What should be tried before adding dropout?],
-  [Add stronger regularization immediately],
-  [Improve the fit: capacity, optimization, data checks, or training time],
-  [Stop training earlier],
-  [Increase label smoothing until training loss vanishes],
+  [After every run, a team reports test accuracy and chooses the next $lambda$. What has the test set become?],
+  [A larger training set],
+  [A validation set used indirectly for selection],
+  [An unbiased final estimate with lower variance],
+  [A regularizer because the labels were not differentiated],
 )
 
-== Answer: diagnose underfitting first #A
-
-#mcq-answer([B], [Improve the fit first], [High training loss signals underfitting or a pipeline issue. More regularization would make fitting even harder.])
-
-Fix the fit first: *bigger model*, *train longer*, *better LR*, *less augmentation*, *check the labels*.
 #pause
-#alertbox[Adding regularization to an underfit model makes it *worse*. Regularize only once you can *overfit*.]
+#note([Commit before the next slide. Name the decision that consumed test information.], color: BLUE)
 
-== Then: regularize an overfit model
+== Answer: selection turns test into validation #A
 
-Training loss *low*, validation loss *high* ⇒ overfitting. Now reach for:
-#pause
-#align(center, table(
-  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 11pt, y: 6pt), align: (left, left),
-  table.header([*Lever*], [*First choice when...*]),
-  [more data / augmentation], [cheap to collect more or transform],
-  [weight decay], [almost always — near-free],
-  [dropout], [MLP / classifier head],
-  [early stopping], [always on],
-  [smaller model], [data is truly limited],
-  [label smoothing], [over-confident / noisy labels],
-))
+#mcq-answer(
+  [B],
+  [a validation set used indirectly for selection],
+  [The chosen $lambda$ depends on test outcomes. The final reported score is therefore conditional on having searched that same set.],
+)
 
-== A regularization dashboard
+#pause
+#result[Seal the test set; if it changes a decision, it was not a final test.]
 
-Track more than the loss — watch *what* is being controlled:
-#pause
-- $cal(L)_"train"$ *and* $cal(L)_"val"$ (and the gap between them);
-#pause
-- $"acc"_"train"$ *and* $"acc"_"val"$;
-#pause
-- weight norm $norm(theta)$;
-#pause
-- confidence $max_k p_k$ and *calibration error*.
-#pause
-#notebox[If the *gap* widens while train keeps improving, you are overfitting — turn a regularization knob.]
+== Which checkpoint should survive? #Q
 
-== Worked diagnosis #D
+#anchor
+#v(7pt)
 
 #align(center, table(
-  columns: 4, stroke: 0.5pt + MUTED, inset: (x: 10pt, y: 7pt), align: (center, center, center, left),
-  table.header([*Model*], [$"acc"_"train"$], [$"acc"_"val"$], [*Action*]),
-  [A], [65%], [63%], [underfit → *add capacity*, train longer],
-  [B], [99%], [72%], [overfit → *regularize* / augment / early-stop],
+  columns: 7, stroke: 0.45pt + MUTED, inset: (x: 10pt, y: 6pt), align: center,
+  table.header([epoch], [1], [2], [3], [4], [5], [6]),
+  [#text(fill: TEAL)[train loss]], [1.20], [0.80], [0.45], [0.32], [0.28], [0.25],
+  [#text(fill: BLUE)[validation loss]], [1.25], [0.98], [0.82], [0.78], [0.84], [0.97],
 ))
-#pause
-#v(3pt)
-The gap is $"acc"_"train" - "acc"_"val"$: #h(0.5em) A $-> 2%$, #h(0.4em) B $-> 27%$.
-#pause
-- *A*: small gap, both low ⇒ the model *cannot fit* — do *not* regularize;
-#pause
-- *B*: large gap ⇒ the model *memorized* — rein it in.
 
-== Practical defaults
+#pause
+#note([Choose the checkpoint and explain why epoch 6 is not automatically best.], color: BLUE)
+
+== Restore epoch 4: it is the observed validation minimum #A
+
+#align(center, early-curves)
+
+#pause
+#align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
+  hairline([SELECTION], [minimum validation loss is $0.78$ at epoch $4$], color: BLUE),
+  hairline([PATIENCE = 2], [epochs $5$ and $6$ fail to improve; stop after epoch $6$, restore epoch $4$], color: ACC),
+))
+
+#pause
+#caption[The plotted points are exactly the six values in the preceding table; both curves share one loss axis.]
+
+== Ledger update: the first remedy is a checkpoint, not a new model
+
+#anchor
+#v(6pt)
+
+#ledger(
+  gap: [#text(fill: RED)[observed] · $27$ points on the fixed validation split; test sealed],
+  checkpoint: [#text(fill: GREEN)[keep] · epoch $4$, validation loss $0.78$; patience $2$ stops after epoch $6$],
+)
+
+#pause
+#note([Early stopping limits how far optimization follows the training objective. It does not repair a broken split or distribution shift.], color: ACC)
+
+// ═════════════════════════ WEIGHT DECAY · CORE ════════════════════════
+= Constrain the weights
+
+== Weight decay changes which fitting solution is preferred #V
+
+#align(center, grid(columns: (1fr, 1fr), gutter: 24pt,
+  hairline([DATA FIT], [$cal(L)_"train"(theta)$ rewards agreement with training labels], color: TEAL),
+  hairline([SIZE PREFERENCE], [$lambda/2 norm(theta)_2^2$ penalizes large parameter coordinates], color: ACC),
+))
+
+#pause
+$ cal(J)(theta) = cal(L)_"train"(theta) + lambda/2 norm(theta)_2^2. $
+
+#pause
+#note([
+  The factor $1/2$ is a convention: it makes $nabla_theta (lambda norm(theta)^2/2)=lambda theta$.
+  Always read the implementation before comparing numerical $lambda$ values.
+], color: ACC)
+
+== Derive the shrinkage step before naming the optimizer #D
+
+Let $g_t=nabla_theta cal(L)_"train"(theta_t)$. For plain SGD on the objective above,
+
+#pause
+$ theta_(t+1) = theta_t - eta (g_t + lambda theta_t). $
+
+#pause
+$ theta_(t+1) = underbrace((1-eta lambda) theta_t)_"shrink" - underbrace(eta g_t)_"fit data". $
+
+#pause
+#align(center, grid(columns: (1fr, 1fr), gutter: 24pt,
+  hairline([INTERVENTION], [$lambda$ controls multiplicative shrinkage], color: ACC),
+  hairline([MEASUREMENT], [validation loss chooses $lambda$; weight norm is a mechanism check], color: BLUE),
+))
+
+== Calculate one scalar update completely #D
+
+#anchor
+#v(8pt)
+
+Given $theta_t=5$, training gradient $g_t=3$, learning rate $eta=0.1$, and decay rate $lambda_"wd"=0.2$:
+
+#pause
+$ 1-eta lambda_"wd" = 1-(0.1)(0.2)=0.98. $
+
+#pause
+$ theta_(t+1) = underbrace(0.98 times 5)_"decay" - underbrace(0.1 times 3)_"gradient" = 4.90-0.30 = 4.60. $
+
+#pause
+#result[Decay accounts for $0.10$ of the change; the data gradient accounts for $0.30$.]
+
+== AdamW keeps decay outside the adaptive gradient transform #V
+
+#align(center, grid(columns: (1fr, 1fr), gutter: 24pt,
+  card([COUPLED L2], [$theta^+ = theta - eta P_t(g + lambda theta)$
+  The penalty enters adaptive moments and preconditioning.], color: MUTED),
+  card([DECOUPLED ADAMW], [$theta^+ = (1-eta lambda_"wd")theta - eta P_t(g)$
+  Shrinkage is applied directly to the parameter.], color: ACC),
+))
+
+#pause
+#note([
+  These coincide for plain SGD up to convention, but not generally for adaptive optimizers.
+  Primary source: #link(ADAMW)[Loshchilov & Hutter, *Decoupled Weight Decay Regularization*].
+], color: ACC)
+
+== Honest evidence: norm is a mechanism; validation chooses the setting #V
 
 #align(center, table(
-  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 11pt, y: 6pt), align: (left, left),
-  table.header([*Setting*], [*Default recipe*]),
-  [images (CNN)], [augmentation + weight decay + early stopping],
-  [MLP / tabular], [weight decay + dropout + early stopping],
-  [Transformer], [AdamW + dropout + (label smoothing) + aug],
-  [small data], [transfer learning + strong validation],
+  columns: (40mm, 58mm, 58mm, 48mm), stroke: 0.45pt + MUTED,
+  inset: (x: 9pt, y: 6pt), align: center,
+  table.header([$lambda_"wd"$], [validation loss], [$norm(theta)_2$], [selection]),
+  [$0$], [$0.596$], [$4.921$], [reject],
+  [$0.03$], [$0.456$], [$2.195$], [#text(fill: GREEN)[best validation]],
+  [$0.20$], [$0.482$], [$0.928$], [reject: $0.482 > 0.456$],
 ))
+
 #pause
-#notebox[Start simple, add one knob at a time, and let *validation* decide whether it helped.]
+#caption[Recorded companion ring experiment in notebook 2; it is not fabricated evidence from the five-class anchor.]
 
-// ═══════════════════════════ PART X — Summary ═══════════════════════════
-= Summary
+#pause
+#result[A smaller norm confirms shrinkage occurred; it does *not* by itself prove better generalization.]
 
-== One table: every method
+== Ledger update: test one weight intervention at a time
+
+#anchor
+#v(5pt)
+
+#ledger(
+  gap: [#text(fill: RED)[observed] · $27$ points; test sealed],
+  checkpoint: [#text(fill: GREEN)[keep] · epoch $4$, validation loss $0.78$],
+  weights: [#text(fill: ACC)[candidate] · decoupled $lambda_"wd"$; scalar audit $5 arrow.r 4.60$; select using validation],
+)
+
+#pause
+#note([Do not combine a new decay rate, dropout probability, and augmentation policy in the same comparison.], color: BLUE)
+
+// ═══════════════════════════ DROPOUT · CORE ═══════════════════════════
+= Perturb the representation
+
+== Dropout trains a sampled representation, not a smaller stored network #V
+
+#align(center, grid(columns: (1fr, 1fr), gutter: 26pt,
+  card([ONE TRAINING PASS], [Mask $m=(1,0,1,0)$ keeps two hidden coordinates.
+  The next layer sees a sampled feature set.], color: ACC),
+  card([EVALUATION], [The mask is disabled. All learned coordinates contribute through the complete network.], color: TEAL),
+))
+
+#pause
+#v(12pt)
+#align(center, grid(columns: (40mm, 8mm, 40mm, 8mm, 40mm, 8mm, 40mm), gutter: 4pt, align: horizon,
+  card([$h_1=2$], [keep], color: TEAL), flow-arrow(color: MUTED),
+  card([$h_2=4$], [drop], color: MUTED), flow-arrow(color: MUTED),
+  card([$h_3=6$], [keep], color: TEAL), flow-arrow(color: MUTED),
+  card([$h_4=8$], [drop], color: MUTED),
+))
+
+#pause
+#caption[The rectangular layout shows values and mask state directly; no node or edge implies an unshown computation.]
+
+== Inverted dropout preserves each activation in expectation #D
+
+$ m_i tilde "Bernoulli"(p_"keep"), quad tilde(h)_i = m_i h_i / p_"keep". $
+
+#pause
+$ EE[tilde(h)_i] = EE[m_i]h_i/p_"keep" = p_"keep" h_i/p_"keep" = h_i. $
+
+#pause
+For $h=[2,4,6,8]$, $m=[1,0,1,0]$, and $p_"keep"=0.5$:
+
+#pause
+$ tilde(h) = [1 times 2,0 times 4,1 times 6,0 times 8]/0.5 = [4,0,12,0]. $
+
+#pause
+#note([One mask is not equal to the original vector; the equality is an expectation over masks.], color: ACC)
+
+== Name the probability: PyTorch takes the drop probability #V
 
 #align(center, table(
-  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 7pt), align: (left, left),
-  table.header([*Method*], [*What it controls*]),
-  [early stopping], [effective complexity — when to stop],
-  [weight decay], [parameter norm $norm(theta)$],
-  [dropout], [co-adaptation / activation noise],
-  [data augmentation], [invariance to nuisance transforms],
-  [mixup], [linearity between examples],
-  [label smoothing], [overconfidence / calibration],
-  [validation split], [model selection — the judge],
+  columns: (46mm, 74mm, 84mm), stroke: 0.45pt + MUTED,
+  inset: (x: 10pt, y: 7pt), align: (left, left, left),
+  table.header([symbol / API], [meaning], [separate API example]),
+  [$p_"keep"$], [probability that a coordinate survives], [$0.8$],
+  [$p_"drop"=1-p_"keep"$], [probability that it is zeroed], [$0.2$],
+  [`nn.Dropout(p)`], [`p` means $p_"drop"$, not $p_"keep"$], [`Dropout(p=0.2)`],
 ))
 
-== Final mental model — one idea
+#pause
+#codebox(size: 14pt)[```python
+import torch
+h = torch.tensor([2., 4., 6., 8.])
+drop = torch.nn.Dropout(p=0.2)  # p_drop = 0.2, p_keep = 0.8
+drop.train(); y_train = drop(h)  # random, scaled by 1/(1-p)
+drop.eval();  y_eval  = drop(h)  # identity
+```]
 
-#align(center, text(size: 22pt)[
-  Optimization *reduces training loss*. \
-  Regularization *improves unseen-data performance*. \
-  #v(4pt)
-  #text(size: 18pt, fill: MUTED)[validation tells us whether it is actually helping.]
-])
+#pause
+#caption[The preceding mask calculation used $p_"keep"=0.5$; unequal values here expose the API conversion.]
+
+== Training and evaluation must disagree in exactly one controlled way #V
+
+#align(center, table(
+  columns: (46mm, 76mm, 82mm), stroke: 0.45pt + MUTED,
+  inset: (x: 10pt, y: 7pt), align: (left, left, left),
+  table.header([mode], [dropout], [what remains fixed]),
+  [#text(fill: ACC)[`model.train()`]], [random masks + inverted scaling], [learned weights, input, loss definition],
+  [#text(fill: TEAL)[`model.eval()`]], [identity mapping], [same learned weights; no manual rescaling],
+))
+
+#pause
+#align(center, grid(columns: (1fr, 1fr), gutter: 24pt,
+  hairline([EXPECTED EFFECT], [reduced reliance on any one hidden coordinate], color: ACC),
+  hairline([MEASURE], [validation loss and calibration; repeat seeds if stochastic variation matters], color: BLUE),
+))
+
+#pause
+#caption[Mechanism and empirical effect are separate claims. Dropout’s original analysis: #link(DROPOUT)[Srivastava et al. (2014)].]
+
+== When is dropout the wrong first response? #Q
+
+#mcq(
+  [Which observation argues *against* increasing dropout first?],
+  [Training loss is already high and validation loss is similarly high],
+  [Training loss is low while validation loss rises after epoch 4],
+  [The model relies on a few hidden features and validation is worse],
+  [A no-dropout baseline has lower train loss but higher validation loss],
+)
+
+#pause
+#note([Ask whether the model can fit before reducing its effective capacity.], color: BLUE)
+
+== Answer: high training loss is an underfitting signal #A
+
+#mcq-answer(
+  [A],
+  [training and validation losses are both high],
+  [Stronger dropout makes fitting harder. First verify optimization, model capacity, features, and labels.],
+)
+
+#pause
+#ledger(
+  gap: [#text(fill: RED)[observed] · $27$ points; test sealed],
+  checkpoint: [#text(fill: GREEN)[keep] · epoch $4$],
+  weights: [#text(fill: ACC)[candidate] · decoupled decay; validate],
+  dropout: [#text(fill: ACC)[candidate] · $p_"keep"=0.5$ / PyTorch $p_"drop"=0.5$; validate],
+)
+
+// ═══════════════════════ DATA + TARGETS · SHOULD ══════════════════════
+= Regularize the examples and targets
+
+== Augmentation encodes a task-specific invariance #V
+
+For a transform $T$, the desired assumption is
+
+#pause
+$ y(T(x)) = y(x) quad "for transformations allowed by the task". $
+
+#pause
+#align(center, grid(columns: (1fr, 1fr), gutter: 24pt,
+  card([VALID FOR OUR CASE], [A small translation or crop that keeps the object fully visible.], color: GREEN),
+  card([INVALID FOR OUR CASE], [A crop that removes the class-defining object.], color: RED),
+))
+
+#pause
+#note([The transform must preserve the label semantics, not merely look plausible to us.], color: ACC)
+
+== Which augmentation policy is defensible? #Q
+
+#anchor
+#v(8pt)
+
+#mcq(
+  [For the five-class object classifier, which policy states a checkable label-preservation rule?],
+  [Apply any transform that increases training loss],
+  [Translate up to two pixels, rejecting samples where the object leaves the frame],
+  [Randomly replace the class label after every crop],
+  [Rotate by any angle without inspecting class semantics],
+)
+
+== Answer: constrain the transform by the task #A
+
+#mcq-answer(
+  [B],
+  [translate only while the object remains in frame],
+  [The policy names both the transformation and the condition under which the label is preserved.],
+)
+
+#pause
+#note([A transform is an intervention. Audit a sample grid and measure validation performance before keeping it.], color: BLUE)
+
+== Mixup trains behaviour between observed examples #V
+
+$ tilde(x)=alpha x_i + (1-alpha)x_j, quad tilde(y)=alpha y_i+(1-alpha)y_j. $
+
+#pause
+#align(center, grid(
+  columns: (50mm, 12mm, 50mm, 12mm, 50mm), gutter: 5pt, align: horizon,
+  card([EXAMPLE $i$], [$x_i$, one-hot $y_i$], color: TEAL),
+  flow-arrow(label: [$alpha$], color: ACC),
+  card([INTERPOLATE], [inputs *and* targets], color: ACC),
+  flow-arrow(label: [$1-alpha$], color: ACC),
+  card([EXAMPLE $j$], [$x_j$, one-hot $y_j$], color: TEAL),
+))
+
+#pause
+#note([
+  Mixup’s claim is about training on convex combinations, not arbitrary semantic invariance.
+  Primary source: #link(MIXUP)[Zhang et al. (2018), *mixup: Beyond Empirical Risk Minimization*].
+], color: ACC)
+
+== Calculate one five-class mixup target #D
+
+Let $y_i=[1,0,0,0,0]$, $y_j=[0,0,0,1,0]$, and $alpha=0.25$.
+
+#pause
+$ tilde(y)=0.25y_i+0.75y_j=[0.25,0,0,0.75,0]. $
+
+#pause
+For predicted class probabilities $p$,
+
+#pause
+$ "CE"(tilde(y),p) = -0.25 log p_1 - 0.75 log p_4. $
+
+#pause
+#result[The target and loss use the *same* mixing coefficient as the input.]
+
+== Label smoothing has two common conventions—name yours #V
+
+For $K=5$ and $epsilon=0.1$ with class 1 correct:
+
+#pause
+#align(center, table(
+  columns: (60mm, 67mm, 67mm), stroke: 0.45pt + MUTED,
+  inset: (x: 9pt, y: 7pt), align: (left, center, center),
+  table.header([convention], [correct class], [each wrong class]),
+  [other-class redistribution], [$1-epsilon=0.90$], [$epsilon/(K-1)=0.025$],
+  [PyTorch uniform mixing], [$1-epsilon+epsilon/K=0.92$], [$epsilon/K=0.02$],
+))
+
+#pause
+#note([
+  PyTorch `CrossEntropyLoss(label_smoothing=ε)` mixes the one-hot target with a uniform distribution over *all* $K$ classes:
+  #link(PTCE)[official API definition].
+], color: BLUE)
+
+== Write both smoothed targets; they are not interchangeable #D
+
+#align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
+  card([OTHER-CLASS], [$[0.90,0.025,0.025,0.025,0.025]$], color: ACC),
+  card([PYTORCH UNIFORM], [$[0.92,0.02,0.02,0.02,0.02]$], color: BLUE),
+))
+
+#pause
+Both sum to $1$, but they assign different mass to the correct class.
+
+#pause
+#align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
+  hairline([MECHANISM], [discourages a zero-loss demand for probability exactly $1$], color: ACC),
+  hairline([MEASURE], [validation NLL and calibration, alongside accuracy], color: BLUE),
+))
+
+#pause
+#caption[Label smoothing was used in #link(SMOOTH)[Szegedy et al. (2016), *Rethinking the Inception Architecture for Computer Vision*].]
+
+== Accuracy and calibration answer different questions #V
+
+Use one validation confidence bin with $100$ examples and $72$ correct predictions.
+
+#pause
+#align(center, table(
+  columns: (60mm, 56mm, 56mm), stroke: 0.45pt + MUTED,
+  inset: (x: 10pt, y: 7pt), align: center,
+  table.header([same predicted labels], [version A], [version B]),
+  [accuracy], [$0.72$], [$0.72$],
+  [mean confidence], [$0.90$], [$0.74$],
+  [bin calibration gap], [$abs(0.90-0.72)=0.18$], [$abs(0.74-0.72)=0.02$],
+))
+
+#pause
+#result[Same accuracy, different confidence quality. Report both when probabilities drive decisions.]
+
+// ═══════════════════════ CUMULATIVE EXPERIMENT ════════════════════════
+= Turn the diagnosis into one controlled experiment
+
+== One semantic map: observe → intervene → select → report #V
+
+#align(center, grid(
+  columns: (48mm, 11mm, 56mm, 11mm, 56mm), gutter: 5pt, align: horizon,
+  card([OBSERVE], [#text(fill: RED)[training–validation gap]
+  curves and split integrity], color: RED),
+  flow-arrow(color: RED),
+  card([INTERVENE ON ONE SITE], [#text(fill: ACC)[checkpoint · weights · hidden features · data · targets]], color: ACC),
+  flow-arrow(color: BLUE),
+  card([SELECT + REPORT], [#text(fill: BLUE)[validation selects]
+  #text(fill: INK)[sealed test reports once]], color: BLUE),
+))
+
+#pause
+#v(12pt)
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
+  hairline([TRAINING PATH + PARAMETERS], [early stopping selects a checkpoint; weight decay changes parameters], color: ACC),
+  hairline([HIDDEN REPRESENTATION], [dropout perturbs hidden features during training], color: ACC),
+  hairline([EXAMPLES + TARGETS], [augmentation, mixup, and smoothing change supervision], color: ACC),
+))
+
+
+== Use symptom → suspect → test, not method → hope #V
+
+#align(center, table(
+  columns: (58mm, 68mm, 78mm), stroke: 0.45pt + MUTED,
+  inset: (x: 9pt, y: 6pt), align: (left, left, left),
+  table.header([symptom], [first suspect], [controlled test]),
+  [train and validation loss both high], [underfit / optimization], [repair fit before adding regularization],
+  [train falls; validation turns upward], [overfit with epoch], [early stop; restore validation minimum],
+  [low train; high validation across epochs], [effective capacity / representation], [sweep decay *or* dropout],
+  [accuracy stable; confidence too high], [target pressure / calibration], [declare smoothing convention; compare NLL],
+))
+
+
+== Pre-register the comparison before running it #D
+
+#anchor
+#v(6pt)
+
+#align(center, table(
+  columns: (49mm, 150mm), stroke: 0.45pt + MUTED,
+  inset: (x: 10pt, y: 5pt), align: (left, left),
+  [*baseline*], [same split, seed set, architecture, optimizer, and epoch budget],
+  [#uncover("2-")[*one change*]], [#uncover("2-")[e.g. $lambda_"wd" in {0,0.03,0.20}$; leave dropout and augmentation fixed]],
+  [#uncover("3-")[*selection*]], [#uncover("3-")[minimum validation loss; restore that checkpoint]],
+  [#uncover("4-")[*secondary measures*]], [#uncover("4-")[accuracy, NLL, calibration; norm only as a mechanism audit]],
+  [#uncover("5-")[*final report*]], [#uncover("5-")[evaluate the sealed test once after the recipe is frozen]],
+))
+
+#pause
+#pause
+#pause
+#pause
+#pause
+
+== Two direct Colab labs, one prediction-first loop #I
+
+#align(center, table(
+  columns: (48mm, 152mm), stroke: 0.45pt + MUTED,
+  inset: (x: 10pt, y: 8pt), align: (left, left),
+  [*1 · curves*], [#link(NB1)[01_overfitting_and_early_stopping.ipynb]],
+  [*2 · mechanisms*], [#link(NB2)[02_dropout_from_scratch.ipynb]],
+))
+
+#pause
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
+  hairline([PREDICT], [write the expected curve or activation before execution], color: ACC),
+  hairline([RUN], [change exactly one declared lever], color: TEAL),
+  hairline([EXPLAIN], [use validation evidence to keep or reject it], color: BLUE),
+))
+
+#pause
+#note([The two filenames above are the only two Colab links in this deck; both point directly to the public repository.], color: GREEN)
+
+== Final ledger: one case, six auditable decisions
+
+#anchor
+#v(5pt)
+
+#ledger(
+  gap: [#uncover("2-")[#text(fill: RED)[observe] · train $99%$, validation $72%$, gap $27$ points; test sealed]],
+  checkpoint: [#uncover("3-")[#text(fill: GREEN)[keep] · epoch $4$ at validation loss $0.78$]],
+  weights: [#uncover("4-")[#text(fill: ACC)[test] · decoupled decay; scalar $5 arrow.r 4.60$; select by validation]],
+  dropout: [#uncover("5-")[#text(fill: ACC)[test] · $h=[2,4,6,8] arrow.r [4,0,12,0]$ for one mask; PyTorch $p_"drop"=0.5$]],
+  data: [#uncover("6-")[#text(fill: ACC)[test] · translate/crop only while the object remains and label is preserved]],
+  targets: [#uncover("7-")[#text(fill: ACC)[test] · state smoothing convention; measure validation NLL and calibration]],
+)
+
+#pause
+#pause
+#pause
+#pause
+#pause
+#pause
+#pause
+
+// ═════════════════════════════ CLOSE ══════════════════════════════════
+= Close the loop
+
+== Retrieval: which sequence protects the claim? #Q
+
+#mcq(
+  [Which workflow supports a defensible generalization claim?],
+  [Tune on train, select on test, report validation],
+  [Change several methods, keep the run with the best test accuracy],
+  [Diagnose curves, change one lever, select on validation, report test once],
+  [Choose the smallest parameter norm without checking predictions],
+)
+
+#pause
+#note([Commit before the answer. Identify where each split appears in your choice.], color: BLUE)
+
+== Answer: diagnosis precedes intervention #A
+
+#mcq-answer(
+  [C],
+  [diagnose curves, change one lever, select on validation, report test once],
+  [The workflow aligns each dataset with one job and makes the effect of the intervention interpretable.],
+)
+
+#pause
+#result[Training demonstrates fit; validation chooses; the sealed test estimates the frozen procedure.]
+
+== Revisit the opening commitment
+
+#align(center, table(
+  columns: (28mm, 82mm, 93mm), stroke: 0.45pt + MUTED,
+  inset: (x: 9pt, y: 5pt), align: (center, left, left),
+  table.header([choice], [problem], [verdict]),
+  [A], [training fit is not unseen-data evidence], [reject],
+  [B], [many changes are not attributable; test checking leaks], [reject],
+  [C], [curves → one lever → validation → sealed test], [#text(fill: GREEN)[keep]],
+  [D], [test-driven tuning destroys the estimate], [reject],
+))
+
+#pause
+#result[The winning commitment was *C*: diagnose first, then run one controlled comparison.]
+
+== Exit ticket: prescribe the smallest next test
+
+New run: training loss falls to $0.18$; validation loss reaches $0.44$ at epoch $9$, then rises to $0.61$ by epoch $20$.
+
+#pause
+Write four lines:
+
+1. *symptom:* what changed after epoch $9$?
+2. *suspect:* which mechanism is consistent with the curves?
+3. *test:* what single intervention do you try first?
+4. *measurement:* which checkpoint and metric decide?
+
+#pause
+#note([Strong first test: restore epoch $9$, then compare one regularizer using validation—without consulting test.], color: GREEN)
+
+== L8 handoff: generalization can also come from architecture #V
+
+#align(center, grid(
+  columns: (54mm, 12mm, 54mm, 12mm, 54mm), gutter: 5pt, align: horizon,
+  card([L7], [External controls shape optimization, features, data, and targets.], color: ACC),
+  flow-arrow(label: [next], color: BLUE),
+  card([IMAGE STRUCTURE], [Nearby pixels interact; useful patterns repeat across location.], color: BLUE),
+  flow-arrow(label: [encode], color: TEAL),
+  card([L8 · CNNs], [Convolution builds locality and weight sharing into the architecture.], color: TEAL),
+))
+
+#pause
+#result[Regularization chooses among fitting rules; architectural inductive bias changes which rules are easy to express.]
 
 #focus-slide[
-  Optimization reduces train loss; regularization improves generalization; validation is the judge.
+  Diagnose the gap → change one lever → select on validation → report the sealed test once.
   #v(12pt)
   #set text(size: 22pt)
-  Next: *CNNs* — why fully-connected nets are inefficient for images.
+  Next: convolution encodes locality and sharing as architectural inductive bias.
 ]
+
+// ═════════════════════════ OPTIONAL APPENDIX · 10 MIN ═════════════════
+= Optional appendix · implementation and provenance
+
+== Coupled penalty and decoupled decay: same for SGD, different for Adam #OPT
+
+#align(center, table(
+  columns: (55mm, 73mm, 73mm), stroke: 0.45pt + MUTED,
+  inset: (x: 9pt, y: 6pt), align: (left, left, left),
+  table.header([optimizer], [coupled L2], [decoupled decay]),
+  [plain SGD], [$theta^+=(1-eta lambda)theta-eta g$], [same algebra after matching convention],
+  [adaptive method], [$theta^+=theta-eta P_t(g+lambda theta)$], [$theta^+=(1-eta lambda_"wd")theta-eta P_t(g)$],
+))
+
+#pause
+#note([The distinction is about where the penalty enters the update, not about whether norms tend to shrink.], color: ACC)
+
+== Parameter groups are a recipe choice, not a theorem #OPT
+
+#codebox(size: 13pt)[```python
+decay, no_decay = [], []
+for name, parameter in model.named_parameters():
+    target = no_decay if (name.endswith("bias") or "norm" in name) else decay
+    target.append(parameter)
+
+optimizer = torch.optim.AdamW([
+    {"params": decay, "weight_decay": 3e-2},
+    {"params": no_decay, "weight_decay": 0.0},
+], lr=1e-3)
+```]
+
+#pause
+#note([Excluding biases and normalization parameters is common, but architecture- and recipe-dependent. Log the groups you actually used.], color: MUTED)
+
+== Early stopping needs saved state, not only a stopping epoch #OPT
+
+#codebox(size: 12.5pt)[```python
+best, waits, snapshot = float("inf"), 0, None
+for epoch in range(max_epochs):
+    train_one_epoch(model)
+    value = validation_loss(model)
+    if value < best:
+        best, waits = value, 0
+        snapshot = copy.deepcopy(model.state_dict())
+    else:
+        waits += 1
+    if waits >= patience:
+        break
+model.load_state_dict(snapshot)
+```]
+
+#pause
+#note([Save optimizer state too if training will resume. For final inference, restore the selected model state.], color: BLUE)
+
+== Calibration aggregates bin gaps; binning is part of the estimate #OPT
+
+For bins $B_m$ with accuracy $"acc"(B_m)$ and mean confidence $"conf"(B_m)$,
+
+#pause
+$ "ECE" = sum_m (abs(B_m)/n) abs("acc"(B_m)-"conf"(B_m)). $
+
+#pause
+#align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
+  hairline([USE WITH CARE], [ECE changes with bin boundaries and sample size], color: MUTED),
+  hairline([PAIR WITH], [NLL, accuracy, reliability plot, and task costs], color: BLUE),
+))
+
+#pause
+#caption[The earlier $0.18$ and $0.02$ values were single-bin gaps, not full-dataset ECE claims.]
+
+== Companion notebook traces: concrete, separate from the anchor #OPT
+
+#set text(size: 15.5pt)
+#align(center, table(
+  columns: (38mm, 45mm, 55mm, 63mm), stroke: 0.45pt + MUTED,
+  inset: (x: 8pt, y: 4.5pt), align: (left, left, left, left),
+  table.header([source], [setting], [validation / agreement], [mechanism / report]),
+  [notebook 1], [epoch $1640$], [MSE $0.1167$ best; $0.1756$ last], [restored test MSE $0.1111$],
+  [notebook 2], [$lambda_"wd"=0$], [loss $0.596$], [norm $4.921$],
+  [], [$lambda_"wd"=0.03$], [loss $0.456$], [norm $2.195$],
+  [], [$lambda_"wd"=0.20$], [loss $0.482$], [norm $0.928$],
+  [transform audit], [rotation], [label agreement $1.000$], [data-specific],
+  [], [translation], [label agreement $0.838$], [data-specific],
+))
+
+#pause
+#note([These recorded outputs motivate checks; they are not substituted for the five-class trace, and model agreement alone is not proof of label preservation.], color: INK)
+
+== Primary references and vector provenance #OPT
+
+#set text(size: 14.5pt)
+
+- Zhang et al. (2017), #link(MEM)[Understanding deep learning requires rethinking generalization] — memorization and random labels.
+- Loshchilov & Hutter (2019), #link(ADAMW)[Decoupled Weight Decay Regularization] — AdamW.
+- Srivastava et al. (2014), #link(DROPOUT)[Dropout: A Simple Way to Prevent Neural Networks from Overfitting].
+- Zhang et al. (2018), #link(MIXUP)[mixup: Beyond Empirical Risk Minimization].
+- Szegedy et al. (2016), #link(SMOOTH)[Rethinking the Inception Architecture for Computer Vision] — label smoothing.
+- PyTorch, #link(PTCE)[CrossEntropyLoss] — uniform-mixture `label_smoothing` convention.
+
+#v(7pt)
+#caption[All diagrams, tables, and plotted traces in this deck are native Typst vectors computed from the values shown; no raster image is embedded. Double descent is deliberately omitted rather than assigned an unsupported threshold.]
