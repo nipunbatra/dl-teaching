@@ -1,46 +1,182 @@
-# Lecture 2 · Universal Approximation & Going Deep · Teaching Guide
-*First-time-instructor companion. Audience: undergrads, one ML course.*
+# Lecture 2 · From Linear Models to Neural Networks · Teaching Guide
 
-## The spine (say this in 2 sentences)
-One hidden layer can already approximate any continuous function (UAT) — but the proof only guarantees that good weights *exist*, says nothing about how *wide* (often astronomically) or whether SGD can *find* them. Depth is the practical answer: it is exponentially more parameter-efficient for compositional data, but naive deep nets break in three distinct ways (vanishing gradients, exploding/vanishing activations, the degradation problem), and the fixes — ReLU, He/Xavier init, and residual skip connections — all amount to *making every layer easy to leave as identity*.
+*Instructor companion for the current public Lecture 2 deck.*
 
-## Where it sits
-Builds on … L1 (MLP = affine + non-linearity; backprop = chain rule; sigmoid vanishes, ReLU un-blocks depth) · ES 335 (gradient descent from Taylor expansion; bias-variance / overfitting).
-Sets up … L03 (the practical training loop where these failures show up as silent bugs) · L04–L05 (the optimizers that navigate the landscapes init/ResNets create) · the whole architecture arc (CNNs, Transformers, diffusion U-Nets all use skip connections + normalization).
+## The spine
 
-## 80-minute plan
-- ⭐ Core (~45 min): UAT in plain English (the LEGO/bump picture) + the *three things it does NOT promise* (learnability, width, generalization) · depth-vs-width with the parity/sawtooth intuition (Telgarsky stated, not proved) · vanishing gradients term-by-term (the `w₄·w₃·w₂` product, sigmoid's 0.25 ceiling) · **the degradation problem is NOT overfitting** · the ResNet idea `y = F(x) + x` and the `∂y/∂x = I + ∂F/∂x` gradient highway.
-- ⭐⭐ Should-cover (~25 min): the curse-of-dimensionality table (1D→10 cells, 100D→10¹⁰⁰) · He vs Xavier *derived* from variance preservation · the 10-layer naive-init explosion (Var → 10²⁴, NaN at step 1) vs He (stays ≈1) · the symptom→suspect→test debugging table.
-- ⭐⭐⭐ Optional / skip-if-tight: the formal Cybenko/Hornik statement and the 3-move density proof · pre-activation ResNets · projection shortcuts (1×1 conv) · the BatchNorm-in-the-block slide. Gist if asked about the proof: "it's a *density* theorem (Stone–Weierstrass), not a construction — it tells you the target is reachable, not how to reach it."
-- **Do live on the board:** the **triangle-bump from 3 ReLUs**: `f(x) = relu(x−1) − 2·relu(x−2) + relu(x−3)`. Walk the table — x=0→0, x=1.5→0.5, x=2→1.0 (peak), x=2.5→0.5, x=4→0. A perfect triangle centered at 2. Then say "tile the axis with these, weight each by the function value there — that *is* UAT." It lands because they watch arbitrary curves get built out of three identical hinges, and they viscerally see why width grows with resolution.
+Lecture 1 chose losses from probability; Lecture 2 expands the prediction rule
+$f_\theta(x)$. Start with one affine score, show exactly why affine layers alone
+cannot represent XOR, then build and verify one two-unit ReLU MLP before widening
+the view to universal approximation, depth, minibatches, and a parameter update.
 
-## Teach it like this
-Open with the pop quiz: 15,000 parameters, spend them on 1 wide layer (5,000 units) or 50 thin layers (17 units) to fit `sin(50x)` — let them bet, and promise their gut answer will flip. Establish UAT as the "you *can* do it with one layer" result, then immediately spend the rest of the lecture on the three things UAT quietly refuses to promise — that gap *is* the lecture. Build the bump by hand (payoff #1: existence is real but width is the price), then pivot to depth as the efficient alternative, and finally show the honest cost: stack 500 plain layers and you get the degradation surprise (training error goes *up*). ResNets are the resolution — frame the skip connection as "change the default from *learn identity* to *do nothing*," and close on the `+I` gradient highway that makes 152 layers trainable.
+## What students should leave able to do
 
-## Heads-up for YOU (subtle points to get right)
-- **UAT guarantees *existence*, not *learnability* — and not a *reasonable* width.** This is the single most-mangled point. The theorem says: for any ε, *there exist* N units and weights achieving error < ε. It is silent on (a) whether SGD finds those weights, (b) how large N is — the bound can be astronomical, and (c) generalization. Don't say "one layer can learn anything"; say "one layer can *represent* anything, with possibly absurd width, and *representing* ≠ *learning*."
-- **Depth ≠ just more parameters.** The deep-narrow net in the slide has *7× fewer* parameters than the wide-shallow one (0.22M vs 1.63M) and still wins. The win is *reusable hierarchy* / compositionality, not capacity. If you frame depth as "more capacity," a sharp student will note the parameter counts contradict you. Capacity is a crude proxy; the inductive bias is the point.
-- **The degradation problem is an OPTIMIZATION failure, not overfitting.** This is the crux of the ResNet motivation and the easiest thing to state backwards. Overfitting = train error *down*, test error *up*. Degradation = train error goes *UP* with depth — the deeper plain net can't even fit the *training* set, despite strictly more capacity. A deeper net can always represent a shallower one (extra layers = identity), so this is purely "SGD can't find it." Never call degradation "overfitting from too many layers."
-- **The skip connection fixes gradient flow via the `+I`, and that's *additive*, not multiplicative.** `∂y/∂x = ∂F/∂x + I`. Even if `∂F/∂x → 0`, the `I` passes the gradient straight through. Contrast with the plain net where the Jacobians *multiply* (0.1×0.1×… → 0). Say "additive identity path = express lane," and be honest that real blocks add matrices/ReLUs/projections so it's a strong *help*, not a literal guarantee — the slide's numeric (1.46 vs 0.0001) is illustrative.
-- **"Wide enough" can mean exponentially wide — that's the curse of dimensionality, and it's *why* depth exists.** Piecewise-linear approximation to error ε needs ~O(1/ε^{d/2}) pieces for generic smooth functions in d dimensions: d=1 → ~10 cells, d=100 → 10¹⁰⁰. This is not a minor caveat; it is the entire economic case for going deep. Present the 1D bump count first so the explosion in d is shocking.
-- **He vs Xavier differ by a factor of 2 *because ReLU zeros half the activations*.** He = `2/n_in`, Xavier = `2/(n_in+n_out)`. The factor of 2 in He exactly compensates for ReLU killing half the pre-activations (`E[h²] = ½Var(y)`). Using He with tanh (which doesn't halve) over-scales → saturation. Don't present them as interchangeable "small random init"; the constant is *derived* from variance preservation and is activation-specific.
+- Track the dimensions of a weighted sum, a batch matrix multiplication, and a
+  two-layer MLP.
+- Separate the affine pre-activation $u$ from the activation $h=\phi(u)$.
+- Explain why stacking linear layers still gives a linear map and why XOR defeats
+  a single straight decision boundary.
+- Evaluate the deck's exact XOR network on all four inputs.
+- State the universal-approximation claim without turning existence into a claim
+  about learnability or generalization.
+- Explain width as feature variety and depth as staged composition.
+- Trace one practical forward pass from inputs to class scores, softmax, loss, a
+  minibatch, and one numerical parameter update.
 
-## Where students stumble (and the fix)
-- **"If one layer is universal, the whole 'go deep' lecture is pointless."** The fix is the three-promises-broken frame: universal-in-principle is not the same as trainable, reasonably-sized, or generalizing. Depth buys all three for compositional data. Make them re-derive their pop-quiz bet *after* the curse-of-dimensionality table.
-- **Conflating vanishing gradients with the degradation problem.** They are *separate* failures. Vanishing gradients = signal can't reach early layers (cured by ReLU + skips). Degradation = even with healthy gradients, adding layers raises *training* loss. ResNets help both, but for different reasons. Draw them as two rows of the master table.
-- **Thinking the skip connection is "just another layer" or that it adds capacity.** It *removes* difficulty: it makes identity the free default so the block only learns a small residual `F ≈ 0`. Weight decay and zero-ish init keep `F` small; the skip costs (almost) no parameters.
-- **Believing init only matters for "very deep" nets.** Show the 10-layer numeric: naive `N(0,1)` init explodes to Var ≈ 10²⁴ → NaN at *step 1*, even at modest depth. Init is a step-0 problem, not a step-1000 problem.
+## Evidence language for this lecture
 
-## If a student asks…
-- "If UAT is true, why did anyone ever struggle to fit functions before deep learning?" → Because UAT is non-constructive — it promises weights exist but gives no algorithm, no width bound, and no learnability. The gap between "exists" and "SGD finds it in a reasonable-size net" is exactly what 30 years of architecture/optimization research closed.
-- "How wide is 'wide enough' really?" → For nice 1D functions, modest (tens of units). For generic functions in d dimensions, ~O(1/ε^{d/2}) — exponential in d. That's why nobody fits a 100-dimensional function with one fat layer; you'd need 10¹⁰⁰ units. Depth sidesteps this when the data is compositional.
-- "Why doesn't the degradation problem just disappear if I lower the learning rate / train longer?" → It's not a tuning issue; it's that SGD on a plain deep net struggles to *even discover* the identity-preserving solution that the deeper net provably contains. ResNets fix it by changing the parameterization so identity is the default, not something to be laboriously learned. (Honest nuance: BatchNorm and good init also help; the skip is the central idea.)
-- "ReLU's gradient is 0 on the negative side — doesn't that *cause* vanishing gradients too?" (hard) → It can cause *dead units* (a neuron stuck negative gets 0 gradient forever), but that's a different failure from the *product-of-sub-1-Jacobians* vanishing. ReLU's win is that on the *active* side the derivative is exactly 1, so the product doesn't decay — unlike sigmoid's ≤ 0.25. Leaky/GELU mitigate the dead-unit issue.
-- "Why does Telgarsky's separation matter if real data isn't a sawtooth?" → The sawtooth is a *witness* — the cleanest function proving depth-k nets need ≥ 2^k width to match a depth-2k net (k=10 → 1024 units). Real images/language aren't sawtooths, but they *are* richly compositional (edges→parts→objects), so the same "depth replaces exponential width" economics apply empirically.
-- "Is BatchNorm necessary for ResNets to work?" → The skip connection is the central idea, but the original ResNet block is a *system*: Conv→BN→ReLU→Conv→BN→(+x)→ReLU, plus He init. BN keeps activation scale stable across depth; the skip keeps gradients flowing. Don't learn the wrong lesson that one component does all the work — they cooperate.
+Use the deck tags as route markers: `V` is a visual explanation, `D` is a worked
+derivation, `Q/A` is a prediction-and-reveal pair, `I` is an interactive, and
+`OPT` is optional. They do **not** by themselves imply empirical evidence.
 
-## If you're short on time
-Cut: the formal UAT statement + 3-move density proof, pre-activation ResNets, projection shortcuts, and the BatchNorm-block slide (all great context, none load-bearing). Never cut: the **triangle-bump-by-hand** (what UAT *is*) + the **three-things-UAT-doesn't-promise** (why we go deep) and the **`∂y/∂x = I + ∂F/∂x` highway** (why depth became trainable). Those three *are* the lecture.
+| Material | Honest evidence label | How to say it |
+|---|---|---|
+| Weighted-sum, batch, neuron, XOR, loss, parameter-count, and update arithmetic | **Computed from displayed values** | “Let us verify the numbers.” |
+| XOR inputs and the exact two-unit weights | **Constructed teaching example** | “These weights are chosen to realize XOR; an optimizer did not discover them here.” |
+| Linear-regression notebook data | **Synthetic data; computed fit** | “This checks the algorithm against the closed-form solution on seeded synthetic data.” |
+| Universal approximation | **Mathematical representation result** | “Approximating weights exist; the theorem does not promise that training finds them.” |
+| Node diagrams, decision-region sketches, and practical image pipeline | **Schematic** | “This diagram explains structure; it is not a measured model trace.” |
+| Vision/audio/text depth hierarchy graphics | **Conceptual schematic** | “This is one plausible compositional story, not observed activations.” |
 
-## Closing line
-"One layer *can* represent anything — at exponential width, with no promise SGD ever finds it. Depth makes representation cheap; ReLU, good init, and a `+x` skip make it *trainable*. That last trio is what turned a 1989 existence theorem into a 152-layer network."
+Do not call the XOR construction a learned result, the synthetic regression a
+real-data experiment, or the hierarchy graphics evidence of what a trained model
+actually represents.
+
+## 85-minute route through the current deck
+
+### 0–6 min · Retrieve Lecture 1 and change only the prediction rule
+
+Use “Lecture 1 chose the loss; Lecture 2 expands the prediction rule” as the
+handoff. Keep $\hat y=f_\theta(x)$ visible and tell students that the loss and
+training loop can remain while the function class becomes richer.
+
+### 6–18 min · Linear starting point
+
+Work through the single weighted sum, every contribution entering the node, the
+labelled batch matrix, the matrix multiplication, and the bias-as-ones column.
+Close with the regression slide: one affine rule is one flat trend. Make students
+say the shapes aloud before revealing them.
+
+### 18–31 min · From a score to a neuron
+
+Separate the two stages: $u=w^Tx+b$, then $h=\phi(u)$. Compare sigmoid/tanh with
+ReLU/GELU, use the saturation calculation to give “locally flat” a numerical
+meaning, and ask the linear-layers question before revealing that two affine maps
+collapse to one. Use the activation interactive only after the algebraic point is
+secure.
+
+### 31–42 min · Where one weighted sum fails
+
+Draw the binary straight boundary and let students try to separate XOR. Then
+connect the same geometry to multiclass scores: score ties live on flat sets, and
+only the top-scoring tie is a visible boundary. The five explicit inputs are a
+calculation, not a dataset benchmark.
+
+### 42–57 min · Build one exact XOR MLP
+
+Keep the same network throughout:
+
+$$
+h_1=\operatorname{ReLU}(x_1+x_2),\qquad
+h_2=\operatorname{ReLU}(x_1+x_2-1),\qquad
+z=2h_1-4h_2-1.
+$$
+
+Verify all four rows, derive both hidden functions before substituting an input,
+then compute the output probability and loss. The hidden-space coordinate slide
+is the payoff: the nonlinearity changes the representation so one output node can
+separate the cases. Say explicitly that the weights are constructed and the
+forward values are computed.
+
+### 57–70 min · Universal approximation via hinges
+
+Frame one precise question, build a ReLU hinge, and assemble the tent function.
+The successive sine approximations make the qualitative point that more hinges
+reduce the worst gap; `sup` means the largest gap over the entire displayed
+region. Finish by reading the theorem in order and dwelling on the `OPT` warning:
+existence is not learnability, data efficiency, or generalization.
+
+### 70–77 min · Width versus depth
+
+Use the node view first: width adds parallel features; depth composes features in
+stages. Work the clipped nonlinear ramp so “composition” is an operation, not a
+metaphor. The vision, audio, and text hierarchy images are **schematic only**—not
+model activations, feature visualizations, probes, or measurements. Phrase them as
+possible hierarchies, never as proof that a particular network learned those
+features.
+
+### 77–85 min · Connect to deep-learning practice
+
+Trace the image forward pass in order: flatten, one pattern test, 128 hidden
+features, class scores, softmax, label-selected loss. Then stack examples into a
+minibatch, count both affine layers' parameters, and complete the single numerical
+update. Close on the deck's final sentence: training changes the parameters, not
+the architecture.
+
+If limited to 70 minutes, shorten the multiclass boundary example and show fewer
+hinge-refinement stages. Do not cut the all-four-row XOR verification, the UAT
+existence caveat, or the minibatch-to-update ending.
+
+## Board checkpoints
+
+1. **Shapes:** $(m\times d)(d\times1)\to(m\times1)$, then
+   $(K\times m)(m\times1)\to(K\times1)$.
+2. **Why linear depth collapses:**
+   $W_2(W_1x+b_1)+b_2=(W_2W_1)x+(W_2b_1+b_2)$.
+3. **Exact XOR table:** calculate $h_1,h_2,z,\hat y$ for all four rows and use
+   $\hat y=1$ when $z\ge0$.
+4. **One hinge/tent interval:** make the piecewise behavior visible before using
+   the phrase “universal approximation.”
+5. **One parameter update:** identify the old value, gradient, learning rate, and
+   new value; do not let the arithmetic obscure which parameter changed.
+
+## Notebook choreography
+
+### `notebooks/L02/01_linear_regression_gd.ipynb`
+
+- Use after the linear-regression slides or as a pre-class companion.
+- The points are seeded **synthetic** observations from $y=2x+1+\epsilon$.
+- Run gradient descent, then reveal the closed-form solution and the numerical
+  agreement. This is an algorithm check, not real-world validation.
+- The loss curve supports the claim that this run converged; it does not establish
+  that gradient descent always converges for every objective.
+
+### `notebooks/L02/02_mlp_xor.ipynb`
+
+- Use immediately after the deck's all-four-input XOR table.
+- First fit the single linear classifier: its 0.50 accuracy is a seeded optimizer
+  result on the four constructed XOR points.
+- Then instantiate the **same exact two-hidden-unit weights as the deck** and
+  print $x_1,x_2,h_1,h_2,z,\hat y,y$ for all four rows. Accuracy must be 1.00.
+- The exact MLP is labelled **constructed + computed**. There is deliberately no
+  claim that training learned those MLP weights.
+- Finish with the side-by-side probability surfaces: a fitted linear model versus
+  the constructed exact MLP.
+
+For either notebook, restart the kernel and run all cells sequentially before
+class. A stale output is especially damaging here because the exact network is
+also verified numerically in the slides.
+
+## Common wrong turns
+
+- **“A neuron is nonlinear because it has a bias.”** No: affine plus affine still
+  collapses. The activation creates the nonlinearity.
+- **“Softmax bends the decision boundary.”** No: softmax preserves the winning
+  score; ties between linear scores remain flat sets.
+- **“The XOR MLP learned those weights.”** Not in this lecture. The construction
+  demonstrates representational capacity. Learning comes from an optimizer and
+  data, which is a different claim.
+- **“Universal approximation means one hidden layer is always enough in
+  practice.”** It is an existence statement with no guarantee of compact width,
+  easy optimization, finite-sample generalization, or useful inductive bias.
+- **“The hierarchy pictures are activation maps.”** They are conceptual
+  schematics. Real activation evidence would require a trained model, specified
+  input, captured tensors, and a stated visualization method.
+- **“A minibatch is a different network.”** It is the same parameters applied to
+  multiple rows; only the leading data dimension changes.
+
+## Exit ticket
+
+Give students $(x_1,x_2)=(1,1)$ and ask them to compute both hidden activations,
+the logit, and the class for the exact XOR MLP. Then ask one sentence: “What does
+universal approximation promise, and what does it not promise?”
