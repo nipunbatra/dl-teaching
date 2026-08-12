@@ -4,6 +4,7 @@
 //   typst compile --root . lecture11/L11-next-token.typ /private/tmp/L11-presentation.pdf
 
 #import "../common/metropolis.typ": *
+#import "@preview/lilaq:0.4.0" as lq
 #show: metropolis-deck.with(
   title: [Next-Token Prediction],
   subtitle: [Tokens, embeddings, and one complete neural language-model calculation],
@@ -19,10 +20,28 @@
 #let PALE-RED = rgb("#FBE8E9")
 #let CREAM = rgb("#F4F1EA")
 
+// EXECUTED evidence from notebook cell 19. The CSV stores every post-update
+// point from the seed-11 run rather than a smoothed or illustrative redraw.
+// Rebuild/check it with evidence/build_cell19_curve_data.py, which pins the
+// source notebook SHA-256 and verifies the CSV byte-for-byte.
+#let nll-curve-data = csv("evidence/cell19_train_heldout_nll.csv", row-type: dictionary)
+#let nll-updates = nll-curve-data.map(row => float(row.at("update")))
+#let nll-train = nll-curve-data.map(row => float(row.at("train_nll")))
+#let nll-heldout = nll-curve-data.map(row => float(row.at("heldout_nll")))
+#let nll-uniform = nll-updates.map(_ => calc.ln(6))
+
 // Stable grammar: TEAL = observed/true context and TRAIN; BLUE = model/logits/
 // probabilities and INFER; ACC = target/chosen token; GREEN = correct/retained;
 // RED = loss/error; INK = EVAL and conventions.
 #let swatch(color, body) = box(width: 13pt, height: 4pt, fill: color, radius: 1pt) + h(4pt) + body
+#let curve-key(color, body, dashed: false) = {
+  let curve-stroke = if dashed {
+    (paint: color, dash: "dashed", thickness: 1.2pt)
+  } else {
+    1.8pt + color
+  }
+  box(width: 15pt, height: 5pt, align(horizon, line(length: 15pt, stroke: curve-stroke))) + h(4pt) + body
+}
 #let lm-legend = align(center, text(size: 11.5pt)[
   #swatch(TEAL, [observed context / TRAIN]) #h(10pt)
   #swatch(BLUE, [model score or probability / INFER]) #h(10pt)
@@ -783,18 +802,51 @@ $
 ))
 #result[Perplexities are comparable only when all three contracts agree.]
 
-== The executed notebook supplies held-out evidence #V
+== The executed notebook shows the full learning trajectory #V
 
 #clock-strip("eval")
-#v(4pt)
-#align(center, grid(columns: (1fr, 1fr), gutter: 14pt,
-  card([FINAL TRAIN], [$"NLL"=.645308$ #linebreak() $"PPL"=1.90657$], color: TEAL),
-  card([FINAL VALIDATION], [$"NLL"=.677965$ #linebreak() $"PPL"=1.96986$], color: INK),
+#v(2pt)
+#align(center, grid(columns: (1.6fr, 1fr), gutter: 12pt, align: top,
+  [
+    #align(center, [
+      #set text(size: 9.4pt)
+      #lq.diagram(
+        width: 137mm, height: 41mm,
+        xlabel: [full-batch Adam update], ylabel: [token NLL],
+        xlim: (1, 300), ylim: (0.58, 1.84),
+        xaxis: (ticks: (1, 50, 100, 150, 200, 250, 300), subticks: none, mirror: false),
+        yaxis: (ticks: (0.6, 0.9, 1.2, 1.5, 1.8), subticks: none, mirror: false),
+        legend: none,
+        grid: (stroke: 0.35pt + MUTED.lighten(60%)),
+        lq.plot(nll-updates, nll-train, stroke: TEAL + 1.8pt, mark: none),
+        lq.plot(nll-updates, nll-heldout, stroke: ACC + 1.8pt, mark: none),
+        lq.plot(nll-updates, nll-uniform,
+          stroke: (paint: MUTED, dash: "dashed", thickness: 1.15pt), mark: none),
+      )
+    ])
+    #v(-3pt)
+    #align(center, text(size: 9.4pt)[
+      #curve-key(TEAL, [train · 56 targets]) #h(9pt)
+      #curve-key(ACC, [held-out · 30 targets]) #h(9pt)
+      #curve-key(MUTED, [uniform baseline 1.792], dashed: true)
+    ])
+  ],
+  [
+    #card([EXECUTED · SEED 11], [
+      #text(size: 12.2pt)[300 full-batch Adam updates #linebreak()
+      constructed 10+4-name course corpus]
+    ], color: BLUE)
+    #v(4pt)
+    #card([COMPUTED · UPDATE 300], [
+      #text(size: 11.8pt)[*train* · NLL 0.645308 · PPL 1.90657 #linebreak()
+      *held-out* · NLL 0.677965 · PPL 1.96986]
+    ], color: INK)
+  ],
 ))
 #pause
-#v(9pt)
-#note([Same architecture class, widened in the notebook to $d=4,H=24$ and trained for 300 full-batch Adam steps.], color: BLUE)
-#result[The small train-validation gap says this tiny held-out set transfers similarly; it does not establish broad name quality.]
+#v(2pt)
+#note([Every point evaluates the same post-update parameter snapshot; no smoothing. The train set has 56 targets and the four held-out names have 30 targets.], color: BLUE)
+#result[Optimization + in-protocol transfer on a constructed course corpus; not broad name quality.]
 
 == Uniform prediction is the first evaluation sanity check #D
 
