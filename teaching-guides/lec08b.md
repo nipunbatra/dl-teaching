@@ -8,7 +8,7 @@ This is **public Lecture 9**, titled **Modern CNN Pipelines & Transfer Learning*
 
 The spine is:
 
-> **A modern CNN is not a catalogue of names. It is a sequence of declared shape, context, route, compute, and reuse decisions; validation chooses how much a pretrained representation should adapt before the sealed test is opened once.**
+> **A modern CNN is not a catalogue of names. It is a sequence of declared shape, context, route, compute, and reuse decisions; real pretrained features make the reuse hypothesis visible, validation chooses how much to adapt, and only then is the sealed test opened once.**
 
 Keep returning to one deployment contract:
 
@@ -44,6 +44,7 @@ Write these beside the board ledger before calculating anything:
 - An addition requires identical height, width, and channels. Concatenation requires identical spatial dimensions and adds channel counts.
 - Parameter freezing and module mode are different controls: `requires_grad`, optimizer membership, `train()`/`eval()`, and gradient recording each answer a different question.
 - Validation may be consulted repeatedly during model selection. The test set may not.
+- A real photograph is **observed data**; pretrained weights and checkpoints are **model artifacts**; activations and predictions are **computed model outputs**; a curve is **measured evidence** only when its protocol and split are named; arrows and layouts are **schematic**. Do not slide between these categories.
 
 If a student produces a number without first naming the output shape, receptive field, and counting convention, ask for those three labels before discussing the arithmetic.
 
@@ -61,11 +62,11 @@ The route below follows the deck order and totals exactly **55 minutes core + 15
 | 29–37 | Core · 8 | Residual retrieval and projected shortcut | Compute $F(2)$, $y$, and $dy/dx$; repair the held $64\to128$ channel mismatch with $P(x)$. |
 | 37–45 | Core · 8 | Depthwise plus pointwise factorization | Separate spatial filtering from channel mixing and derive the exact $8.41\times$ reduction. |
 | 45–50 | Optional · 5 | Groups, scaling, ConvNeXt, measured latency | Treat these as recombinations and deployment caveats, not a second architecture survey. |
-| 50–54 | Core · 4 | Complete stage ledger and form a backbone | Compare all candidates under one contract; connect repeated stages to a $512$-feature head. |
-| 54–58 | Core · 4 | Transfer hypothesis, six-class head, linear probe | Count $3{,}078$ trainable head parameters and distinguish compute from update. |
-| 58–63 | Should · 5 | Frozen state and preprocessing contracts | Separate parameters, buffers, stochastic layers, NCHW, range, channel order, and normalization. |
-| 63–68 | Core · 5 | L7 protocol and progressive unfreezing | Let validation select probe/late/all, checkpoint, and learning-rate groups; keep test sealed. |
-| 68–72 | Should · 4 | Symptom → suspect → test and notebook | Run the smallest discriminating checks, then show the retained notebook evidence. |
+| 50–54 | Core · 4 | Complete stage ledger and executed backbone hierarchy | Compare all candidates, then read the actual $64\times56\times56\to128\times28\times28\to512\times7\times7$ pretrained activations as computed model outputs, not saliency. |
+| 54–58 | Core · 4 | Six-breed commitment, head, probe/late/all | Bind the $72/36/36$ split, count the $3{,}078$-parameter head, and collect a regime prediction before revealing curves. |
+| 58–63 | Should · 5 | Official preprocessing and frozen-state contracts | Follow the actual $600\times400\to384\times256\to224\times224$ image path; separate NCHW, normalization, parameters, buffers, and modes. |
+| 63–68 | Core · 5 | Measured curves and validation-only selection | Reconstruct each best validation epoch; validation selects `all` at epoch 13 before the sealed test is opened. |
+| 68–72 | Should · 4 | Interpretation, sealed examples, notebook | Distinguish GT from predicted label/probability, state the teaching-subset caveat, then replay the real probe from committed train/validation features. |
 | 72–77 | Optional · 5 | FPN teaser and primary provenance | Preserve the L10 cliffhanger; use papers for historical attribution. |
 | 77–80 | Core · 3 | Opening revisit, checklist, L10 handoff | Require a ledger-based defense of B and close on “what” versus “where.” |
 
@@ -304,11 +305,84 @@ Unfreeze in response to evidence:
 
 Use explicit optimizer groups with $0<\eta_b<\eta_h$: the random head often needs a larger step; reused backbone features should be perturbed more cautiously. The ratio is a hyperparameter, not a law.
 
+## The real six-breed evidence case
+
+The transfer section now uses actual Oxford-IIIT Pet images and the cached torchvision ResNet-18 `IMAGENET1K_V1` checkpoint. It is a **small fixed teaching subset, not a benchmark**. No displayed image is generated. Keep four evidence types verbally distinct:
+
+| Label | What appears in this lecture | What it can support |
+|---|---|---|
+| **Observed** | real `Abyssinian_1.jpg`; official resize, center crop, and normalization applied to it; dataset labels | what the declared input and ground-truth contracts contain |
+| **Model artifact** | exact pretrained and validation-selected weight checkpoints | which fixed learned state produced the displayed outputs |
+| **Computed model output** | pretrained layer activations; predicted breed and probability | what a checkpoint computed; activation tiles are not saliency or causal attribution |
+| **Measured** | fixed-protocol train/validation histories and one post-selection test pass | comparison under this exact subset, seed, optimizer, budget, and selection rule |
+| **Schematic** | pipeline arrows, tensor boxes, regime decision route | conceptual structure only; never an empirical result |
+
+### Data, model, and preprocessing contract
+
+- Six cat breeds: Abyssinian, Bengal, Birman, Bombay, British Shorthair, and Egyptian Mau.
+- Seed `20260812`; selection is locked by `SHA256('20260812:<official_split>:<image_id>')`, then bound by filename, dimensions, and JPEG SHA-256 in `selection-manifest.csv`.
+- Training: 12 images per breed, $72$ total, from Oxford's official `trainval` split.
+- Validation: 6 disjoint images per breed, $36$ total, also from official `trainval`.
+- Sealed test: 6 images per breed, $36$ total, from the official `test` split.
+- Backbone: torchvision ResNet-18 `IMAGENET1K_V1`; checkpoint SHA-256 `f37072fd47e89c5e827621c5baffa7500819f7896bbacec160b1a16c560e07ec`.
+- Official transform: resize short side to 256 using bilinear interpolation, center-crop to $224\times224$, tensorize RGB, then normalize with mean $(0.485,0.456,0.406)$ and standard deviation $(0.229,0.224,0.225)$. No augmentation.
+
+For the shared $600\times400$ photograph, the executed path is
+
+\[
+600\times400\ \text{RGB}
+\longrightarrow 384\times256
+\longrightarrow 224\times224
+\longrightarrow 3\times224\times224.
+\]
+
+Its observed post-normalization channel ranges are R $[-2.101,1.992]$, G $[-1.966,1.851]$, and B $[-1.804,2.135]$. These are measurements on this photograph, not universal bounds. The actual pretrained activation shapes are
+
+\[
+\text{layer1}:64\times56\times56,
+\qquad
+\text{layer2}:128\times28\times28,
+\qquad
+\text{layer4}:512\times7\times7.
+\]
+
+The displayed eight channels at each stage are ranked by mean absolute activation and each tile is rescaled by its own 1st–99th percentile. Say explicitly: **computed activations, not saliency**. Their spatial shrinkage and channel growth are inspectable; their display intensity cannot be compared across tiles.
+
+### Fixed comparison and exact result
+
+All three regimes use 15 epochs, batch size 12, AdamW with weight decay $10^{-4}$, the same copied head initialization, the same minibatch order, fixed BatchNorm buffers, and the same preprocessing and split. The head learning rate is $3\times10^{-3}$ in every regime; `layer4` uses $3\times10^{-4}$ in `late`, and the full backbone uses $3\times10^{-5}$ in `all`.
+
+Within a regime, choose maximum validation accuracy, then lower validation loss, then earlier epoch. Across regimes, choose maximum validation accuracy, then fewer trainable parameters, lower validation loss, and earlier epoch. This parsimony tie-break is declared before opening test.
+
+| Regime | Trainable parameters | Validation-selected epoch | Best validation | What happened |
+|---|---:|---:|---:|---|
+| probe | $3{,}078$ | 14 | $33/36=91.7\%$ | pretrained fixed features were already strongly linearly useful |
+| late (`layer4` + head) | $8{,}396{,}806$ | 4 | $27/36=75.0\%$ | worse under this exact short, tiny-data protocol |
+| all | $11{,}179{,}590$ | 13 | $34/36=94.4\%$ | validation winner; selected before test was opened |
+
+Only the validation-selected `all`, epoch-13 checkpoint was evaluated on the sealed subset: $33/36=91.7\%$, cross-entropy $0.168423$, one evaluation. The six displayed post-selection examples pair **GT labels** with **computed predictions and probabilities** from the selected model artifact.
+
+The defensible conclusion is narrow: pretrained features were useful for these six breeds, and validation selected full adaptation under this exact fixed protocol. Do not claim that full fine-tuning is generally best, that late adaptation is intrinsically weak, or that $91.7\%$ is Oxford-IIIT Pet benchmark performance. The subset is small and its initial selection population was limited to JPEGs available when the manifest was bootstrapped.
+
+### Slide-by-slide visual choreography
+
+Use the physical PDF page numbers below; the printed footer is one lower because the title page is unnumbered. The presentation build reveals commitments and answers across states but preserves this order.
+
+| Handout page | Evidence label | Instructor move |
+|---:|---|---|
+| 44 | **OBSERVED + COMPUTED** | Start from the real center crop, name the pretrained checkpoint as the model artifact, then trace its computed activations through layer1, layer2, and layer4. Say “not saliency” before interpreting the hierarchy. |
+| 45 | **GT + OBSERVED CONTRACT** | Name all six ground-truth breeds and the balanced $72/36/36$ split. Students commit to probe/late/all before seeing any curve. |
+| 49 | **OBSERVED** | Walk $600\times400\to384\times256\to224\times224\to(1,3,224,224)$ and identify exactly where normalization enters. |
+| 51 | **MEASURED** | Reveal probe $91.7\%@14$, late $75.0\%@4$, and all $94.4\%@13$; apply the stated validation rule, then reveal the single sealed $33/36$ result. |
+| 52 | **MEASURED INTERPRETATION** | Ask for one supported claim and one unsupported claim. Protect “small fixed teaching subset, not a benchmark.” |
+| 55 | **GT + COMPUTED MODEL OUTPUT** | Compare true breed with predicted breed/probability on six post-selection examples; follow the audit trail to the notebook and committed artifacts. |
+| 63 | **PROVENANCE** | Point to Oxford licensing/splits, torchvision weights, checkpoint/manifest/builder/results hashes, and the retained build environment. |
+
 ## Exact notebook choreography
 
-Open the direct [`L08B` Colab](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L08B/01_depthwise_separable_and_transfer_head.ipynb). It uses only seeded synthetic tensors, NumPy, and PyTorch. It downloads no data and does not claim an accuracy result.
+Open the direct [`L08B` Colab](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L08B/01_depthwise_separable_and_transfer_head.ipynb). It has two explicit lanes. **Lane A** uses seeded synthetic tensors to isolate mechanics. **Lane B** verifies and inspects the committed real-evidence bundle, then replays only the genuine linear probe from cached train/validation features. In a repository checkout it is fully local. Direct Colab fetches only nine SHA-pinned committed artifacts totaling about $0.91$ MiB; it does not download Oxford archives or ResNet weights and does not invoke the builder.
 
-The executed notebook contains eight code checkpoints. Keep the predict-before-run rhythm:
+The executed notebook contains 13 code checkpoints: eight mechanics checkpoints in Lane A and five evidence checkpoints in Lane B. Keep the predict-before-run rhythm:
 
 | Checkpoint | Ask before running | Evidence to inspect |
 |---|---|---|
@@ -324,6 +398,18 @@ The executed notebook contains eight code checkpoints. Keep the predict-before-r
 The final validation trace is labeled illustrative. It is a deterministic control input for the decision rule, not evidence generated by the random TinyBackbone. Make students say this distinction aloud.
 
 If live time is short, run checkpoints 2, 3, 6, 7, and 8. Never skip the prediction on the BatchNorm buffer: it exposes the most common silent “frozen backbone” error.
+
+Then use the five executed Lane B checkpoints as a reveal sequence, not a block of output:
+
+| Checkpoint | Ask before running | Executed evidence to inspect |
+|---|---|---|
+| 9 · provenance gate | What must be verified before trusting a retained result? | 9 artifact hashes, `results.json` SHA `4e22a95b...47e23`, model checkpoint SHA `f37072fd...e07ec`, builder SHA `9fa63046...6da52`. |
+| 10 · split audit | Why are there 144 manifest rows but only 108 cached features? | $72/36/36$ balanced split; feature array $(108,512)$ contains train + validation and explicitly no test. |
+| 11 · image contract | Predict resized/crop and layer shapes. | $600\times400\to384\times256\to224\times224$; NCHW input $(1,3,224,224)$; activations $(64,56,56)$, $(128,28,28)$, $(512,7,7)$. |
+| 12 · validation selection | Which regime wins before test is read? | probe $33/36$ at epoch 14; late $27/36$ at 4; all $34/36$ at 13; validation selects `all`; then inspect one sealed $33/36$ pass. |
+| 13 · probe replay | What can cached frozen features reproduce, and what must remain builder evidence? | exact `Linear(512,6)` replay selects epoch 14 and $33/36$ validation; no `late`/`all` replay and no test evaluation. |
+
+For an 80-minute live lecture, show retained outputs for Lane A checkpoints 2, 3, 6, and 7; execute Lane B checkpoints 10–12; assign the probe replay for follow-along. The critical pedagogical rhythm is: **commit to probe/late/all → audit split/preprocessing → reveal validation curves → announce selected regime → open the already-recorded sealed result once**.
 
 ## Recurring diagnostics: symptom → suspect → smallest test
 
@@ -361,6 +447,10 @@ Use one diagnostic sentence repeatedly:
 - **“`requires_grad=False` freezes BatchNorm.”** It freezes trainable parameters, not running-statistic buffers or training-mode behaviour.
 - **“`no_grad()` is the same as `eval()`.”** One disables graph recording; the other changes module behaviour.
 - **“The random TinyBackbone proves transfer works.”** It proves mechanics only. Transfer quality needs a pretrained representation and held-out validation evidence.
+- **“Bright activation tiles show which pixels caused the prediction.”** No. They are selected feature channels, each rescaled independently for display; the figure is not saliency or attribution.
+- **“The ground-truth and predicted labels on the contact sheet are the same evidence type.”** No. GT comes from the dataset; predicted breed and probability are computed outputs from the selected checkpoint artifact.
+- **“Because `all` won here, full fine-tuning is generally best.”** No. Validation selected it for one tiny fixed subset and protocol. The result does not rank regimes universally.
+- **“The notebook can replay every measured curve from the cached features.”** No. Frozen features reproduce the probe only. Replaying `late` or `all` requires pixels and the checkpoint because the representation changes.
 - **“Unfreeze when the probe has trained for N epochs.”** Unfreeze because a predeclared validation rule identifies underfitting under the fixed protocol.
 - **“Use the test score to decide how much to unfreeze.”** That leaks test information. Validation selects; test reports once.
 
@@ -429,6 +519,8 @@ If only **35 minutes** remain unexpectedly, preserve: opening contract (3), base
 - Verify the public Lecture 9 row links `L8B.pdf`, `L8B-presentation.pdf`, and the exact direct Colab.
 - Put the held contract and blank ledger on the board before students enter.
 - Pre-open the notebook at the cost cell and the frozen-state cell; confirm its outputs are retained.
+- Confirm the nine Lane B artifact hashes pass, the manifest reports $72/36/36$, and the feature bundle reports $(108,512)$ with no test rows.
+- Rehearse the visual taxonomy: photograph/preprocessing = observed; weights/checkpoints = model artifacts; activations/predictions = computed model outputs; curves = measured; arrows = schematic.
 - Decide whether the should-cover Inception and state-diagnostic segments fit this cohort; protect the 55-minute core.
 - Keep a separate train/validation/test diagram visible during transfer discussion.
 - If demonstrating hardware latency, warm up the device and name batch size, dtype, and target hardware. Do not compare a cold first run with a warmed run.
@@ -444,8 +536,11 @@ If only **35 minutes** remain unexpectedly, preserve: opening contract (3), base
 - Lin et al., [Feature Pyramid Networks for Object Detection](https://arxiv.org/abs/1612.03144) — the optional L10 bridge.
 - PyTorch, [`torch.nn.Conv2d`](https://pytorch.org/docs/stable/generated/torch.nn.Conv2d.html) and [`torch.nn.BatchNorm2d`](https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm2d.html) — grouped/depthwise shapes and running-statistic behaviour.
 - Exact executed [`L08B` Colab notebook](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L08B/01_depthwise_separable_and_transfer_head.ipynb) — deterministic factorization, residual, state, and optimizer-group mechanics.
+- Oxford-IIIT Pet, [dataset page](https://www.robots.ox.ac.uk/~vgg/data/pets/) — source, official split boundary, and CC BY-SA 4.0 licensing for the real six-breed evidence case.
+- Torchvision, [`ResNet18_Weights.IMAGENET1K_V1`](https://pytorch.org/vision/stable/models/generated/torchvision.models.resnet18.html) — exact pretrained weights and preprocessing contract; the used checkpoint hash is `f37072fd…e07ec`.
+- Committed `shared/vision-evidence/oxford-iiit-pet/l8b/` evidence bundle — manifest, builder, full histories, train/validation-only features, test predictions, retained visuals, hashes, and environment provenance.
 
-Use the papers for historical claims and design provenance. Use the held ledger and notebook for reproducible classroom arithmetic.
+Use the papers for historical claims and design provenance. Use the held ledger and Lane A for causal mechanics. Use the manifest-bound Lane B evidence only for its narrow measured claims.
 
 ## Closing line
 

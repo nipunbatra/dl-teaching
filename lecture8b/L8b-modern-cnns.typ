@@ -19,6 +19,9 @@
 #let EFFICIENTNET = "https://arxiv.org/abs/1905.11946"
 #let CONVNEXT = "https://arxiv.org/abs/2201.03545"
 #let FPN = "https://arxiv.org/abs/1612.03144"
+#let PETS = "https://www.robots.ox.ac.uk/~vgg/data/pets/"
+#let TVRESNET18 = "https://pytorch.org/vision/stable/models/generated/torchvision.models.resnet18.html"
+#let L9EVIDENCE = "/shared/vision-evidence/oxford-iiit-pet/l8b/"
 
 // Stable semantic grammar:
 // INK = held input / known quantity · TEAL = learned operation / parameter
@@ -56,6 +59,16 @@
   stroke: (left: 2pt + color), fill: color.lighten(93%), radius: 2pt,
   [#body],
 )
+
+#let evidence-image(name, width: auto, height: auto, fit: "contain") = block(
+  fill: white, stroke: 0.8pt + MUTED.lighten(35%), radius: 3pt,
+  inset: 2pt, clip: true,
+  image(L9EVIDENCE + name, width: width, height: height, fit: fit),
+)
+
+#let evidence-caption(tag, body, color: ACC) = align(center, text(size: 11.5pt, fill: MUTED)[
+  #text(weight: 750, fill: color)[#tag] #h(5pt) #body
+])
 
 // This deck's tag body stays above the 7.5pt audit floor while retaining the
 // same shared theme grammar.
@@ -129,7 +142,7 @@
   node((0, 0), $x_ell$, radius: 6mm, fill: rgb("#EFEEEB"))
   blk(1, "conv", TEAL); blk(2, "norm", BLUE); blk(3, "ReLU", ACC)
   blk(4, "conv", TEAL); blk(5, "norm", BLUE)
-  node((6, 0), [$+$], radius: 5mm, fill: white, stroke: 1pt + INK)
+  node((6, 0), align(center, [#text(size: 13pt)[$+$] #v(-1pt) #text(size: 8.5pt, fill: MUTED)[$u$]]), radius: 5mm, fill: white, stroke: 1pt + INK)
   node((7, 0), text(size: 11.5pt)[ReLU], fill: ACC.lighten(82%), stroke: 0.9pt + ACC, corner-radius: 3pt, inset: 5pt)
   node((8, 0), $x_(ell+1)$, radius: 7mm, stroke: 0.9pt + ACC)
   for i in range(6) { edge((i,0),(i+1,0), "-|>", stroke: 0.8pt + MUTED) }
@@ -623,13 +636,13 @@ If “do nothing” is best, the learned branch only needs $F(x) approx 0$.
 
 == Commit: residual arithmetic on one scalar #Q
 
-#case-strip([one scalar block], [At $x=2$, let $F(x)=0.1x^2$. Predict $F(2)$, $y=x+F(x)$, and $d y/d x$.])
+#case-strip([one scalar block], [At $x=2$, let $F(x)=0.1x^2$. First analyze the addition $u=x+F(x)$; then apply $y="ReLU"(u)$.])
 #pause
 #v(5pt)
 #_residual-numeric
 #v(5pt)
 #pause
-#align(center, text(size: 21pt)[$F(2)=0.1(2)^2=0.4, quad y=x+F(x)=2+0.4=2.4.$])
+#align(center, text(size: 21pt)[$F(2)=0.4, quad u=x+F(x)=2.4, quad y="ReLU"(u)=2.4.$])
 #v(7pt)
 #result[The output keeps the original $2$ and adds the learned correction $0.4$.]
 
@@ -638,26 +651,28 @@ If “do nothing” is best, the learned branch only needs $F(x) approx 0$.
 #resblock
 #pause
 #v(7pt)
-#align(center, text(size: 18pt)[$F(x_ell)$ travels through learned layers; $x_ell$ travels unchanged along the green edge.])
+#align(center, text(size: 18pt)[$u=x_ell+F(x_ell)$ at the addition; the drawn block then outputs $x_(ell+1)="ReLU"(u)$.])
 #v(7pt)
 #result[The addition node is only legal when the two incoming tensors have identical shapes.]
 
 == Why the gradient has a direct route #D
 
-For $y=x+F(x)$,
+For the drawn post-activation block, $u=x+F(x)$ and $y="ReLU"(u)$:
 #pause
-#align(center, text(size: 23pt)[$frac(partial y, partial x)=1+frac(partial F, partial x).$])
+#align(center, text(size: 22pt)[$frac(partial y, partial x)=bb(1)[u>0] dot (1+frac(partial F, partial x)).$])
 #v(6pt)
 Continue the scalar example $F(x)=0.1x^2$ at $x=2$:
 #v(3pt)
-$F'(x)=0.2x$, so $F'(2)=0.4$ and
+$u=2.4>0$, so the ReLU gate is open, $F'(2)=0.4$, and
 #pause
 #align(center, text(size: 23pt)[$frac(d y,d x)=1+0.4=1.4.$])
 #v(8pt)
-#result[The $1$ is a direct derivative term. It helps signal flow; it does not guarantee a large total gradient if other terms cancel.]
+#result[The addition contributes a direct $1$ term; the post-add activation still gates the full gradient.]
 
 == Residual depth: the identity path survives many blocks #V
 
+#align(center, text(size: 12.5pt, fill: MUTED)[ADDITION-ONLY ABSTRACTION · nonlinear gates are suppressed to expose the shortcut algebra])
+#v(2pt)
 #_residual-stack
 #pause
 #v(9pt)
@@ -915,28 +930,27 @@ Wall-clock speed also depends on memory traffic, kernel launch overhead, tensor 
 #result[The block ledger governs the backbone; transfer asks how much of that learned hierarchy to reuse.]
 
 // ── Transfer learning ──
-== Transfer starts with a hypothesis: old features may already separate new labels
+== One real crop produces a hierarchy of pretrained model activations #V
 
-#align(center, text(size: 18pt)[
-  pixels $arrow.r$ edges and colours $arrow.r$ textures $arrow.r$ parts $arrow.r$ task evidence
-])
-#pause
-#v(8pt)
-#_transfer-flow
+#align(center, evidence-image("resnet18-activations.png", width: 177mm, height: 75mm, fit: "contain"))
+#v(2pt)
+#evidence-caption([OBSERVED + COMPUTED], [actual center crop $arrow.r$ executed ResNet-18 `IMAGENET1K_V1` activations; top channels by mean $|a|$; each tile uses its own 1–99% scale; *not saliency*], color: ACC)
+#v(3pt)
+#align(center, text(size: 14pt, weight: 650, fill: GREEN)[Spatial grids contract $56 arrow.r 28 arrow.r 7$ while channels expand $64 arrow.r 128 arrow.r 512$: transfer reuses a computed representation.])
+
+== Commit before the curves: how much should this backbone adapt? #Q
+
+#evidence-caption([GT + OBSERVED], [Oxford-IIIT Pet labels · six cat breeds · fixed SHA-ranked subset: 72 train / 36 validation / 36 sealed test], color: BLUE)
 #v(7pt)
-#result[Probe the reused representation first; adapt it only when validation evidence says the fixed features are insufficient.]
-
-== Commit: probe, unfreeze late, or fine-tune all? #Q
-
-A pretrained backbone emits $h in RR^512$ for a new six-class dataset. Training data are limited; the test set is sealed.
-#v(9pt)
+A pretrained backbone emits $h in RR^512$. The exact split, head initialization, optimizer family, minibatch order, and 15-epoch budget are held fixed.
+#v(7pt)
 #align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
   hairline([A · PROBE], [freeze the backbone; train only $512 arrow.r 6$], color: BLUE),
   hairline([B · LATE BLOCKS], [train the head and final backbone stage], color: TEAL),
   hairline([C · ALL], [fine-tune every parameter immediately], color: RED),
 ))
 #pause
-#note([Commit before seeing target validation curves. The correct choice is empirical, not a slogan.], color: BLUE)
+#note([Commit to A, B, or C now. Validation selects the regime and epoch; only that frozen checkpoint may open the 36-image test subset once.], color: BLUE)
 
 == Count the new six-class head exactly #D
 
@@ -978,19 +992,19 @@ $frac("3,078", "11,000,000"+"3,078") approx 0.028%$ of the model.
 #v(9pt)
 #note([For a truly fixed probe, keep the frozen backbone in `eval()` while the new head trains. Updating BatchNorm statistics deliberately is a different intervention—name and validate it.], color: GREEN)
 
-== SHOULD · match both the preprocessing and tensor-layout contracts #D
+== SHOULD · the weight recipe includes the input transformation #V
 
-#align(center, grid(columns: (1fr, 1fr), gutter: 24pt,
-  hairline([BOARD NOTATION], [$H times W times C$ keeps the spatial story readable.], color: BLUE),
-  hairline([PYTORCH INPUT], [`Conv2d` receives $N times C times H times W$.], color: TEAL),
+#align(center, evidence-image("preprocessing-contract.png", width: 179mm, height: 54mm, fit: "contain"))
+#v(2pt)
+#evidence-caption([OBSERVED], [Abyssinian_1.jpg under the official `IMAGENET1K_V1` resize $arrow.r$ center-crop $arrow.r$ normalize contract; no augmentation and no prediction], color: BLUE)
+#v(2pt)
+#set text(size: 16pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 20pt,
+  hairline([BOARD], [$224 times 224 times 3$ keeps the spatial story readable.], color: BLUE),
+  hairline([EXECUTED TENSOR], [`float32` $1 times 3 times 224 times 224$; $x'_c=(x_c-mu_c)/sigma_c$.], color: TEAL),
 ))
-#pause
-#v(9pt)
-#align(center, text(size: 21pt)[$x'_c=frac(x_c-mu_c,sigma_c)$])
-#v(6pt)
-Channel order, input range, resize/crop policy, and $(mu,sigma)$ must match the weight recipe.
-#pause
-#alertbox[Before blaming transfer, inspect one batch: shape, dtype, range, channel order, normalization, and backbone mode.]
+#v(1pt)
+#align(center, text(size: 11.5pt, weight: 650, fill: RED)[Wrong channel order, range, resize/crop, or normalization gives the pretrained model a different problem.])
 
 == L7 protocol: validation chooses how much to unfreeze #V
 
@@ -1003,35 +1017,27 @@ Channel order, input range, resize/crop policy, and $(mu,sigma)$ must match the 
 #v(9pt)
 #result[Repeatedly checking test performance while choosing unfreeze depth turns the test set into validation data.]
 
-== A controlled transfer experiment changes one lever at a time #D
+== Validation selected full fine-tuning on this fixed teaching subset #V
 
-Hold fixed the seed, train/validation split, head initialization, augmentation, optimizer family, epoch budget, and selection metric.
-#pause
-#v(8pt)
-#align(center, table(
-  columns: (42mm, 48mm, 48mm, 48mm), stroke: 0.45pt + MUTED,
-  inset: (x: 7pt, y: 3pt), align: center,
-  table.header([regime], [trainable blocks], [backbone LR], [record]),
-  [probe], [head only], [$0$], [best validation; epoch],
-  [late], [head + final stage], [small], [same record],
-  [all], [entire network], [smaller still], [same record],
+#align(center, image(L9EVIDENCE + "transfer-curves.svg", width: 177mm, height: 76mm, fit: "contain"))
+#v(1pt)
+#evidence-caption([MEASURED], [one manifest-bound run · seed 20260812 · 15 epochs · validation picks regime + epoch · test opened once after selection], color: GREEN)
+#v(3pt)
+#align(center, text(size: 13.5pt, weight: 650, fill: BLUE)[Best validation: probe $33/36$ @ 14 · late $27/36$ @ 4 · *all $34/36$ @ 13* $arrow.r$ sealed test $33/36$.])
+
+== Read the curves before turning them into a prescription #V
+
+#set text(size: 16.5pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 24pt,
+  [#hairline([WHAT WE OBSERVED], [The fixed probe reached $91.7%$ validation: pretrained $512$-D features were strongly separable. Full adaptation gained one validation image and won the declared rule.], color: GREEN)
+   #v(5pt)
+   #hairline([WHAT FAILED], [Late unfreezing reached $100%$ training but only $75.0%$ best validation. More trainable parameters did not guarantee better generalization.], color: RED)],
+  [#hairline([WHAT WE MAY CONCLUDE], [Validation selected full adaptation for these 144 manifest-bound images, fixed optimizer settings, and one seed.], color: BLUE)
+   #v(5pt)
+   #hairline([WHAT WE MAY NOT CONCLUDE], [This is not an Oxford Pets benchmark; it cannot establish that full fine-tuning generally beats probing or late unfreezing.], color: ACC)],
 ))
-#pause
-#v(5pt)
-#align(center, text(size: 13pt, weight: 600, fill: GREEN)[Validation compares interventions fairly; the sealed test evaluates only the selected procedure.])
-
-== Unfreeze progressively in response to evidence #V
-
-#align(center, text(size: 18pt)[
-  *probe underfits train and validation* $arrow.r$ reused features may not separate the task \
-  #v(7pt)
-  *unfreeze late blocks* $arrow.r$ test whether task-specific adaptation closes both gaps \
-  #v(7pt)
-  *consider broader unfreezing* $arrow.r$ only as another validation-controlled candidate
-])
-#pause
-#v(9pt)
-#note([High training accuracy but poor validation is not evidence to unfreeze more. It points first to data size, regularization, augmentation, or shift.], color: RED)
+#v(4pt)
+#align(center, text(size: 13pt, weight: 650, fill: GREEN)[Use a progressive ladder as an experiment design; let held-out evidence—not parameter count—choose the rung.])
 
 == Parameter groups make the fine-tuning hypothesis explicit #D
 
@@ -1065,20 +1071,22 @@ $])
 #pause
 #result[Change the experiment only after the test separates competing causes.]
 
-== Follow along: predict, calculate, run, explain #I
+== The selected checkpoint opened the sealed images once #I
 
-#interbox(link-to: NB1)[
-  Open the exact Colab notebook. Predict the 73,728 / 8,768 parameter ratio, verify standard and separable NCHW paths, inspect residual identity gradients, then prove which parameters changed after one optimizer step.
-]
-#pause
-#v(7pt)
-#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
-  hairline([FACTOR], [$57.803$M $arrow.r 6.874$M MACs], color: BLUE),
-  hairline([PRESERVE], [$x+F(x)$ and the direct gradient term], color: GREEN),
-  hairline([REUSE], [$512 arrow.r 6$ head: $3,078$ trainable], color: ACC),
+#align(center, grid(columns: (111mm, 1fr), gutter: 16pt, align: horizon,
+  [#evidence-image("sealed-test-examples.jpg", width: 111mm, height: 49mm, fit: "contain")
+   #v(2pt)
+   #evidence-caption([GT + COMPUTED MODEL OUTPUT], [one test example per true breed; green line is the selected model's predicted class and probability], color: GREEN)],
+  [#interbox(link-to: NB1)[
+     Reproduce the exact arithmetic, freezing checks, official preprocessing, cached $512$-D features, and manifest-bound linear probe in Colab.
+   ]
+   #v(4pt)
+   #hairline([SEALED RESULT], [full fine-tuning · epoch 13 · $33/36=91.7%$], color: GREEN)
+   #v(3pt)
+   #hairline([AUDIT TRAIL], [`selection-manifest.csv` locks every filename, split, and JPEG SHA-256; `results.json` records the single test pass.], color: BLUE)],
 ))
-#pause
-#note([The synthetic TinyBackbone verifies freezing mechanics; because it is randomly initialized, it is not evidence that pretrained transfer improves validation.], color: MUTED)
+#v(1pt)
+#align(center, text(size: 11pt, fill: MUTED)[Six shown successes are a contact sheet, not the score calculation; $33/36$ uses all sealed examples and includes three errors.])
 
 == The transfer decision is small, but the protocol is complete #V
 
@@ -1170,9 +1178,9 @@ Given an image task, ask in order:
 #v(10pt)
 #result[The next lecture keeps the reusable backbone but changes the head, targets, geometry, and evaluation.]
 
-== OPTIONAL · primary provenance and exact companion #V
+== OPTIONAL · primary provenance and executable evidence #V
 
-#set text(size: 14pt)
+#set text(size: 13.5pt)
 #align(center, grid(columns: (1fr, 1fr), gutter: 20pt,
   hairline([BLOCKS], [
     #link(VGG)[Simonyan & Zisserman · VGG] \
@@ -1180,13 +1188,21 @@ Given an image task, ask in order:
     #link(RESNET)[He et al. · ResNet] \
     #link(MOBILENET)[Howard et al. · MobileNet]
   ], color: TEAL),
-  hairline([SCALING + PIPELINES], [
+  hairline([SCALING + DATA], [
     #link(EFFICIENTNET)[Tan & Le · EfficientNet] \
     #link(CONVNEXT)[Liu et al. · ConvNeXt] \
     #link(FPN)[Lin et al. · FPN] \
-    #link(NB1)[Exact L08B Colab notebook]
+    #link(PETS)[Oxford-IIIT Pet · dataset + CC BY-SA 4.0]
   ], color: BLUE),
 ))
 #pause
-#v(9pt)
-#align(center, text(size: 16pt, fill: MUTED)[Use the papers for historical claims; use the held ledger and notebook for reproducible arithmetic.])
+#v(7pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 20pt,
+  hairline([MODEL ARTIFACT], [#link(TVRESNET18)[torchvision ResNet-18 `IMAGENET1K_V1`] \
+  weights SHA-256 `f37072fd…560e07ec`], color: ACC),
+  hairline([EXECUTABLE CASE], [#link(NB1)[Exact L08B Colab notebook] \
+  manifest + builder + histories + predictions + `results.json`], color: GREEN),
+))
+#pause
+#v(6pt)
+#align(center, text(size: 14.5pt, fill: MUTED)[Photographs remain CC BY-SA 4.0; every numeric claim on the transfer pages is bound to the fixed manifest and recorded run.])

@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="650" viewBox="0 0 1280 650">
+<rect width="100%" height="100%" fill="#f7f8f6"/>
+<style>text{font-family:Arial,Helvetica,sans-serif;fill:#23373b}.title{font-size:30px;font-weight:700}.label{font-size:25px}.small{font-size:25px;fill:#657578}.grid{stroke:#d9dfdc;stroke-width:1}.axis{stroke:#52666a;stroke-width:1.5}</style>
+<text x="50" y="45" class="title">FIXED VALIDATION SELECTS THE ADAPTATION REGIME</text>
+<text x="50" y="72" class="small">6 breeds; 72 train / 36 validation / 36 sealed official-test images; seed 20260812</text>
+<text x="90" y="108" class="title">Validation accuracy</text>
+<text x="700" y="108" class="title">Selected: all</text>
+<line x1="90" y1="130.0" x2="570" y2="130.0" class="grid"/>
+<text x="78" y="135.0" text-anchor="end" class="small">1.0</text>
+<line x1="90" y1="201.0" x2="570" y2="201.0" class="grid"/>
+<text x="78" y="206.0" text-anchor="end" class="small">0.8</text>
+<line x1="90" y1="272.0" x2="570" y2="272.0" class="grid"/>
+<text x="78" y="277.0" text-anchor="end" class="small">0.6</text>
+<line x1="90" y1="343.0" x2="570" y2="343.0" class="grid"/>
+<text x="78" y="348.0" text-anchor="end" class="small">0.4</text>
+<line x1="90" y1="414.0" x2="570" y2="414.0" class="grid"/>
+<text x="78" y="419.0" text-anchor="end" class="small">0.2</text>
+<line x1="90" y1="485.0" x2="570" y2="485.0" class="grid"/>
+<text x="78" y="490.0" text-anchor="end" class="small">0.0</text>
+<line x1="90" y1="130" x2="90" y2="485" class="axis"/>
+<line x1="90" y1="485" x2="570" y2="485" class="axis"/>
+<text x="90.0" y="511" text-anchor="middle" class="small">1</text>
+<text x="227.1" y="511" text-anchor="middle" class="small">5</text>
+<text x="398.6" y="511" text-anchor="middle" class="small">10</text>
+<text x="570.0" y="511" text-anchor="middle" class="small">15</text>
+<line x1="700" y1="130.0" x2="1180" y2="130.0" class="grid"/>
+<text x="688" y="135.0" text-anchor="end" class="small">1.0</text>
+<line x1="700" y1="201.0" x2="1180" y2="201.0" class="grid"/>
+<text x="688" y="206.0" text-anchor="end" class="small">0.8</text>
+<line x1="700" y1="272.0" x2="1180" y2="272.0" class="grid"/>
+<text x="688" y="277.0" text-anchor="end" class="small">0.6</text>
+<line x1="700" y1="343.0" x2="1180" y2="343.0" class="grid"/>
+<text x="688" y="348.0" text-anchor="end" class="small">0.4</text>
+<line x1="700" y1="414.0" x2="1180" y2="414.0" class="grid"/>
+<text x="688" y="419.0" text-anchor="end" class="small">0.2</text>
+<line x1="700" y1="485.0" x2="1180" y2="485.0" class="grid"/>
+<text x="688" y="490.0" text-anchor="end" class="small">0.0</text>
+<line x1="700" y1="130" x2="700" y2="485" class="axis"/>
+<line x1="700" y1="485" x2="1180" y2="485" class="axis"/>
+<text x="700.0" y="511" text-anchor="middle" class="small">1</text>
+<text x="837.1" y="511" text-anchor="middle" class="small">5</text>
+<text x="1008.6" y="511" text-anchor="middle" class="small">10</text>
+<text x="1180.0" y="511" text-anchor="middle" class="small">15</text>
+<polyline points="90.0,327.2 124.3,238.5 158.6,248.3 192.9,208.9 227.1,189.2 261.4,189.2 295.7,189.2 330.0,169.4 364.3,179.3 398.6,169.4 432.9,169.4 467.1,169.4 501.4,169.4 535.7,159.6 570.0,169.4" fill="none" stroke="#2c7a7b" stroke-width="4" stroke-linejoin="round"/>
+<line x1="90" y1="545" x2="118" y2="545" stroke="#2c7a7b" stroke-width="4"/>
+<text x="128" y="550" class="label">probe  best 91.7%</text>
+<polyline points="90.0,356.8 124.3,327.2 158.6,277.9 192.9,218.8 227.1,218.8 261.4,277.9 295.7,238.5 330.0,287.8 364.3,297.6 398.6,327.2 432.9,238.5 467.1,268.1 501.4,258.2 535.7,258.2 570.0,277.9" fill="none" stroke="#eb811b" stroke-width="4" stroke-linejoin="round"/>
+<line x1="90" y1="569" x2="118" y2="569" stroke="#eb811b" stroke-width="4"/>
+<text x="128" y="574" class="label">late  best 75.0%</text>
+<polyline points="90.0,337.1 124.3,218.8 158.6,199.0 192.9,179.3 227.1,159.6 261.4,179.3 295.7,179.3 330.0,159.6 364.3,159.6 398.6,159.6 432.9,159.6 467.1,159.6 501.4,149.7 535.7,159.6 570.0,169.4" fill="none" stroke="#2b6cb0" stroke-width="4" stroke-linejoin="round"/>
+<line x1="90" y1="593" x2="118" y2="593" stroke="#2b6cb0" stroke-width="4"/>
+<text x="128" y="598" class="label">all  best 94.4%</text>
+<polyline points="700.0,386.4 734.3,248.3 768.6,149.7 802.9,130.0 837.1,130.0 871.4,130.0 905.7,130.0 940.0,130.0 974.3,130.0 1008.6,130.0 1042.9,130.0 1077.1,130.0 1111.4,130.0 1145.7,130.0 1180.0,130.0" fill="none" stroke="#52666a" stroke-width="4" stroke-dasharray="8 7" stroke-linejoin="round"/>
+<line x1="700" y1="545" x2="728" y2="545" stroke="#52666a" stroke-width="4" stroke-dasharray="8 7"/>
+<text x="738" y="550" class="label">train</text>
+<polyline points="700.0,337.1 734.3,218.8 768.6,199.0 802.9,179.3 837.1,159.6 871.4,179.3 905.7,179.3 940.0,159.6 974.3,159.6 1008.6,159.6 1042.9,159.6 1077.1,159.6 1111.4,149.7 1145.7,159.6 1180.0,169.4" fill="none" stroke="#2b6cb0" stroke-width="4" stroke-dasharray="" stroke-linejoin="round"/>
+<line x1="700" y1="569" x2="728" y2="569" stroke="#2b6cb0" stroke-width="4" stroke-dasharray=""/>
+<text x="738" y="574" class="label">validation</text>
+<rect x="885" y="530" width="290" height="75" rx="8" fill="#ffffff" stroke="#2c7a7b" stroke-width="2"/>
+<text x="905" y="557" class="label">test opened once</text>
+<text x="905" y="590" class="title">33/36 = 91.7%</text>
+</svg>
