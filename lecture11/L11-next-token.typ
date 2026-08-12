@@ -1,862 +1,1054 @@
-// Next-Token Prediction — Lecture 11 · ES 667 Deep Learning
-// Compile from the repo root:
-//   typst compile --root . lecture11/L11-next-token.typ /tmp/L11.pdf
-//   typst compile --root . --input handout=true lecture11/L11-next-token.typ /tmp/L11h.pdf
-// Theme, palette, helpers and diagram builders live in common/metropolis.typ.
+// Next-Token Prediction - public Lecture 12 · ES 667 Deep Learning
+// Compile from the repository root:
+//   typst compile --root . --input handout=true lecture11/L11-next-token.typ /private/tmp/L11-handout.pdf
+//   typst compile --root . lecture11/L11-next-token.typ /private/tmp/L11-presentation.pdf
 
 #import "../common/metropolis.typ": *
 #show: metropolis-deck.with(
   title: [Next-Token Prediction],
-  subtitle: [Tokens, embeddings and neural language models],
+  subtitle: [Tokens, embeddings, and one complete neural language-model calculation],
 )
 
-#let IA = "https://nipunbatra.github.io/interactive-articles/"
-#let cream = rgb("#EFEEEB")
+#let NB = "https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L11/01_char_mlp_language_model.ipynb"
+#let BENGIO = "https://www.jmlr.org/papers/v3/bengio03a.html"
 
-// ── causal / autoregressive: predicting x_t may look only at the past ──
-#let causaldiag = align(center, diagram(spacing: (13mm, 9mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  let seen(x, lbl) = node((x, 0), text(size: 14pt, lbl), radius: 6.5mm, fill: cream, stroke: 0.9pt + INK)
-  let future(x, lbl) = node((x, 0), text(size: 14pt, fill: MUTED, lbl), radius: 6.5mm, fill: white, stroke: (paint: MUTED, dash: "dashed"))
-  seen(0, $x_1$); seen(1, $x_2$); seen(2, $x_3$)
-  node((3, 0), text(size: 14pt, fill: white, $x_4$), radius: 6.5mm, fill: ACC, stroke: 0.9pt + ACC)
-  future(4, $x_5$); future(5, $x_6$)
-  // causal arrows: only the past feeds the prediction of x_4
-  for i in (0, 1, 2) { edge((i, 0), (3, 0), "-|>", bend: 32deg, stroke: 0.8pt + TEAL) }
-  // the "now" boundary
-  edge((2.5, -0.9), (2.5, 0.9), stroke: (paint: RED, dash: "dashed", thickness: 1pt))
-  node((2.5, 1.15), text(size: 11pt, fill: RED)[now], stroke: none, fill: none)
-  node((4.5, -0.95), text(size: 11pt, fill: MUTED)[future — never seen], stroke: none, fill: none)
-}))
+#let PALE-TEAL = rgb("#DCEBEB")
+#let PALE-BLUE = rgb("#E7F0FA")
+#let PALE-ACC = rgb("#FDECD6")
+#let PALE-GREEN = rgb("#E5F3E9")
+#let PALE-RED = rgb("#FBE8E9")
+#let CREAM = rgb("#F4F1EA")
 
-// ── token id -> embedding table -> a single row ──
-// rounded-rect nodes so the two-line labels sit fully inside
-#let lookupdiag = align(center, diagram(spacing: (34mm, 8mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  node((0, 0), [token id \ #text(size: 13pt, fill: MUTED)[$= 5$]], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 8pt, fill: cream)
-  node((1, 0), [$E$ \ #text(size: 12pt, fill: MUTED)[$V times d$ table]], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 8pt, fill: TEAL.lighten(80%), stroke: 0.9pt + TEAL)
-  node((2, 0), [row 5 \ #text(size: 12pt, fill: MUTED)[$= e_5 in RR^d$]], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 8pt, fill: ACC.lighten(80%), stroke: 0.9pt + ACC)
-  edge((0, 0), (1, 0), "-|>", stroke: 0.8pt + MUTED, label: text(size: 11pt)[index], label-side: center)
-  edge((1, 0), (2, 0), "-|>", stroke: 0.8pt + MUTED, label: text(size: 11pt)[select], label-side: center)
-}))
+// Stable grammar: TEAL = observed/true context and TRAIN; BLUE = model/logits/
+// probabilities and INFER; ACC = target/chosen token; GREEN = correct/retained;
+// RED = loss/error; INK = EVAL and conventions.
+#let swatch(color, body) = box(width: 13pt, height: 4pt, fill: color, radius: 1pt) + h(4pt) + body
+#let lm-legend = align(center, text(size: 11.5pt)[
+  #swatch(TEAL, [observed context / TRAIN]) #h(10pt)
+  #swatch(BLUE, [model score or probability / INFER]) #h(10pt)
+  #swatch(ACC, [target or chosen token]) #h(10pt)
+  #swatch(GREEN, [correct / retained]) #h(10pt)
+  #swatch(RED, [loss or error]) #h(10pt)
+  #swatch(INK, [EVAL])
+])
 
-// ── the makemore MLP language model (Bengio 2003) architecture ──
-#let mlplm = align(center, diagram(spacing: (13mm, 8mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  let idn(y, lbl) = node((0, y), text(size: 12pt, lbl), fill: cream, corner-radius: 3pt, inset: 6pt)
-  let emn(y, lbl) = node((1.05, y), text(size: 12pt, lbl), fill: TEAL.lighten(80%), stroke: 0.9pt + TEAL, corner-radius: 3pt, inset: 6pt)
-  idn(1, $x_(t-3)$); idn(0, $x_(t-2)$); idn(-1, $x_(t-1)$)
-  emn(1, $e_(t-3)$); emn(0, $e_(t-2)$); emn(-1, $e_(t-1)$)
-  node((2.25, 0), [concat \ #text(size: 10pt, fill: MUTED)[$c in RR^(k d)$]], shape: fletcher.shapes.rect, fill: cream, corner-radius: 4pt, inset: 7pt)
-  node((3.55, 0), [hidden \ #text(size: 10pt, fill: MUTED)[$h = phi(W_h c + b_h)$]], shape: fletcher.shapes.rect, fill: BLUE.lighten(82%), stroke: 0.9pt + BLUE, corner-radius: 4pt, inset: 7pt)
-  node((4.95, 0), [logits \ #text(size: 10pt, fill: MUTED)[$z in RR^V$]], shape: fletcher.shapes.rect, fill: ACC.lighten(80%), stroke: 0.9pt + ACC, corner-radius: 4pt, inset: 7pt)
-  node((6.1, 0), [softmax \ #text(size: 10pt, fill: MUTED)[$p(x_t | dot)$]], shape: fletcher.shapes.rect, fill: rgb("#FDECD6"), stroke: 0.9pt + ACC, corner-radius: 4pt, inset: 7pt)
-  for y in (1, 0, -1) {
-    edge((0, y), (1.05, y), "-|>", stroke: 0.7pt + MUTED)
-    edge((1.05, y), (2.25, 0), "-|>", stroke: 0.7pt + MUTED)
+#let hairline(title, body, color: TEAL) = block(
+  width: 100%, inset: 3pt,
+  [#text(size: 13.5pt, weight: 700, fill: color)[#upper(title)]
+   #v(2pt)
+   #line(length: 100%, stroke: 0.8pt + color)
+   #v(5pt)
+   #body],
+)
+
+#let card(title, body, color: TEAL) = block(
+  width: 100%, inset: (x: 10pt, y: 8pt), fill: white,
+  stroke: 1pt + color, radius: 3pt,
+  [#text(size: 12.5pt, weight: 700, fill: color)[#upper(title)]
+   #v(4pt)
+   #body],
+)
+
+#let note(body, color: TEAL) = block(
+  width: 100%, inset: (left: 11pt, right: 5pt, top: 5pt, bottom: 5pt),
+  stroke: (left: 2pt + color), fill: color.lighten(93%), radius: 2pt,
+  [#body],
+)
+
+#let case-strip(stage, detail) = block(
+  width: 100%, inset: (x: 10pt, y: 6pt),
+  fill: rgb("#F3F6F5"), stroke: (left: 3pt + TEAL), radius: 3pt,
+  [#text(size: 11pt, weight: 700, fill: TEAL, tracking: 0.7pt)[HELD CASE · #upper(stage)]
+   #h(8pt)
+   #text(size: 13.5pt, fill: INK)[#detail]],
+)
+
+#let _clock(name, active, col, body) = block(
+  width: 100%, inset: (x: 8pt, y: 5pt), radius: 3pt,
+  fill: if active { col.lighten(88%) } else { rgb("#F2F1EE") },
+  stroke: if active { 1.2pt + col } else { 0.55pt + MUTED },
+  [#text(size: 11pt, weight: 750, fill: if active { col } else { MUTED })[#name]
+   #h(5pt)
+   #text(size: 10.8pt, fill: if active { INK } else { MUTED })[#body]],
+)
+
+#let clock-strip(active) = align(center, grid(
+  columns: (1fr, 1fr, 1fr), gutter: 9pt,
+  _clock([TRAIN], active == "train", TEAL, [true context $arrow.r$ $p$; CE $arrow.r$ update]),
+  _clock([INFER], active == "infer", BLUE, [current context $arrow.r$ $p$; choose $arrow.r$ append]),
+  _clock([EVAL], active == "eval", INK, [held-out truth $arrow.r$ mean NLL / PPL]),
+))
+
+#let token-box(body, color: TEAL, fill: PALE-TEAL, w: 14mm) = box(
+  width: w, height: 10mm, fill: fill, stroke: 0.9pt + color, radius: 2.5pt,
+  align(center + horizon, text(size: 14pt, weight: 650, body)),
+)
+
+#let flow-node(pos, body, color: INK, fill: white, w: 29mm) = node(
+  pos,
+  block(width: w, inset: (x: 5pt, y: 5pt), align(center, text(size: 12pt, body))),
+  shape: fletcher.shapes.rect, corner-radius: 3pt,
+  stroke: 0.9pt + color, fill: fill,
+)
+
+#let flow-arrow(a, b, color: MUTED, label: none, bend: 0deg) = edge(
+  a, b, "-|>", bend: bend, stroke: 0.85pt + color,
+  label: if label == none { none } else { text(size: 10.5pt, fill: color, label) },
+)
+
+#let context-row(items, target: none) = align(center, grid(
+  columns: if target == none { (auto, auto) } else { (auto, auto, 12mm, auto) },
+  gutter: 7pt, align: horizon,
+  ..items,
+  ..if target == none { () } else { ([#text(size: 23pt, fill: MUTED)[$arrow.r$]], token-box(target, color: ACC, fill: PALE-ACC)) },
+))
+
+#let prob-base = (
+  ([.], .028644, [.029], false),
+  ([a], .575333, [.575], true),
+  ([e], .077863, [.078], false),
+  ([i], .028644, [.029], false),
+  ([n], .077863, [.078], false),
+  ([v], .211653, [.212], false),
+)
+
+#let prob-cold = (
+  ([.], .002106, [.002]), ([a], .849672, [.850]), ([e], .015562, [.016]),
+  ([i], .002106, [.002]), ([n], .015562, [.016]), ([v], .114991, [.115]),
+)
+
+#let prob-hot = (
+  ([.], .080017, [.080]), ([a], .358609, [.359]), ([e], .131925, [.132]),
+  ([i], .080017, [.080]), ([n], .131925, [.132]), ([v], .217508, [.218]),
+)
+
+#let probability-bars(values: prob-base, h: 34mm) = {
+  let bar(item) = {
+    let col = if item.len() > 3 and item.at(3) { ACC } else { BLUE }
+    stack(dir: ttb, spacing: 2pt,
+      text(size: 9.5pt, weight: 650, fill: col, item.at(2)),
+      box(
+        width: 13mm,
+        height: h,
+        align(bottom, block(
+          width: 13mm,
+          height: item.at(1) * h,
+          fill: col.lighten(18%),
+          radius: (top: 2pt),
+        )),
+      ),
+    )
   }
-  edge((2.25, 0), (3.55, 0), "-|>", stroke: 0.9pt + INK)
-  edge((3.55, 0), (4.95, 0), "-|>", stroke: 0.9pt + INK)
-  edge((4.95, 0), (6.1, 0), "-|>", stroke: 0.9pt + INK)
-  node((0, 1.95), text(size: 11pt, fill: MUTED)[token ids], stroke: none, fill: none); node((1.05, 1.95), text(size: 11pt, fill: MUTED)[$E$ lookup], stroke: none, fill: none)
-}))
+  align(center, grid(
+    columns: (12mm, 15mm, 15mm, 15mm, 15mm, 15mm, 15mm),
+    rows: (h + 8mm, auto), gutter: 5pt, align: (center, bottom),
+    [#box(width: 10mm, height: h)[
+       #place(top + right, text(size: 8.5pt, fill: MUTED)[1.0])
+       #place(bottom + right, text(size: 8.5pt, fill: MUTED)[0])
+       #place(right, line(length: h, angle: 90deg, stroke: 0.7pt + MUTED))
+     ]],
+    ..values.map(bar),
+    [],
+    ..values.map(item => text(size: 11pt, weight: 650, item.at(0))),
+  ))
+}
 
-// ── the autoregressive generation loop: context -> model -> p_t -> sample -> append -> repeat ──
-#let genloop = align(center, diagram(spacing: (17mm, 9mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  let rn(pos, lbl, c, fill) = node(pos, text(size: 13pt, lbl), shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 7pt, stroke: 0.9pt + c, fill: fill)
-  rn((0, 0), [context], INK, cream)
-  rn((1, 0), [model], BLUE, BLUE.lighten(82%))
-  rn((2, 0), [$p_t$], ACC, ACC.lighten(80%))
-  rn((3, 0), [sample $hat(x)_t$], GREEN, GREEN.lighten(80%))
-  edge((0, 0), (1, 0), "-|>", stroke: 0.7pt + MUTED, label: text(size: 10pt, fill: MUTED)[run])
-  edge((1, 0), (2, 0), "-|>", stroke: 0.7pt + MUTED)
-  edge((2, 0), (3, 0), "-|>", stroke: 0.7pt + MUTED, label: text(size: 10pt, fill: MUTED)[sample])
-  edge((3, 0), (0, 0), "-|>", bend: -36deg, stroke: 0.9pt + GREEN)
-  node((1.5, 1.02), text(size: 10pt, fill: GREEN)[append $hat(x)_t$, drop oldest — *repeat*], stroke: none, fill: white)
-}))
+#let tiny-distribution(title, values, color: BLUE) = card(title, [
+  #align(center, grid(
+    columns: (8mm, 8mm, 8mm, 8mm, 8mm, 8mm), gutter: 3pt, align: bottom,
+    ..values.map(item => stack(dir: ttb, spacing: 1.5pt,
+      block(width: 6mm, height: item.at(1) * 25mm, fill: color.lighten(18%), radius: (top: 1.5pt)),
+      text(size: 8.5pt, item.at(0)),
+    )),
+  ))
+], color: color)
+
+#let model-pipeline = align(center, diagram(
+  spacing: (16mm, 10mm), node-stroke: 1pt + INK, node-fill: white,
+  {
+    flow-node((0,0), [ids $(0,4)$], color: TEAL, fill: PALE-TEAL, w: 22mm)
+    flow-node((1.25,0), [rows $e_.,e_n$], color: TEAL, fill: PALE-TEAL, w: 25mm)
+    flow-node((2.5,0), [ordered $c in RR^4$], color: INK, fill: CREAM, w: 27mm)
+    flow-node((3.75,0), [ReLU $h in RR^2$], color: BLUE, fill: PALE-BLUE, w: 25mm)
+    flow-node((5,0), [logits $z in RR^6$], color: BLUE, fill: PALE-BLUE, w: 25mm)
+    flow-node((6.25,0), [softmax $p$], color: BLUE, fill: PALE-BLUE, w: 23mm)
+    flow-arrow((0,0),(1.25,0), color: TEAL)
+    flow-arrow((1.25,0),(2.5,0), color: TEAL)
+    flow-arrow((2.5,0),(3.75,0), color: BLUE)
+    flow-arrow((3.75,0),(5,0), color: BLUE)
+    flow-arrow((5,0),(6.25,0), color: BLUE)
+  },
+))
 
 #title-slide()
 
-// ═══════════════════════════ PART I — What is sequence modeling ═══════════════════════════
-= What is sequence modeling?
+// ───────────────────────── CORE · 0-55 MIN ─────────────────────────
 
-== Where we are
+== L11 classified spatial sites; L12 classifies the next time site #V
 
-The vision lectures took a *fixed-shape* input — an image tensor:
-#pause
-$ X in RR^(H times W times C) $
-#pause
-Every example had the *same* shape; a CNN mapped it to one label.
-#pause
-#notebox[This lecture changes the *input type*. We move from fixed tensors to *sequences* of variable length — the first step toward language models.]
-
-== Images are fixed; sequences are ordered
-
-An image is a fixed grid. A *sequence* is an ordered list of tokens $x_1, x_2, dots, x_T$:
-#pause
-#align(center, table(
-  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 6pt), align: (left, left),
-  table.header([*Sequence*], [*Tokens $x_t$*]),
-  [text], [characters, subwords, or words],
-  [audio], [waveform samples / frames],
-  [sensors], [readings over time],
-  [events / logs], [user clicks, actions],
-  [DNA], [bases A, C, G, T],
+#align(center, grid(columns: (1fr, 18mm, 1fr), gutter: 9pt, align: horizon,
+  card([PUBLIC L11 · SEGMENTATION], [one categorical distribution at every spatial location #linebreak() output support $H times W$], color: TEAL),
+  [#align(center, text(size: 27pt, fill: MUTED)[$arrow.r$])],
+  card([PUBLIC L12 · LANGUAGE], [one categorical distribution at the next ordered location #linebreak() output support $V$], color: BLUE),
 ))
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[length $T$ *varies* from example to example — a fixed-size vector no longer fits])
+#v(9pt)
+#result[The classifier and cross-entropy stay. Order, causality, and feeding predictions back are new.]
 
-== Order carries meaning
+== Commit before the model reveals anything #Q
 
-The *same* tokens in a *different order* mean different things:
+#case-strip([opening commitment], [Vocabulary `[., a, e, i, n, v]`; visible context `.n`; predict the next token.])
+#v(8pt)
+#context-row((token-box([.]), token-box([n])), target: [?])
 #pause
-#align(center, text(size: 20pt, fill: INK)[
-  "dog bites man" $quad != quad$ "man bites dog"
-])
-#pause
-#alertbox[A model $f$ over sequences must *preserve order*. Treating $x_(1:T)$ as an unordered bag throws away exactly the structure that makes it a sequence.]
-
-== The sequence tasks #V
-
-A handful of task shapes cover most of sequence modeling:
-#pause
-#fig("/lecture11/figures/task_taxonomy.svg", w: 80%)
-
-== The sequence tasks, precisely
-
-#align(center, table(
-  columns: 3, stroke: 0.5pt + MUTED, inset: (x: 10pt, y: 6pt), align: (left, center, left),
-  table.header([*Task*], [*Shape*], [*Example*]),
-  [classification], [$x_(1:T) -> y$], [sentiment of a review],
-  [token classification], [$x_(1:T) -> y_(1:T)$], [tag each word (POS)],
-  [seq2seq], [$x_(1:T) -> y_(1:U)$], [translate a sentence],
-  [*next-token*], [$x_(1:t) -> x_(t+1)$], [*predict what comes next*],
+#v(8pt)
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 10pt,
+  card([OUTPUT], [What six numbers must the model return?], color: BLUE),
+  card([CHOICE], [Will greedy and sampling always pick the same token?], color: ACC),
+  card([LEARNING], [Which embedding rows can this example update?], color: TEAL),
 ))
 #pause
-#result[this lecture: *next-token prediction* — the task behind language models]
+#note([Commit silently. We will derive every answer from one set of weights and revisit all three.], color: BLUE)
 
-== Our first task
+== The 80-minute route protects one numerical spine #V
 
-Given a prefix, predict what comes next:
-#pause
-#align(center, text(size: 20pt, fill: INK)[
-  "deep learning is" $quad -->^? quad$ ???
-])
-#pause
-The model outputs a *probability distribution* over the whole vocabulary $V$:
-$ p_theta (x_(t+1) = v | x_(1:t)) quad "for every" v in V $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[not a single guess — a *score for every possible next token*])
-
-== Running example: makemore names
-
-Our anchor all lecture: a *character-level name generator*.
-#pause
-- predict the next *character* of a name: `naveen`, `aarav`, `diya`, `arjun`;
-#pause
-- tiny vocabulary — 26 letters plus one special token;
-#pause
-- embeddings small enough to *see*, training fast enough to *play with*.
-#pause
-#notebox[This is Karpathy's *makemore* (part 2), which is exactly the neural language model of *Bengio et al. 2003, "A Neural Probabilistic Language Model"*. We build up to that model in this lecture.]
-
-// ═══════════════════════════ PART II — Sequence probability ═══════════════════════════
-= The probability of a sequence
-
-== A model assigns probability to sequences
-
-A language model is really a *probability distribution* over sequences:
-#pause
-$ p_theta (x_1, x_2, dots, x_T) $
-#pause
-How can one model score a sequence of *arbitrary length*? Factor it into pieces.
-
-== The chain rule of probability #D
-
-Any joint distribution factorizes into a product of conditionals:
-#pause
-$ p(x_1, dots, x_T) = p(x_1) thin p(x_2 | x_1) thin p(x_3 | x_1, x_2) dots p(x_T | x_(1:T-1)) $
-#pause
-Compactly, with $x_(<t) = x_(1:t-1)$:
-$ p(x_(1:T)) = product_(t=1)^T p(x_t | x_(<t)) $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[exact — no approximation. This holds for *any* sequence distribution.])
-
-== Why next-token is enough
-
-Read the chain rule the other way around:
-#pause
-#notebox[If we can model *every* conditional $p(x_t | x_(<t))$, we have modelled the *whole* sequence. Each factor is a next-token prediction.]
-#pause
-#result[language modeling $=$ repeated classification]
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[each step: a $V$-way classification of "which token comes next?"])
-
-== The training objective falls out #D
-
-Take the log of the chain-rule product — products become sums:
-#pause
-$ log p(x_(1:T)) = sum_(t=1)^T log p(x_t | x_(<t)) $
-#pause
-Maximizing likelihood $=$ minimizing the *negative log-likelihood*:
-$ cal(L) = - sum_(t=1)^T log p_theta (x_t | x_(<t)) $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[this is exactly *token-level cross-entropy* — the same loss as classification])
-
-== Every position is a training example #D
-
-One name yields *many* supervised (context $->$ target) pairs. For `naveen`:
-#pause
-#align(center, table(
-  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 5.5pt), align: (left, left),
-  table.header([*context* $x_(<t)$], [*target* $x_t$]),
-  [`.` #text(fill: MUTED)[(start)]], [`n`],
-  [`. n`], [`a`],
-  [`. n a`], [`v`],
-  [`. n a v`], [`e`],
-  [`. n a v e`], [`e`],
-  [`. n a v e e`], [`n`],
-  [`. n a v e e n`], [`.` #text(fill: MUTED)[(end)]],
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 12pt,
+  hairline([CORE · 55 MIN], [boundary + causal windows $arrow.r$ embedding lookup $arrow.r$ fixed-context MLP $arrow.r$ stable softmax $arrow.r$ CE $arrow.r$ $p-y$ $arrow.r$ token NLL / PPL], color: TEAL),
+  hairline([SHOULD · 15 MIN], [autoregressive loop $arrow.r$ greedy / sampling $arrow.r$ temperature $arrow.r$ suffix-blind diagnostic $arrow.r$ opening revisit], color: BLUE),
+  hairline([OPTIONAL · 10 MIN], [full gradient matrices $arrow.r$ learned representation $arrow.r$ Colab and primary provenance], color: MUTED),
 ))
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[one 6-letter name $-> 7$ training pairs. A corpus gives *millions*.])
-
-== Causal / autoregressive #V
-
-Predicting $x_t$ may look at the *past* $x_(<t)$ — never at $x_t$ or the future:
-#pause
-#causaldiag
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[*autoregressive*: each token is predicted from the tokens before it])
-
-// ═══════════════════════════ PART III — Tokens & vocabulary ═══════════════════════════
-= Tokens and vocabulary
-
-== Text must become integers
-
-A neural network consumes *numbers*, not strings. So we fix a *vocabulary* and map each token to an integer *id*:
-#pause
-$ "cat" -> 17, quad "dog" -> 18, quad "." -> 0 $
-#pause
-- the vocabulary $V$ is the fixed set of tokens the model knows;
-#pause
-- a sequence of text becomes a sequence of *token ids*.
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[makemore: $V = { space . space, a, b, dots, z }$ — 27 symbols])
-
-== What counts as a token?
-
-The *granularity* of tokenization is a design choice:
-#pause
-#align(center, table(
-  columns: 3, stroke: 0.5pt + MUTED, inset: (x: 10pt, y: 6pt), align: (left, center, center),
-  table.header([*Unit*], [*Vocabulary size*], [*Sequence length*]),
-  [character], [tiny (~$10^2$)], [very long],
-  [word], [huge (~$10^5$+)], [short],
-  [subword], [moderate (~$10^4$)], [moderate],
-))
-#pause
-#notebox[Subword tokenization (e.g. *BPE*) is the modern default — a middle ground. We won't deep-dive it here; makemore just uses *characters*.]
-
-== Special tokens
-
-Beyond ordinary symbols, we reserve a few *control* tokens:
-#pause
-#align(center, table(
-  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 6pt), align: (left, left),
-  table.header([*Token*], [*Role*]),
-  [`<BOS>` / `.`], [marks the *start* of a sequence],
-  [`<EOS>` / `.`], [marks the *end* — lets the model stop],
-  [`<PAD>`], [fills short sequences to a common length],
-  [`<UNK>`], [stands in for out-of-vocabulary tokens],
-))
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[makemore reuses a single `.` as both start and end marker])
-
-== A token id is not a number
-
-The id is a *name*, not a *quantity*:
-#pause
-$ "cat" -> 17, quad "dog" -> 18 quad #text(fill: RED)[but] quad "dog" - "cat" != 1 $
-#pause
-#alertbox[Ids are *categorical* indices. Token 18 is not "one more than" token 17 — the integers carry *no* magnitude or order. Feeding the raw id as a scalar feature would invent a meaningless numeric scale.]
-#pause
-#result[we need a representation with *no* spurious arithmetic — next]
-
-// ═══════════════════════════ PART IV — One-hot & embeddings ═══════════════════════════
-= One-hot vectors and embeddings
-
-== One-hot: the honest encoding
-
-Represent token $i$ as a vector that is *1* in position $i$, *0* elsewhere:
-#pause
-$ o_i in RR^V, quad (o_i)_j = cases(1 quad j = i, 0 quad "otherwise") $
-#pause
-- no false ordering — every token is a distinct axis;
-#pause
-- but *high-dimensional* ($V$ can be $"50,000"$) and *sparse*;
-#pause
-- and *no notion of similarity* — every pair is equally far apart.
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[$norm(o_i - o_j)^2 = 2$ for *every* distinct pair — "cat" is as close to "dog" as to "the"])
-
-== One-hot vs dense embedding #V
-
-#fig("/lecture11/figures/one_hot_vs_embed.svg", w: 80%)
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[replace a long sparse indicator with a short *dense* vector of learned features])
-
-== Embeddings: a learned dense vector
-
-Give each token a *dense* vector $e_i in RR^d$ with $d << V$. Stack them as rows of a matrix:
-#pause
-$ E in RR^(V times d), quad quad e_i = E_(i, :) quad (#text[the $i$-th row]) $
-#pause
-- $V = 27, d = 2$ — small enough to *plot* (makemore);
-#pause
-- $V = "50,000", d = 256$ — a realistic language model.
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[from a $V$-dim sparse axis to a $d$-dim dense point — $d$ is the *embedding dimension*])
-
-== Lookup is a matrix multiply #D
-
-Selecting row $i$ of $E$ *is* a linear operation on the one-hot vector:
-#pause
-$ e_i = E^top o_i $
-#pause
-#lookupdiag
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[in code it is a *table lookup* — but mathematically it is linear, so gradients flow through it])
-
-== Worked example: embedding lookup #D
-
-Four tokens `[I, like, cats, dogs]`, embedding dimension $d = 2$:
-#pause
-$ E = mat(1, 0; 0, 1; 1, 1; -1, 1), quad quad e_"I" = mat(1, 0), quad e_"like" = mat(0, 1) $
-#pause
-Context `"I like"` looks up two rows:
-$ (e_"I", e_"like") = ((1, 0), (0, 1)) $
-#pause
-#align(center, text(size: 16pt, fill: BLUE)[*Check:* what does context `"cats dogs"` look up?])
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[rows $3$ and $4$: $(e_"cats", e_"dogs") = ((1, 1), (-1, 1))$ — two dense rows out, the whole embedding layer])
-
-== The embedding table E #V
-
-$E$ is just a matrix of parameters; a context selects a few *rows*:
-#pause
-#fig("/lecture11/figures/embedding_table.svg", w: 42%)
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[looking up `e` and `o` picks out two rows of $E$ — nothing else is touched])
-
-== Embeddings are parameters #D
-
-$E$ starts as *small random noise* and is *learned* by gradient descent, like any weight:
-#pause
-$ E <- E - eta thin nabla_E cal(L) $
-#pause
-#notebox[Only the *rows that were looked up* in a batch receive a gradient — an unseen token's embedding does not move on that step. Frequent tokens get trained the most.]
-
-== Embedding geometry #V
-
-Trained embeddings place *similar-context* tokens *near* each other:
-#pause
-#fig("/lecture11/figures/embedding_2d.svg", w: 52%)
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[in makemore, vowels and consonants tend to cluster — measured by *cosine similarity*])
-
-== A caveat on embedding geometry
-
-#pause
-- similarity emerges from *usage* — tokens used in like contexts drift together;
-#pause
-- cosine similarity $cos(e_i, e_j) = (e_i^top e_j) / (norm(e_i) norm(e_j))$ measures it;
-#pause
-#alertbox[Do *not* over-promise. Not every direction is a clean semantic axis, and small models learn only coarse structure. "Vowels cluster" is a *tendency*, not a law.]
-
-== Interactive: embedding lookup #I
-
-#interbox(link-to: IA + "embedding-lookup")[click a token id and watch the corresponding *row* of $E$ light up and drop out as the dense embedding vector; nudge a value and see the point move in 2-D.]
-
-// ═══════════════════════════ PART V — Fixed-context MLP language model ═══════════════════════════
-= A fixed-context MLP language model
-
-== The full history is too much
-
-Exactly, $p(x_t | x_(<t))$ conditions on *all* previous tokens — an unbounded input.
-#pause
-Simplify: condition on only the previous $k$ tokens (a *fixed context window*):
-$ p_theta (x_t | x_(<t)) approx p_theta (x_t | x_(t-k : t-1)) $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[a bounded, fixed-size input $-> $ an ordinary MLP can handle it. This is the Bengio-2003 / makemore model.])
-
-== The sliding-window dataset #D
-
-Slide a window of length $k$ over each name to make (context $->$ target) pairs. `naveen`, $k = 3$:
-#pause
-#align(center, table(
-  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 5.5pt), align: (left, left),
-  table.header([*context* ($k = 3$)], [*target*]),
-  [`. . .`], [`n`],
-  [`. . n`], [`a`],
-  [`. n a`], [`v`],
-  [`n a v`], [`e`],
-  [`a v e`], [`e`],
-  [`v e e`], [`n`],
-  [`e e n`], [`.` #text(fill: MUTED)[(end)]],
-))
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[pad the start with `.`; every window is one supervised example])
-
-== The MLP language model #V
-
-#mlplm
-#pause
-#align(center, text(size: 15pt, fill: MUTED)[look up $-> $ concatenate $-> $ hidden layer $-> $ logits $-> $ softmax over $V$])
-
-== The model, in equations #D
-
-Look up each context token's embedding, then run an MLP:
-#pause
-$ e_(t-j) = E[x_(t-j)], quad quad c_t = [e_(t-k); dots; e_(t-1)] in RR^(k d) $
-#pause
-$ h = phi(W_h thin c_t + b_h), quad quad z = W_o thin h + b_o $
-#pause
-$ p = "softmax"(z) in RR^V $
-#pause
-#align(center, text(size: 15pt, fill: MUTED)[Bengio et al. 2003 · Karpathy's makemore — embeddings + one hidden layer + softmax])
-
-== Why concatenate, not average? #D
-
-Concatenation *keeps position information*:
-#pause
-$ [e_"dog"; e_"bites"; e_"man"] quad != quad [e_"man"; e_"bites"; e_"dog"] $
-#pause
-#alertbox[*Averaging* the embeddings would give $1/k sum_j e_(t-j)$ — identical for any *reordering* of the context. That destroys order, the one thing a sequence model must keep.]
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[each position lands in its *own* slice of $c_t$, hitting its *own* columns of $W_h$])
-
-== Tensor shapes
-
-Track a batch of $B$ contexts through the model:
-#pause
-#align(center, table(
-  columns: 3, stroke: 0.5pt + MUTED, inset: (x: 10pt, y: 5.5pt), align: (left, center, left),
-  table.header([*Tensor*], [*Shape*], [*Meaning*]),
-  [context ids $X$], [$B times k$], [$k$ token ids per row],
-  [embeddings $E[X]$], [$B times k times d$], [one $d$-vector per token],
-  [concat $C$], [$B times k d$], [flatten the $k$ embeddings],
-  [hidden $H$], [$B times H_"dim"$], [after $W_h$ and $phi$],
-  [logits $Z$], [$B times V$], [one score per vocab token],
-))
-
-== Parameter count #D
-
-Three weight blocks — embedding, hidden, output:
-#pause
-$ underbrace(V d, "embedding") + underbrace(H dot k d + H, "hidden") + underbrace(V dot H + V, "output") $
-#pause
-where $H$ is the hidden width and $k$ the context length.
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[note: the *embedding* and *output* blocks both scale with the vocabulary $V$])
-
-== Worked parameter count #D
-
-Take $V = "20,000", thin d = 128, thin k = 4, thin H = 512$:
-#pause
-*Embedding* — one $d$-vector per vocab item:
-$ V d = "20,000" dot 128 = "2,560,000" $
-#pause
-*Hidden* — an $H times k d$ matrix plus $H$ biases (note $k d = 512$):
-$ H dot k d + H = 512 dot 512 + 512 = "262,656" $
-#pause
-*Output* — a $V times H$ matrix plus $V$ biases:
-$ V H + V = "20,000" dot 512 + "20,000" = "10,260,000" $
-
-== Worked parameter count (cont.) #D
-
-Add the three weight blocks:
-#pause
-$ underbrace("2,560,000", "embed") + underbrace("262,656", "hidden") + underbrace("10,260,000", "output") $
-#pause
-$ = "13,082,656" $
-#pause
-#result[total $approx 13.08$ M parameters]
-#pause
-#align(center, text(size: 16pt, fill: BLUE)[*Check:* which block shrinks most if we halve the vocabulary $V$?])
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[embedding + output (both $prop V$) dominate — halving $V$ nearly *halves* the model])
-
-// ═══════════════════════════ PART VI — Fully-worked forward + backward ═══════════════════════════
-= A fully-worked forward and backward pass
-
-== The tiny setup
-
-Vocabulary `[I, like, cats, dogs]`, context `"I like"`, target `cats`, $d = 2$:
-#pause
-$ e_"I" = mat(1, 0), quad e_"like" = mat(0, 1), quad c = mat(1, 0, 0, 1)^top $
-#pause
-$ W_h = mat(1, 0, 0, 1; 0, 1, 1, 0), quad b_h = 0 $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[small enough to do *entirely by hand* — and check against the earlier formulas])
-
-== Forward: the hidden layer #D
-
-Multiply row by row, then apply ReLU. Recall $c = mat(1, 0, 0, 1)^top$:
-#pause
-$ (W_h c)_1 = 1 dot 1 + 0 dot 0 + 0 dot 0 + 1 dot 1 = 2 $
-#pause
-$ (W_h c)_2 = 0 dot 1 + 1 dot 0 + 1 dot 0 + 0 dot 1 = 0 $
-#pause
-$ h = "ReLU"(mat(2, 0)) = mat(2, 0) $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[the first hidden unit fires; the second is switched off])
-
-== Forward: logits and softmax #D
-
-Suppose the output layer produces logits (for `[I, like, cats, dogs]`):
-#pause
-$ z = mat(-2, 0, 2, 1) $
-#pause
-Softmax first *exponentiates* each logit:
-#pause
-$ e^(-2) approx 0.135, quad quad e^0 = 1 $
-#pause
-$ e^2 approx 7.389, quad quad e^1 approx 2.718 $
-#pause
-Sum them to get the normalizer $Z$:
-$ Z = 0.135 + 1 + 7.389 + 2.718 = 11.243 $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[a bigger logit becomes an *exponentially* bigger weight — that is the "soft-max"])
-
-== Forward: softmax probabilities (cont.) #D
-
-Divide each exponential by the normalizer $Z = 11.243$:
-#pause
-$ p_"I" = 0.135 / 11.243 approx 0.012, quad quad p_"like" = 1 / 11.243 approx 0.089 $
-#pause
-$ p_"cats" = 7.389 / 11.243 approx 0.657, quad quad p_"dogs" = 2.718 / 11.243 approx 0.242 $
-#pause
-$ p = mat(0.012, 0.089, 0.657, 0.242), quad quad sum_i p_i = 1 $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[the model already puts most mass ($0.657$) on the correct token `cats`])
-
-== Forward: the loss #D
-
-Cross-entropy picks out the *target* probability. Target is `cats`:
-#pause
-$ cal(L) = - log p_"cats" = - log(0.657) approx 0.42 $
-#pause
-#result[$cal(L) approx 0.42$ nats]
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[a confident-but-imperfect prediction; a perfect one would give $cal(L) = 0$])
-
-== Backward: the output gradient #D
-
-For softmax + cross-entropy, the gradient w.r.t. the logits is beautifully simple:
-#pause
-$ nabla_z cal(L) = p - y, quad quad y = mat(0, 0, 1, 0) quad (#text[one-hot target]) $
-#pause
-Only the target coordinate `cats` has $y = 1$; subtract term by term:
-#pause
-$ nabla_z cal(L) = mat(0.012 - 0, 0.089 - 0, 0.657 - 1, 0.242 - 0) $
-#pause
-$ nabla_z cal(L) = mat(0.012, 0.089, -0.343, 0.242) $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[*push down* the three wrong logits, *push up* the correct one `cats` — that is all learning is here])
-
-== Backward: down to the embeddings #D
-
-The chain rule walks the gradient back through the MLP. First to the hidden layer:
-#pause
-$ nabla_h cal(L) = W_o^top thin nabla_z cal(L) quad quad #text(size: 14pt, fill: MUTED)[(pull the logit gradient through $W_o$)] $
-#pause
-Through the ReLU — only the units that *fired* in the forward pass pass a gradient:
-$ nabla_a cal(L) = nabla_h cal(L) dot.o "ReLU"'(W_h c) $
-#pause
-Then back to the concatenated context $c$ (numbers for a specific small $W_o, W_h$ — the *pattern* is the point):
-$ nabla_c cal(L) = W_h^top thin nabla_a cal(L) = mat(-0.234, 0, 0, -0.234) $
-#pause
-#align(center, text(size: 15pt, fill: MUTED)[the off ReLU unit zeroes its block; only the two live coordinates of $c$ get a gradient])
-#pause
-#align(center, text(size: 15pt, fill: MUTED)[the two *zeros* are the coordinates the switched-off hidden unit never touched])
-
-== Backward: the embedding gradients (cont.) #D
-
-Split $c = [e_"I"; e_"like"]$ back into the two rows that were looked up:
-#pause
-$ nabla_(e_"I") cal(L) = mat(-0.234, 0) quad quad #text(size: 14pt, fill: MUTED)[(first two coordinates of $nabla_c cal(L)$)] $
-#pause
-$ nabla_(e_"like") cal(L) = mat(0, -0.234) quad quad #text(size: 14pt, fill: MUTED)[(last two coordinates)] $
-#pause
-#align(center, text(size: 16pt, fill: BLUE)[*Check:* which of the four rows of $E$ move this step?])
-#pause
-#align(center, text(size: 15pt, fill: MUTED)[only rows `I` and `like` — `cats` and `dogs` were not in the context, so their gradient is $0$])
-
-== Interactive: the MLP language model #I
-
-#interbox(link-to: IA + "makemore-forward")[step through this exact example: watch the embeddings look up, the concat form, the softmax bar chart appear, and the $p - y$ gradient flow back and nudge the two used rows.]
-
-// ═══════════════════════════ PART VII — Training objective & evaluation ═══════════════════════════
-= Training objective and evaluation
-
-== The dataset loss
-
-Average the per-token NLL over every (context $->$ target) pair in the corpus:
-#pause
-$ cal(L) = - 1/(T - k) sum_(t) log p_theta (x_t | x_(t-k:t-1)) $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[the token-level cross-entropy from Part II — now over the whole sliding-window dataset])
-
-== The minibatch loop
-
-Train by the same loop as any classifier — on a minibatch $B$ of contexts:
-#pause
-$ cal(L)_B = - 1/abs(B) sum_(i in B) log p_theta (y_i | c_i) $
-#pause
-#align(center, diagram(spacing: 8mm, node-stroke: 0.8pt + INK, node-fill: white, {
-  let b(x, lbl, col) = node((x, 0), text(size: 12pt, lbl), fill: col.lighten(82%), stroke: 0.8pt + col, corner-radius: 3pt, inset: 6pt)
-  b(0, "contexts", INK); b(1, "embed", TEAL); b(2, "MLP", BLUE); b(3, "logits", ACC); b(4, "cross-entropy", RED); b(5, "backprop", GREEN); b(6, "update", INK)
-  for i in range(6) { edge((i, 0), (i + 1, 0), "-|>", stroke: 0.7pt + MUTED) }
-}))
-
-== Padding and loss masks
-
-Sequences in a batch have *different lengths*. Pad short ones to a common length:
-#pause
-- introduce a `<PAD>` token so every row is length $k$;
-- but *do not* let padding contribute to the loss.
-#pause
-Use a mask $m_(i t) in {0, 1}$ ($1$ = real token, $0$ = pad):
-$ cal(L) = (sum_(i, t) m_(i t) thin (- log p_(i t))) / (sum_(i, t) m_(i t)) $
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[the mask makes padding *invisible* to the gradient — only real tokens count])
-
-== Perplexity #D
-
-Report the *per-token* NLL exponentiated — the *perplexity*:
-#pause
-$ "PPL" = exp("NLL") = exp(- 1/N sum_t log p_theta (x_t | x_(<t))) $
-#pause
-#notebox[Interpretation: the *effective number of plausible next tokens*. PPL $= 1$ means perfectly certain; PPL $= V$ means no better than a uniform guess.]
-
-== Perplexity, two ways #V
-
-#fig("/lecture11/figures/perplexity.svg", w: 74%)
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[a peaked distribution has *low* perplexity; a flat one is *perplexed* among many tokens])
-
-== Perplexity: worked and cautioned #D
-
-Quick sanity checks (natural log):
-#pause
-$ "NLL" = log 2 approx 0.69 quad => quad "PPL" = e^(log 2) = 2 $
-#pause
-$ "NLL" = log 10 approx 2.30 quad => quad "PPL" = e^(log 10) = 10 $
-#pause
-#alertbox[*Caveat.* Perplexity depends on the *tokenization*. A character model and a word model are *not* comparable by PPL — they predict different-sized units.]
+#v(10pt)
+#align(center, text(size: 16pt, fill: MUTED)[The final RNN handoff is CORE even when optional material is skipped.])
 
-// ═══════════════════════════ PART VIII — Autoregressive generation ═══════════════════════════
-= Autoregressive generation
+== Three clocks reuse the distribution but change the question #V
 
-== Training vs generation #V
-
-At *training* time the previous tokens are *true*; at *generation* time they are the model's *own* outputs, fed back in:
-#pause
-#align(center, diagram(spacing: (17mm, 13mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  let rn(pos, lbl, c: INK, fill: white) = node(pos, text(size: 13pt, lbl),
-    shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 7pt, stroke: 0.9pt + c, fill: fill)
-  // generation row (top)
-  node((-1.15, -1.4), text(size: 12pt, fill: MUTED)[gen], stroke: none, fill: none)
-  rn((0, -1.4), [context], fill: cream)
-  rn((1.4, -1.4), [model], c: BLUE, fill: BLUE.lighten(82%))
-  rn((2.9, -1.4), [sample $hat(x)_t$], c: GREEN, fill: GREEN.lighten(80%))
-  edge((0, -1.4), (1.4, -1.4), "-|>", stroke: 0.7pt + MUTED); edge((1.4, -1.4), (2.9, -1.4), "-|>", stroke: 0.7pt + MUTED)
-  edge((2.9, -1.4), (0, -1.4), "-|>", bend: 32deg, stroke: 0.9pt + GREEN)
-  node((1.45, -0.72), text(size: 10pt, fill: GREEN)[append, feed back], stroke: none, fill: white)
-  // training row (bottom)
-  node((-1.15, 0), text(size: 12pt, fill: MUTED)[train], stroke: none, fill: none)
-  rn((0, 0), [true $x_(<t)$], fill: cream)
-  rn((1.4, 0), [model], c: BLUE, fill: BLUE.lighten(82%))
-  rn((2.9, 0), [$p(x_t)$], c: ACC, fill: ACC.lighten(80%))
-  edge((0, 0), (1.4, 0), "-|>", stroke: 0.7pt + MUTED); edge((1.4, 0), (2.9, 0), "-|>", stroke: 0.7pt + MUTED)
-}))
-
-== The generation algorithm
-
-One token at a time:
-#pause
-+ start from a context (e.g. just `.` for makemore);
-#pause
-+ run the model $-> $ next-token distribution $p_t$;
-#pause
-+ *select* or *sample* a token $hat(x)_t$ from $p_t$;
+#clock-strip("train")
 #pause
-+ *append* it; drop the oldest token if the context is fixed-length;
+#clock-strip("infer")
 #pause
-+ repeat until `<EOS>` or a maximum length.
+#clock-strip("eval")
 #pause
 #v(6pt)
-#genloop
+#result[Always ask: are we updating weights, choosing a token, or scoring held-out truth?]
 
-== Greedy decoding
+== By the end, one sentence should be operational #V
 
-Always take the *most probable* token:
+#align(center, text(size: 22pt, weight: 700)[A language model maps an observed prefix to a distribution over the next token.])
 #pause
-$ hat(x)_(t+1) = arg max_v thin p_t (v) $
-#pause
-#two(
-  notebox[*Pro* — deterministic, simple, always picks the model's best guess.],
-  alertbox[*Con* — repetitive and bland; locally-best $!=$ globally-best sequence.],
-)
+#v(12pt)
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 10pt,
+  card([REPRESENT], [turn categorical ids into learned vectors without inventing numeric order], color: TEAL),
+  card([PREDICT], [produce $V$ logits, normalize, and train with token cross-entropy], color: BLUE),
+  card([DIAGNOSE], [separate decoding choices from an architecture that cannot see enough history], color: INK),
+))
+#lm-legend
 
-== Sampling
+== One tiny corpus supplies every visible token #V
 
-Draw the next token *at random* from the distribution:
-#pause
-$ hat(x)_(t+1) ~ "Categorical"(p_t) $
-#pause
-- respects the model's uncertainty — likely tokens are likely, but not forced;
-#pause
-- produces *diverse* outputs across runs;
-#pause
-- makemore sampling character-by-character gives *new* plausible names.
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[`. -> n -> a -> v -> e -> e -> n -> .` yields `naveen`; a different draw yields `aarav`, `meera`, …])
+#align(center, grid(columns: (1fr, 1fr), gutter: 12pt,
+  card([TRAIN NAMES], [`naveen` · `navin` · `neev` · `neena` · `vani` #linebreak() `naina` · `avni` · `anvi` · `veena` · `navi`], color: TEAL),
+  card([HELD-OUT NAMES], [`navina` · `naveena` · `veenavi` · `anvina`], color: INK),
+))
+#v(8pt)
+#note([Toy convention: `.` is one shared boundary symbol. Repeat it $k=2$ times as left padding; use one `.` target to end a name. It is not punctuation.], color: ACC)
 
-== Temperature #V
-
-Rescale the logits by $tau$ before the softmax:
-#pause
-$ p_i (tau) = "softmax"(z \/ tau)_i $
-#pause
-#fig("/lecture11/figures/temperature.svg", w: 74%)
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[$tau < 1$ sharpens (bolder) · $tau > 1$ flattens (more random) · $tau -> 0$ $-> $ greedy])
-
-== Top-k sampling
-
-Keep only the $k$ most probable tokens, *renormalize*, then sample:
-#pause
-- zero out everything outside the top $k$;
-#pause
-- rescale the survivors to sum to $1$;
-#pause
-- prevents rare, low-probability tokens from ever being drawn.
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[nucleus / top-$p$ sampling is the close cousin — we meet it in the Transformer lecture])
-
-== Interactive: next-token sampling #I
-
-#interbox(link-to: IA + "softmax-temperature")[
-  Sweep temperature and top-$k$ on a fixed set of logits and watch the next-token bar chart sharpen or flatten — then sample repeatedly and see the diversity of outputs change.
-]
-
-// ═══════════════════════════ PART IX — Where the MLP fails → RNN motivation ═══════════════════════════
-= Where the fixed-context MLP fails
-
-== It only sees a fixed window
-
-The MLP conditions on exactly the last $k$ tokens — anything before $x_(t-k)$ is *invisible*:
-#pause
-#align(center, text(size: 18pt, fill: INK)[
-  "The book that I placed on the table near the window $dots$ *was*"
-])
-#pause
-#alertbox[To choose `was` vs `were` the model needs the subject *book* — but with a small window that word has already scrolled out of view. Long-range dependencies are lost.]
-
-== Longer context costs parameters #D
-
-Widening the window grows the hidden weight matrix:
-#pause
-$ W_h in RR^(H times k d) quad => quad H dot k d quad "parameters" $
-#pause
-- double the context $k$ $-> $ double the hidden-layer parameters;
-#pause
-- and the model *still* cannot accept a sequence longer than $k$.
-#pause
-#align(center, text(size: 16pt, fill: MUTED)[you cannot simply set $k = infinity$ — cost grows with the window, and $k$ is fixed at build time])
-
-== Position-specific parameters #D
-
-Each context slot hits a *different* block of columns of $W_h$:
-#pause
-$ c_t = [e_(t-k); dots; e_(t-1)], quad quad #text(size: 15pt)[slot $j$ $-> $ its own $d$-column block of $W_h$] $
-#pause
-#alertbox[The *same* token at position 1 vs position 2 is processed by *different* weights. Order is preserved, but computation is *not shared* across time — the model relearns each position separately.]
-
-== What we actually want
-
-A better sequence model should:
-#pause
-- accept *variable-length* input (no fixed $k$);
-#pause
-- *share* parameters across time steps;
-#pause
-- *carry* information from arbitrarily far back;
-#pause
-- emit an output at *every* step.
-#pause
-#result[a recurrent update: $h_t = f_theta (h_(t-1), x_t)$]
-
-== From fixed window to recurrent state #V
-
-#align(center, diagram(spacing: (11mm, 8mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  // fixed window (left)
-  node((1, 1.5), text(size: 13pt, fill: INK)[*fixed window (MLP)*], stroke: none, fill: none)
-  for (i, l) in ((0, $x_1$), (1, $x_2$), (2, $x_3$), (3, $x_4$)) {
-    let seen = i >= 1
-    node((i*0.75, 0), text(size: 11pt, fill: if seen { INK } else { MUTED }, l), radius: 5mm,
-      fill: if seen { cream } else { white }, stroke: if seen { 0.8pt + INK } else { (paint: MUTED, dash: "dashed") })
-  }
-  edge((0.75, -0.75), (2.25, -0.75), stroke: 1.2pt + ACC)
-  node((1.5, -1.1), text(size: 10pt, fill: ACC)[window $k = 3$], stroke: none, fill: none)
-  node((0, -0.7), text(size: 10pt, fill: MUTED)[dropped], stroke: none, fill: none)
-  // recurrent (right)
-  node((6, 1.5), text(size: 13pt, fill: INK)[*recurrent (RNN)*], stroke: none, fill: none)
-  for (i, l) in ((0, $x_1$), (1, $x_2$), (2, $x_3$), (3, $x_4$)) {
-    node((5 + i*0.9, -0.9), text(size: 11pt, l), radius: 5mm, fill: cream)
-    node((5 + i*0.9, 0.3), text(size: 11pt, fill: white, $h_#(i+1)$), radius: 5mm, fill: TEAL, stroke: 0.9pt + TEAL)
-    edge((5 + i*0.9, -0.9), (5 + i*0.9, 0.3), "-|>", stroke: 0.7pt + MUTED)
-  }
-  for i in range(3) { edge((5 + i*0.9, 0.3), (5 + (i+1)*0.9, 0.3), "-|>", stroke: 0.9pt + TEAL) }
-  node((6.35, 1.0), text(size: 10pt, fill: TEAL)[state carries the past], stroke: none, fill: none)
-}))
-
-== The recurrent idea
-
-Replace the fixed window with a *running state* that summarizes the past:
-#pause
-$ underbrace(p(x_(t+1) | x_(t-k:t)), "MLP: fixed window") quad --> quad underbrace(h_t = f_theta (h_(t-1), e_t), "RNN: recurrent state") $
-#pause
-$ p = "softmax"(W h_t + b) $
-#pause
-#notebox[The hidden state $h_t$ is a *learned summary* of everything seen so far — one shared function $f_theta$ applied at every step, for any length.]
-
-== One-slide summary
+== Tokenization chooses the units the model must predict #V
 
 #align(center, table(
-  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 11pt, y: 6pt), align: (left, left),
-  table.header([*Idea*], [*Takeaway*]),
-  [chain rule], [$p(x_(1:T)) = product_t p(x_t | x_(<t))$ — model every conditional],
-  [language modeling], [repeated next-token classification; loss = token cross-entropy],
-  [tokens], [text $-> $ integer ids; ids are categorical, not numeric],
-  [embeddings], [learned dense rows of $E$; similar tokens land nearby],
-  [MLP-LM], [fixed window $-> $ concat $-> $ MLP $-> $ softmax (Bengio / makemore)],
-  [generation], [autoregressive; greedy / sample / temperature / top-$k$],
-  [limitation], [fixed window, position-specific weights $-> $ motivates RNNs],
+  columns: (31mm, 55mm, 42mm, 45mm), stroke: 0.55pt + MUTED,
+  inset: (x: 7pt, y: 6pt), align: (left, left, center, center),
+  table.header([*unit*], [*example*], [*vocabulary*], [*sequence*]),
+  [character], [#text(size: 13pt)[`learning` #linebreak() $arrow.r$ `l e a r n i n g`]], [small], [long],
+  [word], [#text(size: 13pt)[`deep learning` #linebreak() $arrow.r$ `deep | learning`]], [very large], [short],
+  [subword], [#text(size: 13pt)[`unpredictable` #linebreak() $arrow.r$ `un | predict | able`]], [moderate], [moderate],
+))
+#v(5pt)
+#set text(size: 13.5pt)
+#note([Characters keep every row visible. Production usually separates `<BOS>`, `<EOS>`, `<PAD>`, and `<UNK>`; this toy merges `<BOS>` and `<EOS>` as `.`.], color: TEAL)
+
+== The vocabulary fixes ids and output coordinates #V
+
+#align(center, table(
+  columns: 6, stroke: 0.7pt + MUTED, inset: (x: 16pt, y: 8pt), align: center,
+  table.header([`.`], [`a`], [`e`], [`i`], [`n`], [`v`]),
+  [$0$], [$1$], [$2$], [$3$], [$4$], [$5$],
+))
+#pause
+#v(10pt)
+#align(center, text(size: 19pt)[$V=6$ means six logits, six probabilities, and six possible next tokens.])
+#case-strip([vocabulary], [The target `a` is coordinate $1$; context `.n` reads ids $(0,4)$.])
+
+== Sliding a two-character window creates seven examples #V
+
+#align(center, table(
+  columns: 7, stroke: 0.55pt + MUTED, inset: (x: 9pt, y: 6pt), align: center,
+  table.header([`..`], [`.n`], [`na`], [`av`], [`ve`], [`ee`], [`en`]),
+  [#text(fill: ACC)[`n`]], [#text(fill: ACC)[`a`]], [#text(fill: ACC)[`v`]], [#text(fill: ACC)[`e`]], [#text(fill: ACC)[`e`]], [#text(fill: ACC)[`n`]], [#text(fill: ACC)[`.`]],
+))
+#pause
+#v(8pt)
+#align(center, text(size: 16pt, fill: MUTED)[top = visible context; bottom = next-token target])
+#case-strip([training pairs], [`.n` $arrow.r$ `a` is the second example and remains our hand calculation.])
+
+== Causal training shifts the same sequence by one site #V
+
+#clock-strip("train")
+#v(6pt)
+#align(center, table(
+  columns: (24mm, 16mm, 16mm, 16mm, 16mm, 16mm, 16mm, 16mm),
+  stroke: 0.5pt + MUTED, inset: (x: 5pt, y: 6pt), align: center,
+  [*input*], [`..`], [`.n`], [`na`], [`av`], [`ve`], [`ee`], [`en`],
+  [*target*], [`n`], [`a`], [`v`], [`e`], [`e`], [`n`], [`.`],
+))
+#pause
+#v(8pt)
+#result[At position $t$, the target token is not part of the input context.]
+
+== The chain rule turns sequence probability into next-token factors #D
+
+Let $B=(.,.)$ denote the fixed left boundary padding and let $x_7=.$ be the end target.
+$
+p(x_(1:7) | B) = product_(t=1)^7 p(x_t | B, x_(<t)).
+$
+#pause
+#v(8pt)
+#result[This is an exact identity. The fixed-window approximation comes next.]
+
+== One ledger will cross probability, loss, and evaluation #V
+
+#case-strip([sequence ledger], [Correct targets for `naveen.` under contexts `..`, `.n`, `na`, `av`, `ve`, `ee`, `en`.])
+#v(7pt)
+#align(center, table(
+  columns: (29mm, 23mm, 23mm, 23mm, 23mm, 23mm, 23mm, 23mm),
+  stroke: 0.55pt + MUTED, inset: (x: 5pt, y: 5pt), align: center,
+  [*context*], [`..`], [`.n`], [`na`], [`av`], [`ve`], [`ee`], [`en`],
+  [*target*], [`n`], [`a`], [`v`], [`e`], [`e`], [`n`], [`.`],
+  [*$p$(target)*], [$.30$], [*derive*], [$.70$], [$.60$], [$.50$], [$.40$], [$.80$],
+))
+#pause
+#note([Six probabilities are held illustrative. The orange `.n` $arrow.r$ `a` entry will come from the exact weights.], color: ACC)
+
+== Checkpoint: what did the chain rule assume? #Q
+
+#align(center, grid(columns: (1fr, 1fr), gutter: 10pt,
+  card([A], [tokens are independent], color: INK),
+  card([B], [the sequence has fixed length], color: INK),
+  card([C], [nothing extra; it is an identity], color: INK),
+  card([D], [future tokens are visible], color: INK),
+))
+#pause
+#v(9pt)
+#result[*C.* Each exact factor conditions on the complete preceding history and boundary.]
+#note([The approximation begins only when the model discards all but the latest $k$ tokens.], color: BLUE)
+
+== A fixed-context MLP deliberately truncates the history #D
+
+$
+p_theta(x_t | B,x_(<t)) approx p_theta(x_t | x_(t-2:t-1)).
+$
+#pause
+#v(9pt)
+#align(center, grid(columns: (1fr, 18mm, 1fr), gutter: 8pt, align: horizon,
+  card([EXACT CONDITIONAL], [boundary plus every earlier token #linebreak() variable-length input], color: INK),
+  [#align(center, text(size: 24pt, fill: MUTED)[$arrow.r$])],
+  card([TOY MODEL], [only two latest tokens #linebreak() fixed-size input for an MLP], color: BLUE),
+))
+#result[This model learns local spelling patterns; it cannot recover a token that has scrolled out.]
+
+== A token id is a label, not a magnitude
+
+`n` has id $4$ and `v` has id $5$, but
+
+$ 5-4=1 quad #text(fill: RED)[does not mean] quad v-n=1. $
+#pause
+#v(10pt)
+#alertbox[Feeding raw ids as scalar features invents ordering and distance. Ids are categorical addresses.]
+The representation must preserve identity without pretending that adjacent ids are similar.
+
+== One-hot vectors give each token an independent axis #D
+
+With vocabulary order `[., a, e, i, n, v]`:
+
+$
+o_. = mat(1,0,0,0,0,0)^T,
+quad
+o_n = mat(0,0,0,0,1,0)^T.
+$
+#pause
+For different tokens $i != j$, $norm(o_i-o_j)^2=2$.
+#note([One-hot is faithful but sparse, $V$-dimensional, and has no learned similarity structure.], color: MUTED)
+
+== An embedding is a learned row selected by an id #V
+
+#align(center, table(
+  columns: (24mm, 27mm, 27mm), stroke: 0.6pt + MUTED,
+  inset: (x: 10pt, y: 5pt), align: center,
+  table.header([*token*], [*feature 1*], [*feature 2*]),
+  [`.`], [$1$], [$0$],
+  [`a`], [$0$], [$1$],
+  [`e`], [$1$], [$1$],
+  [`i`], [$-1$], [$1$],
+  [`n`], [$0$], [$2$],
+  [`v`], [$2$], [$0$],
+))
+#pause
+#v(5pt)
+$ E in RR^(6 times 2), quad e_i=E[i]=E^T o_i. $
+#result[The id addresses a row; gradient descent decides what the two coordinates become.]
+
+== Context `.n` reads exactly two rows #D
+
+#case-strip([lookup], [ids $(0,4)$ select rows for `.` and `n`.])
+#v(8pt)
+$
+e_.=E[0]=(1,0),
+quad
+e_n=E[4]=(0,2).
+$
+#pause
+#context-row((token-box([.]), token-box([n])))
+#note([The target `a` affects the output loss, but its embedding row is not read on this example.], color: ACC)
+
+== Commit: concatenate or average the two rows? #Q
+
+#align(center, grid(columns: (1fr, 1fr), gutter: 14pt,
+  card([A · AVERAGE], [$c=(e_.+e_n)/2=(.5,1)$], color: INK),
+  card([B · CONCATENATE], [$c=[e_.;e_n]=(1,0,0,2)$], color: INK),
+))
+#pause
+#v(9pt)
+#result[*B.* Concatenation gives the first and second context positions different coordinate blocks.]
+#pause
+$c_(".n")=(1,0,0,2) != (0,2,1,0)=c_("n.").$
+
+== One position is an ordinary six-class classifier #V
+
+#model-pipeline
+#pause
+#v(8pt)
+#align(center, text(size: 14.5pt)[two ids #h(6pt) → #h(6pt) two 2-D rows #h(6pt) → #h(6pt) ordered 4-D context #h(6pt) → #h(6pt) two hidden units #h(6pt) → #h(6pt) six logits])
+#result[Language modeling changes how examples are constructed; the local head is familiar classification.]
+
+== The tensor ledger follows the pipeline #D
+
+#clock-strip("train")
+#v(5pt)
+$
+c=[E[x_(t-2)];E[x_(t-1)]] in RR^4,
+$
+#pause
+$
+u=W_h c+b_h, quad h="ReLU"(u) in RR^2,
+$
+#pause
+$
+z=W_o h+b_o in RR^6, quad p="softmax"(z).
+$
+#align(center, text(size: 15pt, fill: MUTED)[$W_h in RR^(2 times 4)$; $W_o in RR^(6 times 2)$; rows of $W_o$ follow vocabulary order.])
+
+== Count parameters once, then keep the shapes visible #D
+
+#align(center, table(
+  columns: (42mm, 53mm, 45mm), stroke: 0.55pt + MUTED,
+  inset: (x: 8pt, y: 5pt), align: (left, center, right),
+  table.header([*block*], [*shape*], [*count*]),
+  [embedding $E$], [$V times d$], [$V d=12$],
+  [hidden $W_h,b_h$], [$H times k d$, $H$], [$H k d+H=10$],
+  [output $W_o,b_o$], [$V times H$, $V$], [$V H+V=18$],
+))
+#pause
+#v(7pt)
+$ 12+10+18=40 " parameters". $
+#note([Increasing context length $k$ grows the hidden block $H k d$ even before we discuss what the model can remember.], color: INK)
+
+== Every weight for `.n` $arrow.r$ `a` is now explicit #D
+
+#case-strip([exact model], [input $x=(.,n)$; target $y=a$; $c=(1,0,0,2)^T$.])
+#v(6pt)
+$
+W_h=mat(0.5,0,0,0.25; 0,1,1,0),
+quad b_h=mat(0;-1),
+$
+#pause
+$
+W_o=mat(-1,0;2,1;0,-1;-1,1;0,0;1,-1),
+quad b_o=0.
+$
+#note([Rows of $W_o$ are `[., a, e, i, n, v]`. Keep that order for every vector below.], color: BLUE)
+
+== Forward 1: lookup and concatenate #D
+
+#clock-strip("train")
+#v(5pt)
+#model-pipeline
+#pause
+$
+E[0]=(1,0), quad E[4]=(0,2),
+$
+#pause
+$
+c=[E[0];E[4]]=(1,0,0,2)^T.
+$
+#case-strip([forward · context], [The ordered context occupies four coordinates; no averaging occurs.])
+
+== Forward 2: one hidden unit turns on #D
+
+$
+u_1=.5(1)+0(0)+0(0)+.25(2)+0=1,
+$
+#pause
+$
+u_2=0(1)+1(0)+1(0)+0(2)-1=-1.
+$
+#pause
+$
+h=(max(0,1),max(0,-1))=(1,0).
+$
+#align(center, grid(columns: (1fr, 1fr), gutter: 12pt,
+  card([ACTIVE], [$h_1=1$; gradient may pass], color: BLUE),
+  card([OFF], [$h_2=0$; ReLU blocks its gradient here], color: GREEN),
 ))
 
-== Final mental model — one idea
+== Commit: compute two logits before seeing all six #Q
 
-#align(center, text(size: 22pt)[
-  A language model estimates a *distribution over the next token.* \
-  #v(4pt)
-  Language modeling is *repeated classification* \
-  #v(4pt)
-  #text(size: 18pt, fill: MUTED)[tokens $-> $ embeddings $-> $ context $-> $ softmax over the vocabulary]
-])
+With $h=(1,0)$, calculate the rows for target `a` and alternative `v`:
 
+#v(8pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 14pt,
+  card([TARGET `a`], [$z_a=(2,1) dot (1,0)=?$], color: ACC),
+  card([ALTERNATIVE `v`], [$z_v=(1,-1) dot (1,0)=?$], color: BLUE),
+))
+#pause
+#v(10pt)
+#align(center, text(size: 23pt, weight: 700)[$z_a=2$ #h(25pt) $z_v=1$])
+#pause
+#result[A logit is an unconstrained score, not yet a probability.]
+
+== Forward 3: every output row supplies one logit #D
+
+#case-strip([forward · logits], [vocabulary order `[., a, e, i, n, v]`.])
+#v(7pt)
+$
+z=W_o h=(-1,2,0,-1,0,1)^T.
+$
+#pause
+#align(center, table(
+  columns: 6, stroke: 0.55pt + MUTED, inset: (x: 12pt, y: 6pt), align: center,
+  table.header([`.`], [`a`], [`e`], [`i`], [`n`], [`v`]),
+  [$-1$], [#text(fill: ACC, weight: 700)[$2$]], [$0$], [$-1$], [$0$], [$1$],
+))
+#note([Softmax will preserve this ranking while converting scores into a normalized distribution.], color: BLUE)
+
+== Stable softmax subtracts a constant before exponentiating #D
+
+Naively exponentiating large logits can overflow. Softmax is unchanged by a shared shift:
+
+#pause
+$
+"softmax"(z)="softmax"(z-m),
+quad m=max_j z_j=2.
+$
+#pause
+$
+z-m=(-3,0,-2,-3,-2,-1).
+$
+#result[Subtracting the maximum is an implementation safeguard, not a model change.]
+
+== Forward 4: exponentiate and normalize #D
+
+$
+exp(z-m)=(.0498,1,.1353,.0498,.1353,.3679),
+$
+#pause
+$
+Z=sum_j exp(z_j-m)=1.7381,
+$
+#pause
+$
+p=frac(exp(z-m),Z)
+=(.028644,.575333,.077863,.028644,.077863,.211653).
+$
+#case-strip([forward · probability], [The exact orange ledger entry is now $p(a|.n)=.575333$.])
+
+== The six bars share a true 0-to-1 probability axis #V
+
+#clock-strip("train")
+#v(4pt)
+#probability-bars()
+#pause
+#v(5pt)
+#align(center, text(size: 16pt, fill: MUTED)[Direct labels follow `[., a, e, i, n, v]`; all six probabilities sum to $1$.])
+#result[`a` is most likely, but alternatives retain nonzero probability.]
+
+== Forward 5: cross-entropy reads the target coordinate #D
+
+#clock-strip("train")
+#v(5pt)
+The target is `a`, so $y=(0,1,0,0,0,0)$.
+#pause
+$
+cal(L)=-sum_j y_j log p_j=-log(.575333)=.552806 " nats".
+$
+#align(center, grid(columns: (1fr, 1fr), gutter: 12pt,
+  card([IF $p_a$ RISES], [the loss falls], color: GREEN),
+  card([IF $p_a arrow.r 1$], [$cal(L) arrow.r 0$], color: ACC),
+))
+
+== The sequence ledger now contains no second version #V
+
+#align(center, table(
+  columns: (29mm, 23mm, 23mm, 23mm, 23mm, 23mm, 23mm, 23mm),
+  stroke: 0.55pt + MUTED, inset: (x: 5pt, y: 5pt), align: center,
+  [*context*], [`..`], [`.n`], [`na`], [`av`], [`ve`], [`ee`], [`en`],
+  [*target*], [`n`], [`a`], [`v`], [`e`], [`e`], [`n`], [`.`],
+  [*$p$(target)*], [$.30$], [#text(fill: ACC, weight: 700)[$.575333$]], [$.70$], [$.60$], [$.50$], [$.40$], [$.80$],
+))
+#pause
+#v(7pt)
+$
+p_theta("naveen."|"..") approx .30(.575333)(.70)(.60)(.50)(.40)(.80)=.0115987.
+$
+#result[The sequence probability is small because all seven next-token decisions must agree.]
+
+== Logs turn the same product into NLL and perplexity #D
+
+#clock-strip("eval")
+#v(4pt)
+$
+-log(.0115987)=4.45686 " nats",
+$
+#pause
+$
+"mean NLL"=4.45686/7=.636694 " nats/token",
+$
+#pause
+$
+"PPL"=exp(.636694)=1.89022.
+$
+#note([This is one illustrative name ledger, not the trained notebook's validation score.], color: INK)
+
+== Commit: what sign must the target-logit gradient have? #Q
+
+#align(center, grid(columns: (1fr, 1fr), gutter: 14pt,
+  card([A · POSITIVE], [gradient descent will lower $z_a$], color: INK),
+  card([B · NEGATIVE], [gradient descent will raise $z_a$], color: INK),
+))
+#pause
+#v(10pt)
+#result[*B.* To reduce $-log p_a$, the update must increase the target logit relative to alternatives.]
+#pause
+#note([Softmax plus cross-entropy makes the exact sign visible in one vector.], color: RED)
+
+== Backward 1: softmax plus CE gives $p-y$ #D
+
+#clock-strip("train")
+#v(4pt)
+$
+nabla_z cal(L)=p-y
+$
+#pause
+$
+=(.028644,-.424667,.077863,.028644,.077863,.211653).
+$
+- the target coordinate is negative, so gradient descent raises $z_a$;
+- every alternative coordinate is positive, so gradient descent lowers it.
+
+== Backward 2: output gradients are outer products #D
+
+Because $z=W_o h+b_o$,
+
+$
+nabla_(W_o)cal(L)=(p-y)h^T,
+quad
+nabla_(b_o)cal(L)=p-y.
+$
+#pause
+With $h=(1,0)$, the first column equals $p-y$ and the second column is zero.
+#result[An inactive feature emits no output-weight gradient on this example.]
+
+== Backward 3: ReLU chooses which hidden signal survives #D
+
+$
+nabla_h cal(L)=W_o^T(p-y)=(-.694969,-.685539)^T.
+$
+#pause
+The forward pre-activation was $u=(1,-1)$, so the ReLU mask is $(1,0)$.
+#pause
+$
+nabla_u cal(L)=nabla_h cal(L) dot.o (1,0)=(-.694969,0)^T.
+$
+#note([The second unit had a nonzero upstream signal, but its negative pre-activation blocks that signal.], color: GREEN)
+
+== Backward 4: return to the ordered context #D
+
+Since $u=W_h c+b_h$,
+
+#pause
+$
+nabla_c cal(L)=W_h^T nabla_u cal(L)
+=(-.347485,0,0,-.173742)^T.
+$
+#pause
+#align(center, table(
+  columns: (32mm, 28mm, 28mm, 28mm, 28mm), stroke: 0.55pt + MUTED,
+  inset: (x: 7pt, y: 6pt), align: center,
+  [*block*], [$e_.[1]$], [$e_.[2]$], [$e_n[1]$], [$e_n[2]$],
+  [*$nabla_c$*], [$-.347485$], [$0$], [$0$], [$-.173742$],
+))
+#result[Concatenation makes the split back into two embedding rows unambiguous.]
+
+== Backward 5: split, scatter, and update only rows read #D
+
+$
+nabla_(e_.)cal(L)=(-.347485,0),
+quad
+nabla_(e_n)cal(L)=(0,-.173742).
+$
+#pause
+Scatter these into rows $0$ and $4$ of $E$; every other row receives zero from this lookup.
+#pause
+With $eta=.1$:
+$
+e_. <- (1.03475,0),
+quad
+e_n <- (0,2.01737).
+$
+#case-strip([opening · learning], [The rows for `.` and `n` move. Target row `a` was not read and does not move through the lookup.])
+
+== One scalar loss teaches every used block #V
+
+#align(center, diagram(spacing: (19mm, 11mm), node-stroke: 1pt + INK, node-fill: white, {
+  flow-node((0,0), [rows `.` and `n`], color: TEAL, fill: PALE-TEAL, w: 27mm)
+  flow-node((1.5,0), [$W_h,b_h$], color: BLUE, fill: PALE-BLUE, w: 25mm)
+  flow-node((3,0), [$W_o,b_o$], color: BLUE, fill: PALE-BLUE, w: 25mm)
+  flow-node((4.5,0), [token CE], color: RED, fill: PALE-RED, w: 24mm)
+  flow-arrow((0,0),(1.5,0),color:TEAL)
+  flow-arrow((1.5,0),(3,0),color:BLUE)
+  flow-arrow((3,0),(4.5,0),color:RED)
+}))
+#pause
+#v(8pt)
+- output rows learn which hidden features support each token;
+- hidden weights learn combinations of ordered context coordinates;
+- read embedding rows learn features that improve future predictions.
+#result[The path is ordinary backpropagation; language structure entered when we built context-target pairs.]
+
+== TRAIN repeats the calculation over a declared batch #V
+
+#clock-strip("train")
+#v(4pt)
+$
+cal(L)_B=-1/abs(B) sum_(i in B) log p_theta(y_i|c_i).
+$
+#pause
+#align(center, diagram(spacing: (17mm, 9mm), node-stroke: 1pt + INK, node-fill: white, {
+  flow-node((0,0), [true contexts], color: TEAL, fill: PALE-TEAL, w: 25mm)
+  flow-node((1.3,0), [MLP], color: BLUE, fill: PALE-BLUE, w: 20mm)
+  flow-node((2.6,0), [$V$ logits], color: BLUE, fill: PALE-BLUE, w: 22mm)
+  flow-node((3.9,0), [token CE], color: RED, fill: PALE-RED, w: 22mm)
+  flow-node((5.2,0), [gradients], color: GREEN, fill: PALE-GREEN, w: 23mm)
+  flow-node((6.5,0), [update], color: INK, fill: CREAM, w: 21mm)
+  flow-arrow((0,0),(1.3,0)); flow-arrow((1.3,0),(2.6,0)); flow-arrow((2.6,0),(3.9,0));
+  flow-arrow((3.9,0),(5.2,0)); flow-arrow((5.2,0),(6.5,0));
+}))
+#note([The notebook uses the entire training set as $B$ on each Adam step: full-batch training, not a minibatch claim.], color: TEAL)
+
+== Split whole names before creating windows #V
+
+#clock-strip("eval")
+#v(5pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 14pt,
+  card([TRAIN], [10 whole names $arrow.r$ 56 context-target pairs #linebreak() weights receive updates], color: TEAL),
+  card([VALIDATION], [4 different whole names $arrow.r$ 30 pairs #linebreak() no updates], color: INK),
+))
+#pause
+#v(8pt)
+#alertbox[Do not randomly split windows from the same name. Nearby windows share almost all their evidence.]
+#result[The split unit must match the object whose generalization we claim: here, a whole name.]
+
+== EVAL declares tokenizer, targets, and reduction #D
+
+#clock-strip("eval")
+#v(4pt)
+$
+"NLL"=-1/N sum_(i=1)^N log p_theta(y_i|c_i),
+quad
+"PPL"=exp("NLL").
+$
+#pause
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 10pt,
+  card([TOKENIZER], [same character vocabulary and boundary policy], color: INK),
+  card([TARGETS], [$N$ non-padding next-token targets], color: INK),
+  card([DATA], [same held-out corpus and token-weighted reduction], color: INK),
+))
+#result[Perplexities are comparable only when all three contracts agree.]
+
+== The executed notebook supplies held-out evidence #V
+
+#clock-strip("eval")
+#v(4pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 14pt,
+  card([FINAL TRAIN], [$"NLL"=.645308$ #linebreak() $"PPL"=1.90657$], color: TEAL),
+  card([FINAL VALIDATION], [$"NLL"=.677965$ #linebreak() $"PPL"=1.96986$], color: INK),
+))
+#pause
+#v(9pt)
+#note([Same architecture class, widened in the notebook to $d=4,H=24$ and trained for 300 full-batch Adam steps.], color: BLUE)
+#result[The small train-validation gap says this tiny held-out set transfers similarly; it does not establish broad name quality.]
+
+== Uniform prediction is the first evaluation sanity check #D
+
+#clock-strip("eval")
+#v(5pt)
+For $V=6$, a uniform model has $p(y)=1/6$:
+
+#pause
+$
+"NLL"=-log(1/6)=log 6=1.79176,
+quad
+"PPL"=6.
+$
+#pause
+#align(center, grid(columns: (1fr, 1fr), gutter: 14pt,
+  card([UNIFORM], [$1.79176$ NLL #linebreak() $6.00$ PPL], color: MUTED),
+  card([VALIDATION], [$.677965$ NLL #linebreak() $1.96986$ PPL], color: INK),
+))
+#pause
+#result[The trained model predicts held-out next characters far better than uniform guessing under this protocol.]
+
+// ───────────────────────── SHOULD · 55-70 MIN ─────────────────────────
+
+== The same $p$ now crosses from TRAIN to INFER #V
+
+#clock-strip("train")
+#pause
+#clock-strip("infer")
+#pause
+#v(7pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 14pt,
+  card([TRAIN], [true context $arrow.r$ distribution $arrow.r$ compare with true target $arrow.r$ update], color: TEAL),
+  card([INFER], [current context $arrow.r$ distribution $arrow.r$ choose token $arrow.r$ append], color: BLUE),
+))
+#pause
+#result[Weights stay fixed during generation; the chosen token changes the next input context.]
+
+== Autoregressive generation closes a feedback loop #V
+
+#align(center, diagram(spacing: (20mm, 11mm), node-stroke: 1pt + INK, node-fill: white, {
+  flow-node((0,0), [current context], color: TEAL, fill: PALE-TEAL, w: 29mm)
+  flow-node((1.5,0), [same MLP], color: BLUE, fill: PALE-BLUE, w: 24mm)
+  flow-node((3,0), [$p$ over 6 tokens], color: BLUE, fill: PALE-BLUE, w: 29mm)
+  flow-node((4.5,0), [choose token], color: ACC, fill: PALE-ACC, w: 26mm)
+  flow-node((6,0), [append; shift], color: GREEN, fill: PALE-GREEN, w: 27mm)
+  flow-arrow((0,0),(1.5,0)); flow-arrow((1.5,0),(3,0)); flow-arrow((3,0),(4.5,0)); flow-arrow((4.5,0),(6,0));
+  flow-arrow((6,0),(0,0),color:GREEN,bend:-34deg,label:[repeat])
+}))
+#pause
+#v(8pt)
+Start from `..`; stop when the model emits `.` or reaches a declared maximum length.
+#pause
+#result[Autoregressive means the model conditions on tokens already present, including its own earlier choices.]
+
+== Commit: must greedy and sampling choose the same token? #Q
+
+#probability-bars()
+#pause
+#align(center, grid(columns: (1fr, 1fr), gutter: 14pt,
+  card([GREEDY], [$hat(x)=arg max_v p(v|.n)$], color: BLUE),
+  card([SAMPLING], [$hat(x) tilde "Categorical"(p)$], color: ACC),
+))
+#pause
+#v(7pt)
+#result[No. Greedy always chooses `a`; sampling can choose any token with nonzero mass.]
+
+== One uniform draw makes categorical sampling concrete #D
+
+#clock-strip("infer")
+#v(4pt)
+#align(center, table(
+  columns: (31mm, 22mm, 22mm, 22mm, 22mm, 22mm, 22mm),
+  stroke: 0.55pt + MUTED, inset: (x: 5pt, y: 5pt), align: center,
+  [*token*], [`.`], [`a`], [`e`], [`i`], [`n`], [`v`],
+  [*$p$*], [$.029$], [$.575$], [$.078$], [$.029$], [$.078$], [$.212$],
+  [*CDF*], [$.029$], [$.604$], [$.682$], [$.710$], [$.788$], [$1.000$],
+))
+#pause
+Draw $u=.650$ from $"Uniform"(0,1)$.
+#pause
+$ .604 < .650 <= .682 quad => quad #text(fill: ACC, weight: 700)[sample `e`]. $
+#pause
+#result[The model supplies probabilities; the decoder supplies the decision rule and randomness.]
+
+== Temperature rescales logits before the same softmax #D
+
+#clock-strip("infer")
+#v(5pt)
+$
+p_i(tau)="softmax"(z/tau)_i, quad tau>0.
+$
+#pause
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 10pt,
+  hairline([$tau=.5$], [logit gaps double #linebreak() distribution concentrates], color: ACC),
+  hairline([$tau=1$], [learned distribution #linebreak() no rescaling], color: BLUE),
+  hairline([$tau=2$], [logit gaps halve #linebreak() distribution flattens], color: TEAL),
+))
+#pause
+#note([Temperature changes neither weights nor token ranking for positive $tau$.], color: BLUE)
+
+== The same six logits produce three exact distributions #V
+
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 10pt,
+  tiny-distribution([$tau=.5$], prob-cold, color: ACC),
+  tiny-distribution([$tau=1$], prob-base, color: BLUE),
+  tiny-distribution([$tau=2$], prob-hot, color: TEAL),
+))
+#pause
+#v(6pt)
+#set text(size: 12.5pt)
+#align(center, table(
+  columns: (24mm, 24mm, 24mm, 24mm, 24mm, 24mm, 24mm),
+  stroke: 0.45pt + MUTED, inset: (x: 4pt, y: 3pt), align: center,
+  [*$tau$*], [`.`], [`a`], [`e`], [`i`], [`n`], [`v`],
+  [$.5$], [$.002$], [$.850$], [$.016$], [$.002$], [$.016$], [$.115$],
+  [$1$], [$.029$], [$.575$], [$.078$], [$.029$], [$.078$], [$.212$],
+  [$2$], [$.080$], [$.359$], [$.132$], [$.080$], [$.132$], [$.218$],
+))
+#pause
+#result[Concentration is measurable; "safer" or "more correct" is not guaranteed.]
+
+== Choose temperature by behavior, not a moral label #Q
+
+#align(center, grid(columns: (1fr, 1fr), gutter: 14pt,
+  card([SYMPTOM], [samples collapse to the same spelling], color: INK),
+  card([TEST], [hold logits and seed fixed; compare token frequencies across $tau$], color: BLUE),
+))
+#pause
+#v(9pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 14pt,
+  card([LOWER $tau$], [more mass on current top tokens; less variation], color: ACC),
+  card([HIGHER $tau$], [more mass on alternatives; more variation], color: TEAL),
+))
+#pause
+#note([If the model ranks a bad token highest, lowering temperature can make that error more consistent.], color: RED)
+
+== The trained MLP is blind to prefixes with the same suffix #V
+
+#clock-strip("infer")
+#v(4pt)
+#align(center, grid(columns: (1fr, 18mm, 1fr), gutter: 8pt, align: horizon,
+  card([PREFIX A], [`na` $arrow.r$ visible context `na`], color: TEAL),
+  [#align(center, text(size: 25pt, fill: MUTED)[$equiv$])],
+  card([PREFIX B], [`veena` $arrow.r$ visible context `na`], color: TEAL),
+))
+#pause
+#v(7pt)
+#set text(size: 12.5pt)
+$
+p=(.418671,
+9.91 times 10^(-7),
+3.77 times 10^(-6),
+.142728,
+3.17 times 10^(-5),
+.438565)
+$
+#pause
+#result[The two distributions are exactly identical because the model receives exactly the same two ids.]
+
+== Diagnose the architecture before tuning the optimizer #V
+
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 11pt,
+  hairline([SYMPTOM], [different long prefixes produce identical next-token distributions], color: RED),
+  hairline([SUSPECT], [the useful distinction lies outside the fixed window], color: BLUE),
+  hairline([TEST], [hold the suffix fixed, change only earlier tokens, compare $p$ exactly], color: GREEN),
+))
+#pause
+#v(9pt)
+#result[If $p$ cannot change, more training cannot make this architecture use the hidden prefix.]
+#pause
+#note([This is an information-access failure, not evidence that Adam, embeddings, or temperature are broken.], color: INK)
+
+== A larger window delays the failure but does not remove it #D
+
+$ W_h in RR^(H times k d) quad => quad #text(fill: ACC)[$H k d$ weights]. $
+#pause
+- doubling $k$ doubles this block;
+- the same token in slot 1 and slot 2 meets different columns;
+- the maximum usable history remains fixed at model construction.
+#pause
+#v(7pt)
+#alertbox[Concatenation preserves order, but the MLP does not reuse one position-independent update across time.]
+
+== Revisit: every opening commitment now has evidence #Q
+
+#case-strip([opening revisit], [context `.n`, exact six-token model.])
+#v(6pt)
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 10pt,
+  card([OUTPUT], [#text(size: 11.5pt)[$p=(.029,.575,.078,$ #linebreak() $.029,.078,.212)$]], color: BLUE),
+  card([CHOICE], [greedy $arrow.r$ `a`; sample with $u=.65$ $arrow.r$ `e`], color: ACC),
+  card([LEARNING], [lookup updates rows `.` and `n`], color: TEAL),
+))
+#pause
+#v(7pt)
+#result[One distribution supports training, decoding, and evaluation only after the clock and policy are declared.]
+
+// ───────────────────────── OPTIONAL · 70-80 MIN ─────────────────────────
+
+== OPTIONAL: expose the full output-gradient matrix #D
+
+With $h=(1,0)$,
+
+$
+nabla_(W_o)cal(L)=mat(
+.028644,0;
+-.424667,0;
+.077863,0;
+.028644,0;
+.077863,0;
+.211653,0
+).
+$
+#pause
+#v(7pt)
+#note([Each vocabulary row receives its own logit error; the inactive hidden feature leaves the second column zero.], color: MUTED)
+
+== OPTIONAL: use the notebook as a prediction protocol #I
+
+#interbox(link-to: NB)[
+  Before running: predict the seven windows, active ReLU unit, sign of the target gradient, two embedding rows that move, and whether `na` and `veena` can differ.
+]
+#pause
+#v(8pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 12pt,
+  card([VERIFY], [exact forward/backward arrays; train/validation NLL; generated names], color: TEAL),
+  card([EXPLAIN], [why temperature changes diversity and why a shared suffix forces identical $p$], color: BLUE),
+))
+#pause
+#result[Prediction before execution turns the notebook from a demo into evidence.]
+
+== OPTIONAL: provenance and extension #I
+
+#align(center, grid(columns: (1fr, 1fr), gutter: 14pt,
+  card([PRIMARY SOURCE], [#link(BENGIO)[Bengio et al. (2003)] #linebreak() distributed representations plus a feedforward neural probabilistic language model], color: INK),
+  card([FOLLOW-ALONG], [#link(NB)[Exact ES 667 Colab] #linebreak() deterministic NumPy forward/backward, full-batch training, generation, and suffix test], color: TEAL),
+))
+#pause
+#v(9pt)
+#note([The paper scales the central idea; our six-token model keeps its mechanics auditable by hand.], color: MUTED)
+
+== Next: replace a fixed window with a shared recurrent state #V
+
+#align(center, grid(columns: (1fr, 18mm, 1fr), gutter: 8pt, align: horizon,
+  card([THIS LECTURE], [$c_t=[e_(t-2);e_(t-1)]$ #linebreak() fixed access; position-specific columns], color: BLUE),
+  [#align(center, text(size: 26pt, fill: MUTED)[$arrow.r$])],
+  card([PUBLIC L13], [$h_t=f_theta(h_(t-1),e_t)$ #linebreak() shared update; variable-length stream], color: TEAL),
+))
+#pause
+#v(10pt)
+#align(center, text(size: 22pt, weight: 700)[The next-token objective stays; the mechanism for carrying context changes.])
 #focus-slide[
-  We predicted the next token from a *fixed window*.
-  #v(12pt)
-  #set text(size: 22pt)
-  Next: *Sequence Models — RNNs* — hidden state, backprop through time, and LSTMs / GRUs that carry information across a whole sequence.
+  A language model estimates a distribution over the *next token*.
+
+  #v(9pt)
+  #set text(size: 20pt)
+  Next: *RNNs, LSTMs, and GRUs* - learn what recurrent state remembers, forgets, and struggles to train.
 ]
