@@ -1,46 +1,226 @@
-# Lecture 4 · SGD, Momentum, Nesterov · Teaching Guide
-*First-time-instructor companion. Audience: undergrads, one ML course.*
+# Lecture 4 · Computation Graphs & Backpropagation · Teaching Guide
+*Instructor companion for the public Lecture 4. Audience: undergraduates who have completed Lectures 1–3.*
 
-## The spine (say this in 2 sentences)
-Real loss surfaces aren't round bowls — they're ill-conditioned *ravines* (steep walls, near-flat floor) riddled with *saddles*, and vanilla SGD oscillates across the walls while crawling along the floor because one global learning rate must serve every direction. Momentum fixes this by stepping with an *exponential moving average of past gradients* — oscillations cancel, the consistent floor-direction accumulates — and Nesterov is the same EMA evaluated one step ahead so the ball can correct before it overshoots.
+## The spine
+
+A forward pass executes a graph and stores values. A backward pass seeds the scalar loss with `1`, sends each arriving sensitivity through a local derivative, and **adds** contributions where paths meet.
+
+The sentence to repeat is:
+
+> **downstream gradient = upstream gradient × local gradient; branches add**
+
+That local rule scales from the hand-worked scalar graph to dense layers and neural networks. Reverse mode is the mathematical direction, backpropagation is the reverse-sweep algorithm, and autograd is the software engine that records and replays the executed operations.
 
 ## Where it sits
-Builds on … ES 335 (gradient descent from a first-order Taylor expansion; SGD noise as a nuisance to average away) · L03 (the LR finder — this lecture explains *why* LR is so delicate) · L02 (the landscapes ResNets/init create are what we now navigate).
-Sets up … L05 (Adam = this momentum EMA *plus* a second EMA of squared gradients for per-parameter scaling; the `1/(1−β)` effective-LR idea recurs in bias correction) · every training run they'll ever do (`momentum=0.9` is the default they'll set forever).
 
-## 80-minute plan
-- ⭐ Core (~45 min): why vanilla SGD oscillates on a ravine (the condition-number geometry: steep direction caps the LR, flat direction then crawls) · the worked ravine numeric (θ₁ zig-zags 10→−5→2.5, θ₂ crawls 1→0.85→0.72) · **momentum as EMA of gradients** with the velocity update `v = βv + (1−β)g` · the momentum-smooths-the-ravine numeric (oscillating component cancels, constant component accumulates).
-- ⭐⭐ Should-cover (~25 min): saddles vs minima vs maxima (Hessian eigenvalue signs) · the effective-LR derivation `η_eff = η/(1−β)` and the β table (0.9→10×, 0.99→100×) · why bumping β to 0.99 diverges · Nesterov's lookahead (one change: *where* the gradient is measured) and its worked numeric · the 2026 optimizer-choice table.
-- ⭐⭐⭐ Optional / skip-if-tight: the "why saddles dominate in high dimensions" 0.5^D argument · the geometric two-column view of Nesterov · the shifted-variable PyTorch NAG form · the convergence-rate O(1/t²) vs O(1/t) aside.
-- **Do live on the board:** the **momentum-smooths-the-ravine numeric**. Gradients `g_t = [±1.0, 0.1]` (first flips sign every step, second constant), β=0.9, v₀=0. Step through three EMAs: v₁=[−0.10, 0.010], v₂=[+0.01, 0.019], v₃=[−0.09, 0.027]. Point at the two columns: component 1 hovers near zero (zig-zags *cancel*), component 2 steadily grows (consistent push *accumulates*). It lands because it shows, in three lines, exactly *how* an average damps oscillation and amplifies persistence — the whole lecture in one table.
+- **Lecture 1:** the loss is the scalar whose sensitivities we want.
+- **Lecture 2:** a neural network is a composition of affine maps and nonlinearities.
+- **Lecture 3 · Calculus Toolkit:** the chain rule and vector–Jacobian products provide the mathematical language.
+- **Lecture 5 · Optimization for Deep Learning:** begins with the minibatch gradient that backprop returns, then asks how an optimizer should use it.
+
+Do not teach optimizer choice, momentum, or Nesterov here. This lecture is about *computing* gradients; Lecture 5 is about *using* them.
+
+## Learning contract
+
+By the end, students should be able to:
+
+1. decompose a scalar expression into stored values and primitive operations;
+2. run the forward pass and one reverse sweep by hand;
+3. distinguish an upstream gradient, a local derivative, and the downstream gradient;
+4. explain why gradients add at a branch and why implementations accumulate with `+=`;
+5. reproduce the four derivatives of `L=(wx+b-y)^2` for the lecture's numeric example;
+6. check a derivative with a central finite difference;
+7. map graph concepts to `Tensor`, `grad_fn`, `backward()`, and `.grad`; and
+8. read the shapes of scalar, vector, and matrix gradients without materializing a full Jacobian.
+
+## Honest evidence route: construct → calculate → verify
+
+Keep the status of each piece of evidence explicit.
+
+| Evidence | Status | What it supports |
+|---|---|---|
+| `x=3, w=2, b=1, y=10` | **constructed teaching example** | A graph small enough to audit end to end; it is not a dataset or benchmark. |
+| Forward values and hand derivatives | **exactly computed** | The chain rule, local rules, signs, and branch accumulation. |
+| Direct symbolic derivatives | **independent algebraic check** | Backprop agrees with differentiating the composed expression directly. |
+| Central finite differences | **numerical diagnostic** | A few coordinates agree approximately with the analytic result; this is a check, not a training method. |
+| PyTorch outputs | **executed software evidence** | Autograd returns the same derivatives on the same graph and accumulates repeated backward calls. |
+| Computation-graph drawings | **explanatory diagrams** | Dependency and reverse-flow structure; they are not empirical measurements. |
+
+This sequence matters pedagogically: students first predict a result, calculate it by hand, and only then let PyTorch verify it. Avoid presenting a printed code output as proof when the notebook can execute the check and assert the result.
+
+## 80-minute route
+
+### 0–10 min · From a loss to an executed graph
+
+- Reconnect to the Lecture 2 model: `x → f_theta(x) → y_hat → L`.
+- Establish the diagram grammar: circles store values, boxes transform them, arrows show dependencies.
+- Compare symbolic differentiation, central differences, and reverse-mode autodiff. All can estimate the same derivative, but only reverse mode returns every parameter sensitivity in one sweep from a scalar loss.
+
+Board question: “If a model has one million parameters and one scalar loss, why is perturbing every parameter twice a poor training algorithm?”
+
+### 10–24 min · One reusable local rule
+
+- Name upstream, local, and downstream before showing a formula.
+- Work the square, addition, multiplication, and ReLU rules.
+- At ReLU, say that the ordinary derivative is undefined at exactly zero and software chooses a convention; commonly it returns zero.
+- Ask the inactive-ReLU checkpoint before revealing the answer.
+
+Keep the numerator of every derivative as the final loss. `∂L/∂u` says what is being measured and where the sensitivity is stored.
+
+### 24–34 min · Branches accumulate
+
+- Draw a value consumed by two operations.
+- Compute each path's chain-rule product separately.
+- Add the products and connect the sum to `+=` in an autograd engine.
+
+The key distinction is:
+
+- an addition **operation** copies its arriving gradient to each input;
+- a **branch in the graph** adds all contributions that return to the shared value.
+
+### 34–54 min · Central worked graph
+
+Use the same example in the slides and notebooks:
+
+`m=wx`, `a=m+b`, `e=a-y`, `L=e²`, with `x=3`, `w=2`, `b=1`, `y=10`.
+
+Forward ledger:
+
+| Stored value | Calculation | Value |
+|---|---|---:|
+| `m` | `2×3` | `6` |
+| `a` | `6+1` | `7` |
+| `e` | `7-10` | `-3` |
+| `L` | `(-3)²` | `9` |
+
+Backward ledger:
+
+| Stored value | Derivative of the loss | Why |
+|---|---:|---|
+| `L` | `1` | reverse seed |
+| `e` | `-6` | `1 × 2e` |
+| `a` | `-6` | subtraction local derivative `1` |
+| `y` | `6` | subtraction local derivative `-1` |
+| `m` | `-6` | addition copies |
+| `b` | `-6` | addition copies |
+| `w` | `-18` | `(-6) × x` |
+| `x` | `-12` | `(-6) × w` |
+
+Have students predict the sign of the `w` update. With `eta=0.01`, gradient descent gives `w=2.18`, `b=1.06`, prediction `7.60`, and loss `5.76`, down from `9`. State the limited claim: one sufficiently small step lowers this constructed loss; backprop itself does not choose the learning rate.
+
+### 54–66 min · Two notebook checks
+
+#### Notebook A · Manual scalar backprop
+
+1. Predict all stored forward values.
+2. Fill the reverse ledger before running the backward cell.
+3. Compare with direct calculus.
+4. Run the central-difference check for `w`, `b`, `x`, and `y`.
+5. Execute the `eta=0.01` update and assert that the new loss is smaller.
+
+Companion: [`01_manual_scalar_backprop.ipynb`](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/01_manual_scalar_backprop.ipynb)
+
+#### Notebook B · PyTorch autograd
+
+1. Predict `.grad` for every tracked leaf before `backward()`.
+2. Retain intermediate gradients only for inspection; explain why ordinary training does not need them.
+3. Verify the hand-derived derivatives.
+4. Call backward on fresh graphs without clearing and watch the leaf buffer accumulate.
+5. Clear once, rerun, and connect the reset to `optimizer.zero_grad()`.
+
+Companion: [`02_autograd_scalar.ipynb`](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/02_autograd_scalar.ipynb)
+
+### 66–76 min · Scalars to vectors and a tiny MLP
+
+- Use shapes before formulas: scalar-to-scalar derivative, vector-to-scalar gradient, vector-to-vector Jacobian.
+- Show `x_bar = J^T y_bar` as the vector version of upstream × local.
+- For an affine map, connect the reverse rules to `dW`, `db`, and `dx`.
+- Trace one gradient through dense → ReLU → dense. Do not expand every large Jacobian; the point is that VJPs avoid doing so.
+
+If time is short, show one dense-layer calculation and omit the longer coordinate expansion. Never cut the scalar graph, branch accumulation, or the hand-to-autograd verification.
+
+### 76–80 min · Exit ticket
+
+Ask students to answer without code:
+
+1. Why is `∂L/∂L=1` the correct reverse seed?
+2. If a value feeds two downstream operations, what combines at that value?
+3. What does `optimizer.step()` do that `loss.backward()` does not?
+4. Why is a central finite difference useful for checking but unsuitable for training a million-parameter model?
+
+Expected answers: identity derivative; the two path contributions add; it changes parameter values using already-computed gradients; it needs two extra forward passes per checked coordinate and is approximate.
 
 ## Teach it like this
-Open with the pop quiz: a 50-layer ResNet trains fine, then oscillates between 1.4 and 1.9 forever — vanishing gradients? step too large? bad shuffling? saddle? Let them commit, promise the answer will surprise them. Then show *why* the surface is hard: a ravine with condition number κ — the steep wall caps your LR, so the gentle floor crawls (do the κ=10 numeric live, watch θ₁ bounce and θ₂ inch forward). Momentum is the fix, and the payoff is the EMA numeric where you *see* the oscillation cancel. Build to the one trap that bites everyone — `η_eff = η/(1−β)`, so β:0.9→0.99 secretly multiplies your LR by 10× and the run NaNs — then add Nesterov as the cheap "peek ahead" refinement. Close by revisiting the pop quiz: it was (b), a ravine with too-large a step, fixed by raising β or halving η.
 
-## Heads-up for YOU (subtle points to get right)
-- **Momentum is literally an EMA of gradients — resist all physics mysticism.** The heavy-ball/inertia analogy is a *hook*, not the explanation. The mechanism is one line: `v_t = βv_{t-1} + (1−β)g_t`, then step with `v` instead of `g`. The EMA averages out sign-flipping components (ravine walls) and accumulates consistent ones (the floor). If you over-lean on "inertia carries it through," a sharp student asks "what *is* the velocity" and the honest answer is "a moving average of the gradients you've already seen" — say that up front. This same EMA primitive returns in Adam, BatchNorm running stats, and RL target nets.
-- **`η_eff = η/(1−β)` — raising momentum silently multiplies your learning rate.** With a persistent gradient, momentum reaches terminal velocity `v_∞ = g/(1−β)`, so the effective step is `η/(1−β)·g`. β=0.9 → 10×, β=0.99 → 100×. This is *the* most common "I bumped momentum and everything diverged" cause. State the rule: **when you raise β, lower η to compensate.** A first-time instructor who presents β as a free, monotonic "more smoothing is better" knob will set students up to NaN their runs.
-- **Almost every critical point in a deep net is a SADDLE, not a local minimum.** With D≈10⁶ parameters, the chance all D Hessian eigenvalues are positive (a true min) is vanishingly small (~0.5^D under the toy model). So the challenge is *not* escaping deep valleys — it's traversing vast near-flat saddle plateaus. This reframes the whole optimization story and is why momentum's *memory* matters (it coasts through plateaus where the instantaneous gradient is ~0). Don't teach the old "stuck in a bad local minimum" picture — in high dimensions that's the wrong fear.
-- **SGD's mini-batch noise is partly a *feature*, not just a nuisance to average away.** This flips the ES 335 framing. The batch gradient is a noisy estimate of the full gradient; the noise (a) helps *escape saddles and shallow minima*, and (b) provides *implicit regularization* that is part of why SGD generalizes — larger batches (less noise) often generalize slightly *worse* (an empirical tendency, not a law). Be careful to call it a tendency; don't overclaim a theorem.
-- **Momentum helps escape *saddles* but does NOT help escape *strict local minima*.** At a saddle there's a descent direction and momentum's accumulated velocity carries you along it through the flat region. At a *strict* local minimum every direction goes up, the gradient genuinely points back inward, and momentum just oscillates inside the bowl — it has no escape mechanism. Students often assume momentum is a general "get unstuck" tool; it's specifically a *consistent-direction* amplifier.
-- **Nesterov changes exactly ONE thing: where the gradient is evaluated.** Same velocity update, same step — but the gradient is measured at the *lookahead* point `θ − ηβv`, not at the current `θ`. If velocity is about to overshoot a wall, the lookahead gradient already points back, so you correct *before* committing. The convex-case payoff is O(1/t²) vs GD's O(1/t); on deep nets the gain is modest but free. Don't describe it as a different algorithm — it's momentum measured at a smarter location.
+Keep one three-colour verbal grammar throughout:
 
-## Where students stumble (and the fix)
-- **"More momentum is always better."** The fix is the `η_eff = η/(1−β)` table: β=0.99 multiplies your LR by 100×, so a previously stable run diverges. Rule: fix β=0.9, tune η with the LR finder, raise β only with clipping + warmup. Tie it to the pop-quiz mistake (`momentum=0.99` → NaN, rescued by dividing η by 10).
-- **Treating SGD noise as pure evil.** It adds step variance, yes — but it also escapes saddles and regularizes. The takeaway isn't "kill the noise"; it's that smaller batches trade speed/variance for better generalization (a tendency). Don't let them conclude "always use the biggest batch."
-- **Thinking the ravine problem is solved by just lowering the LR.** Lowering η stops the zig-zag but makes the *floor* direction crawl even slower — you've traded oscillation for stagnation. The real fix is momentum (or adaptive LR / normalization), which rescales so κ matters less. Show that a smaller η alone doesn't speed the slow direction.
-- **Confusing a saddle plateau with a ravine oscillation in the curves.** Saddle = loss *flat* for many steps, grad norm ≈ 0 (fix: a bit more β to coast through). Ravine = loss *oscillates* between two values (fix: halve η or add β). Vanishing gradients also flatten loss but for a different reason. Walk the symptom→suspect→test table so they read curves correctly.
+- **upstream:** sensitivity arriving from the final loss;
+- **local:** derivative of this one operation using stored forward values;
+- **downstream:** product sent toward the operation's inputs.
 
-## If a student asks…
-- "Is momentum just the physics of a rolling ball?" → The ball is a memory aid; the math is an exponential moving average of gradients, `v = βv + (1−β)g`. 'Inertia' = 'the average remembers the recent direction.' Everything (terminal velocity, the `1/(1−β)` factor, saddle coasting) falls out of that EMA, no physics required.
-- "Why does β=0.9 specifically?" → It gives an effective memory of `1/(1−β) ≈ 10` steps and an effective-LR multiplier of 10× — long enough to smooth ravines, short enough to react to curvature changes. It's a robust default; in practice you set it once and tune η instead. Higher (0.95/0.99) needs clipping/warmup.
-- "Why does momentum escape saddles but not local minima?" (hard) → At a saddle there *exists* a downhill direction; momentum's accumulated velocity carries you along it across the flat region even where the instantaneous gradient ≈ 0. At a strict local minimum *every* direction is uphill — the gradient genuinely points back, so momentum just rattles around inside. It amplifies consistent descent; a true min offers none.
-- "Doesn't bigger batch = better gradient = better training?" → Better *estimate*, but worse *exploration*: less noise means fewer escapes from saddles/shallow minima and weaker implicit regularization, so generalization often drops slightly. The linear-scaling heuristic (2× batch → 2× LR) holds up to a critical batch size; beyond it you need warmup and the gains flatten. Noise isn't purely a bug.
-- "If Nesterov is provably faster, why do vision people still use plain momentum (or SGD-momentum over Adam)?" → On non-convex deep nets Nesterov's O(1/t²) edge is modest — a free small speed-up, not a transformation. And SGD-momentum tends to find *flatter* minima that generalize slightly better on vision benchmarks; that's an empirical pattern, not a theorem, and it varies by model family. Adam is faster to iterate, so people debug with Adam and do final vision runs with SGD-momentum.
-- "What's the difference between the textbook Nesterov and PyTorch's `nesterov=True`?" → PyTorch uses the *shifted-variable* form: it stores the lookahead point instead of the current point, so the code looks different from the three-step lookahead recipe but traces the *same* trajectory. It's an implementation reparameterization, not a different algorithm (a practice problem asks students to show the equivalence).
+At every node, ask the same three questions:
 
-## If you're short on time
-Cut: the 0.5^D saddle-dominance argument, the geometric two-column Nesterov view, the shifted-variable form, and the O(1/t²) convergence aside. Never cut: the **ravine geometry → why SGD oscillates** and the **momentum EMA numeric** (where oscillation visibly cancels), plus the **`η_eff = η/(1−β)`** trap. Those are the mechanism and the one thing students will actually get wrong in the lab.
+1. What value was stored in the forward pass?
+2. What gradient arrives from upstream?
+3. What local derivative turns it into each input's contribution?
+
+This rhythm is more durable than memorizing a long symbolic derivative. It also maps directly to what an autograd engine saves and replays.
+
+## Board derivations worth doing
+
+### 1. Why branches add
+
+For `u=x²` and `v=3x`, with `L=u+v`, write both paths:
+
+`dL/dx = (dL/du)(du/dx) + (dL/dv)(dv/dx) = 1·2x + 1·3`.
+
+At `x=2`, the contributions are `4` and `3`, so the accumulated gradient is `7`. Emphasize that overwriting one contribution would be a correctness bug.
+
+### 2. Central difference for one coordinate
+
+For `L(w)=(3w+1-10)²`, use
+
+`g_FD = [L(w+epsilon)-L(w-epsilon)]/(2 epsilon)`.
+
+At `w=2`, the result is approximately `-18`. Use float64 and a small but not vanishing `epsilon`; the companion notebook checks all four scalar inputs.
+
+### 3. One descent step
+
+From `dL/dw=-18` and `dL/db=-6`, calculate the `eta=0.01` update before revealing the new loss. The negative derivatives imply both parameters increase because gradient descent subtracts them.
+
+## Where students stumble
+
+- **They reverse the slogan.** The arriving gradient is multiplied by the derivative of the local output with respect to the local input.
+- **They overwrite a branch contribution.** Use `+=`, not `=`; each downstream path contributes one term.
+- **They forget the reverse seed.** `dL/dL=1` starts the sweep.
+- **They confuse a value with the operation that produced it.** Values store forward numbers and gradients; operation nodes store a local backward rule and any forward values that rule needs.
+- **They think autograd is symbolic algebra.** It differentiates the operations that actually executed and applies their local rules in reverse.
+- **They expect every intermediate tensor to expose `.grad`.** Leaf gradients are retained by default; intermediate gradients need `retain_grad()` when inspected for teaching or debugging.
+- **They forget accumulation between optimizer steps.** `backward()` adds to `.grad`; `zero_grad()` clears the boundary between intended updates.
+- **They call a successful finite-difference check a proof.** It is a numerical diagnostic at chosen coordinates and tolerances, not a proof of a whole implementation.
+
+## If a student asks
+
+- **“Why reverse mode?”** A scalar loss has one output but possibly millions of parameters. One reverse sweep returns sensitivities for all of them; forward-mode would be attractive for few inputs and many outputs instead.
+- **“Does PyTorch build the same graph every time?”** It records the operations executed in that forward pass. Python control flow can therefore produce a different dynamic graph on the next pass.
+- **“Why save forward values?”** Many local derivatives need them: multiplication needs the other operand, square needs its input, and an activation may need its pre-activation or output.
+- **“Why does the target have a derivative in the board example?”** We track it to audit the complete graph. Ordinary supervised training treats targets as fixed data, so they do not require gradients.
+- **“Is backprop the optimizer?”** No. Backprop computes gradients. The optimizer applies an update using those gradients and its own state.
+- **“Why not use finite differences everywhere?”** They are approximate and require two additional loss evaluations for every checked coordinate. Use them sparsely to debug analytic or autodiff gradients.
+
+## Instructor verification checklist
+
+- The manual notebook reports forward values `6, 7, -3, 9` and gradients `w=-18`, `b=-6`, `x=-12`, `y=6`.
+- Its central differences agree with all four gradients within the declared tolerance.
+- With `eta=0.01`, the notebook reports prediction `7.60` and loss `5.76 < 9`.
+- The autograd notebook executes top to bottom, reproduces the same four leaf gradients, and demonstrates accumulation on fresh graphs.
+- The public Lecture 4 row links the handout and both exact `notebooks/L03/` Colabs.
+- Do not add a presentation link until the source, handout, and progressive artifact are a reproducible committed set.
+
+### Known source/handoff issue
+
+Public Lecture 4 retains legacy repository names: the source is `lecture3/L3-backprop.typ`, the handout is `slides-pdf/L3.pdf`, and the companions are under `notebooks/L03/`. In the 2026-08-12 working tree, the source and handout both have uncommitted revisions. Treat them as an in-progress pair: do not regenerate, commit, or advertise a presentation artifact from only one side. When deck ownership completes the revision, commit the source and both PDFs together, visually inspect them, and only then add `L3-presentation.pdf` to the public row.
 
 ## Closing line
-"Momentum is a moving average of gradients — nothing more. Oscillations cancel, consistent directions accumulate, and the price of a longer memory is a `1/(1−β)`-times larger learning rate. Nesterov just measures the slope one step ahead. Set β=0.9, tune η, and never use bare SGD on a deep net."
+
+“Forward stores values; backward seeds the loss, multiplies by each local derivative, and adds at branches. That one rule is backprop.”
