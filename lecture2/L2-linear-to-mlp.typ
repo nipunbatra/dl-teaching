@@ -57,6 +57,78 @@
   #text(size: 21pt, fill: color)[$arrow.r$]
 ])
 #let neat-caption(body) = align(center, text(size: 14.5pt, fill: MUTED)[#body])
+#let decision-score-plot = {
+  let w = 103mm
+  let h = 39mm
+  let x-min = -1.2
+  let x-max = 1.2
+  let y-min = -1.2
+  let y-max = 1.2
+  let px(x) = (x - x-min) / (x-max - x-min) * w
+  let py(y) = (y - y-min) / (y-max - y-min) * h
+  let fmt(v) = if calc.abs(v) < 1e-9 { "0" } else { str(calc.round(v, digits: 1)) }
+  cetz.canvas({
+    import cetz.draw: line, content
+    // Decision classes: class 2 wins on the left, class 3 in the middle,
+    // and class 1 on the right. Curves and tie markers remain above the fill.
+    for band in (
+      (x-min, -0.5, TEAL.lighten(89%)),
+      (-0.5, 0.5, ACC.lighten(89%)),
+      (0.5, x-max, BLUE.lighten(89%)),
+    ) {
+      line((px(band.at(0)), 0), (px(band.at(1)), 0),
+        (px(band.at(1)), h), (px(band.at(0)), h),
+        close: true, fill: band.at(2), stroke: none)
+    }
+    for f in (0.25, 0.5, 0.75, 1.0) {
+      line((0, f * h), (w, f * h), stroke: 0.4pt + MUTED.lighten(40%))
+    }
+    line((0, 0), (w, 0), stroke: 1.2pt + INK)
+    line((0, 0), (0, h), stroke: 1.2pt + INK)
+    for spec in (
+      (-0.5, [visible tie], MUTED),
+      (0, [hidden tie], RED),
+      (0.5, [visible tie], MUTED),
+    ) {
+      line((px(spec.at(0)), 0), (px(spec.at(0)), h),
+        stroke: (paint: spec.at(2), dash: "dashed", thickness: 0.8pt))
+      content((px(spec.at(0)), h + 0.3em),
+        text(size: 8pt, fill: spec.at(2), spec.at(1)), anchor: "south")
+    }
+    for curve in (
+      (x => x, BLUE),
+      (x => -x, TEAL),
+      (x => 0.5, ACC),
+    ) {
+      let pts = range(101).map(i => {
+        let x = x-min + i * (x-max - x-min) / 100
+        (px(x), py(curve.at(0)(x)))
+      })
+      for i in range(pts.len() - 1) {
+        line(pts.at(i), pts.at(i + 1), stroke: 1.4pt + curve.at(1))
+      }
+    }
+    for f in (0.0, 0.5, 1.0) {
+      content((-0.4em, f * h), text(size: 7.5pt, fill: MUTED, fmt(y-min + f * (y-max - y-min))), anchor: "east")
+    }
+    content((0, -0.4em), text(size: 8pt, fill: MUTED, fmt(x-min)), anchor: "north")
+    content((w, -0.4em), text(size: 8pt, fill: MUTED, fmt(x-max)), anchor: "north")
+    content((w/2, -1.6em), text(size: 9pt, fill: MUTED)[$x$], anchor: "north")
+    content((-2.5em, h/2), rotate(-90deg, text(size: 9pt, fill: MUTED)[class score]), anchor: "south")
+    let lx = w - 20mm
+    for item in (
+      ([$z_1=x$], BLUE),
+      ([$z_2=-x$], TEAL),
+      ([$z_3=0.5$], ACC),
+    ).enumerate() {
+      let i = item.at(0)
+      let pair = item.at(1)
+      let yy = h - 1.5mm - i * 1.15em
+      line((lx, yy), (lx + 3.5mm, yy), stroke: 2.2pt + pair.at(1))
+      content((lx + 4.5mm, yy), text(size: 8pt, fill: INK, pair.at(0)), anchor: "west")
+    }
+  })
+}
 
 // Coordinate grid and activation scale for the two learned-feature fields.
 // The colour encodes a ReLU activation value, not a probability.
@@ -729,13 +801,7 @@ Explore large positive and negative logits, where sigmoid's derivative becomes t
   ])],
   [#pause
    #align(center, [
-     #lines(
-       fn: (x => x, x => -x, x => 0.5), domain: (-1.2, 1.2), samples: 100,
-       markers: (false, false, false), colors: (BLUE, TEAL, ACC),
-       labels: ([$z_1=x$], [$z_2=-x$], [$z_3=0.5$]), legend: "tr",
-       vlines: ((-0.5, [visible tie], MUTED), (0, [hidden tie], RED), (0.5, [visible tie], MUTED)),
-       x-label: [$x$], y-label: [class score], size: (103mm, 39mm),
-     )
+     #decision-score-plot
      #v(3pt)
      #text(size: 10.5pt, weight: 700, fill: INK)[PREDICTED CLASS $= arg max_k z_k(x)$ · boundaries at $x=plus.minus 0.5$]
      #v(2pt)
