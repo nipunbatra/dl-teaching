@@ -91,9 +91,11 @@ forward values are computed.
 ### 57–70 min · Universal approximation via hinges
 
 Frame one precise question, build a ReLU hinge, and assemble the tent function.
-The successive sine approximations make the qualitative point that more hinges
-reduce the worst gap; `sup` means the largest gap over the entire displayed
-region. Finish by reading the theorem in order and dwelling on the `OPT` warning:
+The single three-panel **constructed-interpolant** comparison makes the
+qualitative point that more hinges reduce the worst gap; `sup` means the largest
+gap over the entire displayed region. Stress that these curves use fixed knots
+and are not trained results. Finish by reading the theorem in order and dwelling
+on the existence warning:
 existence is not learnability, data efficiency, or generalization.
 
 ### 70–77 min · Width versus depth
@@ -113,9 +115,10 @@ minibatch, count both affine layers' parameters, and complete the single numeric
 update. Close on the deck's final sentence: training changes the parameters, not
 the architecture.
 
-If limited to 70 minutes, shorten the multiclass boundary example and show fewer
-hinge-refinement stages. Do not cut the all-four-row XOR verification, the UAT
-existence caveat, or the minibatch-to-update ending.
+If limited to 70 minutes, shorten the multiclass boundary example and treat the
+three-panel interpolant comparison as a quick visual read. Do not cut the
+all-four-row XOR verification, the UAT existence caveat, or the
+minibatch-to-update ending.
 
 ## Board checkpoints
 

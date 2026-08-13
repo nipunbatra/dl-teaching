@@ -1260,13 +1260,13 @@ Explore large positive and negative logits, where sigmoid's derivative becomes t
 #place(bottom + center, dy: -2pt,
   result[A hidden layer combines many shifted hinges into a piecewise-linear function.])
 
-== Step 1a: one input fans out to three units #V
+== One input becomes three symbolic hinge features #V
 
 #align(center, text(size: 18pt)[
   Every unit first computes $u_i=w_i x+b_i$, then applies $h_i="ReLU"(u_i)$.
 ])
 #v(6pt)
-#align(center, diagram(spacing: (31mm, 17mm), node-stroke: 0.9pt + INK, node-fill: white, {
+#align(center, diagram(spacing: (31mm, 14.5mm), node-stroke: 0.9pt + INK, node-fill: white, {
   let inp = (0, 0)
   let us = ((2, -1), (2, 0), (2, 1))
   let hs = ((4, -1), (4, 0), (4, 1))
@@ -1293,42 +1293,9 @@ Explore large positive and negative logits, where sigmoid's derivative becomes t
   node((4, -1.72), text(size: 11pt, weight: 650, fill: MUTED)[RELU FEATURES], stroke: none)
 }))
 #place(bottom + center, dy: -2pt,
-  result[One $x$ fans out; biases $0,-1,-2$ shift the three ReLU thresholds.])
+  result[The same $x$ creates $bold(h)(x)=("ReLU"(x),"ReLU"(x-1),"ReLU"(x-2))$; the hinges are at $0,1,2$.])
 
-== Step 1b: evaluate a concrete input #D
-
-#align(center, text(size: 18pt)[Substitute the same value into all three affine sums, then apply ReLU separately.])
-#v(7pt)
-#align(center, grid(
-  columns: (69mm, 12mm, 69mm, 12mm, 69mm), align: horizon,
-  neat-card([unit 1 · already on], [
-    $u_1=1(1.5)+0=1.5$ \
-    #v(4pt)
-    $h_1=max(0,1.5)=1.5$
-  ], color: BLUE, width: 69mm),
-  neat-arrow(),
-  neat-card([unit 2 · just on], [
-    $u_2=1(1.5)-1=0.5$ \
-    #v(4pt)
-    $h_2=max(0,0.5)=0.5$
-  ], color: RED, width: 69mm),
-  neat-arrow(),
-  neat-card([unit 3 · still off], [
-    $u_3=1(1.5)-2=-0.5$ \
-    #v(4pt)
-    $h_3=max(0,-0.5)=0$
-  ], color: GREEN, width: 69mm),
-))
-#pause
-#v(8pt)
-#align(center, text(size: 21pt)[
-  $bold(u)=mat(1.5;0.5;-0.5) quad arrow.r quad bold(h)="ReLU"(bold(u))=mat(1.5;0.5;0)$
-])
-#pause
-#place(bottom + center, dy: -2pt,
-  result[At $x=1.5$, units 1 and 2 are active; unit 3 stays zero until $x$ passes $2$.])
-
-== Step 2: output edges combine the three learned hinges #V
+== Output weights combine the three symbolic hinges #V
 
 #align(center, diagram(spacing: (31mm, 15mm), node-stroke: 0.9pt + INK, node-fill: white, {
   let inp = (0, 0)
@@ -1351,9 +1318,7 @@ Explore large positive and negative logits, where sigmoid's derivative becomes t
     "-|>", stroke: 1.2pt + GREEN, label-side: left)
   node(inp, $x$, radius: 7mm, stroke: 1pt + INK)
   for i in range(3) {
-    let b = ([$b_1=0$], [$b_2=-1$], [$b_3=-2$]).at(i)
-    node(hs.at(i), align(center, text(size: 12.5pt)[#labs.at(i) \
-      #text(size: 9pt, fill: cols.at(i))[#b]]), radius: 9.5mm, stroke: 1.2pt + cols.at(i))
+    node(hs.at(i), labs.at(i), radius: 9.5mm, stroke: 1.2pt + cols.at(i))
   }
   node(out, $f(x)$, radius: 8mm, stroke: 1.2pt + ACC)
   node((0, -1.65), text(size: 11pt, weight: 650, fill: MUTED)[INPUT], stroke: none)
@@ -1361,69 +1326,47 @@ Explore large positive and negative logits, where sigmoid's derivative becomes t
   node((2, -1.65), text(size: 11pt, weight: 650, fill: MUTED)[SHIFTED RELUS], stroke: none)
   node((4, -1.65), text(size: 11pt, weight: 650, fill: MUTED)[WEIGHTED SUM], stroke: none)
 }))
-#pause
 #place(bottom + center, dy: -2pt,
   result[The output adds $f(x)=g_1(x)+g_2(x)+g_3(x)$—the theorem's “sum of hidden units” is literal.])
 
-== Step 3a: the positive output weights keep the ramps upright #V
+== Output weights choose each hinge's slope change #V
 
+#align(center, text(size: 18pt)[
+  Start with $h(x)="ReLU"(x-t)$; its output contribution is $g(x)=v h(x)$.
+])
+#v(4pt)
 #two(
   [#align(center, [
-    #text(size: 18pt, weight: 650, fill: BLUE)[$g_1(x)=(+1)h_1$]
-    #v(5pt)
-    #lines(fn: x => calc.max(0, x), domain: (-1, 3), samples: 100,
-      markers: false, colors: (BLUE,), points: ((0,0, [hinge $0$]), (2.5,2.5, [$(2.5,2.5)$])),
-      x-label: [$x$], y-label: [$g_1(x)$], size: (88mm, 50mm))
-  ])],
-  [#pause
-   #align(center, [
-    #text(size: 18pt, weight: 650, fill: GREEN)[$g_3(x)=(+1)h_3$]
-    #v(5pt)
-    #lines(fn: x => calc.max(0, x - 2), domain: (-1, 3), samples: 100,
-      markers: false, colors: (GREEN,), points: ((2,0, [hinge $2$]), (2.5,0.5, [$(2.5,0.5)$])),
-      x-label: [$x$], y-label: [$g_3(x)$], size: (88mm, 50mm))
-  ])],
-)
-#pause
-#place(bottom + center, dy: -2pt,
-  result[A positive output weight preserves the direction of a hidden ReLU ramp.])
-
-== Step 3b: a negative weight flips the ramp #V
-
-#two(
-  [#align(center, [
-    #text(size: 18pt, weight: 650, fill: MUTED)[$(+1)h_2(x)="ReLU"(x-1)$]
+    #text(size: 18pt, weight: 650, fill: BLUE)[$v=+1 quad arrow.r quad g(x)=+h(x)$]
     #v(4pt)
     #lines(
       fn: (x => calc.max(0, x - 1), x => -4, x => 2),
       domain: (-1, 3), samples: 120,
       markers: (false, false, false),
-      colors: (MUTED, MUTED.transparentize(100%), MUTED.transparentize(100%)),
-      points: ((1, 0, [hinge $1$]), (2.5, 1.5, [$(2.5,1.5)$])),
-      x-label: [$x$], y-label: [$+h_2(x)$], size: (88mm, 49mm),
+      colors: (BLUE, BLUE.transparentize(100%), BLUE.transparentize(100%)),
+      points: ((1, 0, [hinge $t$]),),
+      x-label: [$x$], y-label: [$g(x)$], size: (88mm, 47mm),
     )
     #v(2pt)
-    #text(size: 15pt, fill: MUTED)[slope $+1$ after the hinge]
+    #text(size: 15pt, weight: 650, fill: BLUE)[slope change $Delta s=+1$]
   ])],
-  [#pause
-   #align(center, [
-    #text(size: 18pt, weight: 650, fill: RED)[$(-2)h_2(x)=-2"ReLU"(x-1)$]
+  [#align(center, [
+    #text(size: 18pt, weight: 650, fill: RED)[$v=-2 quad arrow.r quad g(x)=-2h(x)$]
     #v(4pt)
     #lines(
       fn: (x => -2 * calc.max(0, x - 1), x => -4, x => 2),
       domain: (-1, 3), samples: 120,
       markers: (false, false, false),
       colors: (RED, RED.transparentize(100%), RED.transparentize(100%)),
-      points: ((1, 0, [same hinge $1$]), (2.5, -3, [$(2.5,-3)$])),
-      x-label: [$x$], y-label: [$-2h_2(x)$], size: (88mm, 49mm),
+      points: ((1, 0, [same hinge $t$]),),
+      x-label: [$x$], y-label: [$g(x)$], size: (88mm, 47mm),
     )
     #v(2pt)
-    #text(size: 15pt, weight: 650, fill: RED)[slope $-2$ after the hinge]
+    #text(size: 15pt, weight: 650, fill: RED)[slope change $Delta s=-2$]
   ])],
 )
-#pause
 #place(bottom + center, dy: -2pt,
-  result[Multiplying by $-2$ keeps the hinge at $x=1$, flips the ramp, and doubles its slope magnitude; $h_2$ itself is unchanged.])
+  result[The hinge stays at $t$; the sign of $v$ chooses the bend, and $abs(v)$ sets its strength.])
 
 #let _tent-interval-plane(stage) = align(center, diagram(
   spacing: (36mm, 27mm), node-stroke: none, node-fill: none,
@@ -1471,7 +1414,7 @@ Explore large positive and negative logits, where sigmoid's derivative becomes t
   },
 ))
 
-== Step 4: assemble the tent interval by interval #D
+== Three hinges assemble a tent interval by interval #D
 
 #align(center, text(size: 18.5pt)[
   $f(x) = h_1 - 2h_2 + h_3 = "ReLU"(x) - 2"ReLU"(x-1) + "ReLU"(x-2).$
@@ -1496,217 +1439,25 @@ Explore large positive and negative logits, where sigmoid's derivative becomes t
     result[Reading left to right: flat $arrow.r$ rise $arrow.r$ fall $arrow.r$ flat—the weighted sum is a tent.])
 ]
 
-== Step 5: the weighted sum is the tent #V
-
-#two(r: (0.9fr, 1.1fr),
-  [
-    #text(size: 18pt, weight: 650)[Hidden layer]
-    $bold(h)(x) = ("ReLU"(x), "ReLU"(x-1), "ReLU"(x-2)).$
-    #pause
-    #v(9pt)
-    #text(size: 18pt, weight: 650)[Linear output layer]
-    $f(x) = mat(1, -2, 1) bold(h)(x).$
-    #pause
-    #v(9pt)
-    The network has *three hidden nodes* and *one output node*. The output node performs no ReLU here; it only takes a weighted sum.
-  ],
-  [#align(center, lines(
-    fn: x => calc.max(0, x) - 2 * calc.max(0, x - 1) + calc.max(0, x - 2),
-    domain: (-1, 3), samples: 120, markers: false, colors: (ACC,),
-    points: ((0, 0, [$0$]), (1, 1, [$1$]), (2, 0, [$2$])),
-    x-label: [$x$], y-label: [$f(x)$], title: [network output], size: (73mm, 48mm),
-  ))],
-)
-#pause
-#place(bottom + center, dy: -2pt,
-  result[Hidden units create reusable nonlinear features; the output layer chooses their signs and strengths.])
-
-#let _hinge-unit-row(hidden, bias, output-weight, output-node, update, color) = align(center, diagram(
-  spacing: (25mm, 13mm), node-stroke: 0.9pt + INK, node-fill: white,
-  {
-    edge((0, 0), (2, 0), bias, "-|>", stroke: 0.85pt + color, label-side: left)
-    edge((2, 0), (4.25, 0), output-weight, "-|>", stroke: 1.05pt + color, label-side: left)
-    node((0, 0), $x$, radius: 6.5mm, stroke: 1pt + INK)
-    node((2, 0), hidden, shape: fletcher.shapes.rect, inset: 8pt,
-      fill: color.lighten(92%), stroke: 1pt + color)
-    node((4.25, 0), output-node, radius: 6.5mm, stroke: 1.1pt + ACC)
-    node((2.12, 1.05), text(size: 14.5pt, weight: 650, fill: color)[#update], stroke: none)
-  },
-))
-
-#let _two-peak-plane(stage) = align(center, diagram(
-  spacing: (28mm, 25mm), node-stroke: none, node-fill: none,
-  {
-    edge((-0.48, 0), (4.55, 0), "->", stroke: 0.8pt + INK)
-    edge((-0.48, 0.14), (-0.48, -1.38), "->", stroke: 0.8pt + INK)
-    node((4.67, 0.04), $x$, stroke: none)
-    node((-0.55, -1.48), $q(x)$, stroke: none)
-    node((-0.68, -1), $1$, stroke: none)
-    for x in range(5) {
-      edge((x, -0.05), (x, 0.05), stroke: 0.7pt + INK)
-      node((x, 0.2), [$#x$], stroke: none)
-    }
-
-    if stage >= 1 {
-      edge((-0.45, 0), (0, 0), stroke: 2.7pt + MUTED)
-      edge((0, 0), (1, -1), stroke: 3pt + BLUE)
-      node((0.5, -0.6), text(size: 12pt, weight: 650, fill: BLUE)[$s=+1$], stroke: none)
-      node((0, 0), none, radius: 1.6mm, fill: ACC, stroke: none)
-    }
-    if stage >= 2 {
-      edge((1, -1), (2, 0), stroke: 3pt + RED)
-      node((1.5, -0.6), text(size: 12pt, weight: 650, fill: RED)[$s=-1$], stroke: none)
-      node((1, -1), none, radius: 1.6mm, fill: ACC, stroke: none)
-    }
-    if stage >= 3 {
-      edge((2, 0), (3, -1), stroke: 3pt + TEAL)
-      node((2.5, -0.6), text(size: 12pt, weight: 650, fill: TEAL)[$s=+1$], stroke: none)
-      node((2, 0), none, radius: 1.6mm, fill: ACC, stroke: none)
-    }
-    if stage >= 4 {
-      edge((3, -1), (4, 0), stroke: 3pt + RED)
-      node((3.5, -0.6), text(size: 12pt, weight: 650, fill: RED)[$s=-1$], stroke: none)
-      node((3, -1), none, radius: 1.6mm, fill: ACC, stroke: none)
-    }
-    if stage >= 5 {
-      edge((4, 0), (4.52, 0), stroke: 3pt + GREEN)
-      node((4.27, -0.24), text(size: 12pt, weight: 650, fill: GREEN)[$s=0$], stroke: none)
-      node((4, 0), none, radius: 1.6mm, fill: ACC, stroke: none)
-    }
-  },
-))
-
-== Hinge 1 starts a rise #V
-
-#_hinge-unit-row(
-  [$h_1="ReLU"(x)$], [$b_1=0$], [$v_1=+1$], [$q_1$],
-  [$q_1=h_1 quad | quad s: 0+(+1)=+1$], BLUE,
-)
-#v(3pt)
-#_two-peak-plane(1)
-#place(bottom + center, dy: -2pt,
-  result[At $x=0$, the first hidden unit turns on and the output begins rising.])
-
-== Hinge 2 turns downward #V
-
-#_hinge-unit-row(
-  [$h_2="ReLU"(x-1)$], [$b_2=-1$], [$v_2=-2$], [$q_2$],
-  [$q_2=q_1-2h_2 quad | quad s: +1-2=-1$], RED,
-)
-#v(3pt)
-#_two-peak-plane(2)
-#place(bottom + center, dy: -2pt,
-  result[At $x=1$, the weight $-2$ changes the slope by $-2$: the first peak turns downward.])
-
-== Hinge 3 turns upward #V
-
-#_hinge-unit-row(
-  [$h_3="ReLU"(x-2)$], [$b_3=-2$], [$v_3=+2$], [$q_3$],
-  [$q_3=q_2+2h_3 quad | quad s: -1+2=+1$], TEAL,
-)
-#v(3pt)
-#_two-peak-plane(3)
-#place(bottom + center, dy: -2pt,
-  result[At $x=2$, the weight $+2$ changes the slope by $+2$: the output rises again.])
-
-== Hinge 4 turns downward #V
-
-#_hinge-unit-row(
-  [$h_4="ReLU"(x-3)$], [$b_4=-3$], [$v_4=-2$], [$q_4$],
-  [$q_4=q_3-2h_4 quad | quad s: +1-2=-1$], RED,
-)
-#v(3pt)
-#_two-peak-plane(4)
-#place(bottom + center, dy: -2pt,
-  result[At $x=3$, another weight $-2$ turns the second peak downward.])
-
-== Hinge 5 makes the output flat #V
-
-#_hinge-unit-row(
-  [$h_5="ReLU"(x-4)$], [$b_5=-4$], [$v_5=+1$], [$q(x)$],
-  [$q=h_1-2h_2+2h_3-2h_4+h_5 quad | quad s: -1+1=0$], GREEN,
-)
-#v(3pt)
-#_two-peak-plane(5)
-#place(bottom + center, dy: -2pt,
-  result[Five hidden units create five slope changes—and therefore a two-peak piecewise-linear function.])
-
 #let _sin-pwl-breaks(x, m) = _sin-pwl(x, knots: m + 2)
 #let _breakpoint-lines(m) = range(1, m + 1).map(i => (
   -3.14 + 6.28 * i / (m + 1), none, MUTED.lighten(48%),
 ))
-#let _breakpoint-study(m, error) = [
-  #two(r: (1.28fr, 0.72fr),
-    [#align(center, lines(
+#let _constructed-interpolant-panel(m, error) = [
+  #align(center, [
+    #text(size: 18pt, weight: 700, fill: ACC)[#m hinges]
+    #v(1pt)
+    #text(size: 14pt, weight: 650, fill: MUTED)[$epsilon_m approx #str(error)$]
+    #v(2pt)
+    #lines(
       fn: (x => calc.sin(x), x => _sin-pwl-breaks(x, m)),
       domain: (-3.14, 3.14), samples: 240,
-      labels: ([target $sin x$], [learned $g_m(x)$]),
       colors: (INK, ACC), dashes: ("solid", "dashed"), markers: (false, false),
-      legend: "tl", vlines: _breakpoint-lines(m),
-      x-label: [$x$], y-label: [output], title: [same target, more hinges],
-      size: (116mm, 57mm),
-    ))],
-    [#text(size: 18pt, weight: 700, fill: ACC)[LEARNED FUNCTION]
-     #v(5pt)
-     #set text(size: 15.5pt)
-     Here: *#m interior breakpoints*.
-     #v(4pt)
-     $t_i=-pi + frac(2pi i, #str(m+1)), quad i=0,...,#str(m+1)$
-     #v(5pt)
-     $g_m(t_i)=sin(t_i)$
-     #v(3pt)
-     Linear between adjacent knots.
-     #v(9pt)
-     *ReLU form on $[-pi,pi]$*
-     $g_m(x)=a+b x+sum_(j=1)^m c_j "ReLU"(x-t_j)$
-     #v(9pt)
-     *Worst vertical gap*
-     $epsilon_m=sup_x abs(sin x-g_m(x)) approx #str(error)$
-    ],
-  )
+      vlines: _breakpoint-lines(m),
+      x-label: [$x$], y-label: [output], size: (70mm, 43mm),
+    )
+  ])
 ]
-
-== 1 hinge: too little flexibility #V
-
-#_breakpoint-study(1, 1.000)
-#place(bottom + center, dy: -2pt,
-  result[At knots $-pi,0,pi$, the target is zero, so $g_1(x)=0$: one hinge cannot capture both lobes.])
-
-== 2 hinges: the curve begins to bend #V
-
-#_breakpoint-study(2, 0.437)
-#place(bottom + center, dy: -2pt,
-  result[The learned function now captures the sign change, but its peaks remain coarse.])
-
-== 3 hinges: the sine shape appears #V
-
-#_breakpoint-study(3, 0.211)
-#place(bottom + center, dy: -2pt,
-  result[Three hinges capture both extrema and the zero crossing.])
-
-== 5 hinges: the fit improves #V
-
-#_breakpoint-study(5, 0.134)
-#place(bottom + center, dy: -2pt,
-  result[More learned hinges follow the target for shorter distances at a time.])
-
-== Seven hinges reduce the gap #V
-
-#_breakpoint-study(7, 0.070)
-#place(bottom + center, dy: -2pt,
-  result[The worst vertical gap has fallen below $0.1$.])
-
-== 9 hinges: closer again #V
-
-#_breakpoint-study(9, 0.049)
-#place(bottom + center, dy: -2pt,
-  result[With nine hinges, the worst gap is already below $0.05$.])
-
-== 15 hinges: close across the interval #V
-
-#_breakpoint-study(15, 0.019)
-#place(bottom + center, dy: -2pt,
-  result[Increasing width adds hinges; here the worst gap falls from $1.000$ to about $0.019$.])
 
 == Learned ReLU units are the theorem's building blocks #D
 
@@ -1861,7 +1612,7 @@ $ h_j(x)="ReLU"(w_j x+b_j), quad g(x)=c+sum_j v_j h_j(x). $
 #align(center, lines(
   fn: (x => calc.sin(x), x => _sin-pwl(x, knots: 7)),
   domain: (-3.14, 3.14), samples: 220,
-  labels: ([$f(x)$ target], [$g(x)$ learned]),
+  labels: ([$f(x)$ target], [$g(x)$ constructed]),
   colors: (INK, ACC), dashes: ("solid", "dashed"), markers: (false, false),
   legend: "tl", vlines: ((1.57, [], MUTED),),
   points: ((1.57, calc.sin(1.57), []),
@@ -1870,7 +1621,7 @@ $ h_j(x)="ReLU"(w_j x+b_j), quad g(x)=c+sum_j v_j h_j(x). $
   size: (126mm, 59mm),
 ))
 #place(bottom + center, dy: -2pt,
-  result[Pointwise error is the vertical distance between target and learned outputs at the same input.])
+  result[Pointwise error is the vertical distance between the target and its constructed approximation at the same input.])
 
 == Calculate the gap at $x_0=1.57$ #D
 
@@ -1888,7 +1639,7 @@ $ h_j(x)="ReLU"(w_j x+b_j), quad g(x)=c+sum_j v_j h_j(x). $
     node((0, -0.65), align(center)[#text(size: 11pt, weight: 700, fill: INK)[TARGET] \
       $f(1.57) approx 1.000$], shape: fletcher.shapes.rect,
       inset: 9pt, fill: INK.lighten(96%), stroke: 1pt + INK)
-    node((0, 0.65), align(center)[#text(size: 11pt, weight: 700, fill: ACC)[LEARNED] \
+    node((0, 0.65), align(center)[#text(size: 11pt, weight: 700, fill: ACC)[CONSTRUCTED] \
       $g(1.57) approx 0.866$], shape: fletcher.shapes.rect,
       inset: 9pt, fill: ACC.lighten(94%), stroke: 1pt + ACC)
     node((3, 0), align(center)[#text(size: 11pt, weight: 700, fill: TEAL)[ABSOLUTE DIFFERENCE] \
@@ -1932,56 +1683,24 @@ $ h_j(x)="ReLU"(w_j x+b_j), quad g(x)=c+sum_j v_j h_j(x). $
 
 == More hinges reduce the largest approximation error #V
 
+#align(center, [
+  #text(size: 14pt, weight: 750, fill: ACC)[CONSTRUCTED INTERPOLANTS · FIXED KNOTS · NOT TRAINED]
+  #h(10pt)
+  #text(size: 14pt, fill: INK)[solid: target $sin x$]
+  #h(10pt)
+  #text(size: 14pt, fill: ACC)[dashed: $g_m(x)$]
+])
+#v(3pt)
+#align(center, text(size: 15pt)[Each $g_m$ matches $sin x$ at fixed knots and is linear between adjacent knots.])
+#v(5pt)
 #grid(
-  columns: (1fr, 1fr, 1fr), column-gutter: 12pt,
-  [
-    #align(center, [
-      #text(size: 17pt, weight: 650)[4 knots]
-      #v(5pt)
-      #lines(
-        fn: (x => calc.sin(x), x => _sin-pwl(x, knots: 4)),
-        domain: (-3.14, 3.14), samples: 180,
-        markers: (false, false), colors: (INK, ACC), dashes: ("solid", "dashed"),
-        y-ticks: false, x-label: [$x$], size: (51mm, 36mm),
-      )
-      #v(5pt)
-      #text(size: 15pt, fill: MUTED)[largest error $approx 0.44$]
-    ])
-  ],
-  [
-    #pause
-    #align(center, [
-      #text(size: 17pt, weight: 650)[7 knots]
-      #v(5pt)
-      #lines(
-        fn: (x => calc.sin(x), x => _sin-pwl(x, knots: 7)),
-        domain: (-3.14, 3.14), samples: 180,
-        markers: (false, false), colors: (INK, ACC), dashes: ("solid", "dashed"),
-        y-ticks: false, x-label: [$x$], size: (51mm, 36mm),
-      )
-      #v(5pt)
-      #text(size: 15pt, fill: MUTED)[largest error $approx 0.13$]
-    ])
-  ],
-  [
-    #pause
-    #align(center, [
-      #text(size: 17pt, weight: 650)[13 knots]
-      #v(5pt)
-      #lines(
-        fn: (x => calc.sin(x), x => _sin-pwl(x, knots: 13)),
-        domain: (-3.14, 3.14), samples: 180,
-        markers: (false, false), colors: (INK, ACC), dashes: ("solid", "dashed"),
-        y-ticks: false, x-label: [$x$], size: (51mm, 36mm),
-      )
-      #v(5pt)
-      #text(size: 15pt, fill: MUTED)[largest error $approx 0.033$]
-    ])
-  ],
+  columns: (1fr, 1fr, 1fr), column-gutter: 8pt, align: top,
+  _constructed-interpolant-panel(2, 0.437),
+  _constructed-interpolant-panel(5, 0.134),
+  _constructed-interpolant-panel(15, 0.019),
 )
-#pause
 #place(bottom + center, dy: -2pt,
-  result[More hidden units provide more breakpoints, so a piecewise-linear network can follow finer detail.])
+  result[More hinges shorten each linear segment, so the worst gap falls from $0.437$ to $0.019$.])
 
 == Read the universal-approximation claim in order #D
 
