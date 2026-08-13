@@ -1480,53 +1480,63 @@ $ h_j(x)="ReLU"(w_j x+b_j), quad g(x)=c+sum_j v_j h_j(x). $
 #place(bottom + center, dy: -2pt,
   result[Training learns hinge locations and signed contributions; universal approximation says enough such units can make the remaining gap arbitrarily small.])
 
-== In many dimensions, a hinge becomes a hyperplane #V
+== A ReLU unit adds one fold to a multidimensional function #V
 
-#two(r: (0.86fr, 1.14fr),
-  [A unit reads the whole vector:
-   $h(bold(x))="ReLU"(bold(w)^top bold(x)+b).$
-   #pause
-   The hinge is where the pre-activation is zero:
-   $bold(w)^top bold(x)+b=0.$
-   #v(8pt)
-   #notebox[In 1-D this is a point. In 2-D it is a line. In 3-D it is a plane. In $d$ dimensions it is a hyperplane.]],
-  [#pause
-   #align(center, lines(
-     fn: x => 2 - 2 * x, domain: (-1, 2), samples: 80, markers: false, colors: (ACC,),
-     points: ((0,0, [off: $h=0$]), (0,2, [hinge]), (2,-1, [on: $h=0.5$])),
-     x-label: [$x_1$], y-label: [$x_2$], title: [$x_1+0.5x_2-1=0$], size: (103mm, 58mm),
-   ))],
-)
-#pause
-#place(bottom + center, dy: -2pt,
-  result[The one-dimensional breakpoint construction generalizes to learned, oriented folds of a multidimensional input space.])
-
-== Beyond 1-D: approximate class scores, then classify #V
-
-#grid(
-  columns: (90mm, 1fr), column-gutter: 12pt, align: horizon,
-  [#align(center, scale(58%)[
-    #mlp-diagram((3, 5, 3), labels: (
-      [$bold(x) in RR^d$],
-      [#text(size: 13.5pt)[ReLU features]],
-      [#text(size: 13.5pt)[$K$ logits]],
-    ))
+#align(center, text(size: 21pt, weight: 650)[$h(bold(x))="ReLU"(bold(w)^top bold(x)+b)$])
+#v(5pt)
+#two(r: (1.08fr, 0.92fr),
+  [#align(center, [
+    #surface(
+      (x1, x2) => _relu(x1 + 0.65 * x2 - 0.35),
+      xlim: (-1, 1), ylim: (-1, 1), samples: 18,
+      cell: 2.8mm, depth: 0.48, height: 25mm,
+      x-label: [$x_1$], y-label: [$x_2$], z-label: [$h$],
+    )
+    #v(4pt)
+    #neat-caption([computed ReLU surface for a two-dimensional input])
   ])],
-  [#text(size: 15.5pt)[
-    *1 · Vector input $arrow.r$ learned folds* \
-    $h_j(bold(x))="ReLU"(bold(w)_j^top bold(x)+b_j).$
-    #v(5pt)
-    *2 · Features $arrow.r$ continuous scores* \
-    $z_k(bold(x))=c_k+sum_j v_(k j)h_j(bold(x)).$
-    #v(5pt)
-    *3 · Scores $arrow.r$ classification* \
-    $bold(p)="softmax"(bold(z)), quad hat(y)=arg max_k z_k.$ \
-    A class changes where two top scores tie.
-  ]],
+  [#align(center, [
+    #neat-card([the fold], [
+      $bold(w)^top bold(x)+b=0$ \
+      #text(size: 15.5pt)[is a line in 2-D and a hyperplane in $d$-D]
+    ], color: ACC, width: 88mm)
+    #v(9pt)
+    #neat-card([the two sides], [
+      #text(size: 15.5pt)[one side is flat at $h=0$; the other rises linearly]
+    ], color: TEAL, width: 88mm)
+  ])],
 )
-#pause
 #place(bottom + center, dy: -2pt,
-  result[#text(size: 18pt)[On compact $D subset RR^d$, approximate continuous logits; $arg max$ classifies wherever the winning score has a margin.]])
+  result[A weighted sum of ReLU units combines folds in different positions and directions into a piecewise-linear surface.])
+
+== Classification: one score per class, then pick the largest #V
+
+#two(r: (0.92fr, 1.08fr),
+  [#align(center, [
+    #text(size: 16pt, weight: 700, fill: MUTED)[FOR EACH INPUT]
+    #v(8pt)
+    #text(size: 22pt, weight: 650)[$bold(x) arrow.r bold(h) arrow.r (z_1,z_2,z_3)$]
+    #v(5pt)
+    #text(size: 14.5pt, fill: MUTED)[input $arrow.r$ ReLU features $arrow.r$ one score per class]
+    #v(18pt)
+    #neat-card([pick the winning score], [
+      #text(size: 22pt, weight: 700)[$hat(y)=arg max_k z_k(bold(x))$]
+      #v(4pt)
+    ], color: ACC, width: 82mm)
+  ])],
+  [#align(center, [
+    #text(size: 14pt, weight: 700, fill: MUTED)[IN HIDDEN-FEATURE SPACE $(h_1,h_2)$]
+    #v(2pt)
+    #block(width: 78mm, height: 56mm, clip: true)[
+      #place(top + center, dy: -7mm,
+        image("/lecture2/figures/softmax_regions.pdf", width: 78mm))
+    ]
+    #v(4pt)
+    #neat-caption([colour shows which output score is largest])
+  ])],
+)
+#place(bottom + center, dy: -2pt,
+  result[ReLU features reshape the input; the largest output score determines the class, and its winner regions define the boundaries.])
 
 == Interactive: place and combine bends #I
 
