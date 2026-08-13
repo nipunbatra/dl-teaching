@@ -137,18 +137,23 @@ A $32 times 32$ grayscale image must produce one $32 times 32$ response map.
 #pause
 #note([Commit to A, B, C, or D, then write the assumption your choice requires.], color: BLUE)
 
-== The student contract and 80-minute route #V
+== Outline #V
 
-By the end, given a small image/kernel and a tiny CNN, you should be able to compute its responses, shapes, receptive fields, parameters, MACs, and one shared-weight gradient.
-
-#v(8pt)
-#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
-  hairline([CORE · 55 min], [local/shared operator → geometry → equivariance/pooling → RF → classifier ledger], color: TEAL),
-  hairline([SHOULD COVER · 15 min], [shared-weight backprop → NCHW/mode checks → diagnosis], color: BLUE),
-  hairline([OPTIONAL · 10 min], [small-vs-large kernels → im2col → provenance/notebook traces], color: MUTED),
+#align(center, grid(columns: (69mm, 1fr), gutter: 16pt, align: horizon,
+  [#evidence-image("photo-rf-overlay.png", width: 69mm, height: 46mm, fit: "cover")
+   #v(3pt)
+   #caption[REAL PHOTO · the local-to-global story stays attached to pixels]],
+  [#grid(columns: (1fr, 1fr), gutter: 10pt, row-gutter: 10pt,
+    card([01 · LOCAL OPERATOR], [Ask one learned question in a small neighbourhood.], color: TEAL),
+    card([02 · SHAPE GEOMETRY], [Track padding, stride, dilation, and channel axes.], color: BLUE),
+    card([03 · RESPONSE BEHAVIOUR], [Test shifts, pooling, and the limits of equivariance.], color: ACC),
+    card([04 · RECEPTIVE FIELD], [Trace which input pixels can influence a feature.], color: BLUE),
+    card([05 · CNN LEDGER], [Count shapes, parameters, MACs, and classifier inputs.], color: GREEN),
+    card([06 · LEARNING + DEBUG], [Accumulate a shared gradient; verify layout and mode.], color: TEAL),
+  )],
 ))
 
-#v(8pt)
+#v(6pt)
 #semantic-legend
 
 == Flattening preserves values but removes the useful constraint #V
@@ -1040,9 +1045,9 @@ The position-specific dense map used $"1,049,600"$ parameters; the shared $3 tim
 ]
 
 // ═══════════════════════ OPTIONAL APPENDIX · 10 MIN ═════════════════
-= Optional appendix · efficiency and provenance
+= Efficiency and provenance
 
-== Two $3 times 3$ layers versus one $5 times 5$ layer #OPT
+== Two $3 times 3$ layers versus one $5 times 5$ layer
 
 At constant width $C$ and ignoring biases:
 
@@ -1063,7 +1068,7 @@ At constant width $C$ and ignoring biases:
 #pause
 #note([The receptive-field sizes match, but the function classes are not identical: the two-layer path factorizes computation and inserts a nonlinearity.], color: MUTED)
 
-== im2col exposes matrix multiplication; sources fix conventions #OPT
+== im2col exposes matrix multiplication; sources fix conventions
 
 For $x=(2,1,3)$ and kernel $k=(0.5,-1)$,
 

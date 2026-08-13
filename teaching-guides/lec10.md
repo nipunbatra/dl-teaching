@@ -6,7 +6,7 @@
 
 This guide is synchronized to the following evidence/notebook checkpoint; after a deck rebuild, refresh the source hash here before teaching:
 
-- deck source `lecture10/L10-segmentation.typ`, SHA-256 `3c30a4fe018b5755f4817866efd94d8f6a5d6c79cb0b70d2bbb14e5a79a65a38`;
+- deck source `lecture10/L10-segmentation.typ`, SHA-256 `bd0e11a07d33939ab80c9821e7b62fc9387f68e7a08bd819a71d65042ee812f6`;
 - `notebooks/L10/01_dice_vs_ce_toy_masks.ipynb`, SHA-256 `6bc6510ea53462baf20d722ac8a0bde8339ffc0f54ec6485dfb930cad7412908`;
 - real-evidence manifest `shared/vision-evidence/oxford-iiit-pet/l10/evidence.json`, SHA-256 `b9d0a65cb38bf09253af5e072cee9bf46adfa3b50b9a5f91ef8ada98dc3bfa4a`.
 

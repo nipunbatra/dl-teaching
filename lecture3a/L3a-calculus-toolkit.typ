@@ -51,19 +51,19 @@ $ dif/(dif x), quad (partial)/(partial x_i), quad nabla f, quad J, quad H. $
 #pause
 #notebox[These five objects are the entire vocabulary of optimization and backprop.]
 
-== The big picture #V
+== Outline
 
-Five objects, one theme — each is a *derivative* of a function of a particular shape:
-#pause
-#align(center, table(
-  columns: 3, stroke: 0.5pt + MUTED, inset: (x: 10pt, y: 7pt), align: (left, center, left),
-  table.header([*Object*], [*Function type*], [*Tells us*]),
-  [derivative $f'(x)$], [$RR -> RR$], [slope],
-  [partial $(partial f)/(partial x_i)$], [$RR^d -> RR$], [sensitivity to one coordinate],
-  [gradient $nabla f$], [$RR^d -> RR$], [steepest-ascent direction],
-  [Jacobian $J$], [$RR^n -> RR^m$], [local linear map],
-  [Hessian $H$], [$RR^d -> RR$], [curvature],
-))
+#[
+  #set text(size: 22pt)
+  #enum(
+    [*Derivative* — the local linear model of a scalar function],
+    [*Gradient* — combine partials into a direction for optimization],
+    [*Hessian* — describe curvature and explain difficult descent paths],
+    [*Jacobian* — linearize a vector-valued transformation],
+    [*Chain rule and VJPs* — compose local derivatives into backpropagation],
+    spacing: 9pt,
+  )
+]
 
 // ═══════════════════════════ PART II — Scalar derivative ═══════════════════════════
 = The scalar derivative
@@ -294,7 +294,7 @@ $ f(x + Delta x) approx f(x) + underbrace(nabla f(x)^top Delta x, "tilt (gradien
 #pause
 #result[gradient tilts · Hessian bends]
 
-== Hessian geometry #OPT
+== Hessian geometry
 
 For a quadratic $f(x) = 1/2 x^top A x$: #h(0.6em) $nabla f = A x$, #h(0.4em) $H = A$.
 #pause
@@ -402,7 +402,7 @@ $ J_(v,x) = J_(v,u) thin J_(u,x) in RR^(2 times 2) $
 #pause
 #notebox[The inner dimension ($3$) cancels — exactly like ordinary matrix multiplication.]
 
-== Why we avoid full Jacobians #OPT
+== Why we avoid full Jacobians
 
 A single layer with $x, h in RR^4096$ has a Jacobian of $4096 times 4096 approx 1.7 times 10^7$ entries.
 #pause
@@ -455,13 +455,13 @@ $ "ReLU"'(z) = bb(1)[z > 0] $
 #pause
 - adversarial examples: $x_"adv" = x + epsilon thin "sign"(nabla_x cal(L))$.
 
-== Jacobian → sensitivity & flows #OPT
+== Jacobian → sensitivity & flows
 
 Appears in backprop, sensitivity analysis, normalizing flows ($log abs(det J)$), neural ODEs, implicit layers.
 #pause
 #notebox[But almost always accessed through a product $J v$ or $J^top v$ — never the full matrix.]
 
-== Hessian → curvature & second-order #OPT
+== Hessian → curvature & second-order
 
 Newton's method $x_(t+1) = x_t - H^(-1) nabla f$, Laplace approximation, sharpness / flatness, influence functions.
 #pause

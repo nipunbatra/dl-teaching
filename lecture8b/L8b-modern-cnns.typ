@@ -283,18 +283,24 @@
 #pause
 #note([Commit to A, B, or C. Write the count you would calculate first; keep the choice until the closing revisit.], color: BLUE)
 
-== The student contract and 80-minute route #V
+== Outline #V
 
-By the end, you should be able to turn a block diagram into a shape/compute ledger, justify one design move, and run a leak-free probe-first transfer experiment.
-
-#v(8pt)
-#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
-  hairline([CORE · 55 min], [bridge → context + bottleneck → residuals → separable convolution → transfer → revisit], color: TEAL),
-  hairline([SHOULD · 15 min], [Inception branches → frozen state + preprocessing → diagnostic tests], color: BLUE),
-  hairline([OPTIONAL · 10 min], [groups + scaling + ConvNeXt → FPN teaser → primary provenance], color: MUTED),
+#align(center, grid(columns: (78mm, 1fr), gutter: 15pt, align: horizon,
+  [#evidence-image("resnet18-activations.png", width: 78mm, height: 43mm, fit: "contain")
+   #v(3pt)
+   #evidence-caption([MEASURED], [actual pretrained ResNet-18 activations on the held photograph], color: ACC)],
+  [#set text(size: 13pt)
+   #grid(columns: (1fr, 1fr), gutter: 9pt, row-gutter: 9pt,
+    card([01 · CONTEXT], [Spend depth and kernel size to enlarge what a feature can see.], color: BLUE),
+    card([02 · BOTTLENECKS], [Mix channels cheaply with $1 times 1$ projections.], color: TEAL),
+    card([03 · RESIDUALS], [Preserve an identity route while learning a correction.], color: GREEN),
+    card([04 · EFFICIENT CONV], [Factor spatial filtering from channel mixing.], color: ACC),
+    card([05 · TRANSFER], [Reuse a pretrained backbone under its exact input recipe.], color: TEAL),
+    card([06 · VALIDATE], [Probe, fine-tune, and diagnose on separated data roles.], color: BLUE),
+  )],
 ))
 
-#v(8pt)
+#v(6pt)
 #semantic-legend
 
 == One ledger will carry every design decision #V
@@ -516,7 +522,7 @@ $57.803$ million versus $4.215$ million MACs.
 #align(center, text(size: 21pt, weight: 700, fill: GREEN)[The bottleneck clears the budget with $5.785$M MACs to spare.])
 
 // ── Inception: multi-scale branches ──
-== SHOULD · let one block inspect several scales
+== Let one block inspect several scales
 
 #case-strip([candidate 3], [The held stage may need channel evidence, $3 times 3$ texture, $5 times 5$ context, and a pooled summary at the same location.])
 #v(5pt)
@@ -792,7 +798,7 @@ No channel is mixed with another yet.
 #v(6pt)
 #result[$frac("57,802,752", "6,874,112") approx 8.41 times$ fewer MACs than the standard convolution.]
 
-== OPTIONAL · grouped convolution connects the extremes #V
+== Grouped convolution connects the extremes #V
 
 #align(center, text(size: 19pt)[
   one group $arrow.r$ a standard convolution mixes *all* input channels \
@@ -805,7 +811,7 @@ No channel is mixed with another yet.
 #v(11pt)
 #result[With depth multiplier $1$, $C_"out"=C_"in"$ and there is one spatial filter per channel; a later $1 times 1$ restores full mixing.]
 
-== OPTIONAL · three scaling knobs have different costs #D
+== Three scaling knobs have different costs #D
 
 For a representative convolution, MACs scale approximately as
 #align(center, text(size: 23pt)[$"MACs" prop r^2 d w^2,$])
@@ -822,7 +828,7 @@ where $r$ scales resolution, $d$ depth, and $w$ channel width.
 #v(7pt)
 #result[EfficientNet's compound scaling grows all three gradually instead of overspending on one axis.]
 
-== OPTIONAL · ConvNeXt recombines familiar moves #V
+== ConvNeXt recombines familiar moves #V
 
 #align(center, diagram(spacing: (12mm, 8mm), node-stroke: 0.9pt + INK, node-fill: white, {
   let blk(x, body, col) = node((x,0), body, fill:col.lighten(87%), stroke:0.9pt+col, corner-radius:3pt, inset:7pt)
@@ -981,7 +987,7 @@ $frac("3,078", "11,000,000"+"3,078") approx 0.028%$ of the model.
 #v(8pt)
 #result[A probe measures linear separability in pretrained feature space; it does not make backbone computation disappear.]
 
-== SHOULD · freezing parameters does not freeze model state #D
+== Freezing parameters does not freeze model state #D
 
 #align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
   hairline([PARAMETERS], [`requires_grad=False`; exclude them from the optimizer.], color: TEAL),
@@ -992,7 +998,7 @@ $frac("3,078", "11,000,000"+"3,078") approx 0.028%$ of the model.
 #v(9pt)
 #note([For a truly fixed probe, keep the frozen backbone in `eval()` while the new head trains. Updating BatchNorm statistics deliberately is a different intervention—name and validate it.], color: GREEN)
 
-== SHOULD · the weight recipe includes the input transformation #V
+== The weight recipe includes the input transformation #V
 
 #align(center, evidence-image("preprocessing-contract.png", width: 179mm, height: 54mm, fit: "contain"))
 #v(2pt)
@@ -1056,7 +1062,7 @@ $])
 #pause
 #result[The ratio is a hyperparameter selected on validation—not a universal constant.]
 
-== SHOULD · diagnose transfer failures as symptom → suspect → test #V
+== Diagnose transfer failures as symptom → suspect → test #V
 
 #set text(size: 13.5pt)
 #align(center, table(
@@ -1099,7 +1105,7 @@ $])
 #v(10pt)
 #result[“Transfer learning worked” means a controlled candidate won on validation and survived the one-time test—not merely that training ran.]
 
-== OPTIONAL · one teaser for L10: keep spatial features when the task asks where #V
+== Keep spatial features when the next task asks where #V
 
 #_fpn
 #pause
@@ -1178,7 +1184,7 @@ Given an image task, ask in order:
 #v(10pt)
 #result[The next lecture keeps the reusable backbone but changes the head, targets, geometry, and evaluation.]
 
-== OPTIONAL · primary provenance and executable evidence #V
+== Primary provenance and executable evidence #V
 
 #set text(size: 13.5pt)
 #align(center, grid(columns: (1fr, 1fr), gutter: 20pt,

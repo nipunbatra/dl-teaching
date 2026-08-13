@@ -6,7 +6,7 @@
 
 This guide is synchronized to:
 
-- deck source `lecture9/L9-detection.typ`, SHA-256 `377f688adbe12f274960e57190260ff9bf3c6fac3ab8e00195c986e53606886b`;
+- deck source `lecture9/L9-detection.typ`, SHA-256 `c006f906da66087fde66012d7a10375d89ce532e5cab32a531b8a5d781551183`;
 - `notebooks/L09/01_iou_and_bbox_losses.ipynb`, SHA-256 `ea2ef8b54a26094589d3bd41db9ed4e9d273afaae548a965eb33bacba048dd67`;
 - `notebooks/L09/02_nms_from_scratch.ipynb`, SHA-256 `5ac6b9648c1eab8ea731715575f5c976e32b0e4bc5200f3dfa1cc9d76d8b1c1c`;
 - evidence manifest `shared/vision-evidence/oxford-iiit-pet/l9/evidence.json`, SHA-256 `b539bc41f383d52f95ed2abeeaf764ccf325a1a03b000be7d377b075cac2836a`;

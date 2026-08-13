@@ -143,23 +143,19 @@ $ g_1=(4,0), quad g_2=(4,0), quad g_3=(4,0.4). $
 #pause
 #punch[Every method today will be one new answer to: “what should the past change about this step?”]
 
-== The route for today #V
+== Outline: from gradient to update #V
 
-#align(center, diagram(spacing: (23mm, 12mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  node((0, 0), [SGD], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 7pt, stroke: 1pt + INK)
-  node((1, 0), [momentum], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 7pt, stroke: 1pt + TEAL)
-  node((2, 0), [AdaGrad], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 7pt, stroke: 1pt + GREEN)
-  node((3, 0), [RMSProp], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 7pt, stroke: 1pt + GREEN)
-  node((4, 0), [AdamW], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 7pt, stroke: 1pt + ACC)
+#align(center, diagram(spacing: (18mm, 12mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0, 0), text(size: 13pt)[plain SGD], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 6pt, stroke: 1pt + INK)
+  node((1, 0), text(size: 13pt)[remember direction], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 6pt, stroke: 1pt + TEAL)
+  node((2, 0), text(size: 13pt)[adapt scale], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 6pt, stroke: 1pt + GREEN)
+  node((3, 0), text(size: 13pt)[combine in AdamW], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 6pt, stroke: 1pt + ACC)
+  node((4, 0), text(size: 13pt)[schedule + diagnose], shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 6pt, stroke: 1pt + BLUE)
   for i in range(4) { edge((i, 0), (i + 1, 0), "-|>", stroke: 0.8pt + MUTED) }
 }))
 
-#v(10pt)
-#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
-  hairline([CORE · 55 min], [why each stored quantity exists], color: TEAL),
-  hairline([SHOULD COVER · 15 min], [calculate, predict, then run], color: GREEN),
-  hairline([OPTIONAL · 10 min], [geometry, diagnostics, sources], color: MUTED),
-))
+#v(12pt)
+#punch[At every beat: identify the stored state, calculate one update, then test the predicted behaviour.]
 
 #semantic-legend
 
@@ -201,7 +197,7 @@ On our recurring stream, with $eta=0.1$:
 
 #note[One global $eta$ preserves the $10 times$ magnitude gap in $g_3$. It knows nothing about how often each coordinate has appeared.]
 
-== Why the negative gradient is locally downhill #D #OPT
+== Why the negative gradient is locally downhill #D
 
 For a small proposed step $Delta$, the first-order model is
 
@@ -851,7 +847,7 @@ Use the common ravine and start point to:
 #pause
 #punch[Change one suspected cause at a time. “Try Adam” is an experiment, not a diagnosis.]
 
-== Gradient clipping caps a dangerous update #D #OPT
+== Gradient clipping caps a dangerous update #D
 
 Global-norm clipping replaces $g$ by
 
@@ -957,7 +953,7 @@ Before trusting a training run, can you answer all five?
 #pause
 #punch[If you cannot answer these, the loss curve is a symptom without a mechanism.]
 
-== Primary references and provenance #OPT
+== Primary references and provenance
 
 #set text(size: 16pt)
 

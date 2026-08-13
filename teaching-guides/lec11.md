@@ -5,7 +5,7 @@
 ## Release tuple
 
 - Deck source: `lecture11/L11-next-token.typ`
-- Source SHA-256: `c42a4fb5ef49ddf8693973b61598893420841ec6f4c05b49c807bec0ebfe9efc`
+- Source SHA-256: `6c8474c63bad746df8ce370adba82e4cca9da054acc6c7a0dc2a91476a8f9763`
 - Notebook: `notebooks/L11/01_char_mlp_language_model.ipynb`
 - Notebook SHA-256: `0bafad82d1055c4d23622491746a832228b234f35407e4cf2c143fc318b875f5`
 - Public identity: Lecture 12; the physical L11 name is retained for repository compatibility.

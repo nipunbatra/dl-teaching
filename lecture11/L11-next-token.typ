@@ -229,15 +229,30 @@
 #pause
 #note([Commit silently. We will derive every answer from one set of weights and revisit all three.], color: BLUE)
 
-== The 80-minute route protects one numerical spine #V
+== Outline #V
 
-#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 12pt,
-  hairline([CORE · 55 MIN], [boundary + causal windows $arrow.r$ embedding lookup $arrow.r$ fixed-context MLP $arrow.r$ stable softmax $arrow.r$ CE $arrow.r$ $p-y$ $arrow.r$ token NLL / PPL], color: TEAL),
-  hairline([SHOULD · 15 MIN], [autoregressive loop $arrow.r$ greedy / sampling $arrow.r$ temperature $arrow.r$ suffix-blind diagnostic $arrow.r$ opening revisit], color: BLUE),
-  hairline([OPTIONAL · 10 MIN], [full gradient matrices $arrow.r$ learned representation $arrow.r$ Colab and primary provenance], color: MUTED),
+#align(center, grid(columns: (66mm, 1fr), gutter: 16pt, align: horizon,
+  [#align(center, text(size: 13pt, weight: 700, fill: MUTED)[ONE CAUSAL EXAMPLE])
+   #v(7pt)
+   #context-row((token-box([.]), token-box([n])), target: [a])
+   #v(10pt)
+   #align(center, text(size: 23pt, fill: MUTED)[$arrow.b$])
+   #v(6pt)
+   #set text(size: 12.5pt)
+   #align(center, grid(columns: (1fr, 8mm, 1fr), gutter: 4pt, align: horizon,
+     card([CONTEXT], [two learned vectors], color: TEAL),
+     [#text(size: 20pt, fill: MUTED)[$arrow.r$]],
+     card([OUTPUT], [six next-token probabilities], color: BLUE),
+   ))],
+  [#grid(columns: (1fr, 1fr), gutter: 9pt, row-gutter: 9pt,
+    card([01 · TOKENS], [Add boundaries and extract causal context-target windows.], color: TEAL),
+    card([02 · EMBEDDINGS], [Look up and concatenate learned token vectors.], color: ACC),
+    card([03 · PREDICT], [Map context through an MLP to vocabulary logits.], color: BLUE),
+    card([04 · LEARN], [Use stable softmax, cross-entropy, and $p-y$.], color: RED),
+    card([05 · GENERATE], [Choose, append, and repeat under a temperature.], color: GREEN),
+    card([06 · EVALUATE], [Track held-out NLL/PPL and expose suffix blindness.], color: INK),
+  )],
 ))
-#v(10pt)
-#align(center, text(size: 16pt, fill: MUTED)[The final RNN handoff is CORE even when optional material is skipped.])
 
 == Three clocks reuse the distribution but change the question #V
 
@@ -1045,7 +1060,7 @@ $ W_h in RR^(H times k d) quad => quad #text(fill: ACC)[$H k d$ weights]. $
 
 // ───────────────────────── OPTIONAL · 70-80 MIN ─────────────────────────
 
-== OPTIONAL: expose the full output-gradient matrix #D
+== Expose the full output-gradient matrix #D
 
 With $h=(1,0)$,
 
@@ -1063,7 +1078,7 @@ $
 #v(7pt)
 #note([Each vocabulary row receives its own logit error; the inactive hidden feature leaves the second column zero.], color: MUTED)
 
-== OPTIONAL: use the notebook as a prediction protocol #I
+== Use the notebook as a prediction protocol #I
 
 #interbox(link-to: NB)[
   Before running: predict the seven windows, active ReLU unit, sign of the target gradient, two embedding rows that move, and whether `na` and `veena` can differ.
@@ -1077,7 +1092,7 @@ $
 #pause
 #result[Prediction before execution turns the notebook from a demo into evidence.]
 
-== OPTIONAL: provenance and extension #I
+== Provenance and extension #I
 
 #align(center, grid(columns: (1fr, 1fr), gutter: 14pt,
   card([PRIMARY SOURCE], [#link(BENGIO)[Bengio et al. (2003)] #linebreak() distributed representations plus a feedforward neural probabilistic language model], color: INK),

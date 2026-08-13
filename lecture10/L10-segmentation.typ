@@ -245,16 +245,25 @@
 #v(4pt)
 #align(center, text(size: 14pt, fill: BLUE)[Commit silently; the same scene returns after semantic and instance outputs.])
 
-== The 80-minute route protects one causal spine #V
+== Outline #V
 
-#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 12pt,
-  hairline([CORE · 55 MIN], [output contract → pixel logits + CE → spatial decoder → held mask → IoU/Dice → Mask R-CNN → evaluation + revisit], color: TEAL),
-  hairline([SHOULD · 15 MIN], [void/empty conventions → upsampling + RoIAlign → panoptic task choice], color: BLUE),
-  hairline([OPTIONAL · 10 MIN], [primary provenance → architecture variants → mask fusion / PQ extension], color: MUTED),
+#align(center, grid(columns: (77mm, 1fr), gutter: 15pt, align: horizon,
+  [#evidence-image("real-error-overlay.png", width: 77mm, height: 43.3mm)
+   #v(3pt)
+   #caption[OBSERVED pixels + GT · CONSTRUCTED probabilities · COMPUTED errors]],
+  [#set text(size: 13pt)
+   #grid(columns: (1fr, 1fr), gutter: 9pt, row-gutter: 9pt,
+    card([01 · OUTPUT CONTRACT], [Separate semantic labels, instances, and panoptic records.], color: TEAL),
+    card([02 · PIXEL LEARNING], [Turn logits into probabilities; train with declared losses.], color: BLUE),
+    card([03 · SPATIAL DETAIL], [Decode resolution with skips, upsampling, and alignment.], color: ACC),
+    card([04 · METRICS], [Threshold once; compute IoU, Dice, and boundary failures.], color: GREEN),
+    card([05 · INSTANCES], [Predict a scored set of separate object masks.], color: TEAL),
+    card([06 · EVALUATION], [Write void, empty-mask, matching, and averaging policies.], color: INK),
+  )],
 ))
 #pause
-#v(10pt)
-#align(center, text(size: 16pt, fill: MUTED)[The final one-minute checklist and L12 handoff remain CORE even when optional material is skipped.])
+#v(6pt)
+#semantic-legend
 
 == Three clocks prevent a probability from becoming a metric #V
 
@@ -787,9 +796,9 @@ $ =frac(1,4)[.223+.511+.357+.105] approx .299. $
 #result[Box AP asks whether rectangles overlap; mask AP asks whether object pixels overlap.]
 
 // ───────────────────────── 6 · SHOULD ─────────────────────────
-= SHOULD: policies, alignment, and panoptic output
+= Policies, alignment, and panoptic output
 
-== SHOULD · void pixels leave both the loss sum and denominator #D
+== Void pixels leave both the loss sum and denominator #D
 
 #clock-strip("train")
 #align(center, grid(columns: (104mm, 1fr), gutter: 14pt, align: horizon,
@@ -802,7 +811,7 @@ $ =frac(1,4)[.223+.511+.357+.105] approx .299. $
 #pause
 #result[Remove ignored pixels from CE, confusion counts, IoU, and Dice—not only from the numerator.]
 
-== SHOULD · empty masks and class averaging need a written policy #D
+== Empty masks and class averaging need a written policy #D
 
 #clock-strip("eval")
 #align(center, grid(columns:(1fr,1fr),gutter:16pt,
@@ -815,7 +824,7 @@ $ =frac(1,4)[.223+.511+.357+.105] approx .299. $
 #pause
 #result[The reduction rule is part of the metric—not an implementation footnote.]
 
-== SHOULD · upsampling restores resolution by different mechanisms #V
+== Upsampling restores resolution by different mechanisms #V
 
 #align(center, table(
   columns:(52mm,68mm,70mm),stroke:.5pt+MUTED,inset:(x:7pt,y:7pt),
@@ -827,7 +836,7 @@ $ =frac(1,4)[.223+.511+.357+.105] approx .299. $
 #pause
 #result[Every route needs evidence to refine the larger grid; interpolation alone cannot reverse pooling.]
 
-== SHOULD · bilinear interpolation is a weighted four-neighbor sum #D
+== Bilinear interpolation is a weighted four-neighbor sum #D
 
 Suppose a RoIAlign sample lies halfway in both directions between
 $ mat(1,3;5,7). $
@@ -840,7 +849,7 @@ $ f=.25(1)+.25(3)+.25(5)+.25(7)=4. $
 #pause
 #result[Precise sampling preserves alignment; it does not invent image detail.]
 
-== SHOULD · panoptic output assigns one class–identity record per pixel #V
+== Panoptic output assigns one class–identity record per pixel #V
 
 #align(center, diagram(spacing:(29mm,13mm),node-stroke:1pt+INK,node-fill:white,{
   flow-node((0,-.6),[*stuff* \ class only],color:TEAL,fill:PALE-TEAL)
@@ -852,7 +861,7 @@ $ f=.25(1)+.25(3)+.25(5)+.25(7)=4. $
 #pause
 #align(center, text(size:16pt,fill:MUTED)[Overlapping instance hypotheses must be fused; datasets may reserve a void label for uncertain pixels.])
 
-== SHOULD · choose the output and metric from the question #D
+== Choose the output and metric from the question #D
 
 #align(center, table(
   columns:(44mm,70mm,72mm),stroke:.5pt+MUTED,inset:(x:7pt,y:7pt),
@@ -865,7 +874,7 @@ $ f=.25(1)+.25(3)+.25(5)+.25(7)=4. $
 #result[Architecture names follow the output contract; they do not define the task.]
 
 // ───────────────────────── 7 · OPTIONAL + SYNTHESIS ─────────────────────────
-== OPTIONAL · primary papers establish the architectural claims #V
+== Primary papers establish the architectural claims #V
 
 #set text(size: 14pt)
 #align(center, grid(columns:(1fr,1fr),gutter:10pt,
@@ -879,7 +888,7 @@ $ f=.25(1)+.25(3)+.25(5)+.25(7)=4. $
 #v(4pt)
 #caption[OBSERVED = photo · GT = trimap · CONSTRUCTED = orchard / toy $p$ / shifted $p$ · COMPUTED = masks, errors, metrics]
 
-== OPTIONAL · variants change mechanisms, not the contract #V
+== Variants change mechanisms, not the contract #V
 
 #block(width:100%)[
   #set text(size:15pt)
@@ -910,7 +919,7 @@ $ f=.25(1)+.25(3)+.25(5)+.25(7)=4. $
 #pause
 #uncover("2-")[#v(5pt)#result[*D.* Instance masks preserve the two identities; their union gives total area. If every background/stuff pixel also needs a class, use a panoptic class–identity map.]]
 
-== CORE · final checklist and public L12 handoff #V
+== Final checklist and public L12 handoff #V
 
 #align(center, grid(columns:(1fr,1fr),gutter:14pt,
   card([SEGMENTATION CHECKLIST], [

@@ -184,16 +184,12 @@
 #pause
 #note(color: ACC)[Do not change your answer yet. We return to it after the activation gate determines the matching initialization.]
 
-== The student contract and 80-minute route #V
+== Outline: keep signals usable through depth #V
 
-By the end, you should be able to *predict*, *measure*, and *repair* a depth failure using one shared gauge.
+#causal-map
 
-#v(8pt)
-#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
-  hairline([CORE · 55 min], [activation gate → matched init → normalization → residual path], color: TEAL),
-  hairline([SHOULD COVER · 15 min], [contrast BN/LN axes → diagnose one network], color: GREEN),
-  hairline([OPTIONAL · 10 min], [RMSNorm, projection shortcuts, placement, provenance], color: MUTED),
-))
+#v(10pt)
+#punch[Predict the drift → measure both RMS gauges → change the earliest plausible cause → measure again.]
 
 #v(9pt)
 #semantic-legend
@@ -343,16 +339,11 @@ Then its incoming parameter gradients are zero because every $"ReLU"'(u_i)=0$.
 #pause
 #note[Changing upstream representations may revive it; “can never recover” is too strong.]
 
-== A compact activation catalogue is enough #V
+== Compare the gate, not only the curve #V
 
-#align(center, table(
-  columns: 4, stroke: 0.45pt + MUTED, inset: (x: 9pt, y: 6pt), align: (left, left, left, left),
-  table.header([gate], [useful property], [failure to watch], [matched-init clue]),
-  [sigmoid], [bounded gate/probability], [two saturated tails], [not a default deep hidden gate],
-  [tanh], [zero-centred near origin], [two saturated tails], [Xavier is plausible near zero],
-  [ReLU], [simple active linear side], [all-example inactivity], [restore its lost factor $2$],
-  [leaky / GELU / SiLU], [negative-side or smooth route], [gain differs by gate], [use framework gain/default],
-))
+#fig("/lecture6/figures/activation_zoo.svg", w: 73%)
+
+#caption[Solid: $phi(u)$. Dashed: $phi'(u)$, the returning-gradient gate. GELU uses the documented sigmoid approximation $u sigma(1.702u)$; the other curves are exact away from their kink.]
 
 #pause
 #result[Choose the activation for representation; choose initialization to match its gain.]
@@ -463,6 +454,15 @@ $ q_5=1^5q_0=1, quad g_0=1^5g_5=1, quad r_5=s_0=1. $
 
 #pause
 #caption[Both rows share the same exact $0$–$1$ scale; no trajectory falls below or leaves the shown range.]
+
+== A seeded wider simulation shows the same scale story #V
+
+#fig("/lecture6/figures/signal_flow.svg", w: 68%)
+
+#caption[Constructed diagnostic, seed $0$: width $256$, batch $1024$, $40$ bias-free ReLU layers, Gaussian inputs. Each curve uses newly sampled weights; points are measured activation RMS.]
+
+#pause
+#note(color: GREEN)[He keeps the trace order-one in this finite-width draw; Xavier loses roughly one half of the squared gauge per ReLU layer, as predicted.]
 
 == Xavier samplers match variance, not samples
 
@@ -882,9 +882,9 @@ Write three lines:
 ]
 
 // ═══════════════════════════ OPTIONAL APPENDIX · 10 MIN ═══════════════════════════
-= Optional appendix · modern variants and provenance
+= Further variants and provenance
 
-== RMSNorm resets magnitude without mean subtraction #OPT
+== RMSNorm resets magnitude without mean subtraction
 
 For one example with $D$ features,
 
@@ -899,7 +899,7 @@ $ "RMS"(x)=sqrt(1/D sum_(j=1)^D x_j^2+epsilon), quad y_j=gamma_j x_j/"RMS"(x). $
 #pause
 #note[$epsilon>0$ prevents division by zero and limits amplification when the input RMS is extremely small.]
 
-== Projection shortcuts can change width and resolution #OPT
+== Projection shortcuts can change width and resolution
 
 If $F_ell(x_ell)$ and $x_ell$ have different shapes, use
 
@@ -914,7 +914,7 @@ In CNNs, $P_ell$ is often a learned $1 times 1$ convolution:
 #pause
 #result[The shortcut must match shape before addition; it need not be a literal identity tensor.]
 
-== Placement decides whether the shortcut is truly clean #OPT
+== Placement decides whether the shortcut is truly clean
 
 #align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
   hairline([POST-ACTIVATION], [$x_(ell+1)=phi(x_ell+F_ell(x_ell))$; the final $phi'$ gates both paths], color: ACC),
@@ -924,7 +924,7 @@ In CNNs, $P_ell$ is often a learned $1 times 1$ convolution:
 #pause
 #note[Fixup is a separate carefully scaled initialization strategy that trains deep residual networks without normalization; it is evidence that these controls are coupled, not mandatory in one fixed recipe.]
 
-== BatchNorm for convolution reduces over $B,H,W$ #OPT
+== BatchNorm for convolution reduces over $B,H,W$
 
 For $X in RR^(B times C times H times W)$, BatchNorm computes one mean and variance per channel:
 
@@ -942,7 +942,7 @@ $ mu_c, sigma_c^2 quad "over" B dot H dot W " values of channel " c. $
 #pause
 #caption[At inference the frozen per-channel running statistics are used, regardless of inference batch size.]
 
-== Generalized He gain handles a leaky slope #OPT
+== Generalized He gain handles a leaky slope
 
 For $phi(u)=max(u,a u)$ with a symmetric pre-activation,
 
@@ -962,7 +962,7 @@ $ "Var"(w)=2/((1+a^2)n_"in"). $
   [$1$], [$1$], [$1/n_"in"$],
 ))
 
-== Primary references and provenance #OPT
+== Primary references and provenance
 
 #set text(size: 15pt)
 
@@ -974,4 +974,4 @@ $ "Var"(w)=2/((1+a^2)n_"in"). $
 - Zhang & Sennrich (2019), #link("https://arxiv.org/abs/1910.07467")[Root Mean Square Layer Normalization].
 
 #v(8pt)
-#caption[All lecture diagrams, tables, and numeric traces are native Typst vectors computed from the equations shown; no raster figures are embedded.]
+#caption[The activation catalogue and seeded signal-flow trace are generated by `lecture6/diagrams/l6_figs.py`; other diagrams and numeric traces are native Typst vectors computed from the equations shown.]

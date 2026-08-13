@@ -219,17 +219,24 @@
   card([C · LOSS], [rerun loss at inference], color: INK),
 ))
 
-== The 80-minute route has one cumulative spine #V
+== Outline #V
 
-By the end, you should be able to turn a dense output tensor into trained candidates, filtered detections, and a defensible AP number.
-#v(8pt)
-#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 17pt,
-  hairline([CORE · 55 min], [box contract → IoU → dense head → assignment + loss → NMS → matching + AP → revisit], color: TEAL),
-  hairline([SHOULD · 15 min], [Smooth $L_1$/GIoU → two-stage vs one-stage → FPN → COCO protocol], color: BLUE),
-  hairline([OPTIONAL · 10 min], [anchor-free heads → Soft-NMS / set prediction → primary provenance], color: MUTED),
+#align(center, grid(columns: (77mm, 1fr), gutter: 15pt, align: horizon,
+  [#evidence-image("real-eval-matching.png", width: 77mm, height: 43.3mm)
+   #v(3pt)
+   #caption[OBSERVED pixels + GT · CONSTRUCTED candidates · COMPUTED matches]],
+  [#set text(size: 13pt)
+   #grid(columns: (1fr, 1fr), gutter: 9pt, row-gutter: 9pt,
+    card([01 · BOX CONTRACT], [Choose coordinates, decode rules, and class scores.], color: TEAL),
+    card([02 · OVERLAP], [Use IoU to compare boxes under an explicit convention.], color: BLUE),
+    card([03 · TRAIN], [Assign candidates; combine classification and localization losses.], color: ACC),
+    card([04 · INFER], [Decode, threshold, and suppress duplicate predictions.], color: BLUE),
+    card([05 · EVALUATE], [Match once, rank by score, and accumulate AP.], color: GREEN),
+    card([06 · ARCHITECTURES], [Relate two-stage, one-stage, FPN, and anchor-free heads.], color: TEAL),
+  )],
 ))
 #pause
-#v(8pt)
+#v(6pt)
 #semantic-legend
 
 == Three clocks reuse boxes—but never the same comparison #V
@@ -481,7 +488,7 @@ Target $t=(.20,-.10,.693,0)$; prediction $hat(t)=(.25,-.05,.60,.05)$. Let $p_"ob
 #pause
 #note([Also assert valid boxes: $x_1 >= x_0$, $y_1 >= y_0$, and define the zero-union case explicitly.], color: BLUE)
 
-== SHOULD · equal coordinate error can mean unequal overlap #Q
+== Equal coordinate error can mean unequal overlap #Q
 
 Two predictions move one boundary by $10$ pixels.
 #v(8pt)
@@ -497,7 +504,7 @@ Two predictions move one boundary by $10$ pixels.
 #pause
 #result[Use coordinate losses for a stable regression signal; report overlap-aware metrics for the geometry the task actually values.]
 
-== SHOULD · Smooth $L_1$ and GIoU repair different failures #D
+== Smooth $L_1$ and GIoU repair different failures #D
 
 #align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
   hairline([SMOOTH $L_1$ · $beta=1$], [quadratic near $0$; linear for large residuals\ $0.2 arrow.r 0.02$; $3 arrow.r 2.5$], color: BLUE),
@@ -819,7 +826,7 @@ $A_U=1,200+1,092-1,026=1,266$
 #v(5pt)
 #result[This TP-rank average is a transparent teaching convention. It is not a claim about every benchmark’s interpolation rule.]
 
-== SHOULD · COCO AP fixes the full evaluation protocol #D
+== COCO AP fixes the full evaluation protocol #D
 
 #clock-strip("eval")
 #v(7pt)
@@ -851,9 +858,9 @@ $A_U=1,200+1,092-1,026=1,266$
 #result[Loss, NMS, and AP expose different failure surfaces. Name the clock before changing a threshold.]
 
 // ───────────────────────────── 7 · DETECTOR FAMILIES ─────────────────────────────
-= SHOULD: architectures rearrange the same evidence
+= Architectures rearrange the same evidence
 
-== SHOULD · two-stage means propose, then refine #V
+== Two-stage means propose, then refine #V
 
 #align(center, diagram(spacing: (4mm, 11mm), {
   flow-node((0,0), [image], fill: rgb("#EFEEEB"), w: 25mm)
@@ -874,7 +881,7 @@ $A_U=1,200+1,092-1,026=1,266$
 #pause
 #result[Stage 1 asks “where might an object be?” Stage 2 spends more computation to classify and refine a smaller proposal set.]
 
-== SHOULD · one-stage predicts every candidate directly #V
+== One-stage predicts every candidate directly #V
 
 #align(center, diagram(spacing: (4mm, 11mm), {
   flow-node((0,0), [image], fill: rgb("#EFEEEB"), w: 25mm)
@@ -890,7 +897,7 @@ $A_U=1,200+1,092-1,026=1,266$
 #pause
 #note([One-stage versus two-stage describes where proposal/refinement computation occurs—not a timeless guarantee about speed or accuracy.], color: MUTED)
 
-== SHOULD · FPN gives small and large objects strong features #V
+== FPN gives small and large objects strong features #V
 
 #align(center, diagram(spacing: (16mm, 8mm), {
   let feat(p, body, col) = node(p, body, fill: col.lighten(87%), stroke: 0.9pt + col, corner-radius: 3pt, inset: 6pt)
@@ -911,7 +918,7 @@ $A_U=1,200+1,092-1,026=1,266$
 #pause
 #result[High-resolution levels localize small objects; top-down semantics make those levels useful for recognition.]
 
-== OPTIONAL · anchor-free heads change the box parameterization #V
+== Anchor-free heads change the box parameterization #V
 
 #align(center, grid(columns: (1fr, 1fr), gutter: 24pt,
   hairline([ANCHOR-BASED], [start from $(x_a,y_a,w_a,h_a)$; regress normalized translations and log scales], color: TEAL),
@@ -921,7 +928,7 @@ $A_U=1,200+1,092-1,026=1,266$
 #v(10pt)
 #result[Both still need spatial features, class evidence, box geometry, a training matcher, and an evaluation protocol.]
 
-== OPTIONAL · duplicate handling is a design choice, not a law #V
+== Duplicate handling is a design choice, not a law #V
 
 #align(center, grid(columns: (1fr, 1fr), gutter: 24pt,
   hairline([SOFT-NMS], [decay a neighbour’s score instead of deleting it; nearby objects may survive], color: BLUE),
@@ -1014,7 +1021,7 @@ Given a new detector, ask in order:
 #pause
 #result[Today asked “which objects, and where?” Next asks “which class owns every pixel—and which instance?”]
 
-== OPTIONAL · primary provenance and exact companions #V
+== Primary provenance and exact companions #V
 
 #set text(size: 13.5pt)
 #align(center, grid(columns: (1fr, 1fr), gutter: 20pt,

@@ -82,7 +82,7 @@
 
     .preset-nav {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 8px;
       padding: 22px 0;
     }
@@ -140,10 +140,10 @@
       color: var(--muted);
       font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
       font-size: 0.82rem;
+      line-height: 1.35;
       text-align: right;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
+      overflow-wrap: anywhere;
     }
     button:focus-visible, select:focus-visible, input:focus-visible {
       outline: 3px solid rgba(40, 127, 123, 0.34);
@@ -182,6 +182,7 @@
     .swatch { width: 24px; height: 3px; border-radius: 99px; background: var(--accent); }
     .swatch.target { background: var(--ink); }
     .swatch.component { background: var(--teal); opacity: 0.55; }
+    .swatch.decision { height: 2px; background: var(--danger); }
 
     .side { display: grid; gap: 18px; }
     .control-panel { padding: 20px; }
@@ -350,7 +351,7 @@
         <p class="eyebrow">Lecture 2 · function approximation</p>
         <h1>Build a curve from ReLU hinges</h1>
       </div>
-      <p>Each hidden unit contributes one shifted hinge. Move its breakpoint, change its output weight, and watch the weighted sum change locally.</p>
+      <p>Each hidden unit contributes one shifted hinge. Move its breakpoint, change its hidden and output weights, and watch the weighted sum—or classifier logit—change.</p>
     </header>
 
     <nav class="preset-nav" aria-label="Teaching sequence">
@@ -358,6 +359,7 @@
       <button class="preset" data-preset="tent" aria-pressed="false"><strong>2 · Tent</strong><span>Output weights 1, −2, 1</span></button>
       <button class="preset" data-preset="peaks" aria-pressed="false"><strong>3 · Two peaks</strong><span>Five hidden units</span></button>
       <button class="preset" data-preset="sine" aria-pressed="false"><strong>4 · Smooth target</strong><span>More knots, smaller gap</span></button>
+      <button class="preset" data-preset="classify" aria-pressed="false"><strong>5 · Classifier</strong><span>Logit, probability, decision</span></button>
     </nav>
 
     <section class="workspace">
@@ -371,9 +373,10 @@
           <div class="readout" id="readout"></div>
         </div>
         <div class="legend">
-          <span class="key"><span class="swatch"></span>weighted sum</span>
+          <span class="key"><span class="swatch"></span><span id="sumKeyLabel">weighted sum</span></span>
           <span class="key" id="targetKey" hidden><span class="swatch target"></span>target</span>
           <span class="key" id="componentKey"><span class="swatch component"></span>individual hidden-unit contributions</span>
+          <span class="key" id="decisionKey" hidden><span class="swatch decision"></span>decision threshold z = 0</span>
         </div>
       </article>
 
@@ -389,27 +392,31 @@
             <input id="hinge" type="range" min="-3.2" max="4.5" step="0.05" value="0">
           </div>
           <div class="field">
-            <label for="weight">Output weight a <span class="value" id="weightValue">1.00</span></label>
+            <label for="hiddenWeight">Hidden weight w <span class="value" id="hiddenWeightValue">1.00</span></label>
+            <input id="hiddenWeight" type="range" min="-3" max="3" step="0.05" value="1">
+          </div>
+          <div class="field">
+            <label for="weight">Output weight v <span class="value" id="weightValue">1.00</span></label>
             <input id="weight" type="range" min="-3" max="3" step="0.05" value="1">
           </div>
           <div class="field">
             <label for="count">Hidden-unit count <span class="value" id="countValue">1</span></label>
-            <input id="count" type="range" min="1" max="12" step="1" value="1">
+            <input id="count" type="range" min="1" max="15" step="1" value="1">
           </div>
           <label class="check"><input id="showComponents" type="checkbox" checked> Show individual weighted hinges</label>
-          <p class="tip"><strong>Where does −2 come from?</strong> The hidden unit computes <code>h₂ = ReLU(x − 1)</code>. Its outgoing connection multiplies that activation by <code>a₂ = −2</code> before the output node adds all three terms.</p>
+          <p class="tip"><strong>Read one unit in order:</strong> <code>tⱼ</code> locates the hinge, <code>wⱼ</code> sets its orientation and scale, and the outgoing weight <code>vⱼ</code> turns <code>hⱼ</code> into the signed contribution <code>gⱼ = vⱼhⱼ</code>.</p>
         </section>
       </aside>
     </section>
 
     <section class="network-panel">
       <h2>Hidden layer makes hinges; output layer weights and adds them</h2>
-      <p class="network-note">Each row separates the two operations: first compute <em>z</em>, then apply ReLU to obtain <em>h</em>. The orange coefficient belongs to the outgoing edge into the final sum.</p>
+      <p class="network-note">Each row follows the slide notation: compute <em>uⱼ = wⱼ(x − tⱼ)</em>, apply ReLU to obtain <em>hⱼ</em>, then multiply by the outgoing weight <em>vⱼ</em>.</p>
       <div class="network">
         <div class="io-node">x</div>
         <div class="hidden-stack" id="hiddenStack"></div>
-        <div class="sum-node">Σ a<sub>j</sub>h<sub>j</sub><br>+ base</div>
-        <div class="io-node output">f(x)</div>
+        <div class="sum-node">Σ v<sub>j</sub>h<sub>j</sub><br>+ base</div>
+        <div class="io-node output" id="outputNode">f(x)</div>
       </div>
       <div class="base-path" id="basePath">output base: 0</div>
     </section>
@@ -431,8 +438,8 @@
     const readout = document.querySelector('#readout');
     const state = {
       preset: 'hinge', selected: 0, showComponents: true,
-      baseSlope: 0, baseOffset: 0, units: [{ t: 0, a: 1 }],
-      domain: [-1.2, 4.8], yDomain: [-1.4, 2.2], target: null
+      baseSlope: 0, baseOffset: 0, units: [{ t: 0, w: 1, v: 1 }],
+      domain: [-1.2, 4.8], yDomain: [-1.4, 2.2], target: null, classification: false
     };
 
     const copy = {
@@ -451,6 +458,10 @@
       sine: {
         title: 'Piecewise-linear segments follow a smooth target',
         takeaway: 'The approximation remains piecewise linear. Increasing hidden units adds breakpoints and narrows the visible gap.'
+      },
+      classify: {
+        title: 'A ReLU sum becomes a binary-classification logit',
+        takeaway: 'The hidden units build a continuous logit z(x). The predicted class changes where z crosses zero; sigmoid turns the same logit into probability.'
       }
     };
 
@@ -464,7 +475,7 @@
       const slopes = xs.slice(0, -1).map((x, i) => (ys[i + 1] - ys[i]) / step);
       const units = [];
       for (let i = 1; i < knotCount - 1; i += 1) {
-        units.push({ t: xs[i], a: slopes[i] - slopes[i - 1] });
+        units.push({ t: xs[i], w: 1, v: slopes[i] - slopes[i - 1] });
       }
       return {
         units,
@@ -477,15 +488,21 @@
       state.preset = name;
       state.selected = 0;
       state.target = null;
+      state.classification = false;
       if (name === 'hinge') {
-        Object.assign(state, { units: [{ t: 0, a: 1 }], baseSlope: 0, baseOffset: 0, domain: [-1.2, 3.2], yDomain: [-0.3, 3.2] });
+        Object.assign(state, { units: [{ t: 0, w: 1, v: 1 }], baseSlope: 0, baseOffset: 0, domain: [-1.2, 3.2], yDomain: [-0.3, 3.2] });
       } else if (name === 'tent') {
-        Object.assign(state, { units: [{ t: 0, a: 1 }, { t: 1, a: -2 }, { t: 2, a: 1 }], baseSlope: 0, baseOffset: 0, domain: [-1, 3], yDomain: [-0.35, 1.35] });
+        Object.assign(state, { units: [{ t: 0, w: 1, v: 1 }, { t: 1, w: 1, v: -2 }, { t: 2, w: 1, v: 1 }], baseSlope: 0, baseOffset: 0, domain: [-1, 3], yDomain: [-0.35, 1.35] });
       } else if (name === 'peaks') {
-        Object.assign(state, { units: [{ t: 0, a: 1 }, { t: 1, a: -2 }, { t: 2, a: 2 }, { t: 3, a: -2 }, { t: 4, a: 1 }], baseSlope: 0, baseOffset: 0, domain: [-0.6, 4.6], yDomain: [-0.35, 1.35] });
-      } else {
+        Object.assign(state, { units: [{ t: 0, w: 1, v: 1 }, { t: 1, w: 1, v: -2 }, { t: 2, w: 1, v: 2 }, { t: 3, w: 1, v: -2 }, { t: 4, w: 1, v: 1 }], baseSlope: 0, baseOffset: 0, domain: [-0.6, 4.6], yDomain: [-0.35, 1.35] });
+      } else if (name === 'sine') {
         const sine = makeSine(5);
         Object.assign(state, { ...sine, domain: [-Math.PI, Math.PI], yDomain: [-1.35, 1.35], target: Math.sin });
+      } else {
+        Object.assign(state, {
+          units: [{ t: 0, w: 1, v: 2 }, { t: 1, w: 1, v: -4 }, { t: 2, w: 1, v: 2 }],
+          baseSlope: 0, baseOffset: -1, domain: [-1, 3], yDomain: [-1.35, 1.35], classification: true
+        });
       }
       document.querySelectorAll('.preset').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.preset === name)));
       syncControls();
@@ -493,25 +510,37 @@
     }
 
     function functionValue(x) {
-      return state.baseOffset + state.baseSlope * x + state.units.reduce((sum, unit) => sum + unit.a * Math.max(0, x - unit.t), 0);
+      return state.baseOffset + state.baseSlope * x + state.units.reduce((sum, unit) => sum + unit.v * Math.max(0, unit.w * (x - unit.t)), 0);
     }
 
-    function componentValue(unit, x) { return unit.a * Math.max(0, x - unit.t); }
+    function componentValue(unit, x) { return unit.v * Math.max(0, unit.w * (x - unit.t)); }
     function fmt(value) {
       const rounded = Math.abs(value) < 0.0005 ? 0 : value;
       return rounded.toFixed(2).replace(/\.00$/, '');
     }
 
     function formulaText() {
+      if (state.classification) {
+        const logitTerms = [];
+        if (Math.abs(state.baseOffset) > 0.001) logitTerms.push(fmt(state.baseOffset));
+        if (Math.abs(state.baseSlope) > 0.001) logitTerms.push(`${fmt(state.baseSlope)}x`);
+        state.units.forEach((u, i) => {
+          if (Math.abs(u.v) < 0.0005 || Math.abs(u.w) < 0.0005) return;
+          logitTerms.push(`${fmt(u.v)}h${i + 1}`);
+        });
+        const logit = logitTerms.join(' + ').replaceAll('+ -', '− ');
+        return `z(x) = ${logit || '0'}; p = σ(z), ŷ = 1[z ≥ 0]`;
+      }
       const terms = [];
       if (Math.abs(state.baseOffset) > 0.001) terms.push(fmt(state.baseOffset));
       if (Math.abs(state.baseSlope) > 0.001) terms.push(`${fmt(state.baseSlope)}x`);
       state.units.forEach(u => {
-        if (Math.abs(u.a) < 0.0005) return;
-        const sign = u.a < 0 ? '−' : terms.length ? '+' : '';
-        const magnitude = Math.abs(u.a);
+        if (Math.abs(u.v) < 0.0005 || Math.abs(u.w) < 0.0005) return;
+        const sign = u.v < 0 ? '−' : terms.length ? '+' : '';
+        const magnitude = Math.abs(u.v);
         const coefficient = Math.abs(magnitude - 1) < 0.0005 ? '' : `${fmt(magnitude)} `;
-        const inside = Math.abs(u.t) < 0.0005 ? 'x' : `x ${u.t > 0 ? '−' : '+'} ${fmt(Math.abs(u.t))}`;
+        const shifted = Math.abs(u.t) < 0.0005 ? 'x' : `(x ${u.t > 0 ? '−' : '+'} ${fmt(Math.abs(u.t))})`;
+        const inside = Math.abs(u.w - 1) < 0.0005 ? shifted : `${fmt(u.w)}${shifted}`;
         terms.push(`${sign}${sign ? ' ' : ''}${coefficient}ReLU(${inside})`);
       });
       return `f(x) = ${terms.join(' ') || '0'}`;
@@ -524,9 +553,11 @@
       select.value = String(state.selected);
       const unit = state.units[state.selected];
       document.querySelector('#hinge').value = unit.t;
-      document.querySelector('#weight').value = unit.a;
+      document.querySelector('#hiddenWeight').value = unit.w;
+      document.querySelector('#weight').value = unit.v;
       document.querySelector('#hingeValue').textContent = fmt(unit.t);
-      document.querySelector('#weightValue').textContent = fmt(unit.a);
+      document.querySelector('#hiddenWeightValue').textContent = fmt(unit.w);
+      document.querySelector('#weightValue').textContent = fmt(unit.v);
       document.querySelector('#count').value = state.units.length;
       document.querySelector('#countValue').textContent = String(state.units.length);
       document.querySelector('#showComponents').checked = state.showComponents;
@@ -536,6 +567,9 @@
       document.querySelector('#formula').title = formulaText();
       document.querySelector('#targetKey').hidden = !state.target;
       document.querySelector('#componentKey').hidden = !state.showComponents;
+      document.querySelector('#decisionKey').hidden = !state.classification;
+      document.querySelector('#sumKeyLabel').textContent = state.classification ? 'network logit z(x)' : 'weighted sum';
+      document.querySelector('#outputNode').textContent = state.classification ? 'z → p' : 'f(x)';
       renderNetwork();
     }
 
@@ -545,13 +579,13 @@
       state.units.forEach((u, i) => {
         const button = document.createElement('button');
         button.className = `unit${i === state.selected ? ' selected' : ''}`;
-        const inside = Math.abs(u.t) < 0.0005 ? 'x' : `x ${u.t > 0 ? '−' : '+'} ${fmt(Math.abs(u.t))}`;
-        button.innerHTML = `<span class="unit-name">unit ${i + 1}</span><span class="unit-eq">z${i + 1} = ${inside}</span><span class="unit-activation">h${i + 1} = ReLU(z${i + 1})</span><span class="unit-weight">a${i + 1} = ${fmt(u.a)}</span>`;
-        button.setAttribute('aria-label', `Select hidden unit ${i + 1}: z ${i + 1} equals ${inside}; output weight ${fmt(u.a)}`);
+        const shifted = Math.abs(u.t) < 0.0005 ? 'x' : `(x ${u.t > 0 ? '−' : '+'} ${fmt(Math.abs(u.t))})`;
+        button.innerHTML = `<span class="unit-name">unit ${i + 1}</span><span class="unit-eq">u${i + 1} = ${fmt(u.w)}${shifted}</span><span class="unit-activation">h${i + 1} = ReLU(u${i + 1})</span><span class="unit-weight">v${i + 1} = ${fmt(u.v)}</span>`;
+        button.setAttribute('aria-label', `Select hidden unit ${i + 1}: hidden weight ${fmt(u.w)}, hinge ${fmt(u.t)}, output weight ${fmt(u.v)}`);
         button.addEventListener('click', () => { state.selected = i; syncControls(); render(); });
         stack.appendChild(button);
       });
-      document.querySelector('#basePath').textContent = `output base path: ${fmt(state.baseOffset)} ${state.baseSlope >= 0 ? '+' : '−'} ${fmt(Math.abs(state.baseSlope))}x`;
+      document.querySelector('#basePath').textContent = `${state.classification ? 'logit bias/base path' : 'output base path'}: ${fmt(state.baseOffset)} ${state.baseSlope >= 0 ? '+' : '−'} ${fmt(Math.abs(state.baseSlope))}x`;
     }
 
     function resizeCanvas() {
@@ -579,6 +613,14 @@
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
 
+      if (state.classification) {
+        for (let px = Math.round(pad.left); px < Math.round(width - pad.right); px += 2) {
+          const x = xmin + (px - pad.left) / innerW * (xmax - xmin);
+          ctx.fillStyle = functionValue(x) >= 0 ? 'rgba(233,123,18,.075)' : 'rgba(40,127,123,.07)';
+          ctx.fillRect(px, pad.top, 2, innerH);
+        }
+      }
+
       ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
@@ -603,7 +645,17 @@
       ctx.beginPath(); ctx.moveTo(pad.left, sy(0)); ctx.lineTo(width - pad.right, sy(0)); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(sx(0), pad.top); ctx.lineTo(sx(0), height - pad.bottom); ctx.stroke();
       ctx.fillStyle = COLORS.ink; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.font = '600 14px Avenir Next, Arial, sans-serif'; ctx.fillText('input x', pad.left + innerW / 2, height - 27);
-      ctx.save(); ctx.translate(18, pad.top + innerH / 2); ctx.rotate(-Math.PI / 2); ctx.fillText('output f(x)', 0, 0); ctx.restore();
+      ctx.save(); ctx.translate(18, pad.top + innerH / 2); ctx.rotate(-Math.PI / 2); ctx.fillText(state.classification ? 'logit z(x)' : 'output f(x)', 0, 0); ctx.restore();
+
+      if (state.classification) {
+        ctx.strokeStyle = COLORS.danger;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([7, 5]);
+        ctx.beginPath(); ctx.moveTo(pad.left, sy(0)); ctx.lineTo(width - pad.right, sy(0)); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = COLORS.danger; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; ctx.font = '700 12px ui-monospace, SFMono-Regular, Menlo, monospace';
+        ctx.fillText('decision threshold z = 0', width - pad.right, sy(0) - 6);
+      }
 
       function drawCurve(fn, color, widthPx, dash = []) {
         ctx.beginPath();
@@ -639,9 +691,15 @@
       document.querySelector('#formula').textContent = formulaText();
       document.querySelector('#formula').title = formulaText(); renderNetwork(); render();
     });
+    document.querySelector('#hiddenWeight').addEventListener('input', event => {
+      state.units[state.selected].w = Number(event.target.value);
+      document.querySelector('#hiddenWeightValue').textContent = fmt(state.units[state.selected].w);
+      document.querySelector('#formula').textContent = formulaText();
+      document.querySelector('#formula').title = formulaText(); renderNetwork(); render();
+    });
     document.querySelector('#weight').addEventListener('input', event => {
-      state.units[state.selected].a = Number(event.target.value);
-      document.querySelector('#weightValue').textContent = fmt(state.units[state.selected].a);
+      state.units[state.selected].v = Number(event.target.value);
+      document.querySelector('#weightValue').textContent = fmt(state.units[state.selected].v);
       document.querySelector('#formula').textContent = formulaText();
       document.querySelector('#formula').title = formulaText(); renderNetwork(); render();
     });
@@ -650,7 +708,7 @@
       if (state.preset === 'sine') {
         Object.assign(state, makeSine(count));
       } else if (count > state.units.length) {
-        while (state.units.length < count) state.units.push({ t: state.units.length, a: 0 });
+        while (state.units.length < count) state.units.push({ t: state.units.length, w: 1, v: 0 });
       } else {
         state.units = state.units.slice(0, count);
       }
@@ -674,7 +732,12 @@
       }
       const x = plot.xmin + (px - plot.pad.left) / (plot.width - plot.pad.left - plot.pad.right) * (plot.xmax - plot.xmin);
       const y = functionValue(x);
-      readout.innerHTML = `x = ${fmt(x)}<br>f(x) = ${fmt(y)}`;
+      if (state.classification) {
+        const probability = 1 / (1 + Math.exp(-y));
+        readout.innerHTML = `x = ${fmt(x)}<br>z(x) = ${fmt(y)}<br>p(y=1) = ${probability.toFixed(3)}<br>ŷ = ${y >= 0 ? 1 : 0}`;
+      } else {
+        readout.innerHTML = `x = ${fmt(x)}<br>f(x) = ${fmt(y)}`;
+      }
       readout.style.left = `${px}px`; readout.style.top = `${plot.sy(y)}px`;
       readout.classList.add('visible');
     });

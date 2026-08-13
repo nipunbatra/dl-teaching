@@ -5,11 +5,6 @@
 // Theme, palette, helpers and diagram builders live in common/metropolis.typ.
 
 #import "../common/metropolis.typ": *
-#import "@local/chalkdust-autodiff:0.1.0" as ad   // our own reverse-mode AD — used live on the scalar example
-#import "@local/chalkdust-theme:0.1.0": theme as chalk-theme
-// palette-locked computation-graph drawer + the scalar loss, both reused below
-#let cgraph = ad.graph.with(theme: chalk-theme(ink: INK, accent: ACC, accent2: TEAL, muted: MUTED))
-#let scalar-loss = ad.expr("(w*x + b - y)^2", ("w", "x", "b", "y"))
 #show: metropolis-deck.with(
   title: [Computation Graphs, Backpropagation and Autodiff],
   subtitle: [How gradients flow through neural networks],
@@ -18,127 +13,535 @@
 #let IA = "https://nipunbatra.github.io/interactive-articles/"
 #let NB = "https://raw.githubusercontent.com/nipunbatra/dl-teaching/master/notebooks/L03/"
 
+// Semantic gradient colors used throughout the lecture.
+// Forward values stay neutral so these three roles remain unambiguous.
+#let UPSTREAM = TEAL
+#let LOCAL = BLUE
+#let DOWNSTREAM = ACC
+#let FORWARD = MUTED
+#let upstream(body) = text(fill: UPSTREAM)[#body]
+#let localterm(body) = text(fill: LOCAL)[#body]
+#let downstream(body) = text(fill: DOWNSTREAM)[#body]
+
+// Computation-graph grammar. Gradient colors are reserved for backward arrows
+// and formulas; forward graph objects are distinguished primarily by shape.
+#let LEAF_FILL = white
+#let VALUE_FILL = rgb("#F1F4F4")
+#let OP_FILL = LOCAL.lighten(92%)
+#let LOSS_FILL = DOWNSTREAM.lighten(91%)
+
+#let graphkey = align(center, diagram(spacing: (20mm, 9mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0, 0), $x$, radius: 5.5mm, fill: LEAF_FILL, stroke: 1pt + INK)
+  node((1, 0), $f$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((2, 0), $v$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((3, 0), $ell$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((4, 0), $cal(L)$, radius: 5.8mm, fill: LOSS_FILL, stroke: 1.1pt + DOWNSTREAM)
+  for i in range(4) { edge((i, 0), (i + 1, 0), "-|>", stroke: 0.9pt + FORWARD) }
+  node((0, 0.9), text(size: 9.5pt, fill: MUTED)[leaf value], stroke: none, fill: none)
+  node((1, 0.9), text(size: 9.5pt, fill: LOCAL)[operation], stroke: none, fill: none)
+  node((2, 0.9), text(size: 9.5pt, fill: MUTED)[stored intermediate], stroke: none, fill: none)
+  node((3, 0.9), text(size: 9.5pt, fill: LOCAL)[operation], stroke: none, fill: none)
+  node((4, 0.9), text(size: 9.5pt, fill: DOWNSTREAM)[scalar loss], stroke: none, fill: none)
+}))
+
+// L3 uses a quiet visual language: diagrams and equations carry the argument.
+// Comparison columns use a heading and hairline, while genuine warnings retain boxes.
+#let neat-card(title, body, color: TEAL, width: 54mm, height: auto, body-align: center) = block(
+  width: width, height: height, inset: (x: 5pt, y: 4pt),
+  [#text(size: 12.5pt, weight: 700, fill: color)[#title]
+   #v(3pt)
+   #line(length: 100%, stroke: 0.7pt + color)
+   #v(5pt)
+   #align(body-align, body)],
+)
+#let neat-arrow(label: none, color: MUTED) = align(center, [
+  #if label != none { [#text(size: 10.5pt, fill: color)[#label] #h(3pt)] }
+  #text(size: 21pt, fill: color)[$arrow.r$]
+])
+#let neat-caption(body) = align(center, text(size: 14.5pt, fill: MUTED)[#body])
+#let notebox(body) = block(
+  width: 100%,
+  inset: (left: 10pt, right: 2pt, top: 4pt, bottom: 4pt),
+  stroke: (left: 1.2pt + TEAL),
+  [#body],
+)
+#let result(body) = align(center, text(size: 16.5pt, weight: 650)[#body])
+#let gradient-key(label, detail, formula, color) = block(
+  width: 100%,
+  inset: (left: 10pt, right: 2pt, top: 4pt, bottom: 4pt),
+  stroke: (left: 1.4pt + color),
+  [#text(size: 14.5pt, fill: color, weight: 700)[#label]
+   #v(2pt)
+   #text(size: 13pt, fill: MUTED)[#detail]
+   #v(5pt)
+   #text(fill: color)[#formula]],
+)
+
 // ── local fletcher diagrams ──────────────────────────────────────────
-// one local node: teal values forward, orange gradient backward
-#let localnode = align(center, diagram(spacing: (26mm, 11mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  node((0,0), $u$, radius: 6mm)
-  node((1,0), $v$, radius: 6mm, stroke: 0.9pt + TEAL)
-  node((2,0), $cal(L)$, radius: 6mm, stroke: 0.9pt + ACC)
-  edge((0,0),(1,0), text(size: 13pt, fill: TEAL)[forward #h(3pt) $v = f(u)$], "-|>", stroke: 1.1pt + TEAL, label-sep: 8pt)
-  edge((1,0),(2,0), "-|>", stroke: 1.1pt + TEAL)
-  edge((2,0),(0,0), "-|>", bend: 34deg, stroke: 1.2pt + ACC,
-    label: text(size: 13pt, fill: ACC)[backward #h(3pt) $overline(u) = overline(v) f'(u)$], label-sep: 8pt)
+// one local operation: neutral values forward; teal → blue → orange backward
+#let localnode = align(center, diagram(spacing: (23mm, 11mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0,0), $u$, radius: 6mm, fill: LEAF_FILL, stroke: 1pt + INK)
+  node((1,0), $f$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((2,0), $v$, radius: 6mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((3,0), $ell$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((4,0), $cal(L)$, radius: 6mm, fill: LOSS_FILL, stroke: 1pt + DOWNSTREAM)
+  for i in range(4) { edge((i,0),(i + 1,0), "-|>", stroke: 0.9pt + FORWARD) }
+  edge((4,0),(2,0), "-|>", bend: 28deg, stroke: 1.2pt + UPSTREAM)
+  edge((2,0),(0,0), "-|>", bend: -28deg, stroke: 1.2pt + DOWNSTREAM)
+  node((1,-0.72), text(size: 12pt, fill: FORWARD)[forward #h(3pt) $v = f(u)$], stroke: none, fill: none)
+  node((1,0.78), text(size: 11pt, fill: LOCAL)[local #h(3pt) $f'(u)$], stroke: none, fill: none)
 }))
 
 // compact recurring motif for slides that refer back to the same local rule
-#let localnode-mini = align(center, diagram(spacing: (17mm, 7mm), node-stroke: 0.8pt + INK, node-fill: white, {
-  node((0,0), $u$, radius: 4.5mm)
-  node((1,0), $v$, radius: 4.5mm, stroke: 0.8pt + TEAL)
-  node((2,0), $cal(L)$, radius: 4.5mm, stroke: 0.8pt + ACC)
-  edge((0,0),(1,0), text(size: 10pt, fill: TEAL)[$v = f(u)$], "-|>", stroke: 1pt + TEAL, label-sep: 6pt)
-  edge((1,0),(2,0), "-|>", stroke: 1pt + TEAL)
-  edge((2,0),(0,0), "-|>", bend: 34deg, stroke: 1.05pt + ACC,
-    label: text(size: 10pt, fill: ACC)[$overline(u) = overline(v) f'(u)$], label-sep: 6pt)
+#let localnode-mini = align(center, diagram(spacing: (16mm, 7mm), node-stroke: 0.8pt + INK, node-fill: white, {
+  node((0,0), $u$, radius: 4.5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+  node((1,0), $f$, shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 4pt, fill: OP_FILL, stroke: 0.9pt + LOCAL)
+  node((2,0), $v$, radius: 4.5mm, fill: VALUE_FILL, stroke: 0.9pt + INK)
+  node((3,0), $ell$, shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 4pt, fill: OP_FILL, stroke: 0.9pt + LOCAL)
+  node((4,0), $cal(L)$, radius: 4.5mm, fill: LOSS_FILL, stroke: 0.9pt + DOWNSTREAM)
+  for i in range(4) { edge((i,0),(i + 1,0), "-|>", stroke: 0.8pt + FORWARD) }
+  edge((4,0),(2,0), "-|>", bend: 28deg, stroke: 1.05pt + UPSTREAM)
+  edge((2,0),(0,0), "-|>", bend: -28deg, stroke: 1.05pt + DOWNSTREAM)
+  node((1,-0.64), text(size: 9.5pt, fill: FORWARD)[$v = f(u)$], stroke: none, fill: none)
+  node((1,0.7), text(size: 8.5pt, fill: LOCAL)[local $f'(u)$], stroke: none, fill: none)
 }))
 
-// numeric square-node instance used in the first worked local-rule example
-#let squarenode = align(center, diagram(spacing: (24mm, 9mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  node((0,0), $3$, radius: 5.5mm)
-  node((1,0), $9$, radius: 5.5mm, stroke: 0.9pt + TEAL)
-  node((2,0), $cal(L)$, radius: 5.5mm, stroke: 0.9pt + ACC)
-  edge((0,0),(1,0), text(size: 12pt, fill: TEAL)[$u^2$], "-|>", stroke: 1.1pt + TEAL, label-sep: 8pt)
-  edge((1,0),(2,0), "-|>", stroke: 1.1pt + TEAL)
-  edge((2,0),(0,0), "-|>", bend: 34deg, stroke: 1.2pt + ACC,
-    label: text(size: 12pt, fill: ACC)[backward #h(3pt) $overline(v) = 7$, #h(3pt) $2u = 6$ #h(3pt) $arrow.r$ #h(3pt) $overline(u) = 42$], label-sep: 7pt)
+// numeric square-operation instance used in the first worked local-rule example
+#let squarenode = align(center, diagram(spacing: (21mm, 9mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0,0), $u=3$, radius: 6mm, fill: LEAF_FILL, stroke: 1pt + INK)
+  node((1,0), [$(dot)^2$], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((2,0), $v=9$, radius: 6mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((3,0), $ell$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((4,0), $cal(L)$, radius: 5.5mm, fill: LOSS_FILL, stroke: 1pt + DOWNSTREAM)
+  for i in range(4) { edge((i,0),(i + 1,0), "-|>", stroke: 0.9pt + FORWARD) }
+  edge((4,0),(2,0), text(size: 10pt, fill: UPSTREAM)[upstream $=7$], "-|>", bend: 28deg, stroke: 1.15pt + UPSTREAM, label-sep: 6pt)
+  edge((2,0),(0,0), text(size: 10pt, fill: DOWNSTREAM)[downstream $=42$], "-|>", bend: -28deg, stroke: 1.15pt + DOWNSTREAM, label-sep: 6pt)
+  node((1,0.7), text(size: 10pt, fill: LOCAL)[local $2u=6$], stroke: none, fill: none)
 }))
 
 // addition merges two values forward and copies one gradient backward
-#let addnode = align(center, diagram(spacing: (22mm, 12mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  node((0,-0.65), $a$, radius: 5mm)
-  node((0,0.65), $b$, radius: 5mm)
-  node((1,0), $v$, radius: 5.5mm, stroke: 0.9pt + TEAL)
-  node((2,0), $cal(L)$, radius: 5.5mm, stroke: 0.9pt + ACC)
-  edge((0,-0.65),(1,0), "-|>", stroke: 1.05pt + TEAL)
-  edge((0,0.65),(1,0), "-|>", stroke: 1.05pt + TEAL)
-  edge((1,0),(2,0), text(size: 11pt, fill: TEAL)[$v = a + b$], "-|>", stroke: 1.05pt + TEAL, label-sep: 6pt)
-  edge((2,0),(1,0), "-|>", bend: 30deg, stroke: 1.1pt + ACC,
-    label: text(size: 11pt, fill: ACC)[$overline(v)$ arrives], label-sep: 6pt)
-  edge((1,0),(0,-0.65), "-|>", bend: -22deg, stroke: 1.1pt + ACC,
-    label: text(size: 11pt, fill: ACC)[$overline(a) = overline(v)$], label-sep: 5pt)
-  edge((1,0),(0,0.65), "-|>", bend: 22deg, stroke: 1.1pt + ACC,
-    label: text(size: 11pt, fill: ACC)[$overline(b) = overline(v)$], label-sep: 5pt)
+#let addnode = align(center, diagram(spacing: (20mm, 12mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0,-0.65), $a$, radius: 5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+  node((0,0.65), $b$, radius: 5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+  node((1,0), $+$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((2,0), $v$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((3,0), $ell$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((4,0), $cal(L)$, radius: 5.5mm, fill: LOSS_FILL, stroke: 1pt + DOWNSTREAM)
+  edge((0,-0.65),(1,0), "-|>", stroke: 0.85pt + FORWARD)
+  edge((0,0.65),(1,0), "-|>", stroke: 0.85pt + FORWARD)
+  edge((1,0),(2,0), "-|>", stroke: 0.85pt + FORWARD)
+  edge((2,0),(3,0), "-|>", stroke: 0.85pt + FORWARD)
+  edge((3,0),(4,0), "-|>", stroke: 0.85pt + FORWARD)
+  node((1,-0.92), text(size: 10.5pt, fill: FORWARD)[$v=a+b$], stroke: none, fill: none)
+  edge((4,0),(2,0), "-|>", bend: 30deg, stroke: 1.15pt + UPSTREAM,
+    label: text(size: 10pt, fill: UPSTREAM)[upstream $partial cal(L) \/ partial v$], label-sep: 6pt)
+  edge((2,0),(0,-0.65), "-|>", bend: -22deg, stroke: 1.15pt + DOWNSTREAM,
+    label: text(size: 9.5pt)[#downstream[$(partial cal(L))/(partial a)$] $=$ #upstream[$(partial cal(L))/(partial v)$] #localterm[$dot 1$]], label-sep: 5pt)
+  edge((2,0),(0,0.65), "-|>", bend: 22deg, stroke: 1.15pt + DOWNSTREAM,
+    label: text(size: 9.5pt)[#downstream[$(partial cal(L))/(partial b)$] $=$ #upstream[$(partial cal(L))/(partial v)$] #localterm[$dot 1$]], label-sep: 5pt)
 }))
 
 // multiplication sends each input the other input during the backward pass
-#let mulnode = align(center, diagram(spacing: (22mm, 12mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  node((0,-0.65), $a$, radius: 5mm)
-  node((0,0.65), $b$, radius: 5mm)
-  node((1,0), $v$, radius: 5.5mm, stroke: 0.9pt + TEAL)
-  node((2,0), $cal(L)$, radius: 5.5mm, stroke: 0.9pt + ACC)
-  edge((0,-0.65),(1,0), "-|>", stroke: 1.05pt + TEAL)
-  edge((0,0.65),(1,0), "-|>", stroke: 1.05pt + TEAL)
-  edge((1,0),(2,0), text(size: 11pt, fill: TEAL)[$v = a b$], "-|>", stroke: 1.05pt + TEAL, label-sep: 6pt)
-  edge((2,0),(1,0), "-|>", bend: 30deg, stroke: 1.1pt + ACC,
-    label: text(size: 11pt, fill: ACC)[$overline(v)$ arrives], label-sep: 6pt)
-  edge((1,0),(0,-0.65), "-|>", bend: -22deg, stroke: 1.1pt + ACC,
-    label: text(size: 11pt, fill: ACC)[$overline(a) = overline(v) b$], label-sep: 5pt)
-  edge((1,0),(0,0.65), "-|>", bend: 22deg, stroke: 1.1pt + ACC,
-    label: text(size: 11pt, fill: ACC)[$overline(b) = overline(v) a$], label-sep: 5pt)
+#let mulnode = align(center, diagram(spacing: (20mm, 12mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0,-0.65), $a$, radius: 5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+  node((0,0.65), $b$, radius: 5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+  node((1,0), $times$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((2,0), $v$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((3,0), $ell$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((4,0), $cal(L)$, radius: 5.5mm, fill: LOSS_FILL, stroke: 1pt + DOWNSTREAM)
+  edge((0,-0.65),(1,0), "-|>", stroke: 0.85pt + FORWARD)
+  edge((0,0.65),(1,0), "-|>", stroke: 0.85pt + FORWARD)
+  edge((1,0),(2,0), "-|>", stroke: 0.85pt + FORWARD)
+  edge((2,0),(3,0), "-|>", stroke: 0.85pt + FORWARD)
+  edge((3,0),(4,0), "-|>", stroke: 0.85pt + FORWARD)
+  node((1,-0.92), text(size: 10.5pt, fill: FORWARD)[$v=a b$], stroke: none, fill: none)
+  edge((4,0),(2,0), "-|>", bend: 30deg, stroke: 1.15pt + UPSTREAM,
+    label: text(size: 10pt, fill: UPSTREAM)[upstream $partial cal(L) \/ partial v$], label-sep: 6pt)
+  edge((2,0),(0,-0.65), "-|>", bend: -22deg, stroke: 1.15pt + DOWNSTREAM,
+    label: text(size: 9.2pt)[#downstream[$(partial cal(L))/(partial a)$] $=$ #upstream[$(partial cal(L))/(partial v)$] #localterm[$dot b$]], label-sep: 5pt)
+  edge((2,0),(0,0.65), "-|>", bend: 22deg, stroke: 1.15pt + DOWNSTREAM,
+    label: text(size: 9.2pt)[#downstream[$(partial cal(L))/(partial b)$] $=$ #upstream[$(partial cal(L))/(partial v)$] #localterm[$dot a$]], label-sep: 5pt)
 }))
 
 // elementwise activation as the same one-input local-rule motif
-#let actnode = align(center, diagram(spacing: (24mm, 9mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  node((0,0), $u$, radius: 5.5mm)
-  node((1,0), $v$, radius: 5.5mm, stroke: 0.9pt + TEAL)
-  node((2,0), $cal(L)$, radius: 5.5mm, stroke: 0.9pt + ACC)
-  edge((0,0),(1,0), text(size: 12pt, fill: TEAL)[$v = phi(u)$], "-|>", stroke: 1.1pt + TEAL, label-sep: 7pt)
-  edge((1,0),(2,0), "-|>", stroke: 1.1pt + TEAL)
-  edge((2,0),(0,0), "-|>", bend: 34deg, stroke: 1.2pt + ACC,
-    label: text(size: 12pt, fill: ACC)[$overline(u) = overline(v) phi'(u)$], label-sep: 7pt)
+#let actnode = align(center, diagram(spacing: (21mm, 9mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0,0), $u$, radius: 5.5mm, fill: LEAF_FILL, stroke: 1pt + INK)
+  node((1,0), $phi$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((2,0), $v$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((3,0), $ell$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((4,0), $cal(L)$, radius: 5.5mm, fill: LOSS_FILL, stroke: 1pt + DOWNSTREAM)
+  for i in range(4) { edge((i,0),(i + 1,0), "-|>", stroke: 0.9pt + FORWARD) }
+  node((1,-0.74), text(size: 10.5pt, fill: FORWARD)[$v=phi(u)$], stroke: none, fill: none)
+  edge((4,0),(2,0), text(size: 10pt, fill: UPSTREAM)[upstream], "-|>", bend: 28deg, stroke: 1.15pt + UPSTREAM, label-sep: 6pt)
+  edge((2,0),(0,0), text(size: 9.5pt)[#downstream[$(partial cal(L))/(partial u)$] $=$ #upstream[$(partial cal(L))/(partial v)$] #localterm[$phi'(u)$]], "-|>", bend: -28deg, stroke: 1.15pt + DOWNSTREAM, label-sep: 6pt)
 }))
 
 // branch: x fans to u and v, both to L
-#let branchgraph = align(center, diagram(spacing: (16mm, 11mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  node((0,0), $x$, radius: 6mm)
-  node((1,0.7), $u$, radius: 6mm, stroke: 0.9pt + TEAL)
-  node((1,-0.7), $v$, radius: 6mm, stroke: 0.9pt + TEAL)
-  node((2,0), $cal(L)$, radius: 6mm, stroke: 0.9pt + ACC)
-  edge((0,0),(1,0.7), "-|>", stroke: 0.8pt + MUTED)
-  edge((0,0),(1,-0.7), "-|>", stroke: 0.8pt + MUTED)
-  edge((1,0.7),(2,0), "-|>", stroke: 0.8pt + MUTED)
-  edge((1,-0.7),(2,0), "-|>", stroke: 0.8pt + MUTED)
+#let branchgraph = align(center, diagram(spacing: (17mm, 11mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0,0), $x$, radius: 6mm, fill: LEAF_FILL, stroke: 1pt + INK)
+  node((1,-0.75), $f$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((1,0.75), $g$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((2,-0.75), $u$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((2,0.75), $v$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((3.2,0), $ell$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((4.2,0), $cal(L)$, radius: 6mm, fill: LOSS_FILL, stroke: 1pt + DOWNSTREAM)
+  edge((0,0),(1,-0.75), "-|>", stroke: 0.9pt + FORWARD)
+  edge((0,0),(1,0.75), "-|>", stroke: 0.9pt + FORWARD)
+  edge((1,-0.75),(2,-0.75), "-|>", stroke: 0.9pt + FORWARD)
+  edge((1,0.75),(2,0.75), "-|>", stroke: 0.9pt + FORWARD)
+  edge((2,-0.75),(3.2,0), "-|>", stroke: 0.9pt + FORWARD)
+  edge((2,0.75),(3.2,0), "-|>", stroke: 0.9pt + FORWARD)
+  edge((3.2,0),(4.2,0), "-|>", stroke: 0.9pt + FORWARD)
 }))
 
-// scalar computation graph for L=(wx+b-y)^2
-#let scalargraph = align(center, diagram(spacing: (14mm, 8mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  node((0,2),  $w$, radius: 5.5mm)
-  node((0,1),  $x$, radius: 5.5mm)
-  node((0,0),  $b$, radius: 5.5mm)
-  node((0,-1.4), $y$, radius: 5.5mm)
-  node((1.4,1.5), $times$, radius: 6mm, fill: rgb("#E6F0F0"), stroke: 0.9pt + TEAL)
-  node((2.8,0.7), $+$, radius: 6mm, fill: rgb("#E6F0F0"), stroke: 0.9pt + TEAL)
-  node((4.2,-0.3), $-$, radius: 6mm, fill: rgb("#E6F0F0"), stroke: 0.9pt + TEAL)
-  node((5.6,-0.3), [$(dot)^2$], radius: 7mm, fill: rgb("#FDECD6"), stroke: 0.9pt + ACC)
-  edge((0,2),(1.4,1.5), "-|>", stroke: 0.7pt + MUTED)
-  edge((0,1),(1.4,1.5), "-|>", stroke: 0.7pt + MUTED)
-  edge((1.4,1.5),(2.8,0.7), $m$, "-|>", stroke: 0.8pt + INK)
-  edge((0,0),(2.8,0.7), "-|>", stroke: 0.7pt + MUTED)
-  edge((2.8,0.7),(4.2,-0.3), $a$, "-|>", stroke: 0.8pt + INK)
-  edge((0,-1.4),(4.2,-0.3), "-|>", stroke: 0.7pt + MUTED)
-  edge((4.2,-0.3),(5.6,-0.3), $e$, "-|>", stroke: 0.8pt + INK)
-}))
-
-// (the backward graph is now auto-drawn by ad.graph from the real computation —
-//  see "The backward pass, visualized")
-
-// two-layer MLP forward chain
-#let mlpforward = align(center, diagram(spacing: 12mm, node-stroke: 0.9pt + INK, node-fill: white, {
-  let labs = ($bold(x)$, $bold(z)^((1))$, $bold(h)$, $bold(z)^((2))$, $bold(p)$, $cal(L)$)
-  for (i, l) in labs.enumerate() {
-    let c = if i == labs.len() - 1 { ACC } else if i == 0 { INK } else { TEAL }
-    node((i, 0), l, radius: 6mm, stroke: 0.9pt + c)
+// general fan-out: one variable reaches the loss along k distinct paths
+#let multipathgraph = align(center, diagram(spacing: (19mm, 8mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0,0), $x$, radius: 6mm, fill: LEAF_FILL, stroke: 1pt + INK)
+  node((3.2,0), $ell$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((4.2,0), $cal(L)$, radius: 6mm, fill: LOSS_FILL, stroke: 1pt + DOWNSTREAM)
+  let rows = ((-1.2, $f_1$, $u_1$), (-0.4, $f_2$, $u_2$), (1.2, $f_k$, $u_k$))
+  for (y, f, u) in rows {
+    node((1,y), f, shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 4pt, fill: OP_FILL, stroke: 0.9pt + LOCAL)
+    node((2,y), u, radius: 5mm, fill: VALUE_FILL, stroke: 0.9pt + INK)
+    edge((0,0), (1,y), "-|>", stroke: 0.85pt + FORWARD)
+    edge((1,y), (2,y), "-|>", stroke: 0.85pt + FORWARD)
+    edge((2,y), (3.2,0), "-|>", stroke: 0.85pt + FORWARD)
   }
-  for i in range(labs.len() - 1) { edge((i, 0), (i + 1, 0), "-|>", stroke: 0.8pt + MUTED) }
+  edge((3.2,0), (4.2,0), "-|>", stroke: 0.85pt + FORWARD)
+  node((1,0.4), text(size: 15pt, fill: MUTED)[$dots.v$], stroke: none, fill: none)
+  node((2,0.4), text(size: 15pt, fill: MUTED)[$dots.v$], stroke: none, fill: none)
+}))
+
+// scalar computation graph for L=(wx+b-y)^2. Values and operations alternate.
+#let scalargraph = align(center, diagram(spacing: (18mm, 9mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0,1.3), $w$, radius: 5.2mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+  node((0,0.3), $x$, radius: 5.2mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+  node((1,0.8), $times$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((2,0.8), $m$, radius: 5.2mm, fill: VALUE_FILL, stroke: 0.9pt + INK)
+  node((2,-0.5), $b$, radius: 5.2mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+  node((3,0.3), $+$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((4,0.3), $a$, radius: 5.2mm, fill: VALUE_FILL, stroke: 0.9pt + INK)
+  node((4,-1), $y$, radius: 5.2mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+  node((5,-0.3), $-$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((6,-0.3), $e$, radius: 5.2mm, fill: VALUE_FILL, stroke: 0.9pt + INK)
+  node((7,-0.3), [$(dot)^2$], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((8,-0.3), $cal(L)$, radius: 5.5mm, fill: LOSS_FILL, stroke: 1pt + DOWNSTREAM)
+  edge((0,1.3),(1,0.8), "-|>", stroke: 0.8pt + FORWARD)
+  edge((0,0.3),(1,0.8), "-|>", stroke: 0.8pt + FORWARD)
+  edge((1,0.8),(2,0.8), "-|>", stroke: 0.8pt + FORWARD)
+  edge((2,0.8),(3,0.3), "-|>", stroke: 0.8pt + FORWARD)
+  edge((2,-0.5),(3,0.3), "-|>", stroke: 0.8pt + FORWARD)
+  edge((3,0.3),(4,0.3), "-|>", stroke: 0.8pt + FORWARD)
+  edge((4,0.3),(5,-0.3), "-|>", stroke: 0.8pt + FORWARD)
+  edge((4,-1),(5,-0.3), "-|>", stroke: 0.8pt + FORWARD)
+  edge((5,-0.3),(6,-0.3), "-|>", stroke: 0.8pt + FORWARD)
+  edge((6,-0.3),(7,-0.3), "-|>", stroke: 0.8pt + FORWARD)
+  edge((7,-0.3),(8,-0.3), "-|>", stroke: 0.8pt + FORWARD)
+}))
+
+// full scalar graph with one operation boxed for the staged backward derivation
+#let scalargraph-focus(stage) = align(center, diagram(spacing: (16mm, 7mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  let vlabel(sym, num) = stack(dir: ttb, spacing: 0pt, sym, text(size: 7.5pt, fill: MUTED)[#num])
+  let value(pos, label, keys, leaf: false, loss: false) = {
+    let active = keys.contains(stage)
+    let fill-color = if loss { LOSS_FILL } else if leaf { LEAF_FILL } else { VALUE_FILL }
+    let base-stroke = if loss { DOWNSTREAM } else { INK }
+    node(pos, label, radius: 5.3mm, fill: fill-color,
+      stroke: if active { 1.7pt + LOCAL } else { 0.9pt + base-stroke })
+  }
+  let op(pos, label, key) = node(pos, label, shape: fletcher.shapes.rect,
+    corner-radius: 4pt, inset: 5pt,
+    fill: if stage == key { LOCAL.lighten(82%) } else { OP_FILL },
+    stroke: if stage == key { 1.8pt + LOCAL } else { 0.9pt + LOCAL })
+
+  value((0,1.3), vlabel($w$, [2]), ("mul",), leaf: true)
+  value((0,0.3), vlabel($x$, [3]), ("mul",), leaf: true)
+  op((1,0.8), $times$, "mul")
+  value((2,0.8), vlabel($m$, [6]), ("mul", "add"))
+  value((2,-0.5), vlabel($b$, [1]), ("add",), leaf: true)
+  op((3,0.3), $+$, "add")
+  value((4,0.3), vlabel($a$, [7]), ("add", "sub"))
+  value((4,-1), vlabel($y$, [10]), ("sub",), leaf: true)
+  op((5,-0.3), $-$, "sub")
+  value((6,-0.3), vlabel($e$, [-3]), ("sub", "square"))
+  op((7,-0.3), [$(dot)^2$], "square")
+  value((8,-0.3), vlabel($cal(L)$, [9]), ("square",), loss: true)
+  edge((0,1.3),(1,0.8), "-|>", stroke: 0.75pt + FORWARD)
+  edge((0,0.3),(1,0.8), "-|>", stroke: 0.75pt + FORWARD)
+  edge((1,0.8),(2,0.8), "-|>", stroke: 0.75pt + FORWARD)
+  edge((2,0.8),(3,0.3), "-|>", stroke: 0.75pt + FORWARD)
+  edge((2,-0.5),(3,0.3), "-|>", stroke: 0.75pt + FORWARD)
+  edge((3,0.3),(4,0.3), "-|>", stroke: 0.75pt + FORWARD)
+  edge((4,0.3),(5,-0.3), "-|>", stroke: 0.75pt + FORWARD)
+  edge((4,-1),(5,-0.3), "-|>", stroke: 0.75pt + FORWARD)
+  edge((5,-0.3),(6,-0.3), "-|>", stroke: 0.75pt + FORWARD)
+  edge((6,-0.3),(7,-0.3), "-|>", stroke: 0.75pt + FORWARD)
+  edge((7,-0.3),(8,-0.3), "-|>", stroke: 0.75pt + FORWARD)
+}))
+
+// Final scalar graph: each value circle shows the saved forward value and the
+// accumulated loss derivative after the reverse sweep.
+#let scalargraph-final = align(center, diagram(spacing: (18mm, 9mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  let vlabel(sym, val, grad) = stack(
+    dir: ttb, spacing: 0pt,
+    sym,
+    text(size: 7.5pt, fill: MUTED)[value #val],
+    text(size: 7.5pt, fill: DOWNSTREAM)[grad #grad],
+  )
+  let value(pos, label, leaf: false, loss: false) = node(
+    pos, label, radius: 7mm,
+    fill: if loss { LOSS_FILL } else if leaf { LEAF_FILL } else { VALUE_FILL },
+    stroke: 0.9pt + (if loss { DOWNSTREAM } else { INK }),
+  )
+  let op(pos, label) = node(pos, label, shape: fletcher.shapes.rect,
+    corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+
+  value((0,1.3), vlabel($w$, [2], [-18]), leaf: true)
+  value((0,0.3), vlabel($x$, [3], [-12]), leaf: true)
+  op((1,0.8), $times$)
+  value((2,0.8), vlabel($m$, [6], [-6]))
+  value((2,-0.5), vlabel($b$, [1], [-6]), leaf: true)
+  op((3,0.3), $+$)
+  value((4,0.3), vlabel($a$, [7], [-6]))
+  value((4,-1), vlabel($y$, [10], [6]), leaf: true)
+  op((5,-0.3), $-$)
+  value((6,-0.3), vlabel($e$, [-3], [-6]))
+  op((7,-0.3), [$(dot)^2$])
+  value((8,-0.3), vlabel($cal(L)$, [9], [1]), loss: true)
+  edge((0,1.3),(1,0.8), "-|>", stroke: 0.75pt + FORWARD)
+  edge((0,0.3),(1,0.8), "-|>", stroke: 0.75pt + FORWARD)
+  edge((1,0.8),(2,0.8), "-|>", stroke: 0.75pt + FORWARD)
+  edge((2,0.8),(3,0.3), "-|>", stroke: 0.75pt + FORWARD)
+  edge((2,-0.5),(3,0.3), "-|>", stroke: 0.75pt + FORWARD)
+  edge((3,0.3),(4,0.3), "-|>", stroke: 0.75pt + FORWARD)
+  edge((4,0.3),(5,-0.3), "-|>", stroke: 0.75pt + FORWARD)
+  edge((4,-1),(5,-0.3), "-|>", stroke: 0.75pt + FORWARD)
+  edge((5,-0.3),(6,-0.3), "-|>", stroke: 0.75pt + FORWARD)
+  edge((6,-0.3),(7,-0.3), "-|>", stroke: 0.75pt + FORWARD)
+  edge((7,-0.3),(8,-0.3), "-|>", stroke: 0.75pt + FORWARD)
+}))
+
+// Recurring circular node-link views. Cards explain a stage; these diagrams keep
+// the actual neural/computation graph visible throughout the lecture.
+#let mlpforward = align(center, diagram(spacing: (14mm, 9mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0,0), $bold(x)$, radius: 5.5mm, fill: LEAF_FILL, stroke: 1pt + INK)
+  node((1,0), [dense 1], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((2,0), $bold(z)_1$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((3,0), [ReLU], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((4,0), $bold(h)$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((5,0), [dense 2], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((6,0), $bold(hat(y))$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((7,0), [squared loss], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((8,0), $cal(L)$, radius: 5.8mm, fill: LOSS_FILL, stroke: 1pt + DOWNSTREAM)
+  for i in range(8) { edge((i, 0), (i + 1, 0), "-|>", stroke: 0.9pt + FORWARD) }
+}))
+
+#let mlpbackward = align(center, diagram(spacing: (14mm, 9mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0,0), $bold(x)$, radius: 5.5mm, fill: LEAF_FILL, stroke: 1pt + INK)
+  node((1,0), [dense 1], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((2,0), $bold(z)_1$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((3,0), [ReLU], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((4,0), $bold(h)$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((5,0), [dense 2], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((6,0), $bold(hat(y))$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((7,0), [squared loss], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((8,0), $cal(L)$, radius: 5.8mm, fill: LOSS_FILL, stroke: 1pt + DOWNSTREAM)
+  for i in range(8) { edge((i, 0), (i + 1, 0), "-|>", stroke: 0.75pt + FORWARD) }
+  for (right, left) in ((8,6), (6,4), (4,2), (2,0)) {
+    edge((right,0), (left,0), "-|>", bend: 25deg, stroke: 1.15pt + DOWNSTREAM)
+  }
+}))
+
+// Same MLP graph, with only one half of the reverse sweep emphasized.
+#let mlpbackward-focus(stage) = align(center, diagram(spacing: (14mm, 9mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0,0), $bold(x)$, radius: 5.5mm, fill: LEAF_FILL, stroke: 1pt + INK)
+  node((1,0), [dense 1], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((2,0), $bold(z)_1$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((3,0), [ReLU], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((4,0), $bold(h)$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((5,0), [dense 2], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((6,0), $bold(hat(y))$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((7,0), [squared loss], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((8,0), $cal(L)$, radius: 5.8mm, fill: LOSS_FILL, stroke: 1pt + DOWNSTREAM)
+  for i in range(8) { edge((i, 0), (i + 1, 0), "-|>", stroke: 0.75pt + FORWARD) }
+  let active = if stage == "right" { ((8,6), (6,4)) } else { ((4,2), (2,0)) }
+  for (right, left) in active {
+    edge((right,0), (left,0), "-|>", bend: 25deg, stroke: 1.5pt + DOWNSTREAM)
+  }
+}))
+
+#let neuronflow = align(center, diagram(spacing: (20mm, 11mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0, 0), $bold(x)$, radius: 6mm, fill: INK.lighten(95%))
+  node((0, 1.1), $bold(w)$, radius: 5.5mm)
+  node((0, -1.1), $b$, radius: 5.5mm)
+  node((1.3, 0), $z$, radius: 6mm, fill: TEAL.lighten(93%), stroke: 1pt + TEAL)
+  node((2.6, 0), $a$, radius: 6mm, fill: TEAL.lighten(93%), stroke: 1pt + TEAL)
+  node((2.6, -1.1), $y$, radius: 5.5mm)
+  node((3.9, 0), $cal(L)$, radius: 6mm, fill: ACC.lighten(92%), stroke: 1pt + ACC)
+  edge((0, 0), (1.3, 0), "-|>", stroke: 1.05pt + TEAL)
+  edge((0, 1.1), (1.3, 0), "-|>", stroke: 0.85pt + MUTED)
+  edge((0, -1.1), (1.3, 0), "-|>", stroke: 0.85pt + MUTED)
+  edge((1.3, 0), (2.6, 0), text(size: 11pt, fill: TEAL)[$phi$], "-|>", stroke: 1.05pt + TEAL, label-sep: 6pt)
+  edge((2.6, 0), (3.9, 0), text(size: 11pt, fill: ACC)[$ell$], "-|>", stroke: 1.05pt + ACC, label-sep: 6pt)
+  edge((2.6, -1.1), (3.9, 0), "-|>", stroke: 0.85pt + MUTED)
+}))
+
+#let densebackgraph = align(center, diagram(spacing: (18mm, 11mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0, 0), $bold(x)$, radius: 5.5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+  node((0, 1.1), $bold(W)$, radius: 5.5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+  node((0, -1.1), $bold(b)$, radius: 5.5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+  node((1.4, 0), [dense], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((2.6, 0), $bold(z)$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((3.8, 0), $ell$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((5, 0), $cal(L)$, radius: 5.8mm, fill: LOSS_FILL, stroke: 1pt + DOWNSTREAM)
+  edge((0, 0), (1.4, 0), "-|>", stroke: 0.85pt + FORWARD)
+  edge((0, 1.1), (1.4, 0), "-|>", stroke: 0.85pt + FORWARD)
+  edge((0, -1.1), (1.4, 0), "-|>", stroke: 0.85pt + FORWARD)
+  edge((1.4, 0), (2.6, 0), "-|>", stroke: 0.85pt + FORWARD)
+  edge((2.6, 0), (3.8, 0), "-|>", stroke: 0.85pt + FORWARD)
+  edge((3.8, 0), (5, 0), "-|>", stroke: 0.85pt + FORWARD)
+  edge((5, 0), (2.6, 0), text(size: 10pt, fill: UPSTREAM)[upstream], "-|>", bend: 28deg, stroke: 1.2pt + UPSTREAM, label-sep: 6pt)
+  edge((2.6, 0), (0, 0), "-|>", bend: -28deg, stroke: 1.15pt + DOWNSTREAM)
+  edge((2.6, 0), (0, 1.1), "-|>", bend: 24deg, stroke: 1.15pt + DOWNSTREAM)
+  edge((2.6, 0), (0, -1.1), "-|>", bend: -24deg, stroke: 1.15pt + DOWNSTREAM)
+  node((1.4,0.82), text(size: 10pt, fill: LOCAL)[local dense rule], stroke: none, fill: none)
+}))
+
+// A vector affine operation is the first non-scalar extension of the local rule.
+#let vectorgraph = align(center, diagram(spacing: (18mm, 10mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0, 1.15), $bold(x)$, radius: 5.5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+  node((0, 0), $bold(w)$, radius: 5.5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+  node((0, -1.15), $b$, radius: 5.5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+  node((1.4, 0), [affine], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((2.6, 0), $z$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((3.8, 0), [$(dot)^2$], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((5, 0), $cal(L)$, radius: 5.8mm, fill: LOSS_FILL, stroke: 1pt + DOWNSTREAM)
+  edge((0, 1.15), (1.4, 0), "-|>", stroke: 0.9pt + FORWARD)
+  edge((0, 0), (1.4, 0), "-|>", stroke: 0.9pt + FORWARD)
+  edge((0, -1.15), (1.4, 0), "-|>", stroke: 0.9pt + FORWARD)
+  edge((1.4, 0), (2.6, 0), "-|>", stroke: 0.9pt + FORWARD)
+  edge((2.6, 0), (3.8, 0), "-|>", stroke: 0.9pt + FORWARD)
+  edge((3.8, 0), (5, 0), "-|>", stroke: 0.9pt + FORWARD)
+  node((1.4, 0.9), text(size: 10.5pt, fill: LOCAL)[$z = bold(w)^top bold(x) + b$], stroke: none, fill: none)
+}))
+
+#let vectorseedgraph = align(center, diagram(spacing: (33mm, 13mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  let value-label(symbol, value) = stack(
+    dir: ttb, spacing: 1pt,
+    text(size: 16pt)[#symbol],
+    text(size: 8.5pt, fill: MUTED)[value #value],
+  )
+  node((0, 0), value-label($z$, $-1$), radius: 8.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((1, 0), text(size: 12pt, weight: 650)[square], shape: fletcher.shapes.rect,
+    corner-radius: 4pt, inset: 7pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((2, 0), value-label($cal(L)$, $1$), radius: 8.5mm, fill: LOSS_FILL, stroke: 1pt + DOWNSTREAM)
+  edge((0, 0), (1, 0), "-|>", stroke: 0.9pt + FORWARD)
+  edge((1, 0), (2, 0), "-|>", stroke: 0.9pt + FORWARD)
+  node((1, -0.72), text(size: 10pt, fill: LOCAL)[local gradient $partial cal(L)\/partial z=2z=-2$], stroke: none, fill: none)
+  node((2, -0.72), text(size: 9.5pt, fill: UPSTREAM)[seed $partial cal(L)\/partial cal(L)=1$], stroke: none, fill: none)
+  edge((2, 0), (0, 0), text(size: 10.5pt, fill: DOWNSTREAM)[downstream gradient $partial cal(L)\/partial z=-2$],
+    "-|>", bend: 29deg, stroke: 1.25pt + DOWNSTREAM, label-sep: 7pt)
+}))
+
+#let vectorbackgraph = align(center, diagram(spacing: (18mm, 10mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0, 1.15), $bold(x)$, radius: 5.5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+  node((0, 0), $bold(w)$, radius: 5.5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+  node((0, -1.15), $b$, radius: 5.5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+  node((1.4, 0), [affine], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((2.6, 0), $z$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((3.8, 0), [$(dot)^2$], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((5, 0), $cal(L)$, radius: 5.8mm, fill: LOSS_FILL, stroke: 1pt + DOWNSTREAM)
+  edge((0, 1.15), (1.4, 0), "-|>", stroke: 0.75pt + FORWARD)
+  edge((0, 0), (1.4, 0), "-|>", stroke: 0.75pt + FORWARD)
+  edge((0, -1.15), (1.4, 0), "-|>", stroke: 0.75pt + FORWARD)
+  edge((1.4, 0), (2.6, 0), "-|>", stroke: 0.75pt + FORWARD)
+  edge((2.6, 0), (3.8, 0), "-|>", stroke: 0.75pt + FORWARD)
+  edge((3.8, 0), (5, 0), "-|>", stroke: 0.75pt + FORWARD)
+  edge((5, 0), (2.6, 0), "-|>", bend: 28deg, stroke: 1.2pt + UPSTREAM)
+  edge((2.6, 0), (0, 1.15), "-|>", bend: 24deg, stroke: 1.15pt + DOWNSTREAM)
+  edge((2.6, 0), (0, 0), "-|>", bend: -24deg, stroke: 1.15pt + DOWNSTREAM)
+  edge((2.6, 0), (0, -1.15), "-|>", bend: -24deg, stroke: 1.15pt + DOWNSTREAM)
+  node((1.4, 0.9), text(size: 10.5pt, fill: LOCAL)[local affine rule], stroke: none, fill: none)
+}))
+
+// A dense layer is a set of vector dot products evaluated in parallel.
+#let denseforwardgraph = align(center, diagram(spacing: (18mm, 12mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0, 0), $bold(x)$, radius: 6mm, fill: LEAF_FILL, stroke: 1pt + INK)
+  node((1.3, 0.75), [$bold(w)_1^top dot + b_1$], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((1.3, -0.75), [$bold(w)_2^top dot + b_2$], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((2.6, 0.75), $z_1$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((2.6, -0.75), $z_2$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((3.9, 0), [stack], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((5.1, 0), $bold(z)$, radius: 5.8mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  edge((0, 0), (1.3, 0.75), "-|>", stroke: 0.9pt + FORWARD)
+  edge((0, 0), (1.3, -0.75), "-|>", stroke: 0.9pt + FORWARD)
+  edge((1.3, 0.75), (2.6, 0.75), "-|>", stroke: 0.9pt + FORWARD)
+  edge((1.3, -0.75), (2.6, -0.75), "-|>", stroke: 0.9pt + FORWARD)
+  edge((2.6, 0.75), (3.9, 0), "-|>", stroke: 0.9pt + FORWARD)
+  edge((2.6, -0.75), (3.9, 0), "-|>", stroke: 0.9pt + FORWARD)
+  edge((3.9, 0), (5.1, 0), "-|>", stroke: 0.9pt + FORWARD)
+}))
+
+// Expanded scalar view of a 2 x 2 vector map: every output depends on every input.
+#let jacobianexamplegraph = align(center, diagram(spacing: (21mm, 12mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0, -0.75), $x_1$, radius: 5.5mm, fill: LEAF_FILL, stroke: 1pt + INK)
+  node((0, 0.75), $x_2$, radius: 5.5mm, fill: LEAF_FILL, stroke: 1pt + INK)
+  node((1.5, -0.75), [$x_1+x_2$], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((1.5, 0.75), [$2x_1-x_2$], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((3, -0.75), $z_1$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((3, 0.75), $z_2$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  edge((0, -0.75), (1.5, -0.75), "-|>", stroke: 0.9pt + FORWARD)
+  edge((0, 0.75), (1.5, -0.75), "-|>", stroke: 0.9pt + FORWARD)
+  edge((0, -0.75), (1.5, 0.75), "-|>", stroke: 0.9pt + FORWARD)
+  edge((0, 0.75), (1.5, 0.75), "-|>", stroke: 0.9pt + FORWARD)
+  edge((1.5, -0.75), (3, -0.75), "-|>", stroke: 0.9pt + FORWARD)
+  edge((1.5, 0.75), (3, 0.75), "-|>", stroke: 0.9pt + FORWARD)
+}))
+
+// Why an MLP needs a nonlinearity between affine maps.
+#let relumotivationgraph = align(center, diagram(spacing: (14mm, 12mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0, -0.75), $bold(x)$, radius: 5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+  node((1, -0.75), [dense 1], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 4pt, fill: OP_FILL, stroke: 0.9pt + LOCAL)
+  node((2, -0.75), $bold(z)_1$, radius: 5mm, fill: VALUE_FILL, stroke: 0.9pt + INK)
+  node((5, -0.75), [dense 2], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 4pt, fill: OP_FILL, stroke: 0.9pt + LOCAL)
+  node((6, -0.75), $bold(hat(y))$, radius: 5mm, fill: VALUE_FILL, stroke: 0.9pt + INK)
+  edge((0, -0.75), (1, -0.75), "-|>", stroke: 0.85pt + FORWARD)
+  edge((1, -0.75), (2, -0.75), "-|>", stroke: 0.85pt + FORWARD)
+  edge((2, -0.75), (5, -0.75), "-|>", stroke: 0.85pt + FORWARD)
+  edge((5, -0.75), (6, -0.75), "-|>", stroke: 0.85pt + FORWARD)
+  node((3.5, -1.35), text(size: 10pt, fill: MUTED)[still one affine map], stroke: none, fill: none)
+
+  node((0, 0.75), $bold(x)$, radius: 5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+  node((1, 0.75), [dense 1], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 4pt, fill: OP_FILL, stroke: 0.9pt + LOCAL)
+  node((2, 0.75), $bold(z)_1$, radius: 5mm, fill: VALUE_FILL, stroke: 0.9pt + INK)
+  node((3, 0.75), [ReLU], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 4pt, fill: OP_FILL, stroke: 0.9pt + LOCAL)
+  node((4, 0.75), $bold(h)$, radius: 5mm, fill: VALUE_FILL, stroke: 0.9pt + INK)
+  node((5, 0.75), [dense 2], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 4pt, fill: OP_FILL, stroke: 0.9pt + LOCAL)
+  node((6, 0.75), $bold(hat(y))$, radius: 5mm, fill: VALUE_FILL, stroke: 0.9pt + INK)
+  for i in range(6) { edge((i, 0.75), (i + 1, 0.75), "-|>", stroke: 0.85pt + FORWARD) }
+  node((3, 1.38), text(size: 10pt, fill: LOCAL)[nonlinear map], stroke: none, fill: none)
+}))
+
+// A compact deep chain that makes the repeated local multiplications visible.
+#let deepchaingraph = align(center, diagram(spacing: (14mm, 8mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0, 0), $h_0$, radius: 4.8mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+  node((1, 0), $f_1$, shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 4pt, fill: OP_FILL, stroke: 0.9pt + LOCAL)
+  node((2, 0), $h_1$, radius: 4.8mm, fill: VALUE_FILL, stroke: 0.9pt + INK)
+  node((3, 0), $f_2$, shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 4pt, fill: OP_FILL, stroke: 0.9pt + LOCAL)
+  node((4, 0), $h_2$, radius: 4.8mm, fill: VALUE_FILL, stroke: 0.9pt + INK)
+  node((5, 0), $dots.c$, stroke: none, fill: none)
+  node((6, 0), $f_L$, shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 4pt, fill: OP_FILL, stroke: 0.9pt + LOCAL)
+  node((7, 0), $h_L$, radius: 4.8mm, fill: VALUE_FILL, stroke: 0.9pt + INK)
+  node((8, 0), $ell$, shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 4pt, fill: OP_FILL, stroke: 0.9pt + LOCAL)
+  node((9, 0), $cal(L)$, radius: 5mm, fill: LOSS_FILL, stroke: 1pt + DOWNSTREAM)
+  for i in range(9) { edge((i, 0), (i + 1, 0), "-|>", stroke: 0.75pt + FORWARD) }
+  edge((9, 0), (7, 0), "-|>", bend: 25deg, stroke: 1.1pt + DOWNSTREAM)
+  edge((7, 0), (4, 0), "-|>", bend: 22deg, stroke: 1.1pt + DOWNSTREAM)
+  edge((4, 0), (2, 0), "-|>", bend: 22deg, stroke: 1.1pt + DOWNSTREAM)
+  edge((2, 0), (0, 0), "-|>", bend: 25deg, stroke: 1.1pt + DOWNSTREAM)
+  node((1, 0.72), text(size: 9pt, fill: LOCAL)[$f_1'$], stroke: none, fill: none)
+  node((3, 0.72), text(size: 9pt, fill: LOCAL)[$f_2'$], stroke: none, fill: none)
+  node((6, 0.72), text(size: 9pt, fill: LOCAL)[$f_L'$], stroke: none, fill: none)
 }))
 
 #title-slide()
@@ -158,7 +561,7 @@ Last time, an MLP turned an input into a prediction and then one scalar loss. To
     $ bold(x) -> f_(bold(theta))(bold(x)) = hat(bold(y)) -> cal(L) $
     #v(5pt)
     *Backward:* compute sensitivities
-    $ cal(L) -> nabla_(bold(theta)) cal(L) $
+    loss sensitivity for every parameter $theta_j$
   ],
   notebox[
     *Concrete scalar example*
@@ -173,15 +576,6 @@ Last time, an MLP turned an input into a prediction and then one scalar loss. To
 #pause
 #result[same executed graph · values flow forward, gradients flow backward]
 
-== Backprop returns every parameter sensitivity in one sweep
-
-Every update step is
-$ bold(theta)_(t+1) = bold(theta)_t - eta thin nabla_(bold(theta)) cal(L)(bold(theta)_t). $
-#pause
-A modern network has $P = 10^7$ to $10^11$ parameters.
-#pause
-#alertbox[We need all $P$ components $partial cal(L) \/ partial theta_j$. Backprop computes them together in *one reverse sweep*, without perturbing parameters one at a time.]
-
 == Read the notation before the algorithm
 
 #align(center, table(
@@ -190,13 +584,94 @@ A modern network has $P = 10^7$ to $10^11$ parameters.
   [$u, v, z$], [scalars],
   [$bold(x), bold(z), bold(theta)$], [vectors (bold lowercase)],
   [$bold(W), bold(X)$], [matrices (bold uppercase)],
-  [$overline(u)$], [$partial cal(L) \/ partial u$: the loss sensitivity carried backward],
-  [$nabla_(bold(theta)) cal(L)$], [all parameter partial derivatives stacked as a vector],
+  [$partial cal(L) \/ partial u$], [how the loss changes when scalar $u$ changes],
+  [$partial cal(L) \/ partial bold(theta)$], [all parameter derivatives, arranged like $bold(theta)$],
 ))
 #pause
-#notebox[The bar is *not an average*. Read $overline(u)$ aloud as “the gradient arriving at $u$.”]
+#notebox[We keep the full $partial cal(L) \/ partial (dot)$ notation visible throughout: the numerator is always the final loss; the denominator names the stored value whose derivative we want.]
 
-== The route from one node to an entire network #V
+== Our computation-graph convention #V
+
+#graphkey
+#pause
+#align(center, {
+  set text(size: 15pt)
+  table(
+    columns: (38mm, 172mm), stroke: 0.5pt + MUTED,
+    inset: (x: 9pt, y: 3.5pt), align: (left, left),
+    [*white circle*], [given value: input, parameter, or target — a graph leaf],
+    [*gray circle*], [computed intermediate value, saved for backward when needed],
+    [*blue box*], [operation: consumes value(s) and produces a value],
+    [*gray arrow*], [forward dependency from a value to the operation that uses it],
+    [*orange circle*], [final scalar loss $cal(L)$; seeds backward with $partial cal(L) \/ partial cal(L)=1$],
+  )
+})
+#pause
+#result[circles store values · boxes transform them · arrows show dependency]
+
+== One derivative, three routes #D
+
+Use the same scalar example throughout:
+$ cal(L) = (w x + b - y)^2, quad (w,x,b,y)=(2,3,1,10). $
+#pause
+#align(center, table(
+  columns: (42mm, 86mm, 88mm), stroke: 0.5pt + MUTED,
+  inset: (x: 9pt, y: 7pt), align: (left, left, left),
+  table.header([*Route*], [*Computation*], [*For this example*]),
+  [symbolic], [differentiate the whole expression], [$(partial cal(L))/(partial w)=2(w x+b-y)x=-18$],
+  [#uncover("2-")[finite difference]], [#uncover("2-")[probe $w plus.minus epsilon$]], [#uncover("2-")[$(cal(L)(2.01)-cal(L)(1.99))/(2 epsilon) approx -18$]],
+  [#uncover("3-")[reverse mode]], [#uncover("3-")[reuse the local derivative of every operation]], [#uncover("3-")[$(-6) dot 3=-18$]],
+))
+#pause
+#pause
+#pause
+#result[Same derivative; different computation.]
+
+== Gradient checking: compare one coordinate two ways #I
+
+Autodiff gives an analytic gradient; central difference gives an independent numerical estimate:
+$g_("FD") = (cal(L)(theta_j + epsilon) - cal(L)(theta_j - epsilon)) /(2 epsilon).$
+#pause
+#codebox(size: 11.5pt)[```python
+import torch
+def loss(w): return (w*3.0 + 1.0 - 10.0)**2
+w, eps = 2.0, 1e-5
+g_fd = (loss(w + eps) - loss(w - eps)) / (2*eps)
+wt = torch.tensor(w, dtype=torch.float64, requires_grad=True)
+loss(wt).backward()
+g_ad = wt.grad.item()
+print(g_fd, g_ad)  # both approximately -18
+```]
+#pause
+#notebox[Use float64 and check only a few coordinates. Finite differences debug gradients; they do not train models because every checked coordinate needs two extra forward passes.]
+
+== Why train with reverse-mode autodiff? #D
+
+#align(center, table(
+  columns: (42mm, 58mm, 66mm, 50mm), stroke: 0.5pt + MUTED,
+  inset: (x: 8pt, y: 7pt), align: (left, left, left, left),
+  table.header([*Method*], [*Exact?*], [*Cost for $P$ parameters*], [*Use it for*]),
+  [symbolic], [yes], [expression-dependent; algebra can grow], [reasoning],
+  [#uncover("2-")[finite difference]], [#uncover("2-")[approximate]], [#uncover("2-")[$2P$ loss evaluations]], [#uncover("2-")[checking]],
+  [#uncover("3-")[reverse mode]], [#uncover("3-")[up to floating point]], [#uncover("3-")[one reverse sweep for scalar $cal(L)$]], [#uncover("3-")[training]],
+))
+#pause
+#pause
+#pause
+#result[Symbolic to reason · finite differences to check · reverse mode to train.]
+
+== Backprop returns every parameter sensitivity in one sweep
+
+For each parameter coordinate, gradient descent uses
+$ theta_(j,t+1) = theta_(j,t) - eta thin (partial cal(L))/(partial theta_j). $
+#pause
+$eta$ is the learning rate; the derivative supplies the direction and magnitude of the local change.
+#pause
+A modern network has $P = 10^7$ to $10^11$ parameters.
+#pause
+#alertbox[We need all $P$ derivatives $partial cal(L) \/ partial theta_j$. Backprop computes them together in *one reverse sweep*, without perturbing parameters one at a time.]
+
+== The route from one local operation to an entire network #V
 
 #align(center, table(
   columns: 2, stroke: 0.5pt + MUTED, inset: (x: 13pt, y: 7pt), align: (left, left),
@@ -205,126 +680,138 @@ A modern network has $P = 10^7$ to $10^11$ parameters.
   [#uncover("2-")[2 · branches]], [#uncover("2-")[Why do gradient contributions add?]],
   [#uncover("3-")[3 · worked graph]], [#uncover("3-")[Can we reproduce every derivative numerically?]],
   [#uncover("4-")[4 · layers + MLP]], [#uncover("4-")[How do scalar rules become vector and matrix formulas?]],
-  [#uncover("5-")[5 · autodiff + flow]], [#uncover("5-")[How do frameworks execute and check the reverse sweep?]],
+  [#uncover("5-")[5 · depth + gradient flow]], [#uncover("5-")[What happens when many local gradients multiply?]],
 ))
 #pause
 #pause
 #pause
 #pause
 
-== One local node
+== One local operation
 
-Zoom in on a single edge of the graph: $u -> v -> cal(L)$.
+Zoom in on one operation. The value circle $u$ enters the boxed operation $f$; its output is stored in the value circle $v$.
 #pause
 #localnode
 #pause
-#result[backward computes $overline(u) = overline(v) dot f'(u)$]
+#result[backward computes #downstream[$(partial cal(L))/(partial u)$] $=$ #upstream[$(partial cal(L))/(partial v)$] $dot$ #localterm[$f'(u)$]]
 
-== Every node multiplies upstream by its local slope #D
+== Every operation multiplies the arriving gradient by its local gradient #D
 
-At the node $v = f(u)$, write the chain rule in the same bar notation as the graph:
+For the operation $v = f(u)$, the chain rule is
 #localnode-mini
 #pause
-#align(center, text(size: 31pt, weight: 600)[$ overline(u) = overline(v) dot f'(u) $])
+#align(center, text(size: 28pt, weight: 600)[
+  #downstream[$(partial cal(L))/(partial u)$] $=$
+  #upstream[$(partial cal(L))/(partial v)$] $dot$
+  #localterm[$f'(u)$]
+])
 #pause
 #grid(
   columns: 3, gutter: 12pt,
-  notebox[
-    #text(fill: ACC, weight: 600)[Sent back to $u$]
-    #v(5pt)
-    $ overline(u) = (partial cal(L))/(partial u) $
-  ],
-  notebox[
-    #text(fill: TEAL, weight: 600)[Arriving at $v$]
-    #v(5pt)
-    $ overline(v) = (partial cal(L))/(partial v) $
-  ],
-  notebox[
-    #text(fill: INK, weight: 600)[Local slope]
-    #v(5pt)
-    $ f'(u) = (partial v)/(partial u) $
-  ],
+  gradient-key([Downstream gradient], [sent back to $u$], [$(partial cal(L))/(partial u)$], DOWNSTREAM),
+  gradient-key([Upstream gradient], [arriving at $v$], [$(partial cal(L))/(partial v)$], UPSTREAM),
+  gradient-key([Local gradient], [this operation's slope], [$f'(u) = (partial v)/(partial u)$], LOCAL),
 )
-#pause
-#result[gradient sent backward $=$ gradient arriving $times$ local slope]
 
-== Bar notation turns the chain rule into one reusable rule #D
+== The chain rule is one reusable local rule #D
 
-Write $overline(u) = partial cal(L) \/ partial u$. Then every node obeys:
+For every scalar operation $v=f(u)$:
 #localnode-mini
-$ overline(u) = overline(v) dot (partial v)/(partial u). $
+#align(center)[#downstream[$(partial cal(L))/(partial u)$] $=$ #upstream[$(partial cal(L))/(partial v)$] $dot$ #localterm[$(partial v)/(partial u)$].]
 #pause
-#notebox[The node only needs to know its *own* local derivative $partial v \/ partial u$. It multiplies whatever gradient $overline(v)$ arrives from above — no global bookkeeping.]
+#notebox[The operation multiplies its #upstream[*upstream gradient*] by its #localterm[*local gradient*] to produce the #downstream[*downstream gradient*]. It needs no global formula for the whole network.]
 
-== Example: a square node #D
+== Example: a square operation #D
 
-For $v = u^2$ at $u = 3$, the forward value is $v = 9$ and the local slope is $partial v \/ partial u = 2u = 6$.
+For $v = u^2$ at $u = 3$, the forward value is $v = 9$ and the #localterm[local slope is $partial v \/ partial u = 2u = 6$].
 #pause
 #squarenode
 #pause
-$ overline(u) = overline(v) dot 2u = 7 dot 6 = 42. $
+#align(center)[#downstream[$(partial cal(L))/(partial u)$] $=$ #upstream[$(partial cal(L))/(partial v)$] $dot$ #localterm[$2u$] $= 7 dot 6 = 42$.]
 #pause
-#result[downstream $overline(u) = 42$]
+#result[#downstream[$partial cal(L) \/ partial u = 42$]]
 #pause
-#notebox[The node did *one* thing: multiply the incoming $overline(v) = 7$ by its own local slope $2u = 6$.]
+#notebox[The square operation multiplies the #upstream[arriving $partial cal(L) \/ partial v = 7$] by its #localterm[local gradient $2u = 6$] to produce #downstream[$partial cal(L) \/ partial u = 42$].]
 
 == Addition copies; multiplication swaps #D
 
-Node $v = a + b$. Local derivatives $partial v \/ partial a = 1$, $partial v \/ partial b = 1$.
+Operation $v = a + b$. #localterm[Local derivatives: $partial v \/ partial a = 1$, $partial v \/ partial b = 1$.]
 #pause
 #addnode
 #pause
-$ overline(a) = overline(v) dot 1 = overline(v), quad quad overline(b) = overline(v) dot 1 = overline(v). $
+#align(center)[
+  #downstream[$(partial cal(L))/(partial a)$] $=$ #upstream[$(partial cal(L))/(partial v)$] #localterm[$dot 1$],
+  #h(8mm)
+  #downstream[$(partial cal(L))/(partial b)$] $=$ #upstream[$(partial cal(L))/(partial v)$] #localterm[$dot 1$].
+]
 #pause
-#result[$+$ *copies* the upstream gradient to every input]
+#result[$+$ copies the #upstream[arriving derivative] into a #downstream[downstream derivative] for every input.]
 
 == Multiplication sends each input the other input #D
 
-Node $v = a b$. Local derivatives $partial v \/ partial a = b$, $partial v \/ partial b = a$.
+Operation $v = a b$. #localterm[Local derivatives: $partial v \/ partial a = b$, $partial v \/ partial b = a$.]
 #pause
 #mulnode
 #pause
-$ overline(a) = overline(v) dot b, quad quad overline(b) = overline(v) dot a. $
+#align(center)[
+  #downstream[$(partial cal(L))/(partial a)$] $=$ #upstream[$(partial cal(L))/(partial v)$] #localterm[$dot b$],
+  #h(8mm)
+  #downstream[$(partial cal(L))/(partial b)$] $=$ #upstream[$(partial cal(L))/(partial v)$] #localterm[$dot a$].
+]
 #pause
-#result[$times$ *sends the other input*]
+#result[$times$ uses the #localterm[other input as its local multiplier].]
 #pause
-#notebox[If $a = 2, b = 5, overline(v) = 3$: then $overline(a) = 3 dot 5 = 15$ and $overline(b) = 3 dot 2 = 6$.]
+#notebox[If $a = 2$, $b = 5$, and #upstream[$partial cal(L) \/ partial v = 3$], then #downstream[$partial cal(L) \/ partial a = 15$ and $partial cal(L) \/ partial b = 6$].]
 
-== Activation node #D
+== Activation operation #D
 
-Node $v = phi(u)$ (elementwise nonlinearity). Local derivative $partial v \/ partial u = phi'(u)$.
+Operation $v = phi(u)$ (elementwise nonlinearity). #localterm[Local derivative: $partial v \/ partial u = phi'(u)$.]
 #pause
 #actnode
 #pause
-$ overline(u) = overline(v) dot phi'(u). $
+#align(center)[#downstream[$(partial cal(L))/(partial u)$] $=$ #upstream[$(partial cal(L))/(partial v)$] $dot$ #localterm[$phi'(u)$].]
 #pause
 #two(
   notebox[*sigmoid* $sigma$: #h(0.3em) $phi'(u) = sigma(u)(1 - sigma(u))$],
-  notebox[*ReLU*: #h(0.3em) $phi'(u) = bb(1)[u > 0]$],
+  notebox[*ReLU*: #h(0.3em) $phi'(u) = 1$ for $u>0$, and $0$ for $u<0$],
 )
+
+== Pop quiz: what crosses an inactive ReLU? #Q
+
+#mcq(
+  [Let $v="ReLU"(u)$. If $u=-2$ and the #upstream[*upstream gradient* is $partial cal(L) \/ partial v=5$], what #downstream[*downstream gradient* $partial cal(L) \/ partial u$] is sent back?],
+  [$5$],
+  [$-10$],
+  [$0$],
+  [undefined because $u<0$],
+)
+
+== Answer: an inactive ReLU blocks the gradient #A
+
+#mcq-answer([C], [$0$], [For $u<0$, the #localterm[local gradient is $partial v \/ partial u=0$]. Therefore #downstream[downstream] $=$ #upstream[upstream] $times$ #localterm[local] $=5 times 0=0$.])
+#pause
+#two(
+  notebox[*Forward:* $u=-2 arrow.r v=0$],
+  notebox[*Backward:* $5 times 0 arrow.r partial cal(L) \/ partial u=0$],
+)
+#pause
+#notebox[At exactly $u=0$, ReLU's ordinary derivative is undefined. Autodiff software must choose a convention; commonly it returns $0$.]
 
 == The rule table — memorize this #V
 
 #align(center, table(
-  columns: 3, stroke: 0.5pt + MUTED, inset: (x: 11pt, y: 7pt), align: (left, center, left),
-  table.header([*Forward op*], [*Local grad*], [*Backward update*]),
-  [$v = a + b$],   [$1, 1$],     [$overline(a)$ += $overline(v)$, #h(0.3em) $overline(b)$ += $overline(v)$],
-  [$v = a b$],     [$b, a$],     [$overline(a)$ += $overline(v) b$, #h(0.3em) $overline(b)$ += $overline(v) a$],
-  [$v = u^2$],     [$2u$],       [$overline(u)$ += $overline(v) dot 2u$],
-  [$v = phi(u)$],  [$phi'(u)$],  [$overline(u)$ += $overline(v) phi'(u)$],
+  columns: (42mm, 172mm), stroke: 0.5pt + MUTED, inset: (x: 9pt, y: 6pt), align: (left, left),
+  table.header([*Forward operation*], [*Contribution sent backward*]),
+  [$v = a + b$],   [#downstream[$(partial cal(L))/(partial a)$] += #upstream[$(partial cal(L))/(partial v)$] #localterm[$dot 1$]; #h(0.3em) #downstream[$(partial cal(L))/(partial b)$] += #upstream[$(partial cal(L))/(partial v)$] #localterm[$dot 1$]],
+  [$v = a b$],     [#downstream[$(partial cal(L))/(partial a)$] += #upstream[$(partial cal(L))/(partial v)$] #localterm[$dot b$]; #h(0.3em) #downstream[$(partial cal(L))/(partial b)$] += #upstream[$(partial cal(L))/(partial v)$] #localterm[$dot a$]],
+  [$v = u^2$],     [#downstream[$(partial cal(L))/(partial u)$] += #upstream[$(partial cal(L))/(partial v)$] #localterm[$dot 2u$]],
+  [$v = phi(u)$],  [#downstream[$(partial cal(L))/(partial u)$] += #upstream[$(partial cal(L))/(partial v)$] #localterm[$dot phi'(u)$]],
 ))
 #pause
-#alertbox[Use `+=`, not `=` — a variable feeding several nodes accumulates gradient from *all* of them.]
+#alertbox[Use `+=`, not `=` — a value consumed by several operations accumulates gradient from *all* of them.]
 
 // ═══════════════════════════ PART II — Accumulation ═══════════════════════════
 = Gradients accumulate at branches
-
-== A branch must add the contribution from every path #D
-
-If $x$ influences $cal(L)$ through several intermediate variables $u_1, dots, u_k$:
-$ (partial cal(L))/(partial x) = sum_(i=1)^k (partial cal(L))/(partial u_i) (partial u_i)/(partial x). $
-#pause
-#result[gradients from every path *add*]
 
 == Why gradients add at a branch #V
 
@@ -345,12 +832,28 @@ Imagine nudging $x$ from $4$ to $4.01$. The *same nudge* travels down both route
 #v(7pt)
 #result[total slope $=$ total loss change $div$ nudge $= (0.08 + 0.03) / 0.01 = 8 + 3 = 11$]
 
+== The multivariable chain rule adds every path #D
+
+The nudge experiment generalizes. If $x$ influences $cal(L)$ through $u_1, dots, u_k$:
+#pause
+#multipathgraph
+#v(3pt)
+#neat-caption[branch $i$ contributes #upstream[upstream $partial cal(L) \/ partial u_i$] $times$ #localterm[local $partial u_i \/ partial x$]]
+#pause
+#align(center)[#text(size: 25pt, weight: 600)[
+  #downstream[$(partial cal(L))/(partial x)$] $= sum_(i=1)^k$
+  #upstream[$(partial cal(L))/(partial u_i)$]
+  #localterm[$(partial u_i)/(partial x)$].
+]]
+#pause
+#result[each path contributes one chain-rule product; the products add]
+
 == Worked branch example
 
 Let $u = x^2$, #h(0.4em) $v = 3x$, #h(0.4em) $cal(L) = u + v = x^2 + 3x$.
 #pause
 By direct calculus:
-$ (dif cal(L))/(dif x) = 2x + 3, quad "at" x = 4: quad 2(4) + 3 = 11. $
+$ (partial cal(L))/(partial x) = 2x + 3, quad "at" x = 4: quad 2(4) + 3 = 11. $
 #pause
 Now let us get the *same* answer by backprop.
 
@@ -358,11 +861,15 @@ Now let us get the *same* answer by backprop.
 
 *Forward* at $x = 4$: #h(0.5em) $u = 16$, #h(0.3em) $v = 12$, #h(0.3em) $cal(L) = 28$.
 #pause
-*Backward:* #h(0.5em) seed $overline(cal(L)) = 1$; add node gives $overline(u) = 1$, $overline(v) = 1$.
+*Backward:* #h(0.5em) seed $partial cal(L) \/ partial cal(L) = 1$; the add operation gives #upstream[$partial cal(L) \/ partial u = 1$ and $partial cal(L) \/ partial v = 1$].
 #pause
-$ overline(x)_("via" u) = overline(u) dot 2x = 1 dot 8 = 8, quad overline(x)_("via" v) = overline(v) dot 3 = 3. $
+#align(center)[
+  #downstream[$((partial cal(L))/(partial x))_("via" u)$] $=$ #upstream[$1$] $dot$ #localterm[$2x$] $= 8$,
+  #h(7mm)
+  #downstream[$((partial cal(L))/(partial x))_("via" v)$] $=$ #upstream[$1$] $dot$ #localterm[$3$] $= 3$.
+]
 #pause
-$ overline(x) = 8 + 3 = 11. quad checkmark $
+#align(center)[#downstream[$(partial cal(L))/(partial x) = 8 + 3 = 11$]. #h(3mm) $checkmark$]
 
 == PyTorch adds the same two paths #I
 
@@ -379,31 +886,11 @@ print(x.grad)            # tensor(11.)
 ```]
 #pause
 #two(
-  notebox[*via $u$:* $partial u / partial x = 2x = 8$],
-  notebox[*via $v$:* $partial v / partial x = 3$],
+  notebox[*via $u$:* #localterm[$partial u / partial x = 2x = 8$]],
+  notebox[*via $v$:* #localterm[$partial v / partial x = 3$]],
 )
 #pause
-#result[autograd accumulates both contributions: $8 + 3 = 11$]
-
-== `+=` is the chain rule at a branch
-
-Both paths write into the *same* $overline(x)$. If the second overwrote the first, we would lose the $8$.
-#pause
-#notebox[In PyTorch, `.grad` *accumulates* across `backward()` calls — that is exactly this rule. You must `optimizer.zero_grad()` each step, or gradients from old steps pile up.]
-
-== Checkpoint: gradient accumulation #Q
-
-#mcq(
-  [Why is a branch node's backward update written with `+=` rather than `=`?],
-  [It makes the forward pass faster],
-  [The variable receives a contribution from every downstream path],
-  [It changes multiplication into addition],
-  [Autodiff cannot store scalar values],
-)
-
-== Answer: gradient accumulation #A
-
-#mcq-answer([B], [The variable receives a contribution from every downstream path], [The chain rule sums all paths from the variable to the loss; assignment would discard an earlier contribution.])
+#result[autograd accumulates both #downstream[downstream contributions]: $8 + 3 = 11$]
 
 // ═══════════════════════════ PART III — Central example ═══════════════════════════
 = The central worked example
@@ -415,69 +902,82 @@ Predict $hat(y) = w x + b$, squared-error loss $cal(L) = (hat(y) - y)^2$.
 Concrete numbers:
 $ x = 3, quad w = 2, quad b = 1, quad y = 10. $
 #pause
-#notebox[Four scalars, one loss. We will get $partial cal(L)$ w.r.t. *all four* by hand, then check with PyTorch.]
+#notebox[Compute $partial cal(L) \/ partial w$, $partial cal(L) \/ partial x$, $partial cal(L) \/ partial b$, and $partial cal(L) \/ partial y$ by backpropagation; verify the four values with PyTorch.]
 
 == Break into primitives
 
-Decompose the loss into elementary nodes:
+Decompose the loss into elementary operations and name each stored result:
 $ m = w x, quad a = m + b, quad e = a - y, quad cal(L) = e^2. $
 #pause
-#result[$times$, then $+$, then $-$, then $(dot)^2$]
+#result[value $m$ after $times$ · value $a$ after $+$ · value $e$ after $-$ · value $cal(L)$ after $(dot)^2$]
 #pause
-Each is one of the nodes from our rule table.
+The symbols $m$, $a$, and $e$ name stored intermediate values. They are circles in the graph; the four operations are boxes.
 
 == The computation graph #V
 
 #scalargraph
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[inputs (ink) → ops $times, +, -$ (teal) → loss $(dot)^2$ (orange)])
+#align(center, text(size: 15pt, fill: MUTED)[white circles: given values · gray circles: stored intermediates · blue boxes: operations · orange circle: scalar loss])
 
 == Forward pass #D
 
 #align(center, table(
   columns: 3, stroke: 0.5pt + MUTED, inset: (x: 13pt, y: 6pt), align: (left, center, center),
-  table.header([*Node*], [*Rule*], [*Value*]),
-  [$m = w x$],   [$2 dot 3$],      [$6$],
-  [$a = m + b$], [$6 + 1$],        [$7$],
-  [$e = a - y$], [$7 - 10$],       [$-3$],
-  [$cal(L) = e^2$], [$(-3)^2$],    [$9$],
+  table.header([*Stored value*], [*Operation that produces it*], [*Numeric value*]),
+  [$m$],   [$w times x$],      [$2 dot 3 = 6$],
+  [$a$],   [$m + b$],          [$6 + 1 = 7$],
+  [$e$],   [$a - y$],          [$7 - 10 = -3$],
+  [$cal(L)$], [$e^2$],         [$(-3)^2 = 9$],
 ))
 #pause
 #result[$cal(L) = 9$ — now run the graph *backward*]
 
-== Backward: seed and the square node #D
+== Backward: seed and the square operation #D
 
-Seed the output: $overline(cal(L)) = partial cal(L) \/ partial cal(L) = 1$.
+Seed the output: $partial cal(L) \/ partial cal(L) = 1$.
 #pause
-Square node $cal(L) = e^2$, local $partial cal(L) \/ partial e = 2e$:
-$ overline(e) = overline(cal(L)) dot 2e = 1 dot 2(-3) = -6. $
+#scalargraph-focus("square")
+#pause
+Square operation $cal(L) = e^2$, local $partial cal(L) \/ partial e = 2e$:
+$ (partial cal(L))/(partial e) = 1 dot 2e = 1 dot 2(-3) = -6. $
 
-== Backward: the subtraction node #D
+== Backward: the subtraction operation #D
 
-Node $e = a - y$, locals $partial e \/ partial a = 1$, $partial e \/ partial y = -1$:
+Subtraction operation $e = a - y$, locals $partial e \/ partial a = 1$, $partial e \/ partial y = -1$:
 #pause
-$ overline(a) = overline(e) dot 1 = -6 $
+#scalargraph-focus("sub")
 #pause
-$ overline(y) = overline(e) dot (-1) = 6 $
+#grid(
+  columns: 2, gutter: 12mm,
+  [$ (partial cal(L))/(partial a) = (partial cal(L))/(partial e) dot 1 = -6 $],
+  [#pause $ (partial cal(L))/(partial y) = (partial cal(L))/(partial e) dot (-1) = 6 $],
+)
 #pause
-#notebox[The target $y$ already has a gradient — we would use $overline(y)$ if $y$ were itself a learned quantity.]
+#notebox[The target $y$ also receives a derivative. We would use $partial cal(L) \/ partial y$ if $y$ were itself a learned quantity.]
 
-== Backward: the addition node #D
+== Backward: the addition operation #D
 
-Node $a = m + b$ *copies* its gradient:
-$ overline(m) = overline(a) = -6, quad quad overline(b) = overline(a) = -6. $
+Addition operation $a = m + b$ *copies* its gradient:
 #pause
-So $overline(b) = -6$ is one of our final answers.
+#scalargraph-focus("add")
+#pause
+$ (partial cal(L))/(partial m) = (partial cal(L))/(partial a) = -6, quad (partial cal(L))/(partial b) = -6. $
+#pause
+So $partial cal(L) \/ partial b = -6$ is one of our final answers.
 
-== Backward: the multiplication node #D
+== Backward: the multiplication operation #D
 
-Node $m = w x$ *sends the other input*:
+Multiplication operation $m = w x$ *sends the other input*:
 #pause
-$ overline(w) = overline(m) dot x = -6 dot 3 = -18 $
+#scalargraph-focus("mul")
 #pause
-$ overline(x) = overline(m) dot w = -6 dot 2 = -12 $
+#grid(
+  columns: 2, gutter: 12mm,
+  [$ (partial cal(L))/(partial w) = (partial cal(L))/(partial m) dot x = -6 dot 3 = -18 $],
+  [#pause $ (partial cal(L))/(partial x) = (partial cal(L))/(partial m) dot w = -6 dot 2 = -12 $],
+)
 #pause
-#result[$overline(w) = -18, quad overline(x) = -12$]
+#result[$partial cal(L) \/ partial w = -18, quad partial cal(L) \/ partial x = -12$]
 
 == Final gradients #V
 
@@ -489,13 +989,11 @@ $ overline(x) = overline(m) dot w = -6 dot 2 = -12 $
 #pause
 #notebox[One backward sweep produced *all four* partial derivatives — no formula re-derivation per parameter.]
 
-== The backward pass, visualized #V
+== All stored values and their gradients #V
 
-Each node shows its forward value and its backward adjoint, *drawn by our autodiff from the real computation* — nothing typed by hand:
+#scalargraph-final
 #pause
-#cgraph(scalar-loss, (2, 3, 1, 10), names: ("w", "x", "b", "y"))
-#pause
-#align(center, text(size: 15pt, fill: MUTED)[$overline(w) = -18, overline(x) = -12, overline(b) = -6, overline(y) = 6$ — one reverse sweep, right to left])
+#align(center, text(size: 14.5pt, fill: MUTED)[each circle keeps its symbol, forward value, and final accumulated loss derivative; operation boxes never store a gradient])
 
 == Check with direct calculus #D
 
@@ -505,19 +1003,96 @@ $ (partial cal(L))/(partial w) = 2(w x + b - y) x = 2(-3)(3) = -18 quad checkmar
 #pause
 $ (partial cal(L))/(partial b) = 2(w x + b - y) = 2(-3) = -6 quad checkmark $
 #pause
-#result[backprop $=$ calculus — but mechanical & reusable]
+#result[Backprop and symbolic calculus give the same derivatives.]
 
-== One derivative, three routes #V
+== PyTorch executes the same graph #I
+
+#codebox(size: 12.5pt)[```python
+import torch
+
+w = torch.tensor(2.0, requires_grad=True)
+x = torch.tensor(3.0, requires_grad=True)
+b = torch.tensor(1.0, requires_grad=True)
+# Targets normally do not track gradients; enable it here to inspect dL/dy.
+y = torch.tensor(10.0, requires_grad=True)
+
+m = w * x
+a = m + b
+e = a - y
+L = e**2
+for value in (m, a, e, L):
+    value.retain_grad()      # keep intermediate grads for inspection
+
+L.backward()
+print([t.item() for t in (m, a, e, L)])
+# [6.0, 7.0, -3.0, 9.0]
+print([t.grad.item() for t in (L, e, a, m, w, x, b, y)])
+# [1.0, -6.0, -6.0, -6.0, -18.0, -12.0, -6.0, 6.0]
+```]
+
+== Hand computation → PyTorch autograd #V
+
+#align(center, {
+  set text(size: 13.5pt)
+  table(
+    columns: (60mm, 72mm, 82mm), stroke: 0.5pt + MUTED,
+    inset: (x: 9pt, y: 5pt), align: (left, left, left),
+    table.header([*In our graph*], [*In PyTorch*], [*Meaning*]),
+    [stored scalar value], [`Tensor`], [one stored forward value],
+    [#localterm[local backward rule]], [`grad_fn`], [operation that produced a non-leaf tensor],
+    [saved forward value], [saved by the operation], [operand needed by a local derivative],
+    [reverse sweep], [`L.backward()`], [seed at $cal(L)$; visit operations in reverse order],
+    [leaf derivative], [`p.grad`], [$partial cal(L) \/ partial p$, accumulated with `+=`],
+    [intermediate derivative], [`retain_grad()`], [keep non-leaf `.grad` for inspection],
+  )
+})
+#pause
+#result[reverse mode = direction · backprop = algorithm · autograd = engine: record → save → replay]
+
+== The canonical PyTorch training step #I
+
+#codebox(size: 13.5pt)[```python
+model.train()
+optimizer = torch.optim.SGD(model.parameters(), lr=1e-2)
+
+for x, y in loader:
+    optimizer.zero_grad()        # clear gradients from the previous step
+    y_hat = model(x)             # forward: build this batch's graph
+    loss = loss_fn(y_hat, y)     # one scalar objective
+    loss.backward()              # compute and accumulate parameter gradients
+    optimizer.step()             # update parameters using those gradients
+```]
+#pause
+#result[clear → forward → loss → backward → update]
+
+== What each PyTorch line changes #V
 
 #align(center, table(
-  columns: 4, stroke: 0.5pt + MUTED, inset: (x: 9pt, y: 6pt), align: (left, left, center, left),
-  table.header([*Route*], [*Mechanism*], [*$partial cal(L) / partial w$*], [*Best use*]),
-  [symbolic calculus], [rewrite and differentiate the expression], [$-18$], [small algebra; insight],
-  [finite difference], [perturb $w$ by $plus.minus epsilon$ and compare losses], [$approx -18$], [debugging a gradient],
-  [reverse-mode AD], [replay local rules on the executed graph], [$-18$], [training large models],
+  columns: (62mm, 152mm), stroke: 0.5pt + MUTED,
+  inset: (x: 9pt, y: 6pt), align: (left, left),
+  table.header([*Line*], [*State change*]),
+  [`zero_grad()`], [clears parameter `.grad` buffers; values and parameters are unchanged],
+  [`model(x)`], [computes activations and records the operations used for this batch],
+  [`loss_fn(...)`], [reduces the prediction error to one scalar $cal(L)$],
+  [`loss.backward()`], [runs local rules in reverse and adds into each parameter's `.grad`],
+  [`optimizer.step()`], [updates parameters from `.grad`; it does not compute or clear gradients],
+))
+
+== Why `zero_grad()` is necessary #D
+
+`backward()` adds into each parameter's existing `.grad` buffer.
+#pause
+#align(center, table(
+  columns: (55mm, 72mm, 88mm), stroke: 0.5pt + MUTED,
+  inset: (x: 9pt, y: 7pt), align: (left, left, left),
+  table.header([*Moment*], [*With clearing*], [*Without clearing*]),
+  [after batch A], [`.grad = g_A`], [`.grad = g_A`],
+  [start batch B], [`zero_grad()` → `.grad = 0`], [old `g_A` remains],
+  [after `backward()` on B], [`.grad = g_B`], [`.grad = g_A + g_B`],
+  [`step()` uses], [this batch's gradient], [an unintended mixture of two steps],
 ))
 #pause
-#result[all target the same mathematical derivative; only the computation changes]
+#notebox[Accumulation is useful inside one intended window—for branches, several losses, or micro-batches. Clear at the boundary between optimizer steps.]
 
 == Checkpoint: read the sign of a gradient #Q
 
@@ -547,7 +1122,7 @@ New prediction: $hat(y) = 2.18 dot 3 + 1.06 = 7.60$.
 == Interactive: the computation graph #I
 
 #interbox(link-to: IA + "autograd")[
-  Build a scalar computation graph, run the forward pass, then click *backward* to watch each adjoint $overline(u)$ fill in — exactly the $(w x + b - y)^2$ example above.
+  Build a scalar computation graph, run the forward pass, then click *backward* to watch each $partial cal(L) \/ partial u$ fill in — exactly the $(w x + b - y)^2$ example above.
 ]
 #pause
 Trace which local rule changes when the final squared-error operation is replaced with $|e|$.
@@ -559,7 +1134,7 @@ Trace which local rule changes when the final squared-error operation is replace
   notebox[
     *See it move*
     #v(5pt)
-    Step through values and adjoints in the #link(IA + "autograd")[interactive graph ↗].
+    Step through values and loss derivatives in the #link(IA + "autograd")[interactive graph ↗].
   ],
   notebox[
     *Build it by hand*
@@ -580,94 +1155,291 @@ Trace which local rule changes when the final squared-error operation is replace
   [*Hard*], [replace the square by $|e|$; state what happens at $e = 0$],
 ))
 
-// ═══════════════════════════ PART IV — Neuron ═══════════════════════════
-= From scalar graph to a neuron
+// ═══════════════════════════ PART IV — Vectors ═══════════════════════════
+= From scalars to vectors
 
-== A single neuron
+== Derivative, gradient, Jacobian: the shape tells us #V
 
-Vector input, one output:
-$ z = bold(w)^top bold(x) + b, quad a = phi(z), quad cal(L) = ell(a, y). $
+We store gradients as column vectors. The name of the local object depends on the input and output shapes:
 #pause
-#result[same three nodes: affine → activation → loss]
+#align(center, {
+  set text(size: 16pt)
+  table(
+    columns: (70mm, 88mm, 56mm), stroke: 0.5pt + MUTED,
+    inset: (x: 9pt, y: 6pt), align: (left, center, left),
+    table.header([*Operation shape*], [*Local object*], [*Name*]),
+    [$u in RR arrow.r v in RR$], [$partial v \/ partial u in RR$], [derivative],
+    [$bold(x) in RR^d arrow.r z in RR$], [$partial z \/ partial bold(x) in RR^d$], [gradient],
+    [$bold(x) in RR^d arrow.r bold(z) in RR^m$], [$J_(i j) = partial z_i \/ partial x_j$], [Jacobian $bold(J) in RR^(m times d)$],
+  )
+})
+#pause
+#result[a Jacobian contains one local derivative for every output–input pair]
 
-== Backprop through the activation #D
+== A $2 times 2$ Jacobian is four familiar derivatives #V
 
-Let $delta := overline(z) = partial cal(L) \/ partial z$. Through $a = phi(z)$:
-$ delta = overline(a) dot phi'(z), quad "where" overline(a) = (partial cal(L))/(partial a). $
+Take a vector operation with two inputs and two outputs:
+$ z_1=x_1+x_2, quad z_2=2x_1-x_2. $
 #pause
-#notebox[$delta$ is the *error signal at the pre-activation*. Everything below the neuron is expressed through this one scalar.]
+#jacobianexamplegraph
+#pause
+#align(center, table(
+  columns: (48mm, 55mm, 55mm), stroke: 0.5pt + MUTED,
+  inset: (x: 10pt, y: 6pt), align: center,
+  table.header([*Output*], [*Input $x_1$*], [*Input $x_2$*]),
+  [$z_1$], [$partial z_1 \/ partial x_1=1$], [$partial z_1 \/ partial x_2=1$],
+  [$z_2$], [$partial z_2 \/ partial x_1=2$], [$partial z_2 \/ partial x_2=-1$],
+))
+#pause
+#result[$bold(J)=mat(1,1;2,-1)$ · rows are outputs · columns are inputs]
 
-== Backprop through the affine part #D
+== Vector chain rule: make the shapes fit #D
 
-Through $z = bold(w)^top bold(x) + b$ with $overline(z) = delta$:
+For $bold(x) in RR^d arrow.r bold(z) in RR^m$, let the #localterm[local Jacobian] be
+$ bold(J)_(i j) = partial z_i \/ partial x_j, quad bold(J) in RR^(m times d). $
 #pause
-$ nabla_(bold(w)) cal(L) = delta thin bold(x), quad quad (partial cal(L))/(partial b) = delta, quad quad overline(bold(x)) = delta thin bold(w). $
+#align(center, text(size: 30pt, weight: 600)[
+  #downstream[$(partial cal(L))/(partial bold(x))$] $=$
+  #localterm[$bold(J)^top$]
+  #upstream[$(partial cal(L))/(partial bold(z))$]
+])
 #pause
-#notebox[Weight gradient $=$ error $delta$ times the input $bold(x)$. This “error times input” shape reappears at every layer.]
+#align(center, text(size: 19pt, fill: MUTED)[
+  $(d times 1) quad = quad (d times m) quad (m times 1)$
+])
+#pause
+#result[downstream gradient = local Jacobian transpose × upstream gradient]
+#pause
+#notebox[When $d=m=1$, $bold(J)$ is one number and this is the scalar chain rule from earlier.]
 
-== Sigmoid + BCE: the clean cancellation #D
+== The transpose adds every output's contribution #D
 
-Sigmoid $a = sigma(z)$, binary cross-entropy $cal(L) = -[y log a + (1 - y) log(1 - a)]$.
+For the previous operation, suppose the #upstream[arriving gradient] is
+$ bold(g)_z = partial cal(L) \/ partial bold(z) = mat(3;4). $
 #pause
-$ (partial cal(L))/(partial a) = -y/a + (1 - y)/(1 - a) $
+#align(center, text(size: 25pt, weight: 600)[
+  #downstream[$(partial cal(L))/(partial bold(x))$]
+  $=$ #localterm[$bold(J)^top$] #upstream[$bold(g)_z$]
+  $= mat(1,2;1,-1) mat(3;4) = mat(11;-1)$
+])
 #pause
-$ (partial a)/(partial z) = a(1 - a) $
+#align(center, table(
+  columns: (55mm, 115mm), stroke: 0.5pt + MUTED,
+  inset: (x: 11pt, y: 7pt), align: (left, center),
+  [#downstream[$partial cal(L) \/ partial x_1$]], [$3(1)+4(2)=11$],
+  [#downstream[$partial cal(L) \/ partial x_2$]], [$3(1)+4(-1)=-1$],
+))
 #pause
-Multiply — the denominators cancel:
-$ overline(z) = (partial cal(L))/(partial a) dot a(1 - a) = a - y. $
-#pause
-#result[$overline(z) = a - y$ — prediction minus target]
+#result[the vector rule is the scalar branch rule applied to every input]
 
-== Softmax + cross-entropy: same pattern #D
+== An affine operation adds scalar products and a bias #V
 
-For multi-class, $bold(p) = "softmax"(bold(z))$ and $cal(L) = -log p_y$:
-$ nabla_(bold(z)) cal(L) = bold(p) - bold(y), $
-where $bold(y)$ is the one-hot target vector.
+*Affine* means a weighted sum plus a bias:
+$ z = bold(w)^top bold(x) + b quad = quad sum_(j=1)^d w_j x_j + b. $
+
 #pause
-#result[$overline(bold(z)) = bold(p) - bold(y)$ — the identical “prediction $-$ target” form]
+#vectorgraph
+
+== Change one scalar while holding every other value fixed #D
+
+Start from $z=sum_j w_j x_j+b$. Change only one input by a small amount $Delta$:
 #pause
-#notebox[Choosing the loss to *match* the output nonlinearity makes the output-layer gradient trivially simple.]
+#align(center, {
+  set text(size: 16pt)
+  table(
+    columns: (56mm, 100mm, 62mm), stroke: 0.5pt + MUTED,
+    inset: (x: 9pt, y: 7pt), align: (left, center, center),
+    table.header([*Change*], [*Resulting change in $z$*], [*Divide by $Delta$*]),
+    [$w_i arrow.r w_i+Delta$],
+    [$((w_i+Delta) x_i)-w_i x_i = x_i Delta$],
+    [$partial z \/ partial w_i=x_i$],
+    [$x_i arrow.r x_i+Delta$],
+    [$w_i (x_i+Delta)-w_i x_i = w_i Delta$],
+    [$partial z \/ partial x_i=w_i$],
+    [$b arrow.r b+Delta$],
+    [$(b+Delta)-b = Delta$],
+    [$partial z \/ partial b=1$],
+  )
+})
+#pause
+#result[local derivative = change in the operation's output ÷ change in one input]
+
+== Stack the coordinate derivatives into gradient vectors #D
+
+The derivatives with respect to the coordinates of a vector are stored in one column:
+#pause
+#align(center, text(size: 23pt)[
+  $(partial z)/(partial bold(w))
+    := mat(partial z\/partial w_1; dots.v; partial z\/partial w_d)
+    quad = quad mat(x_1; dots.v; x_d) = bold(x)$
+])
+#pause
+#align(center, text(size: 23pt)[
+  $(partial z)/(partial bold(x))
+    := mat(partial z\/partial x_1; dots.v; partial z\/partial x_d)
+    quad = quad mat(w_1; dots.v; w_d) = bold(w)$
+])
+#pause
+With $bold(x)=mat(2;-1)$ and $bold(w)=mat(1;3)$:
+#align(center, text(size: 20pt)[
+  $(partial z)/(partial bold(w))=mat(2;-1), quad
+   (partial z)/(partial bold(x))=mat(1;3), quad
+   (partial z)/(partial b)=1.$
+])
+#pause
+#result[the vector formulas are just the scalar coordinate derivatives stacked together]
+
+== Affine forward: multiply componentwise, then add #D
+
+Use $bold(x)=mat(2;-1)$, $bold(w)=mat(1;3)$, and $b=0$.
+#pause
+#align(center, table(
+  columns: (52mm, 45mm, 45mm, 75mm), stroke: 0.5pt + MUTED,
+  inset: (x: 12pt, y: 6pt), align: center,
+  table.header([*Coordinate*], [$x_i$], [$w_i$], [$w_i x_i$]),
+  [$1$], [$2$], [$1$], [$1 dot 2=2$],
+  [$2$], [$-1$], [$3$], [$3 dot (-1)=-3$],
+))
+#pause
+$ bold(w)^top bold(x) = 2 + (-3) = -1, quad z=-1+0=-1. $
+#pause
+$ cal(L)=z^2=(-1)^2=1. $
+#pause
+#result[dot product = multiply matching entries, then sum]
+
+== First backward step: the square operation #D
+
+#vectorseedgraph
+#pause
+Seed #upstream[$partial cal(L) \/ partial cal(L)=1$]. The square has #localterm[local derivative $2z=-2$], so
+#align(center, text(size: 27pt, weight: 600)[
+  #downstream[$(partial cal(L))/(partial z)$] $=$ #upstream[$1$] #localterm[$dot 2z$] $= -2$.
+])
+#pause
+#result[the square returns $-2$; it now arrives at the affine operation]
+
+== Affine backward: apply the three local gradients #D
+
+#vectorbackgraph
+#pause
+Let #upstream[$g_z = partial cal(L) \/ partial z=-2$] arrive at the affine operation. Its #localterm[local gradients] send back:
+#pause
+#align(center, table(
+  columns: (48mm, 72mm, 95mm), stroke: 0.5pt + MUTED,
+  inset: (x: 10pt, y: 6pt), align: (left, center, center),
+  [#text(fill: INK, weight: 700)[Input]], [#text(fill: LOCAL, weight: 700)[Local gradient]], [#text(fill: DOWNSTREAM, weight: 700)[Downstream gradient]],
+  [$bold(w)$], [#localterm[$partial z \/ partial bold(w)=bold(x)$]], [#downstream[$partial cal(L) \/ partial bold(w)=(-2)bold(x)=(-4,2)^top$]],
+  [$bold(x)$], [#localterm[$partial z \/ partial bold(x)=bold(w)$]], [#downstream[$partial cal(L) \/ partial bold(x)=(-2)bold(w)=(-2,-6)^top$]],
+  [$b$], [#localterm[$partial z \/ partial b=1$]], [#downstream[$partial cal(L) \/ partial b=-2$]],
+))
+#pause
+#result[one arriving gradient $g_z$ produces three separate downstream gradients]
+
+== PyTorch gives the same vector gradients #I
+
+#codebox(size: 13.5pt)[```python
+import torch
+
+x = torch.tensor([2., -1.], requires_grad=True)
+w = torch.tensor([1.,  3.], requires_grad=True)
+b = torch.tensor(0., requires_grad=True)
+
+z = w @ x + b
+L = z**2
+L.backward()
+
+print(z.item(), L.item())  # -1.0, 1.0
+print(w.grad)              # tensor([-4.,  2.])
+print(x.grad, b.grad)      # tensor([-2., -6.]), tensor(-2.)
+```]
+#pause
+#result[`@` performs the dot product; `backward()` still applies the same local rules]
 
 // ═══════════════════════════ PART V — Dense layer ═══════════════════════════
-= The dense layer
+= From one scalar output to a vector output
 
-== Forward: shapes matter #D
+== A dense layer stacks affine operations #V
 
-A dense layer maps $bold(x) in RR^n$ to $bold(z) in RR^m$:
-$ bold(z) = bold(W) bold(x) + bold(b), quad bold(W) in RR^(m times n), quad bold(b) in RR^m. $
+Why a vector output? A layer computes several features at once—one affine operation per output.
 #pause
-#notebox[Read the shapes off the equation: $bold(W)$ has one row per output and one column per input.]
-
-== Dense-layer backward is outer product + transpose #D
-
-Given upstream $overline(bold(z)) in RR^m$:
+#denseforwardgraph
 #pause
-$ nabla_(bold(W)) cal(L) = overline(bold(z)) thin bold(x)^top quad (m times n), $
-$ nabla_(bold(b)) cal(L) = overline(bold(z)) quad (m), quad quad overline(bold(x)) = bold(W)^top overline(bold(z)) quad (n). $
+Each output coordinate has its own row of weights:
+$ z_1=bold(w)_1^top bold(x)+b_1, quad z_2=bold(w)_2^top bold(x)+b_2. $
 #pause
-#result[$nabla_(bold(W)) cal(L) = overline(bold(z)) bold(x)^top$ · #h(0.3em) $overline(bold(x)) = bold(W)^top overline(bold(z))$]
+Stack the two equations:
+#result[$bold(z)=bold(W)bold(x)+bold(b)$]
 
-== A $2 times 2$ dense layer makes the forward shapes concrete #D
+== A $2 times 2$ layer: forward calculation #D
 
-Let
-$ bold(x) = mat(2; -1), quad bold(W) = mat(1, 3; -2, 1), quad bold(b) = mat(0; 1). $
+$ bold(x)=mat(2;-1), quad bold(W)=mat(1,3;-2,1), quad bold(b)=mat(0;1). $
 #pause
-Then
-$ bold(z) = bold(W) bold(x) + bold(b) = mat(1, 3; -2, 1) mat(2; -1) + mat(0; 1) = mat(-1; -4). $
+Compute one row at a time:
+$ z_1=1(2)+3(-1)+0=-1, $
+$ z_2=-2(2)+1(-1)+1=-4. $
 #pause
-#notebox[Two inputs, two outputs: $bold(W)$ and $nabla_(bold(W)) cal(L)$ must both be $2 times 2$.]
+#result[$bold(z)=bold(W)bold(x)+bold(b)=mat(-1;-4)$]
+#pause
+The matrix notation only evaluates the two familiar dot products together.
 
-== The same $2 times 2$ layer backward, numerically #D
+== Dense backward: the Jacobian returns a gradient to the input #D
 
-Suppose the loss sends $overline(bold(z)) = mat(4; -2)$ backward.
+#densebackgraph
 #pause
-$ nabla_(bold(W)) cal(L) = overline(bold(z)) bold(x)^top = mat(4; -2) mat(2, -1) = mat(8, -4; -4, 2), $
+For $bold(z)=bold(W)bold(x)+bold(b)$, the #localterm[local Jacobian with respect to $bold(x)$] is
+$ bold(J)_x = partial bold(z) \/ partial bold(x) = bold(W). $
 #pause
-$ nabla_(bold(b)) cal(L) = mat(4; -2), quad overline(bold(x)) = bold(W)^top overline(bold(z)) = mat(8; 10). $
+Let #upstream[$bold(g)_z = partial cal(L) \/ partial bold(z)$] arrive.
 #pause
-#result[outer product for parameters · transpose for inputs]
+#result[input rule: $partial cal(L)\/partial bold(x)=bold(W)^top bold(g)_z$]
+#pause
+#align(center, text(size: 21pt)[
+  $mat(1,-2;3,1) mat(4;-2) = mat(8;10)$
+])
 
-== PyTorch verifies the dense-layer formulas #I
+== Start with $z_1$: it updates only row 1 of $bold(W)$ #D
+
+The first output uses only the first weight row:
+#align(center, text(size: 24pt)[$z_1 = W_(1,1)x_1 + W_(1,2)x_2 + b_1.$])
+#pause
+With $bold(x)=mat(2;-1)$, its three local derivatives are just the inputs and $1$. Let #upstream[$g_1=partial cal(L)\/partial z_1=4$] arrive.
+#pause
+#align(center, table(
+  columns: (38mm, 78mm, 98mm), stroke: 0.5pt + MUTED,
+  inset: (x: 10pt, y: 6pt), align: center,
+  table.header([*Parameter*], [*Local derivative*], [*Gradient sent back*]),
+  [$W_(1,1)$], [#localterm[$partial z_1\/partial W_(1,1)=x_1=2$]], [#downstream[$partial cal(L)\/partial W_(1,1)=4 dot 2=8$]],
+  [$W_(1,2)$], [#localterm[$partial z_1\/partial W_(1,2)=x_2=-1$]], [#downstream[$partial cal(L)\/partial W_(1,2)=4 dot (-1)=-4$]],
+  [$b_1$], [#localterm[$partial z_1\/partial b_1=1$]], [#downstream[$partial cal(L)\/partial b_1=4 dot 1=4$]],
+))
+#pause
+#result[row 1 of $partial cal(L)\/partial bold(W)$ is $(8,-4)$; the first bias gradient is $4$]
+
+== Repeat for $z_2$, then stack the two rows #D
+
+The second output uses only the second weight row:
+#align(center, text(size: 24pt)[$z_2 = W_(2,1)x_1 + W_(2,2)x_2 + b_2.$])
+#pause
+Now #upstream[$g_2=partial cal(L)\/partial z_2=-2$] arrives. Apply the same scalar rule:
+#align(center, table(
+  columns: (38mm, 78mm, 98mm), stroke: 0.5pt + MUTED,
+  inset: (x: 10pt, y: 6pt), align: center,
+  table.header([*Parameter*], [*Local derivative*], [*Gradient sent back*]),
+  [$W_(2,1)$], [#localterm[$partial z_2\/partial W_(2,1)=x_1=2$]], [#downstream[$partial cal(L)\/partial W_(2,1)=-2 dot 2=-4$]],
+  [$W_(2,2)$], [#localterm[$partial z_2\/partial W_(2,2)=x_2=-1$]], [#downstream[$partial cal(L)\/partial W_(2,2)=-2 dot (-1)=2$]],
+  [$b_2$], [#localterm[$partial z_2\/partial b_2=1$]], [#downstream[$partial cal(L)\/partial b_2=-2 dot 1=-2$]],
+))
+#pause
+Stack row 1 above row 2, and stack the two bias gradients:
+#align(center, text(size: 21pt)[
+  #downstream[$(partial cal(L))/(partial bold(W))$] $= mat(8,-4;-4,2)$,
+  #h(9mm)
+  #downstream[$(partial cal(L))/(partial bold(b))$] $= mat(4;-2)$.
+])
+#pause
+#result[general rule: $partial cal(L)\/partial W_(i,j)=g_i x_j$]
+
+== PyTorch verifies the layer calculation #I
 
 #codebox(size: 13pt)[```python
 import torch
@@ -677,286 +1449,146 @@ W = torch.tensor([[1., 3.], [-2., 1.]], requires_grad=True)
 b = torch.tensor([0., 1.], requires_grad=True)
 
 z = W @ x + b
-z.backward(torch.tensor([4., -2.]))  # upstream z-bar
+z.backward(torch.tensor([4., -2.]))  # arriving dL/dz
 
+print(z)       # tensor([-1., -4.])
 print(W.grad)  # [[ 8., -4.], [-4.,  2.]]
 print(b.grad)  # [4., -2.]
 print(x.grad)  # [8., 10.]
 ```]
 #pause
-#result[the outer product, bias gradient, and transposed input gradient all match]
-
-== Batch version #D
-
-Stack $N$ examples as rows: $bold(X) in RR^(N times n)$, $bold(Z) = bold(X) bold(W)^top + bold(1) bold(b)^top$.
-#pause
-Given $overline(bold(Z)) in RR^(N times m)$:
-$ nabla_(bold(W)) cal(L) = overline(bold(Z))^top bold(X), quad quad nabla_(bold(b)) cal(L) = sum_(i=1)^N overline(bold(Z))_i. $
-#pause
-#notebox[Summing rows of $overline(bold(Z))$ for $nabla_(bold(b))$ is the branch rule: $bold(b)$ is shared by all $N$ examples, so its contributions accumulate.]
-
-== Shape-checking is free debugging #V
-
-#align(center, table(
-  columns: 3, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 6pt), align: (left, center, center),
-  table.header([*Quantity*], [*Shape*], [*Must match*]),
-  [$bold(W)$],           [$m times n$], [$nabla_(bold(W)) cal(L)$],
-  [$bold(b)$],           [$m$],         [$nabla_(bold(b)) cal(L)$],
-  [$bold(x)$],           [$n$],         [$overline(bold(x))$],
-  [$bold(z)$],           [$m$],         [$overline(bold(z))$],
-))
-#pause
-#result[gradient shape $=$ parameter shape — always]
+#notebox[The gradient of every tensor has the same shape as that tensor: $bold(W)$ and $partial cal(L) \/ partial bold(W)$ are both $2 times 2$.]
 
 // ═══════════════════════════ PART VI — MLP ═══════════════════════════
-= Backprop through a two-layer MLP
+= A tiny neural network
 
-== Forward pass #D
+== ReLU is what prevents two dense layers from collapsing into one #V
 
-$ bold(z)^((1)) = bold(W)_1 bold(x) + bold(b)_1, quad bold(h) = phi(bold(z)^((1))), $
-$ bold(z)^((2)) = bold(W)_2 bold(h) + bold(b)_2, quad bold(p) = "softmax"(bold(z)^((2))), quad cal(L) = -log p_y. $
+Without a nonlinearity, two affine maps are still one affine map:
+$ bold(W)_2(bold(W)_1 bold(x)+bold(b)_1)+bold(b)_2 $
+$ quad = (bold(W)_2 bold(W)_1)bold(x)+(bold(W)_2 bold(b)_1+bold(b)_2). $
 #pause
-#result[affine → activation → affine → softmax → CE]
+#relumotivationgraph
+#pause
+#result[ReLU makes the composition nonlinear; depth can now represent a richer function]
 
-== The forward graph #V
+== A tiny MLP composes three vector blocks #V
 
+The network now repeats the operations we already know: affine map, elementwise ReLU, affine map, scalar loss.
+#pause
 #mlpforward
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[backprop reverses every arrow, right to left])
-
-== Backward: the output layer #D
-
-Softmax + CE gives the clean output-layer signal:
-$ overline(bold(z))^((2)) = bold(p) - bold(y). $
+$ bold(z)_1=bold(W)_1bold(x)+bold(b)_1 $
+$ bold(h)="ReLU"(bold(z)_1) $
+$ bold(hat(y))=bold(W)_2bold(h)+bold(b)_2 $
+$ cal(L)=sum_i (hat(y)_i-y_i)^2 $
 #pause
-Then, using the dense-layer rules:
-$ nabla_(bold(W)_2) cal(L) = overline(bold(z))^((2)) bold(h)^top, quad quad overline(bold(h)) = bold(W)_2^top overline(bold(z))^((2)). $
+#result[dense → ReLU → dense → squared loss]
 
-== Backward: the hidden and first layers #D
+== Backward, part 1: loss → dense 2 → hidden activations #D
 
-Through the activation $bold(h) = phi(bold(z)^((1)))$ (elementwise):
-$ overline(bold(z))^((1)) = overline(bold(h)) dot.o phi'(bold(z)^((1))). $
+#mlpbackward-focus("right")
 #pause
-Then the first affine layer:
-$ nabla_(bold(W)_1) cal(L) = overline(bold(z))^((1)) bold(x)^top, quad quad nabla_(bold(b)_1) cal(L) = overline(bold(z))^((1)). $
+*1. Squared loss.* Start with the seed $partial cal(L)\/partial cal(L)=1$. The loss operation returns
+#align(center, text(size: 21pt)[
+  #downstream[$bold(g)_(hat(y))$] $= 2(bold(hat(y))-bold(y)).$
+])
+This says how increasing each prediction coordinate would change the loss.
 #pause
-#notebox[$dot.o$ is elementwise (Hadamard). Each activation coordinate depends only on its matching pre-activation, so the Jacobian is diagonal.]
-
-== The complete recipe #V
-
-#align(center, table(
-  columns: 2, stroke: 0.5pt + MUTED, inset: (x: 13pt, y: 5.5pt), align: (left, left),
-  table.header([*Forward*], [*Backward*]),
-  [$bold(z)^((1)) = bold(W)_1 bold(x) + bold(b)_1$], [$overline(bold(z))^((1)) = overline(bold(h)) dot.o phi'(bold(z)^((1)))$],
-  [$bold(h) = phi(bold(z)^((1)))$], [$nabla_(bold(W)_1) = overline(bold(z))^((1)) bold(x)^top$],
-  [$bold(z)^((2)) = bold(W)_2 bold(h) + bold(b)_2$], [$overline(bold(h)) = bold(W)_2^top overline(bold(z))^((2))$],
-  [$bold(p) = "softmax"(bold(z)^((2)))$], [$nabla_(bold(W)_2) = overline(bold(z))^((2)) bold(h)^top$],
-  [$cal(L) = -log p_y$],           [$overline(bold(z))^((2)) = bold(p) - bold(y)$],
-))
+*2. Second dense layer.* It receives #upstream[$bold(g)_(hat(y))$] and returns a gradient to its input $bold(h)$:
+#align(center, text(size: 21pt)[
+  #downstream[$bold(g)_h$] $=$ #localterm[$bold(W)_2^top$] #upstream[$bold(g)_(hat(y))$].
+])
 #pause
-#result[same two moves at every layer: $bold(delta) bold(x)^top$ for weights, $bold(W)^top bold(delta)$ for inputs]
+#result[the returned $bold(g)_h$ is now the arriving gradient at ReLU]
 
-== Interactive: MLP backprop #I
+== Backward, part 2: ReLU → dense 1 → input #D
 
-#interbox(link-to: IA + "autograd")[
-  Step through a small MLP's forward pass, then watch $overline(bold(z))^((2)) = bold(p) - bold(y)$ propagate back through $bold(W)_2$, the activation, and $bold(W)_1$ — the adjoints light up layer by layer.
-]
+#mlpbackward-focus("left")
 #pause
-Trace the same upstream adjoint into the parameter and input branches of the affine layer.
+*3. ReLU.* Apply its local gate coordinate by coordinate:
+#align(center, text(size: 21pt)[
+  #downstream[$bold(g)_(z_1)$] $=$ #upstream[$bold(g)_h$] #localterm[$dot.o bb(1)[bold(z)_1>0]$].
+])
+An active unit passes its arriving gradient; an inactive unit returns zero.
+#pause
+*4. First dense layer.* It receives #upstream[$bold(g)_(z_1)$] and returns
+#align(center, text(size: 20pt)[
+  #downstream[$bold(g)_x$] $=$ #localterm[$bold(W)_1^top$] #upstream[$bold(g)_(z_1)$], $quad$
+  #downstream[$partial cal(L)\/partial bold(W)_1$] $=$ #upstream[$bold(g)_(z_1)$] #localterm[$bold(x)^top$], $quad$
+  #downstream[$partial cal(L)\/partial bold(b)_1$] $=$ #upstream[$bold(g)_(z_1)$].
+])
+#pause
+#result[each returned gradient becomes the arriving gradient for the block immediately to its left]
 
-== A tiny MLP uses the same recipe #I
+== The same tiny MLP in PyTorch #I
 
 #codebox(size: 12.5pt)[```python
 import torch
 from torch import nn
-import torch.nn.functional as F
 
 model = nn.Sequential(
     nn.Linear(2, 3), nn.ReLU(), nn.Linear(3, 2)
 )
-x = torch.tensor([[2., -1.]])
-target = torch.tensor([1])
+x = torch.tensor([2., -1.])
+y = torch.tensor([1., 0.])
 
-loss = F.cross_entropy(model(x), target)
+y_hat = model(x)
+loss = ((y_hat - y)**2).sum()
 loss.backward()
+
 for name, p in model.named_parameters():
-    print(name, tuple(p.grad.shape))
+    print(name, tuple(p.shape), tuple(p.grad.shape))
 ```]
 #pause
-#notebox[`0.weight (3, 2)` · `0.bias (3,)` · `2.weight (2, 3)` · `2.bias (2,)`]
+#result[PyTorch records the three blocks and applies their local rules in reverse]
+
+== Interactive: follow one vector gradient #I
+
+#interbox(link-to: IA + "autograd")[
+  Step through the forward values, then follow one arriving gradient through a dense operation, a ReLU, and the preceding dense operation.
+]
 #pause
-#result[each parameter receives a gradient of exactly the same shape]
+For practice, predict each gradient's shape before revealing its value in the interactive.
 
-== Checkpoint: dense-layer backward pass #Q
+// ═══════════════════════════ PART VIII — Flow through depth ═══════════════════════════
+= When gradients cross many layers
 
-#mcq(
-  [For $bold(z)=bold(W)bold(x)+bold(b)$, which pair uses the same upstream adjoint $overline(bold(z))$?],
-  [$nabla_(bold(W))=overline(bold(z))bold(x)^top$ and $overline(bold(x))=bold(W)^top overline(bold(z))$],
-  [$nabla_(bold(W))=bold(W)^top bold(x)$ and $overline(bold(x))=overline(bold(z)) bold(x)^top$],
-  [$nabla_(bold(W))=bold(x)$ and $overline(bold(x))=bold(W)$],
-  [$nabla_(bold(W))=bold(0)$ and $overline(bold(x))=bold(0)$],
-)
+== Deep networks repeat the same multiplication #D
 
-== Answer: dense-layer backward pass #A
-
-#mcq-answer([A], [$nabla_(bold(W))=overline(bold(z))bold(x)^top$ and $overline(bold(x))=bold(W)^top overline(bold(z))$], [Both branches apply the chain rule to the same output adjoint; they differ only in the local derivative of the affine operation.])
-
-// ═══════════════════════════ PART VII — Autodiff ═══════════════════════════
-= Automatic differentiation
-
-== Backprop is reverse-mode automatic differentiation
-
-All three routes answer the same question, but they do different work:
+For a scalar chain $h_0 arrow.r h_1 arrow.r dots arrow.r h_L arrow.r cal(L)$:
 #pause
-#grid(
-  columns: 3, gutter: 10pt,
-  notebox[*Symbolic* rewrites a mathematical expression into a derivative expression.],
-  notebox[*Finite difference* probes nearby inputs and estimates a derivative numerically.],
-  notebox[*Reverse-mode AD* replays exact local rules on the operations that actually ran.],
-)
+#deepchaingraph
 #pause
-#result[backprop is reverse-mode AD specialized to neural-network computation graphs]
-
-== A scalar loss makes reverse mode the right direction #D
-
-A loss is a map $f: RR^P -> RR$: many parameter inputs, one output.
+$ (partial cal(L))/(partial h_0) = (partial cal(L))/(partial h_L) dot f_L'(h_(L-1)) dots f_1'(h_0). $
 #pause
-#two(
-  notebox[*Forward mode:* to obtain the full gradient, run one directional sweep per parameter → $P$ sweeps.],
-  notebox[*Reverse mode:* one reverse sweep per scalar output → one sweep for $cal(L)$.],
-)
+#result[depth creates a product of many local slopes]
 #pause
-#result[one reverse sweep costs on the same order as a small number of forward evaluations]
+#notebox[Vector layers do the same operation with matrix–vector products. The intuition is unchanged: repeatedly small factors shrink a gradient; repeatedly large factors grow it.]
 
-== Autodiff records values forward and replays rules backward
+== Ten ordinary-looking slopes can create three regimes #V
 
-During the forward pass the framework:
+Start with an arriving loss derivative of $1$ and multiply the same local slope ten times:
 #pause
-- *records* each primitive op and its inputs onto a tape (the graph);
+#align(center, table(
+  columns: 3, stroke: 0.5pt + MUTED, inset: (x: 15pt, y: 8pt), align: center,
+  [#text(fill: LOCAL, weight: 700)[Local slope]], [#text(fill: INK, weight: 700)[After 10 layers]], [#text(fill: INK, weight: 700)[Effect]],
+  [#localterm[$0.5$]], [$0.5^10 approx 0.001$], [gradient nearly disappears],
+  [#localterm[$1.0$]], [$1^10 = 1$], [gradient is preserved],
+  [#localterm[$1.5$]], [$1.5^10 approx 57.7$], [gradient grows rapidly],
+))
 #pause
-- *stores* intermediate values (needed by local derivatives);
-#pause
-- on `backward()`: seeds $overline(cal(L)) = 1$, applies each op's local rule, and *accumulates* into `.grad`.
-#pause
-#result[you write only the forward pass — the backward pass is generated]
-
-== PyTorch: the scalar example #I
-
-#codebox[```python
-import torch
-x = torch.tensor(3.0)
-w = torch.tensor(2.0, requires_grad=True)
-b = torch.tensor(1.0, requires_grad=True)
-y = torch.tensor(10.0)
-
-L = (w*x + b - y)**2     # forward:  L = 9
-L.backward()             # reverse-mode autodiff
-
-print(L.item())          # 9.0
-print(w.grad, b.grad)    # tensor(-18.)  tensor(-6.)
-```]
-#pause
-#result[matches our hand computation exactly]
-
-== The same graph, in *this* deck #I
-
-Our own toolkit ships a tiny reverse-mode autodiff (chalkdust `autodiff`) — build the
-expression, get *every* gradient in one backward pass. This slide runs it:
-#pause
-// computed live — these ARE the numbers rendered below (un-fakeable)
-#let L = scalar-loss
-#let gr = ad.grad(L, (2, 3, 1, 10)).map(g => int(calc.round(g)))
-#codebox[```typ
-#import "@local/chalkdust-autodiff:0.1.0" as ad
-#let L = ad.expr("(w*x + b - y)^2", ("w", "x", "b", "y"))
-#ad.value(L, (2, 3, 1, 10))   // the loss
-#ad.grad(L,  (2, 3, 1, 10))   // (w̄, x̄, b̄, ȳ), one backward pass
-```]
-#pause
-#result[computed live in this slide: $cal(L) = #int(calc.round(ad.value(L, (2, 3, 1, 10))))$, #h(0.6em)
-  $overline(w) = #gr.at(0), thick overline(x) = #gr.at(1), thick overline(b) = #gr.at(2), thick overline(y) = #gr.at(3)$ — the same four numbers, by hand, by PyTorch, and by our own graph.]
-
-== Gradients accumulate in frameworks
-
-`.grad` is *added to*, never reset, by `backward()`. The standard loop is:
-#pause
-#codebox[```python
-for x, y in loader:
-    optimizer.zero_grad()      # clear old gradients
-    loss = criterion(model(x), y)
-    loss.backward()            # accumulate this batch's gradients
-    optimizer.step()           # theta <- theta - eta * grad
-```]
-#pause
-#alertbox[Forget `zero_grad()` and you sum gradients across steps — the same `+=` branch rule, now biting you.]
-
-// ═══════════════════════════ PART VIII — Checking & flow ═══════════════════════════
-= Gradient checking & gradient flow
-
-== Finite differences check backprop, but cannot replace it #D
-
-To *debug* an analytic gradient, compare against a central difference:
-$ (partial cal(L))/(partial theta_j) approx (cal(L)(bold(theta) + epsilon bold(e)_j) - cal(L)(bold(theta) - epsilon bold(e)_j))/(2 epsilon). $
-#pause
-#notebox[Useful in small float64 unit tests; far too slow for training — a central difference needs *two* loss evaluations per parameter.]
-
-== Gradient check: finite difference versus PyTorch #I
-
-#codebox(size: 13pt)[```python
-import torch
-
-def loss(w):
-    return (w*3.0 + 1.0 - 10.0)**2
-
-w, eps = 2.0, 1e-5
-g_fd = (loss(w + eps) - loss(w - eps)) / (2*eps)
-
-wt = torch.tensor(w, dtype=torch.float64, requires_grad=True)
-loss(wt).backward()
-g_ad = wt.grad.item()
-
-print(g_fd, g_ad)        # both approximately -18
-print(abs(g_fd - g_ad))  # numerical error near zero
-```]
-#pause
-#notebox[Use float64. Too-large $epsilon$ gives truncation error; too-small $epsilon$ gives cancellation error. Check a few coordinates—not millions.]
-
-== Gradient flow in deep chains #D
-
-Stack $L$ layers $h_0 -> h_1 -> dots -> h_L$. The chain rule multiplies Jacobians:
-$ (partial cal(L))/(partial bold(h)_0) = (partial cal(L))/(partial bold(h)_L) product_(ell=1)^L (partial bold(h)_ell)/(partial bold(h)_(ell-1)). $
-#pause
-#result[a *product* of $L$ terms — it can *vanish* or *explode*]
+#result[the chain rule explains both vanishing and exploding gradients]
 
 == Sigmoid saturation #V
 
 $sigma'(z) = sigma(z)(1 - sigma(z)) <= 1/4$, and $approx 0$ for large $|z|$:
 #pause
-#fig("/lecture3/figures/sigmoid_deriv.svg", w: 46%)
+#fig("/lecture3/figures/sigmoid_deriv.svg", w: 40%)
 #pause
 #align(center, text(size: 16pt, fill: MUTED)[each sigmoid layer multiplies the gradient by at most $1 \/ 4$])
-
-== Vanishing gradients #V
-
-Multiply many small local derivatives → the signal *decays* with depth:
 #pause
-#fig("/lecture3/figures/grad_flow.svg", w: 44%)
-#pause
-#notebox[Sigmoid derivatives can repeatedly shrink the signal. ReLU has slope $1$ on active units, but slope $0$ on inactive units; weights and normalization also affect the full Jacobian.]
-
-== Checkpoint: repeated local slopes #Q
-
-#mcq(
-  [Along a scalar chain, ten consecutive local derivatives equal $0.5$. What factor reaches the earliest node?],
-  [$5$],
-  [$0.5$],
-  [$0.5^10 approx 0.001$],
-  [$10^0.5$],
-)
-
-== Answer: products can erase the signal #A
-
-#mcq-answer([C], [$0.5^10 approx 0.001$], [Backprop multiplies local derivatives along a path; several individually moderate slopes can yield a tiny product.])
+#notebox[Repeated sigmoid derivatives can shrink the signal quickly. ReLU has slope $1$ on active units and $0$ on inactive units; weights and normalization also shape the full Jacobian.]
 
 == Interactive: gradient flow #I
 
@@ -966,58 +1598,37 @@ Multiply many small local derivatives → the signal *decays* with depth:
 #pause
 Sweep depth to see repeated small local slopes rapidly erase an early-layer gradient.
 
-== Practice ladder: hand → PyTorch → finite difference #V
-
-#align(center, table(
-  columns: 3, stroke: 0.5pt + MUTED, inset: (x: 10pt, y: 6pt), align: (left, left, left),
-  table.header([*Level*], [*Problem*], [*Verification*]),
-  [easy], [$v = (a + b)^2$ at $a = 2, b = -1$], [derive $overline(a), overline(b)$; check with PyTorch],
-  [medium], [$cal(L) = x^2 + 3x$ at $x = 4$], [show the two path contributions sum to $11$],
-  [hard], [$cal(L) = ell(bold(W) bold(x) + bold(b), y)$], [check one entry of $nabla_(bold(W))$ by finite difference],
-))
-#pause
-#result[solve by hand first · verify the whole gradient with autograd · spot-check numerically]
-
 // ═══════════════════════════ PART IX — Summary ═══════════════════════════
 = Summary
 
 == Backprop in one sentence
 
 #align(center, text(size: 22pt)[
-  Seed $overline(cal(L)) = 1$, then walk the graph *backward*, at each node computing
+  Seed $partial cal(L) \/ partial cal(L) = 1$, then walk the graph *backward*, at each operation computing
   #v(6pt)
-  *downstream $=$ upstream $times$ local*,
+  #downstream[*downstream gradient*] $=$ #upstream[*upstream gradient*] $times$ #localterm[*local derivative*],
   #v(6pt)
   and *adding* gradients wherever a variable branched.
 ])
 #pause
-#align(center, text(size: 16pt, fill: MUTED)[For vector nodes, “times local” becomes a vector–Jacobian product; the logic is unchanged.])
+#align(center, text(size: 16pt, fill: MUTED)[For vector operations, the #localterm[local derivative] can be a vector or matrix; the same color-coded chain rule applies.])
 
 == The formulas to keep #V
 
 #align(center, table(
   columns: 2, stroke: 0.5pt + MUTED, inset: (x: 13pt, y: 7pt), align: (left, left),
   table.header([*Setting*], [*Backward rule*]),
-  [scalar node],        [$overline(u) = overline(v) dot partial v \/ partial u$],
-  [dense layer],        [$nabla_(bold(W)) = overline(bold(z)) bold(x)^top, quad overline(bold(x)) = bold(W)^top overline(bold(z))$],
-  [activation],         [$overline(bold(z)) = overline(bold(a)) dot.o phi'(bold(z))$],
-  [softmax + CE],       [$overline(bold(z)) = bold(p) - bold(y)$],
+  [scalar operation],   [#downstream[$(partial cal(L))/(partial u)$] $=$ #upstream[$(partial cal(L))/(partial v)$] #localterm[$dot partial v \/ partial u$]],
+  [dense layer],        [#downstream[$(partial cal(L))/(partial bold(W))$] $=$ #upstream[$(partial cal(L))/(partial bold(z))$] #localterm[$bold(x)^top$]; #downstream[$(partial cal(L))/(partial bold(x))$] $=$ #localterm[$bold(W)^top$] #upstream[$(partial cal(L))/(partial bold(z))$]],
+  [activation],         [#downstream[$(partial cal(L))/(partial bold(z))$] $=$ #upstream[$(partial cal(L))/(partial bold(a))$] #localterm[$dot.o phi'(bold(z))$]],
   [branch point],       [gradients *add*],
 ))
 
-== What comes next
-
-We can now compute $nabla_(bold(theta)) cal(L)$ for any network by composing local rules.
-#pause
-#result[Next (Lecture 3A): the geometry behind these objects — gradients, Jacobians, and Hessians]
-#pause
-#notebox[Today used derivatives operationally. Lecture 3A makes their shapes and geometry explicit; the later optimization lecture then uses the gradient to choose parameter steps.]
-
 #focus-slide[
-  We can compute $nabla_(bold(theta)) cal(L)$.
+  We can compute $partial cal(L) \/ partial theta_j$ for every parameter.
   #v(12pt)
   #set text(size: 22pt)
-  Next: what gradients, Jacobians, and Hessians mean geometrically.
+  Next: turn those gradients into reliable parameter updates.
   #v(8pt)
-  #text(size: 17pt, fill: rgb("#B9C6C8"))[Lecture 3A · Derivatives, Gradients, Jacobians & Hessians]
+  #text(size: 17pt, fill: rgb("#B9C6C8"))[Lecture 5 · Optimization for Deep Learning]
 ]

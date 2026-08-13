@@ -1,7 +1,8 @@
 // ═══════════════════════════════════════════════════════════════════
 //  mldiag — deck-themed instances of the chalkdust packages.
-//  The packages live in ~/git/chalkdust (symlinked into @local);
-//  this file binds them to the metropolis palette ONCE so a slide is a
+//  The packages are vendored in ../vendor/chalkdust so a clean checkout
+//  has no @local package dependency. This file binds them to the
+//  metropolis palette ONCE so a slide is a
 //  one-liner:
 //
 //    #import "../common/mldiag.typ": *
@@ -9,16 +10,16 @@
 //    #attn-matrix(("the","cat","sat"), mask: "causal")
 // ═══════════════════════════════════════════════════════════════════
 
-#import "@local/chalkdust-theme:0.1.0": theme
-#import "@local/chalkdust-convgrid:0.1.0" as tg   // conv/pool/attention grids (was tensor-grid)
-#import "@local/chalkdust-plot:0.1.0" as mp       // bar & line plots
-#import "@local/chalkdust-frame:0.1.0" as md      // pandas-lite: md.frame(csv("x.csv")), md.xy(f, "a", "b")
-#import "@local/chalkdust-dist:0.1.0" as dist     // distributions: dist.nll0(dist.normal(), r) — the TRUE loss
-#import "@local/chalkdust-field:0.1.0" as fld     // 2-D/3-D fields: contour/heatmap/surface of f(x,y)
-#import "@local/chalkdust-optim:0.1.0" as opt     // optimizers: opt.gd/momentum/adam(grad, x0) → trajectory
-#import "@local/chalkdust-rand:0.1.0" as rnd      // seeded PRNG: rnd.randn(seed, i), rnd.shuffle(seed, arr)
-#import "@local/chalkdust-learn:0.1.0" as ml      // in-Typst fitting: linear/logistic regression, PCA, k-means
-#import "@local/chalkdust-autodiff:0.1.0" as ad   // reverse-mode autodiff: ad.grad(f, x) exact; ad.grad-fn/fn2 for optim+contour
+#import "../vendor/chalkdust/theme/lib.typ": theme
+#import "../vendor/chalkdust/convgrid/lib.typ" as tg   // conv/pool/attention grids (was tensor-grid)
+#import "../vendor/chalkdust/plot/lib.typ" as mp       // bar & line plots
+#import "../vendor/chalkdust/frame/lib.typ" as md      // pandas-lite: md.frame(csv("x.csv")), md.xy(f, "a", "b")
+#import "../vendor/chalkdust/dist/lib.typ" as dist     // distributions: dist.nll0(dist.normal(), r) — the TRUE loss
+#import "../vendor/chalkdust/field/lib.typ" as fld     // 2-D/3-D fields: contour/heatmap/surface of f(x,y)
+#import "../vendor/chalkdust/optim/lib.typ" as opt     // optimizers: opt.gd/momentum/adam(grad, x0) → trajectory
+#import "../vendor/chalkdust/rand/lib.typ" as rnd      // seeded PRNG: rnd.randn(seed, i), rnd.shuffle(seed, arr)
+#import "../vendor/chalkdust/learn/lib.typ" as ml      // in-Typst fitting: linear/logistic regression, PCA, k-means
+#import "../vendor/chalkdust/autodiff/lib.typ" as ad   // reverse-mode autodiff: ad.grad(f, x) exact; ad.grad-fn/fn2 for optim+contour
 #import "metropolis.typ": INK, ACC, TEAL, GREEN, BLUE, MUTED, RED
 
 // the deck theme: metropolis palette, teal→paper→orange diverging ramp

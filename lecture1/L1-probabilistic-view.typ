@@ -40,31 +40,19 @@ $ cal(L)_"total" = cal(L)_"data" + lambda norm(bold(theta))_2^2 quad #text(fill:
 #pause
 #notebox[*Objective.* Derive each term from an explicit likelihood or prior.]
 
-== The map for today
-#stag(V)
+== Outline
 
-Two probabilistic assumptions determine the two halves of the objective.
-#v(4pt)
-#align(center, text(size: 17pt, fill: MUTED)[
-  The labels below are signposts, not assumed vocabulary. We proceed in order: predictive distribution and likelihood; \
-  i.i.d. data; log-likelihood and NLL; then the prior $p(bold(theta))$ and MAP.
-])
-#pause
-#v(6pt)
-#align(center, diagram(
-  spacing: (17mm, 9mm), node-stroke: 0.9pt,
-  {
-    node((0,0), [outputs\ $p_(bold(theta))(y|bold(x))$], shape: fletcher.shapes.rect, fill: rgb("#EFEEEB"), stroke: INK, inset: 7pt)
-    node((2,0), [parameters\ $p(bold(theta))$], shape: fletcher.shapes.rect, fill: rgb("#EFEEEB"), stroke: INK, inset: 7pt)
-    node((0,1), [training loss], shape: fletcher.shapes.rect, fill: rgb("#FDECD6"), stroke: ACC, inset: 7pt)
-    node((2,1), [regularizer], shape: fletcher.shapes.rect, fill: rgb("#FDECD6"), stroke: ACC, inset: 7pt)
-    edge((0,0),(0,1), text(size: 15pt)[negative log-likelihood], "-|>", stroke: 0.8pt + MUTED, label-side: left)
-    edge((2,0),(2,1), text(size: 15pt)[Bayes' rule $arrow.r$ MAP], "-|>", stroke: 0.8pt + MUTED, label-side: right)
-    node((1,2), text(fill: white, weight: 600)[DL objective], shape: fletcher.shapes.rect, fill: TEAL, stroke: none, inset: 8pt)
-    edge((0,1),(1,2), "-|>", stroke: 0.8pt + MUTED)
-    edge((2,1),(1,2), "-|>", stroke: 0.8pt + MUTED)
-  }
-))
+#[
+  #set text(size: 22pt)
+  #enum(
+    [*Predictive distributions* — what the network says about $Y$ given $bold(x)$],
+    [*Likelihood* — how observed data score candidate parameters],
+    [*Negative log-likelihood* — why products become trainable sums],
+    [*Output losses* — Gaussian $arrow.r$ MSE; Bernoulli/categorical $arrow.r$ cross-entropy],
+    [*Priors and MAP* — why regularizers belong in the same objective],
+    spacing: 9pt,
+  )
+]
 
 // ══════════════════════════════ PART II ══════════════════════════════
 = Probability primer
@@ -1580,7 +1568,6 @@ $ = -y log p - (1-y) log(1-p) $
 #notebox[*Check.* True label $y=1$: if $p=0.8$ the loss is $-log 0.8 approx 0.22$; if $p=0.2$ it is $-log 0.2 approx 1.61$.]
 
 == Why BCE matches a binary label better than MSE
-#stag(OPT)
 
 For one observed example, let the target be $y=1$ and the model predict
 #v(2pt)
@@ -2059,7 +2046,7 @@ When several predictors fit the training data, the learner still needs a prefere
       fn: (t => dist.pdf(_prior-narrow, t), t => dist.pdf(_prior-broad, t)),
       domain: (-4, 4), samples: 140, markers: false,
       colors: (ACC, BLUE),
-      x-label: [$theta_j$], y-label: [$p(theta_j)$], y-ticks: false,
+      x-label: [one weight], y-label: [prior density], y-ticks: false,
       size: (68mm, 43mm),
     ))
     #align(center, text(size: 15pt, fill: MUTED)[narrow = stronger preference near $0$])
@@ -2827,13 +2814,12 @@ $ p(y^star | bold(x)^star, cal(D)) = integral p_(bold(theta))(y^star | bold(x)^s
     + range(_post-data.len()).map(_ => INK),
   markers: range(_post-curves.len()).map(_ => false) + range(_post-data.len()).map(_ => true),
   annotations: ((0.78, 1.1, [posterior model samples]),),
-  x-label: [$x^star$], y-label: [$y^star$], y-ticks: false, size: (82mm, 43mm),
+  x-label: [new input], y-label: [new target], y-ticks: false, size: (82mm, 43mm),
 ))
 #pause
 #notebox[Bayesian prediction *averages over plausible models* — and reports uncertainty.]
 
 == Why DL usually uses point estimates
-#stag(OPT)
 
 A modern network has millions to billions of parameters, so integrating $p(bold(theta) | cal(D))$ is hard.
 #pause

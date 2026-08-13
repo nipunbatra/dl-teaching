@@ -160,16 +160,20 @@
 
 #note([The ledger separates *evidence already measured* from *the next intervention to test*.], color: ACC)
 
-== The student contract and 80-minute route #V
+== Outline: diagnose, intervene, verify #V
 
-By the end, you should be able to diagnose a gap, choose one matching remedy, and define the evidence that would justify keeping it.
+#align(center, diagram(spacing: (18mm, 12mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  let beats = ([measure the gap], [seal the splits], [change one lever], [select on validation], [test once])
+  let colors = (RED, INK, ACC, BLUE, GREEN)
+  for (i, beat) in beats.enumerate() {
+    node((i, 0), text(size: 13pt)[#beat], shape: fletcher.shapes.rect, corner-radius: 3pt,
+      inset: 6pt, stroke: 1pt + colors.at(i))
+  }
+  for i in range(4) { edge((i, 0), (i + 1, 0), "-|>", stroke: 0.9pt + MUTED) }
+}))
 
-#v(8pt)
-#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
-  hairline([CORE · 55 min], [gap and split → early stopping → weight decay → dropout], color: TEAL),
-  hairline([SHOULD COVER · 15 min], [task-valid augmentation → mixup → smoothing and calibration], color: BLUE),
-  hairline([OPTIONAL · 10 min], [optimizer nuance → implementation details → notebook traces], color: MUTED),
-))
+#v(12pt)
+#note([Every method enters at the third beat; the evidence protocol stays unchanged.], color: ACC)
 
 #v(10pt)
 #semantic-legend
@@ -770,7 +774,7 @@ Use one validation confidence bin with $100$ examples and $72$ correct predictio
 #pause
 #result[Training demonstrates fit; validation chooses; the sealed test estimates the frozen procedure.]
 
-== Revisit the opening commitment
+== Revisit the opening commitment #A
 
 #align(center, table(
   columns: (28mm, 82mm, 93mm), stroke: 0.45pt + MUTED,
@@ -822,9 +826,9 @@ Write four lines:
 ]
 
 // ═════════════════════════ OPTIONAL APPENDIX · 10 MIN ═════════════════
-= Optional appendix · implementation and provenance
+= Implementation and provenance
 
-== Coupled penalty and decoupled decay: same for SGD, different for Adam #OPT
+== Coupled penalty and decoupled decay: same for SGD, different for Adam
 
 #align(center, table(
   columns: (55mm, 73mm, 73mm), stroke: 0.45pt + MUTED,
@@ -837,7 +841,7 @@ Write four lines:
 #pause
 #note([The distinction is about where the penalty enters the update, not about whether norms tend to shrink.], color: ACC)
 
-== Parameter groups are a recipe choice, not a theorem #OPT
+== Parameter groups are a recipe choice, not a theorem
 
 #codebox(size: 13pt)[```python
 decay, no_decay = [], []
@@ -854,7 +858,7 @@ optimizer = torch.optim.AdamW([
 #pause
 #note([Excluding biases and normalization parameters is common, but architecture- and recipe-dependent. Log the groups you actually used.], color: MUTED)
 
-== Early stopping needs saved state, not only a stopping epoch #OPT
+== Early stopping needs saved state, not only a stopping epoch
 
 #codebox(size: 12.5pt)[```python
 best, waits, snapshot = float("inf"), 0, None
@@ -874,7 +878,7 @@ model.load_state_dict(snapshot)
 #pause
 #note([Save optimizer state too if training will resume. For final inference, restore the selected model state.], color: BLUE)
 
-== Calibration aggregates bin gaps; binning is part of the estimate #OPT
+== Calibration aggregates bin gaps; binning is part of the estimate
 
 For bins $B_m$ with accuracy $"acc"(B_m)$ and mean confidence $"conf"(B_m)$,
 
@@ -890,7 +894,7 @@ $ "ECE" = sum_m (abs(B_m)/n) abs("acc"(B_m)-"conf"(B_m)). $
 #pause
 #caption[The earlier $0.18$ and $0.02$ values were single-bin gaps, not full-dataset ECE claims.]
 
-== Companion notebook traces: concrete, separate from the anchor #OPT
+== Companion notebook traces: concrete, separate from the anchor
 
 #set text(size: 15.5pt)
 #align(center, table(
@@ -908,7 +912,7 @@ $ "ECE" = sum_m (abs(B_m)/n) abs("acc"(B_m)-"conf"(B_m)). $
 #pause
 #note([These recorded outputs motivate checks; they are not substituted for the five-class trace, and model agreement alone is not proof of label preservation.], color: INK)
 
-== Primary references and vector provenance #OPT
+== Primary references and vector provenance
 
 #set text(size: 14.5pt)
 
