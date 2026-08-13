@@ -1528,55 +1528,28 @@ $ h_j(x)="ReLU"(w_j x+b_j), quad g(x)=c+sum_j v_j h_j(x). $
 #place(bottom + center, dy: -2pt,
   result[#text(size: 18pt)[On compact $D subset RR^d$, approximate continuous logits; $arg max$ classifies wherever the winning score has a margin.]])
 
-== One hidden unit has three controls #D
-
-#align(center, diagram(
-  spacing: (29mm, 15mm), node-stroke: 0.9pt + INK, node-fill: white,
-  {
-    edge((0, 0), (2.6, 0), text(size: 13pt, weight: 650, fill: BLUE)[$t_j arrow.r b_j=-w_j t_j$],
-      "-|>", stroke: 1pt + BLUE, label-side: left)
-    edge((2.6, 0), (5.35, 0), text(size: 13pt, weight: 650, fill: ACC)[$v_j$],
-      "-|>", stroke: 1pt + ACC, label-side: left)
-    node((0, 0), $x$, radius: 7mm, stroke: 1pt + INK)
-    node((2.6, 0), [$h_j="ReLU"(w_j(x-t_j))$], shape: fletcher.shapes.rect,
-      inset: 9pt, fill: TEAL.lighten(92%), stroke: 1.1pt + TEAL)
-    node((5.35, 0), [$g_j(x)=v_j h_j(x)$], shape: fletcher.shapes.rect,
-      inset: 9pt, fill: ACC.lighten(94%), stroke: 1.1pt + ACC)
-    node((0, 0.9), text(size: 11pt, weight: 650, fill: MUTED)[INPUT], stroke: none)
-    node((2.6, 0.9), text(size: 11pt, weight: 650, fill: MUTED)[HIDDEN FEATURE], stroke: none)
-    node((5.35, 0.9), text(size: 11pt, weight: 650, fill: MUTED)[SIGNED COMPONENT], stroke: none)
-  },
-))
-#v(14pt)
-#align(center, grid(
-  columns: (68mm, 68mm, 68mm), gutter: 10pt,
-  [#align(center)[#text(size: 13pt, weight: 700, fill: BLUE)[HINGE $t_j$] \
-    #text(size: 16.5pt)[moves the corner]]],
-  [#align(center)[#text(size: 13pt, weight: 700, fill: TEAL)[HIDDEN WEIGHT $w_j$] \
-    #text(size: 16.5pt)[sets orientation and scale]]],
-  [#align(center)[#text(size: 13pt, weight: 700, fill: ACC)[OUTPUT WEIGHT $v_j$] \
-    #text(size: 16.5pt)[sets sign and slope change]]],
-))
-#place(bottom + center, dy: -2pt,
-  result[The controls are the learned parameters; toggling components reveals how their signed sum creates the curve.])
-
-== Interactive: build functions and a binary classifier #I
+== Interactive: place and combine bends #I
 
 #interbox(link-to: "https://nipunbatra.github.io/dl-teaching/interactives/relu-function-builder.html")[
   Follow the same sequence as the slides: *one hinge $arrow.r$ tent $arrow.r$ smooth target $arrow.r$ binary classifier*.
 ]
-#v(13pt)
-#align(center, text(size: 18pt)[
-  Select one unit, then change $t_j$ (hinge), $w_j$ (hidden slope/orientation), or $v_j$ (signed output contribution).
-])
-#pause
-#v(10pt)
-#align(center, text(size: 17pt)[
-  In the classifier preset, the weighted sum is the logit $z(x)$; the decision changes where $z=0$, and $p=sigma(z)$ reports confidence.
-])
+#v(9pt)
+#align(center, text(size: 21pt, weight: 650)[$g_j(x)=v_j "ReLU"(x-t_j)$])
+#v(7pt)
+#align(center, grid(
+  columns: (91mm, 91mm), gutter: 14pt,
+  neat-card([where is the bend?], [
+    #text(size: 18pt, weight: 700, fill: BLUE)[$t_j$] \
+    #text(size: 16.5pt)[moves the hinge left or right]
+  ], color: BLUE, width: 91mm),
+  neat-card([what does the bend do?], [
+    #text(size: 18pt, weight: 700, fill: ACC)[$v_j$] \
+    #text(size: 16.5pt)[sets its direction and strength]
+  ], color: ACC, width: 91mm),
+))
 #pause
 #place(bottom + center, dy: -2pt,
-  result[Inspect individual $v_j h_j(x)$ components first, their sum second, and the class decision last.])
+  result[Add bends to trace a target; when their sum is a logit $z(x)$, the predicted class changes where $z=0$.])
 
 == First fix the target and the input region #V
 
