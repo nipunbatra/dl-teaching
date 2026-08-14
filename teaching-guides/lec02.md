@@ -7,7 +7,9 @@
 Lecture 1 chose losses from probability; Lecture 2 expands the prediction rule
 $f_\theta(x)$. Start with one affine score, show exactly why affine layers alone
 cannot represent XOR, then build and verify one two-unit ReLU MLP before widening
-the view to universal approximation, depth, minibatches, and a parameter update.
+the scope from four Boolean points to filled quadrant regions. Use that contrast
+to motivate a four-ReLU regional construction before widening the view to
+universal approximation, depth, minibatches, and a parameter update.
 
 ## What students should leave able to do
 
@@ -16,7 +18,10 @@ the view to universal approximation, depth, minibatches, and a parameter update.
 - Separate the affine pre-activation $u$ from the activation $h=\phi(u)$.
 - Explain why stacking linear layers still gives a linear map and why XOR defeats
   a single straight decision boundary.
-- Evaluate the deck's exact XOR network on all four inputs.
+- Evaluate the deck's exact two-ReLU XOR network on all four Boolean inputs.
+- Explain why that same rule becomes a diagonal band over a filled square, and
+  distinguish its 75% area agreement from the four-point 4/4 result.
+- Read the four-ReLU regional construction as two competing absolute values.
 - State the universal-approximation claim without turning existence into a claim
   about learnability or generalization.
 - Explain width as feature variety and depth as staged composition.
@@ -32,15 +37,17 @@ derivation, `Q/A` is a prediction-and-reveal pair, `I` is an interactive, and
 | Material | Honest evidence label | How to say it |
 |---|---|---|
 | Weighted-sum, batch, neuron, XOR, loss, parameter-count, and update arithmetic | **Computed from displayed values** | “Let us verify the numbers.” |
-| XOR inputs and the exact two-unit weights | **Constructed teaching example** | “These weights are chosen to realize XOR; an optimizer did not discover them here.” |
+| Four Boolean XOR inputs and the exact two-unit weights | **Constructed teaching example** | “These weights are chosen to fit the four truth-table points; an optimizer did not discover them here.” |
+| Filled-square 75% check and exact four-ReLU regional rule | **Constructed + computed** | “This changes the dataset from four corners to four filled regions, then checks both fixed rules on a dense grid.” |
 | Linear-regression notebook data | **Synthetic data; computed fit** | “This checks the algorithm against the closed-form solution on seeded synthetic data.” |
 | Universal approximation | **Mathematical representation result** | “Approximating weights exist; the theorem does not promise that training finds them.” |
 | Node diagrams, decision-region sketches, and practical image pipeline | **Schematic** | “This diagram explains structure; it is not a measured model trace.” |
 | Vision/audio/text depth hierarchy graphics | **Conceptual schematic** | “This is one plausible compositional story, not observed activations.” |
 
-Do not call the XOR construction a learned result, the synthetic regression a
-real-data experiment, or the hierarchy graphics evidence of what a trained model
-actually represents.
+Do not call either XOR construction a learned result, silently transfer the
+two-ReLU 4/4 claim to a filled-square dataset, call the synthetic regression a
+real-data experiment, or treat the hierarchy graphics as evidence of what a
+trained model actually represents.
 
 ## 85-minute route through the current deck
 
@@ -72,7 +79,7 @@ connect the same geometry to multiclass scores: score ties live on flat sets, an
 only the top-scoring tie is a visible boundary. The five explicit inputs are a
 calculation, not a dataset benchmark.
 
-### 42–57 min · Build one exact XOR MLP
+### 42–57 min · Build exact four-point XOR, then change the dataset
 
 Keep the same network throughout:
 
@@ -87,6 +94,16 @@ then compute the output probability and loss. The hidden-space coordinate slide
 is the payoff: the nonlinearity changes the representation so one output node can
 separate the cases. Say explicitly that the weights are constructed and the
 forward values are computed.
+
+Then make the scope change visible: fill the square with quadrant-XOR points.
+The same logit depends only on $x_1+x_2$, so it paints the diagonal band
+$0.5\leq x_1+x_2\leq1.5$ and agrees on 75% of the square, despite retaining 4/4
+on the corners. Finish with the four-ReLU identity
+$|u-v|-|u+v|$, where $u=x_1-0.5$ and $v=x_2-0.5$, and verify its sign away from
+the two axes. Use the
+[ReLU Playground](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/)
+to switch among points, XOR, circles, and spirals; keep “constructed rule” and
+“optimizer run” as separate claims.
 
 ### 57–70 min · Universal approximation via hinges
 
@@ -128,9 +145,11 @@ minibatch-to-update ending.
    $W_2(W_1x+b_1)+b_2=(W_2W_1)x+(W_2b_1+b_2)$.
 3. **Exact XOR table:** calculate $h_1,h_2,z,\hat y$ for all four rows and use
    $\hat y=1$ when $z\ge0$.
-4. **One hinge/tent interval:** make the piecewise behavior visible before using
+4. **XOR scope check:** draw the two-ReLU diagonal band over the filled square,
+   then contrast it with the four-ReLU quadrant boundary.
+5. **One hinge/tent interval:** make the piecewise behavior visible before using
    the phrase “universal approximation.”
-5. **One parameter update:** identify the old value, gradient, learning rate, and
+6. **One parameter update:** identify the old value, gradient, learning rate, and
    new value; do not let the arithmetic obscure which parameter changed.
 
 ## Notebook choreography
@@ -147,14 +166,16 @@ minibatch-to-update ending.
 ### `notebooks/L02/02_mlp_xor.ipynb`
 
 - Use immediately after the deck's all-four-input XOR table.
-- First fit the single linear classifier: its 0.50 accuracy is a seeded optimizer
-  result on the four constructed XOR points.
-- Then instantiate the **same exact two-hidden-unit weights as the deck** and
-  print $x_1,x_2,h_1,h_2,z,\hat y,y$ for all four rows. Accuracy must be 1.00.
-- The exact MLP is labelled **constructed + computed**. There is deliberately no
-  claim that training learned those MLP weights.
-- Finish with the side-by-side probability surfaces: a fitted linear model versus
-  the constructed exact MLP.
+- Instantiate the **same exact two-hidden-unit weights as the deck** and
+  print $x_1,x_2,h_1,h_2,z,\hat y,y$ for all four rows. Agreement must be 1.00.
+- Extend that fixed rule to a dense filled-square XOR grid: show its diagonal
+  band and compute 0.750 agreement.
+- Construct $|u-v|-|u+v|$ from four ReLUs and verify 1.000 agreement on a dense
+  grid after explicitly excluding the boundary axes.
+- Finish with the three-panel comparison: four corners, the two-ReLU diagonal
+  band, and the four-ReLU filled-region rule.
+- Every network in this notebook is labelled **constructed + computed**. No
+  optimizer runs, and no convergence or generalization claim is made.
 
 For either notebook, restart the kernel and run all cells sequentially before
 class. A stale output is especially damaging here because the exact network is
@@ -169,6 +190,10 @@ also verified numerically in the slides.
 - **“The XOR MLP learned those weights.”** Not in this lecture. The construction
   demonstrates representational capacity. Learning comes from an optimizer and
   data, which is a different claim.
+- **“Two ReLUs solve every dataset called XOR.”** They solve the four Boolean
+  corners used in the deck. On densely filled quadrant XOR, that same rule paints
+  a diagonal band and reaches 75% area agreement; the four-ReLU construction is
+  the exact regional rule away from the axes.
 - **“Universal approximation means one hidden layer is always enough in
   practice.”** It is an existence statement with no guarantee of compact width,
   easy optimization, finite-sample generalization, or useful inductive bias.
@@ -181,5 +206,6 @@ also verified numerically in the slides.
 ## Exit ticket
 
 Give students $(x_1,x_2)=(1,1)$ and ask them to compute both hidden activations,
-the logit, and the class for the exact XOR MLP. Then ask one sentence: “What does
-universal approximation promise, and what does it not promise?”
+the logit, and the class for the exact XOR MLP. Then ask: “Why does 4/4 on the
+truth table not imply perfect classification of filled quadrant XOR?” Close with
+one sentence on what universal approximation promises—and what it does not.

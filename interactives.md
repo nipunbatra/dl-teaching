@@ -26,7 +26,7 @@ live controls) + a `meta.json` (slug, title, tagline, summary, difficulty, tags,
 | 1 | | MAP = likelihood × prior (contours, MLE/MAP/0, Gaussian vs Laplace) | `map-regularization` | LIVE |
 | 2 | Linear → MLP | linear-regression & GD, activations, softmax | `optimizer-race`, `softmax-temperature`, `vanishing-gradients` | LIVE |
 | 2 | | universal approximation | `universal-approximation` | LIVE |
-| 2 | | MLP decision boundary (XOR/circles/spirals playground) | `mlp-decision-boundary` | LIVE |
+| 2 | | [ReLU Playground](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/) (four Boolean points vs filled XOR; circles/spirals; simple hidden ReLUs and decision regions) | `mlp-decision-boundary` | LIVE |
 | 3A | Calculus Toolkit | gradient field & descent, curvature | `optimizer-race` | LIVE |
 | 3A | | tangent line / local linear approx | `derivative-tangent` | LIVE |
 | 3A | | surface slices (∂/∂x, ∂/∂y) | `surface-partials` | LIVE |
@@ -61,7 +61,8 @@ The backlog is empty — there are **no `(to build)` interactives left** in any 
 Built this cycle (all CDP-verified in Brave via `interactive-articles/scripts/verify-interactive.mjs`):
 
 - **L1 ×4** — `likelihood-to-loss`, `softmax-cross-entropy`, `bayes-classifier`, `map-regularization`
-- **L2 ×1** — `mlp-decision-boundary`
+- **L2 ×1** — `mlp-decision-boundary` (ReLU Playground: compare the
+  constructed four-point rule with densely filled datasets)
 - **L3A ×3** — `derivative-tangent`, `surface-partials`, `jacobian-local-map`
 - **L7 ×2** — `weight-decay`, `augmentation-mixup`
 - **L8 ×2** — `pooling-visualizer`, `padding-stride`

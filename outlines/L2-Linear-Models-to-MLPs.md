@@ -691,7 +691,8 @@ Softmax regression can only produce linear decision boundaries.
 
 It fails on:
 
-- XOR;
+- XOR when the four alternating classes fill quadrants rather than lying on one
+  side of a single line;
 - concentric circles;
 - spiral data;
 - complex image/audio/text patterns.
@@ -839,8 +840,34 @@ Message:
 
 Visual:
 
-- XOR in input space;
+- the four Boolean XOR points in input space;
 - transformed hidden space where it is linearly separable.
+
+Scope the claim explicitly. With the deck's fixed construction
+
+\[
+h_1=\operatorname{ReLU}(x_1+x_2),\qquad
+h_2=\operatorname{ReLU}(x_1+x_2-1),
+\]
+
+\[
+z=2h_1-4h_2-1,
+\]
+
+the four Boolean points are classified 4/4. Over a square filled with quadrant
+XOR points, however, the same rule paints the diagonal band
+$0.5\leq x_1+x_2\leq1.5$ and agrees over 75% of the area.
+
+For an exact regional construction, center the inputs with $u=x_1-0.5$ and
+$v=x_2-0.5$, then use four ReLUs:
+
+\[
+z=\operatorname{ReLU}(u-v)+\operatorname{ReLU}(v-u)
+-\operatorname{ReLU}(u+v)-\operatorname{ReLU}(-u-v).
+\]
+
+Its sign is the filled XOR label away from the two boundary axes. Both rules are
+constructed examples; neither is presented as a learned result.
 
 ---
 
@@ -961,20 +988,20 @@ Examples:
 
 ### Slide 38 — Interactive 5: MLP decision boundaries
 
-Demo: `mlp-decision-boundary.html`
+Demo: [ReLU Playground](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/)
 
 Datasets:
 
 - linearly separable;
-- XOR;
+- four-point Boolean XOR;
+- densely filled quadrant XOR;
 - circles;
 - spirals.
 
 Controls:
 
-- number of hidden units;
+- simple ReLU hidden units;
 - number of layers;
-- activation;
 - training steps;
 - learning rate.
 
@@ -987,7 +1014,9 @@ Show:
 
 Question:
 
-> What changes when we add hidden units? What changes when we add layers?
+> Why can two constructed ReLUs be 4/4 on the Boolean corners yet paint the
+> wrong regions when the square is densely filled? What changes when we add
+> hidden units or layers?
 
 ---
 
@@ -1306,8 +1335,9 @@ Skim slides **8, 17, 43, 46** if short on time.
 4. `softmax-regression.html`  
    Multi-class logits, softmax probabilities, linear decision regions.
 
-5. `mlp-decision-boundary.html`  
-   XOR/circles/spiral with hidden units/layers slider.
+5. [ReLU Playground](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/)
+   Four-point versus filled XOR, circles, and spirals with simple ReLU units and
+   visible decision regions.
 
 6. `function-approximation.html`  
    ReLU MLP approximating 1D target functions.

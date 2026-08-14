@@ -979,6 +979,17 @@ Explore large positive and negative logits, where sigmoid's derivative becomes t
 #place(bottom + center, dy: -2pt,
   result[Predict $1$ when $z >= 0$. One ordinary output node correctly classifies all four XOR inputs.])
 
+== Four-point XOR and filled XOR are different tasks #V
+
+#align(center, text(size: 16pt, weight: 650)[
+  The same hand-chosen logit is positive only in the band
+  $0.5 <= x_1+x_2 <= 1.5$.
+])
+#v(2pt)
+#align(center, image("/lecture2/figures/xor_scope_contrast.pdf", width: 170mm))
+#place(bottom + center, dy: -2pt,
+  result[#text(size: 16.5pt)[Our two-unit construction is exact on the *four Boolean inputs*. A Playground-style dataset fills the quadrants and also asks the optimizer to discover the weights.]])
+
 == First derive the feature functions for a general input #D
 
 #align(center, text(size: 20pt)[
@@ -1480,63 +1491,38 @@ $ h_j(x)="ReLU"(w_j x+b_j), quad g(x)=c+sum_j v_j h_j(x). $
 #place(bottom + center, dy: -2pt,
   result[Training learns hinge locations and signed contributions; universal approximation says enough such units can make the remaining gap arbitrarily small.])
 
-== A ReLU unit adds one fold to a multidimensional function #V
+== One ReLU folds a 2-D input plane into a 3-D surface #V
 
-#align(center, text(size: 21pt, weight: 650)[$h(bold(x))="ReLU"(bold(w)^top bold(x)+b)$])
-#v(5pt)
-#two(r: (1.08fr, 0.92fr),
-  [#align(center, [
-    #surface(
-      (x1, x2) => _relu(x1 + 0.65 * x2 - 0.35),
-      xlim: (-1, 1), ylim: (-1, 1), samples: 18,
-      cell: 2.8mm, depth: 0.48, height: 25mm,
-      x-label: [$x_1$], y-label: [$x_2$], z-label: [$h$],
-    )
-    #v(4pt)
-    #neat-caption([computed ReLU surface for a two-dimensional input])
-  ])],
-  [#align(center, [
-    #neat-card([the fold], [
-      $bold(w)^top bold(x)+b=0$ \
-      #text(size: 15.5pt)[is a line in 2-D and a hyperplane in $d$-D]
-    ], color: ACC, width: 88mm)
-    #v(9pt)
-    #neat-card([the two sides], [
-      #text(size: 15.5pt)[one side is flat at $h=0$; the other rises linearly]
-    ], color: TEAL, width: 88mm)
-  ])],
-)
+#align(center, text(size: 19pt, weight: 650)[
+  $h(bold(x))="ReLU"(bold(w)^top bold(x)+b)
+   ="ReLU"(x_1+0.65x_2-0.35)$
+])
+#v(1pt)
+#align(center, image("/lecture2/figures/relu_2d_fold.pdf", width: 182mm))
 #place(bottom + center, dy: -2pt,
-  result[A weighted sum of ReLU units combines folds in different positions and directions into a piecewise-linear surface.])
+  result[The zero line is the hinge: one side stays flat, the other rises linearly. More units add folds in different positions and directions.])
 
-== Classification: one score per class, then pick the largest #V
+== ReLU features create piecewise-linear class boundaries #V
 
-#two(r: (0.92fr, 1.08fr),
+#grid(
+  columns: (83mm, 106mm), column-gutter: 11pt, align: horizon,
   [#align(center, [
-    #text(size: 16pt, weight: 700, fill: MUTED)[FOR EACH INPUT]
-    #v(8pt)
-    #text(size: 22pt, weight: 650)[$bold(x) arrow.r bold(h) arrow.r (z_1,z_2,z_3)$]
-    #v(5pt)
-    #text(size: 14.5pt, fill: MUTED)[input $arrow.r$ ReLU features $arrow.r$ one score per class]
-    #v(18pt)
-    #neat-card([pick the winning score], [
-      #text(size: 22pt, weight: 700)[$hat(y)=arg max_k z_k(bold(x))$]
-      #v(4pt)
-    ], color: ACC, width: 82mm)
-  ])],
-  [#align(center, [
-    #text(size: 14pt, weight: 700, fill: MUTED)[IN HIDDEN-FEATURE SPACE $(h_1,h_2)$]
+    #text(size: 13pt, weight: 700, fill: MUTED)[FEATURES FEED CLASS SCORES]
     #v(2pt)
-    #block(width: 78mm, height: 56mm, clip: true)[
-      #place(top + center, dy: -7mm,
-        image("/lecture2/figures/softmax_regions.pdf", width: 78mm))
+    #scale(70%)[
+      #mlp-diagram((2, 4, 3), labels: ([input], [ReLU features], [class scores]))
     ]
-    #v(4pt)
-    #neat-caption([colour shows which output score is largest])
+    #v(6pt)
+    #text(size: 16.5pt)[
+      $h_j(bold(x))="ReLU"(bold(w)_j^top bold(x)+b_j)$ \
+      $z_k=c_k+sum_j v_(k j)h_j(bold(x))$ \
+      $hat(y)=arg max_k z_k$
+    ]
   ])],
+  [#align(center, image("/lecture2/figures/relu_multiclass_map.pdf", width: 103mm))],
 )
 #place(bottom + center, dy: -2pt,
-  result[ReLU features reshape the input; the largest output score determines the class, and its winner regions define the boundaries.])
+  result[Inside one activation pattern, pairwise score ties are straight; across ReLU hinges they join into piecewise-linear boundaries in input space.])
 
 == Interactive: place and combine bends #I
 
@@ -2042,20 +2028,21 @@ Universal approximation does *not* promise:
 #place(bottom + center, dy: -2pt,
   result[Modern networks usually need both: enough width per stage and enough depth to compose stages.])
 
-== Interactive: compare width and depth on the same task #I
+== Interactive: train simple ReLUs like Playground #I
 
 #interbox(link-to: IA + "mlp-decision-boundary")[
-  Train a linear classifier or a small MLP on *XOR / circles / spirals / moons*. Compare one versus two hidden layers, then adjust width while watching the learned boundary.
-  Controls: dataset · linear/MLP · hidden width · one/two layers · activation · train/reset/resample.
+  Compare a linear model with a simple ReLU MLP on *four XOR points / filled XOR / circles / moons / spirals*.
+  Watch hidden-unit activation maps, the output decision field, and the 3-D logit surface.
+  Controls: dataset · width/depth · train/pause · single step · reset/reseed.
 ]
 #pause
 #v(7pt)
 #align(center, text(size: 17pt)[
-  Hold the dataset fixed. First add width within one layer; then redistribute a similar number of hidden units across two layers. Which boundary appears sooner and which trains more reliably?
+  Start with the lecture preset on four points. Then switch to filled quadrants, train from a new seed, and watch how width, depth, and optimization change the learned boundary.
 ])
 #pause
 #place(bottom + center, dy: -2pt,
-  result[The comparison is empirical: width and depth change both representational structure and optimization behaviour.])
+  result[The hand-built lecture preset is *4/4 on the Boolean inputs*; that is not a claim about learning every point in the filled XOR regions.])
 
 // ═══════════════════════════ PART IX — Connecting to practice ═══════════════════════════
 = Connecting to deep-learning practice
