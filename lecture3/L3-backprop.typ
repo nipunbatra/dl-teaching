@@ -11,7 +11,7 @@
 )
 
 #let IA = "https://nipunbatra.github.io/interactive-articles/"
-#let NB = "https://raw.githubusercontent.com/nipunbatra/dl-teaching/master/notebooks/L03/"
+#let NB = "https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/"
 
 // Semantic gradient colors used throughout the lecture.
 // Forward values stay neutral so these three roles remain unambiguous.
@@ -107,60 +107,61 @@
 }))
 
 // numeric square-operation instance used in the first worked local-rule example
-#let squarenode = align(center, diagram(spacing: (21mm, 9mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  node((0,0), $u=3$, radius: 6mm, fill: LEAF_FILL, stroke: 1pt + INK)
-  node((1,0), [$(dot)^2$], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
-  node((2,0), $v=9$, radius: 6mm, fill: VALUE_FILL, stroke: 1pt + INK)
-  node((3,0), $ell$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
-  node((4,0), $cal(L)$, radius: 5.5mm, fill: LOSS_FILL, stroke: 1pt + DOWNSTREAM)
+#let squarenode = align(center, diagram(spacing: (26mm, 10mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  // Numeric value labels need more room than a one-symbol node. Keep the
+  // circle grammar, but size these nodes so $u=3$ and $v=9$ stay on one line.
+  node((0,0), align(center + horizon, box(text(size: 16pt)[$u = 3$])), radius: 11mm, fill: LEAF_FILL, stroke: 1pt + INK)
+  node((1,0), [$(dot)^2$], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 7pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((2,0), align(center + horizon, box(text(size: 16pt)[$v = 9$])), radius: 11mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((3,0), $ell$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 7pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((4,0), $cal(L)$, radius: 7mm, fill: LOSS_FILL, stroke: 1pt + DOWNSTREAM)
   for i in range(4) { edge((i,0),(i + 1,0), "-|>", stroke: 0.9pt + FORWARD) }
-  edge((4,0),(2,0), text(size: 10pt, fill: UPSTREAM)[upstream $=7$], "-|>", bend: 28deg, stroke: 1.15pt + UPSTREAM, label-sep: 6pt)
-  edge((2,0),(0,0), text(size: 10pt, fill: DOWNSTREAM)[downstream $=42$], "-|>", bend: -28deg, stroke: 1.15pt + DOWNSTREAM, label-sep: 6pt)
+  edge((4,0),(2,0), text(size: 10pt, fill: UPSTREAM)[arriving $g_v = 7$], "-|>", bend: 28deg, stroke: 1.15pt + UPSTREAM, label-sep: 6pt)
+  edge((2,0),(0,0), text(size: 10pt, fill: DOWNSTREAM)[returned $g_u = 42$], "-|>", bend: -28deg, stroke: 1.15pt + DOWNSTREAM, label-sep: 6pt)
   node((1,0.7), text(size: 10pt, fill: LOCAL)[local $2u=6$], stroke: none, fill: none)
 }))
 
-// addition merges two values forward and copies one gradient backward
-#let addnode = align(center, diagram(spacing: (20mm, 12mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  node((0,-0.65), $a$, radius: 5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
-  node((0,0.65), $b$, radius: 5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+// Addition merges two values forward and copies one gradient backward. Keep
+// the diagram labels short; the full partial-derivative equations live below.
+#let addnode = align(center, diagram(spacing: (23mm, 13mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0,-0.7), $a$, radius: 5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+  node((0,0.7), $b$, radius: 5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
   node((1,0), $+$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
   node((2,0), $v$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
   node((3,0), $ell$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
   node((4,0), $cal(L)$, radius: 5.5mm, fill: LOSS_FILL, stroke: 1pt + DOWNSTREAM)
-  edge((0,-0.65),(1,0), "-|>", stroke: 0.85pt + FORWARD)
-  edge((0,0.65),(1,0), "-|>", stroke: 0.85pt + FORWARD)
+  edge((0,-0.7),(1,0), "-|>", stroke: 0.85pt + FORWARD)
+  edge((0,0.7),(1,0), "-|>", stroke: 0.85pt + FORWARD)
   edge((1,0),(2,0), "-|>", stroke: 0.85pt + FORWARD)
   edge((2,0),(3,0), "-|>", stroke: 0.85pt + FORWARD)
   edge((3,0),(4,0), "-|>", stroke: 0.85pt + FORWARD)
-  node((1,-0.92), text(size: 10.5pt, fill: FORWARD)[$v=a+b$], stroke: none, fill: none)
-  edge((4,0),(2,0), "-|>", bend: 30deg, stroke: 1.15pt + UPSTREAM,
-    label: text(size: 10pt, fill: UPSTREAM)[upstream $partial cal(L) \/ partial v$], label-sep: 6pt)
-  edge((2,0),(0,-0.65), "-|>", bend: -22deg, stroke: 1.15pt + DOWNSTREAM,
-    label: text(size: 9.5pt)[#downstream[$(partial cal(L))/(partial a)$] $=$ #upstream[$(partial cal(L))/(partial v)$] #localterm[$dot 1$]], label-sep: 5pt)
-  edge((2,0),(0,0.65), "-|>", bend: 22deg, stroke: 1.15pt + DOWNSTREAM,
-    label: text(size: 9.5pt)[#downstream[$(partial cal(L))/(partial b)$] $=$ #upstream[$(partial cal(L))/(partial v)$] #localterm[$dot 1$]], label-sep: 5pt)
+  edge((4,0),(2,0), text(size: 10pt, fill: UPSTREAM)[arriving $g_v$],
+    "-|>", bend: 31deg, stroke: 1.15pt + UPSTREAM, label-sep: 8pt)
+  edge((2,0),(0,-0.7), text(size: 10pt)[#downstream[$g_a$] $=$ #upstream[$g_v$]],
+    "-|>", bend: -25deg, stroke: 1.15pt + DOWNSTREAM, label-sep: 8pt)
+  edge((2,0),(0,0.7), text(size: 10pt)[#downstream[$g_b$] $=$ #upstream[$g_v$]],
+    "-|>", bend: 25deg, stroke: 1.15pt + DOWNSTREAM, label-sep: 8pt)
 }))
 
 // multiplication sends each input the other input during the backward pass
-#let mulnode = align(center, diagram(spacing: (20mm, 12mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  node((0,-0.65), $a$, radius: 5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
-  node((0,0.65), $b$, radius: 5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+#let mulnode = align(center, diagram(spacing: (23mm, 13mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0,-0.7), $a$, radius: 5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
+  node((0,0.7), $b$, radius: 5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
   node((1,0), $times$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
   node((2,0), $v$, radius: 5.5mm, fill: VALUE_FILL, stroke: 1pt + INK)
   node((3,0), $ell$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
   node((4,0), $cal(L)$, radius: 5.5mm, fill: LOSS_FILL, stroke: 1pt + DOWNSTREAM)
-  edge((0,-0.65),(1,0), "-|>", stroke: 0.85pt + FORWARD)
-  edge((0,0.65),(1,0), "-|>", stroke: 0.85pt + FORWARD)
+  edge((0,-0.7),(1,0), "-|>", stroke: 0.85pt + FORWARD)
+  edge((0,0.7),(1,0), "-|>", stroke: 0.85pt + FORWARD)
   edge((1,0),(2,0), "-|>", stroke: 0.85pt + FORWARD)
   edge((2,0),(3,0), "-|>", stroke: 0.85pt + FORWARD)
   edge((3,0),(4,0), "-|>", stroke: 0.85pt + FORWARD)
-  node((1,-0.92), text(size: 10.5pt, fill: FORWARD)[$v=a b$], stroke: none, fill: none)
-  edge((4,0),(2,0), "-|>", bend: 30deg, stroke: 1.15pt + UPSTREAM,
-    label: text(size: 10pt, fill: UPSTREAM)[upstream $partial cal(L) \/ partial v$], label-sep: 6pt)
-  edge((2,0),(0,-0.65), "-|>", bend: -22deg, stroke: 1.15pt + DOWNSTREAM,
-    label: text(size: 9.2pt)[#downstream[$(partial cal(L))/(partial a)$] $=$ #upstream[$(partial cal(L))/(partial v)$] #localterm[$dot b$]], label-sep: 5pt)
-  edge((2,0),(0,0.65), "-|>", bend: 22deg, stroke: 1.15pt + DOWNSTREAM,
-    label: text(size: 9.2pt)[#downstream[$(partial cal(L))/(partial b)$] $=$ #upstream[$(partial cal(L))/(partial v)$] #localterm[$dot a$]], label-sep: 5pt)
+  edge((4,0),(2,0), text(size: 10pt, fill: UPSTREAM)[arriving $g_v$],
+    "-|>", bend: 31deg, stroke: 1.15pt + UPSTREAM, label-sep: 8pt)
+  edge((2,0),(0,-0.7), text(size: 10pt)[#downstream[$g_a$] $=$ #upstream[$g_v$] #localterm[$b$]],
+    "-|>", bend: -25deg, stroke: 1.15pt + DOWNSTREAM, label-sep: 8pt)
+  edge((2,0),(0,0.7), text(size: 10pt)[#downstream[$g_b$] $=$ #upstream[$g_v$] #localterm[$a$]],
+    "-|>", bend: 25deg, stroke: 1.15pt + DOWNSTREAM, label-sep: 8pt)
 }))
 
 // elementwise activation as the same one-input local-rule motif
@@ -266,48 +267,6 @@
   value((6,-0.3), vlabel($e$, [-3]), ("sub", "square"))
   op((7,-0.3), [$(dot)^2$], "square")
   value((8,-0.3), vlabel($cal(L)$, [9]), ("square",), loss: true)
-  edge((0,1.3),(1,0.8), "-|>", stroke: 0.75pt + FORWARD)
-  edge((0,0.3),(1,0.8), "-|>", stroke: 0.75pt + FORWARD)
-  edge((1,0.8),(2,0.8), "-|>", stroke: 0.75pt + FORWARD)
-  edge((2,0.8),(3,0.3), "-|>", stroke: 0.75pt + FORWARD)
-  edge((2,-0.5),(3,0.3), "-|>", stroke: 0.75pt + FORWARD)
-  edge((3,0.3),(4,0.3), "-|>", stroke: 0.75pt + FORWARD)
-  edge((4,0.3),(5,-0.3), "-|>", stroke: 0.75pt + FORWARD)
-  edge((4,-1),(5,-0.3), "-|>", stroke: 0.75pt + FORWARD)
-  edge((5,-0.3),(6,-0.3), "-|>", stroke: 0.75pt + FORWARD)
-  edge((6,-0.3),(7,-0.3), "-|>", stroke: 0.75pt + FORWARD)
-  edge((7,-0.3),(8,-0.3), "-|>", stroke: 0.75pt + FORWARD)
-}))
-
-// Final scalar graph: each value circle shows the saved forward value and the
-// accumulated loss derivative after the reverse sweep.
-#let scalargraph-final = align(center, diagram(spacing: (18mm, 9mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  let vlabel(sym, val, grad) = stack(
-    dir: ttb, spacing: 0pt,
-    sym,
-    text(size: 7.5pt, fill: MUTED)[value #val],
-    text(size: 7.5pt, fill: DOWNSTREAM)[grad #grad],
-  )
-  let value(pos, label, leaf: false, loss: false) = node(
-    pos, label, radius: 7mm,
-    fill: if loss { LOSS_FILL } else if leaf { LEAF_FILL } else { VALUE_FILL },
-    stroke: 0.9pt + (if loss { DOWNSTREAM } else { INK }),
-  )
-  let op(pos, label) = node(pos, label, shape: fletcher.shapes.rect,
-    corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
-
-  value((0,1.3), vlabel($w$, [2], [-18]), leaf: true)
-  value((0,0.3), vlabel($x$, [3], [-12]), leaf: true)
-  op((1,0.8), $times$)
-  value((2,0.8), vlabel($m$, [6], [-6]))
-  value((2,-0.5), vlabel($b$, [1], [-6]), leaf: true)
-  op((3,0.3), $+$)
-  value((4,0.3), vlabel($a$, [7], [-6]))
-  value((4,-1), vlabel($y$, [10], [6]), leaf: true)
-  op((5,-0.3), $-$)
-  value((6,-0.3), vlabel($e$, [-3], [-6]))
-  op((7,-0.3), [$(dot)^2$])
-  value((8,-0.3), vlabel($cal(L)$, [9], [1]), loss: true)
   edge((0,1.3),(1,0.8), "-|>", stroke: 0.75pt + FORWARD)
   edge((0,0.3),(1,0.8), "-|>", stroke: 0.75pt + FORWARD)
   edge((1,0.8),(2,0.8), "-|>", stroke: 0.75pt + FORWARD)
@@ -723,19 +682,17 @@ For every scalar operation $v=f(u)$:
 
 == Example: a square operation #D
 
-For $v = u^2$ at $u = 3$, the forward value is $v = 9$ and the #localterm[local slope is $partial v \/ partial u = 2u = 6$].
+For $v = u^2$ at $u = 3$, the forward value is $v = 9$ and the #localterm[local slope is $partial v \/ partial u = 2u = 6$]. Suppose the rest of the graph sends #upstream[$g_v = partial cal(L) \/ partial v = 7$] back to this square.
 #pause
 #squarenode
 #pause
 #align(center)[#downstream[$(partial cal(L))/(partial u)$] $=$ #upstream[$(partial cal(L))/(partial v)$] $dot$ #localterm[$2u$] $= 7 dot 6 = 42$.]
 #pause
-#result[#downstream[$partial cal(L) \/ partial u = 42$]]
-#pause
 #notebox[The square operation multiplies the #upstream[arriving $partial cal(L) \/ partial v = 7$] by its #localterm[local gradient $2u = 6$] to produce #downstream[$partial cal(L) \/ partial u = 42$].]
 
-== Addition copies; multiplication swaps #D
+== Addition copies the arriving gradient #D
 
-Operation $v = a + b$. #localterm[Local derivatives: $partial v \/ partial a = 1$, $partial v \/ partial b = 1$.]
+Operation $v = a + b$. Let #upstream[$g_v = partial cal(L) \/ partial v$] arrive. #localterm[Local derivatives: $partial v \/ partial a = 1$, $partial v \/ partial b = 1$.]
 #pause
 #addnode
 #pause
@@ -747,9 +704,9 @@ Operation $v = a + b$. #localterm[Local derivatives: $partial v \/ partial a = 1
 #pause
 #result[$+$ copies the #upstream[arriving derivative] into a #downstream[downstream derivative] for every input.]
 
-== Multiplication sends each input the other input #D
+== Multiplication scales by the other input #D
 
-Operation $v = a b$. #localterm[Local derivatives: $partial v \/ partial a = b$, $partial v \/ partial b = a$.]
+Operation $v = a b$. Let #upstream[$g_v = partial cal(L) \/ partial v$] arrive. #localterm[Local derivatives: $partial v \/ partial a = b$, $partial v \/ partial b = a$.]
 #pause
 #mulnode
 #pause
@@ -916,8 +873,16 @@ The symbols $m$, $a$, and $e$ name stored intermediate values. They are circles 
 == The computation graph #V
 
 #scalargraph
-#pause
-#align(center, text(size: 15pt, fill: MUTED)[white circles: given values · gray circles: stored intermediates · blue boxes: operations · orange circle: scalar loss])
+#align(center, {
+  set text(size: 13pt)
+  table(
+    columns: 2, stroke: 0.45pt + MUTED.lighten(45%), inset: (x: 18pt, y: 5pt), align: center,
+    [#text(weight: 700)[Given values] #h(8pt) $w, x, b, y$],
+    [#text(weight: 700, fill: MUTED)[Stored values] #h(8pt) $m, a, e$],
+    [#text(weight: 700, fill: LOCAL)[Operations] #h(8pt) $times, +, -, (dot)^2$],
+    [#text(weight: 700, fill: DOWNSTREAM)[Scalar loss] #h(8pt) $cal(L)$],
+  )
+})
 
 == Forward pass #D
 
@@ -991,9 +956,19 @@ Multiplication operation $m = w x$ *sends the other input*:
 
 == All stored values and their gradients #V
 
-#scalargraph-final
-#pause
-#align(center, text(size: 14.5pt, fill: MUTED)[each circle keeps its symbol, forward value, and final accumulated loss derivative; operation boxes never store a gradient])
+#scalargraph
+#align(center, {
+  set text(size: 12pt)
+  table(
+    columns: 9, stroke: 0.45pt + MUTED.lighten(45%), inset: (x: 5.5pt, y: 4pt), align: center,
+    [#text(weight: 700, fill: MUTED)[forward]], [$w=2$], [$x=3$], [$m=6$], [$b=1$], [$a=7$], [$y=10$], [$e=-3$], [$cal(L)=9$],
+    [#text(weight: 700, fill: DOWNSTREAM)[gradient]],
+    [#downstream[$g_w=-18$]], [#downstream[$g_x=-12$]], [#downstream[$g_m=-6$]], [#downstream[$g_b=-6$]],
+    [#downstream[$g_a=-6$]], [#downstream[$g_y=6$]], [#downstream[$g_e=-6$]], [#downstream[$g_cal(L)=1$]],
+  )
+  v(5pt)
+  text(size: 13pt, fill: MUTED)[$g_q equiv partial cal(L) \/ partial q$; operation boxes apply local rules, while stored values receive accumulated gradients]
+})
 
 == Check with direct calculus #D
 
@@ -1048,51 +1023,6 @@ print([t.grad.item() for t in (L, e, a, m, w, x, b, y)])
 })
 #pause
 #result[reverse mode = direction · backprop = algorithm · autograd = engine: record → save → replay]
-
-== The canonical PyTorch training step #I
-
-#codebox(size: 13.5pt)[```python
-model.train()
-optimizer = torch.optim.SGD(model.parameters(), lr=1e-2)
-
-for x, y in loader:
-    optimizer.zero_grad()        # clear gradients from the previous step
-    y_hat = model(x)             # forward: build this batch's graph
-    loss = loss_fn(y_hat, y)     # one scalar objective
-    loss.backward()              # compute and accumulate parameter gradients
-    optimizer.step()             # update parameters using those gradients
-```]
-#pause
-#result[clear → forward → loss → backward → update]
-
-== What each PyTorch line changes #V
-
-#align(center, table(
-  columns: (62mm, 152mm), stroke: 0.5pt + MUTED,
-  inset: (x: 9pt, y: 6pt), align: (left, left),
-  table.header([*Line*], [*State change*]),
-  [`zero_grad()`], [clears parameter `.grad` buffers; values and parameters are unchanged],
-  [`model(x)`], [computes activations and records the operations used for this batch],
-  [`loss_fn(...)`], [reduces the prediction error to one scalar $cal(L)$],
-  [`loss.backward()`], [runs local rules in reverse and adds into each parameter's `.grad`],
-  [`optimizer.step()`], [updates parameters from `.grad`; it does not compute or clear gradients],
-))
-
-== Why `zero_grad()` is necessary #D
-
-`backward()` adds into each parameter's existing `.grad` buffer.
-#pause
-#align(center, table(
-  columns: (55mm, 72mm, 88mm), stroke: 0.5pt + MUTED,
-  inset: (x: 9pt, y: 7pt), align: (left, left, left),
-  table.header([*Moment*], [*With clearing*], [*Without clearing*]),
-  [after batch A], [`.grad = g_A`], [`.grad = g_A`],
-  [start batch B], [`zero_grad()` → `.grad = 0`], [old `g_A` remains],
-  [after `backward()` on B], [`.grad = g_B`], [`.grad = g_A + g_B`],
-  [`step()` uses], [this batch's gradient], [an unintended mixture of two steps],
-))
-#pause
-#notebox[Accumulation is useful inside one intended window—for branches, several losses, or micro-batches. Clear at the boundary between optimizer steps.]
 
 == Checkpoint: read the sign of a gradient #Q
 
@@ -1358,106 +1288,211 @@ print(x.grad, b.grad)      # tensor([-2., -6.]), tensor(-2.)
 // ═══════════════════════════ PART V — Dense layer ═══════════════════════════
 = From one scalar output to a vector output
 
-== A dense layer stacks affine operations #V
+== A dense layer repeats one familiar neuron #V
 
-Why a vector output? A layer computes several features at once—one affine operation per output.
-#pause
+Every row of $bold(W)$ is one affine neuron. All rows read the same input $bold(x)$.
 #denseforwardgraph
 #pause
-Each output coordinate has its own row of weights:
-$ z_1=bold(w)_1^top bold(x)+b_1, quad z_2=bold(w)_2^top bold(x)+b_2. $
+#grid(
+  columns: 2, gutter: 14pt,
+  neat-card([ROW 1 · neuron 1], [$z_1=bold(w)_1^top bold(x)+b_1$], color: BLUE, width: 103mm),
+  neat-card([ROW 2 · neuron 2], [$z_2=bold(w)_2^top bold(x)+b_2$], color: TEAL, width: 103mm),
+)
 #pause
-Stack the two equations:
-#result[$bold(z)=bold(W)bold(x)+bold(b)$]
+#result[stack the outputs: $bold(z)=bold(W)bold(x)+bold(b)$]
 
-== A $2 times 2$ layer: forward calculation #D
+== Forward, row 1: do one dot product #D
 
-$ bold(x)=mat(2;-1), quad bold(W)=mat(1,3;-2,1), quad bold(b)=mat(0;1). $
+#align(center, text(size: 22pt)[
+  $bold(x)=mat(2;-1), quad bold(w)_1^top=(1,3), quad b_1=0$
+])
 #pause
-Compute one row at a time:
-$ z_1=1(2)+3(-1)+0=-1, $
-$ z_2=-2(2)+1(-1)+1=-4. $
+#align(center, text(size: 29pt, weight: 600)[
+  $z_1 = underbrace(1(2), "first input") + underbrace(3(-1), "second input") + 0 = -1$
+])
 #pause
-#result[$bold(z)=bold(W)bold(x)+bold(b)=mat(-1;-4)$]
+#notebox[Nothing new happened: multiply matching entries, add them, then add the bias.]
+
+== Forward, row 2: repeat, then stack #D
+
+#align(center, text(size: 22pt)[
+  $bold(w)_2^top=(-2,1), quad b_2=1$
+])
 #pause
-The matrix notation only evaluates the two familiar dot products together.
+#align(center, text(size: 29pt, weight: 600)[
+  $z_2 = (-2)(2) + 1(-1) + 1 = -4$
+])
+#pause
+#align(center, text(size: 23pt)[
+  $bold(z)=mat(z_1;z_2)=mat(-1;-4)$
+])
+#pause
+#result[$bold(W)=mat(1,3;-2,1)$ simply stores the two neuron rows together]
 
-== Dense backward: the Jacobian returns a gradient to the input #D
+== Backward starts with one gradient per output #D
 
+Suppose the later loss sends #upstream[$bold(g)_z=partial cal(L)\/partial bold(z)=mat(4;-2)$] back to this layer.
 #densebackgraph
 #pause
-For $bold(z)=bold(W)bold(x)+bold(b)$, the #localterm[local Jacobian with respect to $bold(x)$] is
-$ bold(J)_x = partial bold(z) \/ partial bold(x) = bold(W). $
-#pause
-Let #upstream[$bold(g)_z = partial cal(L) \/ partial bold(z)$] arrive.
-#pause
-#result[input rule: $partial cal(L)\/partial bold(x)=bold(W)^top bold(g)_z$]
-#pause
-#align(center, text(size: 21pt)[
-  $mat(1,-2;3,1) mat(4;-2) = mat(8;10)$
-])
+#grid(
+  columns: 3, gutter: 8pt,
+  neat-card([TO INPUT], [#downstream[$bold(g)_x$] $=$ #localterm[$bold(W)^top$] #upstream[$bold(g)_z$]], color: BLUE, width: 69mm),
+  neat-card([TO WEIGHTS], [#downstream[$bold(g)_W$] $=$ #upstream[$bold(g)_z$] #localterm[$bold(x)^top$]], color: TEAL, width: 69mm),
+  neat-card([TO BIAS], [#downstream[$bold(g)_b$] $=$ #upstream[$bold(g)_z$]], color: ACC, width: 69mm),
+)
 
-== Start with $z_1$: it updates only row 1 of $bold(W)$ #D
+== Input gradient: both outputs contribute and add #D
 
-The first output uses only the first weight row:
-#align(center, text(size: 24pt)[$z_1 = W_(1,1)x_1 + W_(1,2)x_2 + b_1.$])
+Each input coordinate was used by both output neurons, so two paths return to it.
 #pause
-With $bold(x)=mat(2;-1)$, its three local derivatives are just the inputs and $1$. Let #upstream[$g_1=partial cal(L)\/partial z_1=4$] arrive.
+#grid(
+  columns: 2, gutter: 14pt,
+  neat-card([$x_1$ receives], [
+    $4(1)+(-2)(-2)=8$
+    #v(4pt)
+    #text(size: 12pt, fill: MUTED)[from row 1 + from row 2]
+  ], color: BLUE, width: 103mm),
+  neat-card([$x_2$ receives], [
+    $4(3)+(-2)(1)=10$
+    #v(4pt)
+    #text(size: 12pt, fill: MUTED)[from row 1 + from row 2]
+  ], color: TEAL, width: 103mm),
+)
 #pause
-#align(center, table(
-  columns: (38mm, 78mm, 98mm), stroke: 0.5pt + MUTED,
-  inset: (x: 10pt, y: 6pt), align: center,
-  table.header([*Parameter*], [*Local derivative*], [*Gradient sent back*]),
-  [$W_(1,1)$], [#localterm[$partial z_1\/partial W_(1,1)=x_1=2$]], [#downstream[$partial cal(L)\/partial W_(1,1)=4 dot 2=8$]],
-  [$W_(1,2)$], [#localterm[$partial z_1\/partial W_(1,2)=x_2=-1$]], [#downstream[$partial cal(L)\/partial W_(1,2)=4 dot (-1)=-4$]],
-  [$b_1$], [#localterm[$partial z_1\/partial b_1=1$]], [#downstream[$partial cal(L)\/partial b_1=4 dot 1=4$]],
-))
-#pause
-#result[row 1 of $partial cal(L)\/partial bold(W)$ is $(8,-4)$; the first bias gradient is $4$]
-
-== Repeat for $z_2$, then stack the two rows #D
-
-The second output uses only the second weight row:
-#align(center, text(size: 24pt)[$z_2 = W_(2,1)x_1 + W_(2,2)x_2 + b_2.$])
-#pause
-Now #upstream[$g_2=partial cal(L)\/partial z_2=-2$] arrives. Apply the same scalar rule:
-#align(center, table(
-  columns: (38mm, 78mm, 98mm), stroke: 0.5pt + MUTED,
-  inset: (x: 10pt, y: 6pt), align: center,
-  table.header([*Parameter*], [*Local derivative*], [*Gradient sent back*]),
-  [$W_(2,1)$], [#localterm[$partial z_2\/partial W_(2,1)=x_1=2$]], [#downstream[$partial cal(L)\/partial W_(2,1)=-2 dot 2=-4$]],
-  [$W_(2,2)$], [#localterm[$partial z_2\/partial W_(2,2)=x_2=-1$]], [#downstream[$partial cal(L)\/partial W_(2,2)=-2 dot (-1)=2$]],
-  [$b_2$], [#localterm[$partial z_2\/partial b_2=1$]], [#downstream[$partial cal(L)\/partial b_2=-2 dot 1=-2$]],
-))
-#pause
-Stack row 1 above row 2, and stack the two bias gradients:
-#align(center, text(size: 21pt)[
-  #downstream[$(partial cal(L))/(partial bold(W))$] $= mat(8,-4;-4,2)$,
-  #h(9mm)
-  #downstream[$(partial cal(L))/(partial bold(b))$] $= mat(4;-2)$.
+#align(center, text(size: 25pt, weight: 600)[
+  #downstream[$bold(g)_x$] $=$ #localterm[$bold(W)^top$] #upstream[$bold(g)_z$]
+  $=mat(1,-2;3,1)mat(4;-2)=mat(8;10)$
 ])
 #pause
-#result[general rule: $partial cal(L)\/partial W_(i,j)=g_i x_j$]
+#result[the matrix product performs the same branch addition for every input]
 
-== PyTorch verifies the layer calculation #I
+== Weight gradient: one outer product fills the matrix #D
 
-#codebox(size: 13pt)[```python
-import torch
+Output $i$ sends $g_i x_j$ to weight $W_(i,j)$. Writing every pair at once gives an outer product.
+#pause
+#align(center, text(size: 27pt, weight: 600)[
+  #downstream[$bold(g)_W$]
+  $=$ #upstream[$mat(4;-2)$] #localterm[$mat(2,-1)$]
+  $=mat(8,-4;-4,2)$
+])
+#pause
+#grid(
+  columns: 2, gutter: 14pt,
+  neat-card([ROWS FOLLOW OUTPUTS], [row 1 uses $g_1=4$; row 2 uses $g_2=-2$], color: BLUE, width: 103mm),
+  neat-card([BIAS HAS LOCAL DERIVATIVE 1], [#downstream[$bold(g)_b$] $=$ #upstream[$bold(g)_z$] $=mat(4;-2)$], color: ACC, width: 103mm),
+)
+#pause
+#result[shapes: $bold(g)_W in RR^(2 times 2)$ · $bold(g)_b in RR^2$ · $bold(g)_x in RR^2$]
 
-x = torch.tensor([2., -1.], requires_grad=True)
+== A batch reuses the same $bold(W),bold(b)$ three times #V
+
+For each row $bold(x)^(i)$, compute $bold(z)^(i)=bold(W)bold(x)^(i)+bold(b)$ and residual $bold(r)^(i)=bold(z)^(i)-bold(y)^(i)$.
+#pause
+#grid(
+  columns: 3, gutter: 8pt,
+  neat-card([EXAMPLE 1], [
+    $bold(x)=(2,-1)$ #linebreak()
+    $bold(y)=(-5,-2)$ #linebreak()
+    $bold(z)=(-1,-4)$ #linebreak()
+    #upstream[$bold(r)=(4,-2)$]
+  ], color: BLUE, width: 69mm, body-align: left),
+  neat-card([EXAMPLE 2], [
+    $bold(x)=(-1,2)$ #linebreak()
+    $bold(y)=(7,1)$ #linebreak()
+    $bold(z)=(5,5)$ #linebreak()
+    #upstream[$bold(r)=(-2,4)$]
+  ], color: TEAL, width: 69mm, body-align: left),
+  neat-card([EXAMPLE 3], [
+    $bold(x)=(2,2)$ #linebreak()
+    $bold(y)=(7,-2)$ #linebreak()
+    $bold(z)=(8,-1)$ #linebreak()
+    #upstream[$bold(r)=(1,1)$]
+  ], color: ACC, width: 69mm, body-align: left),
+)
+#pause
+#align(center, text(size: 20pt)[
+  $cal(L)=1/3 sum_(i=1)^3 1/2 norm(bold(r)^(i))^2=(10+10+1)/3=7$
+])
+#pause
+#result[one parameter tensor, three forward paths, one mean loss]
+
+== Batch backward: average the three contributions #D
+
+Each example proposes an unscaled weight contribution $bold(G)^(i)=bold(r)^(i)(bold(x)^(i))^top$.
+#pause
+#grid(
+  columns: 3, gutter: 8pt,
+  neat-card([EXAMPLE 1], [$bold(G)^1=mat(8,-4;-4,2)$], color: BLUE, width: 69mm),
+  neat-card([EXAMPLE 2], [$bold(G)^2=mat(2,-4;-4,8)$], color: TEAL, width: 69mm),
+  neat-card([EXAMPLE 3], [$bold(G)^3=mat(2,2;2,2)$], color: ACC, width: 69mm),
+)
+#pause
+#align(center, text(size: 23pt, weight: 600)[
+  #downstream[$bold(g)_W$]
+  $=1/3(bold(G)^1+bold(G)^2+bold(G)^3)=mat(4,-2;-2,4)$
+])
+#pause
+#align(center, text(size: 20pt)[
+  #downstream[$bold(g)_b$] $=1/3(mat(4;-2)+mat(-2;4)+mat(1;1))=mat(1;1)$
+])
+#pause
+#notebox[*Mean* reduction averages example contributions. A *sum* reduction would be exactly three times larger.]
+
+== PyTorch verifies the single example and the batch #I
+
+#codebox(size: 12.2pt)[```python
+X = torch.tensor([[ 2., -1.], [-1., 2.], [2., 2.]])
+Y = torch.tensor([[-5., -2.], [ 7., 1.], [7., -2.]])
 W = torch.tensor([[1., 3.], [-2., 1.]], requires_grad=True)
 b = torch.tensor([0., 1.], requires_grad=True)
 
-z = W @ x + b
-z.backward(torch.tensor([4., -2.]))  # arriving dL/dz
+Z = X @ W.T + b
+loss = 0.5 * ((Z - Y)**2).sum(dim=1).mean()
+loss.backward()
 
-print(z)       # tensor([-1., -4.])
-print(W.grad)  # [[ 8., -4.], [-4.,  2.]]
-print(b.grad)  # [4., -2.]
-print(x.grad)  # [8., 10.]
+print(loss.item())  # 7.0
+print(W.grad)        # [[ 4., -2.], [-2.,  4.]]
+print(b.grad)        # [1., 1.]
 ```]
 #pause
-#notebox[The gradient of every tensor has the same shape as that tensor: $bold(W)$ and $partial cal(L) \/ partial bold(W)$ are both $2 times 2$.]
+#notebox[
+  Run the #link(NB + "03_dense_layer_batch_autograd.ipynb")[Dense + Batch Colab ↗] to reveal every example's outer product and verify that three correctly scaled micro-batches equal the full-batch gradient.
+]
+
+== The training loop now has a concrete batch #I
+
+#codebox(size: 13pt)[```python
+for X, Y in loader:
+    optimizer.zero_grad()       # clear the previous update's buffers
+    Z = model(X)                # all examples reuse the same parameters
+    loss = loss_fn(Z, Y)        # reduce example losses to one scalar
+    loss.backward()             # aggregate this batch's contributions
+    optimizer.step()            # update once
+```]
+#pause
+#align(center, table(
+  columns: (52mm, 162mm), stroke: 0.5pt + MUTED,
+  inset: (x: 9pt, y: 5pt), align: (left, left),
+  [`zero_grad()`], [starts one intentional update window],
+  [`model(X)`], [records one graph whose rows share the same parameters],
+  [`loss.backward()`], [returns the reduction's sum or mean parameter gradient],
+  [`step()`], [uses that gradient; it neither computes nor clears it],
+))
+#pause
+#result[clear → batch forward → scalar loss → batch backward → update]
+
+== Accumulate within an update; clear between updates #D
+
+#align(center, table(
+  columns: (62mm, 76mm, 78mm), stroke: 0.5pt + MUTED,
+  inset: (x: 8pt, y: 6pt), align: (left, left, left),
+  table.header([*Situation*], [*What accumulates*], [*Correct boundary*]),
+  [three examples in one mean loss], [three path contributions in one backward pass], [divide by $B=3$ through the loss reduction],
+  [three micro-batches for one update], [three scaled `.backward()` calls in `.grad`], [clear once before the first; step once after the third],
+  [the next optimizer update], [must not inherit the old update's gradient], [`zero_grad()` before its forward pass],
+))
+#pause
+#notebox[Branch addition, batch aggregation, and `.grad += ...` share the same mathematics—but the intended update window determines when to clear.]
 
 // ═══════════════════════════ PART VI — MLP ═══════════════════════════
 = A tiny neural network

@@ -30,8 +30,9 @@ By the end, students should be able to:
 4. explain why gradients add at a branch and why implementations accumulate with `+=`;
 5. reproduce the four derivatives of `L=(wx+b-y)^2` for the lecture's numeric example;
 6. check a derivative with a central finite difference;
-7. map graph concepts to `Tensor`, `grad_fn`, `backward()`, and `.grad`; and
-8. read the shapes of scalar, vector, and matrix gradients without materializing a full Jacobian.
+7. map graph concepts to `Tensor`, `grad_fn`, `backward()`, and `.grad`;
+8. read one row of a dense layer as one neuron, then compute `dx`, `dW`, and `db` from an arriving vector; and
+9. explain why examples sharing `W,b` add gradient contributions, how a mean loss scales that sum, and when microbatch accumulation equals full-batch backprop.
 
 ## Honest evidence route: construct → calculate → verify
 
@@ -44,6 +45,8 @@ Keep the status of each piece of evidence explicit.
 | Direct symbolic derivatives | **independent algebraic check** | Backprop agrees with differentiating the composed expression directly. |
 | Central finite differences | **numerical diagnostic** | A few coordinates agree approximately with the analytic result; this is a check, not a training method. |
 | PyTorch outputs | **executed software evidence** | Autograd returns the same derivatives on the same graph and accumulates repeated backward calls. |
+| Two-output dense layer | **constructed teaching example** | `z=Wx+b` is two familiar neurons stacked; exact VJPs expose `dx`, `dW`, and `db`. |
+| Three-example dense batch | **constructed and exactly computed** | Shared-parameter contributions add, the declared mean reduction divides by three, and scaled microbatches equal one full-batch backward pass. |
 | Computation-graph drawings | **explanatory diagrams** | Dependency and reverse-flow structure; they are not empirical measurements. |
 
 This sequence matters pedagogically: students first predict a result, calculate it by hand, and only then let PyTorch verify it. Avoid presenting a printed code output as proof when the notebook can execute the check and assert the result.
@@ -108,7 +111,7 @@ Backward ledger:
 
 Have students predict the sign of the `w` update. With `eta=0.01`, gradient descent gives `w=2.18`, `b=1.06`, prediction `7.60`, and loss `5.76`, down from `9`. State the limited claim: one sufficiently small step lowers this constructed loss; backprop itself does not choose the learning rate.
 
-### 54–66 min · Two notebook checks
+### 54–62 min · Hand calculation meets autograd
 
 #### Notebook A · Manual scalar backprop
 
@@ -130,14 +133,32 @@ Companion: [`01_manual_scalar_backprop.ipynb`](https://colab.research.google.com
 
 Companion: [`02_autograd_scalar.ipynb`](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/02_autograd_scalar.ipynb)
 
-### 66–76 min · Scalars to vectors and a tiny MLP
+### 62–76 min · One neuron → dense layer → shared batch
 
-- Use shapes before formulas: scalar-to-scalar derivative, vector-to-scalar gradient, vector-to-vector Jacobian.
-- Show `x_bar = J^T y_bar` as the vector version of upstream × local.
-- For an affine map, connect the reverse rules to `dW`, `db`, and `dx`.
-- Trace one gradient through dense → ReLU → dense. Do not expand every large Jacobian; the point is that VJPs avoid doing so.
+Slow the transition down and keep the same visual grammar:
 
-If time is short, show one dense-layer calculation and omit the longer coordinate expansion. Never cut the scalar graph, branch accumulation, or the hand-to-autograd verification.
+1. Treat row 1 of `W` as one familiar neuron: one dot product plus one bias.
+2. Add row 2 and stack the two stored outputs into `z=Wx+b`.
+3. Explicitly state that the later loss sends `g_z=(4,-2)` back to this layer.
+4. Return `g_x=W^Tg_z`, `g_W=g_zx^T`, and `g_b=g_z`; read the shapes before the numbers.
+5. Keep `W,b` fixed and let three examples use them. Compute each outer-product contribution before adding.
+6. Name the scalar reduction: `L=(1/3)Σ_i ½||z_i-y_i||²`. Therefore the shared gradients are the **mean** of the three contributions.
+7. Finish by accumulating three losses scaled by `1/3` and matching one full-batch backward call.
+
+Use `x=(2,-1)`, `W=[[1,3],[-2,1]]`, and `b=(0,1)` throughout the single-example calculation. It gives `z=(-1,-4)`; with arriving `g_z=(4,-2)`, the exact returns are `g_x=(8,10)`, `g_W=[[8,-4],[-4,2]]`, and `g_b=(4,-2)`.
+
+#### Notebook C · Dense layer and a batch
+
+1. Predict the first output from row 1 before revealing the dot product.
+2. Stack the second row and verify `z=Wx+b`.
+3. Calculate the vector backward rules and let PyTorch reproduce every entry.
+4. Inspect all three per-example `g_i x_i^T` contributions.
+5. Compare their sum with the gradient of the declared mean loss.
+6. Accumulate three correctly scaled microbatches and assert exact agreement with the full batch.
+
+Companion: [`03_dense_layer_batch_autograd.ipynb`](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/03_dense_layer_batch_autograd.ipynb)
+
+If time is short, compute the first example and the final mean on the board, then let Notebook C expose the other two contributions. Never skip the distinction between a per-example contribution, its sum, and the reduction used by the scalar loss.
 
 ### 76–80 min · Exit ticket
 
@@ -147,8 +168,9 @@ Ask students to answer without code:
 2. If a value feeds two downstream operations, what combines at that value?
 3. What does `optimizer.step()` do that `loss.backward()` does not?
 4. Why is a central finite difference useful for checking but unsuitable for training a million-parameter model?
+5. If three examples share `W` and the loss uses a mean, how is `W.grad` related to the three per-example gradients?
 
-Expected answers: identity derivative; the two path contributions add; it changes parameter values using already-computed gradients; it needs two extra forward passes per checked coordinate and is approximate.
+Expected answers: identity derivative; the two path contributions add; it changes parameter values using already-computed gradients; it needs two extra forward passes per checked coordinate and is approximate; `W.grad` is the sum of the contributions divided by three.
 
 ## Teach it like this
 
@@ -197,6 +219,9 @@ From `dL/dw=-18` and `dL/db=-6`, calculate the `eta=0.01` update before revealin
 - **They think autograd is symbolic algebra.** It differentiates the operations that actually executed and applies their local rules in reverse.
 - **They expect every intermediate tensor to expose `.grad`.** Leaf gradients are retained by default; intermediate gradients need `retain_grad()` when inspected for teaching or debugging.
 - **They forget accumulation between optimizer steps.** `backward()` adds to `.grad`; `zero_grad()` clears the boundary between intended updates.
+- **They see a matrix multiply as one opaque rule.** Read each row of `W` as one neuron first; only then stack the outputs.
+- **They invent the dense layer's arriving gradient.** Say where it comes from: the later loss sends the vector `g_z` back, just as the square example was given an upstream scalar.
+- **They mix sum and mean reductions.** Shared paths always add. A mean loss scales that sum by the batch size; one-example microbatches must use the same overall scaling to match a full batch.
 - **They call a successful finite-difference check a proof.** It is a numerical diagnostic at chosen coordinates and tolerances, not a proof of a whole implementation.
 
 ## If a student asks
@@ -213,13 +238,11 @@ From `dL/dw=-18` and `dL/db=-6`, calculate the `eta=0.01` update before revealin
 - The manual notebook reports forward values `6, 7, -3, 9` and gradients `w=-18`, `b=-6`, `x=-12`, `y=6`.
 - Its central differences agree with all four gradients within the declared tolerance.
 - With `eta=0.01`, the notebook reports prediction `7.60` and loss `5.76 < 9`.
-- The autograd notebook executes top to bottom, reproduces the same four leaf gradients, and demonstrates accumulation on fresh graphs.
-- The public Lecture 4 row links the handout and both exact `notebooks/L03/` Colabs.
-- Do not add a presentation link until the source, handout, and progressive artifact are a reproducible committed set.
-
-### Known source/handoff issue
-
-Public Lecture 4 retains legacy repository names: the source is `lecture3/L3-backprop.typ`, the handout is `slides-pdf/L3.pdf`, and the companions are under `notebooks/L03/`. In the 2026-08-12 working tree, the source and handout both have uncommitted revisions. Treat them as an in-progress pair: do not regenerate, commit, or advertise a presentation artifact from only one side. When deck ownership completes the revision, commit the source and both PDFs together, visually inspect them, and only then add `L3-presentation.pdf` to the public row.
+- The scalar autograd notebook executes top to bottom, reproduces the tracked `w,b` leaf gradients, and demonstrates accumulation on fresh graphs.
+- The dense/batch notebook executes top to bottom with sequential counts and zero errors. It reports `z=(-1,-4)`, `g_x=(8,10)`, `g_W=[[8,-4],[-4,2]]`, and `g_b=(4,-2)` for the single example.
+- For its three-example mean loss, it reports `L=7`, per-example `dW` contributions `[[8,-4],[-4,2]]`, `[[2,-4],[-4,8]]`, and `[[2,2],[2,2]]`, then `W.grad=[[4,-2],[-2,4]]` and `b.grad=(1,1)`.
+- Three losses scaled by `1/3` accumulate to exactly the same `W.grad` and `b.grad` as one full-batch backward call.
+- The public Lecture 4 row links the handout, presentation, and all three exact `notebooks/L03/` Colabs.
 
 ## Closing line
 
