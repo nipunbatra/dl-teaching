@@ -986,9 +986,9 @@ Examples:
 
 ---
 
-### Slide 38 — Interactive 5: MLP decision boundaries
+### Slide 38 — Interactive 5: ReLU classification and approximation
 
-Demo: [ReLU Playground](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/)
+Demo: [ReLU Lab](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/)
 
 Datasets:
 
@@ -996,27 +996,36 @@ Datasets:
 - four-point Boolean XOR;
 - densely filled quadrant XOR;
 - circles;
-- spirals.
+- spirals;
+- custom points placed on the plot.
 
 Controls:
 
 - simple ReLU hidden units;
 - number of layers;
 - training steps;
-- learning rate.
+- learning rate;
+- fixed-knot construction versus training from random weights.
 
 Show:
 
 - decision boundary;
 - train loss;
 - accuracy;
-- hidden unit activations.
+- hidden unit activations;
+- 3-D output-score surface;
+- target curve, ReLU approximation, and pointwise gap.
 
 Question:
 
 > Why can two constructed ReLUs be 4/4 on the Boolean corners yet paint the
 > wrong regions when the square is densely filled? What changes when we add
 > hidden units or layers?
+
+Then switch to **Function approximation**. Increase the fixed-knot construction
+from 2 to 5 to 15 segments before training anything. Ask why this is evidence
+for representational existence but not evidence that gradient descent will find
+the same weights.
 
 ---
 
@@ -1335,9 +1344,9 @@ Skim slides **8, 17, 43, 46** if short on time.
 4. `softmax-regression.html`  
    Multi-class logits, softmax probabilities, linear decision regions.
 
-5. [ReLU Playground](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/)
-   Four-point versus filled XOR, circles, and spirals with simple ReLU units and
-   visible decision regions.
+5. [ReLU Lab](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/)
+   Custom and standard classification datasets, hidden ReLU maps, a 3-D score
+   surface, and constructive-versus-trained one-dimensional approximation.
 
 6. `function-approximation.html`  
    ReLU MLP approximating 1D target functions.

@@ -2028,21 +2028,19 @@ Universal approximation does *not* promise:
 #place(bottom + center, dy: -2pt,
   result[Modern networks usually need both: enough width per stage and enough depth to compose stages.])
 
-== Interactive: train simple ReLUs like Playground #I
+== Interactive lab: ReLU geometry and approximation #I
 
 #interbox(link-to: IA + "mlp-decision-boundary")[
-  Compare a linear model with a simple ReLU MLP on *four XOR points / filled XOR / circles / moons / spirals*.
-  Watch hidden-unit activation maps, the output decision field, and the 3-D logit surface.
-  Controls: dataset · width/depth · train/pause · single step · reset/reseed.
+  *CLASSIFY* — four XOR points, filled XOR, standard datasets, or points you place yourself. \
+  *APPROXIMATE* — tent, sine, smooth targets, or a curve you draw. \
+  *INSPECT* — each ReLU, the 3-D score surface, and the approximation gap.
 ]
-#pause
 #v(7pt)
 #align(center, text(size: 17pt)[
-  Start with the lecture preset on four points. Then switch to filled quadrants, train from a new seed, and watch how width, depth, and optimization change the learned boundary.
+  First load a constructed rule. Then train the same width from a random seed. Change only one of: data, width, depth, or optimization.
 ])
-#pause
 #place(bottom + center, dy: -2pt,
-  result[The hand-built lecture preset is *4/4 on the Boolean inputs*; that is not a claim about learning every point in the filled XOR regions.])
+  result[Keep three claims separate: the data shown, the functions the network can represent, and what training actually finds.])
 
 // ═══════════════════════════ PART IX — Connecting to practice ═══════════════════════════
 = Connecting to deep-learning practice

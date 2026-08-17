@@ -101,9 +101,13 @@ $0.5\leq x_1+x_2\leq1.5$ and agrees on 75% of the square, despite retaining 4/4
 on the corners. Finish with the four-ReLU identity
 $|u-v|-|u+v|$, where $u=x_1-0.5$ and $v=x_2-0.5$, and verify its sign away from
 the two axes. Use the
-[ReLU Playground](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/)
-to switch among points, XOR, circles, and spirals; keep “constructed rule” and
-“optimizer run” as separate claims.
+[ReLU Lab](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/)
+in two passes. In **Classification**, compare four XOR points with the filled
+field, then place a few custom points and inspect the hidden-unit maps and 3-D
+score surface. In **Function approximation**, load a fixed-knot construction,
+increase the number of segments, and only then switch to random-weight training.
+Keep “constructed rule,” “representable function,” and “optimizer run” as three
+separate claims.
 
 ### 57–70 min · Universal approximation via hinges
 
@@ -114,6 +118,9 @@ gap over the entire displayed region. Stress that these curves use fixed knots
 and are not trained results. Finish by reading the theorem in order and dwelling
 on the existence warning:
 existence is not learnability, data efficiency, or generalization.
+Use the lab's sine or drawn-target view to make this distinction visible: the
+fixed-knot construction demonstrates existence, while the trained view shows
+what one particular initialization and optimizer run finds.
 
 ### 70–77 min · Width versus depth
 
