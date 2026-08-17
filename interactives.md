@@ -26,7 +26,8 @@ live controls) + a `meta.json` (slug, title, tagline, summary, difficulty, tags,
 | 1 | | MAP = likelihood × prior (contours, MLE/MAP/0, Gaussian vs Laplace) | `map-regularization` | LIVE |
 | 2 | Linear → MLP | linear-regression & GD, activations, softmax | `optimizer-race`, `softmax-temperature`, `vanishing-gradients` | LIVE |
 | 2 | | universal approximation | `universal-approximation` | LIVE |
-| 2 | | [ReLU Lab](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/) (standard/custom classification data; hidden ReLUs and 3-D scores; constructive/trained 1-D approximation) | `mlp-decision-boundary` | LIVE |
+| 2 | | [ReLU Classification Lab](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/) (datasets and custom points; constructed/random/trained models; logit/probability/class; signed contributions; movable 3-D surface) | `mlp-decision-boundary` | LIVE |
+| 2 | | [ReLU Approximation Lab](https://nipunbatra.github.io/interactive-articles/relu-function-approximation/) (construction/training lanes; targets and custom drawing; knots and width; residual, grid metrics, and signed terms) | `relu-function-approximation` | LIVE |
 | 3A | Calculus Toolkit | gradient field & descent, curvature | `optimizer-race` | LIVE |
 | 3A | | tangent line / local linear approx | `derivative-tangent` | LIVE |
 | 3A | | surface slices (∂/∂x, ∂/∂y) | `surface-partials` | LIVE |
@@ -61,8 +62,8 @@ The backlog is empty — there are **no `(to build)` interactives left** in any 
 Built this cycle (all CDP-verified in Brave via `interactive-articles/scripts/verify-interactive.mjs`):
 
 - **L1 ×4** — `likelihood-to-loss`, `softmax-cross-entropy`, `bayes-classifier`, `map-regularization`
-- **L2 ×1** — `mlp-decision-boundary` (ReLU Lab: compare constructed and
-  trained classifiers, then fixed-knot and trained function approximation)
+- **L2 ×2** — `mlp-decision-boundary` (classification) and
+  `relu-function-approximation` (construction versus training)
 - **L3A ×3** — `derivative-tangent`, `surface-partials`, `jacobian-local-map`
 - **L7 ×2** — `weight-decay`, `augmentation-mixup`
 - **L8 ×2** — `pooling-visualizer`, `padding-stride`

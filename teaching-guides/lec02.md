@@ -100,14 +100,13 @@ The same logit depends only on $x_1+x_2$, so it paints the diagonal band
 $0.5\leq x_1+x_2\leq1.5$ and agrees on 75% of the square, despite retaining 4/4
 on the corners. Finish with the four-ReLU identity
 $|u-v|-|u+v|$, where $u=x_1-0.5$ and $v=x_2-0.5$, and verify its sign away from
-the two axes. Use the
-[ReLU Lab](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/)
-in two passes. In **Classification**, compare four XOR points with the filled
-field, then place a few custom points and inspect the hidden-unit maps and 3-D
-score surface. In **Function approximation**, load a fixed-knot construction,
-increase the number of segments, and only then switch to random-weight training.
-Keep “constructed rule,” “representable function,” and “optimizer run” as three
-separate claims.
+the two axes. Open the
+[ReLU Classification Lab](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/):
+compare the four XOR corners with filled XOR, then try the other datasets or add
+your own points. Load a constructed rule before a random start or training run;
+switch the learned view among logit, probability, and class; inspect each signed
+hidden-unit contribution; and rotate the 3-D logit surface. Keep “constructed
+rule” and “optimizer run” as separate claims.
 
 ### 57–70 min · Universal approximation via hinges
 
@@ -118,9 +117,13 @@ gap over the entire displayed region. Stress that these curves use fixed knots
 and are not trained results. Finish by reading the theorem in order and dwelling
 on the existence warning:
 existence is not learnability, data efficiency, or generalization.
-Use the lab's sine or drawn-target view to make this distinction visible: the
-fixed-knot construction demonstrates existence, while the trained view shows
-what one particular initialization and optimizer run finds.
+Use the
+[ReLU Approximation Lab](https://nipunbatra.github.io/interactive-articles/relu-function-approximation/)
+to make this distinction visible. In **Construction**, choose a target or draw
+one, then change the knots and width while watching the residual, dense-grid
+error, maximum grid gap, and signed ReLU terms. In **Training**, keep the target
+and width fixed so students can compare the constructed interpolant with what
+one initialization and optimizer run finds.
 
 ### 70–77 min · Width versus depth
 

@@ -986,46 +986,36 @@ Examples:
 
 ---
 
-### Slide 38 — Interactive 5: ReLU classification and approximation
+### Slide 38 — Interactive 5: ReLU classification
 
-Demo: [ReLU Lab](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/)
+Demo: [ReLU Classification Lab](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/)
 
 Datasets:
 
-- linearly separable;
 - four-point Boolean XOR;
 - densely filled quadrant XOR;
-- circles;
-- spirals;
+- blobs, circles, moons, and spirals;
 - custom points placed on the plot.
 
 Controls:
 
-- simple ReLU hidden units;
-- number of layers;
-- training steps;
-- learning rate;
-- fixed-knot construction versus training from random weights.
+- dataset and data seed;
+- model width and depth;
+- constructed rule, random start, or training run;
+- training steps and learning rate.
 
 Show:
 
-- decision boundary;
-- train loss;
-- accuracy;
-- hidden unit activations;
-- 3-D output-score surface;
-- target curve, ReLU approximation, and pointwise gap.
+- learned logit, probability, or class;
+- loss and accuracy;
+- each signed hidden-unit contribution;
+- movable 3-D logit surface.
 
 Question:
 
 > Why can two constructed ReLUs be 4/4 on the Boolean corners yet paint the
 > wrong regions when the square is densely filled? What changes when we add
 > hidden units or layers?
-
-Then switch to **Function approximation**. Increase the fixed-knot construction
-from 2 to 5 to 15 segments before training anything. Ask why this is evidence
-for representational existence but not evidence that gradient descent will find
-the same weights.
 
 ---
 
@@ -1131,26 +1121,26 @@ Examples:
 
 ### Slide 44 — Interactive 6: function approximation
 
-Demo: `function-approximation.html`
+Demo: [ReLU Approximation Lab](https://nipunbatra.github.io/interactive-articles/relu-function-approximation/)
 
 Controls:
 
-- target function: sine, square wave, polynomial, custom;
-- hidden units;
-- layers;
-- activation;
-- training iterations.
+- lane: construction or training;
+- target: sine, tent, two bumps, smooth step, or a drawn curve;
+- knots and width;
+- training steps in the training lane.
 
 Show:
 
-- target function;
-- network approximation;
-- residual;
-- number of parameters.
+- target, approximation, and residual;
+- error on the training points and a dense grid;
+- maximum grid gap;
+- signed ReLU terms on a shared scale.
 
 Question:
 
-> Does more expressivity always mean easier optimization?
+> A construction proves that suitable weights exist. Does the training lane
+> find equally good weights from this initialization?
 
 ---
 
@@ -1344,11 +1334,12 @@ Skim slides **8, 17, 43, 46** if short on time.
 4. `softmax-regression.html`  
    Multi-class logits, softmax probabilities, linear decision regions.
 
-5. [ReLU Lab](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/)
-   Custom and standard classification datasets, hidden ReLU maps, a 3-D score
-   surface, and constructive-versus-trained one-dimensional approximation.
+5. [ReLU Classification Lab](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/)
+   Standard and custom datasets, constructed and trained rules, signed hidden
+   contributions, and a movable 3-D logit surface.
 
-6. `function-approximation.html`  
-   ReLU MLP approximating 1D target functions.
+6. [ReLU Approximation Lab](https://nipunbatra.github.io/interactive-articles/relu-function-approximation/)
+   Construction and training lanes for one-dimensional targets, with editable
+   knots, residuals, grid metrics, and signed ReLU terms.
 
 Framework: **Typst + Touying for slides; standalone JS demos on GitHub Pages.**

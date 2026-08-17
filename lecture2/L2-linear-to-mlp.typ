@@ -990,6 +990,27 @@ Explore large positive and negative logits, where sigmoid's derivative becomes t
 #place(bottom + center, dy: -2pt,
   result[#text(size: 16.5pt)[Our two-unit construction is exact on the *four Boolean inputs*. A Playground-style dataset fills the quadrants and also asks the optimizer to discover the weights.]])
 
+== Interactive: four points or four regions? #I
+
+#interbox(link-to: IA + "mlp-decision-boundary")[
+  Open the *ReLU classification lab*. Keep the model fixed while you switch from the four XOR corners to filled XOR.
+]
+#v(7pt)
+#align(center, grid(
+  columns: (1fr, 1fr, 1fr), gutter: 7pt,
+  neat-card([1 · compare the data], [
+    four XOR corners $arrow.r$ filled XOR
+  ], color: TEAL, width: 68mm),
+  neat-card([2 · compare the rules], [
+    two-ReLU corner rule $arrow.r$ four-ReLU field rule
+  ], color: BLUE, width: 68mm),
+  neat-card([3 · inspect the function], [
+    logit map, signed ReLU terms, and a rotatable 3-D surface
+  ], color: ACC, width: 68mm),
+))
+#place(bottom + center, dy: -2pt,
+  result[Then reset and train: representation tells us what is possible; optimization determines what is found.])
+
 == First derive the feature functions for a general input #D
 
 #align(center, text(size: 20pt)[
@@ -1524,28 +1545,26 @@ $ h_j(x)="ReLU"(w_j x+b_j), quad g(x)=c+sum_j v_j h_j(x). $
 #place(bottom + center, dy: -2pt,
   result[Inside one activation pattern, pairwise score ties are straight; across ReLU hinges they join into piecewise-linear boundaries in input space.])
 
-== Interactive: place and combine bends #I
+== Interactive: build or learn a function #I
 
-#interbox(link-to: "https://nipunbatra.github.io/dl-teaching/interactives/relu-function-builder.html")[
-  Follow the same sequence as the slides: *one hinge $arrow.r$ tent $arrow.r$ smooth target $arrow.r$ binary classifier*.
+#interbox(link-to: IA + "relu-function-approximation")[
+  Open the *ReLU function lab*. Construction and training answer different questions, so the lab keeps them in separate lanes.
 ]
-#v(9pt)
-#align(center, text(size: 21pt, weight: 650)[$g_j(x)=v_j "ReLU"(x-t_j)$])
 #v(7pt)
 #align(center, grid(
-  columns: (91mm, 91mm), gutter: 14pt,
-  neat-card([where is the bend?], [
-    #text(size: 18pt, weight: 700, fill: BLUE)[$t_j$] \
-    #text(size: 16.5pt)[moves the hinge left or right]
-  ], color: BLUE, width: 91mm),
-  neat-card([what does the bend do?], [
-    #text(size: 18pt, weight: 700, fill: ACC)[$v_j$] \
-    #text(size: 16.5pt)[sets its direction and strength]
-  ], color: ACC, width: 91mm),
+  columns: (1fr, 1fr, 1fr), gutter: 7pt,
+  neat-card([construct], [
+    choose a target and drag the hinge locations
+  ], color: TEAL, width: 68mm),
+  neat-card([train], [
+    keep the width fixed, reset the seed, and optimize
+  ], color: BLUE, width: 68mm),
+  neat-card([inspect], [
+    learned function, residual, grid gap, and signed ReLU terms
+  ], color: ACC, width: 68mm),
 ))
-#pause
 #place(bottom + center, dy: -2pt,
-  result[Add bends to trace a target; when their sum is a logit $z(x)$, the predicted class changes where $z=0$.])
+  result[More hinges increase representational freedom; the residual shows what the chosen construction or training run still misses.])
 
 == First fix the target and the input region #V
 
@@ -2027,20 +2046,6 @@ Universal approximation does *not* promise:
 #pause
 #place(bottom + center, dy: -2pt,
   result[Modern networks usually need both: enough width per stage and enough depth to compose stages.])
-
-== Interactive lab: ReLU geometry and approximation #I
-
-#interbox(link-to: IA + "mlp-decision-boundary")[
-  *CLASSIFY* — four XOR points, filled XOR, standard datasets, or points you place yourself. \
-  *APPROXIMATE* — tent, sine, smooth targets, or a curve you draw. \
-  *INSPECT* — each ReLU, the 3-D score surface, and the approximation gap.
-]
-#v(7pt)
-#align(center, text(size: 17pt)[
-  First load a constructed rule. Then train the same width from a random seed. Change only one of: data, width, depth, or optimization.
-])
-#place(bottom + center, dy: -2pt,
-  result[Keep three claims separate: the data shown, the functions the network can represent, and what training actually finds.])
 
 // ═══════════════════════════ PART IX — Connecting to practice ═══════════════════════════
 = Connecting to deep-learning practice
