@@ -42,8 +42,8 @@ Keep the status of each piece of evidence explicit.
 |---|---|---|
 | `x=3, w=2, b=1, y=10` | **constructed teaching example** | A graph small enough to audit end to end; it is not a dataset or benchmark. |
 | Forward values and hand derivatives | **exactly computed** | The chain rule, local rules, signs, and branch accumulation. |
-| Direct symbolic derivatives | **independent algebraic check** | Backprop agrees with differentiating the composed expression directly. |
-| Central finite differences | **numerical diagnostic** | A few coordinates agree approximately with the analytic result; this is a check, not a training method. |
+| Symbolic differentiation | **formula-to-formula calculus** | Keeping the variables symbolic—by hand or in a computer-algebra system—produces a derivative formula before any values are substituted. |
+| Central finite differences | **numerical diagnostic** | A few coordinates approximately match the derivative value from symbolic differentiation and autodiff; this is a check, not a training method. |
 | PyTorch outputs | **executed software evidence** | Autograd returns the same derivatives on the same graph and accumulates repeated backward calls. |
 | Two-output dense layer | **constructed teaching example** | `z=Wx+b` is two familiar neurons stacked; exact VJPs expose `dx`, `dW`, and `db`. |
 | Three-example dense batch | **constructed and exactly computed** | Shared-parameter contributions add, the declared mean reduction divides by three, and scaled microbatches equal one full-batch backward pass. |
@@ -57,7 +57,9 @@ This sequence matters pedagogically: students first predict a result, calculate 
 
 - Reconnect to the Lecture 2 model: `x → f_theta(x) → y_hat → L`.
 - Establish the diagram grammar: circles store values, boxes transform them, arrows show dependencies.
-- Compare symbolic differentiation, central differences, and reverse-mode autodiff. All can estimate the same derivative, but only reverse mode returns every parameter sensitivity in one sweep from a scalar loss.
+- Compare symbolic differentiation, central differences, and reverse-mode autodiff by naming what each consumes and returns. Symbolic differentiation transforms one formula into another formula. Finite differences probe nearby function values to approximate one derivative value. Reverse-mode AD records the operations that executed and propagates derivative values backward through their local rules.
+
+Speaker line: “Pen and paper is a medium, not a differentiation method. I can do symbolic differentiation or a small reverse sweep on paper; a computer can do either one too.”
 
 Board question: “If a model has one million parameters and one scalar loss, why is perturbing every parameter twice a poor training algorithm?”
 
@@ -117,7 +119,7 @@ Have students predict the sign of the `w` update. With `eta=0.01`, gradient desc
 
 1. Predict all stored forward values.
 2. Fill the reverse ledger before running the backward cell.
-3. Compare with direct calculus.
+3. Compare with symbolic differentiation: derive the general formula first, then substitute the numbers.
 4. Run the central-difference check for `w`, `b`, `x`, and `y`.
 5. Execute the `eta=0.01` update and assert that the new loss is smaller.
 
@@ -216,7 +218,8 @@ From `dL/dw=-18` and `dL/db=-6`, calculate the `eta=0.01` update before revealin
 - **They overwrite a branch contribution.** Use `+=`, not `=`; each downstream path contributes one term.
 - **They forget the reverse seed.** `dL/dL=1` starts the sweep.
 - **They confuse a value with the operation that produced it.** Values store forward numbers and gradients; operation nodes store a local backward rule and any forward values that rule needs.
-- **They think autograd is symbolic algebra.** It differentiates the operations that actually executed and applies their local rules in reverse.
+- **They equate symbolic with pen and paper.** Symbolic describes formula-to-formula manipulation, whether a person or a computer-algebra system performs it. A reverse sweep can also be worked by hand.
+- **They think autograd is symbolic algebra.** Autograd does not normally construct or simplify a general derivative formula. It records the operations that executed and evaluates their local derivative rules in reverse at the current values.
 - **They expect every intermediate tensor to expose `.grad`.** Leaf gradients are retained by default; intermediate gradients need `retain_grad()` when inspected for teaching or debugging.
 - **They forget accumulation between optimizer steps.** `backward()` adds to `.grad`; `zero_grad()` clears the boundary between intended updates.
 - **They see a matrix multiply as one opaque rule.** Read each row of `W` as one neuron first; only then stack the outputs.
@@ -227,11 +230,12 @@ From `dL/dw=-18` and `dL/db=-6`, calculate the `eta=0.01` update before revealin
 ## If a student asks
 
 - **“Why reverse mode?”** A scalar loss has one output but possibly millions of parameters. One reverse sweep returns sensitivities for all of them; forward-mode would be attractive for few inputs and many outputs instead.
+- **“Is symbolic differentiation just the analytical method we use on paper?”** It is the analytical, formula-to-formula method often used on paper, but paper is not essential. A computer-algebra system can symbolically derive the same formula. Conversely, we can execute a tiny reverse-mode graph by hand without making it symbolic differentiation.
 - **“Does PyTorch build the same graph every time?”** It records the operations executed in that forward pass. Python control flow can therefore produce a different dynamic graph on the next pass.
 - **“Why save forward values?”** Many local derivatives need them: multiplication needs the other operand, square needs its input, and an activation may need its pre-activation or output.
 - **“Why does the target have a derivative in the board example?”** We track it to audit the complete graph. Ordinary supervised training treats targets as fixed data, so they do not require gradients.
 - **“Is backprop the optimizer?”** No. Backprop computes gradients. The optimizer applies an update using those gradients and its own state.
-- **“Why not use finite differences everywhere?”** They are approximate and require two additional loss evaluations for every checked coordinate. Use them sparsely to debug analytic or autodiff gradients.
+- **“Why not use finite differences everywhere?”** They are approximate and require two additional loss evaluations for every checked coordinate. Use them sparsely to debug symbolic or autodiff derivative values.
 
 ## Instructor verification checklist
 

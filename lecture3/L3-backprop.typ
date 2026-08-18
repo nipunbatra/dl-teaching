@@ -241,17 +241,24 @@
 }))
 
 // full scalar graph with one operation boxed for the staged backward derivation
-#let scalargraph-focus(stage) = align(center, diagram(spacing: (16mm, 7mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  let vlabel(sym, num) = stack(dir: ttb, spacing: 0pt, sym, text(size: 7.5pt, fill: MUTED)[#num])
+#let scalargraph-focus(stage) = align(center, diagram(spacing: (18mm, 9mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  // A symbol and its stored number are two distinct visual lines. Explicit
+  // sizes and spacing keep their baselines apart inside a projector-sized node.
+  let vlabel(sym, num) = stack(
+    dir: ttb,
+    spacing: 1.5pt,
+    align(center, text(size: 14pt)[#sym]),
+    align(center, text(size: 9.5pt, fill: MUTED)[#num]),
+  )
   let value(pos, label, keys, leaf: false, loss: false) = {
     let active = keys.contains(stage)
     let fill-color = if loss { LOSS_FILL } else if leaf { LEAF_FILL } else { VALUE_FILL }
     let base-stroke = if loss { DOWNSTREAM } else { INK }
-    node(pos, label, radius: 5.3mm, fill: fill-color,
+    node(pos, label, radius: 7mm, fill: fill-color,
       stroke: if active { 1.7pt + LOCAL } else { 0.9pt + base-stroke })
   }
   let op(pos, label, key) = node(pos, label, shape: fletcher.shapes.rect,
-    corner-radius: 4pt, inset: 5pt,
+    corner-radius: 4pt, inset: 6pt,
     fill: if stage == key { LOCAL.lighten(82%) } else { OP_FILL },
     stroke: if stage == key { 1.8pt + LOCAL } else { 0.9pt + LOCAL })
 
@@ -570,25 +577,25 @@ Last time, an MLP turned an input into a prediction and then one scalar loss. To
 
 == One derivative, three routes #D
 
-Use the same scalar example throughout:
+*Symbolic = formula $arrow.r$ formula.* A person or a computer-algebra system may do the algebra.
 $ cal(L) = (w x + b - y)^2, quad (w,x,b,y)=(2,3,1,10). $
 #pause
 #align(center, table(
   columns: (42mm, 86mm, 88mm), stroke: 0.5pt + MUTED,
-  inset: (x: 9pt, y: 7pt), align: (left, left, left),
-  table.header([*Route*], [*Computation*], [*For this example*]),
-  [symbolic], [differentiate the whole expression], [$(partial cal(L))/(partial w)=2(w x+b-y)x=-18$],
-  [#uncover("2-")[finite difference]], [#uncover("2-")[probe $w plus.minus epsilon$]], [#uncover("2-")[$(cal(L)(2.01)-cal(L)(1.99))/(2 epsilon) approx -18$]],
-  [#uncover("3-")[reverse mode]], [#uncover("3-")[reuse the local derivative of every operation]], [#uncover("3-")[$(-6) dot 3=-18$]],
+  inset: (x: 9pt, y: 4.5pt), align: (left, left, left),
+  table.header([*Route*], [*What it does*], [*What it returns here*]),
+  [#uncover("2-")[symbolic]], [#uncover("2-")[derive a formula]], [#uncover("2-")[$(partial cal(L))/(partial w)=2(w x+b-y)x$; substitute $arrow.r -18$]],
+  [#uncover("3-")[finite difference]], [#uncover("3-")[evaluate $cal(L)(w plus.minus epsilon)$]], [#uncover("3-")[approximate number at $w=2$: $-18$]],
+  [#uncover("4-")[reverse-mode AD]], [#uncover("4-")[run local rules backward]], [#uncover("4-")[number for this run: $(-6) dot 3=-18$]],
 ))
 #pause
 #pause
 #pause
-#result[Same derivative; different computation.]
+#result[formula · approximate value · reverse sweep through the executed graph]
 
 == Gradient checking: compare one coordinate two ways #I
 
-Autodiff gives an analytic gradient; central difference gives an independent numerical estimate:
+Reverse-mode AD computes the derivative from local rules, up to floating-point arithmetic. Central difference independently approximates the same value:
 $g_("FD") = (cal(L)(theta_j + epsilon) - cal(L)(theta_j - epsilon)) /(2 epsilon).$
 #pause
 #codebox(size: 11.5pt)[```python
@@ -610,9 +617,9 @@ print(g_fd, g_ad)  # both approximately -18
   columns: (42mm, 58mm, 66mm, 50mm), stroke: 0.5pt + MUTED,
   inset: (x: 8pt, y: 7pt), align: (left, left, left, left),
   table.header([*Method*], [*Exact?*], [*Cost for $P$ parameters*], [*Use it for*]),
-  [symbolic], [yes], [expression-dependent; algebra can grow], [reasoning],
+  [symbolic], [exact formula before numerical evaluation], [expression-dependent; algebra can grow], [deriving / reasoning],
   [#uncover("2-")[finite difference]], [#uncover("2-")[approximate]], [#uncover("2-")[$2P$ loss evaluations]], [#uncover("2-")[checking]],
-  [#uncover("3-")[reverse mode]], [#uncover("3-")[up to floating point]], [#uncover("3-")[one reverse sweep for scalar $cal(L)$]], [#uncover("3-")[training]],
+  [#uncover("3-")[reverse mode]], [#uncover("3-")[exact local rules; floating-point values]], [#uncover("3-")[one reverse sweep for scalar $cal(L)$]], [#uncover("3-")[training]],
 ))
 #pause
 #pause
@@ -809,7 +816,7 @@ The nudge experiment generalizes. If $x$ influences $cal(L)$ through $u_1, dots,
 
 Let $u = x^2$, #h(0.4em) $v = 3x$, #h(0.4em) $cal(L) = u + v = x^2 + 3x$.
 #pause
-By direct calculus:
+By symbolic differentiation — derive the formula first:
 $ (partial cal(L))/(partial x) = 2x + 3, quad "at" x = 4: quad 2(4) + 3 = 11. $
 #pause
 Now let us get the *same* answer by backprop.
@@ -958,27 +965,35 @@ Multiplication operation $m = w x$ *sends the other input*:
 
 #scalargraph
 #align(center, {
-  set text(size: 12pt)
+  set text(size: 14pt)
   table(
-    columns: 9, stroke: 0.45pt + MUTED.lighten(45%), inset: (x: 5.5pt, y: 4pt), align: center,
-    [#text(weight: 700, fill: MUTED)[forward]], [$w=2$], [$x=3$], [$m=6$], [$b=1$], [$a=7$], [$y=10$], [$e=-3$], [$cal(L)=9$],
+    columns: (34mm, 42mm, 42mm, 42mm, 42mm),
+    stroke: 0.45pt + MUTED.lighten(45%), inset: (x: 7pt, y: 4.5pt), align: center,
+    table.header([*first half*], [$w$], [$x$], [$m$], [$b$]),
+    [#text(weight: 700, fill: MUTED)[forward value]], [$2$], [$3$], [$6$], [$1$],
     [#text(weight: 700, fill: DOWNSTREAM)[gradient]],
     [#downstream[$g_w=-18$]], [#downstream[$g_x=-12$]], [#downstream[$g_m=-6$]], [#downstream[$g_b=-6$]],
+  )
+  v(8pt)
+  table(
+    columns: (34mm, 42mm, 42mm, 42mm, 42mm),
+    stroke: 0.45pt + MUTED.lighten(45%), inset: (x: 7pt, y: 4.5pt), align: center,
+    table.header([*second half*], [$a$], [$y$], [$e$], [$cal(L)$]),
+    [#text(weight: 700, fill: MUTED)[forward value]], [$7$], [$10$], [$-3$], [$9$],
+    [#text(weight: 700, fill: DOWNSTREAM)[gradient]],
     [#downstream[$g_a=-6$]], [#downstream[$g_y=6$]], [#downstream[$g_e=-6$]], [#downstream[$g_cal(L)=1$]],
   )
-  v(5pt)
-  text(size: 13pt, fill: MUTED)[$g_q equiv partial cal(L) \/ partial q$; operation boxes apply local rules, while stored values receive accumulated gradients]
 })
 
-== Check with direct calculus #D
+== Check with symbolic differentiation #D
 
-Differentiate $cal(L) = (w x + b - y)^2$ directly. With $w x + b - y = -3$:
+Keep $w,x,b,y$ symbolic, derive the formulas, and only then substitute $w x + b - y = -3$:
 #pause
 $ (partial cal(L))/(partial w) = 2(w x + b - y) x = 2(-3)(3) = -18 quad checkmark $
 #pause
 $ (partial cal(L))/(partial b) = 2(w x + b - y) = 2(-3) = -6 quad checkmark $
 #pause
-#result[Backprop and symbolic calculus give the same derivatives.]
+#result[Backprop and the symbolic formulas agree at this point.]
 
 == PyTorch executes the same graph #I
 
