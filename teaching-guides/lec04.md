@@ -135,34 +135,48 @@ Companion: [`01_manual_scalar_backprop.ipynb`](https://colab.research.google.com
 
 Companion: [`02_autograd_scalar.ipynb`](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/02_autograd_scalar.ipynb)
 
-### 62–76 min · One neuron → dense layer → shared batch
+### 62–70 min · One neuron → a dense-layer VJP
 
 Slow the transition down and keep the same visual grammar:
 
 1. Treat row 1 of `W` as one familiar neuron: one dot product plus one bias.
 2. Add row 2 and stack the two stored outputs into `z=Wx+b`.
 3. Explicitly state that the later loss sends `g_z=(4,-2)` back to this layer.
-4. Return `g_x=W^Tg_z`, `g_W=g_zx^T`, and `g_b=g_z`; read the shapes before the numbers.
-5. Keep `W,b` fixed and let three examples use them. Compute each outer-product contribution before adding.
-6. Name the scalar reduction: `L=(1/3)Σ_i ½||z_i-y_i||²`. Therefore the shared gradients are the **mean** of the three contributions.
-7. Finish by accumulating three losses scaled by `1/3` and matching one full-batch backward call.
+4. Reuse the scalar affine rule for output row `i`: `x_j` receives `g_i W_ij`, `W_ij` receives `g_i x_j`, and `b_i` receives `g_i`.
+5. Add the two returns to the shared input, then recognize `(g_x)_j=Σ_i g_iW_ij` as `g_x=W^Tg_z`.
+6. Stack the two separate parameter rows to obtain `g_W=g_zx^T`; each bias has local derivative one, so `g_b=g_z`.
+7. Only after the coordinate derivation, verify operand shapes with generic `m,d`. Shape matching checks the transpose and multiplication order; it is not the derivation.
 
 Use `x=(2,-1)`, `W=[[1,3],[-2,1]]`, and `b=(0,1)` throughout the single-example calculation. It gives `z=(-1,-4)`; with arriving `g_z=(4,-2)`, the exact returns are `g_x=(8,10)`, `g_W=[[8,-4],[-4,2]]`, and `g_b=(4,-2)`.
+
+### 70–78 min · From one example to a batch
+
+Keep the operations familiar and introduce only one new idea at a time:
+
+1. State the convention switch explicitly: an individual `x^(n)` is a `d×1` column, while a framework stacks example transposes as rows `X∈R^(B×d)`.
+2. Show `Z=XW^T+1_Bb^T`, or `X @ W.T + b` in PyTorch. Batching adds an example axis; every row still reuses the same `W,b`.
+3. Walk the three-row ledger in order: `x^(n) → z^(n) → y^(n) → r^(n) → ell_n`. Point out that `r^(1)=(4,-2)` is exactly the arriving vector from the preceding single-example calculation.
+4. Derive the missing bridge: for `ell_n=1/2||z^(n)-y^(n)||²`, `∂ell_n/∂z^(n)=r^(n)`. Since `L=(ell_1+ell_2+ell_3)/3`, the batch arrival is `G_Z=R/3`.
+5. Reuse the single-example dense rules on example 1 before exposing the other rows. Its unscaled returns are `G_W^(1)=[[8,-4],[-4,2]]`, `g_b^(1)=(4,-2)`, and `g_x^(1)=(8,10)`; the mean-loss contribution is each divided by three.
+6. Add the three paths into the shared parameters, then apply the mean: `g_W=[[4,-2],[-2,4]]` and `g_b=(1,1)`. Keep the two operations verbally distinct: **paths add; the reduction scales**.
+7. Stack only at the end: `g_W=G_Z^T X`, `g_b=G_Z^T1_B`, and `g_X=G_ZW`. The rows of `g_X` remain separate because the three inputs are distinct graph values.
+8. Contrast sum and mean reductions. The local dense rule is unchanged; only the upstream scale differs by `B=3`.
 
 #### Notebook C · Dense layer and a batch
 
 1. Predict the first output from row 1 before revealing the dot product.
 2. Stack the second row and verify `z=Wx+b`.
-3. Calculate the vector backward rules and let PyTorch reproduce every entry.
-4. Inspect all three per-example `g_i x_i^T` contributions.
-5. Compare their sum with the gradient of the declared mean loss.
-6. Accumulate three correctly scaled microbatches and assert exact agreement with the full batch.
+3. Derive the coordinate rules, expose the two row contributions to `g_x`, then let PyTorch reproduce every entry.
+4. Audit the `X,Z,Y,R,ell` ledger and verify `Z.grad=R/3` for the declared mean loss.
+5. Inspect all three per-example `r^(n)(x^(n))^T` contributions before averaging them.
+6. Verify `X.grad=RW/3`; unlike shared `W,b`, distinct input rows do not add into one another.
+7. Accumulate three correctly scaled microbatches and assert exact agreement with the full batch.
 
 Companion: [`03_dense_layer_batch_autograd.ipynb`](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/03_dense_layer_batch_autograd.ipynb)
 
-If time is short, compute the first example and the final mean on the board, then let Notebook C expose the other two contributions. Never skip the distinction between a per-example contribution, its sum, and the reduction used by the scalar loss.
+If time is short, compute the first example and the final mean on the board, then let Notebook C expose the other two contributions. Treat microbatch equivalence as an extension. Never skip the residual derivative, the row/column convention, or the distinction between a per-example contribution, its sum, and the reduction used by the scalar loss.
 
-### 76–80 min · Exit ticket
+### 78–80 min · Exit ticket
 
 Ask students to answer without code:
 
@@ -224,6 +238,8 @@ From `dL/dw=-18` and `dL/db=-6`, calculate the `eta=0.01` update before revealin
 - **They forget accumulation between optimizer steps.** `backward()` adds to `.grad`; `zero_grad()` clears the boundary between intended updates.
 - **They see a matrix multiply as one opaque rule.** Read each row of `W` as one neuron first; only then stack the outputs.
 - **They invent the dense layer's arriving gradient.** Say where it comes from: the later loss sends the vector `g_z` back, just as the square example was given an upstream scalar.
+- **They treat shape matching as a proof.** Derive the coordinate returns first. Shapes verify orientation and expose a bad transpose, but several wrong formulas can share the same numeric shape when `m=d=2`.
+- **They mix single-example columns with batch rows.** Keep `x^(n)` as `d×1`, but state that PyTorch stacks `(x^(n))^T` into `X∈R^(B×d)`; this is why the batch forward is `XW^T+b`.
 - **They mix sum and mean reductions.** Shared paths always add. A mean loss scales that sum by the batch size; one-example microbatches must use the same overall scaling to match a full batch.
 - **They call a successful finite-difference check a proof.** It is a numerical diagnostic at chosen coordinates and tolerances, not a proof of a whole implementation.
 
@@ -244,7 +260,9 @@ From `dL/dw=-18` and `dL/db=-6`, calculate the `eta=0.01` update before revealin
 - With `eta=0.01`, the notebook reports prediction `7.60` and loss `5.76 < 9`.
 - The scalar autograd notebook executes top to bottom, reproduces the tracked `w,b` leaf gradients, and demonstrates accumulation on fresh graphs.
 - The dense/batch notebook executes top to bottom with sequential counts and zero errors. It reports `z=(-1,-4)`, `g_x=(8,10)`, `g_W=[[8,-4],[-4,2]]`, and `g_b=(4,-2)` for the single example.
+- It shows why the formulas hold: two row contributions add into `g_x`, while separate weight rows stack into `g_W`; generic operand shapes then verify the result.
 - For its three-example mean loss, it reports `L=7`, per-example `dW` contributions `[[8,-4],[-4,2]]`, `[[2,-4],[-4,8]]`, and `[[2,2],[2,2]]`, then `W.grad=[[4,-2],[-2,4]]` and `b.grad=(1,1)`.
+- It verifies `Z.grad=R/3` and `X.grad=[[8/3,10/3],[-10/3,-2/3],[-1/3,4/3]]` for the mean reduction.
 - Three losses scaled by `1/3` accumulate to exactly the same `W.grad` and `b.grad` as one full-batch backward call.
 - The public Lecture 4 row links the handout, presentation, and all three exact `notebooks/L03/` Colabs.
 

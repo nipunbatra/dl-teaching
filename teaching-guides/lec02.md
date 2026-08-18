@@ -5,28 +5,36 @@
 ## The spine
 
 Lecture 1 chose losses from probability; Lecture 2 expands the prediction rule
-$f_\theta(x)$. Start with one affine score, show exactly why affine layers alone
-cannot represent XOR, then build and verify one two-unit ReLU MLP before widening
-the scope from four Boolean points to filled quadrant regions. Use that contrast
-to motivate a four-ReLU regional construction before widening the view to
-universal approximation, depth, minibatches, and a parameter update.
+$f_\theta(x)$. Begin with one affine score, show exactly why affine layers alone
+cannot represent XOR, and then build and verify one two-unit ReLU MLP. Change the
+dataset from four Boolean corners to filled XOR regions so that students learn to
+separate a model construction from a broader task claim. ReLU hinges then lead to
+universal approximation, followed by one concise account of depth as composition.
+End with the handoff
+
+$$
+\text{representation}\rightarrow\text{loss}\rightarrow
+\text{backpropagation}\rightarrow\text{optimizer}.
+$$
 
 ## What students should leave able to do
 
-- Track the dimensions of a weighted sum, a batch matrix multiplication, and a
+- Track the dimensions of a weighted sum, a data-matrix multiplication, and a
   two-layer MLP.
 - Separate the affine pre-activation $u$ from the activation $h=\phi(u)$.
-- Explain why stacking linear layers still gives a linear map and why XOR defeats
-  a single straight decision boundary.
+- Explain why stacking affine layers still gives an affine map and why XOR
+  defeats a single straight decision boundary.
 - Evaluate the deck's exact two-ReLU XOR network on all four Boolean inputs.
 - Explain why that same rule becomes a diagonal band over a filled square, and
-  distinguish its 75% area agreement from the four-point 4/4 result.
-- Read the four-ReLU regional construction as two competing absolute values.
+  distinguish its 75% area agreement from its 4/4 corner result.
+- Read the four-ReLU regional XOR rule as a second, task-specific construction.
 - State the universal-approximation claim without turning existence into a claim
   about learnability or generalization.
-- Explain width as feature variety and depth as staged composition.
-- Trace one practical forward pass from inputs to class scores, softmax, loss, a
-  minibatch, and one numerical parameter update.
+- Explain width as parallel feature variety and depth as sequential composition.
+- Count the trainable scalars in a two-layer MLP using
+  $m(d+1)+K(m+1)$.
+- Connect a richer representation to the familiar loss, then identify
+  backpropagation and optimization as the next two steps.
 
 ## Evidence language for this lecture
 
@@ -36,50 +44,53 @@ derivation, `Q/A` is a prediction-and-reveal pair, `I` is an interactive, and
 
 | Material | Honest evidence label | How to say it |
 |---|---|---|
-| Weighted-sum, batch, neuron, XOR, loss, parameter-count, and update arithmetic | **Computed from displayed values** | “Let us verify the numbers.” |
+| Weighted-sum, matrix, neuron, XOR, loss, and parameter-count arithmetic | **Computed from displayed values** | “Let us verify the numbers.” |
 | Four Boolean XOR inputs and the exact two-unit weights | **Constructed teaching example** | “These weights are chosen to fit the four truth-table points; an optimizer did not discover them here.” |
-| Filled-square 75% check and exact four-ReLU regional rule | **Constructed + computed** | “This changes the dataset from four corners to four filled regions, then checks both fixed rules on a dense grid.” |
-| Linear-regression notebook data | **Synthetic data; computed fit** | “This checks the algorithm against the closed-form solution on seeded synthetic data.” |
+| Filled-square 75% check and exact four-ReLU regional rule | **Constructed + computed** | “We changed the dataset from four corners to four filled regions, then checked both fixed rules on a dense grid.” |
+| Linear-regression notebook data | **Synthetic data; computed fit** | “This checks gradient descent against the closed-form solution on seeded synthetic data.” |
 | Universal approximation | **Mathematical representation result** | “Approximating weights exist; the theorem does not promise that training finds them.” |
-| Node diagrams, decision-region sketches, and practical image pipeline | **Schematic** | “This diagram explains structure; it is not a measured model trace.” |
-| Vision/audio/text depth hierarchy graphics | **Conceptual schematic** | “This is one plausible compositional story, not observed activations.” |
+| Decision-region, node, and vision-hierarchy graphics | **Schematic** | “This diagram explains structure; it is not a measured model trace.” |
 
 Do not call either XOR construction a learned result, silently transfer the
-two-ReLU 4/4 claim to a filled-square dataset, call the synthetic regression a
-real-data experiment, or treat the hierarchy graphics as evidence of what a
-trained model actually represents.
+two-ReLU 4/4 claim to the filled-square dataset, call the synthetic regression a
+real-data experiment, or treat the vision hierarchy as evidence of what a
+particular trained model represents.
 
-## 85-minute route through the current deck
+## 80-minute route through the current deck
 
-### 0–6 min · Retrieve Lecture 1 and change only the prediction rule
+### 0–5 min · Retrieve Lecture 1 and change only the prediction rule
 
 Use “Lecture 1 chose the loss; Lecture 2 expands the prediction rule” as the
-handoff. Keep $\hat y=f_\theta(x)$ visible and tell students that the loss and
-training loop can remain while the function class becomes richer.
+handoff. Keep $\hat y=f_\theta(x)$ visible. The loss can remain unchanged while
+the function class becomes richer.
 
-### 6–18 min · Linear starting point
+### 5–15 min · Linear starting point
 
-Work through the single weighted sum, every contribution entering the node, the
-labelled batch matrix, the matrix multiplication, and the bias-as-ones column.
-Close with the regression slide: one affine rule is one flat trend. Make students
-say the shapes aloud before revealing them.
+Work from one weighted-sum node to the labelled data matrix, one batched matrix
+multiplication, and the bias-as-ones column. Make students say the shapes aloud.
+Close with the regression geometry: one affine rule can tilt and shift a line or
+plane, but it cannot bend. The deck links the
+[Linear GD Colab](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L02/01_linear_regression_gd.ipynb)
+on this slide; use it as a pre-class check or a short live follow-up rather than
+interrupting the conceptual route.
 
-### 18–31 min · From a score to a neuron
+### 15–25 min · From a score to a neuron
 
-Separate the two stages: $u=w^Tx+b$, then $h=\phi(u)$. Compare sigmoid/tanh with
-ReLU/GELU, use the saturation calculation to give “locally flat” a numerical
-meaning, and ask the linear-layers question before revealing that two affine maps
-collapse to one. Use the activation interactive only after the algebraic point is
-secure.
+Separate the two stages: $u=w^Tx+b$, then $h=\phi(u)$. Compare bounded switches
+with ReLU/GELU ramps, and use the saturation calculation to make “locally flat”
+numerical. Ask the linear-layers question before revealing that two affine maps
+collapse into one. Open the activation explorer only after the algebraic point
+is secure.
 
-### 31–42 min · Where one weighted sum fails
+### 25–35 min · Where one weighted sum fails
 
 Draw the binary straight boundary and let students try to separate XOR. Then
-connect the same geometry to multiclass scores: score ties live on flat sets, and
-only the top-scoring tie is a visible boundary. The five explicit inputs are a
-calculation, not a dataset benchmark.
+connect the same geometry to multiclass scores: score ties lie on flat sets, and
+only the top-scoring portion of a tie is a visible decision boundary. The five
+explicit inputs are a calculation, not a benchmark. If time is tight, shorten
+the numerical multiclass example; preserve the straight-boundary idea.
 
-### 42–57 min · Build exact four-point XOR, then change the dataset
+### 35–52 min · Build exact four-point XOR, then change the task
 
 Keep the same network throughout:
 
@@ -89,129 +100,144 @@ h_2=\operatorname{ReLU}(x_1+x_2-1),\qquad
 z=2h_1-4h_2-1.
 $$
 
-Verify all four rows, derive both hidden functions before substituting an input,
-then compute the output probability and loss. The hidden-space coordinate slide
-is the payoff: the nonlinearity changes the representation so one output node can
-separate the cases. Say explicitly that the weights are constructed and the
-forward values are computed.
+Verify all four rows. Derive the two hidden functions before substituting one
+input, then compute the output probability and loss. The hidden-space coordinate
+slide is the payoff: the nonlinear map creates a representation that one output
+node can separate. At the architecture slide, pause on
+$m(d+1)+K(m+1)$: each neuron contributes its incoming weights plus one bias.
 
-Then make the scope change visible: fill the square with quadrant-XOR points.
+Next, make the scope change explicit: fill the square with quadrant-XOR points.
 The same logit depends only on $x_1+x_2$, so it paints the diagonal band
-$0.5\leq x_1+x_2\leq1.5$ and agrees on 75% of the square, despite retaining 4/4
-on the corners. Finish with the four-ReLU identity
-$|u-v|-|u+v|$, where $u=x_1-0.5$ and $v=x_2-0.5$, and verify its sign away from
-the two axes. Open the
-[ReLU Classification Lab](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/):
-compare the four XOR corners with filled XOR, then try the other datasets or add
-your own points. Load a constructed rule before a random start or training run;
-switch the learned view among logit, probability, and class; inspect each signed
-hidden-unit contribution; and rotate the 3-D logit surface. Keep “constructed
-rule” and “optimizer run” as separate claims.
+$0.5\le x_1+x_2\le1.5$ and agrees on 75% of the square even though it retains
+4/4 on the four corners. The deck links the
+[XOR Colab](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L02/02_mlp_xor.ipynb)
+at this comparison.
 
-### 57–70 min · Universal approximation via hinges
+Open the
+[ReLU Classification Lab](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/).
+Compare four XOR corners with filled XOR while holding the rule fixed. Then
+compare the two-ReLU corner rule with the four-ReLU regional construction. Use
+the logit map, signed hidden-unit contributions, and rotatable 3-D surface to ask
+what function the network represents. Reset before training so “constructed
+rule” and “optimizer run” remain separate claims.
 
-Frame one precise question, build a ReLU hinge, and assemble the tent function.
-The single three-panel **constructed-interpolant** comparison makes the
-qualitative point that more hinges reduce the worst gap; `sup` means the largest
-gap over the entire displayed region. Stress that these curves use fixed knots
-and are not trained results. Finish by reading the theorem in order and dwelling
-on the existence warning:
-existence is not learnability, data efficiency, or generalization.
+### 52–67 min · Universal approximation via hinges
+
+Frame one precise question, build shifted ReLU hinges, and assemble the tent
+function interval by interval. The 2-D fold and piecewise-linear classification
+slides extend the same idea beyond a scalar input without starting a separate
+technical detour.
+
+For the approximation claim, fix the target and compact region first, define one
+pointwise vertical gap, and only then explain `sup` as the worst gap over the
+whole region. The three-panel interpolant comparison is **constructed, not
+trained**. Read the theorem in quantifier order and dwell on the warning:
+existence is not learnability, data efficiency, compactness, or generalization.
+
 Use the
 [ReLU Approximation Lab](https://nipunbatra.github.io/interactive-articles/relu-function-approximation/)
-to make this distinction visible. In **Construction**, choose a target or draw
-one, then change the knots and width while watching the residual, dense-grid
-error, maximum grid gap, and signed ReLU terms. In **Training**, keep the target
-and width fixed so students can compare the constructed interpolant with what
-one initialization and optimizer run finds.
+to keep construction and training distinct. In **Construction**, move knots or
+change width while watching the function, residual, maximum grid gap, and signed
+ReLU terms. In **Training**, hold the target and width fixed so students can see
+what one initialization and optimizer run actually finds.
 
-### 70–77 min · Width versus depth
+### 67–76 min · Width versus depth
 
-Use the node view first: width adds parallel features; depth composes features in
-stages. Work the clipped nonlinear ramp so “composition” is an operation, not a
-metaphor. The vision, audio, and text hierarchy images are **schematic only**—not
-model activations, feature visualizations, probes, or measurements. Phrase them as
-possible hierarchies, never as proof that a particular network learned those
-features.
+Use the node view first: width adds parallel features; depth passes one learned
+representation into the next. The two composition slides make that statement
+concrete:
 
-### 77–85 min · Connect to deep-learning practice
+$$
+h_1(x)=\operatorname{ReLU}(2x+1),\qquad
+h_2(x)=\operatorname{ReLU}(2-h_1(x)).
+$$
 
-Trace the image forward pass in order: flatten, one pattern test, 128 hidden
-features, class scores, softmax, label-selected loss. Then stack examples into a
-minibatch, count both affine layers' parameters, and complete the single numerical
-update. Close on the deck's final sentence: training changes the parameters, not
-the architecture.
+Read the two axes carefully—layer 2 receives $h_1$, not raw $x$—then combine the
+maps into the three input regions. The vision slide is the only hierarchy
+example retained: strokes may combine into loops, which may support digit
+evidence. Call it a conceptual schematic, not an activation visualization.
 
-If limited to 70 minutes, shorten the multiclass boundary example and treat the
-three-panel interpolant comparison as a quick visual read. Do not cut the
-all-four-row XOR verification, the UAT existence caveat, or the
-minibatch-to-update ending.
+### 76–80 min · From representation to learning
+
+Use the single closing diagram. Hidden layers produce features and class scores;
+Lecture 1 supplies the loss. Lecture 3 will compute how each parameter affected
+that loss, and the optimizer will use those gradients to change the parameters.
+Keep this to one slide: its purpose is a clean transition to backpropagation.
+
+If limited to 70 minutes, shorten the multiclass numerical example and the
+constructed-interpolant comparison. Do not cut the all-four-row XOR check, the
+four-points-versus-filled-regions distinction, or the UAT existence caveat.
 
 ## Board checkpoints
 
 1. **Shapes:** $(m\times d)(d\times1)\to(m\times1)$, then
    $(K\times m)(m\times1)\to(K\times1)$.
-2. **Why linear depth collapses:**
+2. **Why affine depth collapses:**
    $W_2(W_1x+b_1)+b_2=(W_2W_1)x+(W_2b_1+b_2)$.
 3. **Exact XOR table:** calculate $h_1,h_2,z,\hat y$ for all four rows and use
    $\hat y=1$ when $z\ge0$.
 4. **XOR scope check:** draw the two-ReLU diagonal band over the filled square,
-   then contrast it with the four-ReLU quadrant boundary.
-5. **One hinge/tent interval:** make the piecewise behavior visible before using
-   the phrase “universal approximation.”
-6. **One parameter update:** identify the old value, gradient, learning rate, and
-   new value; do not let the arithmetic obscure which parameter changed.
+   then contrast it with the four-ReLU quadrant rule.
+5. **One hinge/tent interval:** make the slope change visible before using the
+   phrase “universal approximation.”
+6. **Parameter count:** identify $md+m$ parameters in the hidden layer and
+   $Km+K$ in the output layer.
+7. **Learning handoff:** representation $\to$ loss $\to$ backpropagation
+   $\to$ optimizer.
 
-## Notebook choreography
+## Notebook and interactive choreography
 
 ### `notebooks/L02/01_linear_regression_gd.ipynb`
 
 - Use after the linear-regression slides or as a pre-class companion.
 - The points are seeded **synthetic** observations from $y=2x+1+\epsilon$.
-- Run gradient descent, then reveal the closed-form solution and the numerical
+- Run gradient descent, then reveal the closed-form solution and their numerical
   agreement. This is an algorithm check, not real-world validation.
-- The loss curve supports the claim that this run converged; it does not establish
-  that gradient descent always converges for every objective.
+- The deck's “flat trend” slide contains the direct Colab link.
 
 ### `notebooks/L02/02_mlp_xor.ipynb`
 
-- Use immediately after the deck's all-four-input XOR table.
-- Instantiate the **same exact two-hidden-unit weights as the deck** and
-  print $x_1,x_2,h_1,h_2,z,\hat y,y$ for all four rows. Agreement must be 1.00.
-- Extend that fixed rule to a dense filled-square XOR grid: show its diagonal
-  band and compute 0.750 agreement.
-- Construct $|u-v|-|u+v|$ from four ReLUs and verify 1.000 agreement on a dense
-  grid after explicitly excluding the boundary axes.
+- Use immediately after the four-points-versus-filled-regions comparison.
+- Instantiate the **same exact two-hidden-unit weights as the deck** and print
+  $x_1,x_2,h_1,h_2,z,\hat y,y$ for all four rows. Agreement must be 1.00.
+- Extend that fixed rule to a dense filled-square XOR grid and verify 0.750
+  agreement.
+- Construct the four-ReLU regional rule and verify 1.000 agreement away from the
+  boundary axes.
 - Finish with the three-panel comparison: four corners, the two-ReLU diagonal
   band, and the four-ReLU filled-region rule.
-- Every network in this notebook is labelled **constructed + computed**. No
-  optimizer runs, and no convergence or generalization claim is made.
+- These fixed networks are labelled **constructed + computed**. They are not
+  optimizer results. The deck's scope-comparison slide contains the Colab link.
 
-For either notebook, restart the kernel and run all cells sequentially before
-class. A stale output is especially damaging here because the exact network is
-also verified numerically in the slides.
+### Interactive links in the deck
+
+- [Activation explorer](https://nipunbatra.github.io/dl-teaching/interactives/activation-explorer.html): compare shape and saturation.
+- [ReLU Classification Lab](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/): compare datasets, rules, learned boundaries, hidden contributions, and the 3-D logit surface.
+- [ReLU Approximation Lab](https://nipunbatra.github.io/interactive-articles/relu-function-approximation/): compare explicit construction with optimization.
+
+Restart each notebook and run all cells sequentially before class. A stale output
+is especially damaging here because the fixed networks are also verified in the
+slides.
 
 ## Common wrong turns
 
-- **“A neuron is nonlinear because it has a bias.”** No: affine plus affine still
-  collapses. The activation creates the nonlinearity.
+- **“A neuron is nonlinear because it has a bias.”** No: affine after affine
+  still collapses. The activation creates the nonlinearity.
 - **“Softmax bends the decision boundary.”** No: softmax preserves the winning
   score; ties between linear scores remain flat sets.
 - **“The XOR MLP learned those weights.”** Not in this lecture. The construction
-  demonstrates representational capacity. Learning comes from an optimizer and
-  data, which is a different claim.
+  demonstrates representational capacity; an optimizer run is a different claim.
 - **“Two ReLUs solve every dataset called XOR.”** They solve the four Boolean
-  corners used in the deck. On densely filled quadrant XOR, that same rule paints
-  a diagonal band and reaches 75% area agreement; the four-ReLU construction is
-  the exact regional rule away from the axes.
+  corners used in the deck. On filled quadrant XOR, the same rule paints a
+  diagonal band and reaches 75% area agreement.
 - **“Universal approximation means one hidden layer is always enough in
   practice.”** It is an existence statement with no guarantee of compact width,
   easy optimization, finite-sample generalization, or useful inductive bias.
-- **“The hierarchy pictures are activation maps.”** They are conceptual
-  schematics. Real activation evidence would require a trained model, specified
+- **“The vision hierarchy is a measured activation trace.”** It is a conceptual
+  schematic. Real activation evidence requires a trained model, a specified
   input, captured tensors, and a stated visualization method.
-- **“A minibatch is a different network.”** It is the same parameters applied to
-  multiple rows; only the leading data dimension changes.
+- **“Depth just means more parameters.”** Depth means sequential composition;
+  width adds more features at the same stage.
 
 ## Exit ticket
 

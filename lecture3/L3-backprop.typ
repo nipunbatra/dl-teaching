@@ -1344,119 +1344,236 @@ Every row of $bold(W)$ is one affine neuron. All rows read the same input $bold(
 #pause
 #result[$bold(W)=mat(1,3;-2,1)$ simply stores the two neuron rows together]
 
-== Backward starts with one gradient per output #D
+== Backward: reuse the scalar affine rule for each row #D
 
-Suppose the later loss sends #upstream[$bold(g)_z=partial cal(L)\/partial bold(z)=mat(4;-2)$] back to this layer.
-#densebackgraph
+Use column vectors: $bold(x) in RR^(d times 1)$, $bold(W) in RR^(m times d)$, and $bold(z) in RR^(m times 1)$.
+Suppose the later loss sends #upstream[$bold(g)_z=partial cal(L)\/partial bold(z)=mat(4;-2)$] back.
+#pause
+For output row $i$,
+$ z_i = sum_j W_(i,j)x_j+b_i, quad g_i := partial cal(L)\/partial z_i. $
 #pause
 #grid(
   columns: 3, gutter: 8pt,
-  neat-card([TO INPUT], [#downstream[$bold(g)_x$] $=$ #localterm[$bold(W)^top$] #upstream[$bold(g)_z$]], color: BLUE, width: 69mm),
-  neat-card([TO WEIGHTS], [#downstream[$bold(g)_W$] $=$ #upstream[$bold(g)_z$] #localterm[$bold(x)^top$]], color: TEAL, width: 69mm),
-  neat-card([TO BIAS], [#downstream[$bold(g)_b$] $=$ #upstream[$bold(g)_z$]], color: ACC, width: 69mm),
+  neat-card([TO $x_j$], [#localterm[$partial z_i\/partial x_j=W_(i,j)$] #linebreak() contribution #downstream[$g_i W_(i,j)$]], color: BLUE, width: 69mm),
+  neat-card([TO $W_(i,j)$], [#localterm[$partial z_i\/partial W_(i,j)=x_j$] #linebreak() contribution #downstream[$g_i x_j$]], color: TEAL, width: 69mm),
+  neat-card([TO $b_i$], [#localterm[$partial z_i\/partial b_i=1$] #linebreak() contribution #downstream[$g_i$]], color: ACC, width: 69mm),
 )
+#pause
+#result[$bold(g)_z=(4,-2)^top$ means two scalar arrivals: $g_1=4$ and $g_2=-2$]
 
-== Input gradient: both outputs contribute and add #D
+== Input gradient: shared paths add #D
 
-Each input coordinate was used by both output neurons, so two paths return to it.
+The same $bold(x)$ enters both output rows, so both rows return a contribution.
 #pause
 #grid(
   columns: 2, gutter: 14pt,
-  neat-card([$x_1$ receives], [
-    $4(1)+(-2)(-2)=8$
-    #v(4pt)
-    #text(size: 12pt, fill: MUTED)[from row 1 + from row 2]
-  ], color: BLUE, width: 103mm),
-  neat-card([$x_2$ receives], [
-    $4(3)+(-2)(1)=10$
-    #v(4pt)
-    #text(size: 12pt, fill: MUTED)[from row 1 + from row 2]
-  ], color: TEAL, width: 103mm),
+  neat-card([ROW 1 RETURNS], [#downstream[$g_1 bold(w)_1$] $=4mat(1;3)=mat(4;12)$], color: BLUE, width: 103mm),
+  neat-card([ROW 2 RETURNS], [#downstream[$g_2 bold(w)_2$] $=(-2)mat(-2;1)=mat(4;-2)$], color: TEAL, width: 103mm),
 )
 #pause
 #align(center, text(size: 25pt, weight: 600)[
-  #downstream[$bold(g)_x$] $=$ #localterm[$bold(W)^top$] #upstream[$bold(g)_z$]
-  $=mat(1,-2;3,1)mat(4;-2)=mat(8;10)$
+  #downstream[$bold(g)_x$] $=mat(4;12)+mat(4;-2)=mat(8;10)$
 ])
 #pause
-#result[the matrix product performs the same branch addition for every input]
-
-== Weight gradient: one outer product fills the matrix #D
-
-Output $i$ sends $g_i x_j$ to weight $W_(i,j)$. Writing every pair at once gives an outer product.
+#align(center, text(size: 21pt)[
+  $(g_x)_j=sum_i g_i W_(i,j) quad arrow.r quad bold(g)_x=bold(W)^top bold(g)_z$
+])
 #pause
-#align(center, text(size: 27pt, weight: 600)[
-  #downstream[$bold(g)_W$]
-  $=$ #upstream[$mat(4;-2)$] #localterm[$mat(2,-1)$]
-  $=mat(8,-4;-4,2)$
+#notebox[Shape check: $(d times 1)=(d times m)(m times 1)$. The transpose arranges the row contributions so shared input paths add.]
+
+== Weight and bias gradients: separate rows stack #D
+
+Output $i$ owns row $i$ of $bold(W)$, so that gradient row is $g_i bold(x)^top$.
+#pause
+#grid(
+  columns: 2, gutter: 14pt,
+  neat-card([ROW 1], [$g_1 bold(x)^top=4(2,-1)=(8,-4)$], color: BLUE, width: 103mm),
+  neat-card([ROW 2], [$g_2 bold(x)^top=(-2)(2,-1)=(-4,2)$], color: TEAL, width: 103mm),
+)
+#pause
+#align(center, text(size: 25pt, weight: 600)[
+  #downstream[$bold(g)_W$] $=mat(8,-4;-4,2)=$ #upstream[$bold(g)_z$] #localterm[$bold(x)^top$]
+])
+#pause
+Each bias has local derivative $1$, so
+#align(center, text(size: 23pt)[
+  #downstream[$bold(g)_b$] $=mat(g_1;g_2)=$ #upstream[$bold(g)_z$] $=mat(4;-2)$.
+])
+#pause
+#result[returns to a shared input add · returns to separate parameter rows stack]
+
+== Dense backward: derive first, then check shapes #D
+
+#align(center, table(
+  columns: (32mm, 78mm, 54mm, 52mm), stroke: 0.5pt + MUTED,
+  inset: (x: 8pt, y: 6pt), align: (left, center, center, center),
+  table.header([*Recipient*], [*Coordinate rule*], [*Stacked rule*], [*Shape check*]),
+  [$bold(x)$], [$(g_x)_j=sum_i g_i W_(i,j)$], [#downstream[$bold(g)_x$] $=$ #localterm[$bold(W)^top$] #upstream[$bold(g)_z$]], [$(d times 1)=(d times m)(m times 1)$],
+  [$bold(W)$], [$(g_W)_(i,j)=g_i x_j$], [#downstream[$bold(g)_W$] $=$ #upstream[$bold(g)_z$] #localterm[$bold(x)^top$]], [$(m times d)=(m times 1)(1 times d)$],
+  [$bold(b)$], [$(g_b)_i=g_i$], [#downstream[$bold(g)_b$] $=$ #upstream[$bold(g)_z$]], [$(m times 1)=(m times 1)$],
+))
+#pause
+#notebox[The coordinate rules *derive* the gradients. Shape matching then verifies their orientation: $bold(g)_z bold(x)^top$ has the same row-by-column shape as $bold(W)$.]
+
+= From one example to a batch
+
+== A batch adds an axis—not new parameters #V
+
+One example remains a column $bold(x)^(n) in RR^(d times 1)$. A framework stores their transposes as rows of
+#align(center, text(size: 25pt, weight: 600)[
+  $bold(X)=mat(2,-1;-1,2;2,2) in RR^(3 times 2)$.
 ])
 #pause
 #grid(
   columns: 2, gutter: 14pt,
-  neat-card([ROWS FOLLOW OUTPUTS], [row 1 uses $g_1=4$; row 2 uses $g_2=-2$], color: BLUE, width: 103mm),
-  neat-card([BIAS HAS LOCAL DERIVATIVE 1], [#downstream[$bold(g)_b$] $=$ #upstream[$bold(g)_z$] $=mat(4;-2)$], color: ACC, width: 103mm),
+  neat-card([SHARED PARAMETERS], [
+    $bold(W) in RR^(m times d)$ #linebreak()
+    $bold(b) in RR^(m times 1)$ #linebreak()
+    the same values serve every row
+  ], color: TEAL, width: 103mm),
+  neat-card([BATCH FORWARD], [
+    $bold(Z)=bold(X)bold(W)^top+bold(1)_B bold(b)^top$ #linebreak()
+    $(B times m)=(B times d)(d times m)$ #linebreak()
+    PyTorch: `X @ W.T + b`
+  ], color: BLUE, width: 103mm),
 )
 #pause
-#result[shapes: $bold(g)_W in RR^(2 times 2)$ · $bold(g)_b in RR^2$ · $bold(g)_x in RR^2$]
+#result[batching adds an example axis; every row still uses the same $bold(W),bold(b)$]
 
-== A batch reuses the same $bold(W),bold(b)$ three times #V
+== Three examples, three residuals #V
 
-For each row $bold(x)^(i)$, compute $bold(z)^(i)=bold(W)bold(x)^(i)+bold(b)$ and residual $bold(r)^(i)=bold(z)^(i)-bold(y)^(i)$.
+For row $n$, first compute $bold(z)^(n)$, then $bold(r)^(n)=bold(z)^(n)-bold(y)^(n)$.
 #pause
-#grid(
-  columns: 3, gutter: 8pt,
-  neat-card([EXAMPLE 1], [
-    $bold(x)=(2,-1)$ #linebreak()
-    $bold(y)=(-5,-2)$ #linebreak()
-    $bold(z)=(-1,-4)$ #linebreak()
-    #upstream[$bold(r)=(4,-2)$]
-  ], color: BLUE, width: 69mm, body-align: left),
-  neat-card([EXAMPLE 2], [
-    $bold(x)=(-1,2)$ #linebreak()
-    $bold(y)=(7,1)$ #linebreak()
-    $bold(z)=(5,5)$ #linebreak()
-    #upstream[$bold(r)=(-2,4)$]
-  ], color: TEAL, width: 69mm, body-align: left),
-  neat-card([EXAMPLE 3], [
-    $bold(x)=(2,2)$ #linebreak()
-    $bold(y)=(7,-2)$ #linebreak()
-    $bold(z)=(8,-1)$ #linebreak()
-    #upstream[$bold(r)=(1,1)$]
-  ], color: ACC, width: 69mm, body-align: left),
-)
-#pause
-#align(center, text(size: 20pt)[
-  $cal(L)=1/3 sum_(i=1)^3 1/2 norm(bold(r)^(i))^2=(10+10+1)/3=7$
+#align(center, text(size: 15.5pt)[
+  #table(
+    columns: (14mm, 39mm, 39mm, 39mm, 39mm, 24mm), stroke: 0.5pt + MUTED,
+    inset: (x: 6pt, y: 5pt), align: center,
+    table.header([$n$], [$bold(x)^(n)^top$], [$bold(z)^(n)^top$], [$bold(y)^(n)^top$], [$bold(r)^(n)^top$], [$ell_n$]),
+    [1], [$(2,-1)$], [$(-1,-4)$], [$(-5,-2)$], [#upstream[$(4,-2)$]], [$10$],
+    [2], [$(-1,2)$], [$(5,5)$], [$(7,1)$], [#upstream[$(-2,4)$]], [$10$],
+    [3], [$(2,2)$], [$(8,-1)$], [$(7,-2)$], [#upstream[$(1,1)$]], [$1$],
+  )
 ])
 #pause
-#result[one parameter tensor, three forward paths, one mean loss]
+#result[row 1 reproduces the earlier single example: its residual $(4,-2)^top$ is the arriving $bold(g)_z$]
 
-== Batch backward: average the three contributions #D
+== Why the loss sends residuals backward #D
 
-Each example proposes an unscaled weight contribution $bold(G)^(i)=bold(r)^(i)(bold(x)^(i))^top$.
+For one example, use half-squared error:
+#align(center, text(size: 25pt, weight: 600)[
+  $ell_n=1/2 sum_k (z_k^(n)-y_k^(n))^2.$
+])
+#pause
+#align(center, text(size: 23pt)[
+  $partial ell_n\/partial z_k^(n)=z_k^(n)-y_k^(n)=r_k^(n)$
+])
 #pause
 #grid(
-  columns: 3, gutter: 8pt,
-  neat-card([EXAMPLE 1], [$bold(G)^1=mat(8,-4;-4,2)$], color: BLUE, width: 69mm),
-  neat-card([EXAMPLE 2], [$bold(G)^2=mat(2,-4;-4,8)$], color: TEAL, width: 69mm),
-  neat-card([EXAMPLE 3], [$bold(G)^3=mat(2,2;2,2)$], color: ACC, width: 69mm),
+  columns: 2, gutter: 14pt,
+  neat-card([THREE LOSSES], [$ell_1=10, quad ell_2=10, quad ell_3=1$], color: BLUE, width: 103mm),
+  neat-card([ONE SCALAR MEAN], [$cal(L)=1/3(10+10+1)=7$], color: TEAL, width: 103mm),
 )
 #pause
 #align(center, text(size: 23pt, weight: 600)[
-  #downstream[$bold(g)_W$]
-  $=1/3(bold(G)^1+bold(G)^2+bold(G)^3)=mat(4,-2;-2,4)$
+  #upstream[$bold(G)_Z=partial cal(L)\/partial bold(Z)$]
+  $=1/3 bold(R)$
+])
+#pause
+#notebox[The residual is the upstream gradient from each example's loss. The mean contributes the factor $1/B=1/3$.]
+
+== One example proposes one dense-layer gradient #D
+
+Reuse the single-example rules on example 1, before doing any batch algebra.
+#pause
+#grid(
+  columns: 3, gutter: 8pt,
+  neat-card([TO $bold(W)$], [
+    $bold(G)_W^1=bold(r)^1(bold(x)^1)^top$ #linebreak()
+    $=mat(8,-4;-4,2)$
+  ], color: BLUE, width: 69mm),
+  neat-card([TO $bold(b)$], [
+    $bold(g)_b^1=bold(r)^1$ #linebreak()
+    $=mat(4;-2)$
+  ], color: ACC, width: 69mm),
+  neat-card([TO $bold(x)^1$], [
+    $bold(g)_x^1=bold(W)^top bold(r)^1$ #linebreak()
+    $=mat(8;10)$
+  ], color: TEAL, width: 69mm),
+)
+#pause
+#result[these are unscaled example-1 returns; its contribution to the *mean* loss is each value divided by $3$]
+
+== Shared parameters add, then the mean scales #D
+
+Each example proposes one outer product for the *same* $bold(W)$. Shared paths add; the mean loss scales the final sum.
+#pause
+#grid(
+  columns: 3, gutter: 8pt,
+  neat-card([EXAMPLE 1], [$bold(G)_W^1=mat(8,-4;-4,2)$], color: BLUE, width: 69mm),
+  neat-card([EXAMPLE 2], [$bold(G)_W^2=mat(2,-4;-4,8)$], color: TEAL, width: 69mm),
+  neat-card([EXAMPLE 3], [$bold(G)_W^3=mat(2,2;2,2)$], color: ACC, width: 69mm),
+)
+#pause
+#align(center, text(size: 22pt)[
+  $bold(G)_W^1+bold(G)_W^2+bold(G)_W^3=mat(12,-6;-6,12)$
+])
+#pause
+#grid(
+  columns: 2, gutter: 14pt,
+  neat-card([MEAN WEIGHT GRADIENT], [#downstream[$bold(g)_W$] $=1/3 mat(12,-6;-6,12)=mat(4,-2;-2,4)$], color: TEAL, width: 103mm),
+  neat-card([MEAN BIAS GRADIENT], [#downstream[$bold(g)_b$] $=1/3(mat(4;-2)+mat(-2;4)+mat(1;1))=mat(1;1)$], color: ACC, width: 103mm),
+)
+
+== Batch matrix rules stack the same arithmetic #D
+
+Let $bold(G)_Z=bold(R)/B in RR^(B times m)$. The formulas below package the rowwise returns; they do not replace the derivation.
+#pause
+#align(center, text(size: 17pt)[
+  #table(
+    columns: (27mm, 77mm, 106mm), stroke: 0.5pt + MUTED,
+    inset: (x: 7pt, y: 6pt), align: (left, center, center),
+    table.header([*Recipient*], [*Stacked rule*], [*Operand shapes*]),
+    [$bold(W)$], [#downstream[$bold(g)_W$] $=bold(G)_Z^top bold(X)$], [$(m times d)=(m times B)(B times d)$],
+    [$bold(b)$], [#downstream[$bold(g)_b$] $=bold(G)_Z^top bold(1)_B$], [$(m times 1)=(m times B)(B times 1)$],
+    [$bold(X)$], [#downstream[$bold(g)_X$] $=bold(G)_Z bold(W)$], [$(B times d)=(B times m)(m times d)$],
+  )
 ])
 #pause
 #align(center, text(size: 20pt)[
-  #downstream[$bold(g)_b$] $=1/3(mat(4;-2)+mat(-2;4)+mat(1;1))=mat(1;1)$
+  #downstream[$bold(g)_X$]
+  $=1/3 mat(8,10;-10,-2;-1,4)$
 ])
 #pause
-#notebox[*Mean* reduction averages example contributions. A *sum* reduction would be exactly three times larger.]
+#notebox[$bold(W),bold(b)$ are shared, so their example paths add. The three input rows are distinct, so their gradients stay in three separate rows.]
+
+== Sum or mean? The reduction chooses the scale #D
+
+#grid(
+  columns: 2, gutter: 14pt,
+  neat-card([SUM OVER EXAMPLES], [
+    $cal(L)_("sum")=sum_n ell_n$ #linebreak()
+    $bold(G)_Z=bold(R)$ #linebreak()
+    $bold(g)_W=bold(R)^top bold(X)$
+  ], color: BLUE, width: 103mm),
+  neat-card([MEAN OVER EXAMPLES], [
+    $cal(L)_("mean")=1/B sum_n ell_n$ #linebreak()
+    $bold(G)_Z=bold(R)/B$ #linebreak()
+    $bold(g)_W=bold(R)^top bold(X)/B$
+  ], color: TEAL, width: 103mm),
+)
+#pause
+#codebox(size: 15pt)[```python
+loss = 0.5 * ((Z - Y)**2).sum(dim=1).mean()
+# sum output coordinates inside each example; mean over examples
+```]
+#pause
+#result[the dense local rules do not change; the scalar loss reduction chooses their final scale]
 
 == PyTorch verifies the single example and the batch #I
 
 #codebox(size: 12.2pt)[```python
-X = torch.tensor([[ 2., -1.], [-1., 2.], [2., 2.]])
+X = torch.tensor([[ 2., -1.], [-1., 2.], [2., 2.]],
+                 requires_grad=True)
 Y = torch.tensor([[-5., -2.], [ 7., 1.], [7., -2.]])
 W = torch.tensor([[1., 3.], [-2., 1.]], requires_grad=True)
 b = torch.tensor([0., 1.], requires_grad=True)
@@ -1468,6 +1585,7 @@ loss.backward()
 print(loss.item())  # 7.0
 print(W.grad)        # [[ 4., -2.], [-2.,  4.]]
 print(b.grad)        # [1., 1.]
+print(X.grad)        # [[ 8/3, 10/3], [-10/3, -2/3], [-1/3, 4/3]]
 ```]
 #pause
 #notebox[
@@ -1496,18 +1614,33 @@ for X, Y in loader:
 #pause
 #result[clear → batch forward → scalar loss → batch backward → update]
 
-== Accumulate within an update; clear between updates #D
+= One batch can arrive in pieces
 
-#align(center, table(
-  columns: (62mm, 76mm, 78mm), stroke: 0.5pt + MUTED,
-  inset: (x: 8pt, y: 6pt), align: (left, left, left),
-  table.header([*Situation*], [*What accumulates*], [*Correct boundary*]),
-  [three examples in one mean loss], [three path contributions in one backward pass], [divide by $B=3$ through the loss reduction],
-  [three micro-batches for one update], [three scaled `.backward()` calls in `.grad`], [clear once before the first; step once after the third],
-  [the next optimizer update], [must not inherit the old update's gradient], [`zero_grad()` before its forward pass],
-))
+== Microbatches can reproduce the same mean gradient #D
+
+#grid(
+  columns: 2, gutter: 14pt,
+  neat-card([ONE FULL BATCH], [
+    `zero_grad()` #linebreak()
+    `((ell1 + ell2 + ell3) / 3).backward()` #linebreak()
+    `step()`
+  ], color: BLUE, width: 103mm, body-align: left),
+  neat-card([THREE PIECES · ONE UPDATE], [
+    `zero_grad()` #linebreak()
+    `(ell1 / 3).backward()` #linebreak()
+    `(ell2 / 3).backward()` #linebreak()
+    `(ell3 / 3).backward()` #linebreak()
+    `step()`
+  ], color: TEAL, width: 103mm, body-align: left),
+)
 #pause
-#notebox[Branch addition, batch aggregation, and `.grad += ...` share the same mathematics—but the intended update window determines when to clear.]
+#align(center, text(size: 18pt)[
+  $bold(W)."grad": quad bold(G)_W^1/3 arrow.r (bold(G)_W^1+bold(G)_W^2)/3 arrow.r mat(4,-2;-2,4)$
+])
+#pause
+#notebox[Equivalence requires fixed parameters, the same overall reduction, no `step()`, and no `zero_grad()` between pieces. Batch-coupled operations such as BatchNorm need extra care.]
+#pause
+#result[clear once before the update window · add every scaled piece · step once after it]
 
 // ═══════════════════════════ PART VI — MLP ═══════════════════════════
 = A tiny neural network

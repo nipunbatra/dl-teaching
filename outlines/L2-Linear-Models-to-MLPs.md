@@ -1,1345 +1,497 @@
 ---
-title: "Part I — Where we left off"
-source: "https://chatgpt.com/share/6a50728a-9720-83ee-a33d-5f2e3ff744fe"
-status: "Imported from the finalized shared-course discussion"
+title: "Lecture 2 — From Linear Models to MLPs"
+status: "Synchronized with the current public deck"
+duration: "80 minutes"
 ---
 
-## Lecture 2: From Linear Models to MLPs
+# Lecture 2: From Linear Models to MLPs
 
-**Title:** *From Linear Regression to Neural Networks*  
-Core story:
+## Core story
 
-\[
+$$
 \boxed{
-\text{linear model}
+\text{affine prediction}
 \rightarrow
-\text{logistic regression}
+\text{nonlinear feature}
 \rightarrow
-\text{neuron}
+\text{XOR counterexample}
 \rightarrow
-\text{MLP}
+\text{ReLU MLP}
 \rightarrow
 \text{universal approximation}
+\rightarrow
+\text{depth as composition}
 }
-\]
+$$
 
-Target: **80 min, ~48 slides**.
+Lecture 1 chose a probabilistic output and its loss. Lecture 2 keeps that loss
+and enriches the prediction rule $f_\theta(x)$. The final handoff is deliberately
+short:
 
----
+$$
+\text{representation}\rightarrow\text{loss}\rightarrow
+\text{backpropagation}\rightarrow\text{optimizer}.
+$$
 
-# Part I — Where we left off
+This outline follows the current deck by teaching beat rather than by PDF page.
+Reveal states can change the presentation page count, so page-number references
+are intentionally omitted.
 
-### Slide 1 — Title
+## Learning outcomes
 
-**From Linear Models to Neural Networks**
+By the end, students should be able to:
 
-Subtitle:
+1. Compute one weighted sum and its batch-matrix form.
+2. Distinguish pre-activation $u$ from activation $h=\phi(u)$.
+3. Explain why a stack of affine maps is still affine.
+4. Explain why one straight boundary cannot separate XOR.
+5. Evaluate the fixed two-ReLU XOR network on all four Boolean inputs.
+6. Distinguish four-point XOR from filled-region XOR.
+7. Read ReLU units as shifted hinges whose weighted sum builds a
+   piecewise-linear function.
+8. State universal approximation as an existence result on a specified region.
+9. Explain width as parallel variety and depth as sequential composition.
+10. Count a two-layer MLP's parameters and connect representation learning to
+    loss, backpropagation, and optimization.
 
-> Linear regression, logistic regression, neurons, MLPs and universal approximation
+# Part I — Change the prediction rule
 
----
+## Lecture 1 chose the loss; Lecture 2 expands the model
 
-### Slide 2 — Recall from Lecture 1
+Keep from Lecture 1:
 
-\[
-\text{Loss} = -\log p_\theta(y\mid x)
-\]
+- Gaussian outputs lead to MSE for regression.
+- Bernoulli or categorical outputs lead to cross-entropy for classification.
 
-\[
-\text{MSE} \leftrightarrow \text{Gaussian likelihood}
-\]
+Change today:
 
-\[
-\text{CE} \leftrightarrow \text{Bernoulli/Categorical likelihood}
-\]
+$$
+\hat y=f_\theta(x)
+$$
 
-Today:
+moves from one affine map to affine maps separated by nonlinear activations.
 
-\[
-p_\theta(y\mid x)
-\quad\text{will be parameterized by neural networks.}
-\]
+## One notation throughout
 
----
+- $x$: input features;
+- $\theta$: every trainable weight and bias;
+- $f_\theta$: the prediction rule;
+- output: a regression value, logit, or vector of class scores.
 
-### Slide 3 — The key transition
+Do not begin with the fully nested neural-network formula. Build it one operation
+at a time.
 
-Old ML models:
+# Part II — Linear prediction
 
-\[
-f_\theta(x)=w^\top x+b
-\]
+## One weighted sum
 
-Neural networks:
+Start with
 
-\[
-f_\theta(x)
-=
-W_L\phi(W_{L-1}\phi(\cdots \phi(W_1x+b_1)))+b_L
-\]
+$$
+\hat y=w^Tx+b.
+$$
 
-Main question:
+Use the node diagram to make every edge contribution explicit:
 
-> What changes when we replace one affine map by many affine maps plus nonlinearities?
+$$
+w_jx_j,\qquad b\cdot1,\qquad
+\hat y=\sum_j w_jx_j+b.
+$$
 
----
+## A dataset is a labelled matrix
 
-# Part II — Linear regression
+For $n$ examples and $d$ features,
 
-### Slide 4 — Linear regression model
+$$
+X\in\mathbb R^{n\times d},\qquad y\in\mathbb R^n,
+$$
 
-For \(x\in\mathbb R^d\):
+and the same parameters process every row:
 
-\[
-\hat y=w^\top x+b
-\]
+$$
+\hat y=Xw+b\mathbf{1}.
+$$
 
-or with bias absorbed:
+Absorbing the bias gives
 
-\[
-\hat y=\theta^\top \tilde x,
-\qquad
-\tilde x=
-\begin{bmatrix}
-1\\x
-\end{bmatrix}.
-\]
-
-Visual: plane fitting data.
-
----
-
-### Slide 5 — Probabilistic view
-
-Assume:
-
-\[
-Y\mid x,w,b
-\sim
-\mathcal N(w^\top x+b,\sigma^2).
-\]
-
-Then:
-
-\[
--\log p(y\mid x,w,b)
-=
-\frac{(y-w^\top x-b)^2}{2\sigma^2}+C.
-\]
-
-So linear regression + MSE is Gaussian MLE.
-
----
-
-### Slide 6 — Matrix form
-
-Dataset:
-
-\[
-X\in\mathbb R^{n\times d},
-\qquad
-y\in\mathbb R^n.
-\]
-
-Prediction:
-
-\[
-\hat y=Xw+b\mathbf 1.
-\]
-
-With bias absorbed:
-
-\[
+$$
+\tilde X=[X\ \mathbf{1}],\qquad
+\theta=\begin{bmatrix}w\\b\end{bmatrix},\qquad
 \hat y=\tilde X\theta.
-\]
+$$
 
-Loss:
+The point of this sequence is shape literacy and parameter reuse.
 
-\[
-\mathcal L(\theta)
-=
-\frac1n\|y-\tilde X\theta\|_2^2.
-\]
+## One affine model gives one flat trend
 
----
+In one input dimension the graph is a line; with two input dimensions it is a
+plane. The rule can tilt and shift, but it cannot bend.
 
-### Slide 7 — Geometry of linear regression
+The corresponding slide links the
+[Linear GD Colab](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L02/01_linear_regression_gd.ipynb).
+The notebook uses seeded synthetic data and compares gradient descent with the
+closed-form solution.
 
-Visual:
+# Part III — From a score to a neuron
 
-- data points;
-- fitted line/plane;
-- residuals as vertical segments.
+## Two operations, not one
 
-Message:
+$$
+u=w^Tx+b,
+\qquad
+h=\phi(u).
+$$
 
-\[
-\text{linear regression learns a hyperplane in input space.}
-\]
+Keep $u$ and $h$ visually separate. The bias is part of the affine operation;
+the activation creates the nonlinear feature.
 
-For \(d=1\): line.  
-For \(d=2\): plane.  
-For \(d\): hyperplane.
+## Activation families
 
----
+- Sigmoid and tanh act like bounded, smooth switches.
+- ReLU and GELU act like ramps.
+- Saturation means that a curve is locally flat, so a change in input produces
+  only a small change in output.
 
-### Slide 8 — Closed-form solution
+Use the worked saturation calculation before opening the
+[activation explorer](https://nipunbatra.github.io/dl-teaching/interactives/activation-explorer.html).
 
-If \(\tilde X^\top \tilde X\) is invertible:
+## Why affine depth collapses
 
-\[
-\hat\theta
-=
-(\tilde X^\top\tilde X)^{-1}\tilde X^\top y.
-\]
+Ask first whether two affine layers can make a bend. Then reveal
 
-But in deep learning we usually use gradient-based optimization.
+$$
+W_2(W_1x+b_1)+b_2
+=(W_2W_1)x+(W_2b_1+b_2).
+$$
 
-Why?
+Without an intervening activation, the middle layer adds parameters but not a
+new function shape.
 
-- huge parameter count;
-- nonlinear models;
-- minibatches;
-- streaming data.
+# Part IV — Where one weighted sum fails
 
----
+## Binary classification
 
-### Slide 9 — Gradient descent preview
+A binary affine classifier changes class where
 
-For MSE:
+$$
+w^Tx+b=0,
+$$
 
-\[
-\mathcal L(\theta)=\frac1n\|y-\tilde X\theta\|_2^2.
-\]
+which is a straight line in two dimensions. XOR places equal labels at opposite
+corners, so no single line separates it.
 
-Gradient:
+## Multiclass classification
 
-\[
-\
-abla_\theta \mathcal L
-=
--\frac2n\tilde X^\top(y-\tilde X\theta).
-\]
+Each class has an affine score
 
-Update:
+$$
+z_k(x)=w_k^Tx+b_k.
+$$
 
-\[
-\theta\leftarrow\theta-\eta\
-abla_\theta\mathcal L.
-\]
+Softmax changes scores into probabilities but preserves their order. A candidate
+tie between classes $i$ and $j$ satisfies
 
-This will become backpropagation later.
+$$
+z_i(x)=z_j(x),
+$$
 
----
+which is a flat set. Only the portion where both tied scores are maximal is a
+visible decision boundary. Use the explicit points to distinguish candidate
+ties from visible boundaries; do not present them as a benchmark dataset.
 
-### Slide 10 — Interactive 1: linear regression
+# Part V — The multilayer perceptron and XOR
 
-Demo: `linear-regression.html`
+## A hidden layer is a learned feature map
 
-Controls:
-
-- slope \(w\);
-- intercept \(b\);
-- noise level;
-- learning rate;
-- gradient descent steps.
-
-Show:
-
-- data;
-- fitted line;
-- MSE surface;
-- parameter trajectory.
-
-Question:
-
-> What happens when learning rate is too large?
-
----
-
-# Part III — Logistic regression
-
-### Slide 11 — Regression output is not a probability
-
-Linear score:
-
-\[
-z=w^\top x+b
-\]
-
-But for binary classification we need:
-
-\[
-p(y=1\mid x)\in[0,1].
-\]
-
-Solution:
-
-\[
-p(y=1\mid x)=\sigma(z).
-\]
-
----
-
-### Slide 12 — Sigmoid function
-
-\[
-\sigma(z)=\frac1{1+e^{-z}}.
-\]
-
-Properties:
-
-\[
-\sigma(z)\in(0,1)
-\]
-
-\[
-\sigma(0)=0.5
-\]
-
-\[
-\sigma(-z)=1-\sigma(z)
-\]
-
-Visual: sigmoid curve.
-
----
-
-### Slide 13 — Logistic regression model
-
-\[
-z=w^\top x+b
-\]
-
-\[
-p_\theta(y=1\mid x)=\sigma(z)
-\]
-
-\[
-p_\theta(y=0\mid x)=1-\sigma(z)
-\]
-
-So:
-
-\[
-Y\mid x
-\sim
-\operatorname{Bernoulli}(\sigma(w^\top x+b)).
-\]
-
----
-
-### Slide 14 — Binary cross-entropy loss
-
-For \(y\in\{0,1\}\):
-
-\[
-\mathcal L
-=
--y\log \hat p
--
-(1-y)\log(1-\hat p)
-\]
-
-where
-
-\[
-\hat p=\sigma(w^\top x+b).
-\]
-
-Equivalent compact form:
-
-\[
-p(y\mid x)
-=
-\hat p^y(1-\hat p)^{1-y}.
-\]
-
----
-
-### Slide 15 — Decision boundary
-
-Classifier:
-
-\[
-\hat y=
-\begin{cases}
-1, & \sigma(w^\top x+b)\ge 0.5,\\
-0, & \text{otherwise}.
-\end{cases}
-\]
-
-Since
-
-\[
-\sigma(z)\ge 0.5
-\iff
-z\ge 0,
-\]
-
-decision boundary is:
-
-\[
-w^\top x+b=0.
-\]
-
-Visual: 2D points separated by a line.
-
----
-
-### Slide 16 — Logistic regression is still linear
-
-Even though sigmoid is nonlinear, the decision boundary is linear:
-
-\[
-w^\top x+b=0.
-\]
-
-Important distinction:
-
-- output probability is nonlinear in \(z\);
-- decision boundary is linear in \(x\).
-
-Message:
-
-\[
-\boxed{\text{logistic regression = linear classifier + sigmoid}}
-\]
-
----
-
-### Slide 17 — Gradient intuition
-
-For one example:
-
-\[
-\hat p=\sigma(w^\top x+b)
-\]
-
-\[
-\mathcal L=
--y\log\hat p-(1-y)\log(1-\hat p)
-\]
-
-The beautiful result:
-
-\[
-\frac{\partial \mathcal L}{\partial z}
-=
-\hat p-y.
-\]
-
-Then:
-
-\[
-\
-abla_w\mathcal L=(\hat p-y)x.
-\]
-
----
-
-### Slide 18 — Interactive 2: logistic regression
-
-Demo: `logistic-regression.html`
-
-Controls:
-
-- line angle;
-- bias;
-- sigmoid steepness;
-- threshold;
-- add/remove points.
-
-Show:
-
-- probability heatmap;
-- decision boundary;
-- BCE loss;
-- misclassified points.
-
-Question:
-
-> How does the decision boundary move when \(b\) changes?
-
----
-
-# Part IV — From logistic regression to a neuron
-
-### Slide 19 — A neuron
-
-A neuron computes:
-
-\[
-z=w^\top x+b
-\]
-
-\[
-a=\phi(z).
-\]
-
-Diagram:
-
-```text
-x1 --w1--
-x2 --w2--  →  Σ + b  →  activation  →  a
-xd --wd--
-```
-
-This is the basic unit of a neural network.
-
----
-
-### Slide 20 — Logistic regression is one neuron
-
-For binary classification:
-
-\[
-a=\sigma(w^\top x+b)
-\]
-
-\[
-a=p(y=1\mid x).
-\]
-
-So logistic regression is a single sigmoid neuron.
-
-Message:
-
-\[
-\boxed{\text{logistic regression is the simplest neural network}}
-\]
-
----
-
-### Slide 21 — Common activation functions
-
-Show curves:
-
-\[
-\sigma(z)=\frac1{1+e^{-z}}
-\]
-
-\[
-\tanh(z)
-\]
-
-\[
-\operatorname{ReLU}(z)=\max(0,z)
-\]
-
-\[
-\operatorname{GELU}(z)\approx z\Phi(z)
-\]
-
-Mention:
-
-- sigmoid: probabilities/gates;
-- tanh: zero-centered;
-- ReLU: common hidden activation;
-- GELU: common in Transformers.
-
----
-
-### Slide 22 — Why activation is needed
-
-If we stack only linear maps:
-
-\[
-h_1=W_1x+b_1
-\]
-
-\[
-h_2=W_2h_1+b_2
-\]
-
-then:
-
-\[
-h_2=W_2W_1x+(W_2b_1+b_2).
-\]
-
-This is still linear.
-
-Therefore:
-
-\[
-\boxed{\text{without nonlinear activation, depth collapses to one linear layer}}
-\]
-
----
-
-### Slide 23 — Interactive 3: activation functions
-
-Demo: `activation-functions.html`
-
-Controls:
-
-- activation type;
-- input \(z\);
-- show derivative;
-- compare saturation.
-
-Show:
-
-- \(\phi(z)\);
-- \(\phi'(z)\);
-- effect on gradient.
-
-Questions:
-
-1. Where does sigmoid saturate?
-2. Where is ReLU derivative zero?
-3. Why might saturation hurt training?
-
----
-
-# Part V — Multi-class classification
-
-### Slide 24 — Binary to multi-class
-
-Binary:
-
-\[
-z=w^\top x+b
-\]
-
-\[
-p(y=1\mid x)=\sigma(z).
-\]
-
-Multi-class:
-
-\[
-z_k=w_k^\top x+b_k,
-\qquad k=1,\dots,K.
-\]
-
-Each class gets a score/logit.
-
----
-
-### Slide 25 — Softmax regression
-
-For \(K\) classes:
-
-\[
-p(y=k\mid x)
-=
-\frac{\exp(z_k)}
-{\sum_{j=1}^K\exp(z_j)}.
-\]
-
-where
-
-\[
-z=Wx+b.
-\]
-
-This is also called multinomial logistic regression.
-
----
-
-### Slide 26 — Multi-class cross-entropy
-
-For one-hot target \(y\):
-
-\[
-\mathcal L
-=
--\sum_{k=1}^K y_k\log p_k.
-\]
-
-Since one \(y_k=1\):
-
-\[
-\mathcal L=-\log p_{\text{true class}}.
-\]
-
----
-
-### Slide 27 — Geometry of softmax regression
-
-For classes \(i\) and \(j\), boundary occurs when:
-
-\[
-z_i=z_j.
-\]
-
-That is:
-
-\[
-w_i^\top x+b_i
-=
-w_j^\top x+b_j.
-\]
-
-So:
-
-\[
-(w_i-w_j)^\top x+(b_i-b_j)=0.
-\]
-
-Decision regions are linear/polyhedral.
-
-Visual: 3-class linear regions in 2D.
-
----
-
-### Slide 28 — Softmax regression limitation
-
-Softmax regression can only produce linear decision boundaries.
-
-It fails on:
-
-- XOR when the four alternating classes fill quadrants rather than lying on one
-  side of a single line;
-- concentric circles;
-- spiral data;
-- complex image/audio/text patterns.
-
-Visual: XOR dataset with no single line separation.
-
----
-
-### Slide 29 — Interactive 4: softmax classifier
-
-Demo: `softmax-regression.html`
-
-Controls:
-
-- three class weight vectors;
-- bias terms;
-- input point;
-- temperature \(T\).
-
-Show:
-
-- logits;
-- softmax probabilities;
-- decision regions;
-- CE loss.
-
-Question:
-
-> Why are the decision regions straight-edged?
-
----
-
-# Part VI — Multilayer perceptron
-
-### Slide 30 — Add a hidden layer
-
-Instead of:
-
-\[
-z=Wx+b
-\]
-
-use:
-
-\[
-h=\phi(W_1x+b_1)
-\]
-
-\[
+$$
+h=\phi(W_1x+b_1),
+\qquad
 z=W_2h+b_2.
-\]
+$$
 
-For classification:
+For input dimension $d$, hidden width $m$, and $K$ outputs:
 
-\[
-p=\operatorname{softmax}(z).
-\]
+$$
+W_1\in\mathbb R^{m\times d},
+\quad
+b_1\in\mathbb R^m,
+\quad
+W_2\in\mathbb R^{K\times m},
+\quad
+b_2\in\mathbb R^K.
+$$
 
-This is a one-hidden-layer MLP.
+Move the parameter count here, while the architecture is visible:
 
----
+$$
+\underbrace{md+m}_{\text{hidden layer}}
++
+\underbrace{Km+K}_{\text{output layer}}
+=m(d+1)+K(m+1).
+$$
 
-### Slide 31 — MLP architecture diagram
+## One exact two-ReLU construction for four-point XOR
 
-Draw:
+Use the same functions throughout:
 
-```text
-input layer → hidden layer → output layer
-```
-
-With dimensions:
-
-\[
-x\in\mathbb R^d
-\]
-
-\[
-W_1\in\mathbb R^{m\times d}
-\]
-
-\[
-h\in\mathbb R^m
-\]
-
-\[
-W_2\in\mathbb R^{K\times m}
-\]
-
-\[
-z\in\mathbb R^K
-\]
-
----
-
-### Slide 32 — Each hidden neuron creates a feature
-
-Hidden unit:
-
-\[
-h_j=\phi(w_j^\top x+b_j).
-\]
-
-Interpretation:
-
-- first layer learns features;
-- second layer combines features.
-
-For ReLU:
-
-\[
-h_j=\max(0,w_j^\top x+b_j).
-\]
-
-Each ReLU is active on one side of a hyperplane.
-
----
-
-### Slide 33 — Feature transformation view
-
-Original input space:
-
-\[
-x
-\]
-
-Hidden representation:
-
-\[
-h=\phi(W_1x+b_1)
-\]
-
-Classifier works in hidden space:
-
-\[
-z=W_2h+b_2.
-\]
-
-Message:
-
-\[
-\boxed{
-\text{MLP learns a representation where classification becomes easier}
-}
-\]
-
-Visual:
-
-- the four Boolean XOR points in input space;
-- transformed hidden space where it is linearly separable.
-
-Scope the claim explicitly. With the deck's fixed construction
-
-\[
-h_1=\operatorname{ReLU}(x_1+x_2),\qquad
+$$
+h_1=\operatorname{ReLU}(x_1+x_2),
+\qquad
 h_2=\operatorname{ReLU}(x_1+x_2-1),
-\]
+$$
 
-\[
+$$
 z=2h_1-4h_2-1,
-\]
+\qquad
+\hat y=\mathbf{1}[z\ge0].
+$$
 
-the four Boolean points are classified 4/4. Over a square filled with quadrant
-XOR points, however, the same rule paints the diagonal band
-$0.5\leq x_1+x_2\leq1.5$ and agrees over 75% of the area.
+Required checks:
 
-For an exact regional construction, center the inputs with $u=x_1-0.5$ and
-$v=x_2-0.5$, then use four ReLUs:
+1. Evaluate all four Boolean inputs.
+2. Derive $h_1(x)$ and $h_2(x)$ symbolically before substituting one point.
+3. Verify the hidden calculation in matrix form.
+4. Combine the features into $z$, then compute sigmoid probability and binary
+   cross-entropy for one labelled example.
+5. Plot the two hidden features in input space.
+6. Map all four inputs into $(h_1,h_2)$ space and show why one output boundary
+   can now separate them.
 
-\[
-z=\operatorname{ReLU}(u-v)+\operatorname{ReLU}(v-u)
--\operatorname{ReLU}(u+v)-\operatorname{ReLU}(-u-v).
-\]
+These are hand-chosen weights. The slides demonstrate representational capacity,
+not optimizer success.
 
-Its sign is the filled XOR label away from the two boundary axes. Both rules are
-constructed examples; neither is presented as a learned result.
+## Four points and four filled regions are different tasks
 
----
+The same two-ReLU logit is positive only when
 
-### Slide 34 — MLP for binary classification
+$$
+0.5\le x_1+x_2\le1.5.
+$$
 
-Architecture:
+It classifies the four Boolean corners exactly but paints a diagonal band over a
+filled square, giving 75% area agreement for the filled-XOR lab setup. A separate
+four-ReLU construction represents the quadrant pattern away from the two
+boundary axes.
 
-\[
-h=\phi(W_1x+b_1)
-\]
+The comparison slide links the
+[XOR Colab](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L02/02_mlp_xor.ipynb).
+The notebook verifies both fixed constructions on dense grids.
 
-\[
-z=w_2^\top h+b_2
-\]
+Open the
+[ReLU Classification Lab](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/)
+to compare:
 
-\[
-p(y=1\mid x)=\sigma(z).
-\]
+- four XOR corners and filled XOR;
+- the two-ReLU corner rule and four-ReLU regional rule;
+- fixed constructions and optimizer runs;
+- logit, probability, class map, signed unit contributions, and the rotatable
+  3-D logit surface.
 
-Loss:
+Reset between a constructed rule and a training run so the evidence labels do
+not blur together.
 
-\[
-\mathcal L
-=
--y\log p-(1-y)\log(1-p).
-\]
+## Output structure
 
----
+- Binary classification can use one output logit.
+- $K$-class classification uses $K$ output scores.
+- Additional hidden layers add stages of learned features.
 
-### Slide 35 — MLP for multi-class classification
+# Part VI — Universal approximation
 
-Architecture:
+## The question
 
-\[
-h=\phi(W_1x+b_1)
-\]
+Given a continuous target $f$ on a specified compact domain $D$, can a finite
+network $g$ make the largest error smaller than any requested tolerance?
 
-\[
-z=W_2h+b_2
-\]
+## A ReLU is a hinge
 
-\[
-p=\operatorname{softmax}(z).
-\]
+$$
+h_j(x)=\operatorname{ReLU}(w_jx+b_j).
+$$
 
-Loss:
+In one dimension, the zero of $w_jx+b_j$ sets the hinge location. An output
+weight chooses the sign and size of the slope change. Several hidden units
+therefore provide a collection of symbolic hinge features for the same input.
 
-\[
-\mathcal L=-\log p_y.
-\]
+## Three hinges build a tent
 
-Same output layer as softmax regression; only representation changed.
+$$
+g(x)=\operatorname{ReLU}(x)
+-2\operatorname{ReLU}(x-1)
++\operatorname{ReLU}(x-2).
+$$
 
----
+Read it interval by interval:
 
-### Slide 36 — Multiple hidden layers
+- flat before $0$;
+- rise on $[0,1)$;
+- fall on $[1,2)$;
+- flat after $2$.
 
-General MLP:
+The output weights choose the slope changes. This concrete construction is the
+bridge to the theorem.
 
-\[
-h^{(1)}=\phi(W_1x+b_1)
-\]
+## Beyond one-dimensional functions
 
-\[
-h^{(2)}=\phi(W_2h^{(1)}+b_2)
-\]
+One ReLU applied to a two-dimensional input folds the input plane along
+$w^Tx+b=0$: one side is flat and the other rises. Multiple such features feed
+class scores, producing piecewise-linear decision boundaries. Keep this to one
+function slide and one classification slide; it is a conceptual extension, not
+a new derivation sequence.
 
-\[
-\cdots
-\]
+## Construction and training are different questions
 
-\[
-z=W_Lh^{(L-1)}+b_L.
-\]
+Use the
+[ReLU Approximation Lab](https://nipunbatra.github.io/interactive-articles/relu-function-approximation/)
+in two lanes:
 
-Then:
+- **Construction:** choose a target, place hinges, and inspect the resulting
+  function, residual, worst grid gap, and signed terms.
+- **Training:** keep target and width fixed, reset the seed, and inspect what the
+  optimizer finds.
 
-\[
-p=\operatorname{softmax}(z)
-\]
+More units increase representational freedom; they do not guarantee a better
+optimizer outcome on every run.
 
-or
+## Read the error statement in order
 
-\[
-\hat y=z
-\]
+1. Fix a continuous target $f$ and a compact region $D$.
+2. At one input, define the vertical gap
+   $|f(x_0)-g(x_0)|$.
+3. Over the region, use
+   $\sup_{x\in D}|f(x)-g(x)|$ for the worst gap.
+4. Choose any $\epsilon>0$.
+5. The theorem says that some finite MLP $g$ can make
+   $\sup_{x\in D}|f(x)-g(x)|<\epsilon$.
 
-for regression.
+The displayed interpolants use fixed knots and are **constructed, not trained**.
 
----
+## What universal approximation does not say
 
-### Slide 37 — Depth vs width
+It does not guarantee:
 
-Width:
+- that training finds the approximating network;
+- that a small width suffices;
+- that finite data identifies the desired function;
+- that the result generalizes beyond the observed data or chosen region.
 
-\[
-\text{number of neurons per layer}
-\]
+$$
+\text{expressivity}\ne\text{trainability}\ne\text{generalization}.
+$$
 
-Depth:
+# Part VII — Depth versus width
 
-\[
-\text{number of layers}
-\]
+## Node view
 
-Intuition:
+- Width adds more features in parallel at one stage.
+- Depth adds more transformations in sequence.
 
-- width gives more features at same level;
-- depth composes features;
-- deep models build hierarchical representations.
+## Two slides for one concrete composition
 
-Examples:
+Use
 
-- pixels → edges → motifs → objects;
-- characters → words → phrases → semantics.
+$$
+h_1(x)=\operatorname{ReLU}(2x+1),
+\qquad
+h_2(h_1)=\operatorname{ReLU}(2-h_1).
+$$
 
----
+First show the two maps separately and stress that the horizontal axis of the
+second plot is $h_1$, not raw $x$. Then compose them:
 
-### Slide 38 — Interactive 5: ReLU classification
+$$
+h_2(x)=\operatorname{ReLU}\!\left(2-\operatorname{ReLU}(2x+1)\right).
+$$
 
-Demo: [ReLU Classification Lab](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/)
+The result has three input regions:
 
-Datasets:
+- $x\le-0.5$: left plateau, $h_2=2$;
+- $-0.5<x<0.5$: middle ramp, $h_2=1-2x$;
+- $x\ge0.5$: right plateau, $h_2=0$.
 
-- four-point Boolean XOR;
-- densely filled quadrant XOR;
-- blobs, circles, moons, and spirals;
-- custom points placed on the plot.
+This example explains sequential composition. It does not claim that the simple
+function requires a deep network.
 
-Controls:
+## One hierarchy example only: vision
 
-- dataset and data seed;
-- model width and depth;
-- constructed rule, random start, or training run;
-- training steps and learning rate.
+The retained schematic reads
 
-Show:
+$$
+\text{pixels}\rightarrow\text{strokes}\rightarrow
+\text{loops}\rightarrow\text{evidence for a digit}.
+$$
 
-- learned logit, probability, or class;
-- loss and accuracy;
-- each signed hidden-unit contribution;
-- movable 3-D logit surface.
+It is a possible compositional story, not a measured activation trace.
 
-Question:
+## Decision rule
 
-> Why can two constructed ReLUs be 4/4 on the Boolean corners yet paint the
-> wrong regions when the square is densely filled? What changes when we add
-> hidden units or layers?
+- Add width when more same-stage feature variety is useful.
+- Add depth when the target is naturally described by sequential composition.
 
----
+This is a modelling intuition, not a universal architecture-selection theorem.
 
-# Part VII — Why MLPs can represent complex functions
+# Part VIII — From representation to learning
 
-### Slide 39 — Piecewise linear view of ReLU networks
+## One closing handoff
 
-For ReLU:
-
-\[
-\phi(z)=\max(0,z).
-\]
-
-A ReLU network is piecewise linear.
-
-Visual:
-
-- one ReLU: hinge;
-- sum of ReLUs: piecewise linear curve;
-- many ReLUs: complex approximation.
-
----
-
-### Slide 40 — Building functions from ReLUs
-
-One-hidden-layer scalar network:
-
-\[
-f(x)=
-\sum_{j=1}^{m}
-a_j\operatorname{ReLU}(w_jx+b_j)+c.
-\]
-
-Each hidden unit adds one kink.
-
-With enough hidden units, we can approximate complicated 1D functions.
-
-Visual: approximate sine curve using sum of ReLUs.
-
----
-
-### Slide 41 — Universal approximation theorem
-
-Informal statement:
-
-Let \(f\) be a continuous function on a compact domain.  
-A feedforward neural network with one hidden layer and suitable nonlinear activation can approximate \(f\) arbitrarily well.
-
-Symbolically:
-
-\[
-\forall \epsilon>0,\quad
-\exists\ \text{MLP } g
-\quad\text{s.t.}\quad
-\sup_x |f(x)-g(x)|<\epsilon.
-\]
-
----
-
-### Slide 42 — What UAT does not say
-
-Universal approximation does **not** say:
-
-- training will find the function;
-- finite data is enough;
-- small network is enough;
-- generalization is guaranteed;
-- one hidden layer is computationally efficient.
-
-Message:
-
-\[
-\boxed{
-\text{expressivity} \
-eq \text{trainability} \
-eq \text{generalization}
-}
-\]
-
----
-
-### Slide 43 — Why depth still matters
-
-Even if one hidden layer is universal, depth can be exponentially more efficient for some functions.
-
-Intuition:
-
-\[
-\text{composition is natural}
-\]
-
-\[
-f(x)=f_L\circ f_{L-1}\circ\cdots\circ f_1(x).
-\]
-
-Examples:
-
-- image hierarchy;
-- language hierarchy;
-- program-like computations.
-
----
-
-### Slide 44 — Interactive 6: function approximation
-
-Demo: [ReLU Approximation Lab](https://nipunbatra.github.io/interactive-articles/relu-function-approximation/)
-
-Controls:
-
-- lane: construction or training;
-- target: sine, tent, two bumps, smooth step, or a drawn curve;
-- knots and width;
-- training steps in the training lane.
-
-Show:
-
-- target, approximation, and residual;
-- error on the training points and a dense grid;
-- maximum grid gap;
-- signed ReLU terms on a shared scale.
-
-Question:
-
-> A construction proves that suitable weights exist. Does the training lane
-> find equally good weights from this initialization?
-
----
-
-# Part VIII — Connecting to deep learning practice
-
-### Slide 45 — One training example through an MLP
-
-Forward pass:
-
-\[
+$$
 x
-\rightarrow
-h^{(1)}
-\rightarrow
-h^{(2)}
-\rightarrow
-z
-\rightarrow
-p
-\rightarrow
-\mathcal L.
-\]
+\rightarrow h^{(1)}
+\rightarrow h^{(2)}
+\rightarrow z
+\rightarrow \mathcal L.
+$$
 
-For multi-class:
+- **Forward:** evaluate the current representation, prediction, and scalar loss.
+- **Next — backpropagation:** compute how each parameter affected the loss.
+- **Then — optimization:** use those gradients to change the parameters.
 
-\[
-\mathcal L=-\log p_y.
-\]
+Hidden layers enrich $f_\theta(x)$; the output loss can remain the same one
+chosen in Lecture 1. Keep this handoff to one slide.
 
-Diagram: computation graph.
+# 80-minute route
 
-This prepares for backpropagation.
+| Time | Teaching beat | Must preserve |
+|---:|---|---|
+| 0–5 min | Lecture 1 handoff and notation | Change the model, keep the loss |
+| 5–15 min | Weighted sums and matrix form | Shapes; bias as a ones column; Linear GD Colab link |
+| 15–25 min | Neuron and activations | $u$ versus $h$; saturation; affine collapse |
+| 25–35 min | Linear classification limit | XOR; softmax preserves the winner; visible ties |
+| 35–52 min | MLP and XOR | Parameter count; all four rows; filled-region scope; XOR Colab and classifier lab |
+| 52–67 min | Hinges and UAT | Tent construction; 2-D fold; `sup`; existence caveat; function lab |
+| 67–76 min | Width and depth | Two composition slides; one vision hierarchy |
+| 76–80 min | Learning handoff | Representation $\to$ loss $\to$ backprop $\to$ optimizer |
 
----
+If shortened to 70 minutes, compress the explicit multiclass-score example and
+the interpolant comparison. Preserve the four-row XOR verification, the
+four-points-versus-filled-regions distinction, and the UAT caveat.
 
-### Slide 46 — Parameters of an MLP
+# Synchronized resources
 
-For layer \(\ell\):
+| Resource | Deck location | Purpose |
+|---|---|---|
+| [Linear GD Colab](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L02/01_linear_regression_gd.ipynb) | “For regression, one weighted sum gives one flat trend” | Fit seeded synthetic data and compare with the closed form |
+| [XOR Colab](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L02/02_mlp_xor.ipynb) | “Four-point XOR and filled XOR are different tasks” | Verify the two fixed XOR constructions |
+| [Activation explorer](https://nipunbatra.github.io/dl-teaching/interactives/activation-explorer.html) | Activation interactive slide | Compare shape, range, and saturation |
+| [ReLU Classification Lab](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/) | Four-points-versus-regions interactive slide | Compare datasets, representations, training, and the 3-D logit surface |
+| [ReLU Approximation Lab](https://nipunbatra.github.io/interactive-articles/relu-function-approximation/) | Function-approximation interactive slide | Separate constructive approximation from optimizer behaviour |
 
-\[
-W_\ell\in\mathbb R^{d_\ell\times d_{\ell-1}},
-\qquad
-b_\ell\in\mathbb R^{d_\ell}.
-\]
+# Evidence guardrails
 
-Total parameters:
+- Call the displayed XOR weights **constructed**, not learned.
+- Call the regression data **seeded synthetic**, not real-world data.
+- Call the fixed-knot approximation curves **constructed interpolants**, not
+  trained models.
+- Call the vision hierarchy a **conceptual schematic**, not an activation map.
+- Treat UAT as a representation theorem, not an optimization or generalization
+  guarantee.
 
-\[
-\sum_{\ell=1}^{L}
-(d_\ell d_{\ell-1}+d_\ell).
-\]
+# Exit ticket
 
-Quick exercise:
+For $(x_1,x_2)=(1,1)$, compute $h_1$, $h_2$, $z$, and the predicted class for the
+fixed XOR MLP. Then answer:
 
-Input \(784\), hidden \(128\), output \(10\):
-
-\[
-784\times128+128+128\times10+10.
-\]
-
----
-
-### Slide 47 — The standard supervised DL template
-
-Regression:
-
-\[
-z=f_\theta(x),
-\qquad
-\mathcal L=(y-z)^2.
-\]
-
-Binary classification:
-
-\[
-z=f_\theta(x),
-\qquad
-p=\sigma(z),
-\qquad
-\mathcal L=\text{BCE}.
-\]
-
-Multi-class classification:
-
-\[
-z=f_\theta(x),
-\qquad
-p=\operatorname{softmax}(z),
-\qquad
-\mathcal L=\text{CE}.
-\]
-
----
-
-### Slide 48 — Summary table
-
-| Model | Output | Distribution | Loss | Boundary |
-|---|---|---|---|---|
-| Linear regression | \(w^\top x+b\) | Gaussian | MSE | — |
-| Logistic regression | \(\sigma(w^\top x+b)\) | Bernoulli | BCE | linear |
-| Softmax regression | \(\operatorname{softmax}(Wx+b)\) | Categorical | CE | linear |
-| MLP classifier | \(\operatorname{softmax}(f_\theta(x))\) | Categorical | CE | nonlinear |
-
----
-
-### Slide 49 — Final mental model
-
-\[
-\boxed{
-\text{linear regression} =
-\text{linear score + Gaussian likelihood}
-}
-\]
-
-\[
-\boxed{
-\text{logistic regression} =
-\text{linear score + sigmoid + Bernoulli likelihood}
-}
-\]
-
-\[
-\boxed{
-\text{softmax regression} =
-\text{linear scores + softmax + categorical likelihood}
-}
-\]
-
-\[
-\boxed{
-\text{MLP} =
-\text{learned nonlinear features + output likelihood}
-}
-\]
-
----
-
-### Slide 50 — Next lecture
-
-Now we have:
-
-\[
-x\rightarrow f_\theta(x)\rightarrow \mathcal L.
-\]
-
-Next:
-
-\[
-\frac{\partial \mathcal L}{\partial \theta}
-\]
-
-Topics:
-
-- computation graphs;
-- chain rule;
-- backpropagation;
-- gradient descent;
-- automatic differentiation.
-
----
-
-## Timing
-
-| Section | Slides | Time |
-|---|---:|---:|
-| Recap and motivation | 1–3 | 5 min |
-| Linear regression | 4–10 | 12 min |
-| Logistic regression | 11–18 | 14 min |
-| Neuron and activations | 19–23 | 10 min |
-| Softmax regression | 24–29 | 10 min |
-| MLPs | 30–38 | 16 min |
-| Universal approximation | 39–44 | 10 min |
-| DL template and summary | 45–50 | 8 min |
-
-Total: **~85 min nominal**.  
-Skim slides **8, 17, 43, 46** if short on time.
-
----
-
-## Interactives to make
-
-1. `linear-regression.html`  
-   MSE surface, gradient descent path, fitted line.
-
-2. `logistic-regression.html`  
-   Sigmoid probability heatmap and linear decision boundary.
-
-3. `activation-functions.html`  
-   Sigmoid, tanh, ReLU, GELU and derivatives.
-
-4. `softmax-regression.html`  
-   Multi-class logits, softmax probabilities, linear decision regions.
-
-5. [ReLU Classification Lab](https://nipunbatra.github.io/interactive-articles/mlp-decision-boundary/)
-   Standard and custom datasets, constructed and trained rules, signed hidden
-   contributions, and a movable 3-D logit surface.
-
-6. [ReLU Approximation Lab](https://nipunbatra.github.io/interactive-articles/relu-function-approximation/)
-   Construction and training lanes for one-dimensional targets, with editable
-   knots, residuals, grid metrics, and signed ReLU terms.
-
-Framework: **Typst + Touying for slides; standalone JS demos on GitHub Pages.**
+1. Why does 4/4 on the Boolean truth table not imply perfect filled-XOR
+   classification?
+2. What does universal approximation promise?
+3. What does it not promise about training?

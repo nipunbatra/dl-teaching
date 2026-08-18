@@ -14,6 +14,7 @@
 
 // interactive base + a small local compute graph (fletcher)
 #let IA = "https://nipunbatra.github.io/interactive-articles/"
+#let NB = "https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L02/"
 #let _sigmoid(z) = 1 / (1 + calc.exp(-z))
 #let _tanh(z) = {
   let e = calc.exp(2 * z)
@@ -226,8 +227,8 @@
     [*Linear prediction* — weighted sums, batches, and output shapes],
     [*One neuron* — add an activation to create a nonlinear feature],
     [*The limitation* — see exactly why a linear model cannot solve XOR],
-    [*An MLP* — compose learned features across width and depth],
-    [*Practice* — trace one forward pass, count parameters, and make one update],
+    [*An MLP* — compose ReLU features and solve the XOR counterexample],
+    [*Capacity and depth* — approximate functions, then compose representations],
     spacing: 9pt,
   )
 ]
@@ -428,7 +429,7 @@ For one output, every input node sends a weighted value into one summation node.
 #fig("/lecture2/figures/linreg_geometry.pdf", w: 52%)
 #pause
 #place(bottom + center, dy: -2pt,
-  result[The model can tilt and shift a line or plane, but it cannot bend to follow nonlinear structure.])
+  result[The model can tilt and shift a line or plane, but it cannot bend. #link(NB + "01_linear_regression_gd.ipynb")[Fit it in the Linear GD Colab ↗]])
 
 // ═══════════════════════════ PART III — From linear score to a neuron ═══════════════════════════
 = From a linear score to a neuron
@@ -913,7 +914,7 @@ Explore large positive and negative logits, where sigmoid's derivative becomes t
 ])
 #pause
 #place(bottom + center, dy: -2pt,
-  result[The inner dimensions cancel; the number of rows determines the next representation size.])
+  result[The inner dimensions cancel; trainable scalars $=m(d+1)+K(m+1)$.])
 
 == One XOR network: keep these two features throughout #V
 
@@ -988,7 +989,7 @@ Explore large positive and negative logits, where sigmoid's derivative becomes t
 #v(2pt)
 #align(center, image("/lecture2/figures/xor_scope_contrast.pdf", width: 170mm))
 #place(bottom + center, dy: -2pt,
-  result[#text(size: 16.5pt)[Our two-unit construction is exact on the *four Boolean inputs*. A Playground-style dataset fills the quadrants and also asks the optimizer to discover the weights.]])
+  result[#text(size: 16pt)[Exact on the *four Boolean inputs* is not exact on filled regions. #link(NB + "02_mlp_xor.ipynb")[Audit both constructions in the XOR Colab ↗]]])
 
 == Interactive: four points or four regions? #I
 
@@ -1750,201 +1751,63 @@ Universal approximation does *not* promise:
 #place(bottom + center, dy: -2pt,
   result[Count nodes vertically to read width; count hidden columns horizontally to read depth.])
 
-== Layer 1 creates a hinge at $x=-0.5$ #V
+== Depth means composition: layer 2 receives $h_1$, not $x$ #V
 
-#two(r: (0.9fr, 1.1fr),
-  [#align(center, [
-    #diagram(spacing: (15mm, 16mm), node-stroke: 1pt + INK, node-fill: white, {
-      let inp = (0, 0)
-      let bias = (0, 1.15)
-      let pre = (2.35, 0)
-      let out = (4.55, 0)
-
-      edge(inp, pre, text(size: 13pt, weight: 700, fill: TEAL)[$w_1=2$],
-        "-|>", stroke: 1.1pt + TEAL, label-side: left)
-      edge(bias, pre, text(size: 13pt, weight: 700, fill: RED)[$b_1=+1$],
-        "-|>", stroke: 1.0pt + RED, label-side: right)
-      edge(pre, out, text(size: 12.5pt, weight: 700, fill: ACC)[ReLU],
-        "-|>", stroke: 1.15pt + ACC, label-side: left)
-
-      node(inp, $x$, radius: 8.5mm, stroke: 1.2pt + INK)
-      node(bias, $1$, radius: 7mm, stroke: 1.1pt + RED)
-      node(pre, $u_1$, radius: 10mm, fill: TEAL.lighten(92%), stroke: 1.2pt + TEAL)
-      node(out, $h_1$, radius: 10mm, fill: ACC.lighten(92%), stroke: 1.2pt + ACC)
-    })
-    #v(8pt)
-    #text(size: 18pt)[$u_1=2x+1$ \
-      $h_1=f_1(x)="ReLU"(u_1)$]
-    #v(8pt)
-    #text(size: 16.5pt)[At $x=0.25$: \
-      $u_1=1.5 arrow.r h_1=1.5$]
-  ])],
-  [#pause
-   #align(center, lines(
-     fn: x => _relu(2 * x + 1), domain: (-1.5, 1.5), samples: 120,
-     labels: ([$f_1(x)$],), colors: (TEAL,), markers: false, legend: "tl",
-     vlines: ((-0.5, [hinge], MUTED),),
-     points: ((0.25, 1.5, [$(0.25,1.5)$]),),
-     x-label: [$x$], y-label: [$h_1$], title: [layer 1 output],
-     size: (92mm, 55mm),
-   ))],
+#align(center, text(size: 22pt, weight: 650)[
+  $x arrow.r h_1(x)="ReLU"(2x+1) arrow.r h_2(h_1)="ReLU"(2-h_1)$
+])
+#pause
+#two(
+  [#align(center, lines(
+    fn: x => _relu(2 * x + 1), domain: (-1.5, 1.5), samples: 120,
+    labels: ([$h_1(x)$],), colors: (TEAL,), markers: false, legend: "tl",
+    vlines: ((-0.5, [$2x+1=0$], MUTED),),
+    x-label: [$x$], y-label: [$h_1$], title: [layer 1: horizontal axis is $x$],
+    size: (103mm, 53mm),
+  ))],
+  [#align(center, lines(
+    fn: h => _relu(2 - h), domain: (0, 4), samples: 120,
+    labels: ([$h_2(h_1)$],), colors: (ACC,), markers: false, legend: "tl",
+    vlines: ((2, [$2-h_1=0$], MUTED),),
+    x-label: [$h_1$], y-label: [$h_2$], title: [layer 2: horizontal axis is $h_1$],
+    size: (103mm, 53mm),
+  ))],
 )
 #pause
-#place(bottom + center, dy: -2pt,
-  result[Layer 1 is flat until $2x+1$ becomes positive; then its learned feature grows linearly.])
-
-== The second layer transforms the learned feature #V
-
-#two(r: (0.9fr, 1.1fr),
-  [#align(center, [
-    #diagram(spacing: (15mm, 16mm), node-stroke: 1pt + INK, node-fill: white, {
-      let inp = (0, 0)
-      let bias = (0, 1.15)
-      let pre = (2.35, 0)
-      let out = (4.55, 0)
-
-      edge(inp, pre, text(size: 13pt, weight: 700, fill: TEAL)[$w_2=-1$],
-        "-|>", stroke: 1.1pt + TEAL, label-side: left)
-      edge(bias, pre, text(size: 13pt, weight: 700, fill: RED)[$b_2=+2$],
-        "-|>", stroke: 1.0pt + RED, label-side: right)
-      edge(pre, out, text(size: 12.5pt, weight: 700, fill: ACC)[ReLU],
-        "-|>", stroke: 1.15pt + ACC, label-side: left)
-
-      node(inp, $h_1$, radius: 10mm, fill: TEAL.lighten(92%), stroke: 1.2pt + TEAL)
-      node(bias, $1$, radius: 7mm, stroke: 1.1pt + RED)
-      node(pre, $u_2$, radius: 10mm, fill: ACC.lighten(94%), stroke: 1.2pt + ACC)
-      node(out, $h_2$, radius: 10mm, fill: ACC.lighten(90%), stroke: 1.2pt + ACC)
-    })
-    #v(8pt)
-    #text(size: 18pt)[$u_2=2-h_1$ \
-      $h_2=f_2(h_1)="ReLU"(u_2)$]
-    #v(8pt)
-    #text(size: 16.5pt)[For $h_1=1.5$: \
-      $u_2=0.5 arrow.r h_2=0.5$]
-  ])],
-  [#pause
-   #align(center, lines(
-     fn: h => _relu(2 - h), domain: (0, 4), samples: 120,
-     labels: ([$f_2(h_1)$],), colors: (ACC,), markers: false, legend: "tl",
-     vlines: ((2, [hinge], MUTED),),
-     points: ((1.5, 0.5, [$(1.5,0.5)$]),),
-     x-label: [$h_1$], y-label: [$h_2$], title: [layer 2 response],
-     size: (92mm, 55mm),
-   ))],
+#grid(
+  columns: 2, gutter: 14pt,
+  neat-card([FIRST BEND], [$2x+1=0 arrow.r x=-0.5$], color: TEAL, width: 103mm),
+  neat-card([SECOND BEND IN INPUT SPACE], [$h_1=2 arrow.r 2x+1=2 arrow.r x=0.5$], color: ACC, width: 103mm),
 )
-#pause
-#place(bottom + center, dy: -2pt,
-  result[Layer 2 decreases as $h_1$ grows, then ReLU clips every negative result to zero.])
 
-== Two layers create a clipped nonlinear ramp #V
+== Composing the two maps gives three input regions #V
 
-#align(center, diagram(spacing: (28mm, 16mm), node-stroke: 1pt + INK, node-fill: white, {
-  let inp = (0, 0)
-  let mid = (2.7, 0)
-  let out = (5.4, 0)
-
-  edge(inp, mid, text(size: 13.5pt, weight: 700, fill: TEAL)[$f_1(x)="ReLU"(2x+1)$],
-    "-|>", stroke: 1.15pt + TEAL, label-side: left)
-  edge(mid, out, text(size: 13.5pt, weight: 700, fill: ACC)[$f_2(h_1)="ReLU"(2-h_1)$],
-    "-|>", stroke: 1.15pt + ACC, label-side: left)
-
-  node(inp, $x$, radius: 9mm, stroke: 1.2pt + INK)
-  node(mid, $h_1$, radius: 10.5mm, fill: TEAL.lighten(92%), stroke: 1.2pt + TEAL)
-  node(out, $h_2$, radius: 10.5mm, fill: ACC.lighten(90%), stroke: 1.2pt + ACC)
-}))
-#v(3pt)
 #align(center, text(size: 18pt, weight: 650)[
   $h_2(x)=f_2(f_1(x))="ReLU"(2-"ReLU"(2x+1))$
 ])
+#align(center, text(size: 14pt, fill: MUTED)[
+  This illustrates sequential composition; it does not claim that this simple function requires depth.
+])
 #pause
-#align(center, lines(
-  fn: x => _relu(2 - _relu(2 * x + 1)), domain: (-1.5, 1.5), samples: 150,
-  labels: ([$h_2(x)$],), colors: (ACC,), markers: false, legend: "tl",
-  vlines: ((-0.5, [$-0.5$], MUTED), (0.5, [$0.5$], MUTED)),
-  x-label: [$x$], y-label: [$h_2$], title: [overall map from raw input to layer 2],
-  size: (126mm, 40mm),
-))
-#pause
-#place(bottom + center, dy: -2pt,
-  result[The first hinge turns on at $x=-0.5$; the second layer creates another bend at $x=0.5$.])
-
-== Three inputs reveal the complete composition #D
-
-#two(r: (1.05fr, 0.95fr),
+#two(r: (1.1fr, 0.9fr),
   [#align(center, lines(
     fn: x => _relu(2 - _relu(2 * x + 1)), domain: (-1.5, 1.5), samples: 150,
     labels: ([$h_2(x)$],), colors: (ACC,), markers: false, legend: "tl",
-    vlines: ((-0.5, [], MUTED), (0.5, [], MUTED)),
-    points: ((-1, 2, [$(-1,2)$]), (0.25, 0.5, [$(0.25,0.5)$]), (1, 0, [$(1,0)$])),
-    x-label: [$x$], y-label: [$h_2$], title: [three regions, three behaviours],
-    size: (101mm, 58mm),
+    vlines: ((-0.5, [$-0.5$], MUTED), (0.5, [$0.5$], MUTED)),
+    x-label: [$x$], y-label: [$h_2$], title: [overall map from raw input to layer 2],
+    size: (102mm, 50mm),
   ))],
-  [#set text(size: 16.5pt)
-   #text(size: 18pt, weight: 700, fill: TEAL)[$x=-1$]
-   $u_1=-1 arrow.r h_1=0$ \
-   $u_2=2 arrow.r h_2=2$
-   #v(7pt)
-   #text(size: 18pt, weight: 700, fill: ACC)[$x=0.25$]
-   $u_1=1.5 arrow.r h_1=1.5$ \
-   $u_2=0.5 arrow.r h_2=0.5$
-   #v(7pt)
-   #text(size: 18pt, weight: 700, fill: GREEN)[$x=1$]
-   $u_1=3 arrow.r h_1=3$ \
-   $u_2=-1 arrow.r h_2=0$
+  [#set text(size: 14.5pt)
+   #neat-card([LEFT PLATEAU], [$x <= -0.5$ \
+     $h_1=0 arrow.r h_2=2$], color: TEAL, width: 78mm)
+   #v(3pt)
+   #neat-card([MIDDLE RAMP], [$-0.5 < x < 0.5$ \
+     $h_1=2x+1 arrow.r h_2=1-2x$], color: ACC, width: 78mm)
+   #v(3pt)
+   #neat-card([RIGHT PLATEAU], [$x >= 0.5$ \
+     $h_1 >= 2 arrow.r h_2=0$], color: GREEN, width: 78mm)
   ],
 )
-#pause
-#place(bottom + center, dy: -2pt,
-  result[Depth means sequential reuse: layer 2 receives the learned value $h_1$ and transforms it again.])
-
-== Depth builds features one stage at a time #V
-
-#align(center, text(size: 18.5pt)[
-  Each layer receives the representation produced immediately before it.
-])
-#v(5pt)
-#align(center, text(size: 19pt, weight: 650)[
-  pixels $arrow.r$ short strokes $arrow.r$ closed loops $arrow.r$ digit score
-])
-#v(8pt)
-#align(center, diagram(spacing: (27mm, 14mm), node-stroke: 1pt + INK, node-fill: white, {
-  let inp = (0, 0)
-  let first = (2, 0)
-  let second = (4, 0)
-  let out = (6, 0)
-
-  edge(inp, first, text(size: 12.5pt, weight: 700, fill: TEAL)[find simple patterns],
-    "-|>", stroke: 1.15pt + TEAL, label-side: left)
-  edge(first, second, text(size: 12.5pt, weight: 700, fill: BLUE)[combine them],
-    "-|>", stroke: 1.15pt + BLUE, label-side: left)
-  edge(second, out, text(size: 12.5pt, weight: 700, fill: ACC)[make a prediction],
-    "-|>", stroke: 1.15pt + ACC, label-side: left)
-
-  node(inp, $bold(x)$, radius: 10mm, stroke: 1.2pt + INK)
-  node(first, $bold(h)^(1)$, radius: 11mm,
-    fill: TEAL.lighten(92%), stroke: 1.2pt + TEAL)
-  node(second, $bold(h)^(2)$, radius: 11mm,
-    fill: BLUE.lighten(92%), stroke: 1.2pt + BLUE)
-  node(out, $bold(z)$, radius: 10mm,
-    fill: ACC.lighten(92%), stroke: 1.2pt + ACC)
-
-  node((0, -1.25), text(size: 11.5pt, weight: 700, fill: INK)[INPUT], stroke: none)
-  node((2, -1.25), text(size: 11.5pt, weight: 700, fill: TEAL)[LAYER 1], stroke: none)
-  node((4, -1.25), text(size: 11.5pt, weight: 700, fill: BLUE)[LAYER 2], stroke: none)
-  node((6, -1.25), text(size: 11.5pt, weight: 700, fill: ACC)[OUTPUT], stroke: none)
-
-  node((0, 1.35), align(center)[#text(size: 12pt)[raw \
-    measurements]], stroke: none)
-  node((2, 1.35), align(center)[#text(size: 12pt)[simple learned \
-    features]], stroke: none)
-  node((4, 1.35), align(center)[#text(size: 12pt)[features made \
-    from features]], stroke: none)
-  node((6, 1.35), align(center)[#text(size: 12pt)[task-specific \
-    score]], stroke: none)
-}))
-#pause
-#place(bottom + center, dy: -2pt,
-  result[Later layers build on earlier features; they do not solve the whole task from raw input again.])
 
 == Vision: depth builds strokes, then loops #V
 
@@ -1969,57 +1832,7 @@ Universal approximation does *not* promise:
 )
 #pause
 #place(bottom + center, dy: -2pt,
-  result[Early units respond to local edges; later units combine them into shapes that support the final class.])
-
-== Audio: depth builds tones, then phonemes #V
-
-#align(center, text(size: 11.5pt, weight: 700, fill: MUTED)[
-  CONCEPTUAL SCHEMATIC · illustrates a possible hierarchy; not measured model activations
-])
-#v(2pt)
-#align(center, image(
-  "figures/depth-feature-hierarchy-audio.png",
-  width: 244mm, height: 57mm, fit: "cover",
-))
-#v(4pt)
-#grid(columns: (1fr, 1fr, 1fr, 1fr), column-gutter: 5mm,
-  [#align(center)[#text(size: 11.5pt, weight: 700, fill: INK)[INPUT] \
-    #text(size: 14pt)[waveform samples]]],
-  [#align(center)[#text(size: 11.5pt, weight: 700, fill: TEAL)[LAYER 1] \
-    #text(size: 14pt)[frequency + onset]]],
-  [#align(center)[#text(size: 11.5pt, weight: 700, fill: BLUE)[LAYER 2] \
-    #text(size: 14pt)[phoneme pattern]]],
-  [#align(center)[#text(size: 11.5pt, weight: 700, fill: ACC)[OUTPUT] \
-    #text(size: 14pt)[word evidence]]],
-)
-#pause
-#place(bottom + center, dy: -2pt,
-  result[Early layers detect local frequency and timing cues; later layers combine them over longer time windows.])
-
-== Text: depth combines words into phrase meaning #V
-
-#align(center, text(size: 11.5pt, weight: 700, fill: MUTED)[
-  CONCEPTUAL SCHEMATIC · illustrates a possible hierarchy; not measured model activations
-])
-#v(2pt)
-#align(center, image(
-  "figures/depth-feature-hierarchy-text.png",
-  width: 244mm, height: 57mm, fit: "cover",
-))
-#v(4pt)
-#grid(columns: (1fr, 1fr, 1fr, 1fr), column-gutter: 5mm,
-  [#align(center)[#text(size: 11.5pt, weight: 700, fill: INK)[INPUT] \
-    #text(size: 14pt)[tokens “not”, “good”]]],
-  [#align(center)[#text(size: 11.5pt, weight: 700, fill: TEAL)[LAYER 1] \
-    #text(size: 14pt)[ordered phrase]]],
-  [#align(center)[#text(size: 11.5pt, weight: 700, fill: BLUE)[LAYER 2] \
-    #text(size: 14pt)[negative evidence]]],
-  [#align(center)[#text(size: 11.5pt, weight: 700, fill: ACC)[OUTPUT] \
-    #text(size: 14pt)[negative review]]],
-)
-#pause
-#place(bottom + center, dy: -2pt,
-  result[A later unit can reverse the evidence from “good” after combining it with the preceding token “not”.])
+  result[Early units *can* respond to local edges; later units can combine them into shapes that support the final class.])
 
 == Choose width for variety; choose depth for composition #D
 
@@ -2040,343 +1853,38 @@ Universal approximation does *not* promise:
    #v(9pt)
    *Example:* strokes $arrow.r$ loops $arrow.r$ digit identity.],
 )
-#pause
-#v(12pt)
-#notebox[There is no universally best shape. Compare models under a meaningful parameter, memory, and compute budget.]
-#pause
-#place(bottom + center, dy: -2pt,
-  result[Modern networks usually need both: enough width per stage and enough depth to compose stages.])
 
-// ═══════════════════════════ PART IX — Connecting to practice ═══════════════════════════
-= Connecting to deep-learning practice
+// ═══════════════════════════ PART IX — Handoff ═══════════════════════════
+= From representation to learning
 
-== Forward pass, step 1: flatten the image into a vector #V
+== A richer representation; the same learning loop #V
 
-#align(center, text(size: 18pt)[Start with a $2 times 2$ toy image so that every number stays visible.])
-#v(10pt)
 #align(center, grid(
-  columns: (82mm, 38mm, 82mm), align: horizon,
-  neat-card([pixel grid], [
-    $bold(X)_("image")=mat(1,0;1,1)$ \
-    four pixel intensities
-  ], color: INK, width: 82mm),
-  neat-arrow(label: [read row by row]),
-  neat-card([input vector], [
-    $bold(x)=mat(1;0;1;1) in RR^4$ \
-    the same four values
-  ], color: TEAL, width: 82mm),
+  columns: (42mm, 7mm, 42mm, 7mm, 42mm, 7mm, 42mm, 7mm, 42mm), align: horizon,
+  neat-card([INPUT], [$bold(x)$ #linebreak() raw features], color: INK, width: 42mm),
+  neat-arrow(),
+  neat-card([HIDDEN 1], [$bold(h)^1$ #linebreak() ReLU features], color: TEAL, width: 42mm),
+  neat-arrow(),
+  neat-card([HIDDEN 2], [$bold(h)^2$ #linebreak() composed features], color: BLUE, width: 42mm),
+  neat-arrow(),
+  neat-card([OUTPUT], [$bold(z)$ #linebreak() class scores], color: ACC, width: 42mm),
+  neat-arrow(),
+  neat-card([LECTURE 1], [$cal(L)$ #linebreak() familiar loss], color: GREEN, width: 42mm),
 ))
 #pause
-#v(13pt)
-#align(center, neat-card([real image], [
-  a $28 times 28$ image becomes $bold(x) in RR^784$ because $28(28)=784$
-], color: BLUE, width: 154mm))
-#pause
-#place(bottom + center, dy: -2pt,
-  result[Flattening changes the arrangement of the pixels—not their values or meaning.])
-
-== Forward pass, step 2: one hidden unit tests one pattern #D
-
-#align(center, diagram(spacing: (23mm, 16mm), node-stroke: 0.9pt + INK, node-fill: white, {
-  let inputs = ((0,-1.5), (0,-0.5), (0,0.5), (0,1.5))
-  let names = ([$x_1$], [$x_2$], [$x_3$], [$x_4$])
-  let vals = ([$1$], [$0$], [$1$], [$1$])
-  let weights = ([$+1$], [$-1$], [$+0.5$], [$+0.5$])
-  let sum-pos = (3.2, 0)
-  let act = (5.25, 0)
-  for i in range(4) {
-    edge(inputs.at(i), sum-pos,
-      text(size: 11.5pt, weight: 700, fill: TEAL)[#weights.at(i)],
-      "-|>", stroke: 1pt + TEAL, label-side: left)
-    node(inputs.at(i), align(center, text(size: 11pt)[#names.at(i) \
-      #vals.at(i)]), radius: 7.5mm, stroke: 1pt + INK)
-  }
-  edge((1.75, 1.75), sum-pos, text(size: 11.5pt, weight: 700, fill: ACC)[$-0.5$],
-    "-|>", stroke: 1pt + ACC, label-side: right)
-  edge(sum-pos, act, text(size: 11pt, weight: 700, fill: BLUE)[ReLU],
-    "-|>", stroke: 1.1pt + BLUE, label-side: left)
-  node((1.75, 1.75), [$1$], radius: 6mm, fill: ACC.lighten(90%), stroke: 1pt + ACC)
-  node(sum-pos, text(size: 16pt)[$sum$], radius: 9mm, stroke: 1.2pt + TEAL)
-  node((3.2, 0.72), text(size: 10pt, weight: 650, fill: TEAL)[$u=1.5$], stroke: none)
-  node(act, align(center, text(size: 12pt)[$h$ \
-    #text(size: 9pt, fill: BLUE)[$=1.5$]]), radius: 10mm, stroke: 1.2pt + BLUE)
-}))
-#pause
-#place(bottom + center, dy: -2pt,
-  result[#text(size: 17pt)[
-    $u=1(1)-1(0)+0.5(1)+0.5(1)-0.5=1.5$, then $h=max(0,u)=1.5$.
-    The edge weights define the pixel pattern this feature detects.
-  ]])
-
-== Forward pass, step 3: 128 units test 128 patterns #V
-
+#v(12pt)
 #grid(
-  columns: (105mm, 1fr), column-gutter: 14pt, align: horizon,
-  [#block(width: 105mm, height: 76mm, clip: true, inset: 0pt)[
-     #align(center + horizon, scale(82%)[
-       #mlp-diagram((4, 5), labels: ([784 input pixels], [128 hidden units]))
-     ])
-   ]
-   #v(3pt)
-   #neat-caption([schematic: only a few nodes are drawn])],
-  [Each receiving unit has its own row of weights:
-   #v(6pt)
-   $u_j=bold(w)_j^top bold(x)+b_j$ \
-   $h_j=max(0,u_j)$ \
-   #v(8pt)
-   $bold(u)=bold(W)_1 bold(x)+bold(b)_1 in RR^128$ \
-   $bold(h)="ReLU"(bold(u)) in RR^128$],
+  columns: 3, gutter: 9pt,
+  neat-card([FORWARD], [evaluate the current computation and scalar loss], color: TEAL, width: 70mm),
+  neat-card([NEXT · BACKPROP], [compute how every parameter affected that loss], color: BLUE, width: 70mm),
+  neat-card([THEN · OPTIMIZE], [use those gradients to change the parameters], color: ACC, width: 70mm),
 )
-#pause
-#v(5pt)
-#align(center, text(size: 16.5pt)[
-  For one trained layer: #text(fill: BLUE)[$h_17=2.1$] $arrow.r$ curved-stroke unit *on*; #h(7pt)
-  #text(fill: ACC)[$h_83=0$] $arrow.r$ another unit *off*.
-])
-#pause
-#place(bottom + center, dy: -2pt,
-  result[The hidden vector is a list of 128 learned measurements of the same image.])
-
-== Forward pass, step 4: hidden features become class scores #D
-
-#align(center, text(size: 18pt)[Use a three-class toy output so that every logit can be computed explicitly.])
-#v(8pt)
-#align(center, grid(
-  columns: (69mm, 12mm, 106mm), align: horizon,
-  neat-card([hidden features], [$bold(h)=(1.5,0.5)^top$], color: BLUE, width: 69mm),
-  neat-arrow(),
-  neat-card([linear output layer], [
-    #set text(size: 16pt)
-    $bold(W)_2=mat(1,0;0,1;-1,1), quad bold(b)_2=(0.5,0,0)^top$ \
-    $bold(z)=bold(W)_2 bold(h)+bold(b)_2=(2.0,0.5,-1.0)^top$
-  ], color: ACC, width: 106mm),
-))
-#pause
-#v(10pt)
-#align(center, grid(
-  columns: (1fr, 1fr, 1fr), column-gutter: 8pt,
-  notebox[$z_A=1(1.5)+0(0.5)+0.5=2.0$],
-  notebox[$z_B=0(1.5)+1(0.5)+0=0.5$],
-  notebox[$z_C=-1(1.5)+1(0.5)+0=-1.0$],
-))
-#pause
-#place(bottom + center, dy: -2pt,
-  result[Logits are unrestricted class scores: larger means preferred, but they are not probabilities yet.])
-
-== Forward pass, step 5: softmax compares every score #D
-
-#align(center, grid(
-  columns: (60mm, 10mm, 84mm, 10mm, 70mm), align: horizon,
-  neat-card([logits], [$bold(z)=(2.0,0.5,-1.0)^top$], color: ACC, width: 60mm),
-  neat-arrow(),
-  neat-card([exponentiate and add], [
-    $exp(bold(z)) approx (7.389,1.649,0.368)^top$ \
-    total $=9.406$
-  ], color: TEAL, width: 84mm),
-  neat-arrow(),
-  neat-card([probabilities], [
-    #set text(size: 15pt)
-    $bold(p) approx$ \
-    $(0.786,0.175,0.039)^top$ \
-    sum $=1$
-  ], color: BLUE, width: 70mm),
-))
-#pause
-#v(12pt)
-#align(center, text(size: 20pt)[
-  $p_A=frac(exp(2.0), exp(2.0)+exp(0.5)+exp(-1.0))=frac(7.389,9.406) approx 0.786$
-])
-#pause
-#place(bottom + center, dy: -2pt,
-  result[Softmax preserves the score ordering while turning all three scores into one probability distribution.])
-
-== Forward pass, step 6: the label selects the loss #D
-
-#align(center, text(size: 19pt)[Cross-entropy reads the probability assigned to the true class: $cal(L)=-log p_y$.])
-#v(12pt)
-#align(center, grid(
-  columns: (1fr, 1fr, 1fr), column-gutter: 10pt,
-  neat-card([if y = A], [$cal(L)=-log(0.786) approx 0.241$], color: GREEN, width: 72mm),
-  neat-card([if y = B], [$cal(L)=-log(0.175) approx 1.743$], color: ACC, width: 72mm),
-  neat-card([if y = C], [$cal(L)=-log(0.039) approx 3.244$], color: RED, width: 72mm),
-))
-#pause
-#v(13pt)
-#two(
-  notebox[High probability on the true class gives a small loss.],
-  notebox[Confident probability on the wrong class gives a large loss.],
-)
-#pause
-#place(bottom + center, dy: -2pt,
-  result[The forward pass ends with one scalar loss; it has evaluated the weights but has not updated them.])
-
-== A minibatch stacks examples as rows #D
-
-#align(center, text(size: 18pt)[Apply the same hidden unit from step 2 to three inputs at once.])
-#v(8pt)
-#align(center, grid(
-  columns: (89mm, 12mm, 105mm), align: horizon,
-  neat-card([three input rows], [
-    $bold(X)=mat(1,0,1,1;0,1,1,0;1,1,0,0)$ \
-    shape $3 times 4$
-  ], color: INK, width: 89mm),
-  neat-arrow(),
-  neat-card([one feature across the batch], [
-    $bold(u)=bold(X)bold(w)+b bold(1)=(1.5,-1,-0.5)^top$ \
-    $bold(h)="ReLU"(bold(u))=(1.5,0,0)^top$
-  ], color: TEAL, width: 105mm),
-))
-#pause
-#v(10pt)
-#align(center, text(size: 19pt)[The same $bold(w)$ and $b$ are reused for row 1, row 2, and row 3.])
-#pause
-#place(bottom + center, dy: -2pt,
-  result[Rows are different examples; columns are the features computed for those examples.])
-
-== The full minibatch keeps the same network #D
-
-For $n=64$ images, all $128$ hidden units and all $10$ logits are computed together:
-#v(9pt)
-#align(center, grid(
-  columns: (65mm, 12mm, 76mm, 12mm, 65mm), align: horizon,
-  neat-card([batch input], [$bold(X): 64 times 784$ \
-    one image per row], color: INK, width: 65mm),
-  neat-arrow(),
-  neat-card([batch hidden features], [$bold(H)="ReLU"(bold(X)bold(W)_1^top+bold(1)bold(b)_1^top)$ \
-    shape $64 times 128$], color: TEAL, width: 76mm),
-  neat-arrow(),
-  neat-card([batch logits], [$bold(Z):64 times 10$ \
-    ten scores per row], color: ACC, width: 65mm),
-))
-#pause
-#v(10pt)
-#two(
-  notebox[*Shared across rows:* weights and biases.],
-  notebox[*Recomputed for this batch:* activations, probabilities, and losses.],
-)
-#pause
-#place(bottom + center, dy: -2pt,
-  result[Batching changes the array shapes, not the prediction rule: every row follows the same network.])
-
-== A tiny layer reveals the parameter-count rule #V
-
-#grid(
-  columns: (112mm, 1fr), column-gutter: 12pt, align: horizon,
-  [#mlp-diagram((4, 3), labels: ([4 incoming values], [3 receiving units]))
-   #v(4pt)
-   #neat-caption([every connecting edge carries one weight])],
-  [*Weights* \
-   $4$ inputs $times 3$ units $=12$
-   #v(9pt)
-   *Biases* \
-   one per receiving unit $=3$
-   #v(9pt)
-   *Total* \
-   $12+3=15$ parameters],
-)
-#pause
-#v(9pt)
-#align(center, neat-card([general rule], [
-  $("output width" times "input width") + "output width"$
-], color: GREEN, width: 162mm))
-#pause
-#place(bottom + center, dy: -2pt,
-  result[Count the arrows, then add one bias for every receiving node.])
-
-== Apply the same counting rule to both affine layers #D
-
-#two(r: (0.9fr, 1.1fr),
-  [#align(center, [
-    #mlp-diagram((4, 5, 3), labels: ([$784$ inputs], [$128$ hidden units], [$10$ outputs]))
-    #v(5pt)
-    #neat-caption([The drawing is schematic; the labels give the actual widths.])
-  ])],
-  [#text(size: 18pt, weight: 700, fill: TEAL)[INPUT $arrow.r$ HIDDEN]
-   #v(4pt)
-   $bold(W)_1:128 times 784 quad arrow.r quad 128(784)="100,352"$ \
-   $bold(b)_1 in RR^128 quad arrow.r quad 128$
-   #v(4pt)
-   *Subtotal:* $"100,352"+128="100,480"$
-   #pause
-   #v(10pt)
-   #text(size: 18pt, weight: 700, fill: ACC)[HIDDEN $arrow.r$ OUTPUT]
-   #v(4pt)
-   $bold(W)_2:10 times 128 quad arrow.r quad 10(128)="1,280"$ \
-   $bold(b)_2 in RR^10 quad arrow.r quad 10$
-   #v(4pt)
-   *Subtotal:* $"1,280"+10="1,290"$],
-)
-#pause
-#place(bottom + center, dy: -2pt,
-  result[Total trainable parameters: $"100,480"+"1,290"="101,770"$.])
-
-== Training changes parameters, not the architecture #D
-
-#align(center, grid(
-  columns: (43mm, 7mm, 43mm, 7mm, 43mm, 7mm, 43mm, 7mm, 43mm), align: horizon,
-  neat-card([current parameters], [$bold(theta)$], color: INK, width: 43mm),
-  neat-arrow(),
-  neat-card([forward pass], [activations and prediction], color: TEAL, width: 43mm),
-  neat-arrow(),
-  neat-card([batch loss], [$cal(L)$], color: ACC, width: 43mm),
-  neat-arrow(),
-  neat-card([gradient], [$nabla_(bold(theta))cal(L)$], color: BLUE, width: 43mm),
-  neat-arrow(),
-  neat-card([updated parameters], [$bold(theta)_("new")$], color: GREEN, width: 43mm),
-))
-#pause
-#v(12pt)
-#align(center, text(size: 22pt)[$bold(theta)_("new")=bold(theta)_("old")-eta nabla_(bold(theta))cal(L)$])
-#pause
-#v(10pt)
-#two(
-  notebox[*Fixed:* layer sizes, connectivity pattern, and activation choices.],
-  notebox[*Changed:* the entries of weight matrices and bias vectors.],
-)
-#pause
-#place(bottom + center, dy: -2pt,
-  result[Forward propagation produces activations and loss; learning uses that loss to update the shared parameters.])
-
-== One numerical parameter update #D
-
-#align(center, grid(
-  columns: (58mm, 10mm, 58mm, 10mm, 58mm), align: horizon,
-  neat-card([current value], [$w_("old")=0.8$], color: INK, width: 58mm),
-  neat-arrow(),
-  neat-card([gradient and step size], [$frac(partial cal(L),partial w)=-0.3$ \
-    $eta=0.1$], color: BLUE, width: 58mm),
-  neat-arrow(),
-  neat-card([updated value], [$w_("new")=0.8-0.1(-0.3)=0.83$], color: GREEN, width: 58mm),
-))
-#pause
-#v(13pt)
-#align(center, text(size: 20pt)[The negative gradient says increasing $w$ locally decreases the loss, so the update moves $w$ upward.])
-#pause
-#notebox[Lecture 3 will explain how backpropagation computes every component of $nabla_(bold(theta))cal(L)$ efficiently.]
-#pause
-#place(bottom + center, dy: -2pt,
-  result[The forward pass evaluates the current network; the update changes the network for the next pass.])
-
-== The decisive change is the learned representation
-
-#align(center, [
-  #mlp-diagram(
-    (3, 5, 5, 2),
-    labels: ([input $bold(x)$], [learned $bold(h)^((1))$], [learned $bold(h)^((2))$], [output $bold(z)$]),
-  )
-  #v(8pt)
-  #neat-caption([The final scores still feed the familiar Lecture 1 output model and loss.])
-])
-#pause
-#place(bottom + center, dy: -2pt,
-  result[The output loss can stay the same while hidden layers make the representation nonlinear.])
-
 // closing standout
 #focus-slide[
   We now have $bold(x) -> f_(bold(theta))(bold(x)) -> cal(L)$.
   #v(12pt)
   #set text(size: 22pt)
-  Lecture 3: how do we compute $display(nabla_(bold(theta)) cal(L))$ efficiently?
+  Next: how does the loss send credit backward through that computation?
   #v(8pt)
-  #text(size: 17pt, fill: rgb("#B9C6C8"))[computation graphs · the chain rule · backpropagation · automatic differentiation]
+  #text(size: 17pt, fill: rgb("#B9C6C8"))[computation graphs · local derivatives · backpropagation · automatic differentiation]
 ]
