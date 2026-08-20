@@ -7,17 +7,15 @@ This site contains the lecture materials for ES 667. Course dates, grading, and 
 
 ## Current material
 
-**Lecture 1 · Where Deep Learning Losses Come From**
+**Computation Graphs, Backpropagation & Autograd**
 
-- [Slides (PDF)](slides-pdf/L1.pdf)
-- [Companion notebook (HTML)](notebooks/L01/00_likelihood_iid_worked_examples.html)
-- [Companion notebook (Colab)](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L01/00_likelihood_iid_worked_examples.ipynb)
-- [Notebook source (IPYNB)](https://raw.githubusercontent.com/nipunbatra/dl-teaching/master/notebooks/L01/00_likelihood_iid_worked_examples.ipynb)
-- [Robust regression notebook (HTML)](notebooks/L01/03_robust_linear_regression.html)
-- [Robust regression notebook (Colab)](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L01/03_robust_linear_regression.ipynb)
-- [Robust regression source (IPYNB)](https://raw.githubusercontent.com/nipunbatra/dl-teaching/master/notebooks/L01/03_robust_linear_regression.ipynb)
+- [Slides (PDF)](slides-pdf/L3.pdf)
+- [Presentation mode](slides-pdf/L3-presentation.pdf)
+- [Complete lecture notebook (HTML)](notebooks/L03/00_backprop_autograd_complete.html)
+- [Complete lecture notebook (Colab)](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/00_backprop_autograd_complete.ipynb)
+- [Notebook source (IPYNB)](https://raw.githubusercontent.com/nipunbatra/dl-teaching/master/notebooks/L03/00_backprop_autograd_complete.ipynb)
 
-The main notebook uses `torch.distributions` to work through probability mass and density, i.i.d. observations, maximum likelihood, linear regression, binary classification, and MAP estimation. The shorter robust-regression notebook compares Gaussian/MSE, Laplace/MAE, and Student-t observation models on the same data.
+The one notebook follows the slide numbers and examples from local backward rules through the complete scalar graph, symbolic and finite-difference checks, PyTorch autograd, branch accumulation, a dense-layer VJP, a three-example mean batch, equivalent microbatches, one optimizer step, and a tiny MLP.
 
 ## Course materials
 

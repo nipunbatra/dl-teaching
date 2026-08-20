@@ -9,6 +9,7 @@ project:
     - "labs/*.qmd"
     - "notebooks/L01/00_likelihood_iid_worked_examples.ipynb"
     - "notebooks/L01/03_robust_linear_regression.ipynb"
+    - "notebooks/L03/00_backprop_autograd_complete.ipynb"
   resources:
     - "slides-pdf/**"
     - "notebooks/**/*.ipynb"

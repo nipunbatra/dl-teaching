@@ -1082,14 +1082,14 @@ Trace which local rule changes when the final squared-error operation is replace
     Step through values and loss derivatives in the #link(IA + "autograd")[interactive graph ↗].
   ],
   notebox[
-    *Build it by hand*
+    *Run one complete Colab*
     #v(5pt)
-    Run the #link(NB + "01_manual_scalar_backprop.ipynb")[manual-backprop notebook ↓].
+    Open the #link(NB + "00_backprop_autograd_complete.ipynb")[lecture notebook ↓]: manual graph, PyTorch, dense layer, batch, and MLP.
   ],
   notebox[
-    *Let PyTorch build it*
+    *Follow the checkpoints*
     #v(5pt)
-    Run the #link(NB + "02_autograd_scalar.ipynb")[autograd notebook ↓].
+    Predict first; then execute one checkpoint and compare. The same numbers recur throughout the lecture.
   ],
 )
 #pause
@@ -1589,7 +1589,7 @@ print(X.grad)        # [[ 8/3, 10/3], [-10/3, -2/3], [-1/3, 4/3]]
 ```]
 #pause
 #notebox[
-  Run the #link(NB + "03_dense_layer_batch_autograd.ipynb")[Dense + Batch Colab ↗] to reveal every example's outer product and verify that three correctly scaled micro-batches equal the full-batch gradient.
+  Continue in the #link(NB + "00_backprop_autograd_complete.ipynb")[complete lecture Colab ↗]: checkpoints 11–16 derive the dense VJP, expose every batch contribution, verify microbatches, run one update, and finish with the tiny MLP.
 ]
 
 == The training loop now has a concrete batch #I

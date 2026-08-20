@@ -85,7 +85,7 @@ The key distinction is:
 
 ### 34–54 min · Central worked graph
 
-Use the same example in the slides and notebooks:
+Use the same example in the slides and canonical notebook:
 
 `m=wx`, `a=m+b`, `e=a-y`, `L=e²`, with `x=3`, `w=2`, `b=1`, `y=10`.
 
@@ -115,25 +115,20 @@ Have students predict the sign of the `w` update. With `eta=0.01`, gradient desc
 
 ### 54–62 min · Hand calculation meets autograd
 
-#### Notebook A · Manual scalar backprop
+#### One canonical lecture Colab · checkpoints 1–10
 
 1. Predict all stored forward values.
 2. Fill the reverse ledger before running the backward cell.
 3. Compare with symbolic differentiation: derive the general formula first, then substitute the numbers.
 4. Run the central-difference check for `w`, `b`, `x`, and `y`.
 5. Execute the `eta=0.01` update and assert that the new loss is smaller.
+6. Predict `.grad` for every tracked leaf before `backward()`.
+7. Retain intermediate gradients only for inspection; explain why ordinary training does not need them.
+8. Call backward on fresh graphs without clearing and watch the leaf buffer accumulate.
+9. Verify that the branch `x² + 3x` returns `8 + 3 = 11` at the shared `x`.
+10. Run the vector-neuron checkpoint before moving to the dense layer.
 
-Companion: [`01_manual_scalar_backprop.ipynb`](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/01_manual_scalar_backprop.ipynb)
-
-#### Notebook B · PyTorch autograd
-
-1. Predict `.grad` for every tracked leaf before `backward()`.
-2. Retain intermediate gradients only for inspection; explain why ordinary training does not need them.
-3. Verify the hand-derived derivatives.
-4. Call backward on fresh graphs without clearing and watch the leaf buffer accumulate.
-5. Clear once, rerun, and connect the reset to `optimizer.zero_grad()`.
-
-Companion: [`02_autograd_scalar.ipynb`](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/02_autograd_scalar.ipynb)
+Canonical companion: [`00_backprop_autograd_complete.ipynb`](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/00_backprop_autograd_complete.ipynb)
 
 ### 62–70 min · One neuron → a dense-layer VJP
 
@@ -162,7 +157,7 @@ Keep the operations familiar and introduce only one new idea at a time:
 7. Stack only at the end: `g_W=G_Z^T X`, `g_b=G_Z^T1_B`, and `g_X=G_ZW`. The rows of `g_X` remain separate because the three inputs are distinct graph values.
 8. Contrast sum and mean reductions. The local dense rule is unchanged; only the upstream scale differs by `B=3`.
 
-#### Notebook C · Dense layer and a batch
+#### Continue the same Colab · checkpoints 11–16
 
 1. Predict the first output from row 1 before revealing the dot product.
 2. Stack the second row and verify `z=Wx+b`.
@@ -172,9 +167,9 @@ Keep the operations familiar and introduce only one new idea at a time:
 6. Verify `X.grad=RW/3`; unlike shared `W,b`, distinct input rows do not add into one another.
 7. Accumulate three correctly scaled microbatches and assert exact agreement with the full batch.
 
-Companion: [`03_dense_layer_batch_autograd.ipynb`](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/03_dense_layer_batch_autograd.ipynb)
+The same canonical notebook then verifies one optimizer step and the final tiny MLP, so students never have to change documents mid-lecture.
 
-If time is short, compute the first example and the final mean on the board, then let Notebook C expose the other two contributions. Treat microbatch equivalence as an extension. Never skip the residual derivative, the row/column convention, or the distinction between a per-example contribution, its sum, and the reduction used by the scalar loss.
+If time is short, compute the first example and the final mean on the board, then let checkpoints 12–14 expose the other two contributions. Treat microbatch equivalence as an extension. Never skip the residual derivative, the row/column convention, or the distinction between a per-example contribution, its sum, and the reduction used by the scalar loss.
 
 ### 78–80 min · Exit ticket
 
@@ -255,16 +250,16 @@ From `dL/dw=-18` and `dL/db=-6`, calculate the `eta=0.01` update before revealin
 
 ## Instructor verification checklist
 
-- The manual notebook reports forward values `6, 7, -3, 9` and gradients `w=-18`, `b=-6`, `x=-12`, `y=6`.
-- Its central differences agree with all four gradients within the declared tolerance.
-- With `eta=0.01`, the notebook reports prediction `7.60` and loss `5.76 < 9`.
-- The scalar autograd notebook executes top to bottom, reproduces the tracked `w,b` leaf gradients, and demonstrates accumulation on fresh graphs.
-- The dense/batch notebook executes top to bottom with sequential counts and zero errors. It reports `z=(-1,-4)`, `g_x=(8,10)`, `g_W=[[8,-4],[-4,2]]`, and `g_b=(4,-2)` for the single example.
+- The canonical notebook executes top to bottom with 16 sequential checkpoints, zero errors, and no warning outputs.
+- It reports forward values `6, 7, -3, 9` and gradients `w=-18`, `b=-6`, `x=-12`, `y=6`; central differences agree with all four gradients within the declared tolerance.
+- With `eta=0.01`, it reports prediction `7.60` and loss `5.76 < 9`; it also demonstrates `.grad` accumulation on fresh graphs.
+- It verifies the branched result `x.grad=8+3=11`, the vector neuron, and the dense result `z=(-1,-4)`, `g_x=(8,10)`, `g_W=[[8,-4],[-4,2]]`, `g_b=(4,-2)`.
 - It shows why the formulas hold: two row contributions add into `g_x`, while separate weight rows stack into `g_W`; generic operand shapes then verify the result.
 - For its three-example mean loss, it reports `L=7`, per-example `dW` contributions `[[8,-4],[-4,2]]`, `[[2,-4],[-4,8]]`, and `[[2,2],[2,2]]`, then `W.grad=[[4,-2],[-2,4]]` and `b.grad=(1,1)`.
 - It verifies `Z.grad=R/3` and `X.grad=[[8/3,10/3],[-10/3,-2/3],[-1/3,4/3]]` for the mean reduction.
 - Three losses scaled by `1/3` accumulate to exactly the same `W.grad` and `b.grad` as one full-batch backward call.
-- The public Lecture 4 row links the handout, presentation, and all three exact `notebooks/L03/` Colabs.
+- One concrete `lr=0.01` batch update lowers the loss from `7` to `6.5865`; the deterministic tiny MLP has finite, shape-matched gradients and a zero return from its inactive ReLU unit.
+- The public Lecture 4 row, both PDFs, the notebook inventory, and the DL26 site all point to the same canonical Colab.
 
 ## Closing line
 

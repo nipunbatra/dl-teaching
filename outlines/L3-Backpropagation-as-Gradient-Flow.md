@@ -843,9 +843,9 @@ Message:
 
 ---
 
-### Slide 27 — Interactive 1: worked graph
+### Slide 27 — Interactive: worked graph
 
-Demo: `worked-computation-graph.html`
+Live lab: `https://nipunbatra.github.io/interactive-articles/autograd/`
 
 Must show:
 
@@ -1047,9 +1047,10 @@ Same pattern:
 
 ---
 
-### Slide 34 — Interactive 2: single neuron backprop
+### Slide 34 — Interactive: single-neuron backprop
 
-Demo: `single-neuron-backprop.html`
+Use the same live autograd lab:
+`https://nipunbatra.github.io/interactive-articles/autograd/`
 
 Controls:
 
@@ -1374,9 +1375,10 @@ abla_{W_1}=\bar z^{(1)}x^\top.
 
 ---
 
-### Slide 45 — Interactive 3: MLP backprop
+### Slide 45 — Interactive: MLP backprop
 
-Demo: `mlp-backprop.html`
+Use the same live autograd lab:
+`https://nipunbatra.github.io/interactive-articles/autograd/`
 
 Network:
 
@@ -1457,7 +1459,10 @@ in roughly a small constant multiple of forward-pass cost.
 
 ### Slide 49 — PyTorch scalar demo
 
-Notebook: `01_autograd_scalar.ipynb`
+Canonical notebook: `notebooks/L03/00_backprop_autograd_complete.ipynb`
+
+Use checkpoints 3–8 for the complete scalar ledger, symbolic and finite-
+difference checks, retained intermediate gradients, and `.grad` accumulation.
 
 ```python
 import torch
@@ -1579,9 +1584,9 @@ Deep sigmoid networks can suffer vanishing gradients.
 
 ---
 
-### Slide 54 — Interactive 4: gradient flow
+### Slide 54 — Interactive: gradient flow
 
-Demo: `gradient-flow.html`
+Live lab: `https://nipunbatra.github.io/interactive-articles/vanishing-gradients/`
 
 Controls:
 
@@ -1718,42 +1723,25 @@ Skim Slides **37, 51, 53** if short.
 
 # Interactives
 
-1. `worked-computation-graph.html`  
-   Main one. Use \(L=(wx+b-y)^2\). Show upstream/local/downstream gradients explicitly.
+1. [Autograd lab](https://nipunbatra.github.io/interactive-articles/autograd/)
+   The main companion: step through the scalar graph, branch accumulation,
+   local derivative rules, and small neural-network modules.
 
-2. `branch-gradient-accumulation.html`  
-   Use \(L=x^2+3x\). Highlight multiple paths and `+=`.
-
-3. `single-neuron-backprop.html`  
-   One neuron with sigmoid/ReLU and MSE/BCE.
-
-4. `mlp-backprop.html`  
-   Small \(2\to3\to2\) classifier.
-
-5. `gradient-flow.html`  
-   Deep chain with sigmoid/tanh/ReLU.
+2. [Vanishing-gradients lab](https://nipunbatra.github.io/interactive-articles/vanishing-gradients/)
+   Compare gradient flow through deep sigmoid, tanh, and ReLU chains.
 
 ---
 
-# Notebooks
+# Canonical notebook
 
-1. `01_manual_scalar_backprop.ipynb`  
-   Hand-coded forward/backward for \(L=(wx+b-y)^2\).
+Use one student-facing notebook throughout:
+`notebooks/L03/00_backprop_autograd_complete.ipynb`.
 
-2. `02_autograd_scalar.ipynb`  
-   Same example in PyTorch; compare gradients.
-
-3. `03_manual_neuron_backprop.ipynb`  
-   Sigmoid neuron; derive and implement \(\bar z=a-y\).
-
-4. `04_manual_mlp_numpy.ipynb`  
-   Two-layer MLP on XOR with manual NumPy backprop.
-
-5. `05_pytorch_mlp_autograd.ipynb`  
-   Same MLP in PyTorch.
-
-6. `06_gradient_flow.ipynb`  
-   Plot gradient norms through deep sigmoid/tanh/ReLU chains.
+Its checkpoints follow the lecture in order: local rules; manual scalar graph;
+symbolic and finite-difference checks; PyTorch autograd; branch accumulation;
+one vector neuron; dense VJP; three-example mean batch; microbatch equivalence;
+one optimizer step; and a tiny dense–ReLU–dense MLP. The older focused
+notebooks remain in the repository only for backward-compatible links.
 
 ---
 
