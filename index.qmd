@@ -18,7 +18,7 @@ This site contains the lecture materials for ES 667. Course dates, grading, and 
 - [Complete lecture notebook (Colab)](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/00_backprop_autograd_complete.ipynb)
 - [Complete notebook source (IPYNB)](https://raw.githubusercontent.com/nipunbatra/dl-teaching/master/notebooks/L03/00_backprop_autograd_complete.ipynb)
 
-The focused scalar notebook asks PyTorch for the answer first, then rebuilds the exact lecture graph as a tiny autograd engine with visible forward and backward states. The complete notebook continues through symbolic and finite-difference checks, branch accumulation, a dense-layer VJP, a three-example mean batch, equivalent microbatches, one optimizer step, and a tiny MLP.
+The focused scalar notebook uses literal PyTorch tensors and `.backward()`, then rebuilds the exact graph with one small `Value` record, four local rules, and clear Graphviz views before and after backward. The complete notebook continues through symbolic and finite-difference checks, branch accumulation, a dense-layer VJP, a three-example mean batch, equivalent microbatches, one optimizer step, and a tiny MLP.
 
 ## Course materials
 

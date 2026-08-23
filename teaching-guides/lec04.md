@@ -117,18 +117,15 @@ Have students predict the sign of the `w` update. With `eta=0.01`, gradient desc
 
 #### Focused scalar-engine Colab · PyTorch first, then from scratch
 
-Use [`04_scalar_autograd_pytorch_to_scratch.ipynb`](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/04_scalar_autograd_pytorch_to_scratch.ipynb) as the in-class scalar demonstration. In the live eight-minute core, establish the PyTorch answer, run the scratch half, and linger on the five backward states; the implementation cells remain for students to revisit:
+Use [`04_scalar_autograd_pytorch_to_scratch.ipynb`](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/04_scalar_autograd_pytorch_to_scratch.ipynb) as the in-class scalar demonstration. In the live eight-minute core, establish the PyTorch answer, then compare the same graph before and after backward in the tiny scratch engine:
 
-1. Run the exact `w=2, x=3, b=1, y=10` graph in PyTorch and expose all eight stored values.
-2. Seed `L.backward()` and compare PyTorch's complete gradient ledger with the paper calculation.
-3. Build the minimal scalar `Value` object: `data`, `grad`, ordered parent edges, local derivatives, and a local `_backward` closure.
-4. Execute the same forward graph one primitive at a time: multiply, add, subtract, square.
-5. Step the reverse tape through seed → square → subtraction → addition → multiplication. At every state, read the arriving gradient, local derivative, contribution, and accumulated parent buffer.
-6. Check every named value and gradient against PyTorch.
-7. Use `q²+3q` and `r*r` to show why local rules must update with `+=`.
-8. Apply the same `eta=0.01` update, rebuild the graph, and verify `9 → 5.76`.
+1. Create `w`, `x`, `b`, and `y` with literal `torch.tensor(..., requires_grad=True)` lines.
+2. Run the four-line forward graph, call `L.backward()`, and read the `.grad` values directly.
+3. Build one minimal `Value` record containing `data`, `grad`, parent/local-derivative pairs, plus one generic reverse traversal.
+4. Rebuild the same four operations and compare the Graphviz view before and after `backward()`.
+5. Check all eight named values and gradients against PyTorch.
 
-The durable HTML states are deliberate: they remain useful in Colab, after **Run all**, and on the rendered course site without relying on widget or hook execution order.
+Keep branch accumulation, finite differences, and the optimizer update in the complete lecture notebook below; the focused notebook should remain deliberately small.
 
 #### Complete lecture Colab · follow-along and after class
 
@@ -265,13 +262,13 @@ From `dL/dw=-18` and `dL/db=-6`, calculate the `eta=0.01` update before revealin
 
 ## Instructor verification checklist
 
-- The focused scalar notebook executes top to bottom with 20 sequential code cells, zero errors, and no warning outputs; the complete notebook retains its 16 lecture checkpoints.
-- It reports forward values `6, 7, -3, 9` and gradients `w=-18`, `b=-6`, `x=-12`, `y=6`; central differences agree with all four gradients within the declared tolerance.
-- With `eta=0.01`, it reports prediction `7.60` and loss `5.76 < 9`; it also demonstrates `.grad` accumulation on fresh graphs.
-- It verifies the branched result `x.grad=8+3=11`, the vector neuron, and the dense result `z=(-1,-4)`, `g_x=(8,10)`, `g_W=[[8,-4],[-4,2]]`, `g_b=(4,-2)`.
-- It shows why the formulas hold: two row contributions add into `g_x`, while separate weight rows stack into `g_W`; generic operand shapes then verify the result.
-- For its three-example mean loss, it reports `L=7`, per-example `dW` contributions `[[8,-4],[-4,2]]`, `[[2,-4],[-4,8]]`, and `[[2,2],[2,2]]`, then `W.grad=[[4,-2],[-2,4]]` and `b.grad=(1,1)`.
-- It verifies `Z.grad=R/3` and `X.grad=[[8/3,10/3],[-10/3,-2/3],[-1/3,4/3]]` for the mean reduction.
+- The focused scalar notebook executes top to bottom with 8 sequential code cells, zero errors, no warning outputs, and two Graphviz SVGs.
+- It reports forward values `6, 7, -3, 9` and gradients `w=-18`, `b=-6`, `x=-12`, `y=6`, then verifies all eight scratch values and gradients against PyTorch.
+- The complete notebook retains its 16 lecture checkpoints; central differences agree with all four scalar gradients, and `eta=0.01` lowers the loss from `9` to `5.76` while also demonstrating `.grad` accumulation.
+- The complete notebook verifies the branched result `x.grad=8+3=11`, the vector neuron, and the dense result `z=(-1,-4)`, `g_x=(8,10)`, `g_W=[[8,-4],[-4,2]]`, `g_b=(4,-2)`.
+- The complete notebook shows why the formulas hold: two row contributions add into `g_x`, while separate weight rows stack into `g_W`; generic operand shapes then verify the result.
+- For its three-example mean loss, the complete notebook reports `L=7`, per-example `dW` contributions `[[8,-4],[-4,2]]`, `[[2,-4],[-4,8]]`, and `[[2,2],[2,2]]`, then `W.grad=[[4,-2],[-2,4]]` and `b.grad=(1,1)`.
+- The complete notebook verifies `Z.grad=R/3` and `X.grad=[[8/3,10/3],[-10/3,-2/3],[-1/3,4/3]]` for the mean reduction.
 - Three losses scaled by `1/3` accumulate to exactly the same `W.grad` and `b.grad` as one full-batch backward call.
 - One concrete `lr=0.01` batch update lowers the loss from `7` to `6.5865`; the deterministic tiny MLP has finite, shape-matched gradients and a zero return from its inactive ReLU unit.
 - The public Lecture 4 row, both PDFs, the notebook inventory, and the DL26 site distinguish the focused scalar-engine Colab from the complete lecture Colab.
