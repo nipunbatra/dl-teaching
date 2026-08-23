@@ -135,58 +135,123 @@ def build_notebook():
             A `Value` stores only:
 
             - its number in `data`,
-            - its derivative in `grad`,
-            - its parent values, and
-            - the local derivative leading to each parent.
+            - its accumulated loss-gradient buffer in `grad`, and
+            - ordered links to the operands that directly produced it.
 
-            Each operation computes one forward value and records its local derivatives. One generic `backward`
-            function then walks the graph in reverse. It uses `+=` because several paths may contribute to the same
-            value.
+            Each parent link stores two things: the parent operand and the evaluated local derivative along that
+            edge. For example, $m=wx$ remembers $(w,\partial m/\partial w=x)$ and
+            $(x,\partial m/\partial x=w)$.
+
+            The gradient names are always relative to the operation currently running:
+
+            - <span style="color:#2C7A7B;font-weight:700">upstream</span>:
+              $g_v=\partial L/\partial v$, already accumulated in `v.grad`;
+            - <span style="color:#2B6CB0;font-weight:700">local</span>:
+              $\partial v/\partial u$, stored in the link from output $v$ to parent $u$;
+            - <span style="color:#EB811B;font-weight:700">downstream contribution</span>:
+              $\Delta g_u=g_v(\partial v/\partial u)$, computed during backward and added to `u.grad`.
+
+            A parent is simply a direct input to an operation—not a whole neural-network layer.
             """
         ),
         code(
             r'''
+            class ParentLink:
+                def __init__(self, value, local_grad):
+                    self.value = value
+                    self.local_grad = float(local_grad)
+
             class Value:
                 def __init__(self, data, label="", parents=(), op=""):
                     self.data = float(data)
                     self.grad = 0.0
                     self.label = label
-                    self.parents = tuple(parents)  # (parent, local derivative)
+                    self.parents = tuple(parents)
                     self.op = op
 
             def multiply(u, v, label):
                 return Value(u.data * v.data, label,
-                             parents=((u, v.data), (v, u.data)), op="×")
+                             parents=(ParentLink(u, v.data),
+                                      ParentLink(v, u.data)), op="×")
 
             def add(u, v, label):
                 return Value(u.data + v.data, label,
-                             parents=((u, 1.0), (v, 1.0)), op="+")
+                             parents=(ParentLink(u, 1.0),
+                                      ParentLink(v, 1.0)), op="+")
 
             def subtract(u, v, label):
                 return Value(u.data - v.data, label,
-                             parents=((u, 1.0), (v, -1.0)), op="−")
+                             parents=(ParentLink(u, 1.0),
+                                      ParentLink(v, -1.0)), op="−")
 
             def square(u, label):
                 return Value(u.data ** 2, label,
-                             parents=((u, 2 * u.data),), op="²")
+                             parents=(ParentLink(u, 2 * u.data),), op="²")
 
             def backward(root):
                 order, seen = [], set()
+
+                # 1. Put every reachable value in forward order.
                 def visit(node):
                     if id(node) in seen:
                         return
                     seen.add(id(node))
-                    for parent, _local in node.parents:
-                        visit(parent)
+                    for link in node.parents:
+                        visit(link.value)
                     order.append(node)
 
                 visit(root)
+
+                # 2. Clear old accumulated gradients, then seed the loss.
+                for node in order:
+                    node.grad = 0.0
                 root.grad = 1.0
+
+                # 3. Walk backward. One parent link gives one chain-rule update.
+                steps = []
                 for node in reversed(order):
-                    for parent, local in node.parents:
-                        parent.grad += node.grad * local
+                    for link in node.parents:
+                        upstream = node.grad
+                        local = link.local_grad
+                        downstream = upstream * local
+                        before = link.value.grad
+                        link.value.grad += downstream
+
+                        steps.append({
+                            "output": node.label,
+                            "upstream": upstream,
+                            "parent": link.value.label,
+                            "local": local,
+                            "downstream": downstream,
+                            "before": before,
+                            "after": link.value.grad,
+                        })
+                return steps
             ''',
-            "Define the tiny scalar record, four local rules, and reverse traversal",
+            "Define explicit parent links, four local rules, and the traced reverse traversal",
+        ),
+        md(
+            r"""
+            Read `backward(root)` in three pieces:
+
+            1. `visit` follows the parent links and makes a forward order. Here it is
+               `w, x, m, b, a, y, e, L`.
+            2. We clear the reachable `.grad` buffers and seed `L.grad = 1`, because
+               $\partial L/\partial L=1$.
+            3. We reverse that order. At each link from output $v$ to parent $u$, the loop reads the
+               upstream gradient from `v.grad`, reads the local derivative from the link, and adds their product
+               into `u.grad`.
+
+            | quantity | where it lives |
+            |---|---|
+            | upstream $g_v$ | already accumulated in `v.grad` |
+            | local $\partial v/\partial u$ | saved in `link.local_grad` during the forward pass |
+            | downstream contribution $\Delta g_u$ | temporary variable `downstream` for this one edge |
+            | accumulated $g_u$ | updated in `link.value.grad` |
+
+            So the code does **not** store a separate downstream gradient forever. It computes one contribution,
+            adds it to the parent's buffer, and that buffer later becomes the upstream gradient for the parent.
+            """
         ),
         code(
             r'''
@@ -201,7 +266,7 @@ def build_notebook():
                 )
 
             from graphviz import Digraph
-            from IPython.display import HTML
+            from IPython.display import HTML, display
 
             def draw_graph(root, show_grad=True):
                 nodes, seen = [], set()
@@ -210,8 +275,8 @@ def build_notebook():
                         return
                     seen.add(id(node))
                     nodes.append(node)
-                    for parent, _local in node.parents:
-                        visit(parent)
+                    for link in node.parents:
+                        visit(link.value)
                 visit(root)
 
                 dot = Digraph(format="svg")
@@ -223,21 +288,31 @@ def build_notebook():
                 for node in nodes:
                     node_id = "value_" + node.label
                     grad = f"{node.grad:g}" if show_grad else "—"
-                    fill = "#fff1df" if show_grad and node.grad != 0 else "#ffffff"
+                    fill = "#e8f7f5" if show_grad and node.grad != 0 else "#ffffff"
+                    border = "#2C7A7B" if show_grad and node.grad != 0 else "#1f3a40"
                     dot.node(
                         node_id,
                         label=f"{{ {node.label} | value {node.data:g} | grad {grad} }}",
                         shape="record", style="rounded,filled", fillcolor=fill,
-                        color="#1f3a40", fontcolor="#1f3a40",
+                        color=border, fontcolor="#1f3a40",
                     )
                     if node.op:
                         op_id = "op_" + node.label
                         dot.node(op_id, label=node.op, shape="circle", fixedsize="true",
-                                 width="0.32", style="filled", fillcolor="#ef7d00",
-                                 color="#ef7d00", fontcolor="white")
+                                 width="0.32", style="filled", fillcolor="#2B6CB0",
+                                 color="#2B6CB0", fontcolor="white")
                         dot.edge(op_id, node_id)
-                        for parent, _local in node.parents:
-                            dot.edge("value_" + parent.label, op_id)
+                        for link in node.parents:
+                            local_label = (
+                                f"∂{node.label}/∂{link.value.label}="
+                                f"{link.local_grad:g}"
+                            )
+                            dot.edge(
+                                "value_" + link.value.label,
+                                op_id,
+                                label=local_label,
+                                fontcolor="#2B6CB0",
+                            )
                 svg = dot.pipe(format="svg").decode("utf-8")
                 svg = svg.replace(
                     "<svg ",
@@ -248,8 +323,34 @@ def build_notebook():
                     '<div style="max-width:100%;overflow-x:auto">'
                     '<div style="min-width:780px">' + svg + '</div></div>'
                 )
+
+            def show_backward_steps(steps):
+                rows = []
+                for number, step in enumerate(steps, start=1):
+                    output = step["output"]
+                    parent = step["parent"]
+                    rows.append(
+                        "<div style='border:1px solid #d6e2e1;border-radius:8px;"
+                        "padding:10px 12px;margin:8px 0;background:#fff'>"
+                        f"<div style='font-weight:700;margin-bottom:4px'>{number}. {output} → {parent}</div>"
+                        "<div style='font-size:1.02em;line-height:1.55'>"
+                        f"<span style='color:#2C7A7B;font-weight:700'>g<sub>{output}</sub> = {step['upstream']:g}</span>"
+                        " &nbsp;×&nbsp; "
+                        f"<span style='color:#2B6CB0;font-weight:700'>∂{output}/∂{parent} = {step['local']:g}</span>"
+                        " &nbsp;=&nbsp; "
+                        f"<span style='color:#EB811B;font-weight:700'>Δg<sub>{parent}</sub> = {step['downstream']:g}</span>"
+                        "</div>"
+                        f"<div style='color:#526669;margin-top:3px'>{parent}.grad: "
+                        f"{step['before']:g} → {step['after']:g}</div></div>"
+                    )
+
+                display(HTML(
+                    "<div style='border-left:5px solid #2C7A7B;background:#eef8f7;"
+                    "padding:10px 12px;margin:4px 0 12px;border-radius:4px'>"
+                    "<b>Seed:</b> L.grad = ∂L/∂L = 1</div>" + "".join(rows)
+                ))
             ''',
-            "Load Graphviz and define the compact Karpathy-style graph drawing helper",
+            "Define the compact Graphviz view and color-matched backward trace table",
             hidden=True,
         ),
         md(
@@ -269,9 +370,13 @@ def build_notebook():
             se = subtract(sa, sy, "e")
             sL = square(se, "L")
 
+            print("What m=wx stored during forward:")
+            for link in sm.parents:
+                print(f"  parent {link.value.label}: local ∂m/∂{link.value.label} = {link.local_grad:g}")
+
             draw_graph(sL, show_grad=False)
             ''',
-            "Build and draw the scratch forward graph before backward",
+            "Inspect one pair of parent links, then draw the forward graph",
         ),
         md(
             r"""
@@ -280,35 +385,29 @@ def build_notebook():
         ),
         code(
             r'''
-            backward(sL)
-
-            scratch_nodes = {"w": sw, "x": sx, "m": sm, "b": sb,
-                             "a": sa, "y": sy, "e": se, "L": sL}
-
-            print(f"{'node':<5} {'value':>8} {'grad':>8}")
-            for name, node in scratch_nodes.items():
-                print(f"{name:<5} {node.data:8.1f} {node.grad:8.1f}")
+            steps = backward(sL)
+            show_backward_steps(steps)
 
             draw_graph(sL, show_grad=True)
             ''',
-            "Run scratch backward, print the ledger, and redraw the graph with gradients",
+            "Run and display every backward edge, then redraw the graph with gradients",
         ),
         md(
             r"""
-            Read the backward pass from right to left:
+            The trace contains every reverse edge. For example, the square sends $-6$ into `e.grad`. On the next
+            operation, that same stored number becomes the upstream gradient $g_e$ for subtraction.
 
-            | local rule | calculation | gradients produced |
-            |---|---|---|
-            | $L=e^2$ | $1\times 2e=1\times(-6)$ | $g_e=-6$ |
-            | $e=a-y$ | $-6\times(1,-1)$ | $g_a=-6,\ g_y=6$ |
-            | $a=m+b$ | $-6\times(1,1)$ | $g_m=-6,\ g_b=-6$ |
-            | $m=wx$ | $-6\times(x,w)$ | $g_w=-18,\ g_x=-12$ |
+            A single row's product is a **downstream contribution**. If several paths return to one value, each row
+            adds into the same `parent.grad` buffer; only their sum is the full gradient at that parent.
 
             Finally, check that our tiny engine and PyTorch agree at every named value.
             """
         ),
         code(
             r'''
+            scratch_nodes = {"w": sw, "x": sx, "m": sm, "b": sb,
+                             "a": sa, "y": sy, "e": se, "L": sL}
+
             for name, node in scratch_nodes.items():
                 torch_value, torch_grad = torch_reference[name]
                 assert node.data == torch_value
@@ -324,9 +423,12 @@ def build_notebook():
 
             Both systems do the same three things:
 
-            1. run the forward operations and remember the graph,
-            2. start with $g_L=1$,
-            3. apply each local derivative in reverse and add contributions.
+            1. run the forward operations and store parent links plus local derivatives,
+            2. start with $g_L=1$ in the loss's `.grad` buffer,
+            3. compute <span style="color:#2C7A7B;font-weight:700">upstream</span>
+               $\times$ <span style="color:#2B6CB0;font-weight:700">local</span>
+               $=$ <span style="color:#EB811B;font-weight:700">downstream contribution</span>, then add it to
+               the parent's `.grad` buffer.
 
             Our tiny `Value` record and four local rules make those steps visible. PyTorch generalizes them to
             tensors, neural-network layers, accelerators, and large models.

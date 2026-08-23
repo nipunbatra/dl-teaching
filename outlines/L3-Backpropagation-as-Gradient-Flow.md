@@ -1462,8 +1462,9 @@ in roughly a small constant multiple of forward-pass cost.
 Focused scalar demo: `notebooks/L03/04_scalar_autograd_pytorch_to_scratch.ipynb`
 
 Use it PyTorch-first: create literal scalar tensors, call `.backward()`, and read
-their gradients. Then rebuild the exact graph with one minimal `Value` record and
-compare its Graphviz view before and after backward. Continue in
+their gradients. Then rebuild the exact graph with one minimal `Value` record,
+inspect its saved parent links, and trace every reverse edge using “upstream ×
+local = downstream contribution.” Compare the Graphviz view before and after backward. Continue in
 `00_backprop_autograd_complete.ipynb` for the full lecture sequence.
 
 ```python
@@ -1737,8 +1738,9 @@ Skim Slides **37, 51, 53** if short.
 # Complementary notebooks
 
 Use `notebooks/L03/04_scalar_autograd_pytorch_to_scratch.ipynb` for the focused
-in-class scalar-engine build. It asks PyTorch first, then shows the same graph
-before and after backward with a minimal `Value` implementation.
+in-class scalar-engine build. It asks PyTorch first, then exposes the saved parent
+links, all seven reverse-edge updates, and the same graph before and after
+backward with a minimal `Value` implementation.
 
 The full companion remains `notebooks/L03/00_backprop_autograd_complete.ipynb`.
 Its checkpoints follow the lecture in order: local rules; manual scalar graph;

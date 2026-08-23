@@ -117,13 +117,14 @@ Have students predict the sign of the `w` update. With `eta=0.01`, gradient desc
 
 #### Focused scalar-engine Colab · PyTorch first, then from scratch
 
-Use [`04_scalar_autograd_pytorch_to_scratch.ipynb`](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/04_scalar_autograd_pytorch_to_scratch.ipynb) as the in-class scalar demonstration. In the live eight-minute core, establish the PyTorch answer, then compare the same graph before and after backward in the tiny scratch engine:
+Use [`04_scalar_autograd_pytorch_to_scratch.ipynb`](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/04_scalar_autograd_pytorch_to_scratch.ipynb) as the in-class scalar demonstration. In the live eight-minute core, establish the PyTorch answer, then expose the same backward pass in the tiny scratch engine:
 
 1. Create `w`, `x`, `b`, and `y` with literal `torch.tensor(..., requires_grad=True)` lines.
 2. Run the four-line forward graph, call `L.backward()`, and read the `.grad` values directly.
-3. Build one minimal `Value` record containing `data`, `grad`, parent/local-derivative pairs, plus one generic reverse traversal.
-4. Rebuild the same four operations and compare the Graphviz view before and after `backward()`.
-5. Check all eight named values and gradients against PyTorch.
+3. Build a minimal `Value` record containing `data`, an accumulated `grad` buffer, and explicit `ParentLink(value, local_grad)` entries.
+4. Inspect what the two parent links of `m = w*x` saved during the forward pass.
+5. Seed `L.grad = 1`, then read all seven reverse-edge cards using the lecture convention: teal upstream from `node.grad`, blue local derivative from the parent link, and orange downstream contribution added to `parent.grad`.
+6. Compare the Graphviz view before and after `backward()`, then check all eight named values and gradients against PyTorch.
 
 Keep branch accumulation, finite differences, and the optimizer update in the complete lecture notebook below; the focused notebook should remain deliberately small.
 
@@ -262,8 +263,8 @@ From `dL/dw=-18` and `dL/db=-6`, calculate the `eta=0.01` update before revealin
 
 ## Instructor verification checklist
 
-- The focused scalar notebook executes top to bottom with 8 sequential code cells, zero errors, no warning outputs, and two Graphviz SVGs.
-- It reports forward values `6, 7, -3, 9` and gradients `w=-18`, `b=-6`, `x=-12`, `y=6`, then verifies all eight scratch values and gradients against PyTorch.
+- The focused scalar notebook executes top to bottom with 8 sequential code cells, zero errors, no warning outputs, two Graphviz SVGs, one seed, and all 7 reverse-edge updates.
+- Its trace consistently shows upstream × local = downstream contribution and the parent buffer before/after each update. It reports forward values `6, 7, -3, 9` and gradients `w=-18`, `b=-6`, `x=-12`, `y=6`, then verifies all eight scratch values and gradients against PyTorch.
 - The complete notebook retains its 16 lecture checkpoints; central differences agree with all four scalar gradients, and `eta=0.01` lowers the loss from `9` to `5.76` while also demonstrating `.grad` accumulation.
 - The complete notebook verifies the branched result `x.grad=8+3=11`, the vector neuron, and the dense result `z=(-1,-4)`, `g_x=(8,10)`, `g_W=[[8,-4],[-4,2]]`, `g_b=(4,-2)`.
 - The complete notebook shows why the formulas hold: two row contributions add into `g_x`, while separate weight rows stack into `g_W`; generic operand shapes then verify the result.
