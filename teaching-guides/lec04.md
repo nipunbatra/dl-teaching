@@ -85,7 +85,7 @@ The key distinction is:
 
 ### 34–54 min · Central worked graph
 
-Use the same example in the slides and canonical notebook:
+Use the same example in the slides and focused scalar notebook:
 
 `m=wx`, `a=m+b`, `e=a-y`, `L=e²`, with `x=3`, `w=2`, `b=1`, `y=10`.
 
@@ -115,7 +115,22 @@ Have students predict the sign of the `w` update. With `eta=0.01`, gradient desc
 
 ### 54–62 min · Hand calculation meets autograd
 
-#### One canonical lecture Colab · checkpoints 1–10
+#### Focused scalar-engine Colab · PyTorch first, then from scratch
+
+Use [`04_scalar_autograd_pytorch_to_scratch.ipynb`](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/04_scalar_autograd_pytorch_to_scratch.ipynb) as the in-class scalar demonstration. In the live eight-minute core, establish the PyTorch answer, run the scratch half, and linger on the five backward states; the implementation cells remain for students to revisit:
+
+1. Run the exact `w=2, x=3, b=1, y=10` graph in PyTorch and expose all eight stored values.
+2. Seed `L.backward()` and compare PyTorch's complete gradient ledger with the paper calculation.
+3. Build the minimal scalar `Value` object: `data`, `grad`, ordered parent edges, local derivatives, and a local `_backward` closure.
+4. Execute the same forward graph one primitive at a time: multiply, add, subtract, square.
+5. Step the reverse tape through seed → square → subtraction → addition → multiplication. At every state, read the arriving gradient, local derivative, contribution, and accumulated parent buffer.
+6. Check every named value and gradient against PyTorch.
+7. Use `q²+3q` and `r*r` to show why local rules must update with `+=`.
+8. Apply the same `eta=0.01` update, rebuild the graph, and verify `9 → 5.76`.
+
+The durable HTML states are deliberate: they remain useful in Colab, after **Run all**, and on the rendered course site without relying on widget or hook execution order.
+
+#### Complete lecture Colab · follow-along and after class
 
 1. Predict all stored forward values.
 2. Fill the reverse ledger before running the backward cell.
@@ -128,7 +143,7 @@ Have students predict the sign of the `w` update. With `eta=0.01`, gradient desc
 9. Verify that the branch `x² + 3x` returns `8 + 3 = 11` at the shared `x`.
 10. Run the vector-neuron checkpoint before moving to the dense layer.
 
-Canonical companion: [`00_backprop_autograd_complete.ipynb`](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/00_backprop_autograd_complete.ipynb)
+Full-lecture companion: [`00_backprop_autograd_complete.ipynb`](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/00_backprop_autograd_complete.ipynb)
 
 ### 62–70 min · One neuron → a dense-layer VJP
 
@@ -167,7 +182,7 @@ Keep the operations familiar and introduce only one new idea at a time:
 6. Verify `X.grad=RW/3`; unlike shared `W,b`, distinct input rows do not add into one another.
 7. Accumulate three correctly scaled microbatches and assert exact agreement with the full batch.
 
-The same canonical notebook then verifies one optimizer step and the final tiny MLP, so students never have to change documents mid-lecture.
+The complete lecture notebook then verifies one optimizer step and the final tiny MLP, so the vector-to-batch sequence stays in one document.
 
 If time is short, compute the first example and the final mean on the board, then let checkpoints 12–14 expose the other two contributions. Treat microbatch equivalence as an extension. Never skip the residual derivative, the row/column convention, or the distinction between a per-example contribution, its sum, and the reduction used by the scalar loss.
 
@@ -250,7 +265,7 @@ From `dL/dw=-18` and `dL/db=-6`, calculate the `eta=0.01` update before revealin
 
 ## Instructor verification checklist
 
-- The canonical notebook executes top to bottom with 16 sequential checkpoints, zero errors, and no warning outputs.
+- The focused scalar notebook executes top to bottom with 20 sequential code cells, zero errors, and no warning outputs; the complete notebook retains its 16 lecture checkpoints.
 - It reports forward values `6, 7, -3, 9` and gradients `w=-18`, `b=-6`, `x=-12`, `y=6`; central differences agree with all four gradients within the declared tolerance.
 - With `eta=0.01`, it reports prediction `7.60` and loss `5.76 < 9`; it also demonstrates `.grad` accumulation on fresh graphs.
 - It verifies the branched result `x.grad=8+3=11`, the vector neuron, and the dense result `z=(-1,-4)`, `g_x=(8,10)`, `g_W=[[8,-4],[-4,2]]`, `g_b=(4,-2)`.
@@ -259,7 +274,7 @@ From `dL/dw=-18` and `dL/db=-6`, calculate the `eta=0.01` update before revealin
 - It verifies `Z.grad=R/3` and `X.grad=[[8/3,10/3],[-10/3,-2/3],[-1/3,4/3]]` for the mean reduction.
 - Three losses scaled by `1/3` accumulate to exactly the same `W.grad` and `b.grad` as one full-batch backward call.
 - One concrete `lr=0.01` batch update lowers the loss from `7` to `6.5865`; the deterministic tiny MLP has finite, shape-matched gradients and a zero return from its inactive ReLU unit.
-- The public Lecture 4 row, both PDFs, the notebook inventory, and the DL26 site all point to the same canonical Colab.
+- The public Lecture 4 row, both PDFs, the notebook inventory, and the DL26 site distinguish the focused scalar-engine Colab from the complete lecture Colab.
 
 ## Closing line
 

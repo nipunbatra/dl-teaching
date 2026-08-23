@@ -1459,10 +1459,12 @@ in roughly a small constant multiple of forward-pass cost.
 
 ### Slide 49 — PyTorch scalar demo
 
-Canonical notebook: `notebooks/L03/00_backprop_autograd_complete.ipynb`
+Focused scalar demo: `notebooks/L03/04_scalar_autograd_pytorch_to_scratch.ipynb`
 
-Use checkpoints 3–8 for the complete scalar ledger, symbolic and finite-
-difference checks, retained intermediate gradients, and `.grad` accumulation.
+Use it PyTorch-first: inspect the complete scalar ledger, then rebuild the exact
+graph as a tiny engine and step through seed, square, subtraction, addition, and
+multiplication. Continue in `00_backprop_autograd_complete.ipynb` for the full
+lecture sequence.
 
 ```python
 import torch
@@ -1732,11 +1734,13 @@ Skim Slides **37, 51, 53** if short.
 
 ---
 
-# Canonical notebook
+# Complementary notebooks
 
-Use one student-facing notebook throughout:
-`notebooks/L03/00_backprop_autograd_complete.ipynb`.
+Use `notebooks/L03/04_scalar_autograd_pytorch_to_scratch.ipynb` for the focused
+in-class scalar-engine build. It asks PyTorch first, then reveals the mechanism
+with durable forward and backward states.
 
+The full companion remains `notebooks/L03/00_backprop_autograd_complete.ipynb`.
 Its checkpoints follow the lecture in order: local rules; manual scalar graph;
 symbolic and finite-difference checks; PyTorch autograd; branch accumulation;
 one vector neuron; dense VJP; three-example mean batch; microbatch equivalence;

@@ -1082,14 +1082,14 @@ Trace which local rule changes when the final squared-error operation is replace
     Step through values and loss derivatives in the #link(IA + "autograd")[interactive graph ↗].
   ],
   notebox[
-    *Run one complete Colab*
+    *PyTorch → build autograd*
     #v(5pt)
-    Open the #link(NB + "00_backprop_autograd_complete.ipynb")[lecture notebook ↓]: manual graph, PyTorch, dense layer, batch, and MLP.
+    Open the #link(NB + "04_scalar_autograd_pytorch_to_scratch.ipynb")[scalar-engine Colab ↓]: ask PyTorch first, then rebuild this exact graph from scratch and step backward live.
   ],
   notebox[
-    *Follow the checkpoints*
+    *Continue through the lecture*
     #v(5pt)
-    Predict first; then execute one checkpoint and compare. The same numbers recur throughout the lecture.
+    Use the #link(NB + "00_backprop_autograd_complete.ipynb")[complete Colab ↓] for branches, vectors, the dense VJP, batches, one update, and the tiny MLP.
   ],
 )
 #pause

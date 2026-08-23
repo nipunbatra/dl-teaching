@@ -11,11 +11,14 @@ This site contains the lecture materials for ES 667. Course dates, grading, and 
 
 - [Slides (PDF)](slides-pdf/L3.pdf)
 - [Presentation mode](slides-pdf/L3-presentation.pdf)
+- [Scalar autograd engine (HTML)](notebooks/L03/04_scalar_autograd_pytorch_to_scratch.html)
+- [Scalar autograd engine (Colab)](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/04_scalar_autograd_pytorch_to_scratch.ipynb)
+- [Scalar autograd engine source (IPYNB)](https://raw.githubusercontent.com/nipunbatra/dl-teaching/master/notebooks/L03/04_scalar_autograd_pytorch_to_scratch.ipynb)
 - [Complete lecture notebook (HTML)](notebooks/L03/00_backprop_autograd_complete.html)
 - [Complete lecture notebook (Colab)](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/00_backprop_autograd_complete.ipynb)
-- [Notebook source (IPYNB)](https://raw.githubusercontent.com/nipunbatra/dl-teaching/master/notebooks/L03/00_backprop_autograd_complete.ipynb)
+- [Complete notebook source (IPYNB)](https://raw.githubusercontent.com/nipunbatra/dl-teaching/master/notebooks/L03/00_backprop_autograd_complete.ipynb)
 
-The one notebook follows the slide numbers and examples from local backward rules through the complete scalar graph, symbolic and finite-difference checks, PyTorch autograd, branch accumulation, a dense-layer VJP, a three-example mean batch, equivalent microbatches, one optimizer step, and a tiny MLP.
+The focused scalar notebook asks PyTorch for the answer first, then rebuilds the exact lecture graph as a tiny autograd engine with visible forward and backward states. The complete notebook continues through symbolic and finite-difference checks, branch accumulation, a dense-layer VJP, a three-example mean batch, equivalent microbatches, one optimizer step, and a tiny MLP.
 
 ## Course materials
 
