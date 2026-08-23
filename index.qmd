@@ -18,7 +18,7 @@ This site contains the lecture materials for ES 667. Course dates, grading, and 
 - [Complete lecture notebook (Colab)](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/00_backprop_autograd_complete.ipynb)
 - [Complete notebook source (IPYNB)](https://raw.githubusercontent.com/nipunbatra/dl-teaching/master/notebooks/L03/00_backprop_autograd_complete.ipynb)
 
-The focused scalar notebook uses literal PyTorch tensors and `.backward()`, then rebuilds the exact graph with one small `Value` record. It exposes saved parent links and local derivatives, traces all seven reverse-edge updates as upstream × local = downstream contribution, and shows the Graphviz graph before and after backward. The complete notebook continues through symbolic and finite-difference checks, branch accumulation, a dense-layer VJP, a three-example mean batch, equivalent microbatches, one optimizer step, and a tiny MLP.
+The focused scalar notebook uses literal PyTorch tensors and `.backward()`, then rebuilds the exact graph with one small `Value` record. Its first example exposes saved parent links and all seven reverse-edge updates. An optional second example compares a fused sigmoid with the fully atomic graph `1 / (1 + exp(-z))`, showing that one saved local derivative equals the product of four atomic derivatives. The complete notebook continues through symbolic and finite-difference checks, branch accumulation, a dense-layer VJP, a three-example mean batch, equivalent microbatches, one optimizer step, and a tiny MLP.
 
 ## Course materials
 

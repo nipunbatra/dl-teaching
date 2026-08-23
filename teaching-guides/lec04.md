@@ -126,7 +126,9 @@ Use [`04_scalar_autograd_pytorch_to_scratch.ipynb`](https://colab.research.googl
 5. Seed `L.grad = 1`, then read all seven reverse-edge cards using the lecture convention: teal upstream from `node.grad`, blue local derivative from the parent link, and orange downstream contribution added to `parent.grad`.
 6. Compare the Graphviz view before and after `backward()`, then check all eight named values and gradients against PyTorch.
 
-Keep branch accumulation, finite differences, and the optimizer update in the complete lecture notebook below; the focused notebook should remain deliberately small.
+If time permits—or as a follow-up—run Part 3. It builds the neuron `z = w*x + b`, then compares one fused `sigmoid` parent link with the four atomic links in `1 / (1 + exp(-z))`. Show all 8 fused and 11 atomic reverse edges; highlight that the activation itself takes 1 update versus 4 while both return `z.grad = -0.25`.
+
+Keep branch accumulation, finite differences, and the optimizer update in the complete lecture notebook below. The focused notebook stops after this one controlled fusion comparison.
 
 #### Complete lecture Colab · follow-along and after class
 
@@ -263,8 +265,9 @@ From `dL/dw=-18` and `dL/db=-6`, calculate the `eta=0.01` update before revealin
 
 ## Instructor verification checklist
 
-- The focused scalar notebook executes top to bottom with 8 sequential code cells, zero errors, no warning outputs, two Graphviz SVGs, one seed, and all 7 reverse-edge updates.
-- Its trace consistently shows upstream × local = downstream contribution and the parent buffer before/after each update. It reports forward values `6, 7, -3, 9` and gradients `w=-18`, `b=-6`, `x=-12`, `y=6`, then verifies all eight scratch values and gradients against PyTorch.
+- The focused scalar notebook executes top to bottom with 11 sequential code cells, zero errors, no warning outputs, four Graphviz SVGs, and three complete seed-to-leaf traces: 7 edges for the square example, 8 for fused sigmoid, and 11 for atomic sigmoid.
+- The first trace consistently shows upstream × local = downstream contribution and the parent buffer before/after each update. It reports forward values `6, 7, -3, 9` and gradients `w=-18`, `b=-6`, `x=-12`, `y=6`, then verifies all eight scratch values and gradients against PyTorch.
+- The sigmoid comparison verifies `z=0`, `s=0.5`, `L=0.25`, and common gradients `w=-0.5`, `x=-0.125`, `b=z=-0.25`, `y=1`. Four atomic activation locals multiply to the fused local `s(1-s)=0.25`, and both graphs match `torch.sigmoid`.
 - The complete notebook retains its 16 lecture checkpoints; central differences agree with all four scalar gradients, and `eta=0.01` lowers the loss from `9` to `5.76` while also demonstrating `.grad` accumulation.
 - The complete notebook verifies the branched result `x.grad=8+3=11`, the vector neuron, and the dense result `z=(-1,-4)`, `g_x=(8,10)`, `g_W=[[8,-4],[-4,2]]`, `g_b=(4,-2)`.
 - The complete notebook shows why the formulas hold: two row contributions add into `g_x`, while separate weight rows stack into `g_W`; generic operand shapes then verify the result.

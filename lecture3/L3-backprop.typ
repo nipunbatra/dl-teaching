@@ -1084,7 +1084,7 @@ Trace which local rule changes when the final squared-error operation is replace
   notebox[
     *PyTorch → build autograd*
     #v(5pt)
-    Open the #link(NB + "04_scalar_autograd_pytorch_to_scratch.ipynb")[scalar-engine Colab ↓]: use plain PyTorch, then trace every reverse edge with one small `Value` record.
+    Open the #link(NB + "04_scalar_autograd_pytorch_to_scratch.ipynb")[scalar-engine Colab ↓]: use plain PyTorch, trace every edge, then compare fused and atomic sigmoid.
   ],
   notebox[
     *Continue through the lecture*

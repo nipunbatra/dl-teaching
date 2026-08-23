@@ -32,9 +32,9 @@ def build_notebook():
     cells = [
         md(
             r"""
-            # One scalar graph: PyTorch, then autograd from scratch
+            # Scalar autograd: PyTorch, from scratch, then a fused sigmoid
 
-            We will use one graph throughout:
+            We will start with one graph:
 
             $$
             m=wx,\qquad a=m+b,\qquad e=a-y,\qquad L=e^2
@@ -43,7 +43,8 @@ def build_notebook():
             with $w=2$, $x=3$, $b=1$, and $y=10$.
 
             First we let PyTorch differentiate it. Then we build the smallest useful version of the same idea
-            ourselves. The point is not to replace PyTorch—it is to see what `.backward()` does.
+            ourselves. The point is not to replace PyTorch—it is to see what `.backward()` does. A final optional
+            example then compares one fused sigmoid operation with the same sigmoid expanded into atomic operations.
             """
         ),
         md(
@@ -228,7 +229,7 @@ def build_notebook():
                         })
                 return steps
             ''',
-            "Define explicit parent links, four local rules, and the traced reverse traversal",
+            "Define explicit parent links, the first four local rules, and the traced reverse traversal",
         ),
         md(
             r"""
@@ -268,7 +269,7 @@ def build_notebook():
             from graphviz import Digraph
             from IPython.display import HTML, display
 
-            def draw_graph(root, show_grad=True):
+            def draw_graph(root, show_grad=True, min_width=780):
                 nodes, seen = [], set()
                 def visit(node):
                     if id(node) in seen:
@@ -298,8 +299,9 @@ def build_notebook():
                     )
                     if node.op:
                         op_id = "op_" + node.label
-                        dot.node(op_id, label=node.op, shape="circle", fixedsize="true",
-                                 width="0.32", style="filled", fillcolor="#2B6CB0",
+                        dot.node(op_id, label=node.op, shape="circle",
+                                 width="0.32", height="0.32", margin="0.03",
+                                 style="filled", fillcolor="#2B6CB0",
                                  color="#2B6CB0", fontcolor="white")
                         dot.edge(op_id, node_id)
                         for link in node.parents:
@@ -316,22 +318,25 @@ def build_notebook():
                 svg = dot.pipe(format="svg").decode("utf-8")
                 svg = svg.replace(
                     "<svg ",
-                    '<svg style="width:100%;height:auto;min-width:780px" ',
+                    f'<svg style="width:100%;height:auto;min-width:{min_width}px" ',
                     1,
                 )
                 return HTML(
                     '<div style="max-width:100%;overflow-x:auto">'
-                    '<div style="min-width:780px">' + svg + '</div></div>'
+                    f'<div style="min-width:{min_width}px">' + svg + '</div></div>'
                 )
 
-            def show_backward_steps(steps):
+            def show_backward_steps(steps, highlight_outputs=()):
                 rows = []
                 for number, step in enumerate(steps, start=1):
                     output = step["output"]
                     parent = step["parent"]
+                    focused = output in highlight_outputs
+                    border = "#2B6CB0" if focused else "#d6e2e1"
+                    background = "#f4f8ff" if focused else "#fff"
                     rows.append(
-                        "<div style='border:1px solid #d6e2e1;border-radius:8px;"
-                        "padding:10px 12px;margin:8px 0;background:#fff'>"
+                        f"<div style='border:1px solid {border};border-radius:8px;"
+                        f"padding:10px 12px;margin:8px 0;background:{background}'>"
                         f"<div style='font-weight:700;margin-bottom:4px'>{number}. {output} → {parent}</div>"
                         "<div style='font-size:1.02em;line-height:1.55'>"
                         f"<span style='color:#2C7A7B;font-weight:700'>g<sub>{output}</sub> = {step['upstream']:g}</span>"
@@ -350,7 +355,7 @@ def build_notebook():
                     "<b>Seed:</b> L.grad = ∂L/∂L = 1</div>" + "".join(rows)
                 ))
             ''',
-            "Define the compact Graphviz view and color-matched backward trace table",
+            "Define the compact Graphviz view and color-matched backward trace cards",
             hidden=True,
         ),
         md(
@@ -419,6 +424,185 @@ def build_notebook():
         ),
         md(
             r"""
+            ## 3 · One neuron: fused sigmoid or atomic sigmoid?
+
+            Now use a slightly larger graph:
+
+            $$
+            m=wx,\qquad z=m+b,\qquad s=\sigma(z),\qquad e=s-y,\qquad L=e^2.
+            $$
+
+            Choose $w=0.5$, $x=2$, $b=-1$, and $y=1$. Then $z=0$, $s=0.5$, and $L=0.25$,
+            so the backward numbers stay readable.
+
+            We will build the sigmoid in two ways:
+
+            - **fused autograd primitive:** one operation $s=\sigma(z)$;
+            - **atomic graph:** $n=-z$, $q=\exp(n)$, $d=1+q$, and $s=1/d$.
+
+            “Fused” here describes the autograd graph: several local steps are packaged behind one operation node.
+            It does not mean that we are skipping the chain rule.
+            """
+        ),
+        code(
+            r'''
+            import math
+
+            def negate(u, label):
+                return Value(-u.data, label,
+                             parents=(ParentLink(u, -1.0),), op="−")
+
+            def exponential(u, label):
+                out = math.exp(u.data)
+                return Value(out, label,
+                             parents=(ParentLink(u, out),), op="exp")
+
+            def plus_one(u, label):
+                return Value(1.0 + u.data, label,
+                             parents=(ParentLink(u, 1.0),), op="+1")
+
+            def reciprocal(u, label):
+                return Value(1.0 / u.data, label,
+                             parents=(ParentLink(u, -1.0 / u.data**2),), op="1/x")
+
+            def sigmoid(u, label):
+                # Stable forward formula; backward reuses the saved output s.
+                if u.data >= 0:
+                    s = 1.0 / (1.0 + math.exp(-u.data))
+                else:
+                    exp_z = math.exp(u.data)
+                    s = exp_z / (1.0 + exp_z)
+                return Value(s, label,
+                             parents=(ParentLink(u, s * (1.0 - s)),), op="σ")
+            ''',
+            "Define the four atomic sigmoid rules and one fused sigmoid rule",
+        ),
+        md(
+            r"""
+            The fused rule stores one local derivative:
+
+            $$
+            \frac{\partial s}{\partial z}=s(1-s).
+            $$
+
+            The atomic graph stores four local derivatives. Their product is the same quantity:
+
+            $$
+            \underbrace{\left(-\frac{1}{d^2}\right)}_{s=1/d}
+            \underbrace{(1)}_{d=1+q}
+            \underbrace{(q)}_{q=\exp(n)}
+            \underbrace{(-1)}_{n=-z}
+            =\frac{q}{d^2}=s(1-s).
+            $$
+            """
+        ),
+        code(
+            r'''
+            def build_sigmoid_neuron(*, fused):
+                nodes = {
+                    "w": Value(0.5, label="w"),
+                    "x": Value(2.0, label="x"),
+                    "b": Value(-1.0, label="b"),
+                    "y": Value(1.0, label="y"),
+                }
+                nodes["m"] = multiply(nodes["w"], nodes["x"], "m")
+                nodes["z"] = add(nodes["m"], nodes["b"], "z")
+
+                if fused:
+                    nodes["s"] = sigmoid(nodes["z"], "s")
+                else:
+                    nodes["n"] = negate(nodes["z"], "n")
+                    nodes["q"] = exponential(nodes["n"], "q")
+                    nodes["d"] = plus_one(nodes["q"], "d")
+                    nodes["s"] = reciprocal(nodes["d"], "s")
+
+                nodes["e"] = subtract(nodes["s"], nodes["y"], "e")
+                nodes["L"] = square(nodes["e"], "L")
+                return nodes
+
+            fused_nodes = build_sigmoid_neuron(fused=True)
+            atomic_nodes = build_sigmoid_neuron(fused=False)
+            fused_steps = backward(fused_nodes["L"])
+            atomic_steps = backward(atomic_nodes["L"])
+
+            display(HTML("<h4>Fused sigmoid · 8 reverse edges</h4>"))
+            display(draw_graph(fused_nodes["L"], show_grad=True, min_width=1180))
+            show_backward_steps(fused_steps, highlight_outputs={"s"})
+
+            display(HTML("<h4 style='margin-top:24px'>Atomic sigmoid · 11 reverse edges</h4>"))
+            display(draw_graph(atomic_nodes["L"], show_grad=True, min_width=1700))
+            show_backward_steps(atomic_steps, highlight_outputs={"s", "d", "q", "n"})
+            ''',
+            "Build both sigmoid graphs and show every backward edge",
+        ),
+        md(
+            r"""
+            The blue-highlighted cards are the only part that changed:
+
+            - fused sigmoid: one update, $g_z=g_s\,s(1-s)=(-1)(0.25)=-0.25$;
+            - atomic sigmoid: four updates, ending with the same $g_z=-0.25$.
+
+            Fusion therefore gives a smaller graph and fewer intermediate gradient buffers. A real library can also
+            use a numerically stable sigmoid implementation. The mathematics is unchanged: the single fused local
+            derivative is exactly the product of the four atomic local derivatives.
+            """
+        ),
+        code(
+            r'''
+            common = ("w", "x", "m", "b", "z", "s", "y", "e", "L")
+            for name in common:
+                assert math.isclose(fused_nodes[name].data, atomic_nodes[name].data)
+                assert math.isclose(fused_nodes[name].grad, atomic_nodes[name].grad)
+
+            assert [(s["output"], s["parent"]) for s in fused_steps] == [
+                ("L", "e"), ("e", "s"), ("e", "y"), ("s", "z"),
+                ("z", "m"), ("z", "b"), ("m", "w"), ("m", "x"),
+            ]
+            assert [(s["output"], s["parent"]) for s in atomic_steps] == [
+                ("L", "e"), ("e", "s"), ("e", "y"), ("s", "d"),
+                ("d", "q"), ("q", "n"), ("n", "z"), ("z", "m"),
+                ("z", "b"), ("m", "w"), ("m", "x"),
+            ]
+
+            expected_sigmoid = {
+                "w": (0.5, -0.5), "x": (2.0, -0.125), "m": (1.0, -0.25),
+                "b": (-1.0, -0.25), "z": (0.0, -0.25), "s": (0.5, -1.0),
+                "y": (1.0, 1.0), "e": (-0.5, -1.0), "L": (0.25, 1.0),
+            }
+            for name, (value, grad) in expected_sigmoid.items():
+                assert math.isclose(fused_nodes[name].data, value)
+                assert math.isclose(fused_nodes[name].grad, grad)
+
+            fused_local = next(
+                step["local"] for step in fused_steps
+                if step["output"] == "s" and step["parent"] == "z"
+            )
+            atomic_locals = [
+                step["local"] for step in atomic_steps
+                if step["output"] in {"s", "d", "q", "n"}
+            ]
+            assert math.isclose(math.prod(atomic_locals), fused_local)
+
+            tw = torch.tensor(0.5, requires_grad=True)
+            tx = torch.tensor(2.0, requires_grad=True)
+            tb = torch.tensor(-1.0, requires_grad=True)
+            ty = torch.tensor(1.0, requires_grad=True)
+            tL = (torch.sigmoid(tw * tx + tb) - ty) ** 2
+            tL.backward()
+
+            assert math.isclose(fused_nodes["w"].grad, tw.grad.item())
+            assert math.isclose(fused_nodes["x"].grad, tx.grad.item())
+            assert math.isclose(fused_nodes["b"].grad, tb.grad.item())
+            assert math.isclose(fused_nodes["y"].grad, ty.grad.item())
+
+            print("✓ Fused, atomic, and PyTorch agree.")
+            print("  sigmoid local: 4 atomic factors = 1 fused factor =", fused_local)
+            print("  final gradients: w = -0.5, x = -0.125, b = -0.25, y = 1")
+            ''',
+            "Verify fused-to-atomic equivalence and PyTorch parity",
+        ),
+        md(
+            r"""
             ## Takeaway
 
             Both systems do the same three things:
@@ -430,7 +614,8 @@ def build_notebook():
                $=$ <span style="color:#EB811B;font-weight:700">downstream contribution</span>, then add it to
                the parent's `.grad` buffer.
 
-            Our tiny `Value` record and four local rules make those steps visible. PyTorch generalizes them to
+            Our tiny `Value` record and local rules make those steps visible. Fusion does not change the calculus;
+            it packages a product of local derivatives behind one operation. PyTorch generalizes these ideas to
             tensors, neural-network layers, accelerators, and large models.
             """
         ),
@@ -447,7 +632,7 @@ def build_notebook():
             "course": {
                 "lecture": 4,
                 "title": "Computation Graphs, Backpropagation & Autograd",
-                "evidence": "exact scalar example; PyTorch and minimal scratch-engine parity",
+                "evidence": "exact scalar example; traced backward; fused-versus-atomic sigmoid parity",
             },
         },
     )
