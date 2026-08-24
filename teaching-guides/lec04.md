@@ -123,7 +123,7 @@ Use [`04_scalar_autograd_pytorch_to_scratch.ipynb`](https://colab.research.googl
 2. Run the four-line forward graph, call `L.backward()`, and read the `.grad` values directly.
 3. Build a minimal `Value` record containing `data`, an accumulated `grad` buffer, and explicit `ParentLink(value, local_grad)` entries.
 4. Inspect what the two parent links of `m = w*x` saved during the forward pass.
-5. Establish the readiness rule before naming it: append a value only after its dependencies, call the result a dependency-first or topological order, then reverse it for backward. Use the exact schedules `w,x,m,b,a,y,e,L` and `L,e,y,a,b,m,x,w`.
+5. Establish the readiness rule before naming it: append a value only after its dependencies, call the result a dependency-first or topological order, then reverse it for backward. Step through the embedded trace of the actual `sL` graph, keeping the highlighted code line, call stack, `seen`, active `ParentLink`, and growing list visible together. End with the exact schedules `w,x,m,b,a,y,e,L` and `L,e,y,a,b,m,x,w`.
 6. Seed `L.grad = 1`, then read all seven reverse-edge cards using the lecture convention: teal upstream from `node.grad`, blue local derivative from the parent link, and the orange edge contribution added to `parent.grad`.
 7. Compare the Graphviz view before and after `backward()`, inspect the complete cards for all eight `Value`s and seven `ParentLink`s, then check every named value and gradient against PyTorch.
 
@@ -266,7 +266,7 @@ From `dL/dw=-18` and `dL/db=-6`, calculate the `eta=0.01` update before revealin
 
 ## Instructor verification checklist
 
-- The focused scalar notebook executes top to bottom with 11 sequential code cells, zero errors, no warning outputs, three embedded teaching diagrams, four Graphviz SVGs, complete state cards for all eight square-example `Value`s and seven `ParentLink`s, and three complete seed-to-leaf traces: 7 edges for the square example, 8 for fused sigmoid, and 11 for atomic sigmoid.
+- The focused scalar notebook executes top to bottom with 11 sequential code cells, zero errors, no warning outputs, three embedded teaching diagrams, one self-contained interactive ordering trace, four Graphviz SVGs, complete state cards for all eight square-example `Value`s and seven `ParentLink`s, and three complete seed-to-leaf traces: 7 edges for the square example, 8 for fused sigmoid, and 11 for atomic sigmoid.
 - The first trace consistently shows upstream × local = downstream contribution and the parent buffer before/after each update. It reports forward values `6, 7, -3, 9` and gradients `w=-18`, `b=-6`, `x=-12`, `y=6`, then verifies all eight scratch values and gradients against PyTorch.
 - The sigmoid comparison verifies `z=0`, `s=0.5`, `L=0.25`, and common gradients `w=-0.5`, `x=-0.125`, `b=z=-0.25`, `y=1`. Four atomic activation locals multiply to the fused local `s(1-s)=0.25`, and both graphs match `torch.sigmoid`.
 - The complete notebook retains its 16 lecture checkpoints; central differences agree with all four scalar gradients, and `eta=0.01` lowers the loss from `9` to `5.76` while also demonstrating `.grad` accumulation.
