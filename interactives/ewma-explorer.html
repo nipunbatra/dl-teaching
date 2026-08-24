@@ -1,0 +1,3029 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EWMA + Momentum Explorer — ES 667</title>
+<style>
+  :root {
+    color-scheme: light;
+    --ink: #23373b;
+    --muted: #6e7f82;
+    --accent: #eb811b;
+    --teal: #2c7a7b;
+    --blue: #2b6cb0;
+    --red: #d64550;
+    --paper: #ffffff;
+    --wash: #f7f8f6;
+    --line: #d9e1df;
+    --line-soft: #e9eeec;
+    --sans: "IBM Plex Sans", "Avenir Next", "Segoe UI", Arial, sans-serif;
+    --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    background: var(--wash);
+  }
+
+  body {
+    min-width: 320px;
+    min-height: 100dvh;
+    margin: 0;
+    color: var(--ink);
+    background:
+      linear-gradient(180deg, #ffffff 0, #ffffff 15rem, var(--wash) 15rem);
+    font-family: var(--sans);
+    line-height: 1.5;
+  }
+
+  button,
+  input {
+    font: inherit;
+  }
+
+  button,
+  input[type="range"],
+  input[type="checkbox"] {
+    cursor: pointer;
+  }
+
+  button:focus-visible,
+  input:focus-visible,
+  svg:focus-visible {
+    outline: 3px solid rgba(43, 108, 176, 0.35);
+    outline-offset: 3px;
+  }
+
+  .page-shell {
+    width: min(1180px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 24px 0 48px;
+  }
+
+  .topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 0.86rem;
+    font-weight: 650;
+    letter-spacing: 0.02em;
+  }
+
+  .topline a {
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .topline a:hover {
+    color: var(--blue);
+  }
+
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(250px, 0.65fr);
+    gap: clamp(28px, 6vw, 84px);
+    align-items: end;
+    padding: clamp(36px, 7vw, 72px) 0 34px;
+  }
+
+  h1 {
+    max-width: 16ch;
+    margin: 0;
+    font-size: clamp(2.15rem, 5vw, 4.25rem);
+    line-height: 0.98;
+    letter-spacing: -0.055em;
+    font-weight: 680;
+  }
+
+  .hero-copy {
+    max-width: 37rem;
+    margin: 0;
+    padding-left: 20px;
+    border-left: 4px solid var(--accent);
+    color: #43585c;
+    font-size: clamp(1rem, 1.8vw, 1.2rem);
+  }
+
+  .workspace {
+    overflow: hidden;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: 0 18px 48px rgba(35, 55, 59, 0.08);
+  }
+
+  .mode-switch {
+    display: inline-flex;
+    gap: 4px;
+    margin: 0 0 14px;
+    padding: 4px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #eef2f0;
+  }
+
+  .mode-button {
+    padding: 9px 16px;
+    border: 0;
+    border-radius: 7px;
+    color: #53676a;
+    background: transparent;
+    font-size: 0.87rem;
+    font-weight: 720;
+    transition:
+      transform 140ms ease,
+      color 140ms ease,
+      background-color 140ms ease;
+  }
+
+  .mode-button:hover {
+    color: var(--ink);
+    background: rgba(255, 255, 255, 0.72);
+  }
+
+  .mode-button[aria-selected="true"] {
+    color: #ffffff;
+    background: var(--ink);
+  }
+
+  .mode-button:active {
+    transform: translateY(1px);
+  }
+
+  .mode-panel[hidden] {
+    display: none;
+  }
+
+  .controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+    gap: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .control-primary,
+  .control-secondary {
+    padding: 24px 28px;
+  }
+
+  .control-secondary {
+    border-left: 1px solid var(--line);
+    background: #fbfcfb;
+  }
+
+  .control-heading {
+    margin: 0 0 14px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 750;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+
+  .beta-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .slider-label,
+  .compact-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 9px;
+    color: #455a5e;
+    font-size: 0.9rem;
+    font-weight: 650;
+  }
+
+  .slider-label output,
+  .compact-label output {
+    color: var(--accent);
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    height: 28px;
+    margin: 0;
+    accent-color: var(--accent);
+  }
+
+  .preset-group {
+    display: inline-flex;
+    padding: 3px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--wash);
+  }
+
+  .preset {
+    min-width: 54px;
+    padding: 7px 11px;
+    border: 0;
+    border-radius: 6px;
+    color: #53676a;
+    background: transparent;
+    font-family: var(--mono);
+    font-size: 0.84rem;
+    font-weight: 700;
+  }
+
+  .preset:hover {
+    color: var(--ink);
+    background: #ffffff;
+  }
+
+  .preset[aria-pressed="true"] {
+    color: #ffffff;
+    background: var(--teal);
+  }
+
+  .control-note {
+    margin: 10px 0 0;
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+
+  .secondary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 18px;
+    color: #455a5e;
+    font-size: 0.9rem;
+    font-weight: 650;
+  }
+
+  .toggle-row input {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: var(--teal);
+  }
+
+  .step-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-top: 17px;
+    padding-top: 17px;
+    border-top: 1px solid var(--line-soft);
+    transition: opacity 160ms ease;
+  }
+
+  .step-controls[aria-disabled="true"] {
+    opacity: 0.4;
+  }
+
+  .signal-init {
+    display: grid;
+    grid-template-columns: auto auto auto minmax(260px, 1fr);
+    gap: 12px 18px;
+    align-items: center;
+    padding: 15px 28px 16px;
+    border-bottom: 1px solid var(--line);
+    border-left: 5px solid var(--teal);
+    color: #455a5e;
+    background: #f3f9f7;
+    font-size: 0.86rem;
+  }
+
+  .signal-init .init-state {
+    display: grid;
+    gap: 2px;
+  }
+
+  .signal-init .init-state span {
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-weight: 760;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .signal-init .init-state strong {
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .signal-init .init-arrow {
+    color: var(--accent);
+    font-size: 1.25rem;
+  }
+
+  .signal-init p {
+    margin: 0;
+  }
+
+  .signal-init p strong {
+    color: var(--ink);
+  }
+
+  .chart-region {
+    padding: 22px 24px 18px;
+  }
+
+  .chart-topline {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin: 0 4px 10px;
+  }
+
+  .chart-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 9px 16px;
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .legend-line {
+    width: 24px;
+    height: 0;
+    border-top: 3px solid currentColor;
+    border-radius: 999px;
+  }
+
+  .legend-line.raw {
+    color: var(--muted);
+    border-top-width: 2px;
+  }
+
+  .legend-line.trend {
+    color: var(--ink);
+    border-top-width: 2px;
+    border-top-style: dashed;
+  }
+
+  .legend-line.ewma {
+    color: var(--teal);
+  }
+
+  .chart-frame {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid var(--line-soft);
+    border-radius: 12px;
+    background: #ffffff;
+  }
+
+  #chart {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 280px;
+    touch-action: manipulation;
+  }
+
+  .chart-help {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    margin: 0;
+    padding: 4px 7px;
+    border-radius: 5px;
+    color: var(--muted);
+    background: rgba(255, 255, 255, 0.88);
+    font-size: 0.72rem;
+    pointer-events: none;
+  }
+
+  .timeline {
+    display: grid;
+    grid-template-columns: auto minmax(180px, 1fr) auto;
+    gap: 14px;
+    align-items: center;
+    margin-top: 15px;
+  }
+
+  .timeline-buttons {
+    display: flex;
+    gap: 8px;
+  }
+
+  .action {
+    min-height: 40px;
+    padding: 8px 15px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--ink);
+    background: #ffffff;
+    font-size: 0.86rem;
+    font-weight: 700;
+    transition:
+      transform 140ms ease,
+      border-color 140ms ease,
+      color 140ms ease,
+      background-color 140ms ease;
+  }
+
+  .action:hover {
+    border-color: var(--teal);
+    color: var(--teal);
+  }
+
+  .action.primary {
+    border-color: var(--ink);
+    color: #ffffff;
+    background: var(--ink);
+  }
+
+  .action.primary:hover {
+    border-color: var(--teal);
+    background: var(--teal);
+  }
+
+  .action:active {
+    transform: translateY(1px);
+  }
+
+  .day-readout {
+    min-width: 82px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.86rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .explanation {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+    border-top: 1px solid var(--line);
+  }
+
+  .recurrence,
+  .interpretation {
+    padding: 27px 30px 30px;
+  }
+
+  .interpretation {
+    border-left: 1px solid var(--line);
+    background: #fbfcfb;
+  }
+
+  h2 {
+    margin: 0 0 6px;
+    font-size: clamp(1.25rem, 2vw, 1.55rem);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+
+  .definition {
+    margin: 0 0 20px;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  .equation {
+    margin: 0;
+    padding: 17px 0;
+    border-top: 1px solid var(--line-soft);
+    border-bottom: 1px solid var(--line-soft);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: clamp(0.91rem, 1.8vw, 1.16rem);
+    line-height: 1.8;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .equation .old {
+    color: var(--blue);
+  }
+
+  .equation .today {
+    color: var(--accent);
+  }
+
+  .equation .new {
+    color: var(--teal);
+    font-weight: 750;
+  }
+
+  .decomposition {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    margin-top: 18px;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .term {
+    min-width: 0;
+    padding: 14px 14px 14px 0;
+  }
+
+  .term + .term {
+    padding-left: 14px;
+    border-left: 1px solid var(--line);
+  }
+
+  .term-name {
+    display: block;
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 750;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+
+  .term-value {
+    display: block;
+    margin-top: 4px;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 1.04rem;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .term:nth-child(1) .term-value {
+    color: var(--blue);
+  }
+
+  .term:nth-child(2) .term-value {
+    color: var(--accent);
+  }
+
+  .term:nth-child(3) .term-value {
+    color: var(--teal);
+  }
+
+  .memory-number {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 18px 0 8px;
+  }
+
+  .memory-number strong {
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: clamp(2.1rem, 5vw, 3.8rem);
+    font-weight: 660;
+    letter-spacing: -0.07em;
+    line-height: 0.95;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .memory-number span {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .heuristic {
+    margin: 0;
+    color: #455a5e;
+    font-size: 0.92rem;
+  }
+
+  .tradeoff {
+    margin: 20px 0 0;
+    padding: 16px 0 0 17px;
+    border-top: 1px solid var(--line);
+    border-left: 4px solid var(--teal);
+    color: var(--ink);
+    font-size: 0.98rem;
+  }
+
+  .offset {
+    margin: 12px 0 0;
+    color: var(--muted);
+    font-size: 0.84rem;
+  }
+
+  .momentum-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+    gap: 28px;
+    align-items: center;
+    padding: 26px 30px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .momentum-header h2 {
+    margin-bottom: 9px;
+  }
+
+  .momentum-header p {
+    max-width: 58ch;
+    margin: 0;
+    color: #455a5e;
+  }
+
+  .momentum-formulas {
+    display: grid;
+    gap: 8px;
+    padding-left: 24px;
+    border-left: 1px solid var(--line);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .momentum-formulas strong {
+    color: var(--accent);
+    font-family: var(--sans);
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .momentum-intuition {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 18px;
+    padding: 20px 30px;
+    border-bottom: 1px solid var(--line);
+    background: #fbfcfc;
+  }
+
+  .intuition-case {
+    min-width: 0;
+    padding: 2px 0 2px 18px;
+    border-left: 4px solid var(--teal);
+  }
+
+  .intuition-case.reversal {
+    border-left-color: var(--accent);
+  }
+
+  .intuition-case h3 {
+    margin: 0 0 7px;
+    color: var(--ink);
+    font-size: 1rem;
+  }
+
+  .intuition-case p {
+    margin: 0;
+    color: #455a5e;
+    font-size: 0.9rem;
+  }
+
+  .intuition-case .pushes {
+    display: block;
+    margin: 7px 0 5px;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 0.88rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .intuition-caveat {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+
+  .momentum-init {
+    display: grid;
+    grid-template-columns: auto auto minmax(260px, 1fr);
+    gap: 12px 22px;
+    align-items: center;
+    padding: 16px 30px 17px;
+    border-bottom: 1px solid var(--line);
+    border-left: 5px solid var(--accent);
+    color: #455a5e;
+    background: #fff9f1;
+    font-size: 0.9rem;
+  }
+
+  .momentum-init .init-values {
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 1.04rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .momentum-init span strong {
+    color: var(--ink);
+  }
+
+  .momentum-init .init-kicker {
+    color: var(--accent);
+    font-size: 0.72rem;
+    font-weight: 780;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+
+  .momentum-stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(330px, 0.85fr);
+    min-height: 510px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .momentum-plot {
+    min-width: 0;
+    padding: 22px 22px 18px;
+  }
+
+  .momentum-plot h3,
+  .momentum-update h3,
+  .worked-pair h3,
+  .update-table-section h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.2;
+  }
+
+  #momentumChart {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 360px;
+    margin-top: 10px;
+    border: 1px solid var(--line-soft);
+    border-radius: 11px;
+    background: #ffffff;
+  }
+
+  #predictionChart {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 155px;
+    margin-top: 14px;
+    border-top: 1px solid var(--line);
+    background: #ffffff;
+  }
+
+  .momentum-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    margin: 11px 3px 0;
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+
+  .momentum-legend .legend-line.path {
+    color: var(--teal);
+  }
+
+  .momentum-legend .legend-line.raw-direction {
+    color: var(--blue);
+  }
+
+  .momentum-legend .legend-line.update-direction {
+    color: var(--accent);
+  }
+
+  .momentum-update {
+    padding: 22px 26px 24px;
+    border-left: 1px solid var(--line);
+    background: #fbfcfb;
+  }
+
+  .momentum-stepper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin: 14px 0 19px;
+  }
+
+  .momentum-stepper .action {
+    min-width: 70px;
+  }
+
+  .momentum-stepper .action:disabled {
+    cursor: not-allowed;
+    opacity: 0.38;
+  }
+
+  .step-counter {
+    margin-left: auto;
+    align-self: center;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.83rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .update-cycle {
+    display: grid;
+    gap: 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .cycle-step {
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 10px;
+    padding: 13px 0;
+  }
+
+  .cycle-step + .cycle-step {
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .cycle-label {
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 760;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .cycle-value {
+    min-width: 0;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cycle-step.measure .cycle-value {
+    color: var(--blue);
+  }
+
+  .cycle-step.initialize .cycle-value,
+  .cycle-step.retain .cycle-value,
+  .cycle-step.combine .cycle-value {
+    color: var(--teal);
+  }
+
+  .cycle-step.contribute .cycle-value {
+    color: var(--blue);
+  }
+
+  .cycle-step.move .cycle-value {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .cycle-step.is-pending .cycle-value {
+    color: var(--muted);
+    font-style: italic;
+    opacity: 0.68;
+  }
+
+  .cycle-step.is-current {
+    background: linear-gradient(90deg, rgba(235, 129, 27, 0.08), transparent 78%);
+  }
+
+  .cycle-step.is-current .cycle-label {
+    color: var(--accent);
+  }
+
+  .momentum-insight {
+    margin: 18px 0 0;
+    padding: 14px 0 0 15px;
+    border-top: 1px solid var(--line);
+    border-left: 4px solid var(--teal);
+    color: #455a5e;
+    font-size: 0.91rem;
+  }
+
+  .worked-pair {
+    padding: 27px 30px 30px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .worked-pair > p {
+    margin: 7px 0 19px;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  .worked-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .worked-update {
+    min-width: 0;
+    padding: 18px 22px 18px 0;
+  }
+
+  .worked-update + .worked-update {
+    padding-right: 0;
+    padding-left: 22px;
+    border-left: 1px solid var(--line);
+  }
+
+  .worked-update h4 {
+    margin: 0 0 10px;
+    color: var(--ink);
+    font-size: 0.89rem;
+    letter-spacing: 0.02em;
+  }
+
+  .worked-update p {
+    margin: 7px 0;
+    color: #455a5e;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    line-height: 1.65;
+    overflow-wrap: anywhere;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cancellation-note {
+    margin: 18px 0 0;
+    padding-left: 17px;
+    border-left: 4px solid var(--accent);
+    color: var(--ink);
+    font-size: 0.92rem;
+  }
+
+  .cancellation-note strong:first-child {
+    color: var(--blue);
+  }
+
+  .cancellation-note strong:nth-of-type(2) {
+    color: var(--accent);
+  }
+
+  .update-table-section {
+    padding: 27px 30px 30px;
+  }
+
+  .update-table-section > p {
+    margin: 7px 0 15px;
+    color: var(--muted);
+    font-size: 0.86rem;
+  }
+
+  .table-scroll {
+    overflow-x: auto;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .update-table {
+    width: 100%;
+    min-width: 1020px;
+    border-collapse: collapse;
+    color: #455a5e;
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .update-table th,
+  .update-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line-soft);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .update-table th {
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    font-weight: 760;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .update-table th:first-child,
+  .update-table td:first-child {
+    text-align: center;
+  }
+
+  .update-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .update-table tbody tr.is-current {
+    color: var(--ink);
+    background: rgba(235, 129, 27, 0.09);
+  }
+
+  .update-table tbody tr.is-current td:first-child {
+    color: var(--accent);
+    font-weight: 760;
+  }
+
+  footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    padding-top: 20px;
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  @media (max-width: 820px) {
+    .page-shell {
+      width: min(100% - 20px, 720px);
+      padding-top: 14px;
+    }
+
+    .hero,
+    .controls,
+    .explanation,
+    .momentum-header,
+    .momentum-intuition,
+    .momentum-stage {
+      grid-template-columns: 1fr;
+    }
+
+    .momentum-init {
+      grid-template-columns: 1fr;
+      gap: 5px;
+    }
+
+    .signal-init {
+      grid-template-columns: auto auto auto minmax(220px, 1fr);
+    }
+
+    .hero {
+      gap: 24px;
+      padding: 38px 8px 28px;
+    }
+
+    h1 {
+      max-width: 15ch;
+    }
+
+    .hero-copy {
+      max-width: none;
+    }
+
+    .control-secondary,
+    .interpretation,
+    .momentum-update {
+      border-left: 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .momentum-formulas {
+      padding: 17px 0 0;
+      border-top: 1px solid var(--line);
+      border-left: 0;
+    }
+
+    .chart-topline {
+      display: block;
+    }
+
+    .legend {
+      justify-content: flex-start;
+      margin-top: 10px;
+    }
+  }
+
+  @media (max-width: 580px) {
+    .topline {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .control-primary,
+    .control-secondary,
+    .recurrence,
+    .interpretation,
+    .momentum-header,
+    .momentum-intuition,
+    .signal-init,
+    .momentum-init,
+    .momentum-update,
+    .worked-pair,
+    .update-table-section {
+      padding: 21px 18px;
+    }
+
+    .signal-init {
+      grid-template-columns: 1fr auto 1fr;
+    }
+
+    .signal-init p {
+      grid-column: 1 / -1;
+    }
+
+    .mode-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      width: 100%;
+    }
+
+    .mode-button {
+      min-width: 0;
+      padding: 10px 8px;
+      font-size: 0.8rem;
+    }
+
+    .beta-row,
+    .secondary-grid,
+    .step-controls {
+      grid-template-columns: 1fr;
+    }
+
+    .preset-group {
+      justify-self: start;
+    }
+
+    .chart-region {
+      padding: 18px 10px 16px;
+    }
+
+    .chart-help {
+      display: none;
+    }
+
+    #chart {
+      min-height: 245px;
+    }
+
+    .timeline {
+      grid-template-columns: 1fr auto;
+      padding: 0 7px;
+    }
+
+    .timeline-buttons {
+      grid-column: 1 / -1;
+    }
+
+    .timeline .day-slider-wrap {
+      grid-column: 1;
+    }
+
+    .day-readout {
+      grid-column: 2;
+    }
+
+    .decomposition {
+      grid-template-columns: 1fr;
+    }
+
+    .worked-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .worked-update,
+    .worked-update + .worked-update {
+      padding: 16px 0;
+      border-left: 0;
+    }
+
+    .worked-update + .worked-update {
+      border-top: 1px solid var(--line);
+    }
+
+    .momentum-plot {
+      padding: 18px 10px;
+    }
+
+    #momentumChart {
+      min-height: 300px;
+    }
+
+    .term {
+      padding: 11px 0;
+    }
+
+    .term + .term {
+      padding-left: 0;
+      border-top: 1px solid var(--line-soft);
+      border-left: 0;
+    }
+
+    footer {
+      flex-direction: column;
+      gap: 4px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      scroll-behavior: auto !important;
+      transition-duration: 0.001ms !important;
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="page-shell">
+  <div class="topline">
+    <a href="../" aria-label="Back to ES 667 interactives">ES 667 · Deep Learning</a>
+    <span>Lecture 5 · Optimization</span>
+  </div>
+
+  <header class="hero">
+    <h1>From a running average to momentum.</h1>
+    <p class="hero-copy">
+      First smooth a noisy signal. Then apply the same memory idea to an actual
+      gradient path and inspect every measure, remember, and move step.
+    </p>
+  </header>
+
+  <nav class="mode-switch" role="tablist" aria-label="Explorer part">
+    <button class="mode-button" id="temperatureTab" type="button" role="tab"
+            aria-selected="true" aria-controls="temperatureMode">
+      1 · Smooth a signal
+    </button>
+    <button class="mode-button" id="momentumTab" type="button" role="tab"
+            aria-selected="false" aria-controls="momentumMode">
+      2 · Build momentum
+    </button>
+  </nav>
+
+  <main>
+  <section class="workspace mode-panel" id="temperatureMode" role="tabpanel"
+           aria-labelledby="temperatureTab">
+    <section class="controls" aria-label="EWMA controls">
+      <div class="control-primary">
+        <p class="control-heading">Memory</p>
+        <div class="beta-row">
+          <div>
+            <label class="slider-label" for="beta">
+              <span>Previous summary retained, β</span>
+              <output id="betaValue" for="beta">0.90</output>
+            </label>
+            <input id="beta" type="range" min="0" max="0.99" value="0.90" step="0.01">
+          </div>
+          <div class="preset-group" aria-label="Suggested beta values">
+            <button class="preset" type="button" data-beta="0.5" aria-pressed="false">.50</button>
+            <button class="preset" type="button" data-beta="0.9" aria-pressed="true">.90</button>
+            <button class="preset" type="button" data-beta="0.98" aria-pressed="false">.98</button>
+          </div>
+        </div>
+        <p class="control-note" id="blendNote">
+          Keep 90% of the previous memory; add 10% of today’s reading.
+        </p>
+      </div>
+
+      <div class="control-secondary">
+        <p class="control-heading">Signal</p>
+        <div class="secondary-grid">
+          <div>
+            <label class="compact-label" for="noise">
+              <span>Noise σ</span>
+              <output id="noiseValue" for="noise">4.4°C</output>
+            </label>
+            <input id="noise" type="range" min="0" max="8" value="4.4" step="0.1">
+          </div>
+          <label class="toggle-row" for="showTrend">
+            <input id="showTrend" type="checkbox" checked>
+            <span>Show constructed slow trend</span>
+          </label>
+        </div>
+
+        <label class="toggle-row" for="stepToggle">
+          <input id="stepToggle" type="checkbox">
+          <span>Add a sudden change to test lag</span>
+        </label>
+
+        <div class="step-controls" id="stepControls" aria-disabled="true">
+          <div>
+            <label class="compact-label" for="stepDay">
+              <span>Change begins</span>
+              <output id="stepDayValue" for="stepDay">day 65</output>
+            </label>
+            <input id="stepDay" type="range" min="20" max="105" value="65" step="1" disabled>
+          </div>
+          <div>
+            <label class="compact-label" for="stepSize">
+              <span>Change size</span>
+              <output id="stepSizeValue" for="stepSize">+7.0°C</output>
+            </label>
+            <input id="stepSize" type="range" min="-10" max="10" value="7" step="0.5" disabled>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="signal-init" aria-label="Signal smoother initialization">
+      <div class="init-state">
+        <span>Before day 1</span>
+        <strong>m₀ = 0</strong>
+      </div>
+      <span class="init-arrow" aria-hidden="true">→</span>
+      <div class="init-state">
+        <span>First reading</span>
+        <strong>m₁ = x₁</strong>
+      </div>
+      <p><strong>Choice used in this signal plot:</strong> seed the smoother at
+      the first observation, then apply
+      mₜ = βmₜ₋₁ + (1−β)xₜ from day 2 onward. The momentum section
+      instead applies its recurrence immediately from m₀ = 0.</p>
+    </div>
+
+    <section class="chart-region" aria-labelledby="chartHeading">
+      <div class="chart-topline">
+        <h2 class="chart-title" id="chartHeading">The same 120 readings, one adjustable memory</h2>
+        <div class="legend" aria-label="Chart legend">
+          <span class="legend-item"><span class="legend-line raw"></span>daily reading</span>
+          <span class="legend-item" id="trendLegend"><span class="legend-line trend"></span>constructed trend</span>
+          <span class="legend-item"><span class="legend-line ewma"></span>EWMA through today</span>
+        </div>
+      </div>
+
+      <div class="chart-frame">
+        <svg id="chart" viewBox="0 0 1000 470" role="img" tabindex="0"
+             aria-labelledby="chartTitle chartDescription">
+          <title id="chartTitle">Noisy temperature readings and their exponentially weighted moving average</title>
+          <desc id="chartDescription">Use the day control or left and right arrow keys to inspect each update.</desc>
+        </svg>
+        <p class="chart-help">Click the plot or use ← → to choose a day</p>
+      </div>
+
+      <div class="timeline">
+        <div class="timeline-buttons">
+          <button class="action primary" id="play" type="button">Play</button>
+          <button class="action" id="reset" type="button">Reset</button>
+        </div>
+        <div class="day-slider-wrap">
+          <label class="visually-hidden" for="day">Current day</label>
+          <input id="day" type="range" min="0" max="120" value="0" step="1">
+        </div>
+        <output class="day-readout" id="dayValue" for="day">before day 1 · m₀ = 0</output>
+      </div>
+    </section>
+
+    <section class="explanation" aria-label="Current EWMA update">
+      <div class="recurrence">
+        <h2>One number is carried forward</h2>
+        <p class="definition">
+          <strong>m</strong> stands for memory. <strong>m<sub>t</sub></strong> is
+          the running summary after reading day <strong>t</strong>;
+          <strong>m<sub>0</sub></strong> is its state before any reading.
+        </p>
+        <p class="equation" id="equation" aria-live="polite"></p>
+        <div class="decomposition" aria-label="Numerical decomposition of the current update">
+          <div class="term">
+            <span class="term-name">Retained memory</span>
+            <span class="term-value" id="retainedValue">—</span>
+          </div>
+          <div class="term">
+            <span class="term-name">Today’s contribution</span>
+            <span class="term-value" id="todayValue">—</span>
+          </div>
+          <div class="term">
+            <span class="term-name">New memory</span>
+            <span class="term-value" id="memoryValue">—</span>
+          </div>
+        </div>
+      </div>
+
+      <aside class="interpretation">
+        <p class="control-heading">How to read β</p>
+        <div class="memory-number">
+          <strong id="roughMemory">10</strong>
+          <span>readings<br>rough memory</span>
+        </div>
+        <p class="heuristic">
+          Heuristic only: 1 / (1 − β). It describes a useful timescale, not a
+          hard window.
+        </p>
+        <p class="tradeoff" id="tradeoffText">
+          A useful compromise: much of the day-to-day noise is removed, with
+          some delay when the trend turns.
+        </p>
+        <p class="offset" id="offsetText"></p>
+      </aside>
+    </section>
+  </section>
+
+  <section class="workspace mode-panel" id="momentumMode" role="tabpanel"
+           aria-labelledby="momentumTab" hidden>
+    <header class="momentum-header">
+      <div>
+        <h2>Use memory to filter a changing gradient direction</h2>
+        <p>
+          In this computed ravine, one coordinate is one hundred times steeper.
+          Plain gradient directions swing across the valley. Momentum blends
+          successive gradients before moving.
+        </p>
+      </div>
+      <div class="momentum-formulas" aria-label="Ravine and momentum formulas">
+        <strong>Actual Lecture 5 example</strong>
+        <span>L(q) = 0.5 q₁² + 50 q₂²</span>
+        <span>gₜ = (qₜ,₁, 100qₜ,₂)</span>
+        <span>mₜ₊₁ = .8mₜ + .2gₜ</span>
+        <span>qₜ₊₁ = qₜ − .095mₜ₊₁</span>
+      </div>
+    </header>
+
+    <section class="momentum-intuition" aria-label="Two intuitions for momentum">
+      <article class="intuition-case">
+        <h3>Same direction: build speed</h3>
+        <p>Plain GD uses only today’s gradient, so its step shrinks as the
+        remaining error shrinks. Momentum keeps part of earlier, agreeing
+        gradients—like repeated pushes in the same direction.</p>
+        <span class="pushes">actual q₁ moves: GD +.0456 → +.0447 · momentum +.0456 → +.0812</span>
+      </article>
+      <article class="intuition-case reversal">
+        <h3>Direction reverses: brake the zigzag</h3>
+        <p>Across the valley the gradient flips sign. Old and new contributions
+        oppose each other, so the stored direction becomes much smaller.</p>
+        <span class="pushes">actual update 2 across q₂: plain GD +1.454 · momentum +.162</span>
+      </article>
+      <p class="intuition-caveat">The rates here are matched so both methods
+      make the same first move. The rolling-ball picture is an intuition for
+      accumulated direction, not a literal force law or a guarantee that every
+      momentum step lowers the loss.</p>
+    </section>
+
+    <div class="momentum-init" aria-label="Momentum initialization">
+      <span class="init-kicker">Before the first gradient</span>
+      <strong class="init-values">q₀ = (−2.4, .85) · m₀ = (0, 0)</strong>
+      <span><strong>m means gradient memory.</strong> We start it at zero because
+      no earlier gradient exists—not because the current gradient is zero.</span>
+    </div>
+
+    <section class="momentum-stage" aria-label="Momentum stepper">
+      <div class="momentum-plot">
+        <h3>Parameter space and model predictions move together</h3>
+        <svg id="momentumChart" viewBox="0 0 720 500" role="img" tabindex="0"
+             aria-labelledby="momentumChartTitle momentumChartDescription">
+          <title id="momentumChartTitle">Momentum path on the exact ravine objective</title>
+          <desc id="momentumChartDescription">Use the step controls or left and right arrow keys to inspect updates.</desc>
+        </svg>
+        <div class="momentum-legend" aria-label="Momentum chart legend">
+          <span class="legend-item"><span class="legend-line path"></span>path so far</span>
+          <span class="legend-item"><span class="legend-line raw-direction"></span>measured descent direction −gₜ</span>
+          <span class="legend-item"><span class="legend-line" style="color:#6e7f82;border-top-style:dashed"></span>retained −.8mₜ</span>
+          <span class="legend-item"><span class="legend-line ewma"></span>sum −mₜ₊₁</span>
+          <span class="legend-item"><span class="legend-line update-direction"></span>actual move −.095mₜ₊₁</span>
+        </div>
+        <svg id="predictionChart" viewBox="0 0 720 190" role="img"
+             aria-labelledby="predictionChartTitle predictionChartDescription">
+          <title id="predictionChartTitle">Targets and model predictions for the four regression rows</title>
+          <desc id="predictionChartDescription">Four horizontal rows compare each fixed target with the current model prediction.</desc>
+        </svg>
+      </div>
+
+      <div class="momentum-update" aria-live="polite">
+        <h3 id="momentumStepHeading">Start before update 1</h3>
+        <div class="momentum-stepper">
+          <button class="action" id="momentumPrevious" type="button">Previous</button>
+          <button class="action primary" id="momentumNext" type="button">Next: measure g₀</button>
+          <button class="action" id="momentumPlay" type="button" aria-pressed="false">Play</button>
+          <button class="action" id="momentumReset" type="button">Reset</button>
+          <span class="step-counter" id="momentumCounter">first update · step 1 of 6</span>
+        </div>
+
+        <div class="update-cycle" aria-live="polite">
+          <div class="cycle-step initialize is-current">
+            <span class="cycle-label">Start</span>
+            <span class="cycle-value" id="initialValue">q₀ = (−2.4000, .8500); m₀ = (0, 0)</span>
+          </div>
+          <div class="cycle-step measure">
+            <span class="cycle-label">Measure</span>
+            <span class="cycle-value" id="measureValue">—</span>
+          </div>
+          <div class="cycle-step retain">
+            <span class="cycle-label">Keep</span>
+            <span class="cycle-value" id="retainValue">—</span>
+          </div>
+          <div class="cycle-step contribute">
+            <span class="cycle-label">Add</span>
+            <span class="cycle-value" id="contributionValue">—</span>
+          </div>
+          <div class="cycle-step combine">
+            <span class="cycle-label">Combine</span>
+            <span class="cycle-value" id="combineValue">—</span>
+          </div>
+          <div class="cycle-step move">
+            <span class="cycle-label">Move</span>
+            <span class="cycle-value" id="moveValue">—</span>
+          </div>
+        </div>
+
+        <p class="momentum-insight" id="momentumInsight"></p>
+      </div>
+    </section>
+
+    <section class="worked-pair" aria-labelledby="workedPairHeading">
+      <h3 id="workedPairHeading">The first two updates, without skipping a line</h3>
+      <p>The first update creates memory. The second shows what cancellation means numerically.</p>
+      <div class="worked-grid">
+        <article class="worked-update">
+          <h4>Update 1 · start from m₀ = (0, 0)</h4>
+          <p>g₀ = (−2.4, 85)</p>
+          <p>m₁ = .8(0, 0) + .2(−2.4, 85) = (−.48, 17)</p>
+          <p>q₁ = (−2.4, .85) − .095(−.48, 17) = (−2.3544, −.765)</p>
+        </article>
+        <article class="worked-update">
+          <h4>Update 2 · remeasure at q₁</h4>
+          <p>g₁ = (−2.3544, −76.5)</p>
+          <p>m₂ = .8(−.48, 17) + .2(−2.3544, −76.5) = (−.85488, −1.7)</p>
+          <p>q₂ = (−2.3544, −.765) − .095(−.85488, −1.7) = (−2.2732, −.6035)</p>
+        </article>
+      </div>
+      <p class="cancellation-note">
+        <strong>Along the valley:</strong> the q₁ gradients stay negative, so
+        their memory reinforces. <strong>Across the valley:</strong> .8(17) =
+        13.6 and .2(−76.5) = −15.3 partly cancel, leaving m₂,₂ = −1.7 rather
+        than another large swing.
+      </p>
+    </section>
+
+    <section class="update-table-section" aria-labelledby="updateTableHeading">
+      <h3 id="updateTableHeading">Reveal the computed trajectory one update at a time</h3>
+      <p>Rows appear only after the stepper reaches them. Loss is evaluated at qₜ, before that row’s move.</p>
+      <div class="table-scroll" tabindex="0" aria-label="Computed momentum updates">
+        <table class="update-table">
+          <thead>
+            <tr>
+              <th>t</th>
+              <th>qₜ</th>
+              <th>mₜ (before)</th>
+              <th>gₜ</th>
+              <th>mₜ₊₁</th>
+              <th>qₜ₊₁</th>
+              <th>L(qₜ)</th>
+            </tr>
+          </thead>
+          <tbody id="momentumTable"></tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+  </main>
+
+  <footer>
+    <span>Part 1: seeded temperature signal · Part 2: exact Lecture 5 ravine</span>
+    <span>ES 667 · IIT Gandhinagar</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var DAYS = 120;
+  var DEFAULTS = {
+    beta: 0.90,
+    noise: 4.4,
+    showTrend: true,
+    stepOn: false,
+    stepDay: 65,
+    stepSize: 7.0,
+    day: 0
+  };
+
+  // Generated once with np.random.default_rng(12).normal(size=120).
+  // Changing sigma rescales these same residuals; it never redraws the noise.
+  var STANDARD_NOISE = [
+    -0.006826779865523179, 1.0461432923049026, 0.7415884212884828, 0.7239565416499906,
+    1.6187762233340763, -1.205558142646329, -0.6269554710763733, -1.3206632116051251,
+    -0.10775250794802987, 0.9987636553170226, -0.02194788627038025, 0.4958800664642217,
+    -1.910768664176647, 0.14706416587832766, -0.9069432512592963, 1.7753893872461408,
+    0.8868490764587924, 0.9493494832580337, -0.05785496250096947, 0.6128622742800935,
+    0.6578901620545003, -0.34440266642056316, -0.49737203549585546, -0.1147727834068699,
+    -0.6054520093504348, -0.5943394175048538, -0.2833753756039578, -0.7284177271834528,
+    0.7663277859454005, -1.5960863337954336, 0.8235621286156919, -0.6255664702584507,
+    -0.5459399556941108, -1.35084714186579, -0.14424211884897012, -0.24766150926736738,
+    0.19145583053805643, -0.5337742959249345, 0.09375617930346658, 1.8196918381290936,
+    0.40899969445359535, -0.5736900371557184, 0.9531095952386714, -0.12880113396915818,
+    0.5938744680979048, 0.6127474289476967, -0.3910657167609224, -1.9302874975259847,
+    -0.34765362325494176, 0.5514554237995707, -0.38011040653339456, 0.43896931488302815,
+    0.9795403716599739, -0.5441134150640868, 1.2313517525412896, 1.621804461688138,
+    1.0790459442040814, 1.1654628406272693, 1.096796447776445, 2.2545390605711515,
+    0.18586090464094035, 0.0020840828512682153, 0.6031073051902183, -0.9081951186439164,
+    -1.5531767648845436, -0.8820079726267296, 0.37256535014264275, 0.47305334074830474,
+    -1.536358718291743, -1.8834637085418371, -0.3161422429105865, -0.18805651607489748,
+    -0.0492008330004283, 0.6713624466370349, 1.2288341782192547, 0.23089642990774156,
+    0.6126847036037366, -1.0952016928073385, -1.1763080144635716, 0.23623833449570664,
+    0.6646631027839327, 0.7262434559120877, 0.5927419911039958, 0.7841737089762773,
+    0.8098280299966294, -1.752185363937654, -0.7341657689505272, 0.4551597423063389,
+    0.5966719650669899, -1.5120924094997832, 1.1730613665619862, -0.43883192384648573,
+    -0.23242474937708185, 0.2738186447603591, 0.7496352320484423, -1.433116993391593,
+    0.9899125769741429, 0.07729346772113933, -0.7708134949215095, -0.27527314152763765,
+    -2.1858383485986193, -0.6476185246020855, 0.18190965102151874, -0.7090504752192786,
+    -0.32801286159833143, -0.14676236752236549, 0.04838089258719638, 1.0206366653522176,
+    -0.024895779915063802, -0.25996793590577055, 0.5386452227247717, 2.0766170605107335,
+    -0.3427476755552765, 0.5128672527234075, -1.5773049500113667, 1.3454938703802579,
+    0.6593835057093626, 1.332799668008021, -0.05906025637855197, -1.0428155640122234
+  ];
+
+  var COLORS = {
+    ink: "#23373b",
+    muted: "#6e7f82",
+    accent: "#eb811b",
+    teal: "#2c7a7b",
+    blue: "#2b6cb0",
+    red: "#d64550",
+    grid: "#e3e9e7",
+    paper: "#ffffff"
+  };
+
+  var els = {
+    beta: document.getElementById("beta"),
+    betaValue: document.getElementById("betaValue"),
+    noise: document.getElementById("noise"),
+    noiseValue: document.getElementById("noiseValue"),
+    showTrend: document.getElementById("showTrend"),
+    stepToggle: document.getElementById("stepToggle"),
+    stepControls: document.getElementById("stepControls"),
+    stepDay: document.getElementById("stepDay"),
+    stepDayValue: document.getElementById("stepDayValue"),
+    stepSize: document.getElementById("stepSize"),
+    stepSizeValue: document.getElementById("stepSizeValue"),
+    day: document.getElementById("day"),
+    dayValue: document.getElementById("dayValue"),
+    play: document.getElementById("play"),
+    reset: document.getElementById("reset"),
+    chart: document.getElementById("chart"),
+    trendLegend: document.getElementById("trendLegend"),
+    blendNote: document.getElementById("blendNote"),
+    equation: document.getElementById("equation"),
+    retainedValue: document.getElementById("retainedValue"),
+    todayValue: document.getElementById("todayValue"),
+    memoryValue: document.getElementById("memoryValue"),
+    roughMemory: document.getElementById("roughMemory"),
+    tradeoffText: document.getElementById("tradeoffText"),
+    offsetText: document.getElementById("offsetText"),
+    temperatureTab: document.getElementById("temperatureTab"),
+    momentumTab: document.getElementById("momentumTab"),
+    temperatureMode: document.getElementById("temperatureMode"),
+    momentumMode: document.getElementById("momentumMode"),
+    momentumChart: document.getElementById("momentumChart"),
+    predictionChart: document.getElementById("predictionChart"),
+    momentumPrevious: document.getElementById("momentumPrevious"),
+    momentumNext: document.getElementById("momentumNext"),
+    momentumPlay: document.getElementById("momentumPlay"),
+    momentumReset: document.getElementById("momentumReset"),
+    momentumCounter: document.getElementById("momentumCounter"),
+    momentumStepHeading: document.getElementById("momentumStepHeading"),
+    initialValue: document.getElementById("initialValue"),
+    measureValue: document.getElementById("measureValue"),
+    retainValue: document.getElementById("retainValue"),
+    contributionValue: document.getElementById("contributionValue"),
+    combineValue: document.getElementById("combineValue"),
+    moveValue: document.getElementById("moveValue"),
+    momentumInsight: document.getElementById("momentumInsight"),
+    momentumTable: document.getElementById("momentumTable")
+  };
+
+  var state = Object.assign({}, DEFAULTS);
+  var series = null;
+  var playTimer = null;
+  var MOMENTUM_BETA = 0.8;
+  var MOMENTUM_ETA = 0.095;
+  var MOMENTUM_STEPS = 10;
+  var momentumStep = 0;
+  var momentumPhase = 0;
+  var momentumTimer = null;
+  var momentumData = buildMomentumData();
+  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function fixed(value, digits) {
+    return Number(value).toFixed(digits);
+  }
+
+  function signed(value, digits) {
+    var n = Number(value);
+    return (n >= 0 ? "+" : "") + n.toFixed(digits);
+  }
+
+  function percent(value) {
+    var number = value * 100;
+    return Math.abs(number - Math.round(number)) < 1e-8
+      ? String(Math.round(number))
+      : number.toFixed(1);
+  }
+
+  function vectorAdd(a, b) {
+    return [a[0] + b[0], a[1] + b[1]];
+  }
+
+  function vectorScale(value, vector) {
+    return [value * vector[0], value * vector[1]];
+  }
+
+  function vectorFormat(vector, digits) {
+    return "(" + fixed(vector[0], digits) + ", " + fixed(vector[1], digits) + ")";
+  }
+
+  function ravineLoss(q) {
+    return 0.5 * q[0] * q[0] + 50 * q[1] * q[1];
+  }
+
+  function ravineGradient(q) {
+    return [q[0], 100 * q[1]];
+  }
+
+  function buildMomentumData() {
+    var positions = [[-2.4, 0.85]];
+    var memories = [[0, 0]];
+    var updates = [];
+
+    for (var t = 0; t < MOMENTUM_STEPS; t += 1) {
+      var q = positions[t];
+      var memory = memories[t];
+      var gradient = ravineGradient(q);
+      var retained = vectorScale(MOMENTUM_BETA, memory);
+      var contribution = vectorScale(1 - MOMENTUM_BETA, gradient);
+      var nextMemory = vectorAdd(retained, contribution);
+      var move = vectorScale(-MOMENTUM_ETA, nextMemory);
+      var nextQ = vectorAdd(q, move);
+      updates.push({
+        t: t,
+        q: q.slice(),
+        gradient: gradient,
+        memory: memory.slice(),
+        retained: retained,
+        contribution: contribution,
+        nextMemory: nextMemory,
+        move: move,
+        nextQ: nextQ,
+        loss: ravineLoss(q)
+      });
+      memories.push(nextMemory);
+      positions.push(nextQ);
+    }
+
+    return {
+      positions: positions,
+      memories: memories,
+      updates: updates
+    };
+  }
+
+  function buildSeries() {
+    var trend = [];
+    var readings = [];
+    var memory = [];
+
+    for (var i = 0; i < DAYS; i += 1) {
+      var day = i + 1;
+      var base = 25 + 7.5 * Math.sin(2 * Math.PI * (day - 24) / 120);
+      var shifted = base + (state.stepOn && day >= state.stepDay ? state.stepSize : 0);
+      trend.push(shifted);
+      readings.push(shifted + state.noise * STANDARD_NOISE[i]);
+    }
+
+    memory[0] = readings[0];
+    for (var j = 1; j < DAYS; j += 1) {
+      memory[j] = state.beta * memory[j - 1] + (1 - state.beta) * readings[j];
+    }
+
+    return { trend: trend, readings: readings, memory: memory };
+  }
+
+  function svgElement(name, attrs, text) {
+    var node = document.createElementNS("http://www.w3.org/2000/svg", name);
+    Object.keys(attrs || {}).forEach(function (key) {
+      node.setAttribute(key, attrs[key]);
+    });
+    if (text !== undefined) {
+      node.textContent = text;
+    }
+    return node;
+  }
+
+  function pathFor(values, lastIndex, xScale, yScale) {
+    if (lastIndex < 0) {
+      return "";
+    }
+    var stop = Math.max(0, Math.min(lastIndex, values.length - 1));
+    var parts = [];
+    for (var i = 0; i <= stop; i += 1) {
+      parts.push((i === 0 ? "M " : "L ") + xScale(i + 1).toFixed(2) + " " + yScale(values[i]).toFixed(2));
+    }
+    return parts.join(" ");
+  }
+
+  function niceStep(span) {
+    var rough = span / 5;
+    var power = Math.pow(10, Math.floor(Math.log10(rough)));
+    var scaled = rough / power;
+    var unit = scaled <= 1 ? 1 : scaled <= 2 ? 2 : scaled <= 5 ? 5 : 10;
+    return unit * power;
+  }
+
+  function addArrowMarker(defs, id, color) {
+    var marker = svgElement("marker", {
+      id: id,
+      viewBox: "0 0 10 10",
+      refX: 8.5,
+      refY: 5,
+      markerWidth: 6,
+      markerHeight: 6,
+      orient: "auto-start-reverse"
+    });
+    marker.appendChild(svgElement("path", {
+      d: "M 0 0 L 10 5 L 0 10 z",
+      fill: color
+    }));
+    defs.appendChild(marker);
+  }
+
+  function starPoints(cx, cy, outerRadius, innerRadius) {
+    var points = [];
+    for (var i = 0; i < 10; i += 1) {
+      var radius = i % 2 === 0 ? outerRadius : innerRadius;
+      var angle = -Math.PI / 2 + i * Math.PI / 5;
+      points.push(
+        (cx + radius * Math.cos(angle)).toFixed(2) + "," +
+        (cy + radius * Math.sin(angle)).toFixed(2)
+      );
+    }
+    return points.join(" ");
+  }
+
+  function drawMomentumChart() {
+    var svg = els.momentumChart;
+    while (svg.firstChild) {
+      svg.removeChild(svg.firstChild);
+    }
+
+    var currentQ = momentumData.positions[momentumStep];
+    var firstMoveVisible = momentumStep > 0 || momentumPhase >= 5;
+    var visiblePathStep = momentumStep === 0 && firstMoveVisible ? 1 : momentumStep;
+    svg.appendChild(svgElement("title", { id: "momentumChartTitle" },
+      "Momentum path on the exact ravine objective"));
+    svg.appendChild(svgElement("desc", { id: "momentumChartDescription" },
+      (momentumStep === 0 ? "First-update phase " + momentumPhase + ". " : "State " + momentumStep + ". ") +
+      "q equals " + vectorFormat(currentQ, 3) +
+      ", memory equals " + vectorFormat(momentumData.memories[momentumStep], 3) +
+      ", loss equals " + fixed(ravineLoss(currentQ), 3) + "."));
+
+    var width = 720;
+    var height = 500;
+    var margin = { top: 32, right: 28, bottom: 55, left: 64 };
+    var innerW = width - margin.left - margin.right;
+    var innerH = height - margin.top - margin.bottom;
+    var xMin = -3.2;
+    var xMax = 3.2;
+    var yMin = -1.05;
+    var yMax = 1.05;
+
+    function xScale(value) {
+      return margin.left + ((value - xMin) / (xMax - xMin)) * innerW;
+    }
+
+    function yScale(value) {
+      return margin.top + ((yMax - value) / (yMax - yMin)) * innerH;
+    }
+
+    var defs = svgElement("defs");
+    var clip = svgElement("clipPath", { id: "momentumPlotClip" });
+    clip.appendChild(svgElement("rect", {
+      x: margin.left,
+      y: margin.top,
+      width: innerW,
+      height: innerH
+    }));
+    defs.appendChild(clip);
+    addArrowMarker(defs, "newContributionArrow", COLORS.blue);
+    addArrowMarker(defs, "retainedArrow", COLORS.muted);
+    addArrowMarker(defs, "memorySumArrow", COLORS.teal);
+    addArrowMarker(defs, "actualMoveArrow", COLORS.accent);
+    svg.appendChild(defs);
+
+    var plot = svgElement("g", {
+      "clip-path": "url(#momentumPlotClip)",
+      "aria-hidden": "true"
+    });
+    svg.appendChild(plot);
+
+    [-3, -2, -1, 0, 1, 2, 3].forEach(function (tick) {
+      var xx = xScale(tick);
+      plot.appendChild(svgElement("line", {
+        x1: xx,
+        x2: xx,
+        y1: margin.top,
+        y2: height - margin.bottom,
+        stroke: COLORS.grid,
+        "stroke-width": tick === 0 ? 1.4 : 1,
+        opacity: tick === 0 ? 0.92 : 0.72
+      }));
+      svg.appendChild(svgElement("text", {
+        x: xx,
+        y: height - margin.bottom + 24,
+        "text-anchor": "middle",
+        fill: COLORS.muted,
+        "font-family": "IBM Plex Sans, Avenir Next, Segoe UI, sans-serif",
+        "font-size": 12
+      }, String(tick)));
+    });
+
+    [-1, -0.5, 0, 0.5, 1].forEach(function (tick) {
+      var yy = yScale(tick);
+      plot.appendChild(svgElement("line", {
+        x1: margin.left,
+        x2: width - margin.right,
+        y1: yy,
+        y2: yy,
+        stroke: COLORS.grid,
+        "stroke-width": tick === 0 ? 1.4 : 1,
+        opacity: tick === 0 ? 0.92 : 0.72
+      }));
+      svg.appendChild(svgElement("text", {
+        x: margin.left - 11,
+        y: yy + 4,
+        "text-anchor": "end",
+        fill: COLORS.muted,
+        "font-family": "IBM Plex Sans, Avenir Next, Segoe UI, sans-serif",
+        "font-size": 12
+      }, tick.toFixed(tick % 1 === 0 ? 0 : 1)));
+    });
+
+    [0.25, 0.5, 1, 2, 5, 10, 20, 40, 80].forEach(function (level, index) {
+      var radiusQ1 = Math.sqrt(2 * level);
+      var radiusQ2 = Math.sqrt(level / 50);
+      plot.appendChild(svgElement("ellipse", {
+        cx: xScale(0),
+        cy: yScale(0),
+        rx: Math.abs(xScale(radiusQ1) - xScale(0)),
+        ry: Math.abs(yScale(radiusQ2) - yScale(0)),
+        fill: "none",
+        stroke: COLORS.teal,
+        "stroke-width": index < 3 ? 1.35 : 1.05,
+        opacity: index < 3 ? 0.42 : 0.29
+      }));
+    });
+
+    var pathParts = [];
+    for (var p = 0; p <= visiblePathStep; p += 1) {
+      var point = momentumData.positions[p];
+      pathParts.push((p === 0 ? "M " : "L ") +
+        xScale(point[0]).toFixed(2) + " " + yScale(point[1]).toFixed(2));
+    }
+    if (pathParts.length > 1) {
+      plot.appendChild(svgElement("path", {
+        d: pathParts.join(" "),
+        fill: "none",
+        stroke: COLORS.teal,
+        "stroke-width": 3.2,
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round"
+      }));
+    }
+
+    for (var h = 0; h < visiblePathStep; h += 1) {
+      var past = momentumData.positions[h];
+      plot.appendChild(svgElement("circle", {
+        cx: xScale(past[0]),
+        cy: yScale(past[1]),
+        r: 3.8,
+        fill: COLORS.teal,
+        opacity: 0.58
+      }));
+    }
+
+    var optimumX = xScale(0);
+    var optimumY = yScale(0);
+    plot.appendChild(svgElement("polygon", {
+      points: starPoints(optimumX, optimumY, 10, 4.5),
+      fill: COLORS.red,
+      stroke: COLORS.paper,
+      "stroke-width": 1.5
+    }));
+
+    var startX = xScale(currentQ[0]);
+    var startY = yScale(currentQ[1]);
+
+    function drawDirection(ingredient, length, color, markerId, dash, widthValue) {
+      var descent = [-ingredient[0], -ingredient[1]];
+      var dx = descent[0] * innerW / (xMax - xMin);
+      var dy = -descent[1] * innerH / (yMax - yMin);
+      var norm = Math.sqrt(dx * dx + dy * dy);
+      if (norm < 1e-9) {
+        return;
+      }
+      plot.appendChild(svgElement("line", {
+        x1: startX,
+        y1: startY,
+        x2: startX + length * dx / norm,
+        y2: startY + length * dy / norm,
+        stroke: color,
+        "stroke-width": widthValue,
+        "stroke-dasharray": dash || "",
+        "stroke-linecap": "round",
+        "marker-end": "url(#" + markerId + ")"
+      }));
+    }
+
+    if (momentumStep < MOMENTUM_STEPS) {
+      var update = momentumData.updates[momentumStep];
+      var progressiveFirstUpdate = momentumStep === 0;
+      var showMeasure = !progressiveFirstUpdate || momentumPhase >= 1;
+      var showRetained = !progressiveFirstUpdate || momentumPhase >= 2;
+      var showCombined = !progressiveFirstUpdate || momentumPhase >= 4;
+      var showMove = !progressiveFirstUpdate || momentumPhase >= 5;
+
+      if (showMeasure) {
+        drawDirection(update.gradient, 48, COLORS.blue, "newContributionArrow", "", 2.1);
+      }
+      if (showRetained) {
+        drawDirection(update.retained, 42, COLORS.muted, "retainedArrow", "5 4", 2.0);
+      }
+      if (showCombined) {
+        drawDirection(update.nextMemory, 70, COLORS.teal, "memorySumArrow", "", 2.4);
+      }
+
+      if (progressiveFirstUpdate && momentumPhase >= 2 && momentumPhase < 4) {
+        plot.appendChild(svgElement("text", {
+          x: Math.min(width - margin.right - 12, startX + 18),
+          y: Math.max(margin.top + 20, startY - 30),
+          fill: COLORS.muted,
+          "font-family": "IBM Plex Mono, SFMono-Regular, Consolas, monospace",
+          "font-size": 11,
+          "font-weight": 650
+        }, "βm₀ = (0, 0): no retained arrow"));
+      }
+
+      if (showMove) {
+        plot.appendChild(svgElement("line", {
+          x1: startX,
+          y1: startY,
+          x2: xScale(update.nextQ[0]),
+          y2: yScale(update.nextQ[1]),
+          stroke: COLORS.accent,
+          "stroke-width": 3.2,
+          "stroke-linecap": "round",
+          "marker-end": "url(#actualMoveArrow)"
+        }));
+      }
+    }
+
+    plot.appendChild(svgElement("circle", {
+      cx: startX,
+      cy: startY,
+      r: 7,
+      fill: COLORS.ink,
+      stroke: COLORS.paper,
+      "stroke-width": 2.4
+    }));
+
+    var currentAnchor = currentQ[0] > 2.2 ? "end" : "start";
+    var currentLabelX = currentAnchor === "end" ? startX - 10 : startX + 10;
+    plot.appendChild(svgElement("text", {
+      x: currentLabelX,
+      y: Math.max(margin.top + 16, startY - 11),
+      "text-anchor": currentAnchor,
+      fill: COLORS.ink,
+      "font-family": "IBM Plex Sans, Avenir Next, Segoe UI, sans-serif",
+      "font-size": 13,
+      "font-weight": 750
+    }, "q" + momentumStep));
+
+    svg.appendChild(svgElement("text", {
+      x: margin.left + innerW / 2,
+      y: height - 12,
+      "text-anchor": "middle",
+      fill: COLORS.ink,
+      "font-family": "IBM Plex Sans, Avenir Next, Segoe UI, sans-serif",
+      "font-size": 13,
+      "font-weight": 650
+    }, "shallow error q₁"));
+    svg.appendChild(svgElement("text", {
+      x: 17,
+      y: margin.top + innerH / 2,
+      transform: "rotate(-90 17 " + (margin.top + innerH / 2) + ")",
+      "text-anchor": "middle",
+      fill: COLORS.ink,
+      "font-family": "IBM Plex Sans, Avenir Next, Segoe UI, sans-serif",
+      "font-size": 13,
+      "font-weight": 650
+    }, "steep error q₂"));
+    svg.appendChild(svgElement("text", {
+      x: width - margin.right,
+      y: 19,
+      "text-anchor": "end",
+      fill: COLORS.muted,
+      "font-family": "IBM Plex Sans, Avenir Next, Segoe UI, sans-serif",
+      "font-size": 11
+    }, "ingredient arrows show direction; orange uses the actual step"));
+  }
+
+  function drawPredictionChart() {
+    var svg = els.predictionChart;
+    while (svg.firstChild) {
+      svg.removeChild(svg.firstChild);
+    }
+
+    var inputs = [[-1, -10], [-1, 10], [1, -10], [1, 10]];
+    var thetaStar = [1, -0.5];
+    var predictionStep = momentumStep === 0 && momentumPhase >= 5 ? 1 : momentumStep;
+    var q = momentumData.positions[predictionStep];
+    var theta = vectorAdd(thetaStar, q);
+    var targets = [];
+    var predictions = [];
+    inputs.forEach(function (row) {
+      targets.push(row[0] * thetaStar[0] + row[1] * thetaStar[1]);
+      predictions.push(row[0] * theta[0] + row[1] * theta[1]);
+    });
+
+    svg.appendChild(svgElement("title", { id: "predictionChartTitle" },
+      "Targets and model predictions for the four regression rows"));
+    svg.appendChild(svgElement("desc", { id: "predictionChartDescription" },
+      "At state " + momentumStep + ", theta equals " + vectorFormat(theta, 3) + "."));
+
+    var width = 720;
+    var height = 190;
+    var margin = { top: 39, right: 25, bottom: 29, left: 94 };
+    var innerW = width - margin.left - margin.right;
+    var xMin = -16;
+    var xMax = 16;
+
+    function xScale(value) {
+      return margin.left + ((value - xMin) / (xMax - xMin)) * innerW;
+    }
+
+    svg.appendChild(svgElement("text", {
+      x: margin.left,
+      y: 19,
+      fill: COLORS.ink,
+      "font-family": "IBM Plex Sans, Avenir Next, Segoe UI, sans-serif",
+      "font-size": 12.5,
+      "font-weight": 720
+    }, "same q" + predictionStep + " in prediction space · θ" + predictionStep + " = θ* + q" + predictionStep));
+
+    svg.appendChild(svgElement("circle", {
+      cx: width - 169,
+      cy: 15,
+      r: 4,
+      fill: COLORS.red
+    }));
+    svg.appendChild(svgElement("text", {
+      x: width - 159,
+      y: 19,
+      fill: COLORS.muted,
+      "font-family": "IBM Plex Sans, Avenir Next, Segoe UI, sans-serif",
+      "font-size": 10.5
+    }, "target"));
+    svg.appendChild(svgElement("circle", {
+      cx: width - 91,
+      cy: 15,
+      r: 4,
+      fill: COLORS.blue
+    }));
+    svg.appendChild(svgElement("text", {
+      x: width - 81,
+      y: 19,
+      fill: COLORS.muted,
+      "font-family": "IBM Plex Sans, Avenir Next, Segoe UI, sans-serif",
+      "font-size": 10.5
+    }, "prediction"));
+
+    [-16, -8, 0, 8, 16].forEach(function (tick) {
+      var xx = xScale(tick);
+      svg.appendChild(svgElement("line", {
+        x1: xx,
+        x2: xx,
+        y1: margin.top - 5,
+        y2: height - margin.bottom,
+        stroke: COLORS.grid,
+        "stroke-width": tick === 0 ? 1.3 : 1
+      }));
+      svg.appendChild(svgElement("text", {
+        x: xx,
+        y: height - 8,
+        "text-anchor": "middle",
+        fill: COLORS.muted,
+        "font-family": "IBM Plex Sans, Avenir Next, Segoe UI, sans-serif",
+        "font-size": 10.5
+      }, String(tick)));
+    });
+
+    inputs.forEach(function (row, index) {
+      var yy = margin.top + 15 + index * 29;
+      svg.appendChild(svgElement("text", {
+        x: margin.left - 11,
+        y: yy + 4,
+        "text-anchor": "end",
+        fill: COLORS.muted,
+        "font-family": "IBM Plex Mono, SFMono-Regular, Consolas, monospace",
+        "font-size": 10.5
+      }, "(" + row[0] + ", " + row[1] + ")"));
+      svg.appendChild(svgElement("line", {
+        x1: xScale(targets[index]),
+        x2: xScale(predictions[index]),
+        y1: yy,
+        y2: yy,
+        stroke: COLORS.muted,
+        "stroke-width": 1.5,
+        opacity: 0.48
+      }));
+      svg.appendChild(svgElement("circle", {
+        cx: xScale(targets[index]),
+        cy: yy,
+        r: 4.5,
+        fill: COLORS.red,
+        stroke: COLORS.paper,
+        "stroke-width": 1
+      }));
+      svg.appendChild(svgElement("circle", {
+        cx: xScale(predictions[index]),
+        cy: yy,
+        r: 5,
+        fill: COLORS.blue,
+        stroke: COLORS.paper,
+        "stroke-width": 1.2
+      }));
+    });
+  }
+
+  function renderMomentumTable() {
+    while (els.momentumTable.firstChild) {
+      els.momentumTable.removeChild(els.momentumTable.firstChild);
+    }
+
+    var lastVisible = Math.min(momentumStep, MOMENTUM_STEPS - 1);
+    for (var i = 0; i <= lastVisible; i += 1) {
+      var update = momentumData.updates[i];
+      var firstUpdateInProgress = i === 0 && momentumStep === 0;
+      var gradientVisible = !firstUpdateInProgress || momentumPhase >= 1;
+      var nextMemoryVisible = !firstUpdateInProgress || momentumPhase >= 4;
+      var nextQVisible = !firstUpdateInProgress || momentumPhase >= 5;
+      var row = document.createElement("tr");
+      if (i === lastVisible) {
+        row.className = "is-current";
+      }
+      [
+        String(update.t),
+        vectorFormat(update.q, 3),
+        vectorFormat(update.memory, 3),
+        gradientVisible ? vectorFormat(update.gradient, 3) : "—",
+        nextMemoryVisible ? vectorFormat(update.nextMemory, 3) : "—",
+        nextQVisible ? vectorFormat(update.nextQ, 3) : "—",
+        fixed(update.loss, 3)
+      ].forEach(function (value) {
+        var cell = document.createElement("td");
+        cell.textContent = value;
+        row.appendChild(cell);
+      });
+      els.momentumTable.appendChild(row);
+    }
+  }
+
+  function setCycleState(element, requiredPhase, text, pendingText, activePhase) {
+    var row = element.parentElement;
+    var revealed = activePhase >= requiredPhase;
+    element.textContent = revealed ? text : pendingText;
+    row.classList.toggle("is-pending", !revealed);
+    row.classList.toggle("is-current", activePhase === requiredPhase);
+  }
+
+  function renderMomentumExplanation() {
+    els.momentumPrevious.disabled = momentumStep === 0 && momentumPhase === 0;
+    els.momentumNext.disabled = momentumStep === MOMENTUM_STEPS;
+
+    if (momentumStep === MOMENTUM_STEPS) {
+      var finalQ = momentumData.positions[momentumStep];
+      var finalMemory = momentumData.memories[momentumStep];
+      els.momentumStepHeading.textContent = "After 10 updates";
+      els.momentumCounter.textContent = "10 updates complete";
+      els.momentumNext.textContent = "Complete";
+      setCycleState(els.initialValue, 0,
+        "q₁₀ = " + vectorFormat(finalQ, 4) + "; m₁₀ = " + vectorFormat(finalMemory, 4), "", 6);
+      setCycleState(els.measureValue, 0,
+        "L(q₁₀) = " + fixed(ravineLoss(finalQ), 4), "", 6);
+      setCycleState(els.retainValue, 0,
+        "The displayed update budget is complete.", "", 6);
+      setCycleState(els.contributionValue, 0,
+        "No new gradient is measured in this final state.", "", 6);
+      setCycleState(els.combineValue, 0,
+        "Press Previous to inspect update 10.", "", 6);
+      setCycleState(els.moveValue, 0,
+        "Reset returns to q₀ and m₀ = (0, 0).", "", 6);
+      els.momentumInsight.textContent =
+        "The path still crosses the valley, but it also travels along the shallow q₁ direction. Momentum is helping on this example; it is not a guarantee of lower loss at every update.";
+      return;
+    }
+
+    var update = momentumData.updates[momentumStep];
+    var betaText = fixed(MOMENTUM_BETA, 1);
+    var newWeightText = fixed(1 - MOMENTUM_BETA, 1);
+    var etaText = fixed(MOMENTUM_ETA, 3);
+    var phaseForDisplay = momentumStep === 0 ? momentumPhase : 5;
+
+    setCycleState(els.initialValue, 0,
+      "q" + momentumStep + " = " + vectorFormat(update.q, 4) +
+      "; m" + momentumStep + " = " + vectorFormat(update.memory, 4), "", phaseForDisplay);
+    setCycleState(els.measureValue, 1,
+      "g" + momentumStep + " = ∇L(q" + momentumStep + ") = " + vectorFormat(update.gradient, 4),
+      "not measured yet", phaseForDisplay);
+    setCycleState(els.retainValue, 2,
+      betaText + "m" + momentumStep + " = " + vectorFormat(update.retained, 4),
+      "waiting for the measured gradient", phaseForDisplay);
+    setCycleState(els.contributionValue, 3,
+      newWeightText + "g" + momentumStep + " = " + vectorFormat(update.contribution, 4),
+      "waiting to add the current gradient", phaseForDisplay);
+    setCycleState(els.combineValue, 4,
+      "m" + (momentumStep + 1) + " = " + betaText + "m" + momentumStep + " + " +
+      newWeightText + "g" + momentumStep + " = " + vectorFormat(update.nextMemory, 4),
+      "waiting to form the new memory", phaseForDisplay);
+    setCycleState(els.moveValue, 5,
+      "−" + etaText + "m" + (momentumStep + 1) + " = " + vectorFormat(update.move, 4) +
+      "; q" + (momentumStep + 1) + " = " + vectorFormat(update.nextQ, 4),
+      "waiting to update the parameters", phaseForDisplay);
+
+    if (momentumStep === 0) {
+      var firstHeadings = [
+        "Start before update 1",
+        "1 · Measure the first gradient",
+        "2 · Retain the old memory",
+        "3 · Add part of the new gradient",
+        "4 · Form the first momentum memory",
+        "5 · Move the parameters"
+      ];
+      var nextLabels = [
+        "Next: measure g₀",
+        "Next: keep βm₀",
+        "Next: add (1−β)g₀",
+        "Next: form m₁",
+        "Next: move to q₁",
+        "Next: update 2"
+      ];
+      var firstInsights = [
+        "m is the optimizer’s running memory of earlier gradients. We set m₀ = (0, 0) because no gradient has been seen yet; this does not say that g₀ is zero.",
+        "Now measure g₀ at q₀. The steep coordinate is large: g₀ = (−2.4, 85). We still have not changed q.",
+        "Keep βm₀ = .8(0, 0) = (0, 0). There is no retained arrow because a zero vector has no direction.",
+        "Add the current evidence: (1−β)g₀ = .2g₀ = (−.48, 17). On the first update, this is the only nonzero ingredient.",
+        "Combine old and new information. Because the old memory is zero, m₁ = .2g₀. Later updates will combine two nonzero terms.",
+        "Only now do we move: q₁ = q₀ − ηm₁. The orange arrow is the actual parameter update, and the table now contains the completed first row."
+      ];
+      els.momentumStepHeading.textContent = firstHeadings[momentumPhase];
+      els.momentumCounter.textContent = "first update · step " + (momentumPhase + 1) + " of 6";
+      els.momentumNext.textContent = nextLabels[momentumPhase];
+      els.momentumInsight.textContent = firstInsights[momentumPhase];
+    } else if (momentumStep === 1) {
+      els.momentumStepHeading.textContent = "Update 2 · old and new directions disagree";
+      els.momentumCounter.textContent = "update 2 of 10";
+      els.momentumNext.textContent = "Next update";
+      els.momentumInsight.textContent =
+        "Across q₂, retained history contributes +13.6 while the new gradient contributes −15.3. They nearly cancel to −1.7. Along q₁, both contributions are negative and reinforce.";
+    } else {
+      els.momentumStepHeading.textContent = "Update " + (momentumStep + 1);
+      els.momentumCounter.textContent = "update " + (momentumStep + 1) + " of 10";
+      els.momentumNext.textContent = momentumStep === MOMENTUM_STEPS - 1 ? "Next: finish" : "Next update";
+      var q1Same = update.retained[0] * update.contribution[0] >= 0;
+      var q2Same = update.retained[1] * update.contribution[1] >= 0;
+      els.momentumInsight.textContent =
+        "At this step, retained and new q₁ components " +
+        (q1Same ? "reinforce" : "partly cancel") +
+        "; their q₂ components " +
+        (q2Same ? "reinforce" : "partly cancel") +
+        ". The sum m" + (momentumStep + 1) + " sets the next move.";
+    }
+  }
+
+  function renderMomentum() {
+    drawMomentumChart();
+    drawPredictionChart();
+    renderMomentumExplanation();
+    renderMomentumTable();
+  }
+
+  function drawChart() {
+    var svg = els.chart;
+    while (svg.firstChild) {
+      svg.removeChild(svg.firstChild);
+    }
+
+    svg.appendChild(svgElement("title", { id: "chartTitle" },
+      "Noisy temperature readings and their exponentially weighted moving average"));
+    svg.appendChild(svgElement("desc", { id: "chartDescription" },
+      state.day === 0
+        ? "Before day 1. Memory m zero equals zero; no reading has been processed."
+        : "Day " + state.day + ". Reading " + fixed(series.readings[state.day - 1], 1) +
+          " degrees Celsius. EWMA " + fixed(series.memory[state.day - 1], 1) + " degrees Celsius."));
+
+    var width = 1000;
+    var height = 470;
+    var margin = { top: 34, right: 30, bottom: 58, left: 72 };
+    var innerW = width - margin.left - margin.right;
+    var innerH = height - margin.top - margin.bottom;
+    var allValues = series.readings.concat(series.memory).concat(series.trend);
+    var minimum = Math.min.apply(null, allValues);
+    var maximum = Math.max.apply(null, allValues);
+    var step = niceStep(maximum - minimum + 4);
+    var yMin = Math.floor((minimum - 2) / step) * step;
+    var yMax = Math.ceil((maximum + 2) / step) * step;
+
+    function xScale(day) {
+      return margin.left + ((day - 1) / (DAYS - 1)) * innerW;
+    }
+
+    function yScale(value) {
+      return margin.top + ((yMax - value) / (yMax - yMin)) * innerH;
+    }
+
+    var plot = svgElement("g", { "aria-hidden": "true" });
+    svg.appendChild(plot);
+
+    for (var y = yMin; y <= yMax + step * 0.1; y += step) {
+      var yy = yScale(y);
+      plot.appendChild(svgElement("line", {
+        x1: margin.left,
+        x2: width - margin.right,
+        y1: yy,
+        y2: yy,
+        stroke: COLORS.grid,
+        "stroke-width": 1
+      }));
+      plot.appendChild(svgElement("text", {
+        x: margin.left - 13,
+        y: yy + 4,
+        "text-anchor": "end",
+        fill: COLORS.muted,
+        "font-family": "IBM Plex Sans, Avenir Next, Segoe UI, sans-serif",
+        "font-size": 13
+      }, String(Math.round(y))));
+    }
+
+    [1, 20, 40, 60, 80, 100, 120].forEach(function (day) {
+      var xx = xScale(day);
+      plot.appendChild(svgElement("line", {
+        x1: xx,
+        x2: xx,
+        y1: margin.top,
+        y2: height - margin.bottom,
+        stroke: COLORS.grid,
+        "stroke-width": 1,
+        opacity: day === 1 || day === 120 ? 0 : 0.72
+      }));
+      plot.appendChild(svgElement("text", {
+        x: xx,
+        y: height - margin.bottom + 25,
+        "text-anchor": "middle",
+        fill: COLORS.muted,
+        "font-family": "IBM Plex Sans, Avenir Next, Segoe UI, sans-serif",
+        "font-size": 13
+      }, String(day)));
+    });
+
+    plot.appendChild(svgElement("line", {
+      x1: margin.left,
+      x2: margin.left,
+      y1: margin.top,
+      y2: height - margin.bottom,
+      stroke: COLORS.muted,
+      "stroke-width": 1.25
+    }));
+    plot.appendChild(svgElement("line", {
+      x1: margin.left,
+      x2: width - margin.right,
+      y1: height - margin.bottom,
+      y2: height - margin.bottom,
+      stroke: COLORS.muted,
+      "stroke-width": 1.25
+    }));
+
+    plot.appendChild(svgElement("text", {
+      x: margin.left + innerW / 2,
+      y: height - 13,
+      "text-anchor": "middle",
+      fill: COLORS.ink,
+      "font-family": "IBM Plex Sans, Avenir Next, Segoe UI, sans-serif",
+      "font-size": 14,
+      "font-weight": 600
+    }, "day"));
+
+    plot.appendChild(svgElement("text", {
+      x: 18,
+      y: margin.top + innerH / 2,
+      transform: "rotate(-90 18 " + (margin.top + innerH / 2) + ")",
+      "text-anchor": "middle",
+      fill: COLORS.ink,
+      "font-family": "IBM Plex Sans, Avenir Next, Segoe UI, sans-serif",
+      "font-size": 14,
+      "font-weight": 600
+    }, "temperature (°C)"));
+
+    if (state.stepOn) {
+      var stepX = xScale(state.stepDay);
+      plot.appendChild(svgElement("line", {
+        x1: stepX,
+        x2: stepX,
+        y1: margin.top,
+        y2: height - margin.bottom,
+        stroke: COLORS.accent,
+        "stroke-width": 1.8,
+        "stroke-dasharray": "5 5",
+        opacity: 0.75
+      }));
+      plot.appendChild(svgElement("text", {
+        x: Math.min(stepX + 8, width - margin.right - 115),
+        y: margin.top + 18,
+        fill: COLORS.accent,
+        "font-family": "IBM Plex Sans, Avenir Next, Segoe UI, sans-serif",
+        "font-size": 12,
+        "font-weight": 700
+      }, "signal changes"));
+    }
+
+    if (state.showTrend) {
+      plot.appendChild(svgElement("path", {
+        d: pathFor(series.trend, DAYS - 1, xScale, yScale),
+        fill: "none",
+        stroke: COLORS.ink,
+        "stroke-width": 2.2,
+        "stroke-dasharray": "8 7",
+        opacity: 0.76,
+        "stroke-linejoin": "round",
+        "stroke-linecap": "round"
+      }));
+    }
+
+    plot.appendChild(svgElement("path", {
+      d: pathFor(series.readings, DAYS - 1, xScale, yScale),
+      fill: "none",
+      stroke: COLORS.muted,
+      "stroke-width": 1.15,
+      opacity: 0.17,
+      "stroke-linejoin": "round",
+      "stroke-linecap": "round"
+    }));
+
+    plot.appendChild(svgElement("path", {
+      d: pathFor(series.readings, state.day - 1, xScale, yScale),
+      fill: "none",
+      stroke: COLORS.muted,
+      "stroke-width": 1.4,
+      opacity: 0.43,
+      "stroke-linejoin": "round",
+      "stroke-linecap": "round"
+    }));
+
+    for (var i = 0; i < DAYS; i += 1) {
+      plot.appendChild(svgElement("circle", {
+        cx: xScale(i + 1),
+        cy: yScale(series.readings[i]),
+        r: i < state.day ? 2.75 : 2.15,
+        fill: COLORS.muted,
+        opacity: i < state.day ? 0.58 : 0.18
+      }));
+    }
+
+    plot.appendChild(svgElement("path", {
+      d: pathFor(series.memory, state.day - 1, xScale, yScale),
+      fill: "none",
+      stroke: COLORS.teal,
+      "stroke-width": 4,
+      "stroke-linejoin": "round",
+      "stroke-linecap": "round"
+    }));
+
+    if (state.day === 0) {
+      plot.appendChild(svgElement("text", {
+        x: margin.left + 17,
+        y: margin.top + 25,
+        fill: COLORS.teal,
+        "font-family": "IBM Plex Mono, SFMono-Regular, Consolas, monospace",
+        "font-size": 14,
+        "font-weight": 700
+      }, "m₀ = 0 · no reading processed yet"));
+    } else {
+      var currentIndex = state.day - 1;
+      var currentX = xScale(state.day);
+      plot.appendChild(svgElement("line", {
+        x1: currentX,
+        x2: currentX,
+        y1: margin.top,
+        y2: height - margin.bottom,
+        stroke: COLORS.blue,
+        "stroke-width": 1.5,
+        opacity: 0.65
+      }));
+
+      plot.appendChild(svgElement("circle", {
+        cx: currentX,
+        cy: yScale(series.readings[currentIndex]),
+        r: 6,
+        fill: COLORS.paper,
+        stroke: COLORS.accent,
+        "stroke-width": 3
+      }));
+      plot.appendChild(svgElement("circle", {
+        cx: currentX,
+        cy: yScale(series.memory[currentIndex]),
+        r: 6,
+        fill: COLORS.paper,
+        stroke: COLORS.teal,
+        "stroke-width": 3.5
+      }));
+
+      var labelX = currentX > width - 205 ? currentX - 10 : currentX + 10;
+      var anchor = currentX > width - 205 ? "end" : "start";
+      var labelY = Math.max(margin.top + 23,
+        Math.min(yScale(series.memory[currentIndex]) - 12, height - margin.bottom - 12));
+      plot.appendChild(svgElement("text", {
+        x: labelX,
+        y: labelY,
+        "text-anchor": anchor,
+        fill: COLORS.teal,
+        "font-family": "IBM Plex Sans, Avenir Next, Segoe UI, sans-serif",
+        "font-size": 13,
+        "font-weight": 750
+      }, "m" + state.day + " = " + fixed(series.memory[currentIndex], 1) + "°C"));
+    }
+  }
+
+  function updateExplanation() {
+    var index = state.day - 1;
+    var current = series.memory[index];
+    var reading = series.readings[index];
+    var rough = Math.max(1, Math.round(1 / (1 - state.beta)));
+    var keep = percent(state.beta);
+    var add = percent(1 - state.beta);
+
+    els.blendNote.textContent =
+      "Keep " + keep + "% of the previous memory; add " + add + "% of today’s reading.";
+    els.roughMemory.textContent = String(rough);
+
+    if (state.day === 0) {
+      els.equation.innerHTML =
+        '<span class="new">m<sub>0</sub> = 0</span> &nbsp; (no reading has been processed)';
+      els.retainedValue.textContent = "no earlier memory";
+      els.todayValue.textContent = "no reading yet";
+      els.memoryValue.textContent = "m₀ = 0";
+    } else if (state.day === 1) {
+      els.equation.innerHTML =
+        '<span class="new">m<sub>1</sub> = x<sub>1</sub> = ' + fixed(reading, 2) +
+        '°C</span> &nbsp; (seed at the first reading; recurrence starts on day 2)';
+      els.retainedValue.textContent = "m₀ = 0 (not blended in this convention)";
+      els.todayValue.textContent = "x₁ = " + fixed(reading, 2) + "°C";
+      els.memoryValue.textContent = fixed(current, 2) + "°C";
+    } else {
+      var previous = series.memory[index - 1];
+      var retained = state.beta * previous;
+      var todayContribution = (1 - state.beta) * reading;
+      els.equation.innerHTML =
+        'm<sub>' + state.day + '</sub> = ' +
+        '<span class="old">' + fixed(state.beta, 2) + ' × ' + fixed(previous, 2) + '</span> + ' +
+        '<span class="today">' + fixed(1 - state.beta, 2) + ' × ' + fixed(reading, 2) + '</span> = ' +
+        '<span class="new">' + fixed(current, 2) + '°C</span>';
+      els.retainedValue.textContent =
+        fixed(state.beta, 2) + " × " + fixed(previous, 2) + " = " + fixed(retained, 2) + "°C";
+      els.todayValue.textContent =
+        fixed(1 - state.beta, 2) + " × " + fixed(reading, 2) + " = " + fixed(todayContribution, 2) + "°C";
+      els.memoryValue.textContent = fixed(current, 2) + "°C";
+    }
+
+    if (state.beta < 0.65) {
+      els.tradeoffText.textContent =
+        "Short memory: the estimate reacts quickly, but it also follows many one-day jumps.";
+    } else if (state.beta < 0.95) {
+      els.tradeoffText.textContent =
+        "A useful compromise: much of the day-to-day noise is removed, with some delay when the trend turns.";
+    } else {
+      els.tradeoffText.textContent =
+        "Long memory: the estimate is very smooth, but a real change takes many readings to appear.";
+    }
+
+    if (state.day === 0) {
+      els.offsetText.textContent =
+        "Press Play or → to process x₁. This plot sets m₁ = x₁ so its early behavior shows smoothing rather than an artificial zero-start transient.";
+    } else if (state.stepOn && state.day < state.stepDay) {
+      els.offsetText.textContent =
+        "The constructed signal changes on day " + state.stepDay + ". Play past it to see the response.";
+    } else {
+      var offset = current - series.trend[index];
+      els.offsetText.textContent =
+        "At day " + state.day + ", the EWMA is " + signed(offset, 1) +
+        "°C relative to the constructed trend.";
+    }
+  }
+
+  function syncControls() {
+    els.beta.value = String(state.beta);
+    els.betaValue.textContent = fixed(state.beta, 2);
+    els.noise.value = String(state.noise);
+    els.noiseValue.textContent = fixed(state.noise, 1) + "°C";
+    els.showTrend.checked = state.showTrend;
+    els.stepToggle.checked = state.stepOn;
+    els.stepDay.value = String(state.stepDay);
+    els.stepDayValue.textContent = "day " + state.stepDay;
+    els.stepSize.value = String(state.stepSize);
+    els.stepSizeValue.textContent = signed(state.stepSize, 1) + "°C";
+    els.day.value = String(state.day);
+    els.dayValue.textContent = state.day === 0
+      ? "before day 1 · m₀ = 0"
+      : "day " + state.day + " / " + DAYS;
+    els.trendLegend.hidden = !state.showTrend;
+    els.stepControls.setAttribute("aria-disabled", state.stepOn ? "false" : "true");
+    els.stepDay.disabled = !state.stepOn;
+    els.stepSize.disabled = !state.stepOn;
+
+    document.querySelectorAll(".preset").forEach(function (button) {
+      var active = Math.abs(Number(button.dataset.beta) - state.beta) < 0.0001;
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+  }
+
+  function render(rebuild) {
+    if (rebuild || !series) {
+      series = buildSeries();
+    }
+    syncControls();
+    drawChart();
+    updateExplanation();
+  }
+
+  function stopPlayback() {
+    if (playTimer !== null) {
+      window.clearInterval(playTimer);
+      playTimer = null;
+    }
+    els.play.textContent = "Play";
+    els.play.setAttribute("aria-pressed", "false");
+  }
+
+  function stopMomentumPlayback() {
+    if (momentumTimer !== null) {
+      window.clearInterval(momentumTimer);
+      momentumTimer = null;
+    }
+    els.momentumPlay.textContent = "Play";
+    els.momentumPlay.setAttribute("aria-pressed", "false");
+  }
+
+  function setMomentumStep(nextStep) {
+    momentumStep = Math.max(0, Math.min(MOMENTUM_STEPS, nextStep));
+    momentumPhase = momentumStep === 0 ? 0 : 5;
+    renderMomentum();
+  }
+
+  function advanceMomentumState() {
+    if (momentumStep >= MOMENTUM_STEPS) {
+      return;
+    }
+    if (momentumStep === 0 && momentumPhase < 5) {
+      momentumPhase += 1;
+    } else {
+      momentumStep += 1;
+      momentumPhase = 5;
+    }
+    renderMomentum();
+  }
+
+  function retreatMomentumState() {
+    if (momentumStep === 0) {
+      momentumPhase = Math.max(0, momentumPhase - 1);
+    } else if (momentumStep === 1) {
+      momentumStep = 0;
+      momentumPhase = 5;
+    } else {
+      momentumStep -= 1;
+      momentumPhase = 5;
+    }
+    renderMomentum();
+  }
+
+  function toggleMomentumPlayback() {
+    if (momentumTimer !== null) {
+      stopMomentumPlayback();
+      return;
+    }
+
+    if (momentumStep >= MOMENTUM_STEPS) {
+      momentumStep = 0;
+      momentumPhase = 0;
+      renderMomentum();
+    }
+
+    els.momentumPlay.textContent = "Pause";
+    els.momentumPlay.setAttribute("aria-pressed", "true");
+    momentumTimer = window.setInterval(function () {
+      if (momentumStep >= MOMENTUM_STEPS) {
+        stopMomentumPlayback();
+        return;
+      }
+      advanceMomentumState();
+    }, reduceMotion ? 1050 : 760);
+  }
+
+  function setMode(mode) {
+    var showTemperature = mode === "temperature";
+    stopPlayback();
+    stopMomentumPlayback();
+    els.temperatureMode.hidden = !showTemperature;
+    els.momentumMode.hidden = showTemperature;
+    els.temperatureTab.setAttribute("aria-selected", showTemperature ? "true" : "false");
+    els.momentumTab.setAttribute("aria-selected", showTemperature ? "false" : "true");
+    if (!showTemperature) {
+      renderMomentum();
+    }
+  }
+
+  function togglePlayback() {
+    if (playTimer !== null) {
+      stopPlayback();
+      return;
+    }
+
+    if (state.day >= DAYS) {
+      state.day = 0;
+      render(false);
+    }
+
+    els.play.textContent = "Pause";
+    els.play.setAttribute("aria-pressed", "true");
+    playTimer = window.setInterval(function () {
+      if (state.day >= DAYS) {
+        stopPlayback();
+        return;
+      }
+      state.day += 1;
+      render(false);
+    }, reduceMotion ? 230 : 115);
+  }
+
+  function reset() {
+    stopPlayback();
+    state = Object.assign({}, DEFAULTS);
+    render(true);
+  }
+
+  els.beta.addEventListener("input", function () {
+    stopPlayback();
+    state.beta = Number(this.value);
+    render(true);
+  });
+
+  document.querySelectorAll(".preset").forEach(function (button) {
+    button.addEventListener("click", function () {
+      stopPlayback();
+      state.beta = Number(this.dataset.beta);
+      render(true);
+    });
+  });
+
+  els.noise.addEventListener("input", function () {
+    stopPlayback();
+    state.noise = Number(this.value);
+    render(true);
+  });
+
+  els.showTrend.addEventListener("change", function () {
+    state.showTrend = this.checked;
+    render(false);
+  });
+
+  els.stepToggle.addEventListener("change", function () {
+    stopPlayback();
+    state.stepOn = this.checked;
+    render(true);
+  });
+
+  els.stepDay.addEventListener("input", function () {
+    stopPlayback();
+    state.stepDay = Number(this.value);
+    render(true);
+  });
+
+  els.stepSize.addEventListener("input", function () {
+    stopPlayback();
+    state.stepSize = Number(this.value);
+    render(true);
+  });
+
+  els.day.addEventListener("input", function () {
+    stopPlayback();
+    state.day = Number(this.value);
+    render(false);
+  });
+
+  els.play.addEventListener("click", togglePlayback);
+  els.reset.addEventListener("click", reset);
+
+  els.temperatureTab.addEventListener("click", function () {
+    setMode("temperature");
+  });
+  els.momentumTab.addEventListener("click", function () {
+    setMode("momentum");
+  });
+  [els.temperatureTab, els.momentumTab].forEach(function (tab) {
+    tab.addEventListener("keydown", function (event) {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
+        return;
+      }
+      event.preventDefault();
+      var nextTab = tab === els.temperatureTab ? els.momentumTab : els.temperatureTab;
+      nextTab.focus();
+      setMode(nextTab === els.temperatureTab ? "temperature" : "momentum");
+    });
+  });
+
+  els.momentumPrevious.addEventListener("click", function () {
+    stopMomentumPlayback();
+    retreatMomentumState();
+  });
+  els.momentumNext.addEventListener("click", function () {
+    stopMomentumPlayback();
+    advanceMomentumState();
+  });
+  els.momentumPlay.addEventListener("click", toggleMomentumPlayback);
+  els.momentumReset.addEventListener("click", function () {
+    stopMomentumPlayback();
+    setMomentumStep(0);
+  });
+
+  els.momentumChart.addEventListener("keydown", function (event) {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight" &&
+        event.key !== "Home" && event.key !== "End") {
+      return;
+    }
+    event.preventDefault();
+    stopMomentumPlayback();
+    if (event.key === "ArrowLeft") {
+      retreatMomentumState();
+    } else if (event.key === "ArrowRight") {
+      advanceMomentumState();
+    } else if (event.key === "Home") {
+      setMomentumStep(0);
+    } else {
+      setMomentumStep(MOMENTUM_STEPS);
+    }
+  });
+
+  els.chart.addEventListener("keydown", function (event) {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight" &&
+        event.key !== "Home" && event.key !== "End") {
+      return;
+    }
+    event.preventDefault();
+    stopPlayback();
+    if (event.key === "ArrowLeft") {
+      state.day = Math.max(0, state.day - 1);
+    } else if (event.key === "ArrowRight") {
+      state.day = Math.min(DAYS, state.day + 1);
+    } else if (event.key === "Home") {
+      state.day = 0;
+    } else {
+      state.day = DAYS;
+    }
+    render(false);
+  });
+
+  els.chart.addEventListener("click", function (event) {
+    var box = els.chart.getBoundingClientRect();
+    var viewX = ((event.clientX - box.left) / box.width) * 1000;
+    var marginLeft = 72;
+    var marginRight = 30;
+    var fraction = (viewX - marginLeft) / (1000 - marginLeft - marginRight);
+    stopPlayback();
+    state.day = Math.max(1, Math.min(DAYS, Math.round(1 + fraction * (DAYS - 1))));
+    render(false);
+  });
+
+  render(true);
+  renderMomentum();
+}());
+</script>
+</body>
+</html>
