@@ -245,6 +245,91 @@ def parent_link_diagram_html() -> str:
     )
 
 
+def dependency_order_diagram_html() -> str:
+    """Explain a dependency-first node order and its backward reversal."""
+    return embedded_svg_html(
+        r"""
+        <div style="max-width:100%;overflow-x:auto;margin:1.25rem 0 0.5rem;padding:0.25rem 0;">
+          <svg viewBox="0 0 1120 525" role="img" aria-labelledby="order-title order-desc"
+               style="display:block;width:100%;height:auto;min-width:1060px;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+            <title id="order-title">How the engine finds a safe order for the backward pass</title>
+            <desc id="order-desc">Starting from the loss, the traversal follows parent links. It appends a value only after appending its parents. This produces one dependency-first order, which is reversed for backward. A warning shows why processing m before a would lose a gradient contribution.</desc>
+            <defs>
+              <marker id="order-neutral-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#60777B"/></marker>
+              <marker id="order-teal-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2C7A7B"/></marker>
+            </defs>
+
+            <text x="25" y="29" font-size="19" font-weight="800" fill="#1F3A40">First ask: what must be ready before a node can send its gradient?</text>
+
+            <rect x="25" y="51" width="664" height="84" rx="16" fill="#F4F7F7" stroke="#D8E1E2" stroke-width="1.5"/>
+            <circle cx="69" cy="93" r="25" fill="#1F3A40"/>
+            <text x="69" y="100" text-anchor="middle" font-size="21" font-weight="800" fill="#FFFFFF">L</text>
+            <text x="112" y="78" font-size="14.5" font-weight="750" fill="#1F3A40">Start at the loss and follow each <tspan font-family="ui-monospace,SFMono-Regular,Menlo,monospace">ParentLink</tspan> toward its operands.</text>
+            <text x="112" y="104" font-size="14.5" fill="#52696D">When visiting a node, visit all its parents first; append the node only on the way back.</text>
+            <text x="112" y="126" font-size="13.5" font-weight="700" fill="#2B6CB0">In code: recurse to parents → then <tspan font-family="ui-monospace,SFMono-Regular,Menlo,monospace">order.append(node)</tspan>.</text>
+
+            <rect x="714" y="51" width="381" height="84" rx="16" fill="#EAF2FC" stroke="#2B6CB0" stroke-width="1.7"/>
+            <text x="735" y="76" font-size="14.5" font-weight="800" fill="#2B6CB0">Why keep <tspan font-family="ui-monospace,SFMono-Regular,Menlo,monospace">seen</tspan>?</text>
+            <text x="735" y="101" font-size="13.5" fill="#29464B">A shared value can be reached along several paths.</text>
+            <text x="735" y="123" font-size="13.5" fill="#29464B">Schedule the Value once; do not delete any ParentLink.</text>
+
+            <text x="25" y="174" font-size="16" font-weight="800" fill="#1F3A40">One dependency-first order returned by our stored parent order</text>
+            <text x="1095" y="174" text-anchor="end" font-size="13" font-weight="700" fill="#60777B">parents appear before the value they create</text>
+
+            <g>
+              <rect x="25"  y="193" width="104" height="58" rx="12" fill="#FFFFFF" stroke="#A9BABC" stroke-width="1.7"/><text x="77"  y="229" text-anchor="middle" font-size="21" font-weight="800" fill="#1F3A40">w</text>
+              <rect x="162" y="193" width="104" height="58" rx="12" fill="#FFFFFF" stroke="#A9BABC" stroke-width="1.7"/><text x="214" y="229" text-anchor="middle" font-size="21" font-weight="800" fill="#1F3A40">x</text>
+              <rect x="299" y="193" width="104" height="58" rx="12" fill="#E8F7F5" stroke="#2C7A7B" stroke-width="1.9"/><text x="351" y="229" text-anchor="middle" font-size="21" font-weight="800" fill="#1F3A40">m</text>
+              <rect x="436" y="193" width="104" height="58" rx="12" fill="#FFFFFF" stroke="#A9BABC" stroke-width="1.7"/><text x="488" y="229" text-anchor="middle" font-size="21" font-weight="800" fill="#1F3A40">b</text>
+              <rect x="573" y="193" width="104" height="58" rx="12" fill="#E8F7F5" stroke="#2C7A7B" stroke-width="1.9"/><text x="625" y="229" text-anchor="middle" font-size="21" font-weight="800" fill="#1F3A40">a</text>
+              <rect x="710" y="193" width="104" height="58" rx="12" fill="#FFFFFF" stroke="#A9BABC" stroke-width="1.7"/><text x="762" y="229" text-anchor="middle" font-size="21" font-weight="800" fill="#1F3A40">y</text>
+              <rect x="847" y="193" width="104" height="58" rx="12" fill="#E8F7F5" stroke="#2C7A7B" stroke-width="1.9"/><text x="899" y="229" text-anchor="middle" font-size="21" font-weight="800" fill="#1F3A40">e</text>
+              <rect x="984" y="193" width="104" height="58" rx="12" fill="#FFF5E8" stroke="#EB811B" stroke-width="1.9"/><text x="1036" y="229" text-anchor="middle" font-size="21" font-weight="800" fill="#1F3A40">L</text>
+            </g>
+            <g fill="none" stroke="#60777B" stroke-width="2.3" marker-end="url(#order-neutral-arrow)">
+              <line x1="131" y1="222" x2="158" y2="222"/><line x1="268" y1="222" x2="295" y2="222"/><line x1="405" y1="222" x2="432" y2="222"/><line x1="542" y1="222" x2="569" y2="222"/>
+              <line x1="679" y1="222" x2="706" y2="222"/><line x1="816" y1="222" x2="843" y2="222"/><line x1="953" y1="222" x2="980" y2="222"/>
+            </g>
+            <text x="25" y="273" font-size="13.5" fill="#52696D">Many orders are valid: independent values can trade places. These arrows mean “next in the list,” not extra data-flow edges.</text>
+
+            <text x="25" y="314" font-size="16" font-weight="800" fill="#1F3A40">Backward processes the exact reverse</text>
+            <text x="1095" y="314" text-anchor="end" font-size="13" font-weight="700" fill="#2C7A7B">each node's full upstream gradient is ready before it sends anything</text>
+            <g>
+              <rect x="25"  y="333" width="104" height="58" rx="12" fill="#FFF5E8" stroke="#EB811B" stroke-width="1.9"/><text x="77"  y="369" text-anchor="middle" font-size="21" font-weight="800" fill="#1F3A40">L</text>
+              <rect x="162" y="333" width="104" height="58" rx="12" fill="#E8F7F5" stroke="#2C7A7B" stroke-width="1.9"/><text x="214" y="369" text-anchor="middle" font-size="21" font-weight="800" fill="#1F3A40">e</text>
+              <rect x="299" y="333" width="104" height="58" rx="12" fill="#FFFFFF" stroke="#A9BABC" stroke-width="1.7"/><text x="351" y="369" text-anchor="middle" font-size="21" font-weight="800" fill="#1F3A40">y</text>
+              <rect x="436" y="333" width="104" height="58" rx="12" fill="#E8F7F5" stroke="#2C7A7B" stroke-width="1.9"/><text x="488" y="369" text-anchor="middle" font-size="21" font-weight="800" fill="#1F3A40">a</text>
+              <rect x="573" y="333" width="104" height="58" rx="12" fill="#FFFFFF" stroke="#A9BABC" stroke-width="1.7"/><text x="625" y="369" text-anchor="middle" font-size="21" font-weight="800" fill="#1F3A40">b</text>
+              <rect x="710" y="333" width="104" height="58" rx="12" fill="#E8F7F5" stroke="#2C7A7B" stroke-width="2.4"/><text x="762" y="369" text-anchor="middle" font-size="21" font-weight="800" fill="#1F3A40">m</text>
+              <rect x="847" y="333" width="104" height="58" rx="12" fill="#FFFFFF" stroke="#A9BABC" stroke-width="1.7"/><text x="899" y="369" text-anchor="middle" font-size="21" font-weight="800" fill="#1F3A40">x</text>
+              <rect x="984" y="333" width="104" height="58" rx="12" fill="#FFFFFF" stroke="#A9BABC" stroke-width="1.7"/><text x="1036" y="369" text-anchor="middle" font-size="21" font-weight="800" fill="#1F3A40">w</text>
+            </g>
+            <g fill="none" stroke="#2C7A7B" stroke-width="2.5" marker-end="url(#order-teal-arrow)">
+              <line x1="131" y1="362" x2="158" y2="362"/><line x1="268" y1="362" x2="295" y2="362"/><line x1="405" y1="362" x2="432" y2="362"/><line x1="542" y1="362" x2="569" y2="362"/>
+              <line x1="679" y1="362" x2="706" y2="362"/><line x1="816" y1="362" x2="843" y2="362"/><line x1="953" y1="362" x2="980" y2="362"/>
+            </g>
+            <text x="25" y="412" font-size="13.5" fill="#52696D">White boxes are leaves: they remain in the schedule but have no ParentLinks, so their turn performs no update.</text>
+
+            <rect x="25" y="425" width="1070" height="78" rx="15" fill="#FFF1E5" stroke="#EB811B" stroke-width="1.8"/>
+            <text x="48" y="451" font-size="14.5" font-weight="800" fill="#B35F0B">WHAT BREAKS IN THE WRONG ORDER?</text>
+            <text x="48" y="475" font-size="14" fill="#29464B">If <tspan font-weight="800">m</tspan> runs before <tspan font-weight="800">a</tspan>, it reads <tspan font-family="ui-monospace,SFMono-Regular,Menlo,monospace">m.grad = 0</tspan></text>
+            <text x="48" y="496" font-size="14" fill="#29464B">and wrongly sends zero to w and x.</text>
+            <text x="590" y="451" font-size="14.5" font-weight="800" fill="#B35F0B">THE LATE CONTRIBUTION CANNOT REPAIR IT</text>
+            <text x="590" y="475" font-size="14" fill="#29464B">Later a adds −6 to <tspan font-family="ui-monospace,SFMono-Regular,Menlo,monospace">m.grad</tspan>—but m has already run.</text>
+            <text x="590" y="496" font-size="14" fill="#29464B">The correct −18 and −12 updates are lost.</text>
+          </svg>
+        </div>
+        <p style="margin:0.25rem 0 1.25rem;color:#52696D;font-size:0.95rem;">
+          The formal name for any ordering that puts every dependency before the value that uses it is a
+          <strong>topological order</strong>. We first understand the readiness rule; the name is secondary.
+          On a phone, scroll sideways.
+        </p>
+        """,
+        alt="Dependency-safe order for forward values, its reverse for backward, and an example of a wrong order",
+        min_width=1060,
+    )
+
+
 def build_notebook():
     cells = [
         md(
@@ -367,15 +452,18 @@ def build_notebook():
             + "\n\n"
             + textwrap.dedent(
                 r"""
-            A `Value` therefore stores only:
+            For the autograd calculation, a `Value` needs only:
 
             - its number in `data`,
             - its accumulated loss-gradient buffer in `grad`, and
             - ordered links to the operands that directly produced it.
 
-            Each parent link stores two things: the parent operand and the evaluated local derivative along that
-            edge. For example, $m=wx$ remembers $(w,\partial m/\partial w=x)$ and
-            $(x,\partial m/\partial x=w)$.
+            Our teaching class also stores `label` and `op` so diagrams can say “m” and “×”. They are display
+            metadata: changing those strings does not change the forward number or any gradient.
+
+            Each `ParentLink` has exactly two fields: `.value` points to the parent operand, and `.local_grad` holds
+            the evaluated local derivative along that edge. For example, $m=wx$ remembers
+            $(w,\partial m/\partial w=x)$ and $(x,\partial m/\partial x=w)$.
 
             The gradient names are always relative to the operation currently running:
 
@@ -383,11 +471,54 @@ def build_notebook():
               $g_v=\partial L/\partial v$, already accumulated in `v.grad`;
             - <span style="color:#2B6CB0;font-weight:700">local</span>:
               $\partial v/\partial u$, stored in the link from output $v$ to parent $u$;
-            - <span style="color:#EB811B;font-weight:700">downstream contribution</span>:
+            - <span style="color:#EB811B;font-weight:700">edge contribution to the parent</span>
+              (the “downstream contribution” in our color legend):
               $\Delta g_u=g_v(\partial v/\partial u)$, computed during backward and added to `u.grad`.
 
-            The downstream contribution is temporary: only the accumulated result in `u.grad` remains.
-            A leaf such as `w` has no parents; the scalar loss `L` is the root passed to `backward`.
+            The edge contribution is temporary: only the accumulated result in `u.grad` remains. `w` is a leaf
+            because it has no dependencies. `L` is the forward output or sink; `backward(L)` treats it as the
+            starting node—the root of the reverse traversal.
+                """
+            ).strip()
+            + "\n\n"
+            + textwrap.dedent(
+                r"""
+            ### Before writing `backward`: decide when a node is ready
+
+            A node must not send its gradient to its parents until **all gradient contributions arriving at that
+            node have been added to its `.grad` buffer**. We therefore need a dependency-safe processing order.
+            Start at `L`, follow its saved `ParentLink`s toward the inputs, and append each node only after all its
+            parents have been appended. Reversing the resulting list gives the safe order for backward.
+                """
+            ).strip()
+            + "\n\n"
+            + dependency_order_diagram_html()
+            + "\n\n"
+            + textwrap.dedent(
+                r"""
+            First apply the append-after-parents rule to one small part of the graph:
+
+            ```text
+            visit(m):
+              visit(w) → w has no parents → append w
+              visit(x) → x has no parents → append x
+              both parents are ready       → append m
+            ```
+
+            Starting from `L` applies that same rule recursively to the whole graph. With our stored parent order,
+            the traversal produces exactly
+
+            ```text
+            dependency-first:  w, x, m, b, a, y, e, L
+            process back:  L, e, y, a, b, m, x, w
+            ```
+
+            Other dependency-safe lists are possible—for example, two independent leaves can swap places.
+            `seen` matters when a value feeds several later operations: following links from `L` may reach that same
+            object more than once, but it must be appended and processed only once. `seen` deduplicates `Value`
+            objects in the node schedule—not edges. If an operation is `w * w`, it still stores two `ParentLink`s,
+            and backward still processes both contributions. For $r=w^2$ at $w=2$, `w` appears once in the node
+            schedule, but the two links each contribute $2$; `w.grad += contribution` therefore gives $4$.
                 """
             ).strip()
         ),
@@ -425,69 +556,97 @@ def build_notebook():
                 return Value(u.data ** 2, label,
                              parents=(ParentLink(u, 2 * u.data),), op="²")
 
-            def backward(root):
-                order, seen = [], set()
+            def dependency_safe_order(root):
+                """Return reachable Values with every parent before its output."""
+                safe_order = []
+                seen = set()
 
-                # 1. Put every reachable value in forward order.
-                def visit(node):
+                def append_after_parents(node):
+                    # A shared Value may be reachable from the loss by several paths.
+                    # Visit and append that object only once.
                     if id(node) in seen:
                         return
                     seen.add(id(node))
+
+                    # Follow output -> ParentLink -> operand, starting from the loss.
                     for link in node.parents:
-                        visit(link.value)
-                    order.append(node)
+                        append_after_parents(link.value)
 
-                visit(root)
+                    # Only now are all direct parents earlier in safe_order.
+                    safe_order.append(node)
 
-                # 2. Clear old accumulated gradients, then seed the loss.
-                for node in order:
+                append_after_parents(root)
+                return safe_order
+
+            def backward(root):
+                safe_order = dependency_safe_order(root)
+
+                # 1. Clear old accumulated gradients, then seed the loss.
+                for node in safe_order:
                     node.grad = 0.0
                 root.grad = 1.0
 
-                # 3. Walk backward. One parent link gives one chain-rule update.
+                # 2. Reverse the safe order. A node's full upstream gradient is
+                # ready before that node sends contributions to its parents.
                 steps = []
-                for node in reversed(order):
-                    for link in node.parents:
-                        upstream = node.grad
+                for output in reversed(safe_order):
+                    # One saved parent link gives one chain-rule update.
+                    for link in output.parents:
+                        parent = link.value
+                        upstream = output.grad
                         local = link.local_grad
-                        downstream = upstream * local
-                        before = link.value.grad
-                        link.value.grad += downstream
+                        contribution = upstream * local
+                        before = parent.grad
+                        parent.grad += contribution
 
+                        # Keep a teaching trace; autograd only needs the update above.
                         steps.append({
-                            "output": node.label,
+                            "output": output.label,
                             "upstream": upstream,
-                            "parent": link.value.label,
+                            "parent": parent.label,
                             "local": local,
-                            "downstream": downstream,
+                            "downstream": contribution,
                             "before": before,
-                            "after": link.value.grad,
+                            "after": parent.grad,
                         })
                 return steps
             ''',
-            "Define explicit parent links, the first four local rules, and the traced reverse traversal",
+            "Define parent links, local rules, a dependency-safe ordering helper, and backward",
         ),
         md(
             r"""
-            Read `backward(root)` in three pieces:
+            The visible code separates **finding a safe order** from **doing the calculus**:
 
-            1. `visit` follows the parent links and makes a forward order. Here it is
-               `w, x, m, b, a, y, e, L`.
-            2. We clear the reachable `.grad` buffers and seed `L.grad = 1`, because
+            1. `dependency_safe_order(root)` starts at `L`. `append_after_parents` follows each stored link to a
+               direct operand and calls itself there first. Only after those calls return does it append the current
+               node. `seen` makes a shared object a no-op on its second visit.
+            2. `backward(root)` clears every reachable `.grad`, then seeds `L.grad = 1` because
                $\partial L/\partial L=1$.
-            3. We reverse that order. At each link from output $v$ to parent $u$, the loop reads the
-               upstream gradient from `v.grad`, reads the local derivative from the link, and adds their product
-               into `u.grad`.
+            3. `reversed(safe_order)` processes `L, e, y, a, b, m, x, w`. At every saved link from output $v$
+               to parent $u$, it reads the now-complete upstream gradient from `v.grad`, multiplies by the saved
+               local derivative, and accumulates the result in `u.grad`.
+
+            Leaves such as `w` still appear in the processing list. They simply have no parent links, so there is
+            nothing further to update when their turn arrives.
 
             | quantity | where it lives |
             |---|---|
             | upstream $g_v$ | already accumulated in `v.grad` |
             | local $\partial v/\partial u$ | saved in `link.local_grad` during the forward pass |
-            | downstream contribution $\Delta g_u$ | temporary variable `downstream` for this one edge |
-            | accumulated $g_u$ | updated in `link.value.grad` |
+            | edge contribution to parent $\Delta g_u$ | temporary variable `contribution` for this one edge |
+            | accumulated $g_u$ | updated in `parent.grad` |
 
-            So the code does **not** store a separate downstream gradient forever. It computes one contribution,
-            adds it to the parent's buffer, and that buffer later becomes the upstream gradient for the parent.
+            The autograd graph does **not** store a separate downstream gradient forever. It computes one edge
+            contribution, adds it to the parent's buffer, and that buffer later becomes the upstream gradient for
+            the parent. Our returned `steps` list is only a teaching log: it copies each contribution and the
+            before/after values so we can display them.
+
+            Three deliberate boundaries keep this engine small:
+
+            - it assumes an acyclic computation graph (a DAG);
+            - it seeds a scalar loss with `1`; vector outputs would need an explicit upstream seed;
+            - it clears reachable `.grad` buffers at the start of every call. PyTorch normally **accumulates**
+              gradients across `.backward()` calls until you clear them.
             """
         ),
         code(
@@ -495,6 +654,7 @@ def build_notebook():
             import importlib.util
             import subprocess
             import sys
+            from html import escape as escape_html
 
             if importlib.util.find_spec("graphviz") is None:
                 subprocess.run(
@@ -506,15 +666,7 @@ def build_notebook():
             from IPython.display import HTML, display
 
             def draw_graph(root, show_grad=True, min_width=780):
-                nodes, seen = [], set()
-                def visit(node):
-                    if id(node) in seen:
-                        return
-                    seen.add(id(node))
-                    nodes.append(node)
-                    for link in node.parents:
-                        visit(link.value)
-                visit(root)
+                nodes = dependency_safe_order(root)
 
                 dot = Digraph(format="svg")
                 dot.attr(rankdir="LR", bgcolor="transparent", pad="0.15",
@@ -590,8 +742,77 @@ def build_notebook():
                     "padding:10px 12px;margin:4px 0 12px;border-radius:4px'>"
                     "<b>Seed:</b> L.grad = ∂L/∂L = 1</div>" + "".join(rows)
                 ))
+
+            def show_complete_state(root):
+                """Show every stored Value field and every saved ParentLink."""
+                cards = []
+                for node in dependency_safe_order(root):
+                    label = escape_html(node.label)
+                    label_value = escape_html(repr(node.label))
+                    op_value = escape_html(repr(node.op))
+                    op_note = "" if node.op else " &nbsp;—&nbsp; input / leaf"
+
+                    if node.parents:
+                        parent_rows = []
+                        for index, link in enumerate(node.parents, start=1):
+                            parent = escape_html(link.value.label)
+                            parent_rows.append(
+                                "<div style='display:grid;grid-template-columns:auto 1fr;gap:5px 10px;"
+                                "align-items:baseline;padding:7px 0;border-top:1px solid #e2e9e9'>"
+                                f"<span style='color:#60777B;font-size:0.82rem'>.parents[{index - 1}]</span>"
+                                f"<code style='font-weight:750'>ParentLink(value={parent})</code>"
+                                "<span style='color:#60777B;font-size:0.82rem'>.value</span>"
+                                f"<span><code>{parent}</code></span>"
+                                "<span style='color:#60777B;font-size:0.82rem'>.local_grad</span>"
+                                f"<span style='color:#2B6CB0;font-weight:750'>{link.local_grad:g}"
+                                f" &nbsp; (= ∂{label}/∂{parent})</span></div>"
+                            )
+                        parents_html = "".join(parent_rows)
+                    else:
+                        parents_html = (
+                            "<div style='padding:9px 0 2px;color:#60777B;border-top:1px solid #e2e9e9'>"
+                            "<code>.parents = ()</code> &nbsp;—&nbsp; no direct operands</div>"
+                        )
+
+                    cards.append(
+                        "<section style='min-width:0;border:1px solid #cddada;border-radius:12px;"
+                        "background:#FFFFFF;overflow:hidden'>"
+                        "<div style='display:flex;justify-content:space-between;align-items:baseline;gap:12px;"
+                        "padding:10px 12px;background:#F4F7F7;border-bottom:1px solid #dce5e5'>"
+                        f"<strong style='font-size:1.2rem;color:#1F3A40'>Value {label}</strong>"
+                        f"<span style='color:#60777B;font-size:0.85rem'><code>.label = {label_value}</code></span></div>"
+                        "<div style='padding:10px 12px'>"
+                        "<div style='display:grid;grid-template-columns:auto 1fr;gap:7px 10px;align-items:baseline'>"
+                        "<span style='color:#60777B'><code>.data</code></span>"
+                        f"<strong style='color:#1F3A40'>{node.data:g}</strong>"
+                        "<span style='color:#60777B'><code>.grad</code></span>"
+                        f"<strong style='color:#2C7A7B'>{node.grad:g} "
+                        f"<span style='font-size:0.88rem;font-weight:650'>(= ∂L/∂{label})</span></strong>"
+                        "<span style='color:#60777B'><code>.op</code></span>"
+                        f"<strong style='color:#1F3A40'><code>{op_value}</code>{op_note}</strong>"
+                        "<span style='color:#60777B'><code>.parents</code></span>"
+                        f"<strong style='color:#1F3A40'>{len(node.parents)} saved link"
+                        f"{'s' if len(node.parents) != 1 else ''}</strong></div>"
+                        f"<div style='margin-top:9px'>{parents_html}</div></div></section>"
+                    )
+
+                order_text = " → ".join(escape_html(node.label) for node in dependency_safe_order(root))
+                display(HTML(
+                    "<div style='margin:18px 0 8px'>"
+                    "<div style='border-left:5px solid #2C7A7B;background:#EEF8F7;"
+                    "padding:10px 12px;margin-bottom:12px;border-radius:4px'>"
+                    "<strong>Complete stored state after backward</strong><br>"
+                    "<span style='color:#526669'>The graph above stays compact. These cards expose every "
+                    "<code>Value</code> field and every saved <code>ParentLink</code>. "
+                    "The orange edge contribution is not a <code>Value</code> or <code>ParentLink</code> field; "
+                    "it survives only in the optional <code>steps</code> teaching trace.</span><br>"
+                    f"<span style='color:#60777B;font-size:0.9rem'>Displayed in dependency-first order: {order_text}</span>"
+                    "</div>"
+                    "<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));"
+                    "gap:12px;align-items:start'>" + "".join(cards) + "</div></div>"
+                ))
             ''',
-            "Define the compact Graphviz view and color-matched backward trace cards",
+            "Define the compact graph, backward trace cards, and complete stored-state view",
             hidden=True,
         ),
         md(
@@ -615,13 +836,24 @@ def build_notebook():
             for link in sm.parents:
                 print(f"  parent {link.value.label}: local ∂m/∂{link.value.label} = {link.local_grad:g}")
 
+            safe_order = dependency_safe_order(sL)
+            print("\nDependency-first order:", " → ".join(node.label for node in safe_order))
+            print("Backward will process:   ", " → ".join(node.label for node in reversed(safe_order)))
+
             draw_graph(sL, show_grad=False)
             ''',
-            "Inspect one pair of parent links, then draw the forward graph",
+            "Inspect saved links, confirm both traversal orders, and draw the forward graph",
         ),
         md(
             r"""
-            Now our whole reverse pass is also one line:
+            Now run backward once, then inspect the result at three levels:
+
+            1. the **edge-by-edge trace** shows every chain-rule multiplication and accumulation;
+            2. the **compact graph** shows the whole computation without overcrowding it;
+            3. the **complete state cards** expose every field on every `Value`, including every saved parent link.
+
+            Only `steps = backward(sL)` performs differentiation. The two `show_...` helpers and `draw_graph` are
+            teaching displays; removing them would not change any gradient.
             """
         ),
         code(
@@ -629,17 +861,19 @@ def build_notebook():
             steps = backward(sL)
             show_backward_steps(steps)
 
-            draw_graph(sL, show_grad=True)
+            display(draw_graph(sL, show_grad=True))
+            show_complete_state(sL)
             ''',
-            "Run and display every backward edge, then redraw the graph with gradients",
+            "Run backward, show every edge, redraw gradients, and expose complete stored state",
         ),
         md(
             r"""
             The trace contains every reverse edge. For example, the square sends $-6$ into `e.grad`. On the next
             operation, that same stored number becomes the upstream gradient $g_e$ for subtraction.
 
-            A single row's product is a **downstream contribution**. If several paths return to one value, each row
-            adds into the same `parent.grad` buffer; only their sum is the full gradient at that parent.
+            A single row's product is one **edge contribution to `parent.grad`**—the quantity colored orange in our
+            legend. If several paths return to one value, each row adds into the same buffer; only their sum is the
+            full gradient at that parent.
 
             Finally, check that our tiny engine and PyTorch agree at every named value.
             """
@@ -847,7 +1081,7 @@ def build_notebook():
             2. start with $g_L=1$ in the loss's `.grad` buffer,
             3. compute <span style="color:#2C7A7B;font-weight:700">upstream</span>
                $\times$ <span style="color:#2B6CB0;font-weight:700">local</span>
-               $=$ <span style="color:#EB811B;font-weight:700">downstream contribution</span>, then add it to
+               $=$ <span style="color:#EB811B;font-weight:700">edge contribution to the parent</span>, then add it to
                the parent's `.grad` buffer.
 
             Our tiny `Value` record and local rules make those steps visible. Fusion does not change the calculus;
