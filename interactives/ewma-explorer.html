@@ -1454,10 +1454,11 @@
       </div>
       <div class="momentum-formulas" aria-label="Ravine and momentum formulas">
         <strong>Actual Lecture 5 example</strong>
-        <span>L(q) = 0.5 q₁² + 50 q₂²</span>
-        <span>gₜ = (qₜ,₁, 100qₜ,₂)</span>
+        <span>θ* = (1, −0.5)</span>
+        <span>L(θ) = 0.5(θ₁ − 1)² + 50(θ₂ + 0.5)²</span>
+        <span>gₜ = (θₜ,₁ − 1, 100(θₜ,₂ + 0.5))</span>
         <span>mₜ₊₁ = .8mₜ + .2gₜ</span>
-        <span>qₜ₊₁ = qₜ − .095mₜ₊₁</span>
+        <span>θₜ₊₁ = θₜ − .095mₜ₊₁</span>
       </div>
     </header>
 
@@ -1467,13 +1468,13 @@
         <p>Plain GD uses only today’s gradient, so its step shrinks as the
         remaining error shrinks. Momentum keeps part of earlier, agreeing
         gradients—like repeated pushes in the same direction.</p>
-        <span class="pushes">actual q₁ moves: GD +.0456 → +.0447 · momentum +.0456 → +.0812</span>
+        <span class="pushes">actual θ₁ moves: GD +.0456 → +.0447 · momentum +.0456 → +.0812</span>
       </article>
       <article class="intuition-case reversal">
         <h3>Direction reverses: brake the zigzag</h3>
         <p>Across the valley the gradient flips sign. Old and new contributions
         oppose each other, so the stored direction becomes much smaller.</p>
-        <span class="pushes">actual update 2 across q₂: plain GD +1.454 · momentum +.162</span>
+        <span class="pushes">actual update 2 in θ₂: plain GD +1.454 · momentum +.162</span>
       </article>
       <p class="intuition-caveat">The rates here are matched so both methods
       make the same first move. The rolling-ball picture is an intuition for
@@ -1483,7 +1484,7 @@
 
     <div class="momentum-init" aria-label="Momentum initialization">
       <span class="init-kicker">Before the first gradient</span>
-      <strong class="init-values">q₀ = (−2.4, .85) · m₀ = (0, 0)</strong>
+      <strong class="init-values">θ₀ = (−1.4, .35) · θ* = (1, −.5) · m₀ = (0, 0)</strong>
       <span><strong>m means gradient memory.</strong> We start it at zero because
       no earlier gradient exists—not because the current gradient is zero.</span>
     </div>
@@ -1523,7 +1524,7 @@
         <div class="update-cycle" aria-live="polite">
           <div class="cycle-step initialize is-current">
             <span class="cycle-label">Start</span>
-            <span class="cycle-value" id="initialValue">q₀ = (−2.4000, .8500); m₀ = (0, 0)</span>
+            <span class="cycle-value" id="initialValue">θ₀ = (−1.4000, .3500); m₀ = (0, 0)</span>
           </div>
           <div class="cycle-step measure">
             <span class="cycle-label">Measure</span>
@@ -1559,17 +1560,17 @@
           <h4>Update 1 · start from m₀ = (0, 0)</h4>
           <p>g₀ = (−2.4, 85)</p>
           <p>m₁ = .8(0, 0) + .2(−2.4, 85) = (−.48, 17)</p>
-          <p>q₁ = (−2.4, .85) − .095(−.48, 17) = (−2.3544, −.765)</p>
+          <p>θ₁ = (−1.4, .35) − .095(−.48, 17) = (−1.3544, −1.265)</p>
         </article>
         <article class="worked-update">
-          <h4>Update 2 · remeasure at q₁</h4>
+          <h4>Update 2 · remeasure at θ₁</h4>
           <p>g₁ = (−2.3544, −76.5)</p>
           <p>m₂ = .8(−.48, 17) + .2(−2.3544, −76.5) = (−.85488, −1.7)</p>
-          <p>q₂ = (−2.3544, −.765) − .095(−.85488, −1.7) = (−2.2732, −.6035)</p>
+          <p>θ₂ = (−1.3544, −1.265) − .095(−.85488, −1.7) = (−1.2732, −1.1035)</p>
         </article>
       </div>
       <p class="cancellation-note">
-        <strong>Along the valley:</strong> the q₁ gradients stay negative, so
+        <strong>Along the valley:</strong> the θ₁ gradient components stay negative, so
         their memory reinforces. <strong>Across the valley:</strong> .8(17) =
         13.6 and .2(−76.5) = −15.3 partly cancel, leaving m₂,₂ = −1.7 rather
         than another large swing.
@@ -1578,18 +1579,18 @@
 
     <section class="update-table-section" aria-labelledby="updateTableHeading">
       <h3 id="updateTableHeading">Reveal the computed trajectory one update at a time</h3>
-      <p>Rows appear only after the stepper reaches them. Loss is evaluated at qₜ, before that row’s move.</p>
+      <p>Rows appear only after the stepper reaches them. Loss is evaluated at θₜ, before that row’s move.</p>
       <div class="table-scroll" tabindex="0" aria-label="Computed momentum updates">
         <table class="update-table">
           <thead>
             <tr>
               <th>t</th>
-              <th>qₜ</th>
+              <th>θₜ</th>
               <th>mₜ (before)</th>
               <th>gₜ</th>
               <th>mₜ₊₁</th>
-              <th>qₜ₊₁</th>
-              <th>L(qₜ)</th>
+              <th>θₜ₊₁</th>
+              <th>L(θₜ)</th>
             </tr>
           </thead>
           <tbody id="momentumTable"></tbody>
@@ -1720,6 +1721,8 @@
   var MOMENTUM_BETA = 0.8;
   var MOMENTUM_ETA = 0.095;
   var MOMENTUM_STEPS = 10;
+  var THETA_STAR = [1, -0.5];
+  var THETA_ZERO = [-1.4, 0.35];
   var momentumStep = 0;
   var momentumPhase = 0;
   var momentumTimer = null;
@@ -1754,42 +1757,47 @@
     return "(" + fixed(vector[0], digits) + ", " + fixed(vector[1], digits) + ")";
   }
 
-  function ravineLoss(q) {
-    return 0.5 * q[0] * q[0] + 50 * q[1] * q[1];
+  function ravineLoss(theta) {
+    var error1 = theta[0] - THETA_STAR[0];
+    var error2 = theta[1] - THETA_STAR[1];
+    return 0.5 * error1 * error1 + 50 * error2 * error2;
   }
 
-  function ravineGradient(q) {
-    return [q[0], 100 * q[1]];
+  function ravineGradient(theta) {
+    return [
+      theta[0] - THETA_STAR[0],
+      100 * (theta[1] - THETA_STAR[1])
+    ];
   }
 
   function buildMomentumData() {
-    var positions = [[-2.4, 0.85]];
+    var positions = [THETA_ZERO.slice()];
     var memories = [[0, 0]];
     var updates = [];
 
     for (var t = 0; t < MOMENTUM_STEPS; t += 1) {
-      var q = positions[t];
+      var theta = positions[t];
       var memory = memories[t];
-      var gradient = ravineGradient(q);
+      var gradient = ravineGradient(theta);
       var retained = vectorScale(MOMENTUM_BETA, memory);
       var contribution = vectorScale(1 - MOMENTUM_BETA, gradient);
       var nextMemory = vectorAdd(retained, contribution);
       var move = vectorScale(-MOMENTUM_ETA, nextMemory);
-      var nextQ = vectorAdd(q, move);
+      var nextTheta = vectorAdd(theta, move);
       updates.push({
         t: t,
-        q: q.slice(),
+        theta: theta.slice(),
         gradient: gradient,
         memory: memory.slice(),
         retained: retained,
         contribution: contribution,
         nextMemory: nextMemory,
         move: move,
-        nextQ: nextQ,
-        loss: ravineLoss(q)
+        nextTheta: nextTheta,
+        loss: ravineLoss(theta)
       });
       memories.push(nextMemory);
-      positions.push(nextQ);
+      positions.push(nextTheta);
     }
 
     return {
@@ -1887,26 +1895,26 @@
       svg.removeChild(svg.firstChild);
     }
 
-    var currentQ = momentumData.positions[momentumStep];
+    var currentTheta = momentumData.positions[momentumStep];
     var firstMoveVisible = momentumStep > 0 || momentumPhase >= 5;
     var visiblePathStep = momentumStep === 0 && firstMoveVisible ? 1 : momentumStep;
     svg.appendChild(svgElement("title", { id: "momentumChartTitle" },
       "Momentum path on the exact ravine objective"));
     svg.appendChild(svgElement("desc", { id: "momentumChartDescription" },
       (momentumStep === 0 ? "First-update phase " + momentumPhase + ". " : "State " + momentumStep + ". ") +
-      "q equals " + vectorFormat(currentQ, 3) +
+      "theta equals " + vectorFormat(currentTheta, 3) +
       ", memory equals " + vectorFormat(momentumData.memories[momentumStep], 3) +
-      ", loss equals " + fixed(ravineLoss(currentQ), 3) + "."));
+      ", loss equals " + fixed(ravineLoss(currentTheta), 3) + "."));
 
     var width = 720;
     var height = 500;
     var margin = { top: 32, right: 28, bottom: 55, left: 64 };
     var innerW = width - margin.left - margin.right;
     var innerH = height - margin.top - margin.bottom;
-    var xMin = -3.2;
-    var xMax = 3.2;
-    var yMin = -1.05;
-    var yMax = 1.05;
+    var xMin = -2.2;
+    var xMax = 4.2;
+    var yMin = -1.55;
+    var yMax = 0.55;
 
     function xScale(value) {
       return margin.left + ((value - xMin) / (xMax - xMin)) * innerW;
@@ -1937,7 +1945,7 @@
     });
     svg.appendChild(plot);
 
-    [-3, -2, -1, 0, 1, 2, 3].forEach(function (tick) {
+    [-2, -1, 0, 1, 2, 3, 4].forEach(function (tick) {
       var xx = xScale(tick);
       plot.appendChild(svgElement("line", {
         x1: xx,
@@ -1945,8 +1953,8 @@
         y1: margin.top,
         y2: height - margin.bottom,
         stroke: COLORS.grid,
-        "stroke-width": tick === 0 ? 1.4 : 1,
-        opacity: tick === 0 ? 0.92 : 0.72
+        "stroke-width": tick === THETA_STAR[0] ? 1.4 : 1,
+        opacity: tick === THETA_STAR[0] ? 0.92 : 0.72
       }));
       svg.appendChild(svgElement("text", {
         x: xx,
@@ -1958,7 +1966,7 @@
       }, String(tick)));
     });
 
-    [-1, -0.5, 0, 0.5, 1].forEach(function (tick) {
+    [-1.5, -1, -0.5, 0, 0.5].forEach(function (tick) {
       var yy = yScale(tick);
       plot.appendChild(svgElement("line", {
         x1: margin.left,
@@ -1966,8 +1974,8 @@
         y1: yy,
         y2: yy,
         stroke: COLORS.grid,
-        "stroke-width": tick === 0 ? 1.4 : 1,
-        opacity: tick === 0 ? 0.92 : 0.72
+        "stroke-width": tick === THETA_STAR[1] ? 1.4 : 1,
+        opacity: tick === THETA_STAR[1] ? 0.92 : 0.72
       }));
       svg.appendChild(svgElement("text", {
         x: margin.left - 11,
@@ -1980,13 +1988,13 @@
     });
 
     [0.25, 0.5, 1, 2, 5, 10, 20, 40, 80].forEach(function (level, index) {
-      var radiusQ1 = Math.sqrt(2 * level);
-      var radiusQ2 = Math.sqrt(level / 50);
+      var radiusTheta1 = Math.sqrt(2 * level);
+      var radiusTheta2 = Math.sqrt(level / 50);
       plot.appendChild(svgElement("ellipse", {
-        cx: xScale(0),
-        cy: yScale(0),
-        rx: Math.abs(xScale(radiusQ1) - xScale(0)),
-        ry: Math.abs(yScale(radiusQ2) - yScale(0)),
+        cx: xScale(THETA_STAR[0]),
+        cy: yScale(THETA_STAR[1]),
+        rx: Math.abs(xScale(THETA_STAR[0] + radiusTheta1) - xScale(THETA_STAR[0])),
+        ry: Math.abs(yScale(THETA_STAR[1] + radiusTheta2) - yScale(THETA_STAR[1])),
         fill: "none",
         stroke: COLORS.teal,
         "stroke-width": index < 3 ? 1.35 : 1.05,
@@ -2022,8 +2030,8 @@
       }));
     }
 
-    var optimumX = xScale(0);
-    var optimumY = yScale(0);
+    var optimumX = xScale(THETA_STAR[0]);
+    var optimumY = yScale(THETA_STAR[1]);
     plot.appendChild(svgElement("polygon", {
       points: starPoints(optimumX, optimumY, 10, 4.5),
       fill: COLORS.red,
@@ -2031,8 +2039,8 @@
       "stroke-width": 1.5
     }));
 
-    var startX = xScale(currentQ[0]);
-    var startY = yScale(currentQ[1]);
+    var startX = xScale(currentTheta[0]);
+    var startY = yScale(currentTheta[1]);
 
     function drawDirection(ingredient, length, color, markerId, dash, widthValue) {
       var descent = [-ingredient[0], -ingredient[1]];
@@ -2088,8 +2096,8 @@
         plot.appendChild(svgElement("line", {
           x1: startX,
           y1: startY,
-          x2: xScale(update.nextQ[0]),
-          y2: yScale(update.nextQ[1]),
+          x2: xScale(update.nextTheta[0]),
+          y2: yScale(update.nextTheta[1]),
           stroke: COLORS.accent,
           "stroke-width": 3.2,
           "stroke-linecap": "round",
@@ -2107,7 +2115,7 @@
       "stroke-width": 2.4
     }));
 
-    var currentAnchor = currentQ[0] > 2.2 ? "end" : "start";
+    var currentAnchor = currentTheta[0] > 3.2 ? "end" : "start";
     var currentLabelX = currentAnchor === "end" ? startX - 10 : startX + 10;
     plot.appendChild(svgElement("text", {
       x: currentLabelX,
@@ -2117,7 +2125,7 @@
       "font-family": "IBM Plex Sans, Avenir Next, Segoe UI, sans-serif",
       "font-size": 13,
       "font-weight": 750
-    }, "q" + momentumStep));
+    }, "θ" + momentumStep));
 
     svg.appendChild(svgElement("text", {
       x: margin.left + innerW / 2,
@@ -2127,7 +2135,7 @@
       "font-family": "IBM Plex Sans, Avenir Next, Segoe UI, sans-serif",
       "font-size": 13,
       "font-weight": 650
-    }, "shallow error q₁"));
+    }, "parameter θ₁ · shallow direction"));
     svg.appendChild(svgElement("text", {
       x: 17,
       y: margin.top + innerH / 2,
@@ -2137,7 +2145,7 @@
       "font-family": "IBM Plex Sans, Avenir Next, Segoe UI, sans-serif",
       "font-size": 13,
       "font-weight": 650
-    }, "steep error q₂"));
+    }, "parameter θ₂ · steep direction"));
     svg.appendChild(svgElement("text", {
       x: width - margin.right,
       y: 19,
@@ -2155,14 +2163,12 @@
     }
 
     var inputs = [[-1, -10], [-1, 10], [1, -10], [1, 10]];
-    var thetaStar = [1, -0.5];
     var predictionStep = momentumStep === 0 && momentumPhase >= 5 ? 1 : momentumStep;
-    var q = momentumData.positions[predictionStep];
-    var theta = vectorAdd(thetaStar, q);
+    var theta = momentumData.positions[predictionStep];
     var targets = [];
     var predictions = [];
     inputs.forEach(function (row) {
-      targets.push(row[0] * thetaStar[0] + row[1] * thetaStar[1]);
+      targets.push(row[0] * THETA_STAR[0] + row[1] * THETA_STAR[1]);
       predictions.push(row[0] * theta[0] + row[1] * theta[1]);
     });
 
@@ -2189,7 +2195,7 @@
       "font-family": "IBM Plex Sans, Avenir Next, Segoe UI, sans-serif",
       "font-size": 12.5,
       "font-weight": 720
-    }, "same q" + predictionStep + " in prediction space · θ" + predictionStep + " = θ* + q" + predictionStep));
+    }, "current parameters θ" + predictionStep + " = " + vectorFormat(theta, 3)));
 
     svg.appendChild(svgElement("circle", {
       cx: width - 169,
@@ -2287,18 +2293,18 @@
       var firstUpdateInProgress = i === 0 && momentumStep === 0;
       var gradientVisible = !firstUpdateInProgress || momentumPhase >= 1;
       var nextMemoryVisible = !firstUpdateInProgress || momentumPhase >= 4;
-      var nextQVisible = !firstUpdateInProgress || momentumPhase >= 5;
+      var nextThetaVisible = !firstUpdateInProgress || momentumPhase >= 5;
       var row = document.createElement("tr");
       if (i === lastVisible) {
         row.className = "is-current";
       }
       [
         String(update.t),
-        vectorFormat(update.q, 3),
+        vectorFormat(update.theta, 3),
         vectorFormat(update.memory, 3),
         gradientVisible ? vectorFormat(update.gradient, 3) : "—",
         nextMemoryVisible ? vectorFormat(update.nextMemory, 3) : "—",
-        nextQVisible ? vectorFormat(update.nextQ, 3) : "—",
+        nextThetaVisible ? vectorFormat(update.nextTheta, 3) : "—",
         fixed(update.loss, 3)
       ].forEach(function (value) {
         var cell = document.createElement("td");
@@ -2322,15 +2328,15 @@
     els.momentumNext.disabled = momentumStep === MOMENTUM_STEPS;
 
     if (momentumStep === MOMENTUM_STEPS) {
-      var finalQ = momentumData.positions[momentumStep];
+      var finalTheta = momentumData.positions[momentumStep];
       var finalMemory = momentumData.memories[momentumStep];
       els.momentumStepHeading.textContent = "After 10 updates";
       els.momentumCounter.textContent = "10 updates complete";
       els.momentumNext.textContent = "Complete";
       setCycleState(els.initialValue, 0,
-        "q₁₀ = " + vectorFormat(finalQ, 4) + "; m₁₀ = " + vectorFormat(finalMemory, 4), "", 6);
+        "θ₁₀ = " + vectorFormat(finalTheta, 4) + "; m₁₀ = " + vectorFormat(finalMemory, 4), "", 6);
       setCycleState(els.measureValue, 0,
-        "L(q₁₀) = " + fixed(ravineLoss(finalQ), 4), "", 6);
+        "L(θ₁₀) = " + fixed(ravineLoss(finalTheta), 4), "", 6);
       setCycleState(els.retainValue, 0,
         "The displayed update budget is complete.", "", 6);
       setCycleState(els.contributionValue, 0,
@@ -2338,9 +2344,9 @@
       setCycleState(els.combineValue, 0,
         "Press Previous to inspect update 10.", "", 6);
       setCycleState(els.moveValue, 0,
-        "Reset returns to q₀ and m₀ = (0, 0).", "", 6);
+        "Reset returns to θ₀ and m₀ = (0, 0).", "", 6);
       els.momentumInsight.textContent =
-        "The path still crosses the valley, but it also travels along the shallow q₁ direction. Momentum is helping on this example; it is not a guarantee of lower loss at every update.";
+        "The path still crosses the valley, but it also travels along the shallow θ₁ direction. Momentum is helping on this example; it is not a guarantee of lower loss at every update.";
       return;
     }
 
@@ -2351,10 +2357,10 @@
     var phaseForDisplay = momentumStep === 0 ? momentumPhase : 5;
 
     setCycleState(els.initialValue, 0,
-      "q" + momentumStep + " = " + vectorFormat(update.q, 4) +
+      "θ" + momentumStep + " = " + vectorFormat(update.theta, 4) +
       "; m" + momentumStep + " = " + vectorFormat(update.memory, 4), "", phaseForDisplay);
     setCycleState(els.measureValue, 1,
-      "g" + momentumStep + " = ∇L(q" + momentumStep + ") = " + vectorFormat(update.gradient, 4),
+      "g" + momentumStep + " = ∇L(θ" + momentumStep + ") = " + vectorFormat(update.gradient, 4),
       "not measured yet", phaseForDisplay);
     setCycleState(els.retainValue, 2,
       betaText + "m" + momentumStep + " = " + vectorFormat(update.retained, 4),
@@ -2368,7 +2374,7 @@
       "waiting to form the new memory", phaseForDisplay);
     setCycleState(els.moveValue, 5,
       "−" + etaText + "m" + (momentumStep + 1) + " = " + vectorFormat(update.move, 4) +
-      "; q" + (momentumStep + 1) + " = " + vectorFormat(update.nextQ, 4),
+      "; θ" + (momentumStep + 1) + " = " + vectorFormat(update.nextTheta, 4),
       "waiting to update the parameters", phaseForDisplay);
 
     if (momentumStep === 0) {
@@ -2385,16 +2391,16 @@
         "Next: keep βm₀",
         "Next: add (1−β)g₀",
         "Next: form m₁",
-        "Next: move to q₁",
+        "Next: move to θ₁",
         "Next: update 2"
       ];
       var firstInsights = [
         "m is the optimizer’s running memory of earlier gradients. We set m₀ = (0, 0) because no gradient has been seen yet; this does not say that g₀ is zero.",
-        "Now measure g₀ at q₀. The steep coordinate is large: g₀ = (−2.4, 85). We still have not changed q.",
+        "Now measure g₀ at θ₀. The steep coordinate is large: g₀ = (−2.4, 85). We still have not changed θ.",
         "Keep βm₀ = .8(0, 0) = (0, 0). There is no retained arrow because a zero vector has no direction.",
         "Add the current evidence: (1−β)g₀ = .2g₀ = (−.48, 17). On the first update, this is the only nonzero ingredient.",
         "Combine old and new information. Because the old memory is zero, m₁ = .2g₀. Later updates will combine two nonzero terms.",
-        "Only now do we move: q₁ = q₀ − ηm₁. The orange arrow is the actual parameter update, and the table now contains the completed first row."
+        "Only now do we move: θ₁ = θ₀ − ηm₁. The orange arrow is the actual parameter update, and the table now contains the completed first row."
       ];
       els.momentumStepHeading.textContent = firstHeadings[momentumPhase];
       els.momentumCounter.textContent = "first update · step " + (momentumPhase + 1) + " of 6";
@@ -2405,18 +2411,18 @@
       els.momentumCounter.textContent = "update 2 of 10";
       els.momentumNext.textContent = "Next update";
       els.momentumInsight.textContent =
-        "Across q₂, retained history contributes +13.6 while the new gradient contributes −15.3. They nearly cancel to −1.7. Along q₁, both contributions are negative and reinforce.";
+        "In the θ₂ component, retained history contributes +13.6 while the new gradient contributes −15.3. They nearly cancel to −1.7. In θ₁, both contributions are negative and reinforce.";
     } else {
       els.momentumStepHeading.textContent = "Update " + (momentumStep + 1);
       els.momentumCounter.textContent = "update " + (momentumStep + 1) + " of 10";
       els.momentumNext.textContent = momentumStep === MOMENTUM_STEPS - 1 ? "Next: finish" : "Next update";
-      var q1Same = update.retained[0] * update.contribution[0] >= 0;
-      var q2Same = update.retained[1] * update.contribution[1] >= 0;
+      var theta1Same = update.retained[0] * update.contribution[0] >= 0;
+      var theta2Same = update.retained[1] * update.contribution[1] >= 0;
       els.momentumInsight.textContent =
-        "At this step, retained and new q₁ components " +
-        (q1Same ? "reinforce" : "partly cancel") +
-        "; their q₂ components " +
-        (q2Same ? "reinforce" : "partly cancel") +
+        "At this step, retained and new θ₁ components " +
+        (theta1Same ? "reinforce" : "partly cancel") +
+        "; their θ₂ components " +
+        (theta2Same ? "reinforce" : "partly cancel") +
         ". The sum m" + (momentumStep + 1) + " sets the next move.";
     }
   }
