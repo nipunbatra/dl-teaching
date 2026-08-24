@@ -25,6 +25,9 @@ def code(source: str, purpose: str, *, hidden: bool = False):
     metadata = {"purpose": purpose}
     normalized = textwrap.dedent(source).strip()
     if hidden:
+        # Colab uses this notebook metadata to collapse teaching-support cells
+        # into a compact form while leaving them runnable and inspectable.
+        metadata["cellView"] = "form"
         metadata["jupyter"] = {"source_hidden": True}
         normalized = "#| echo: false\n" + normalized
     return nbformat.v4.new_code_cell(normalized, metadata=metadata)
@@ -330,496 +333,6 @@ def dependency_order_diagram_html() -> str:
     )
 
 
-def dependency_order_animation_document() -> str:
-    """Return the sandboxed document used by the runtime traversal animation."""
-    return textwrap.dedent(
-        r"""
-        <!doctype html>
-        <html lang="en">
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width,initial-scale=1">
-          <title>Dependency-safe ordering trace</title>
-        </head>
-        <body style="margin:0;padding:8px;background:#FFFFFF;">
-        <section data-toposort-animation aria-label="Interactive trace of dependency-safe ordering"
-                 tabindex="0" style="margin:0;">
-          <style>
-            [data-toposort-animation] {
-              --tsa-ink:#1F3A40; --tsa-muted:#52696D; --tsa-line:#C9D5D7;
-              --tsa-paper:#FFFFFF; --tsa-soft:#F4F7F7; --tsa-teal:#2C7A7B;
-              --tsa-teal-soft:#E8F7F5; --tsa-blue:#2B6CB0; --tsa-blue-soft:#EAF2FC;
-              --tsa-orange:#B35F0B;
-              --tsa-orange-soft:#FFF1E5; color:var(--tsa-ink);
-              font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-            }
-            [data-toposort-animation] * { box-sizing:border-box; }
-            [data-toposort-animation] .tsa-shell {
-              border:1px solid #D8E1E2; border-radius:18px; background:var(--tsa-paper);
-              box-shadow:0 10px 30px rgba(31,58,64,.07); overflow:hidden;
-            }
-            [data-toposort-animation] .tsa-heading { padding:20px 22px 16px; border-bottom:1px solid #E2E9EA; }
-            [data-toposort-animation] .tsa-kicker {
-              margin:0 0 5px; color:var(--tsa-blue); font-size:.76rem; font-weight:800;
-              letter-spacing:.08em; text-transform:uppercase;
-            }
-            [data-toposort-animation] h4 { margin:0; color:var(--tsa-ink); font-size:1.2rem; line-height:1.3; }
-            [data-toposort-animation] .tsa-intro { margin:7px 0 0; color:var(--tsa-muted); line-height:1.55; max-width:78ch; }
-            [data-toposort-animation] .tsa-controls {
-              display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:12px 14px;
-              background:#F8FAFA; border-bottom:1px solid #E2E9EA;
-            }
-            [data-toposort-animation] button, [data-toposort-animation] select {
-              min-height:44px; border:1px solid #71878A; border-radius:9px; background:#FFFFFF;
-              color:var(--tsa-ink); font:inherit; font-size:.9rem; font-weight:700;
-            }
-            [data-toposort-animation] button { padding:7px 12px; cursor:pointer; }
-            [data-toposort-animation] button[data-action="play"] {
-              min-width:104px; color:#FFFFFF; background:var(--tsa-teal); border-color:var(--tsa-teal);
-            }
-            [data-toposort-animation] button:hover:not(:disabled) { filter:brightness(.96); }
-            [data-toposort-animation] button:active:not(:disabled) { transform:translateY(1px); }
-            [data-toposort-animation] button:focus-visible,
-            [data-toposort-animation] select:focus-visible,
-            [data-toposort-animation]:focus-visible { outline:3px solid rgba(43,108,176,.3); outline-offset:2px; }
-            [data-toposort-animation] button:disabled { cursor:not-allowed; opacity:.42; }
-            [data-toposort-animation] .tsa-speed { display:flex; align-items:center; gap:6px; margin-left:4px; color:var(--tsa-muted); font-size:.86rem; font-weight:700; }
-            [data-toposort-animation] select { padding:6px 28px 6px 9px; }
-            [data-toposort-animation] .tsa-step-count { margin-left:auto; color:var(--tsa-muted); font-size:.84rem; font-variant-numeric:tabular-nums; }
-            [data-toposort-animation] .tsa-main {
-              display:grid; grid-template-columns:minmax(0,1.62fr) minmax(270px,.78fr); min-width:0;
-            }
-            [data-toposort-animation] .tsa-visual { min-width:0; padding:16px; border-right:1px solid #E2E9EA; }
-            [data-toposort-animation] .tsa-action {
-              display:grid; grid-template-columns:auto minmax(0,1fr); align-items:start; gap:10px;
-              min-height:70px; padding:12px 13px; border:1px solid #D8E1E2; border-radius:12px; background:#FBFCFC;
-            }
-            [data-toposort-animation] .tsa-action-badge,
-            [data-toposort-animation] .tsa-legend-badge {
-              display:inline-flex; align-items:center; justify-content:center; min-width:74px; padding:5px 8px;
-              border-radius:999px; font-size:.7rem; line-height:1; font-weight:850; letter-spacing:.045em; text-transform:uppercase;
-            }
-            [data-toposort-animation] .tsa-action-badge[data-kind="ready"] { color:#52696D; background:#E9EEEE; }
-            [data-toposort-animation] .tsa-action-badge[data-kind="enter"] { color:#235893; background:var(--tsa-blue-soft); }
-            [data-toposort-animation] .tsa-action-badge[data-kind="follow"] { color:#8B4A08; background:var(--tsa-orange-soft); }
-            [data-toposort-animation] .tsa-action-badge[data-kind="skip"] { color:#8B4A08; background:var(--tsa-orange-soft); }
-            [data-toposort-animation] .tsa-action-badge[data-kind="append"] { color:#1F655F; background:var(--tsa-teal-soft); }
-            [data-toposort-animation] .tsa-action-badge[data-kind="unwind"] { color:#4D6367; background:#E9EEEE; }
-            [data-toposort-animation] .tsa-action-badge[data-kind="return"] { color:#235893; background:var(--tsa-blue-soft); }
-            [data-toposort-animation] .tsa-action-badge[data-kind="reverse"] { color:#8B4A08; background:var(--tsa-orange-soft); }
-            [data-toposort-animation] .tsa-status { color:var(--tsa-ink); font-size:.94rem; line-height:1.46; }
-            [data-toposort-animation] .tsa-status strong { color:inherit; }
-            [data-toposort-animation] .tsa-graph-scroll { max-width:100%; overflow-x:auto; margin-top:12px; padding-bottom:3px; }
-            [data-toposort-animation] .tsa-graph-scroll:focus-visible { outline:3px solid rgba(43,108,176,.3); outline-offset:2px; }
-            [data-toposort-animation] svg.tsa-graph { display:block; width:100%; height:auto; min-width:690px; }
-            [data-toposort-animation] .tsa-edge {
-              fill:none; stroke:#71878A; stroke-width:2.2; marker-end:url(#tsa-forward-arrow);
-            }
-            [data-toposort-animation] .tsa-edge.is-active {
-              stroke:var(--tsa-orange); stroke-width:5; stroke-dasharray:9 7;
-              marker-start:url(#tsa-parent-arrow); marker-end:none; animation:tsa-dash .75s linear infinite;
-            }
-            [data-toposort-animation] .tsa-node rect { fill:#FFFFFF; stroke:#71878A; stroke-width:1.8; transition:fill .16s,stroke .16s,stroke-width .16s; }
-            [data-toposort-animation] .tsa-node text:first-of-type { fill:var(--tsa-ink); font-size:20px; font-weight:820; }
-            [data-toposort-animation] .tsa-node text:last-of-type { fill:#60777B; font-size:11px; font-weight:650; }
-            [data-toposort-animation] .tsa-node.is-seen rect { fill:var(--tsa-blue-soft); stroke:var(--tsa-blue); }
-            [data-toposort-animation] .tsa-node.is-appended rect { fill:var(--tsa-teal-soft); stroke:var(--tsa-teal); }
-            [data-toposort-animation] .tsa-node.is-stack rect { stroke:var(--tsa-blue); stroke-width:3; }
-            [data-toposort-animation] .tsa-node.is-current rect { stroke:#EB811B; stroke-width:4; }
-            [data-toposort-animation] .tsa-node.is-link-target rect { stroke:var(--tsa-orange); stroke-width:4; }
-            [data-toposort-animation] .tsa-node-index { fill:#52696D; font-size:10px; font-weight:750; }
-            [data-toposort-animation] .tsa-direction { margin:6px 0 0; color:var(--tsa-muted); font-size:.78rem; }
-            [data-toposort-animation] .tsa-node-legend { display:flex; flex-wrap:wrap; gap:8px 14px; margin-top:8px; color:var(--tsa-muted); font-size:.75rem; }
-            [data-toposort-animation] .tsa-node-legend span { display:inline-flex; align-items:center; gap:6px; }
-            [data-toposort-animation] .tsa-swatch { width:13px; height:13px; border:2px solid #71878A; border-radius:4px; background:#FFF; }
-            [data-toposort-animation] .tsa-swatch.seen { background:var(--tsa-blue-soft); border-color:var(--tsa-blue); }
-            [data-toposort-animation] .tsa-swatch.stack { border:3px solid var(--tsa-blue); }
-            [data-toposort-animation] .tsa-swatch.appended { background:var(--tsa-teal-soft); border-color:var(--tsa-teal); }
-            [data-toposort-animation] .tsa-machine { padding:16px; min-width:0; background:#FBFCFC; }
-            [data-toposort-animation] .tsa-panel-title { margin:0 0 8px; font-size:.78rem; color:var(--tsa-muted); font-weight:820; letter-spacing:.05em; text-transform:uppercase; }
-            [data-toposort-animation] .tsa-code { margin:0 0 16px; padding:9px 0; overflow-x:auto; border-radius:11px; background:#20363B; color:#EAF2F2; font:12px/1.58 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
-            [data-toposort-animation] .tsa-code-line { display:block; padding:0 11px; white-space:pre; border-left:3px solid transparent; }
-            [data-toposort-animation] .tsa-code-line.is-active { background:#314E55; border-left-color:#F1A34B; color:#FFFFFF; }
-            [data-toposort-animation] .tsa-state-box { margin-top:12px; }
-            [data-toposort-animation] .tsa-link-state {
-              min-height:68px; padding:10px; border:1px solid #D8E1E2; border-radius:10px;
-              background:#FFFFFF; color:var(--tsa-ink); font-size:.82rem; line-height:1.5;
-            }
-            [data-toposort-animation] .tsa-link-state strong { color:var(--tsa-orange); }
-            [data-toposort-animation] .tsa-link-local { display:block; margin-top:4px; color:#52696D; }
-            [data-toposort-animation] .tsa-state-note { margin:5px 0 0; color:#52696D; font-size:.75rem; line-height:1.4; }
-            [data-toposort-animation] .tsa-chip-row { display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-height:36px; }
-            [data-toposort-animation] .tsa-chip { display:inline-flex; align-items:center; justify-content:center; min-width:31px; min-height:31px; padding:4px 8px; border-radius:8px; color:var(--tsa-ink); background:#FFFFFF; border:1px solid #71878A; font:750 .84rem ui-monospace,SFMono-Regular,Menlo,monospace; }
-            [data-toposort-animation] .tsa-chip.stack { color:#235893; border:2px solid var(--tsa-blue); background:#F8FBFF; }
-            [data-toposort-animation] .tsa-chip.seen { color:#235893; border-color:#7EA5D1; background:var(--tsa-blue-soft); }
-            [data-toposort-animation] .tsa-chip.output { color:#1F655F; border-color:#79B8B2; background:var(--tsa-teal-soft); }
-            [data-toposort-animation] .tsa-chip-arrow { color:#52696D; font-weight:800; }
-            [data-toposort-animation] .tsa-empty { color:#52696D; font-size:.82rem; font-style:italic; }
-            [data-toposort-animation] .tsa-ledgers { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:14px 16px 16px; border-top:1px solid #E2E9EA; }
-            [data-toposort-animation] .tsa-ledger { min-width:0; padding:12px; border:1px solid #D8E1E2; border-radius:12px; background:#FFFFFF; }
-            [data-toposort-animation] .tsa-ledger p { margin:7px 0 0; color:var(--tsa-muted); font-size:.78rem; line-height:1.4; }
-            [data-toposort-animation] .tsa-backward { margin:0 16px 16px; padding:14px; border:1px solid #EB811B; border-radius:13px; background:var(--tsa-orange-soft); }
-            [data-toposort-animation] .tsa-backward[hidden] { display:none; }
-            [data-toposort-animation] .tsa-backward .tsa-chip { background:#FFFFFF; border-color:#D88B3D; color:#7B430B; }
-            [data-toposort-animation] .tsa-backward p { margin:9px 0 0; color:#5E421F; font-size:.88rem; line-height:1.48; }
-            [data-toposort-animation] .tsa-action-key { display:flex; flex-wrap:wrap; gap:6px 10px; padding:11px 16px 13px; border-top:1px solid #E2E9EA; color:var(--tsa-muted); font-size:.72rem; }
-            [data-toposort-animation] .tsa-action-key span { display:inline-flex; align-items:center; gap:5px; }
-            [data-toposort-animation] .tsa-legend-badge { min-width:auto; padding:4px 7px; }
-            [data-toposort-animation] .tsa-legend-badge.enter { color:#235893; background:var(--tsa-blue-soft); }
-            [data-toposort-animation] .tsa-legend-badge.follow { color:#8B4A08; background:var(--tsa-orange-soft); }
-            [data-toposort-animation] .tsa-legend-badge.skip { color:#8B4A08; background:var(--tsa-orange-soft); }
-            [data-toposort-animation] .tsa-legend-badge.append { color:#1F655F; background:var(--tsa-teal-soft); }
-            [data-toposort-animation] .tsa-legend-badge.unwind { color:#4D6367; background:#E9EEEE; }
-            [data-toposort-animation] .tsa-legend-badge.return { color:#235893; background:var(--tsa-blue-soft); }
-            [data-toposort-animation] .tsa-legend-badge.reverse { color:#8B4A08; background:var(--tsa-orange-soft); }
-            [data-toposort-animation] .tsa-keyboard { width:100%; margin-top:2px; color:#52696D; }
-            [data-toposort-animation] .tsa-print-summary { display:none; }
-            @keyframes tsa-dash { to { stroke-dashoffset:-16; } }
-            @media (max-width:850px) {
-              [data-toposort-animation] .tsa-main { grid-template-columns:1fr; }
-              [data-toposort-animation] .tsa-visual { border-right:0; border-bottom:1px solid #E2E9EA; }
-              [data-toposort-animation] .tsa-ledgers { grid-template-columns:1fr; }
-              [data-toposort-animation] .tsa-step-count { width:100%; margin-left:0; }
-            }
-            @media (max-width:520px) {
-              [data-toposort-animation] .tsa-heading { padding:17px 15px 14px; }
-              [data-toposort-animation] .tsa-controls { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); padding:10px; gap:6px; }
-              [data-toposort-animation] .tsa-speed, [data-toposort-animation] .tsa-step-count { grid-column:1 / -1; margin-left:0; }
-              [data-toposort-animation] .tsa-visual, [data-toposort-animation] .tsa-machine { padding:12px; }
-              [data-toposort-animation] .tsa-ledgers { padding:12px; }
-            }
-            @media (prefers-reduced-motion:reduce) {
-              [data-toposort-animation] .tsa-edge.is-active { animation:none; }
-              [data-toposort-animation] .tsa-node rect { transition:none; }
-            }
-            @media print {
-              [data-toposort-animation] .tsa-heading,
-              [data-toposort-animation] .tsa-controls,
-              [data-toposort-animation] .tsa-main,
-              [data-toposort-animation] .tsa-ledgers,
-              [data-toposort-animation] .tsa-backward,
-              [data-toposort-animation] .tsa-action-key { display:none !important; }
-              [data-toposort-animation] .tsa-print-summary {
-                display:block; padding:18px 22px; color:var(--tsa-ink); line-height:1.6;
-              }
-            }
-          </style>
-
-          <div class="tsa-shell">
-            <header class="tsa-heading">
-              <p class="tsa-kicker">Interactive trace · exact notebook graph</p>
-              <h4>Watch <code>dependency_safe_order(L)</code> build its list</h4>
-              <p class="tsa-intro">Each step is one action performed by the recursive helper. The graph is fixed;
-                only the call stack, <code>seen</code>, and <code>safe_order</code> change.</p>
-            </header>
-
-            <div class="tsa-controls" role="group" aria-label="Animation controls">
-              <button type="button" data-action="reset" title="Reset (Home)">Reset</button>
-              <button type="button" data-action="previous" title="Previous step (Left arrow)">Previous</button>
-              <button type="button" data-action="play" aria-pressed="false" title="Play or pause (Space)">Play</button>
-              <button type="button" data-action="next" title="Next step (Right arrow)">Next</button>
-              <label class="tsa-speed">Speed
-                <select data-action="speed" aria-label="Playback speed">
-                  <option value="1500">0.6×</option>
-                  <option value="950" selected>1×</option>
-                  <option value="520">1.8×</option>
-                </select>
-              </label>
-              <span class="tsa-step-count" data-step-count>Step 0 of 0</span>
-            </div>
-
-            <div class="tsa-main">
-              <div class="tsa-visual">
-                <div class="tsa-action">
-                  <span class="tsa-action-badge" data-kind="ready" data-action-badge>Ready</span>
-                  <div class="tsa-status" data-status role="status" aria-live="polite">Press <strong>Next</strong> or <strong>Play</strong> to call <code>append_after_parents(L)</code>.</div>
-                </div>
-
-                <div class="tsa-graph-scroll" tabindex="0" role="region"
-                     aria-label="Scrollable computation graph; use left and right arrow keys to pan">
-                  <svg class="tsa-graph" viewBox="0 0 900 350" role="img">
-                    <title>Computation graph used by the dependency-order trace</title>
-                    <desc>The forward graph has leaves w and x creating m, m and b creating a, a and y creating e, and e creating L. The recursive traversal follows those edges in reverse, from each output to its parent operands.</desc>
-                    <defs>
-                      <marker id="tsa-forward-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#71878A"/>
-                      </marker>
-                      <marker id="tsa-parent-arrow" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#B35F0B"/>
-                      </marker>
-                    </defs>
-
-                    <path class="tsa-edge" data-child="m" data-parent="w" d="M150 62 C168 62 173 104 190 112"/>
-                    <path class="tsa-edge" data-child="m" data-parent="x" d="M150 157 C168 157 173 120 190 112"/>
-                    <path class="tsa-edge" data-child="a" data-parent="m" d="M315 112 C340 112 350 156 375 167"/>
-                    <path class="tsa-edge" data-child="a" data-parent="b" d="M315 237 C340 237 350 178 375 167"/>
-                    <path class="tsa-edge" data-child="e" data-parent="a" d="M500 167 C525 167 535 216 560 227"/>
-                    <path class="tsa-edge" data-child="e" data-parent="y" d="M500 292 C525 292 535 238 560 227"/>
-                    <path class="tsa-edge" data-child="L" data-parent="e" d="M685 227 L745 227"/>
-
-                    <g class="tsa-node" data-node="w" transform="translate(25 30)"><rect width="125" height="64" rx="13"/><text x="62.5" y="27" text-anchor="middle">w</text><text x="62.5" y="48" text-anchor="middle">leaf · value 2</text></g>
-                    <g class="tsa-node" data-node="x" transform="translate(25 125)"><rect width="125" height="64" rx="13"/><text x="62.5" y="27" text-anchor="middle">x</text><text x="62.5" y="48" text-anchor="middle">leaf · value 3</text></g>
-                    <g class="tsa-node" data-node="m" transform="translate(190 80)"><rect width="125" height="64" rx="13"/><text x="62.5" y="27" text-anchor="middle">m</text><text x="62.5" y="48" text-anchor="middle">w × x = 6</text></g>
-                    <g class="tsa-node" data-node="b" transform="translate(190 205)"><rect width="125" height="64" rx="13"/><text x="62.5" y="27" text-anchor="middle">b</text><text x="62.5" y="48" text-anchor="middle">leaf · value 1</text></g>
-                    <g class="tsa-node" data-node="a" transform="translate(375 135)"><rect width="125" height="64" rx="13"/><text x="62.5" y="27" text-anchor="middle">a</text><text x="62.5" y="48" text-anchor="middle">m + b = 7</text></g>
-                    <g class="tsa-node" data-node="y" transform="translate(375 260)"><rect width="125" height="64" rx="13"/><text x="62.5" y="27" text-anchor="middle">y</text><text x="62.5" y="48" text-anchor="middle">leaf · value 10</text></g>
-                    <g class="tsa-node" data-node="e" transform="translate(560 195)"><rect width="125" height="64" rx="13"/><text x="62.5" y="27" text-anchor="middle">e</text><text x="62.5" y="48" text-anchor="middle">a − y = −3</text></g>
-                    <g class="tsa-node" data-node="L" transform="translate(745 195)"><rect width="125" height="64" rx="13"/><text x="62.5" y="27" text-anchor="middle">L</text><text x="62.5" y="48" text-anchor="middle">e² = 9</text></g>
-
-                    <text x="25" y="342" class="tsa-node-index">forward graph: operands → outputs &nbsp; · &nbsp; traversal: output → saved parent operand</text>
-                  </svg>
-                </div>
-                <p class="tsa-direction">The moving dashed edge is a saved <code>ParentLink</code> being followed from an output back to one direct operand. On a phone, scroll the graph sideways.</p>
-                <div class="tsa-node-legend" aria-label="Node color key">
-                  <span><i class="tsa-swatch"></i>unseen</span>
-                  <span><i class="tsa-swatch seen"></i>seen</span>
-                  <span><i class="tsa-swatch stack"></i>on call stack</span>
-                  <span><i class="tsa-swatch appended"></i>appended</span>
-                </div>
-              </div>
-
-              <aside class="tsa-machine" aria-label="Algorithm state">
-                <p class="tsa-panel-title">The code now running</p>
-                <pre class="tsa-code" aria-label="dependency safe order pseudocode"><code><span class="tsa-code-line" data-line="1">def append_after_parents(node):</span><span class="tsa-code-line" data-line="2">  if id(node) in seen: return</span><span class="tsa-code-line" data-line="3">  seen.add(id(node))</span><span class="tsa-code-line" data-line="4">  for link in node.parents:</span><span class="tsa-code-line" data-line="5">    append_after_parents(link.value)</span><span class="tsa-code-line" data-line="6">  safe_order.append(node)</span><span class="tsa-code-line" data-line="7"></span><span class="tsa-code-line" data-line="8">append_after_parents(L)</span><span class="tsa-code-line" data-line="9">return safe_order</span><span class="tsa-code-line" data-line="10"></span><span class="tsa-code-line" data-line="11">for output in reversed(safe_order):  # backward</span></code></pre>
-
-                <div class="tsa-state-box">
-                  <p class="tsa-panel-title">Active recursive calls</p>
-                  <div class="tsa-chip-row" data-stack aria-label="Call stack"><span class="tsa-empty">empty</span></div>
-                </div>
-                <div class="tsa-state-box">
-                  <p class="tsa-panel-title">Seen Values</p>
-                  <div class="tsa-chip-row" data-seen aria-label="Seen Values"><span class="tsa-empty">none yet</span></div>
-                  <p class="tsa-state-note">Shown in discovery order for readability; <code>seen</code> is a set, so only membership matters.</p>
-                </div>
-                <div class="tsa-state-box">
-                  <p class="tsa-panel-title">Current ParentLink</p>
-                  <div class="tsa-link-state" data-link-state aria-live="polite"><span class="tsa-empty">No link is being followed.</span></div>
-                  <p class="tsa-state-note">Sorting follows <code>.value</code>. The saved <code>.local_grad</code> is displayed but remains unused until backward.</p>
-                </div>
-              </aside>
-            </div>
-
-            <div class="tsa-ledgers">
-              <section class="tsa-ledger">
-                <p class="tsa-panel-title">Dependency-first output being built</p>
-                <div class="tsa-chip-row" data-order aria-label="Dependency-first output"><span class="tsa-empty">empty</span></div>
-                <p>A Value enters this list only after every recursive parent call has returned.</p>
-              </section>
-              <section class="tsa-ledger">
-                <p class="tsa-panel-title">What the current structures mean</p>
-                <p><code>stack</code> answers “which calls are waiting?” · <code>seen</code> prevents scheduling one shared Value twice · <code>safe_order</code> is the list we will reverse.</p>
-              </section>
-            </div>
-
-            <section class="tsa-backward" data-backward hidden aria-label="Final backward schedule">
-              <p class="tsa-panel-title">Reverse once · backward schedule</p>
-              <div class="tsa-chip-row" data-backward-order></div>
-              <p><strong>Why every node is ready:</strong> reversing puts an output before the operands it can update.
-                Therefore every later output that can contribute to a node's <code>.grad</code> has already run before
-                that node sends its completed gradient to its own parents.</p>
-            </section>
-
-            <div class="tsa-action-key" aria-label="Action type key">
-              <span><b class="tsa-legend-badge enter">enter</b> start one call and mark new</span>
-              <span><b class="tsa-legend-badge follow">follow link</b> recurse to an operand</span>
-              <span><b class="tsa-legend-badge skip">skip seen</b> immediate return for a shared Value; this exact graph never needs it</span>
-              <span><b class="tsa-legend-badge append">append</b> parents are finished</span>
-              <span><b class="tsa-legend-badge unwind">unwind</b> child call returned</span>
-              <span><b class="tsa-legend-badge return">return</b> sorting is finished</span>
-              <span><b class="tsa-legend-badge reverse">reverse</b> enter the backward schedule</span>
-              <span class="tsa-keyboard">Keyboard when the panel itself is focused: ← previous · → next · Space play/pause · Home reset.</span>
-            </div>
-            <div class="tsa-print-summary">
-              <strong>Dependency-first order:</strong> w → x → m → b → a → y → e → L<br>
-              <strong>Reverse for backward:</strong> L → e → y → a → b → m → x → w<br>
-              Each operand appears before the output that uses it; reversing makes each output ready before it sends gradient contributions to its operands.
-            </div>
-          </div>
-          <noscript><p><strong>JavaScript is off.</strong> Use the static dependency-order diagram immediately above this trace.</p></noscript>
-        </section>
-        <script data-toposort-animation-init>
-        (() => {
-          const payload = __TOPOLOGY_PAYLOAD__;
-          const script = document.currentScript;
-          const root = script && script.previousElementSibling;
-          if (!root || !root.matches("[data-toposort-animation]") || root.dataset.enhanced === "true") return;
-          root.dataset.enhanced = "true";
-          const instanceId = "toposort-animation";
-          root.id = instanceId;
-          const svg = root.querySelector("svg.tsa-graph");
-          const svgTitle = svg.querySelector("title");
-          const svgDesc = svg.querySelector("desc");
-          svgTitle.id = `${instanceId}-graph-title`;
-          svgDesc.id = `${instanceId}-graph-desc`;
-          svg.setAttribute("aria-labelledby", `${svgTitle.id} ${svgDesc.id}`);
-
-          const events = payload.events;
-
-          const labels = {
-            ready:"Ready", enter:"Enter", follow:"Follow link", skip:"Skip seen",
-            append:"Append", unwind:"Unwind", return:"Return", reverse:"Reverse"
-          };
-          const buttons = {
-            reset:root.querySelector('[data-action="reset"]'),
-            previous:root.querySelector('[data-action="previous"]'),
-            play:root.querySelector('[data-action="play"]'),
-            next:root.querySelector('[data-action="next"]')
-          };
-          const speed = root.querySelector('[data-action="speed"]');
-          const actionBadge = root.querySelector("[data-action-badge]");
-          const status = root.querySelector("[data-status]");
-          const stepCount = root.querySelector("[data-step-count]");
-          const backwardPanel = root.querySelector("[data-backward]");
-          const linkState = root.querySelector("[data-link-state]");
-          const nodeElements = [...root.querySelectorAll("[data-node]")];
-          const edgeElements = [...root.querySelectorAll(".tsa-edge")];
-          const codeLines = [...root.querySelectorAll("[data-line]")];
-          let index = 0;
-          let timer = null;
-          let playing = false;
-          let lastReportedHeight = 0;
-
-          function reportHeight() {
-            const height = Math.ceil(root.getBoundingClientRect().height + 16);
-            if (height === lastReportedHeight) return;
-            lastReportedHeight = height;
-            window.parent.postMessage({type:"scalar-topology-animation-height", height}, "*");
-          }
-
-          function chips(target, values, kind, emptyText) {
-            target.replaceChildren();
-            if (!values.length) {
-              const empty = document.createElement("span");
-              empty.className = "tsa-empty";
-              empty.textContent = emptyText;
-              target.append(empty);
-              return;
-            }
-            values.forEach((value, position) => {
-              if (position) {
-                const arrow = document.createElement("span");
-                arrow.className = "tsa-chip-arrow";
-                arrow.textContent = "→";
-                arrow.setAttribute("aria-hidden", "true");
-                target.append(arrow);
-              }
-              const chip = document.createElement("span");
-              chip.className = `tsa-chip ${kind}`;
-              chip.textContent = value;
-              target.append(chip);
-            });
-          }
-
-          function stop() {
-            if (timer !== null) window.clearTimeout(timer);
-            timer = null;
-            playing = false;
-            buttons.play.textContent = "Play";
-            buttons.play.setAttribute("aria-pressed", "false");
-          }
-
-          function render() {
-            const event = events[index];
-            const backwardOrder = [...event.order].reverse();
-            actionBadge.dataset.kind = event.kind;
-            actionBadge.textContent = labels[event.kind];
-            status.innerHTML = event.message;
-            stepCount.textContent = `Step ${index} of ${events.length - 1}`;
-            buttons.previous.disabled = index === 0;
-            buttons.next.disabled = index === events.length - 1;
-
-            codeLines.forEach(line => line.classList.toggle("is-active", Number(line.dataset.line) === event.line));
-            nodeElements.forEach(nodeElement => {
-              const name = nodeElement.dataset.node;
-              nodeElement.classList.toggle("is-seen", event.seen.includes(name));
-              nodeElement.classList.toggle("is-stack", event.stack.includes(name));
-              nodeElement.classList.toggle("is-appended", event.order.includes(name));
-              nodeElement.classList.toggle("is-current", event.node === name && event.kind !== "follow");
-              nodeElement.classList.toggle("is-link-target", event.kind === "follow" && event.parent === name);
-            });
-            edgeElements.forEach(edge => edge.classList.toggle(
-              "is-active",
-              event.kind === "follow" && edge.dataset.child === event.node && edge.dataset.parent === event.parent
-            ));
-
-            linkState.replaceChildren();
-            if (event.kind === "follow") {
-              const linkName = document.createElement("code");
-              linkName.textContent = `${event.node}.parents[${event.link_index}]`;
-              const valueLine = document.createElement("strong");
-              valueLine.style.display = "block";
-              valueLine.textContent = `.value = ${event.parent}  ← followed now`;
-              const localLine = document.createElement("span");
-              localLine.className = "tsa-link-local";
-              localLine.textContent = `.local_grad = ${event.local_grad}  · stored, not read by sorting`;
-              linkState.append(linkName, valueLine, localLine);
-            } else {
-              const empty = document.createElement("span");
-              empty.className = "tsa-empty";
-              empty.textContent = "No link is being followed in this step.";
-              linkState.append(empty);
-            }
-
-            chips(root.querySelector("[data-stack]"), event.stack, "stack", "empty");
-            chips(root.querySelector("[data-seen]"), event.seen, "seen", "none yet");
-            chips(root.querySelector("[data-order]"), event.order, "output", "empty");
-            chips(root.querySelector("[data-backward-order]"), backwardOrder, "backward", "empty");
-            backwardPanel.hidden = event.kind !== "reverse";
-            window.requestAnimationFrame(reportHeight);
-          }
-
-          function scheduleNext() {
-            if (!playing) return;
-            timer = window.setTimeout(() => {
-              if (index < events.length - 1) {
-                index += 1;
-                render();
-                scheduleNext();
-              } else {
-                stop();
-              }
-            }, Number(speed.value));
-          }
-
-          function togglePlay() {
-            if (playing) {
-              stop();
-              return;
-            }
-            if (index === events.length - 1) index = 0;
-            playing = true;
-            buttons.play.textContent = "Pause";
-            buttons.play.setAttribute("aria-pressed", "true");
-            render();
-            scheduleNext();
-          }
-
-          buttons.reset.addEventListener("click", () => { stop(); index = 0; render(); });
-          buttons.previous.addEventListener("click", () => { stop(); index = Math.max(0, index - 1); render(); });
-          buttons.next.addEventListener("click", () => { stop(); index = Math.min(events.length - 1, index + 1); render(); });
-          buttons.play.addEventListener("click", togglePlay);
-          speed.addEventListener("change", () => {
-            if (playing) { window.clearTimeout(timer); scheduleNext(); }
-          });
-          document.addEventListener("visibilitychange", () => {
-            if (document.hidden) stop();
-          });
-          window.addEventListener("resize", () => window.requestAnimationFrame(reportHeight));
-          root.addEventListener("keydown", event => {
-            if (event.target !== root) return;
-            if (event.key === "ArrowRight") { event.preventDefault(); buttons.next.click(); }
-            else if (event.key === "ArrowLeft") { event.preventDefault(); buttons.previous.click(); }
-            else if (event.key === "Home") { event.preventDefault(); buttons.reset.click(); }
-            else if (event.key === " ") { event.preventDefault(); togglePlay(); }
-          });
-
-          render();
-        })();
-        </script>
-        </body>
-        </html>
-        """
-    ).strip()
 
 
 def build_notebook():
@@ -1150,8 +663,6 @@ def build_notebook():
             import warnings
             from html import escape as escape_html
 
-            TOPOLOGY_SORT_ANIMATION_DOCUMENT = __TOPOLOGY_DOCUMENT_LITERAL__
-
             if importlib.util.find_spec("graphviz") is None:
                 subprocess.run(
                     [sys.executable, "-m", "pip", "install", "-q", "graphviz"],
@@ -1336,7 +847,7 @@ def build_notebook():
                 return events
 
             def show_topological_sort_animation(root, events):
-                """Render the recorded traversal in an isolated, deterministic iframe."""
+                """Send the validated traversal to the isolated hosted interactive."""
                 nodes = dependency_safe_order(root)
                 order_labels = [node.label for node in nodes]
                 backward_labels = list(reversed(order_labels))
@@ -1435,31 +946,80 @@ def build_notebook():
                     "order": order_labels,
                     "backward": backward_labels,
                 }
-                marker = "__TOPOLOGY_PAYLOAD__"
-                assert TOPOLOGY_SORT_ANIMATION_DOCUMENT.count(marker) == 1
-                document = TOPOLOGY_SORT_ANIMATION_DOCUMENT.replace(
-                    marker,
-                    json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
+                hosted_url = (
+                    "https://nipunbatra.github.io/interactive-articles/"
+                    "autograd-topological-order/"
                 )
+                hosted_embed_url = hosted_url + "?embed=1"
+                payload_json = json.dumps(
+                    payload, ensure_ascii=False, separators=(",", ":")
+                ).replace("</", "<\\/")
                 iframe = (
                     "<style>"
-                    ".scalar-topology-animation-frame{height:1120px}"
-                    "@media(max-width:850px){.scalar-topology-animation-frame{height:1750px}}"
-                    "@media(max-width:520px){.scalar-topology-animation-frame{height:2360px}}"
-                    "@media print{.scalar-topology-animation-frame{height:180px!important}}"
+                    ".scalar-topology-embed{margin:16px 0 22px;border:1px solid #D8E1E2;"
+                    "border-radius:16px;overflow:hidden;background:#fff;color:#1F3A40;"
+                    "font-family:Manrope,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}"
+                    ".scalar-topology-embed__bar{display:flex;align-items:center;justify-content:space-between;"
+                    "gap:16px;padding:12px 15px;border-bottom:1px solid #E2E9EA;background:#F7FAFA}"
+                    ".scalar-topology-embed__title{font-weight:800;line-height:1.25}"
+                    ".scalar-topology-embed__hint{display:block;margin-top:2px;color:#52696D;"
+                    "font-size:.84rem;font-weight:500}"
+                    ".scalar-topology-embed__open{flex:0 0 auto;padding:8px 11px;border:1px solid #2C7A7B;"
+                    "border-radius:8px;color:#1F6666!important;background:#fff;text-decoration:none!important;"
+                    "font-size:.86rem;font-weight:750}"
+                    ".scalar-topology-embed__open:hover{background:#E8F7F5}"
+                    ".scalar-topology-animation-frame{display:block;width:100%;height:1080px;border:0;background:#fff}"
+                    ".scalar-topology-embed__fallback{margin:0;padding:9px 15px;border-top:1px solid #E2E9EA;"
+                    "color:#52696D;font-size:.84rem}"
+                    ".scalar-topology-embed__print{display:none}"
+                    "@media(max-width:850px){.scalar-topology-animation-frame{height:1780px}}"
+                    "@media(max-width:640px){"
+                    ".scalar-topology-embed__bar{align-items:flex-start;flex-direction:column;gap:9px}"
+                    ".scalar-topology-animation-frame{height:2400px}"
+                    "}"
+                    "@media print{"
+                    ".scalar-topology-embed__bar,.scalar-topology-animation-frame,"
+                    ".scalar-topology-embed__fallback{display:none!important}"
+                    ".scalar-topology-embed__print{display:block;padding:14px 16px;line-height:1.5}"
+                    "}"
                     "</style>"
+                    '<section class="scalar-topology-embed" aria-label="Topological-order interactive">'
+                    '<div class="scalar-topology-embed__bar"><div>'
+                    '<div class="scalar-topology-embed__title">Dependency-safe ordering, step by step</div>'
+                    '<span class="scalar-topology-embed__hint">Uses the live graph and ParentLinks built above.</span>'
+                    '</div>'
+                    f'<a class="scalar-topology-embed__open" href="{hosted_url}" target="_blank" '
+                    'rel="noopener noreferrer">Open full screen</a></div>'
                     '<iframe class="scalar-topology-animation-frame" '
                     'title="Interactive dependency-safe ordering trace" sandbox="allow-scripts" '
-                    'style="display:block;width:100%;border:0;margin:14px 0 20px;" '
-                    f'srcdoc="{escape_html(document, quote=True)}"></iframe>'
+                    'allow="fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" '
+                    f'src="{hosted_embed_url}"></iframe>'
+                    '<p class="scalar-topology-embed__fallback">If the embedded view does not load, '
+                    f'<a href="{hosted_url}" target="_blank" rel="noopener noreferrer">open the interactive '
+                    'in a new tab</a>.</p>'
+                    '<div class="scalar-topology-embed__print"><strong>Dependency-safe order:</strong> '
+                    'w → x → m → b → a → y → e → L<br>'
+                    '<strong>Backward schedule:</strong> L → e → y → a → b → m → x → w</div>'
+                    '</section>'
                     "<script>(()=>{"
-                    "const frame=document.currentScript.previousElementSibling;"
+                    "const shell=document.currentScript.previousElementSibling;"
+                    "const frame=shell.querySelector('.scalar-topology-animation-frame');"
+                    f"const payload={payload_json};"
+                    "const channel=`scalar-topology-${Math.random().toString(36).slice(2)}`;"
+                    "const sendPayload=()=>frame.contentWindow?.postMessage({"
+                    "type:'scalar-topology-animation-data',channel,payload},'*');"
                     "const resize=(event)=>{"
-                    "if(event.source!==frame.contentWindow||event.data?.type!=='scalar-topology-animation-height')return;"
-                    "const height=Math.max(800,Math.min(2600,Number(event.data.height)||1120));"
+                    "const data=event.data;"
+                    "if(event.source!==frame.contentWindow||!data||"
+                    "data.type!=='scalar-topology-animation-height'||data.channel!==channel)return;"
+                    "const requested=Number(data.height);"
+                    "if(!Number.isFinite(requested))return;"
+                    "const height=Math.max(620,Math.min(2800,requested));"
                     "frame.style.height=`${height}px`;"
                     "};"
                     "window.addEventListener('message',resize);"
+                    "frame.addEventListener('load',()=>{sendPayload();setTimeout(sendPayload,160);});"
+                    "sendPayload();"
                     "})();</script>"
                 )
                 with warnings.catch_warnings():
@@ -1567,10 +1127,7 @@ def build_notebook():
                     "<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));"
                     "gap:12px;align-items:start'>" + "".join(cards) + "</div></div>"
                 ))
-            '''.replace(
-                "__TOPOLOGY_DOCUMENT_LITERAL__",
-                repr(dependency_order_animation_document()),
-            ),
+            ''',
             "Define the compact graph, backward trace cards, and complete stored-state view",
             hidden=True,
         ),
