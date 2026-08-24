@@ -1,4 +1,4 @@
-.PHONY: all clean help list dirs diagrams audit-typst
+.PHONY: all clean help list dirs diagrams l5-typst audit-typst
 
 # Directories
 SLIDES_DIR := slides
@@ -204,7 +204,8 @@ help:
 	@echo "  make lec01-html  # Build lecture 01 HTML only (fast)"
 	@echo "  make all         # Build everything"
 	@echo "  make diagrams    # Regenerate all diagrams"
-	@echo "  make audit-typst # Check L1/L2 PDFs for clipping and raster regressions"
+	@echo "  make l5-typst    # Build the L5 handout + presentation PDFs"
+	@echo "  make audit-typst # Check L1/L2/L5 PDFs for clipping and raster regressions"
 	@echo "  make list        # List available slides"
 	@echo "  make clean       # Remove generated files"
 	@echo ""
@@ -212,7 +213,13 @@ help:
 
 # Visual-quality gate for the active Typst decks. Deliberate photographs can be
 # allowed by running the script directly with --max-raster-images N.
+l5-typst:
+	@mkdir -p slides-pdf
+	@typst compile --root . --input handout=true lecture5/L5-optimization.typ slides-pdf/L5.pdf
+	@typst compile --root . lecture5/L5-optimization.typ slides-pdf/L5-presentation.pdf
+
 audit-typst:
 	@python3 scripts/audit_typst_slides.py \
 		slides-pdf/L1.pdf slides-pdf/L1-presentation.pdf \
-		slides-pdf/L2.pdf slides-pdf/L2-presentation.pdf
+		slides-pdf/L2.pdf slides-pdf/L2-presentation.pdf \
+		slides-pdf/L5.pdf slides-pdf/L5-presentation.pdf

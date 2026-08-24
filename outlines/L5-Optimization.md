@@ -1,8 +1,13 @@
 ---
 title: "Lecture 5: Optimization for Deep Learning"
 source: "https://chatgpt.com/share/6a50728a-9720-83ee-a33d-5f2e3ff744fe"
-status: "Imported from the finalized shared-course discussion"
+status: "SUPERSEDED — non-authoritative historical outline"
 ---
+
+> **SUPERSEDED / DO NOT USE AS THE LECTURE PLAN.** This imported outline records
+> an earlier design and is retained only for provenance. The authoritative
+> materials are the current [Typst deck](../lecture5/L5-optimization.typ),
+> [teaching guide](../teaching-guides/lec05.md), and [course page](../slides.qmd).
 
 # Lecture 5: Optimization for Deep Learning  
 ## SGD, Momentum, Adam, Learning Rates

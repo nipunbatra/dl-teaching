@@ -29,6 +29,11 @@ Read the original paper only after you understand the deck’s mechanism. The re
 
 [Interactive Articles](https://nipunbatra.github.io/interactive-articles/) hosts optional browser explainers for mechanics such as convolution, optimization, attention, contrastive learning, and diffusion. Follow the links on `[I]` lecture slides; they are the curated entry points rather than a separate parallel syllabus.
 
+The course site also hosts small lecture-matched tools, including the Lecture 5
+[EWMA + momentum explorer](interactives/ewma-explorer.html), which uses the same
+seeded temperature observations and the same computed ravine as the deck and
+notebook.
+
 ## For each lecture
 
 1. Read the deck’s opening and its worked mechanism.

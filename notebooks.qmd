@@ -13,7 +13,11 @@ Use the rendered version for reading and the `.ipynb` file for running or modify
 | Scalar autograd: PyTorch → scratch engine → fused sigmoid | L4 | [HTML](notebooks/L03/04_scalar_autograd_pytorch_to_scratch.html) · [Colab](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/04_scalar_autograd_pytorch_to_scratch.ipynb) · [Interactive](https://nipunbatra.github.io/interactive-articles/autograd-topological-order/) · [IPYNB](https://raw.githubusercontent.com/nipunbatra/dl-teaching/master/notebooks/L03/04_scalar_autograd_pytorch_to_scratch.ipynb) |
 | Computation graphs, backpropagation, and autograd | L4 | [HTML](notebooks/L03/00_backprop_autograd_complete.html) · [Colab](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/00_backprop_autograd_complete.ipynb) · [IPYNB](https://raw.githubusercontent.com/nipunbatra/dl-teaching/master/notebooks/L03/00_backprop_autograd_complete.ipynb) |
 | [micrograd-mlp](notebooks/01-micrograd-mlp.ipynb) | L2–L4 | scalar autodiff, backpropagation, and a small MLP |
-| [optimizers](notebooks/05-optimizers.ipynb) | L5 | SGD, momentum, and Adam on the same loss surface |
+| Batch/SGD/Minibatches + Estimators | L5 | [Colab](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L05/00_full_batch_sgd_minibatch.ipynb) · [IPYNB](notebooks/L05/00_full_batch_sgd_minibatch.ipynb) |
+| EWMA + Momentum | L5 | [Interactive](interactives/ewma-explorer.html) · [Colab](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L05/02_ewma_momentum.ipynb) · [IPYNB](notebooks/L05/02_ewma_momentum.ipynb) |
+| RMSProp + Adam + Constraints | L5 | [Colab](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L05/03_adaptive_optimizers_constraints.ipynb) · [IPYNB](notebooks/L05/03_adaptive_optimizers_constraints.ipynb) |
+| XOR Optimizer Lab | L5 | [Colab](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L05/04_xor_optimizer_lab.ipynb) · [IPYNB](notebooks/L05/04_xor_optimizer_lab.ipynb) |
+| [Assignment 1 optimizer starter](notebooks/05-optimizers.ipynb) | HW1 | supplemental NumPy implementation scaffold retained for the assignment; not the canonical L5 companion |
 | [cnn-shape-tour](notebooks/07-cnn-shape-tour.ipynb) | L8 | convolutional tensor shapes, parameters, and receptive fields |
 | [debug-ladder](notebooks/03-debug-ladder.ipynb) | L6–L7 | diagnose a training run with deliberately planted failures |
 
