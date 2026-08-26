@@ -1,0 +1,984 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Learning-rate schedule explorer — ES 667</title>
+<style>
+  :root {
+    color-scheme: light;
+    --ink: #23373b;
+    --text: #43585c;
+    --muted: #6e7f82;
+    --accent: #eb811b;
+    --teal: #2c7a7b;
+    --blue: #2b6cb0;
+    --red: #d64550;
+    --paper: #ffffff;
+    --wash: #f7f8f6;
+    --line: #d9e1df;
+    --line-soft: #e9eeec;
+    --sans: "IBM Plex Sans", "Avenir Next", "Segoe UI", Arial, sans-serif;
+    --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html { background: var(--wash); }
+
+  body {
+    min-width: 320px;
+    min-height: 100dvh;
+    margin: 0;
+    color: var(--ink);
+    background: linear-gradient(180deg, #ffffff 0, #ffffff 14rem, var(--wash) 14rem);
+    font-family: var(--sans);
+    line-height: 1.5;
+  }
+
+  button, input { font: inherit; }
+  button, input[type="range"] { cursor: pointer; }
+
+  button:focus-visible,
+  input:focus-visible,
+  svg:focus-visible {
+    outline: 3px solid rgba(43, 108, 176, 0.35);
+    outline-offset: 3px;
+  }
+
+  .page-shell {
+    width: min(1160px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 24px 0 48px;
+  }
+
+  .topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 0.86rem;
+    font-weight: 650;
+    letter-spacing: 0.02em;
+  }
+
+  .topline a {
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .topline a:hover { color: var(--blue); }
+
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
+    gap: clamp(28px, 6vw, 78px);
+    align-items: end;
+    padding: clamp(34px, 7vw, 68px) 0 32px;
+  }
+
+  h1 {
+    max-width: 16ch;
+    margin: 0;
+    font-size: clamp(2.15rem, 5vw, 4rem);
+    font-weight: 680;
+    letter-spacing: -0.055em;
+    line-height: 0.99;
+  }
+
+  .hero-copy {
+    max-width: 38rem;
+    margin: 0;
+    padding-left: 20px;
+    border-left: 4px solid var(--accent);
+    color: var(--text);
+    font-size: clamp(1rem, 1.8vw, 1.18rem);
+  }
+
+  .workspace {
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: var(--paper);
+    box-shadow: 0 18px 48px rgba(35, 55, 59, 0.08);
+  }
+
+  .lesson-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid var(--line);
+    background: #eef2f0;
+  }
+
+  .lesson-tab {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 13px;
+    align-items: center;
+    min-height: 72px;
+    padding: 13px 24px;
+    border: 0;
+    color: #53676a;
+    background: transparent;
+    text-align: left;
+    transition: color 150ms ease, background-color 150ms ease, transform 150ms ease;
+  }
+
+  .lesson-tab + .lesson-tab { border-left: 1px solid var(--line); }
+  .lesson-tab:hover { color: var(--ink); background: rgba(255, 255, 255, 0.72); }
+  .lesson-tab:active { transform: translateY(1px); }
+  .lesson-tab[aria-selected="true"] { color: var(--ink); background: var(--paper); }
+
+  .tab-number {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    font-weight: 760;
+  }
+
+  .lesson-tab[aria-selected="true"] .tab-number {
+    border-color: var(--accent);
+    color: #ffffff;
+    background: var(--accent);
+  }
+
+  .tab-copy strong { display: block; font-size: 0.96rem; }
+  .tab-copy span { display: block; color: var(--muted); font-size: 0.79rem; }
+  .lesson-panel[hidden] { display: none; }
+
+  .lesson-intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(250px, 0.65fr);
+    gap: 28px;
+    align-items: center;
+    padding: 27px 30px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  h2 {
+    margin: 0 0 7px;
+    font-size: clamp(1.35rem, 2.2vw, 1.75rem);
+    letter-spacing: -0.025em;
+    line-height: 1.16;
+  }
+
+  .lesson-intro p { max-width: 60ch; margin: 0; color: var(--text); }
+
+  .shared-stream {
+    padding-left: 20px;
+    border-left: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 0.86rem;
+  }
+
+  .shared-stream strong { display: block; margin-bottom: 3px; color: var(--ink); }
+
+  .formula-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid var(--line);
+    background: #fbfcfb;
+  }
+
+  .formula {
+    min-width: 0;
+    padding: 17px 30px;
+  }
+
+  .formula + .formula { border-left: 1px solid var(--line); }
+
+  .formula-label {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 760;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .formula code {
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: clamp(0.88rem, 2vw, 1.05rem);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .formula.fast { border-top: 4px solid var(--accent); }
+  .formula.slow { border-top: 4px solid var(--blue); }
+  .formula.decay { border-top: 4px solid var(--teal); }
+
+  .chart-region { padding: 22px 26px 17px; }
+
+  .chart-topline {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin: 0 3px 12px;
+  }
+
+  .chart-title { margin: 0; font-size: 1.05rem; font-weight: 720; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 9px 17px;
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+
+  .legend-item { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+  .legend-line { width: 25px; height: 0; border-top: 3px solid currentColor; border-radius: 99px; }
+  .legend-line.fast { color: var(--accent); }
+  .legend-line.slow { color: var(--blue); }
+  .legend-line.fixed { color: var(--accent); }
+  .legend-line.decay { color: var(--teal); }
+  .legend-line.threshold { color: var(--muted); border-top-width: 2px; border-top-style: dashed; }
+
+  .chart-frame {
+    overflow: hidden;
+    border: 1px solid var(--line-soft);
+    border-radius: 12px;
+    background: #ffffff;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 320px;
+    touch-action: manipulation;
+  }
+
+  .scrubber {
+    display: grid;
+    grid-template-columns: auto minmax(180px, 1fr) auto;
+    gap: 14px;
+    align-items: center;
+    margin-top: 15px;
+  }
+
+  .scrubber-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .action {
+    min-height: 40px;
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--ink);
+    background: #ffffff;
+    font-size: 0.84rem;
+    font-weight: 710;
+    transition: color 140ms ease, border-color 140ms ease, background-color 140ms ease, transform 140ms ease;
+  }
+
+  .action:hover { border-color: var(--teal); color: var(--teal); }
+  .action.primary { border-color: var(--ink); color: #ffffff; background: var(--ink); }
+  .action.primary:hover { border-color: var(--teal); background: var(--teal); }
+  .action:active { transform: translateY(1px); }
+  input[type="range"] { width: 100%; height: 28px; margin: 0; accent-color: var(--accent); }
+
+  .update-readout {
+    min-width: 98px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.84rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .metric-rows { border-top: 1px solid var(--line); }
+
+  .metric-row {
+    display: grid;
+    grid-template-columns: minmax(170px, 0.75fr) repeat(3, minmax(120px, 1fr));
+    align-items: stretch;
+  }
+
+  .metric-row + .metric-row { border-top: 1px solid var(--line-soft); }
+
+  .metric-name,
+  .metric {
+    padding: 16px 22px;
+  }
+
+  .metric-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 720;
+  }
+
+  .swatch { width: 12px; height: 12px; border-radius: 50%; background: currentColor; }
+  .metric-name.fixed { color: var(--accent); }
+  .metric-name.decay { color: var(--teal); }
+  .metric { border-left: 1px solid var(--line-soft); }
+  .metric span { display: block; color: var(--muted); font-size: 0.7rem; font-weight: 750; letter-spacing: 0.06em; text-transform: uppercase; }
+  .metric strong { display: block; margin-top: 3px; color: var(--ink); font-family: var(--mono); font-size: 1rem; font-variant-numeric: tabular-nums; }
+
+  .takeaway {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(220px, 0.6fr);
+    gap: 30px;
+    align-items: start;
+    padding: 24px 30px 27px;
+    border-top: 1px solid var(--line);
+    background: #fbfcfb;
+  }
+
+  .takeaway h3 { margin: 0 0 7px; font-size: 1.05rem; }
+  .takeaway p { margin: 0; color: var(--text); }
+
+  .key-number {
+    padding-left: 20px;
+    border-left: 4px solid var(--teal);
+  }
+
+  .key-number strong {
+    display: block;
+    color: var(--teal);
+    font-family: var(--mono);
+    font-size: clamp(2rem, 4vw, 3rem);
+    letter-spacing: -0.06em;
+    line-height: 1;
+  }
+
+  .key-number span { color: var(--muted); font-size: 0.82rem; }
+
+  .data-note {
+    margin: 20px 0 0;
+    padding: 16px 20px;
+    border-left: 4px solid var(--accent);
+    color: var(--text);
+    background: #fff9f1;
+    font-size: 0.85rem;
+  }
+
+  .data-note code { font-family: var(--mono); color: var(--ink); }
+
+  .verification {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+
+  .verification-mark {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--teal);
+  }
+
+  .verification[data-state="error"] { color: var(--red); }
+  .verification[data-state="error"] .verification-mark { background: var(--red); }
+
+  @media (max-width: 780px) {
+    .hero,
+    .lesson-intro,
+    .takeaway { grid-template-columns: 1fr; }
+
+    .hero { align-items: start; }
+    .shared-stream, .key-number { border-left: 4px solid var(--line); padding-left: 16px; }
+    .formula-strip { grid-template-columns: 1fr; }
+    .formula + .formula { border-left: 0; border-top: 1px solid var(--line); }
+    .formula.fast, .formula.slow, .formula.decay { border-top-width: 4px; }
+    .metric-row { grid-template-columns: 1fr 1fr 1fr; }
+    .metric-name { grid-column: 1 / -1; padding-bottom: 9px; }
+    .metric:first-of-type { border-left: 0; }
+    .chart-topline { display: grid; }
+    .legend { justify-content: flex-start; }
+  }
+
+  @media (max-width: 580px) {
+    .page-shell { width: min(100% - 20px, 1160px); padding-top: 14px; }
+    .topline { align-items: flex-start; }
+    .lesson-tabs { grid-template-columns: 1fr; }
+    .lesson-tab + .lesson-tab { border-left: 0; border-top: 1px solid var(--line); }
+    .lesson-intro, .chart-region, .takeaway { padding-left: 18px; padding-right: 18px; }
+    .formula { padding-left: 18px; padding-right: 18px; }
+    .scrubber { grid-template-columns: 1fr; }
+    .update-readout { text-align: left; }
+    .metric-row { grid-template-columns: 1fr; }
+    .metric-name { grid-column: auto; }
+    .metric { border-left: 0; border-top: 1px solid var(--line-soft); padding-top: 10px; padding-bottom: 10px; }
+    svg { min-height: 250px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+<main class="page-shell">
+  <div class="topline">
+    <a href="../slides-review/L5.html#slide-89">ES 667 · Lecture 5</a>
+    <span>Computed from the four-point line-fitting example</span>
+  </div>
+
+  <header class="hero">
+    <h1>Learning-rate schedules</h1>
+    <p class="hero-copy">A fixed rate makes one compromise for the whole run. First compare the compromise; then watch a decaying rate keep the fast start and settle down later.</p>
+  </header>
+
+  <section class="workspace" aria-label="Learning-rate schedule explorer">
+    <div class="lesson-tabs" role="tablist" aria-label="Two-part learning-rate lesson">
+      <button class="lesson-tab" id="travel-tab" role="tab" aria-controls="travel-panel" aria-selected="true" type="button">
+        <span class="tab-number">1</span>
+        <span class="tab-copy"><strong>Travel early</strong><span>Why not choose one small rate?</span></span>
+      </button>
+      <button class="lesson-tab" id="settle-tab" role="tab" aria-controls="settle-panel" aria-selected="false" type="button">
+        <span class="tab-number">2</span>
+        <span class="tab-copy"><strong>Settle late</strong><span>What changes when the rate decays?</span></span>
+      </button>
+    </div>
+
+    <section class="lesson-panel" id="travel-panel" role="tabpanel" aria-labelledby="travel-tab">
+      <div class="lesson-intro">
+        <div>
+          <h2>A large fixed rate reaches a useful region sooner</h2>
+          <p>Both runs see exactly the same examples in the same order. The only change is the learning rate. We mark the first update where the full-loss gap falls below 0.5.</p>
+        </div>
+        <div class="shared-stream"><strong>Controlled comparison</strong>Same dataset, initial parameters, sampled indices, and 80-update window.</div>
+      </div>
+
+      <div class="formula-strip" aria-label="Fixed learning-rate rules">
+        <div class="formula fast"><span class="formula-label">larger fixed rate</span><code>θₜ₊₁ = θₜ − 0.10 gₜ</code></div>
+        <div class="formula slow"><span class="formula-label">smaller fixed rate</span><code>θₜ₊₁ = θₜ − 0.02 gₜ</code></div>
+      </div>
+
+      <div class="chart-region">
+        <div class="chart-topline">
+          <p class="chart-title">Full-loss gap during the first 80 updates</p>
+          <div class="legend" aria-label="Chart legend">
+            <span class="legend-item"><span class="legend-line fast"></span>fixed η = 0.10</span>
+            <span class="legend-item"><span class="legend-line slow"></span>fixed η = 0.02</span>
+            <span class="legend-item"><span class="legend-line threshold"></span>gap = 0.5</span>
+          </div>
+        </div>
+        <div class="chart-frame">
+          <svg id="travel-chart" viewBox="0 0 960 430" role="img" aria-label="Full-loss gap for fixed learning rates 0.10 and 0.02 over the first 80 updates" tabindex="0"></svg>
+        </div>
+        <div class="scrubber">
+          <div class="scrubber-buttons">
+            <button class="action" id="travel-reset" type="button">Reset</button>
+            <button class="action" id="travel-step" type="button">Next update</button>
+            <button class="action primary" id="travel-play" type="button">Play</button>
+          </div>
+          <label>
+            <span class="formula-label">Reveal through update</span>
+            <input id="travel-range" type="range" min="0" max="80" value="0" step="1" aria-label="Reveal early training through update">
+          </label>
+          <output class="update-readout" id="travel-update" for="travel-range">update 0 / 80</output>
+        </div>
+      </div>
+
+      <div class="metric-rows" aria-label="First threshold crossing">
+        <div class="metric-row">
+          <div class="metric-name fixed"><span class="swatch"></span>fixed η = 0.10</div>
+          <div class="metric"><span>first gap below 0.5</span><strong id="fast-crossing">not reached</strong></div>
+          <div class="metric"><span>update 8 gap</span><strong>0.386</strong></div>
+          <div class="metric"><span>role</span><strong>travel quickly</strong></div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-name" style="color: var(--blue)"><span class="swatch"></span>fixed η = 0.02</div>
+          <div class="metric"><span>first gap below 0.5</span><strong id="slow-crossing">not reached</strong></div>
+          <div class="metric"><span>update 56 gap</span><strong>0.499</strong></div>
+          <div class="metric"><span>trade-off</span><strong>arrives later</strong></div>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div>
+          <h3>The small rate is not wrong; it is slow when distance matters</h3>
+          <p>A large rate gets into the useful region seven times sooner in this run. The next question is whether we must keep taking those large steps after we arrive.</p>
+        </div>
+        <div class="key-number"><strong>8 vs 56</strong><span>first threshold crossing, not a universal speed ratio</span></div>
+      </div>
+    </section>
+
+    <section class="lesson-panel" id="settle-panel" role="tabpanel" aria-labelledby="settle-tab" hidden>
+      <div class="lesson-intro">
+        <div>
+          <h2>Decay keeps the fast start and makes later moves smaller</h2>
+          <p>Both runs begin at η = 0.10 and therefore make the same first move. In the decayed run, each later gradient is multiplied by a progressively smaller learning rate.</p>
+        </div>
+        <div class="shared-stream"><strong>Late-training window</strong>The chart reveals the final 99 parameter transitions, from update 261 to 360.</div>
+      </div>
+
+      <div class="formula-strip" aria-label="Fixed and inverse-time learning-rate rules">
+        <div class="formula fast"><span class="formula-label">fixed</span><code>ηₜ = 0.10</code></div>
+        <div class="formula decay"><span class="formula-label">inverse-time decay</span><code>ηₜ = 0.10 / (1 + 0.02t)</code></div>
+      </div>
+
+      <div class="chart-region">
+        <div class="chart-topline">
+          <p class="chart-title">Movement near the least-squares optimum</p>
+          <div class="legend" aria-label="Chart legend">
+            <span class="legend-item"><span class="legend-line fixed"></span>fixed rate</span>
+            <span class="legend-item"><span class="legend-line decay"></span>decayed rate</span>
+          </div>
+        </div>
+        <div class="chart-frame">
+          <svg id="settle-chart" viewBox="0 0 960 500" role="img" aria-label="Late parameter paths for fixed and inverse-time decayed learning rates on the same loss contours" tabindex="0"></svg>
+        </div>
+        <div class="scrubber">
+          <div class="scrubber-buttons">
+            <button class="action" id="settle-reset" type="button">Reset</button>
+            <button class="action" id="settle-back" type="button">Previous</button>
+            <button class="action" id="settle-step" type="button">Next</button>
+            <button class="action primary" id="settle-play" type="button">Play</button>
+          </div>
+          <label>
+            <span class="formula-label">Current update</span>
+            <input id="settle-range" type="range" min="261" max="360" value="261" step="1" aria-label="Current late-training update">
+          </label>
+          <output class="update-readout" id="settle-update" for="settle-range">update 261 / 360</output>
+        </div>
+      </div>
+
+      <div class="metric-rows" aria-label="Late-training measurements">
+        <div class="metric-row">
+          <div class="metric-name fixed"><span class="swatch"></span>fixed η = 0.10</div>
+          <div class="metric"><span>η on current update</span><strong id="fixed-eta">0.1000</strong></div>
+          <div class="metric"><span>distance revealed</span><strong id="fixed-distance">0.000</strong></div>
+          <div class="metric"><span>mean gap, final 100</span><strong>0.00410</strong></div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-name decay"><span class="swatch"></span>inverse-time decay</div>
+          <div class="metric"><span>η on current update</span><strong id="decay-eta">0.0161</strong></div>
+          <div class="metric"><span>distance revealed</span><strong id="decay-distance">0.000</strong></div>
+          <div class="metric"><span>mean gap, final 100</span><strong>0.000201</strong></div>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div>
+          <h3>The sampled indices are unchanged; the learning-rate policy changes the moves</h3>
+          <p>Across the final 99 transitions, the fixed-rate path travels 3.794 parameter units. The decayed path travels 0.520 and has about 20 times smaller mean full-loss gap.</p>
+        </div>
+        <div class="key-number"><strong>14%</strong><span>the decayed path travels 14% as far late in training</span></div>
+      </div>
+    </section>
+  </section>
+
+  <p class="data-note"><strong>Exact experiment.</strong> Example A uses <code>x = [−1, 0, 1, 2]</code>, <code>y = [−1, 1, 3, 6]</code>, and <code>θ₀ = (2, −1)</code>. The 360 sampled indices are the exact output of <code>numpy.random.default_rng(12).integers(0, 4, 360)</code>.</p>
+  <div class="verification" id="verification" role="status" aria-live="polite"><span class="verification-mark"></span><span>Checking deterministic results…</span></div>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  const COLORS = {
+    ink: "#23373b",
+    muted: "#6e7f82",
+    accent: "#eb811b",
+    teal: "#2c7a7b",
+    blue: "#2b6cb0",
+    red: "#d64550",
+    line: "#d9e1df",
+    grid: "#e9eeec",
+    paper: "#ffffff"
+  };
+
+  const X = [-1, 0, 1, 2];
+  const Y = [-1, 1, 3, 6];
+  const THETA0 = [2, -1];
+  const THETA_STAR = [1.1, 2.3];
+  const SAMPLE_INDICES = [2,1,3,3,0,0,0,0,2,1,1,0,3,2,2,0,0,3,1,3,3,0,1,2,1,0,2,1,1,1,1,1,3,1,2,3,0,1,2,0,2,2,2,3,1,3,3,3,1,0,3,3,1,2,0,3,3,1,3,0,3,3,3,2,0,3,2,0,3,0,1,3,3,0,1,3,2,0,1,2,0,1,1,1,2,0,3,3,2,3,0,2,3,2,2,2,2,2,2,2,2,3,3,1,3,0,2,3,3,3,3,1,0,3,3,2,2,3,1,0,3,3,2,2,3,1,3,2,3,2,1,1,2,1,0,3,3,3,1,0,3,1,0,3,1,3,2,3,0,0,3,3,3,2,3,0,3,0,0,0,0,0,1,2,2,1,1,2,2,0,2,3,0,2,1,3,1,2,1,1,2,0,0,3,3,0,2,2,1,0,1,0,2,2,1,3,2,1,3,3,0,3,1,2,1,3,3,1,1,0,0,0,1,0,1,0,2,3,1,3,0,0,0,2,2,3,1,2,3,1,0,1,0,2,2,0,3,3,2,0,1,0,0,3,1,0,3,0,2,0,2,0,2,0,1,3,2,2,3,1,1,0,3,3,2,1,0,3,3,2,2,0,3,0,0,3,2,0,1,0,2,1,1,1,2,1,1,3,0,1,1,3,1,0,3,1,0,3,2,1,0,3,1,1,3,1,2,3,1,1,2,2,0,2,3,0,1,0,3,0,2,0,1,2,3,2,1,1,1,1,3,0,3,1,0,3,0,0,3,2,1,2,1,0,0,1,0,0,1,2,0,1,3,0,3,1,3,0,2,3];
+
+  const NS = "http://www.w3.org/2000/svg";
+  const travelChart = document.getElementById("travel-chart");
+  const settleChart = document.getElementById("settle-chart");
+  const verification = document.getElementById("verification");
+
+  function loss(theta) {
+    let total = 0;
+    for (let i = 0; i < X.length; i += 1) {
+      const residual = theta[0] + theta[1] * X[i] - Y[i];
+      total += residual * residual;
+    }
+    return 0.5 * total / X.length;
+  }
+
+  function sampledGradient(theta, index) {
+    const residual = theta[0] + theta[1] * X[index] - Y[index];
+    return [residual, residual * X[index]];
+  }
+
+  function run(rateAt) {
+    let theta = THETA0.slice();
+    const path = [theta.slice()];
+    const losses = [];
+    for (let t = 0; t < SAMPLE_INDICES.length; t += 1) {
+      const gradient = sampledGradient(theta, SAMPLE_INDICES[t]);
+      const eta = rateAt(t);
+      theta = [theta[0] - eta * gradient[0], theta[1] - eta * gradient[1]];
+      path.push(theta.slice());
+      losses.push(loss(theta));
+    }
+    return { path, losses };
+  }
+
+  const optimumLoss = loss(THETA_STAR);
+  const startGap = loss(THETA0) - optimumLoss;
+  const fast = run(() => 0.10);
+  const slow = run(() => 0.02);
+  const decay = run(t => 0.10 / (1 + 0.02 * t));
+  const fastGaps = fast.losses.map(value => value - optimumLoss);
+  const slowGaps = slow.losses.map(value => value - optimumLoss);
+  const decayGaps = decay.losses.map(value => value - optimumLoss);
+
+  function firstBelow(values, threshold) {
+    const index = values.findIndex(value => value < threshold);
+    return index < 0 ? null : index + 1;
+  }
+
+  function distance(path, from, to) {
+    let total = 0;
+    for (let i = from + 1; i <= to; i += 1) {
+      total += Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]);
+    }
+    return total;
+  }
+
+  function mean(values) {
+    return values.reduce((sum, value) => sum + value, 0) / values.length;
+  }
+
+  function approx(actual, expected, tolerance = 1e-11) {
+    if (Math.abs(actual - expected) > tolerance) {
+      throw new Error(`Expected ${expected}, received ${actual}`);
+    }
+  }
+
+  function verify() {
+    if (SAMPLE_INDICES.length !== 360) throw new Error("Seeded stream must contain 360 indices.");
+    const expectedPrefix = [2, 1, 3, 3, 0, 0, 0, 0, 2, 1, 1, 0];
+    if (!expectedPrefix.every((value, i) => SAMPLE_INDICES[i] === value)) throw new Error("Seeded stream prefix differs from NumPy.");
+    approx(optimumLoss, 0.0375);
+    approx(loss(THETA0), 7.125);
+    if (firstBelow(fastGaps, 0.5) !== 8) throw new Error("Fast-rate crossing must be update 8.");
+    if (firstBelow(slowGaps, 0.5) !== 56) throw new Error("Small-rate crossing must be update 56.");
+    approx(distance(fast.path, 261, 360), 3.794479821649366);
+    approx(distance(decay.path, 261, 360), 0.520387236914856);
+    approx(mean(fastGaps.slice(-100)), 0.004099611448621285);
+    approx(mean(decayGaps.slice(-100)), 0.00020140237311844306);
+    approx(0.10 / (1 + 0.02 * 359), 0.012224938875305624);
+  }
+
+  function svgElement(tag, attrs = {}, text = null) {
+    const node = document.createElementNS(NS, tag);
+    Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, String(value)));
+    if (text !== null) node.textContent = text;
+    return node;
+  }
+
+  function addText(svg, x, y, text, options = {}) {
+    const node = svgElement("text", {
+      x, y,
+      fill: options.fill || COLORS.muted,
+      "font-size": options.size || 13,
+      "font-family": options.mono ? "IBM Plex Mono, SFMono-Regular, Consolas, monospace" : "IBM Plex Sans, Avenir Next, Segoe UI, Arial, sans-serif",
+      "font-weight": options.weight || 500,
+      "text-anchor": options.anchor || "start",
+      "dominant-baseline": options.baseline || "auto"
+    }, text);
+    svg.appendChild(node);
+    return node;
+  }
+
+  function addLine(svg, x1, y1, x2, y2, options = {}) {
+    const node = svgElement("line", {
+      x1, y1, x2, y2,
+      stroke: options.stroke || COLORS.grid,
+      "stroke-width": options.width || 1,
+      "stroke-dasharray": options.dash || "",
+      "stroke-linecap": "round",
+      opacity: options.opacity ?? 1
+    });
+    svg.appendChild(node);
+    return node;
+  }
+
+  function addPath(svg, points, options = {}) {
+    if (!points.length) return null;
+    const d = points.map((point, i) => `${i ? "L" : "M"}${point[0].toFixed(2)},${point[1].toFixed(2)}`).join(" ");
+    const node = svgElement("path", {
+      d,
+      fill: options.fill || "none",
+      stroke: options.stroke || COLORS.ink,
+      "stroke-width": options.width || 2,
+      "stroke-linejoin": "round",
+      "stroke-linecap": "round",
+      opacity: options.opacity ?? 1
+    });
+    svg.appendChild(node);
+    return node;
+  }
+
+  function addDot(svg, x, y, options = {}) {
+    const node = svgElement("circle", {
+      cx: x, cy: y, r: options.radius || 5,
+      fill: options.fill || COLORS.ink,
+      stroke: options.stroke || COLORS.paper,
+      "stroke-width": options.strokeWidth || 2
+    });
+    svg.appendChild(node);
+    return node;
+  }
+
+  function drawTravel(reveal) {
+    travelChart.replaceChildren();
+    const compact = window.matchMedia("(max-width: 580px)").matches;
+    const W = compact ? 560 : 960, H = 430;
+    const tickSize = compact ? 16 : 12;
+    const labelSize = compact ? 18 : 13;
+    const noteSize = compact ? 15 : 12;
+    const margin = compact
+      ? { left: 68, right: 18, top: 26, bottom: 62 }
+      : { left: 72, right: 28, top: 26, bottom: 58 };
+    travelChart.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const innerW = W - margin.left - margin.right;
+    const innerH = H - margin.top - margin.bottom;
+    const xMap = update => margin.left + (update / 80) * innerW;
+    const minLog = Math.log10(0.001), maxLog = Math.log10(10);
+    const yMap = value => margin.top + (maxLog - Math.log10(Math.max(value, 0.001))) / (maxLog - minLog) * innerH;
+
+    [0.001, 0.01, 0.1, 1, 10].forEach(value => {
+      const y = yMap(value);
+      addLine(travelChart, margin.left, y, W - margin.right, y);
+      addText(travelChart, margin.left - 12, y, value < 1 ? value.toString() : String(value), { anchor: "end", baseline: "middle", mono: true, size: tickSize });
+    });
+    [0, 20, 40, 60, 80].forEach(value => {
+      const x = xMap(value);
+      addLine(travelChart, x, margin.top, x, H - margin.bottom);
+      addText(travelChart, x, H - margin.bottom + 28, String(value), { anchor: "middle", mono: true, size: tickSize });
+    });
+
+    addLine(travelChart, margin.left, margin.top, margin.left, H - margin.bottom, { stroke: COLORS.muted, width: 1.2 });
+    addLine(travelChart, margin.left, H - margin.bottom, W - margin.right, H - margin.bottom, { stroke: COLORS.muted, width: 1.2 });
+    addText(travelChart, margin.left + innerW / 2, H - 13, "optimizer update", { anchor: "middle", fill: COLORS.ink, size: labelSize });
+    const yLabelX = compact ? 18 : 20;
+    const yLabel = addText(travelChart, yLabelX, margin.top + innerH / 2, "full-loss gap (log scale)", { anchor: "middle", fill: COLORS.ink, size: labelSize });
+    yLabel.setAttribute("transform", `rotate(-90 ${yLabelX} ${margin.top + innerH / 2})`);
+
+    const thresholdY = yMap(0.5);
+    addLine(travelChart, margin.left, thresholdY, W - margin.right, thresholdY, { stroke: COLORS.muted, width: 1.5, dash: "7 7" });
+    addText(travelChart, W - margin.right - 6, thresholdY - 9, "useful region: gap < 0.5", { anchor: "end", fill: COLORS.muted, size: noteSize, weight: 650 });
+
+    const fastValues = [startGap, ...fastGaps.slice(0, 80)];
+    const slowValues = [startGap, ...slowGaps.slice(0, 80)];
+    const count = Math.min(80, reveal);
+    const fastPoints = fastValues.slice(0, count + 1).map((value, i) => [xMap(i), yMap(value)]);
+    const slowPoints = slowValues.slice(0, count + 1).map((value, i) => [xMap(i), yMap(value)]);
+    addPath(travelChart, fastPoints, { stroke: COLORS.accent, width: 3 });
+    addPath(travelChart, slowPoints, { stroke: COLORS.blue, width: 3 });
+
+    if (reveal >= 8) {
+      const x = xMap(8), y = yMap(fastGaps[7]);
+      addDot(travelChart, x, y, { fill: COLORS.accent, radius: 6 });
+      addText(travelChart, x + 12, y - 14, "crosses at update 8", { fill: COLORS.accent, size: labelSize, weight: 720 });
+    }
+    if (reveal >= 56) {
+      const x = xMap(56), y = yMap(slowGaps[55]);
+      addDot(travelChart, x, y, { fill: COLORS.blue, radius: 6 });
+      addText(travelChart, x + 12, y + 23, "crosses at update 56", { fill: COLORS.blue, size: labelSize, weight: 720 });
+    }
+
+    document.getElementById("travel-update").textContent = `update ${reveal} / 80`;
+    document.getElementById("fast-crossing").textContent = reveal >= 8 ? "update 8" : "not reached";
+    document.getElementById("slow-crossing").textContent = reveal >= 56 ? "update 56" : "not reached";
+  }
+
+  function contourPoints(gap, xMap, yMap) {
+    const scale = Math.sqrt(2 * gap);
+    const points = [];
+    for (let i = 0; i <= 160; i += 1) {
+      const angle = 2 * Math.PI * i / 160;
+      const u1 = scale * Math.cos(angle);
+      const u2 = scale * Math.sin(angle);
+      const d2 = u2 / Math.sqrt(1.25);
+      const d1 = u1 - 0.5 * d2;
+      points.push([xMap(THETA_STAR[0] + d1), yMap(THETA_STAR[1] + d2)]);
+    }
+    return points;
+  }
+
+  function starPath(cx, cy, outer = 10, inner = 4.5) {
+    const points = [];
+    for (let i = 0; i < 10; i += 1) {
+      const angle = -Math.PI / 2 + i * Math.PI / 5;
+      const radius = i % 2 ? inner : outer;
+      points.push([cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)]);
+    }
+    return points.map((point, i) => `${i ? "L" : "M"}${point[0].toFixed(2)},${point[1].toFixed(2)}`).join(" ") + " Z";
+  }
+
+  function drawSettle(update) {
+    settleChart.replaceChildren();
+    const compact = window.matchMedia("(max-width: 580px)").matches;
+    const W = compact ? 560 : 960, H = 500;
+    const tickSize = compact ? 16 : 12;
+    const labelSize = compact ? 18 : 13;
+    const noteSize = compact ? 15 : 12;
+    const margin = compact
+      ? { left: 70, right: 18, top: 28, bottom: 66 }
+      : { left: 76, right: 30, top: 28, bottom: 62 };
+    settleChart.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const xMin = 0.97, xMax = 1.23, yMin = 2.14, yMax = 2.42;
+    const innerW = W - margin.left - margin.right;
+    const innerH = H - margin.top - margin.bottom;
+    const xMap = value => margin.left + (value - xMin) / (xMax - xMin) * innerW;
+    const yMap = value => margin.top + (yMax - value) / (yMax - yMin) * innerH;
+
+    [1.00, 1.05, 1.10, 1.15, 1.20].forEach(value => {
+      const x = xMap(value);
+      addLine(settleChart, x, margin.top, x, H - margin.bottom);
+      addText(settleChart, x, H - margin.bottom + 29, value.toFixed(2), { anchor: "middle", mono: true, size: tickSize });
+    });
+    [2.15, 2.20, 2.25, 2.30, 2.35, 2.40].forEach(value => {
+      const y = yMap(value);
+      addLine(settleChart, margin.left, y, W - margin.right, y);
+      addText(settleChart, margin.left - 12, y, value.toFixed(2), { anchor: "end", baseline: "middle", mono: true, size: tickSize });
+    });
+    addLine(settleChart, margin.left, margin.top, margin.left, H - margin.bottom, { stroke: COLORS.muted, width: 1.2 });
+    addLine(settleChart, margin.left, H - margin.bottom, W - margin.right, H - margin.bottom, { stroke: COLORS.muted, width: 1.2 });
+
+    [0.0001, 0.0003, 0.001, 0.003, 0.01, 0.03].forEach(gap => {
+      addPath(settleChart, contourPoints(gap, xMap, yMap), { stroke: COLORS.muted, width: 1.1, opacity: 0.52 });
+    });
+
+    const start = 261;
+    const fixedPoints = fast.path.slice(start, update + 1).map(theta => [xMap(theta[0]), yMap(theta[1])]);
+    const decayPoints = decay.path.slice(start, update + 1).map(theta => [xMap(theta[0]), yMap(theta[1])]);
+    addPath(settleChart, fixedPoints, { stroke: COLORS.accent, width: 2.8, opacity: 0.92 });
+    addPath(settleChart, decayPoints, { stroke: COLORS.teal, width: 3.2, opacity: 0.96 });
+
+    const optimumX = xMap(THETA_STAR[0]), optimumY = yMap(THETA_STAR[1]);
+    settleChart.appendChild(svgElement("path", { d: starPath(optimumX, optimumY), fill: COLORS.red, stroke: COLORS.paper, "stroke-width": 1.5 }));
+    addText(settleChart, optimumX + 14, optimumY - 15, "least-squares optimum", { fill: COLORS.red, size: noteSize, weight: 700 });
+
+    const fixedCurrent = fast.path[update];
+    const decayCurrent = decay.path[update];
+    addDot(settleChart, xMap(fixedCurrent[0]), yMap(fixedCurrent[1]), { fill: COLORS.accent, radius: 6.5 });
+    addDot(settleChart, xMap(decayCurrent[0]), yMap(decayCurrent[1]), { fill: COLORS.teal, radius: 6.5 });
+
+    addText(settleChart, margin.left + innerW / 2, H - 15, "bias b", { anchor: "middle", fill: COLORS.ink, size: labelSize });
+    const yLabelX = compact ? 18 : 20;
+    const yLabel = addText(settleChart, yLabelX, margin.top + innerH / 2, "slope w", { anchor: "middle", fill: COLORS.ink, size: labelSize });
+    yLabel.setAttribute("transform", `rotate(-90 ${yLabelX} ${margin.top + innerH / 2})`);
+
+    const etaIndex = Math.max(0, update - 1);
+    document.getElementById("settle-update").textContent = `update ${update} / 360`;
+    document.getElementById("fixed-eta").textContent = "0.1000";
+    document.getElementById("decay-eta").textContent = (0.10 / (1 + 0.02 * etaIndex)).toFixed(4);
+    document.getElementById("fixed-distance").textContent = distance(fast.path, start, update).toFixed(3);
+    document.getElementById("decay-distance").textContent = distance(decay.path, start, update).toFixed(3);
+  }
+
+  function makePlayer({ range, playButton, resetButton, stepButton, backButton = null, min, max, interval, draw }) {
+    let timer = null;
+
+    function stop() {
+      if (timer !== null) window.clearInterval(timer);
+      timer = null;
+      playButton.textContent = "Play";
+    }
+
+    function setValue(value) {
+      const bounded = Math.max(min, Math.min(max, value));
+      range.value = String(bounded);
+      draw(bounded);
+      if (bounded === max) stop();
+    }
+
+    playButton.addEventListener("click", () => {
+      if (timer !== null) { stop(); return; }
+      if (Number(range.value) >= max) setValue(min);
+      playButton.textContent = "Pause";
+      timer = window.setInterval(() => setValue(Number(range.value) + 1), interval);
+    });
+    resetButton.addEventListener("click", () => { stop(); setValue(min); });
+    stepButton.addEventListener("click", () => { stop(); setValue(Number(range.value) + 1); });
+    if (backButton) backButton.addEventListener("click", () => { stop(); setValue(Number(range.value) - 1); });
+    range.addEventListener("input", () => { stop(); draw(Number(range.value)); });
+    return { stop, setValue };
+  }
+
+  const travelPlayer = makePlayer({
+    range: document.getElementById("travel-range"),
+    playButton: document.getElementById("travel-play"),
+    resetButton: document.getElementById("travel-reset"),
+    stepButton: document.getElementById("travel-step"),
+    min: 0, max: 80, interval: 90, draw: drawTravel
+  });
+
+  const settlePlayer = makePlayer({
+    range: document.getElementById("settle-range"),
+    playButton: document.getElementById("settle-play"),
+    resetButton: document.getElementById("settle-reset"),
+    stepButton: document.getElementById("settle-step"),
+    backButton: document.getElementById("settle-back"),
+    min: 261, max: 360, interval: 85, draw: drawSettle
+  });
+
+  const tabs = [document.getElementById("travel-tab"), document.getElementById("settle-tab")];
+  const panels = [document.getElementById("travel-panel"), document.getElementById("settle-panel")];
+  tabs.forEach((tab, selectedIndex) => {
+    tab.addEventListener("click", () => {
+      travelPlayer.stop();
+      settlePlayer.stop();
+      tabs.forEach((candidate, index) => candidate.setAttribute("aria-selected", String(index === selectedIndex)));
+      panels.forEach((panel, index) => { panel.hidden = index !== selectedIndex; });
+      if (selectedIndex === 0) drawTravel(Number(document.getElementById("travel-range").value));
+      else drawSettle(Number(document.getElementById("settle-range").value));
+    });
+    tab.addEventListener("keydown", event => {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      event.preventDefault();
+      const next = event.key === "ArrowRight" ? (selectedIndex + 1) % tabs.length : (selectedIndex + tabs.length - 1) % tabs.length;
+      tabs[next].focus();
+      tabs[next].click();
+    });
+  });
+
+  try {
+    verify();
+    verification.dataset.state = "ok";
+    verification.querySelector("span:last-child").textContent = "Deterministic checks passed: stream, crossings, late distances, and late loss gaps match the computed lecture figures.";
+  } catch (error) {
+    verification.dataset.state = "error";
+    verification.querySelector("span:last-child").textContent = `Numerical check failed: ${error.message}`;
+    console.error(error);
+  }
+
+  drawTravel(0);
+  drawSettle(261);
+
+  let redrawTimer = null;
+  window.addEventListener("resize", () => {
+    window.clearTimeout(redrawTimer);
+    redrawTimer = window.setTimeout(() => {
+      drawTravel(Number(document.getElementById("travel-range").value));
+      drawSettle(Number(document.getElementById("settle-range").value));
+    }, 120);
+  });
+})();
+</script>
+</body>
+</html>

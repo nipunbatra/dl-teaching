@@ -1,6 +1,6 @@
 # Lecture 5 · Optimization for Deep Learning · Teaching Guide
 
-*Instructor companion for the rebuilt public Lecture 5 deck and its four exact notebooks.*
+*Instructor companion for the rebuilt public Lecture 5 deck and its three exact notebooks.*
 
 ## The spine
 
@@ -14,25 +14,29 @@ Teach the lecture as one progressive diagnosis, not an optimizer catalogue:
 2. change only the data used per update: one example, then a minibatch;
 3. explain the centre and spread of that stochastic gradient estimator;
 4. derive a genuine ravine from a second, scaled-feature regression problem;
-5. introduce EWMA and momentum from a noisy-signal analogy, then verify the
-   repair on the actual ravine;
-6. ask whether feature standardization could remove this constructed failure,
-   state what momentum still addresses, and then introduce RMSProp and Adam;
-7. reduce late stochastic wandering with learning-rate decay;
-8. hold data, model, initialization, minibatches, and budget fixed on XOR while
-   changing only the optimizer; and
-9. handle positive, bounded, and simplex parameters by changing coordinates or
-   projecting.
+5. introduce EWMA from a noisy-signal analogy, contrast first-reading and
+   zero-start initialization on those same observations, then carry the idea of
+   empty memory into EWMA-form momentum and verify its effect on the ravine;
+6. answer the feature-standardization objection, then use a separate
+   standardized-but-correlated regression to show what can remain;
+7. build RMSProp from per-coordinate recent magnitude and Adam from first- and
+   second-raw-moment memories, normalizing Adam's two zero-start memories only
+   after the temperature and ordinary-momentum cases are understood;
+8. reduce late stochastic wandering with learning-rate decay; and
+9. motivate positive scales, bounded coefficients, Bernoulli probabilities, and
+   simplex weights from their models, then enforce them by changing coordinates
+   or, for simple closed sets, projecting.
 
-The three recurring model examples are deliberately small enough to calculate
+The two recurring model examples are deliberately small enough to calculate
 and plot exactly. The synthetic temperature sequence exists only to make EWMA
 intuitive before the signal becomes a gradient.
 
 ## Where it sits
 
 - **Retrieves Lectures 2–3:** the loss surface, gradient geometry, and the vanilla
-  update $\boldsymbol g_t=\nabla_{\boldsymbol\theta}\mathcal L(\boldsymbol\theta_t)$,
-  $\boldsymbol\theta_{t+1}=\boldsymbol\theta_t-\eta\boldsymbol g_t$.
+  update $\hat{\boldsymbol g}_t=\nabla_{\boldsymbol\theta}
+  \mathcal L_{\mathcal B_t}(\boldsymbol\theta_t)$,
+  $\boldsymbol\theta_{t+1}=\boldsymbol\theta_t-\eta\hat{\boldsymbol g}_t$.
 - **Builds directly on Lecture 4:** backprop computes the current batch gradient;
   this lecture turns that measurement into an update.
 - **Sets up Lecture 6:** initialization, activations, normalization, and residual
@@ -45,22 +49,54 @@ intuitive before the signal becomes a gradient.
 Keep the notation inherited from Lectures 1–3 visible throughout:
 
 - bold lowercase symbols are vectors: $\boldsymbol x_i$, $\boldsymbol\theta$,
-  $\boldsymbol g$, $\boldsymbol m$, $\boldsymbol s$, and
-  $\boldsymbol v$; $y_i$, $\hat y_i$, $\ell_i$, and $\mathcal L$ are scalars.
+  $\hat{\boldsymbol g}$, $\boldsymbol m$, and $\boldsymbol v$;
+  $y_i$, $\hat y_i$, $\ell_i$, and $\mathcal L$ are scalars.
   Example A intentionally uses a single scalar feature $x_i$;
 - bold uppercase symbols are matrices, such as the design matrix $\mathbf X$;
-- $\boldsymbol g_t=\nabla_{\boldsymbol\theta}\mathcal L(\boldsymbol\theta_t)$
-  is the exact full gradient, whereas $\hat{\boldsymbol g}_t$ is a sampled or
-  minibatch estimator evaluated at the same current parameters;
-- the optimizer clock is zero-based: parameters $\boldsymbol\theta_t$ produce
-  measurement $\boldsymbol g_t$ or
-  $\hat{\boldsymbol g}_t$, then state $\boldsymbol m_{t+1}$,
-  $\boldsymbol s_{t+1}$, or $\boldsymbol v_{t+1}$ and parameters at $t+1$;
-- $\epsilon_{\mathrm{opt}}$ stabilizes an optimizer denominator, whereas
-  $s_{\min}$ is a modelling floor in a positive parameterization; and
+- $\hat{\boldsymbol g}_t=\nabla_{\boldsymbol\theta}
+  \mathcal L_{\mathcal B_t}(\boldsymbol\theta_t)$ is the current gradient
+  measurement supplied to the optimizer. It may be full-batch or minibatch;
+  when $\mathcal B_t$ is the complete training set it equals the exact empirical
+  gradient $\boldsymbol g_t=\nabla_{\boldsymbol\theta}
+  \mathcal L(\boldsymbol\theta_t)$;
+- for conceptual momentum, $\boldsymbol m_t$ is the normalized EWMA state
+  $\boldsymbol m_{t+1}=\beta\boldsymbol m_t+
+  (1-\beta)\hat{\boldsymbol g}_t$, exactly matching the temperature recurrence.
+  PyTorch instead stores the unnormalized buffer
+  $\widetilde{\boldsymbol m}_{t+1}=\beta
+  \widetilde{\boldsymbol m}_t+\hat{\boldsymbol g}_t$, so
+  $\boldsymbol m=(1-\beta)\widetilde{\boldsymbol m}$ and its learning rate is
+  scaled accordingly. Adam also uses the conventional symbol
+  $\boldsymbol m_t$ for its signed first raw moment. $\boldsymbol v_t$ is
+  squared-gradient, second-raw-moment scale memory, used by RMSProp and Adam;
+  when Adam combines both memories, standalone momentum's $\beta$ is written
+  $\beta_1$, while RMSProp's $\beta_2$ carries over. The subscripts identify
+  the two roles; they do not imply equal numerical values;
+- the optimizer clock is zero-based and advances once per executed
+  `optimizer.step()`: parameters $\boldsymbol\theta_t$ produce measurement
+  $\hat{\boldsymbol g}_t$, then state $\boldsymbol m_{t+1}$ and/or
+  $\boldsymbol v_{t+1}$ and parameters at $t+1$. This is an update-clock
+  convention: an executed step still counts when a zero gradient produces no
+  numerical parameter change;
+- $\epsilon_{\mathrm{opt}}$ stabilizes an optimizer denominator; it is unrelated
+  to the primary positive-parameter convention $a=\log\sigma$,
+  $\sigma=\exp(a)$. Any small floor added to an alternative `softplus` map is a
+  separate modelling choice; and
 - the standalone temperature EWMA uses the standard one-based signal notation
-  $x_t\mapsto m_t$. Once that memory is coupled to an optimizer, return to the
-  zero-based measurement/next-state convention above.
+  $x_t\mapsto m_t$. The smoothing curves initialize at the first reading
+  $m_1=x_1$; the cold-start bridge deliberately reuses the same readings with
+  $m_0=0$, for which the observed-weight mass after day $t$ is $1-\beta^t$ and
+  $\widehat m_t=m_t/(1-\beta^t)$ removes only the artificial pull toward zero;
+- ordinary momentum carries its uncorrected EWMA state
+  $\boldsymbol m_{t+1}$ as optimizer dynamics. Although this zero-start state
+  initially has less than unit gradient weight, the optimizer deliberately
+  does not divide it by the missing mass. Hats on
+  $\widehat{\boldsymbol m}_{t+1}$ and
+  $\widehat{\boldsymbol v}_{t+1}$ are reserved for Adam's zero-start
+  corrections; they are not new stochastic-gradient estimators; and
+- once the scalar memory is coupled to an optimizer, return to the zero-based
+  clock above: measurement $\hat{\boldsymbol g}_t$ creates state $t+1$, so its
+  accumulated mass is $1-\beta^{t+1}$.
 
 ## What students should leave able to do
 
@@ -76,21 +112,27 @@ Students should be able to:
 - explain why minibatch averaging preserves the mean and reduces covariance;
 - derive the ravine loss in the original parameter coordinates from the
   displayed design matrix; distinguish its shallow and steep parameter
-  directions, overshoot, and oscillation; and explain what feature
-  standardization repairs;
-- expand an EWMA and explain the smoothness-versus-lag trade-off across
-  $\beta=.5,.9,.98$;
-- implement normalized momentum from scratch and recognize PyTorch's different
-  momentum-buffer convention;
-- explain RMSProp as coordinate-scale memory and Adam as direction plus scale
-  memory;
-- inspect `momentum_buffer`, `exp_avg`, and `exp_avg_sq`, and verify the displayed
-  RMSProp/Adam recurrences against PyTorch;
+  directions, overshoot, and oscillation; explain what feature standardization
+  repairs; and explain why unit variance does not remove feature correlation;
+- expand an EWMA, explain the smoothness-versus-lag trade-off across
+  $\beta=.5,.9,.98$, and calculate the missing weight mass created by
+  $m_0=0$ on the same temperature sequence;
+- implement EWMA-form momentum from scratch with the same conceptual learning
+  rate as GD, recognize PyTorch's unnormalized-buffer rate mapping as an
+  implementation detail, and distinguish ordinary momentum's uncorrected
+  dynamical state from Adam's explicitly corrected moment estimates;
+- explain RMSProp as an EWMA of squared gradients initialized with
+  $\boldsymbol v_0=\boldsymbol0$, with `square_avg` storing
+  $\boldsymbol v$ and ruler $\sqrt{\boldsymbol v}+\epsilon_{\mathrm{opt}}$;
+- explain Adam's signed first raw moment, squared second raw moment, and the
+  zero-start bias corrections before combining direction and scale;
+- inspect `momentum_buffer`, `square_avg`, `exp_avg`, and `exp_avg_sq`, and
+  verify the displayed RMSProp/Adam recurrences against PyTorch;
 - state which clock advances a learning-rate schedule;
-- design a controlled optimizer comparison that shares initialization,
-  minibatch order, model, loss, and update budget; and
-- choose reparameterization or projection for common constraints, including the
-  boundary trade-off.
+- turn positive, box-constrained, probability, and simplex problems into
+  unconstrained raw-parameter problems using log scale plus `exp`, affine
+  `sigmoid`, logits, and `softmax`; and choose projection instead when a simple
+  closed boundary is part of the model, including the optimizer-state caveat.
 
 ## Evidence language
 
@@ -99,13 +141,12 @@ Students should be able to:
 | Four-point line fit, gradients, losses, contours, and decay plots | **Constructed data; computed exactly** | “Every number and trajectory comes from the four displayed examples.” |
 | Batch-size averaging diagram | **Exact enumeration at one fixed parameter value** | “The arrows are computed from Example A, but the picture suppresses numbers to isolate the averaging intuition.” |
 | Individual and minibatch loss-surface sequence | **Exact losses and gradients at one shared parameter value** | “The deck separates surfaces from arrows, then shows the worked $B=1,2,4$ family; Notebook 00 exposes the underlying calculations.” |
-| Scaled-feature ravine | **Constructed regression; computed empirical loss** | “The ellipse is the loss of the displayed design matrix, not a decorative quadratic or a real-data benchmark.” |
-| Temperature sequence | **Fixed-seed synthetic signal** | “The same 120-day observations isolate EWMA's memory; only $\beta$ changes before we apply the idea to gradients.” |
+| Scaled-feature ravine and standardized-correlated control | **Constructed regressions; computed empirical losses** | “The first isolates unequal units; the second uses four exact rows whose feature variances are one but whose correlation is $4/5$, giving condition number $9$ and contour-axis ratio $3$.” |
+| Temperature sequence | **Fixed-seed synthetic signal; computed recurrence** | “The same 120-day observations isolate EWMA's memory. First only $\beta$ changes; then the first 12 readings are reused to compare $m_1=x_1$ with a raw and missing-mass-corrected zero start.” |
 | Estimator arrows and batch-spread plots | **Exact enumeration at one fixed parameter value** | “The centre and spread are computed over all displayed samples or subsets.” |
 | Optimizer-path comparison | **Mechanism demonstration** | “Rates are method-specific; this is not a leaderboard or universal ranking.” |
-| XOR loss curves and decision boundaries | **Seeded controlled mechanism demonstration** | “The four runs share initialization, minibatch order, model, loss, and 400-update budget; training accuracy is not generalization evidence.” |
 | Throughput and hardware statements | **Qualitative systems guidance** | “Actual wall-clock performance depends on vectorization, memory, and hardware.” |
-| Constraint maps and projected path | **Computed toy examples** | “They explain feasibility and chain-rule effects, not convergence guarantees for arbitrary constrained problems.” |
+| Feasible-set picture, constraint maps, and projected path | **Conceptual illustration plus computed toy examples** | “The picture introduces legal versus illegal values; every scalar transform and optimizer path is then computed. None is a convergence guarantee for arbitrary constrained problems.” |
 
 Use the deck tags as teaching cues: `[Q]` requires a prediction, `[D]` deserves at
 least one line of live mathematics, `[V]` should be read from the picture before
@@ -118,15 +159,14 @@ the caption, and `[I]` is a notebook or code checkpoint.
    - `notebooks/L05/00_full_batch_sgd_minibatch.ipynb`
    - `notebooks/L05/02_ewma_momentum.ipynb`
    - `notebooks/L05/03_adaptive_optimizers_constraints.ipynb`
-   - `notebooks/L05/04_xor_optimizer_lab.ipynb`
 3. Keep one board panel for the four-point line-fit gradients and one for the
    ravine loss, directions, and first overshooting step. Do not erase them when
    the optimizer names change.
 4. The course page uses Colab URLs on the public `master` branch. Until this
    worktree is published to that repository, use the local notebooks and do not
-   tell students that the four new Colab targets are live.
+   tell students that the three new Colab targets are live.
 
-## 80-minute canonical route through the 89-page handout
+## 80-minute canonical route through the 110-page handout
 
 This is the default live route. The labels implement the course timing contract:
 
@@ -138,9 +178,10 @@ This is the default live route. The labels implement the course timing contract:
 The page numbers below are physical PDF pages and count the title page.
 Separators are used only to pose the next failure; do not spend time reading them.
 
-The presentation PDF has 115 states because a few handout pages reveal in
-stages. Navigate by slide title, and finish all states carrying that title
-before advancing. The current physical-page/state synchronization is:
+The synchronized handout has 110 physical pages, and the rebuilt presentation
+has 128 states because a few handout pages reveal in stages. Navigate by slide
+title, and finish all states carrying that title before advancing. The final
+physical-page/state synchronization is:
 
 | Handout pages | Presentation states | Arc |
 |---|---:|---|
@@ -149,14 +190,14 @@ before advancing. The current physical-page/state synchronization is:
 | 5–16 | 7–33 | Full batch, SGD, and minibatches |
 | 17–19 | 34–36 | Batch-size comparison and PyTorch |
 | 20–30 | 37–48 | Loss surfaces and estimator reasoning |
-| 31–36 | 49–54 | Exact-gradient ravine |
-| 37–51 | 55–69 | EWMA and momentum |
-| 52–53 | 70–71 | Feature standardization |
-| 54–68 | 72–90 | RMSProp and Adam |
-| 69–74 | 91–98 | Learning-rate schedules |
-| 75–83 | 99–109 | XOR implementation bridge |
-| 84–87 | 110–113 | Constrained parameters |
-| 88–89 | 114–115 | Retrieval and synthesis |
+| 31–37 | 49–55 | Exact-gradient ravine |
+| 38–57 | 56–75 | EWMA and momentum |
+| 58–62 | 76–80 | Standardization and correlated control |
+| 63–75 | 81–93 | RMSProp |
+| 76–85 | 94–103 | Adam |
+| 86–93 | 104–111 | Learning-rate schedules |
+| 94–108 | 112–126 | Constrained parameters |
+| 109–110 | 127–128 | Retrieval and synthesis |
 
 ### 0–5 min · Pages 2–4 · bridge and recurring examples
 
@@ -164,9 +205,8 @@ before advancing. The current physical-page/state synchronization is:
   move.”** Separate the measured gradient from the optimizer's update state.
 - **[CORE] Page 3, “Outline.”** Read only the five verbs: choose, understand,
   expose, add, finish.
-- **[CORE] Page 4, “Three examples will keep the mechanisms concrete.”**
-  Establish Example A for sampling, Example B for geometry, and Example C for
-  the neural-network implementation check.
+- **[CORE] Page 4, “Two examples will keep the mechanisms concrete.”**
+  Establish Example A for sampling and Example B for geometry.
 
 ### 5–16 min · Pages 5–16 · full batch → SGD → minibatch
 
@@ -181,7 +221,7 @@ before advancing. The current physical-page/state synchronization is:
   “Example A: compute one full-batch gradient,” and “Average, then update.”**
   Keep parameter order $(b,w)$. At $\boldsymbol\theta_0=(2,-1)$ the residuals
   are $(4,1,-2,-6)$, the full gradient is
-  $\boldsymbol g_0=(-.75,-4.5)$, and $\eta=.10$ gives
+  $\hat{\boldsymbol g}_0=(-.75,-4.5)$, and $\eta=.10$ gives
   $\boldsymbol\theta_1=(2.075,-.55)$ with loss
   $7.125\rightarrow5.2153$.
 - **[SHOULD-COVER] Page 10, “One gradient step changes the fitted model.”**
@@ -227,8 +267,11 @@ before advancing. The current physical-page/state synchronization is:
   late motion depend on batch size, while actual throughput depends on hardware
   and implementation.
 - **[CORE] Page 19, “Choosing the batch size in PyTorch.”** Trace
-  `zero_grad → backward → step`. With gradient accumulation or a skipped step,
-  a microbatch/iteration need not be an optimizer update.
+  `zero_grad → backward → step`. With gradient accumulation, a
+  microbatch/iteration need not execute an optimizer step. An executed
+  `optimizer.step()` counts as an optimizer update even when a zero gradient
+  produces no numerical change; if the optimizer step itself is skipped, as on
+  an AMP overflow, there is no optimizer update.
 
 ### 23–33 min · Pages 20–30 · surfaces → directions → estimator
 
@@ -275,7 +318,7 @@ before advancing. The current physical-page/state synchronization is:
   averages.”** Run the 90-second Notebook 00 checkpoint listed below; leave
   nonuniform sampling and exact covariance variants for follow-along.
 
-### 33–41 min · Pages 31–36 · exact gradient and ravine geometry
+### 33–41 min · Pages 31–37 · exact gradient and ravine geometry
 
 - **[CORE] Page 31, “An exact gradient can still be slow.”** Close the sampling
   story: every update in Example B now uses the exact full-batch gradient. The
@@ -286,579 +329,462 @@ before advancing. The current physical-page/state synchronization is:
   original parameter coordinates: the optimum is
   $\boldsymbol\theta^\star=(1,-.5)$ and the displayed start is
   $\boldsymbol\theta_0=(-1.4,.35)$.
-- **[CORE] Page 33, “The $10\times$ feature creates a $100\times$ sensitive
-  direction.”** Obtain
+- **[CORE] Page 33, “A ravine is a long, narrow valley with steep walls.”**
+  Establish the physical picture before showing an equation: travel along the
+  valley is gradual, while a small sideways move climbs a steep wall. This is
+  the geometric problem that one global learning rate must handle.
+- **[CORE] Page 34, “The $10\times$ feature turns the loss into a ravine.”**
+  Read the exact three-dimensional loss surface first, then obtain
   $\mathcal L(\boldsymbol\theta)=
   \tfrac12(\theta_1-1)^2+50(\theta_2+.5)^2$ and
   $\nabla_{\boldsymbol\theta}\mathcal L=
   (\theta_1-1,100(\theta_2+.5))$. Define *curvature* before using it: it is how
   quickly the slope changes as a parameter moves. The feature factor $10$ is
   squared by the loss, so the $\theta_2$ direction is $100\times$ more
-  sensitive.
-- **[CORE] Page 34, “A ravine is a long, narrow low-loss valley.”** Name the
+  sensitive. Notebook 02 reproduces this exact 3-D surface rather than a
+  decorative surrogate.
+- **[CORE] Page 35, “Contours show the same surface from above.”** Connect
+  height on Page 34's surface to equal-loss contour lines, then name the
   geometry directly on the equal-aspect contour in parameter space. Moving
   horizontally in $\theta_1$ is the shallow direction; moving vertically in
   $\theta_2$ is the steep direction. “Along the valley” and “across the valley”
   are optional geometric descriptions, not additional coordinates students
   must track.
-- **[CORE] Page 35, “One correct step can overshoot across the valley.”** Work
-  $\boldsymbol g_0=(-2.4,85)$,
-  $\Delta\boldsymbol\theta_0=(.0456,-1.615)$, and
-  $\boldsymbol\theta_1=(-1.3544,-1.265)$ at $\eta=.019$. The gradient points
-  uphill and the update $-\eta\boldsymbol g_0$ points downhill; its second
-  component carries $\theta_2$ past the optimum $-.5$. Call this one crossing
-  *overshoot*, not yet oscillation.
-- **[CORE] Page 36, “The trade-off is visible in the computed paths.”** Compare
-  the actual full-batch paths at $\eta=.005$ and $.019$ under the same start
+- **[CORE] Page 36, “One correct step can overshoot across the valley.”** Work
+  $\hat{\boldsymbol g}_0=(-2.4,85)$,
+  $\Delta\boldsymbol\theta_0=-.0195\hat{\boldsymbol g}_0=(.0468,-1.6575)$, and
+  $\boldsymbol\theta_1=(-1.3532,-1.3075)$. The gradient points toward increasing
+  loss and the update $-\eta\hat{\boldsymbol g}_0$ points toward local decrease; its
+  second component carries $\theta_2$ past the optimum $-.5$. Call this one
+  crossing *overshoot*, not yet oscillation.
+- **[CORE] Page 37, “The trade-off is visible in the computed paths.”** Compare
+  the actual full-batch paths at $\eta=.005$ and $.0195$ under the same start
   and update budget. The smaller rate avoids the first crossing but moves
-  $\theta_1$ by only $.012$; the larger rate moves farther in the shallow
-  $\theta_1$ direction while overshooting in the steep $\theta_2$ direction.
+  $\theta_1$ by only $.012$; the larger rate moves $\theta_1$ by $.0468$ while
+  overshooting in the steep $\theta_2$ direction.
   One global rate creates the trade-off. Define
   *oscillation* here as repeated side-to-side crossings of the valley—not merely
   one overshoot. The evidence is computed on Example B, not a decorative path.
 
-### 41–55 min · Pages 37–51 · noisy signal → EWMA → momentum
+### 41–55 min · Pages 38–57 · noisy signal → EWMA → momentum
 
-- **[CORE] Page 37, “How can we smooth a noisy sequence?”** Use the separator
+- **[CORE] Page 38, “How can we smooth a noisy sequence?”** Use the separator
   only to pose the new problem. Do not introduce gradient notation yet.
-- **[CORE] Page 38, “Start with the noisy observations—not the formula.”** Read
-  the seeded 120-day temperature signal first. Define *memory* as one running
-  summary carried from one observation to the next; it does not store every
-  reading. The target is the changing trend, not tomorrow's forecast. If time
-  permits, open the [EWMA + momentum explorer](https://nipunbatra.github.io/dl-teaching/interactives/ewma-explorer.html):
+- **[CORE] Page 39, “Daily temperature readings are noisy.”** Read the seeded
+  120-day temperature signal before introducing a formula. One day may be
+  unusually warm or cool; the target is the slower changing trend. Define
+  *memory* as one running average carried from one observation to the next—it
+  does not store every reading. If time permits, open the
+  [EWMA + momentum explorer](https://nipunbatra.github.io/dl-teaching/interactives/ewma-explorer.html):
   move the day control first, then compare $\beta=.5,.9,.98$ while keeping the
   observations fixed. Use the sudden-change control only after students can
   name the basic smoothness–lag trade-off.
-- **[CORE] Page 39, “Short memory reacts quickly—and follows the noise.”** Before
+- **[CORE] Page 40, “Short memory reacts quickly—and follows the noise.”** Before
   reading the curve, define $\beta$ as the fraction of the *previous summary*
   retained. With $\beta=.5$, old summary and new observation receive equal
   weight, so the estimate reacts quickly but remains noisy.
-- **[CORE] Page 40, “More memory gives a useful compromise.”** Change only
+- **[CORE] Page 41, “More memory gives a useful compromise.”** Change only
   $\beta$ to $.9$: retain $90\%$ of the previous summary and add $10\%$ of the
   new reading. Ask students to identify both the reduced noise and the lag when
   the trend turns.
-- **[CORE] Page 41, “Too much memory becomes slow to respond.”** At
+- **[CORE] Page 42, “Too much memory becomes slow to respond.”** At
   $\beta=.98$, the curve is smoother but visibly lags. Larger $\beta$ means
   longer memory, not automatically a better estimate.
-- **[CORE] Page 42, “EWMA keeps one running memory $m_t$.”** Define $m_t$
+- **[CORE] Page 43, “EWMA keeps one running memory $m_t$.”** Define $m_t$
   explicitly as the running memory—the smoothed value after processing
   observation $x_t$. Only after the three curves write
   $m_t=\beta m_{t-1}+(1-\beta)x_t$. Work
   $.9(30)+.1(36)=30.6$, then unroll just enough to see weights
   $(1-\beta),(1-\beta)\beta,(1-\beta)\beta^2,\ldots$ and earn the name
   exponentially weighted moving average (EWMA).
-- **[CORE] Page 43, “Why ‘exponential’? Unroll the memory.”** Substitute the
-  recurrence for $m_{t-1}$ and then $m_{t-2}$. Point to the resulting weights
+- **[CORE] Page 44, “EWMA weights come from repeated substitution.”** Write the
+  recurrence at $t$ and $t-1$, then substitute the second expression into the
+  first. Point to the resulting weights
   $(1-\beta)$, $(1-\beta)\beta$, and $(1-\beta)\beta^2$ before stating the
   general weight $(1-\beta)\beta^k$ on $x_{t-k}$. For $\beta=.9$, read the
   concrete sequence `.100, .090, .081, .0729, ...`: each additional step into
   the past multiplies the weight by $.9$. This geometric decay earns the word
   *exponential*.
-- **[CORE] Page 44, “Same-direction pushes build speed; reversals cancel.”**
-  First use the shallow parameter component to make the slowdown concrete:
-  $g_{t,1}=\theta_{t,1}-1$, hence
-  $|\Delta\theta_{t,1}|=\eta|\theta_{t,1}-1|$. As the parameter approaches its
-  optimum value $1$, plain GD's next step shrinks because it uses only the
-  current gradient. Then read the computed two-panel component diagram from the
-  actual $\eta=.019$ full-batch path. The first gradient component keeps the
-  same sign, so retained measurements reinforce; the second component reverses
-  sign, so retained and current measurements partly cancel. Present the
-  rolling-ball analogy as intuition for accumulated direction, not a literal
-  force law or a guarantee of a downhill step. State that the displayed GD and
-  normalized-momentum rates have been matched to give the same first
-  displacement; otherwise “larger steps” would mix the memory mechanism with
-  an arbitrary learning-rate change. Map the temperature rule to
+- **[CORE] Page 45, “Starting from zero makes the first temperature estimate too
+  small.”** Keep the exact same fixed-seed temperature readings and $\beta=.9$;
+  change only the initialization. The earlier smoothing curves used $m_1=x_1$.
+  Now set $m_0=0$ and work the actual first reading:
+  $x_1=17.968^\circ\mathrm C$ gives
+  $m_1=.9(0)+.1(17.968)=1.7968^\circ\mathrm C\approx1.80^\circ\mathrm C$. Say explicitly that this is not a
+  plausible average of the readings: only $.1$ observation weight has arrived,
+  while $.9$ remains on the artificial initial zero.
+- **[CORE] Page 46, “Divide by the weight that has arrived.”** Sum the geometric
+  weights, $(1-\beta)\sum_{k=0}^{t-1}\beta^k=1-\beta^t$, then obtain
+  $\widehat m_1=1.7968/(1-.9)=17.968^\circ\mathrm C\approx17.97^\circ\mathrm C$. Call this *missing-mass
+  correction*: it removes initialization shrinkage, not observation noise.
+- **[CORE] Page 47, “Momentum: complete update rule.”** Replace the scalar
+  observation $x_t$ by the measured gradient $\boldsymbol g_t$ and return to
+  the optimizer clock. Write the full EWMA-form rule before substituting:
   $\boldsymbol m_{t+1}=\beta\boldsymbol m_t+
-  (1-\beta)\boldsymbol g_t$ for this exact-gradient example. The same optimizer
-  can instead receive a sampled $\hat{\boldsymbol g}_t$ from a minibatch.
-- **[CORE] Page 45, “Momentum update 1: there is no history yet.”** Keep the
-  first update entirely separate. Define $\boldsymbol m_t$ as the optimizer's
-  running memory of earlier gradients. Explain that
-  $\boldsymbol m_0=\boldsymbol0$ is a deliberate initial condition: before any
-  gradient has been observed there is no history to average and zero adds no
-  preferred direction. It is neither a measured gradient nor a learned
-  parameter. State the choices $\beta=.8$ and EWMA-form $\eta=.095$, but defer
-  the PyTorch conversion to Page 51. Begin from
-  $\boldsymbol\theta_0=(-1.4,.35)$, then read the
-  three boxes in order: measure
-  $\boldsymbol g_0=(-2.4,85)$; remember
-  $\boldsymbol m_1=.8\boldsymbol m_0+.2\boldsymbol g_0
-  =.2\boldsymbol g_0=(-.48,17)$; move to
-  $\boldsymbol\theta_1=(-1.3544,-1.265)$. Emphasize the immediate consequence:
-  $\beta$ cannot retain old history on update 1 because none exists. From
-  update 2 onward, $\boldsymbol m_t$ carries earlier gradients.
-- **[CORE] Page 46, “Momentum update 2: old and new directions can disagree.”**
-  Keep $\boldsymbol m_1$, remeasure
-  $\boldsymbol g_1=(-2.3544,-76.5)$ at the new point, and compute the two memory
-  components separately. In the first parameter component,
-  $-.384-.4709=-.8549$ reinforces; in the second parameter component,
-  $13.6-15.3=-1.7$ mostly cancels. Only then move to
-  $\boldsymbol\theta_2=(-1.2732,-1.1035)$. Close by naming the reusable loop:
-  *measure → remember → move*. The cancellation is substantial here, not a
-  guarantee of exact cancellation on every step. Reopen the browser explorer's
-  momentum view if students need to scrub these rows while watching the contour
-  path and memory arrow change together.
-- **[CORE] Page 47, “What changed in the second momentum step?”** Read the
-  three-panel visual left to right: the first move crosses the valley; the old
-  and new first-parameter contributions reinforce while the second-parameter
-  contributions nearly cancel; the resulting second-parameter move is much
-  smaller than plain GD's proposal at the same point. This is the graphical
-  version of Page 46's arithmetic.
-- **[CORE] Page 48, “Momentum travels farther in the same 55 updates.”** Read
-  the computed paths under the same start, first displacement, and 55 exact
-  gradient evaluations. Momentum still crosses the valley, but makes much more
-  progress in the shallow $\theta_1$ direction. Use crossings only as a
-  mechanism clue; the full loss on Page 49 is the outcome that matters.
-- **[CORE] Page 49, “Momentum is faster here—not downhill at every update.”**
-  First resolve the apparent surprise in the curves: both use exact
-  full-batch gradients, so momentum's sawtooth is not sampling noise. For plain
-  GD at $\eta=.019$, the two coordinates update as
-  $\theta_{t+1,1}-1=.981(\theta_{t,1}-1)$ and
-  $\theta_{t+1,2}+.5=-.9(\theta_{t,2}+.5)$; both squared errors shrink, so the
-  loss decreases on every displayed update. Momentum retains direction,
-  can cross the valley with stored motion, and therefore can increase the loss
-  on an individual update. Read the first concrete rise directly from the
-  plot: $\mathcal L_2=20.7943\rightarrow\mathcal L_3=24.9464$ as the steep
-  parameter moves from $\theta_{2,2}=-1.1035$ past the optimum to
-  $\theta_{3,2}=.17235$. Judge the falling envelope and final objective, not
-  stepwise monotonicity. On the identical 55-update
-  budget, plain GD ends at approximately `.349461`, whereas momentum ends at
-  `.00013619`. Momentum
-  remains below $\mathcal L=.1$ from update 26 onward. This is controlled
-  evidence on Example B, not a universal guarantee.
-- **[SHOULD-COVER] Page 50, “Under the hood: one memory tensor per parameter.”**
-  Read the short implementation as *measure → remember → move*. The current
-  gradient is recomputed; only `state` persists between updates.
-- **[CORE] Page 51, “PyTorch momentum uses the same training loop.”** Show
-  `SGD(lr=.019, momentum=.8)`, then connect PyTorch's buffer to the normalized
-  recurrence. Define $\boldsymbol v$ as PyTorch's stored `momentum_buffer`;
-  then $\boldsymbol m=(1-\beta)\boldsymbol v$ and
-  $\eta_{\mathrm{PT}}=(1-\beta)\eta=.019$. Use Notebook 02 to compare
-  $\beta=.5,.9,.98$, reproduce the two worked momentum updates, and inspect the
+  (1-\beta)\boldsymbol g_t$,
+  $\boldsymbol\theta_{t+1}=\boldsymbol\theta_t-\eta\boldsymbol m_{t+1}$, and
+  $\boldsymbol m_0=\boldsymbol0$. Use the same conceptual rate as plain GD,
+  $\eta=.0195$, and choose $\beta=.25$. Then substitute
+  $\boldsymbol g_0=(-2.4,85)$ to obtain
+  $\boldsymbol m_1=.75\boldsymbol g_0=(-1.8,63.75)$ and
+  $-\eta\boldsymbol m_1=(.0351,-1.243125)$. With an empty memory and no bias
+  correction, the first momentum move is therefore $75\%$ of the GD move at the
+  same $\eta$; this is a consequence to explain, not a difference to hide by
+  rescaling the rate. Adam later corrects two zero-start memories that are used
+  explicitly as moment estimates.
+- **[CORE] Pages 48–49, “First update: the same gradient, two update rules” and
+  “Updates 2 and 3: repeat the same three equations.”** Read the two update
+  rules before entering the table, then compare each row
+  horizontally. Both use $\eta=.0195$; momentum additionally uses $\beta=.25$.
+  Plain GD reaches $(-1.3532,-1.3075)$ with loss `35.371588`, while momentum
+  reaches $(-1.3649,-.893125)$ with loss `10.523739`. After update 2, plain GD is
+  at $(-1.307313,.267125)$ with loss `32.085884`, while momentum is at
+  $(-1.321538,-.628961)$ with loss `3.526316`. After update 3 the respective
+  points are $(-1.262320,-1.228769)$ and $(-1.276745,-.374315)$ with losses
+  `29.114240` and `3.381626`. Both loss sequences decrease at every row; the
+  first points differ because ordinary momentum uses its uncorrected zero-start
+  state.
+- **[CORE] Page 50, “Updates 4–6: the same learning rate, different moves.”** Each
+  method now evaluates a different current gradient because its parameter path
+  has already diverged. Read horizontally rather than turning the table into a
+  second derivation: plain GD's losses decrease
+  `26.426279 → 23.994575 → 21.794368`, while momentum's decrease
+  `2.493000 → 2.447849 → 2.303186`. Momentum is already lower at update 1
+  and remains lower through the displayed 55-update run. The comparison isolates
+  faster progress while preserving strict descent for both methods.
+- **[CORE] Page 51, “The same learning rate produces very different paths.”**
+  Read the computed contour only in the model's original
+  $(\theta_1,\theta_2)$ coordinates. The paths share only the starting point:
+  with the same $\eta$, zero-start momentum makes a smaller first move and then
+  carries its running memory. Use the numbered arrows to connect the rows on
+  Pages 48–50 to actual parameter movement—this is not a gradient-space plot.
+- **[CORE] Page 52, “Momentum update 2 in $\theta_1$: both pushes point
+  right.”** At the
+  momentum point $\boldsymbol\theta_1=(-1.3649,-.893125)$, isolate the first
+  coordinate: $m_{1,1}=-1.8$ and $g_{1,1}=-2.3649$. Convert the two terms of
+  $m_{2,1}=.25m_{1,1}+.75g_{1,1}$ into parameter moves. Stored history contributes
+  `+.0088`; the new gradient contributes `+.0346`; together they give `+.0434`
+  and hence $\theta_{2,1}=-1.321538$. The two pushes agree, so the memory keeps a
+  persistent rightward direction.
+- **[CORE] Page 53, “Update 2 in $\theta_2$: the old and new pushes nearly
+  cancel.”** Now isolate $m_{1,2}=63.75$ and $g_{1,2}=-39.3125$. Stored history
+  moves `-.3108`, while the reversed current gradient moves `+.5750`; the net is
+  only `+.2642`, giving $\theta_{2,2}=-.628961$. This move is about six times
+  smaller than plain GD's update-2 move in the steep coordinate. Combine the two
+  derived coordinates to recover
+  momentum's $\boldsymbol\theta_2=(-1.321538,-.628961)$, compare with the
+  Page 49 update-2 row, and reconnect both methods to Page 51's contour.
+- **[CORE] Page 54, “Momentum damps the steep-direction oscillation.”** Read
+  the computed paths under the same start, same $\eta=.0195$, and 55 exact
+  gradient evaluations. With displacements below $10^{-6}$ treated as numerical
+  jitter, plain GD makes 55 visible crossings and momentum makes 12. Momentum
+  also reduces across-valley travel from `31.1763` to `1.9751` while retaining
+  steady motion in the shallow $\theta_1$ direction. Treat these as mechanism
+  clues; the full loss on Page 55 is the outcome that matters.
+- **[CORE] Page 55, “Both losses fall; momentum remains lower.”** Both methods
+  use exact full-batch gradients and the same $\eta=.0195$. Both full-loss curves
+  decrease strictly on every displayed update, and momentum stays lower from
+  update 1. On the identical 55-update budget, plain GD ends at approximately
+  `.458144`, whereas momentum ends at `.329775`. This is controlled evidence on
+  Example B, not a universal guarantee.
+- **[SHOULD-COVER] Page 56, “Momentum is GD plus one running memory.”** Read the
+  two pure-Python functions side by side. Both functions name their step-size
+  argument `eta`, and this comparison passes the same value `.0195` to both.
+  Plain GD returns only the next parameters. Momentum
+  first blends the old memory with the current gradient, then returns both the
+  next parameters and the next memory. Initialize
+  `memory = [0.0] * len(theta)` once and reuse the returned list; do not reset it
+  inside the training loop. The gradient itself is still recomputed at every
+  update. Keep the order explicit:
+  $\boldsymbol g_t\to
+  \boldsymbol m_{t+1}=\beta\boldsymbol m_t+(1-\beta)
+  \boldsymbol g_t\to
+  \boldsymbol\theta_{t+1}=\boldsymbol\theta_t-\eta\boldsymbol m_{t+1}$.
+- **[CORE] Page 57, “PyTorch momentum uses the same training loop.”** Show
+  `SGD(lr=.014625, momentum=.25)` only after the conceptual recurrence is secure.
+  Define PyTorch's stored `momentum_buffer` as
+  $\widetilde{\boldsymbol m}_{t+1}=\beta
+  \widetilde{\boldsymbol m}_t+\boldsymbol g_t$. Then
+  $\boldsymbol m=(1-\beta)\widetilde{\boldsymbol m}$ and
+  $\eta_{\rm PT}=\eta(1-\beta)=.014625$. Present this as a library-convention
+  mapping, not as the conceptual comparison's motivation. Use Notebook 02 to
+  compare $\beta=.25,.5,.9$, reproduce the first six table rows, and inspect the
   actual `momentum_buffer`.
 
-### 55–57 min · Pages 52–53 · what preprocessing fixes—and what remains
+### 55–59 min · Pages 58–62 · what standardization fixes—and what remains
 
-- **[CORE] Page 52, “Could feature standardization fix this example? Yes.”**
-  Ask this only after students have seen momentum work. Use $z_2=x_2/10$ to
-  show the before/after geometry. In this constructed linear problem,
-  standardization removes the $100{:}1$ scale imbalance. Preserve the same
-  starting predictor: because $\phi_2=10\theta_2$, the parameter error relative
-  to the optimum changes from $(-2.4,.85)$ in $\boldsymbol\theta$ coordinates
-  to $(-2.4,8.5)$ in $\boldsymbol\phi$ coordinates. The figure gives both
-  plain-GD paths ten updates and labels their stable rates ($.019$ before,
-  $.35$ after); plain GD no longer needs momentum to repair this particular
-  feature-scaling failure.
-- **[CORE] Page 53, “Feature scaling helps; it does not make momentum
-  obsolete.”** Give the direct answer: normalize strongly mismatched input
-  features first. Momentum remains useful because deep networks can have
-  coupled, changing parameter-space directions, and minibatch gradients still
-  fluctuate after input scaling. Normalization changes geometry; momentum
-  changes how successive gradients are combined. They are complementary, not
-  competing repairs. State the experimental reset explicitly: Page 54 returns
-  to the original unscaled ravine only so RMSProp's coordinate-scale mechanism
-  remains visible.
+- **[CORE] Page 58, “Could feature standardization fix this example? Yes.”**
+  Ask the objection only after momentum has solved the raw-feature ravine. In
+  this deliberately scale-only example, $z_2=x_2/10$ changes curvature from
+  $(1,100)$ to $(1,1)$; plain GD no longer needs momentum for this failure.
+- **[CORE] Pages 59–62, exact four-row correlated control.** On “Four rows:
+  standardized, but still correlated,” display
+  $\mathbf X=[(-1,-7/5),(-1,-1/5),(1,1/5),(1,7/5)]$, use
+  $\boldsymbol\theta^\star=(1,0)$ and $y=x_1$, and verify that both columns
+  have mean zero and variance one while their correlation is $4/5=.8$. On
+  “Equal-sized moves change this loss by a factor of nine,” calculate
+  $\mathbf H=\mathbf X^\top\mathbf X/4=
+  \begin{bmatrix}1&4/5\\4/5&1\end{bmatrix}$ and compare
+  $\mathcal L(a,a)=\tfrac95a^2$ with
+  $\mathcal L(a,-a)=\tfrac15a^2$. Then use “The $9\times$ curvature difference
+  produces a tilted ravine” to read eigenvalues $.2$ and $1.8$, condition
+  number $9$, and contour-axis ratio $\sqrt9=3$. Finally, on “The same four
+  rows confirm that momentum can help,” use the same conceptual rate $\eta=1$
+  for GD and normalized-EWMA momentum, with $\beta=.25$. Compare both methods
+  over 18 exact updates; their first displacements intentionally differ because
+  momentum starts from empty memory. Their final losses are approximately
+  `1.62259e-4` and `8.35231e-6`,
+  respectively; both decrease strictly. The claim is narrow: standardization
+  fixes units, not correlation, minibatch fluctuation, or every changing
+  deep-network direction.
 
-### 57–66 min · Pages 54–68 · diagnose scale, then build RMSProp and Adam
+### 59–67 min · Pages 63–75 · build RMSProp from the remaining scale problem
 
-- **[CORE] Page 54, “One learning rate cannot fit both directions”.** Return
-  deliberately to the original unscaled Example B—not as recommended
-  preprocessing, but as a controlled way to isolate the optimizer mechanism.
-  The unresolved problem is one scalar $\eta$: a value large enough to move
-  along the shallow direction is unsafe across the steep direction.
-- **[CORE] Page 55, “The problem: one coordinate moves 35× farther”.** Use the
-  exact starting gradient $\boldsymbol g_0=(-2.4,85)$ and compute
-  $|g_{0,2}|/|g_{0,1}|=85/2.4\approx35.4$. Ask which coordinate should be
-  reduced more before proposing the mechanism. This is a coordinate-scale
-  diagnosis on the displayed loss, not a claim about every model.
-- **[CORE] Page 56, “RMSProp intuition: give each coordinate its own ruler”.**
-  Stay qualitative first: remember recent gradient *magnitude* separately in
-  each coordinate, then divide by that local ruler. Read the picture before any
-  recurrence: a historically large coordinate receives a smaller effective
-  step; a smaller one is not suppressed by the same amount.
-- **[CORE] Page 57, “The rule: remember squared magnitude, then rescale”.** Only
-  now write
-  $\boldsymbol s_{t+1}=\rho\boldsymbol s_t+(1-\rho)\hat{\boldsymbol g}_t^2$
-  and the elementwise update. Explain why squaring removes sign while retaining
-  scale, why the fading memory can adapt, and why
-  $\epsilon_{\mathrm{opt}}$ is a numerical denominator stabilizer.
-- **[CORE] Page 58, “Work one RMSProp update from start to finish”.** Follow the
-  exact Example B chain
-  $\boldsymbol\theta_0\to\boldsymbol g_0\to\boldsymbol s_1
-  \to\boldsymbol\theta_1$.
-  With $\rho=.9$, obtain $\boldsymbol s_1=(.576,722.5)$ and
-  $\boldsymbol g_0/\sqrt{\boldsymbol s_1}\approx(-3.162,3.162)$. Name the
-  $\sqrt{10}$ magnitude as zero-start inflation; with $\eta=.08$, finish at
-  $\boldsymbol\theta_1\approx(-1.1470,.0970)$. Standard PyTorch RMSProp does not
-  bias-correct this state.
-- **[CORE] Page 59, “Computed outcome: the ravine path straightens”.** Read the
-  computed path as evidence only after the diagnosis, intuition, and update.
-  The displayed run uses the same Example B loss with
-  $\eta=.08,\rho=.9,\epsilon_{\mathrm{opt}}=10^{-8}$ for 40 updates. Explain
-  the repaired geometry, while stating that the method-specific rate makes this
-  a mechanism demonstration rather than a universal superiority claim.
-- **[SHOULD-COVER] Page 60, “PyTorch stores the ruler as square_avg”.** Map
-  `square_avg` to $\boldsymbol s_{t+1}$ and inspect both that tensor and the
-  parameter update; matching only the final path is insufficient.
-- **[CORE] Page 61, “Adam: remember direction and scale”.** Use the separator
-  to pose the next repair: RMSProp addressed unequal coordinate scale, while
-  momentum addressed persistent versus alternating direction. Can one update
-  retain both memories?
-- **[CORE] Page 62, “Why combine them? the failures are different”.** Contrast
-  the two failures on Example B before introducing Adam: momentum smooths sign
-  but retains one global scale; RMSProp rescales coordinates but does not store
-  a signed direction. Avoid implying that either failure appears in every task.
-- **[CORE] Page 63, “Adam runs two memories in parallel”.** Map
-  $\hat{\boldsymbol g}_t$ to a signed first-moment state
-  $\boldsymbol m_{t+1}$ and a squared-magnitude second raw moment
-  $\boldsymbol v_{t+1}$. Call $\boldsymbol v$ a second raw moment, not a
-  variance, and keep the measurement/state/update clock explicit.
-- **[CORE] Page 64, “Zero-start correction makes early memories comparable”.**
-  Derive directly that zero-initialized EWMA weights have accumulated masses
-  $1-\beta_1^{t+1}$ and $1-\beta_2^{t+1}$. The sign-sized approximation is restricted to the
-  first corrected nonzero update from zero state, up to
-  $\epsilon_{\mathrm{opt}}$; it is not Adam's general behavior. For the actual
-  first Example B update shown, set $\eta=.10$ and omit $\epsilon_{\mathrm{opt}}$
-  only for the arithmetic: $\Delta\boldsymbol\theta_0=(.10,-.10)$ and
-  $\boldsymbol\theta_1=(-1.30,.25)$.
-- **[CORE] Page 65, “Same ravine, four optimizers”.** Read the shared
-  55-update evidence on exact Example B. Final losses are GD `.349461`,
-  normalized momentum `.000136190`, RMSProp `1.7248e-08`, and Adam `.062601`,
-  so the displayed order is
-  RMSProp $\ll$ momentum $<$ Adam $<$ GD. The method-specific settings remain
-  visible: GD $\eta=.019$; normalized momentum
-  $\eta=.095,\beta=.8$ (restricted PyTorch `lr=.019`); RMSProp
-  $\eta=.08,\rho=.9$; and Adam $\eta=.10,\beta=(.9,.999)$. Ask students to
-  explain each curve from the state its method stores, then state the limit of
-  the comparison: these selected rates and this controlled ravine illustrate
-  mechanisms; they do not establish a universal optimizer ranking.
-- **[SHOULD-COVER] Page 66, “PyTorch exposes exp_avg and exp_avg_sq”.** Map
-  `exp_avg` and `exp_avg_sq` to the two raw memories and inspect their correction
-  clock. Do not introduce optimizer variants here.
-- **[CORE] Page 67, “Choose state to match the failure”.** Require a symptom
-  before a method: no state for a cheap baseline, direction memory for rapid
-  alternation, scale memory for unequal coordinate magnitudes, and both only
-  when both diagnoses are supported. State what optimizer memory cannot repair:
-  a wrong objective, broken data, or a poor model.
-- **[CORE] Page 68, “Notebook 03: inspect every adaptive state”.** Run the
-  RMSProp/Adam checkpoint below. Students should reproduce the analytic first
-  update, inspect every carried state, and then read the computed paths.
+- **[CORE] Pages 63–66, separator through “Recent magnitude should control each
+  component's step.”** Return to the original unscaled Example B solely to
+  isolate the mechanism. On Page 64, retrieve the four rows and recompute
+  $\hat{\boldsymbol g}_0=(-2.4,85)$ from the displayed loss; derive the
+  $35.4\times$ component ratio and the corresponding update magnitudes at
+  $\eta=.0195$. Page 65 makes explicit that multiplying both components by one
+  learning rate cannot change this ratio. Then read the first five signed
+  gradients on Page 66: alternating signs can cancel in an ordinary average,
+  while squares retain evidence that a coordinate has been large.
+- **[CORE] Pages 67–68, “RMSProp uses a recent root-mean-square scale” and
+  “RMSProp: complete update rule.”** Earn each word in the name:
+  square, exponentially weighted mean, root, then propagate the scaled update.
+  Initialize $\boldsymbol v_0=\boldsymbol0$ and keep the operations elementwise:
+  $\boldsymbol v_{t+1}=\beta_2\boldsymbol v_t+(1-\beta_2)\hat{\boldsymbol g}_t^2$,
+  ruler $\boldsymbol r_{t+1}=\sqrt{\boldsymbol v_{t+1}}+\epsilon_{\rm opt}$,
+  then divide by $\boldsymbol r_{t+1}$. Name $\boldsymbol v$ as the
+  squared-gradient memory and $\boldsymbol r$ as the corresponding RMS scale;
+  defer the numerical meaning of the division to the scalar calculation next.
+- **[CORE] Pages 69–70, the scalar loss bridge.** Use
+  $\mathcal L(\theta)=\tfrac12\theta^2$, $\theta_0=2$, and $g_0=2$ to work one
+  complete update for plain GD, EWMA momentum, and RMSProp. Keep the loss,
+  starting point, current gradient, and $\eta=.10$ fixed. Read every
+  intermediate state—$m_1$, $v_1$, $r_1$, and $g_0/r_1$—before comparing the
+  new parameters and losses. This is a formula check, not an optimizer ranking.
+- **[CORE] Pages 71–72, the “First update” stages.** Build
+  $\boldsymbol v_1=(.576,722.5)$ and rulers $(.759,26.879)$ before dividing.
+  With $\eta=.08$, obtain the rescaled gradient $(-3.162,3.162)$ and
+  $\boldsymbol\theta_1=(-1.147,.097)$. Stress that equal first-step magnitudes
+  are a cold-start consequence of $\boldsymbol v_0=\boldsymbol0$, not RMSProp's general
+  behavior; standard PyTorch RMSProp does not bias-correct `square_avg`.
+- **[CORE] Page 73, “Second update: the history now matters.”** Recompute
+  $\hat{\boldsymbol g}_1=(-2.147,59.702)$, then obtain
+  $\boldsymbol v_2=(.979,1006.680)$, rulers $(.990,31.728)$, and unequal
+  rescaled components $(-2.170,1.882)$. This is the first displayed update in
+  which the scale contains two gradients.
+- **[SHOULD-COVER] Pages 74–75.** Read the vectorized GD/RMSProp functions side
+  by side. In PyTorch, `square_avg` stores $\boldsymbol v$ and the denominator is
+  `square_avg.sqrt() + eps`; PyTorch's argument `alpha` is the same retention
+  coefficient denoted $\beta_2$ in the lecture. Judge the method only on the computed path after
+  understanding the carried state; the method-specific rate is mechanism
+  evidence, not a leaderboard.
 
-### 66–70 min · Pages 69–74 · schedule and its clock
+### 67–73 min · Pages 76–85 · combine the two memories in Adam
 
-- **[CORE] Page 69, “Let the step size change with training.”** Use the
-  separator only to pose the conflict: early training needs travel, while late
-  training needs careful refinement.
-- **[CORE] Page 70, “One schedule has two jobs: travel early, refine late”.**
-  Teach the computed visual as two predictions, not a result table. First show
-  fixed large $\eta=.10$ and fixed small $\eta=.02$ and ask, “Which reaches a
-  full-loss gap below $.5$ first?” Reveal `8` updates for the large rate versus
-  `56` for the small rate; inverse-time decay
-  $\eta_t=.10/(1+.02t)$ also takes `8` because it starts at $.10$. Then ask,
-  “Which choice should refine most tightly late in training?” Over the final
-  100 updates, reveal mean full-loss gaps `.0040996` (large), `.0012871`
-  (small), and `.0002014` (decay). The corresponding final-99-transition path
-  lengths are `3.79448`, `.739121`, and `.520387`: fixed $.10$ keeps roaming,
-  fixed $.02$ refines more gently, and the decayed rate is tightest here. All
-  runs use Example A and the identical 360 sampled indices from seed 12. The
-  lesson is that decay gets both displayed behaviors—a large initial rate and a
-  smaller late rate—not that it universally beats every fixed schedule.
-- **[CORE] Page 71, “Decay shrinks late updates, so the path settles”.** Read
-  the visual strictly left to right as a causal chain. *What we choose:* fixed
-  $\eta=.10$ versus $\eta_t=.10/(1+.02t)$, which falls from `.100` to
-  `.0122249` over updates 0–359. Before revealing the middle panel, ask,
-  “What should change in the distance the parameters actually move late in
-  training?” *What it changes:* over the final 99 transitions, the summed
-  actual distances $\sum_t\lVert\Delta\boldsymbol\theta_t\rVert$ are
-  `3.79447982` (fixed) and `.520387237` (decay); the fixed distance is
-  `7.29165×` the decayed distance. *What we see:* connect that measured
-  reduction to the contour zoom:
-  the fixed-rate path keeps roaming while the decayed path settles more tightly
-  near the least-squares optimum. Both runs share Example A,
-  $\boldsymbol\theta_0$, seed 12, and the identical 360 sampled indices; only
-  the update-scale rule is changed. The resulting parameters and gradients can
-  then differ. This is controlled mechanism evidence, not a schedule benchmark.
-- **[CORE] Page 72, “One simple schedule is enough to understand the idea.”**
-  Derive the inverse-time form after students have seen its effect. Keep the
-  clock on optimizer updates.
-- **[CORE] Page 73, “PyTorch: implement the same update-clock schedule.”**
-  `optimizer.step()` uses $\eta_t$; `scheduler.step()` prepares
-  $\eta_{t+1}$. Under accumulation, advance only after an optimizer update.
-- **[SHOULD-COVER] Page 74, “Different schedules change the shape, not the
-  clock.”** Inverse-time, exponential, and cosine are shapes; the event counted
-  by $t$ must still be stated.
+- **[CORE] Pages 76–78, separator through “What does ‘moment’ mean here?”**
+  Ordinary momentum retains signed gradient history in a normalized EWMA;
+  RMSProp retains a recent mean square. Define the first raw moment
+  $\mathbb E[G]$ and second raw moment $\mathbb E[G^2]$ before saying that Adam
+  means *adaptive moment estimation*. In Adam, rename standalone momentum's
+  $\beta$ to $\beta_1$ and keep RMSProp's $\beta_2$. Adam combines a signed EWMA with a
+  squared-gradient EWMA, then explicitly corrects both for their missing
+  zero-start mass. Do not call the second raw moment a variance.
+- **[CORE] Pages 79–80, “Adam normalizes both zero-start memories” and “Adam:
+  complete update rule.”** Retrieve the temperature calculation before
+  writing Adam's correction. The temperature clock counted observations
+  $1,\ldots,t$, hence mass $1-\beta^t$; optimizer measurement
+  $\hat{\boldsymbol g}_t$ creates state $t+1$, hence mass
+  $1-\beta^{t+1}$. Initialize
+  $\boldsymbol m_0=\boldsymbol v_0=\boldsymbol0$, then divide by
+  $1-\beta_1^{t+1}$ and $1-\beta_2^{t+1}$. At the first update,
+  $\boldsymbol m_1=.1\boldsymbol g_0\to
+  \widehat{\boldsymbol m}_1=\boldsymbol g_0$ and
+  $\boldsymbol v_1=.001\boldsymbol g_0^2\to
+  \widehat{\boldsymbol v}_1=\boldsymbol g_0^2$. Adam corrects both because its
+  two memories use different $\beta$ values before they are combined. Ordinary
+  momentum above still uses its uncorrected state. This is initialization
+  correction—not correction of gradient-sampling noise or predictive-model
+  bias. Read the PyTorch tuple positionally: `betas=(.9, .999)` means
+  $(\beta_1,\beta_2)$, so the first value retains signed-gradient memory
+  $\boldsymbol m$ and the second retains squared-gradient memory
+  $\boldsymbol v$.
+- **[CORE] Pages 81–82, the two worked Adam updates.** On update 1, obtain
+  $\boldsymbol m_1=(-.24,8.5)$, $\boldsymbol v_1=(.00576,7.225)$ and the
+  corrected sign-scaled move $(.10,-.10)$. On update 2, both memories contain
+  history and the move is approximately $(.0999,-.0995)$.
+- **[SHOULD-COVER] Pages 83–85.** Trace the vectorized function with `step=1`
+  on its first call. Map `exp_avg` to $\boldsymbol m$ and `exp_avg_sq` to
+  $\boldsymbol v$. Use the four-path figure only to explain stored-state
+  mechanisms under method-specific rates, then use Notebook 03 to check every
+  parameter and state history against PyTorch to numerical precision.
 
-### 70–76 min · Pages 75–83 · controlled XOR implementation bridge
+### 73–80 min · Pages 86–93 · why and how the learning rate changes
 
-- **[CORE] Pages 75–77, “Optimizers on the XOR network,” “Example C: return
-  to Lecture 2's XOR task,” and “A controlled
-  mechanism demo—not a leaderboard.”** Fix the $2\rightarrow4$ tanh
-  $\rightarrow1$-logit network, BCE loss, initialization, minibatch sequence,
-  and 400-update budget. Only the optimizer changes.
-- **[CORE] Pages 78 and 80, “Same initialization, same 400 minibatches” and
-  “The PyTorch loop changes in one line.”** Use seed 2026 and shared size-2
-  batches. Rates are SGD $.25$, momentum SGD $.12$ with $\beta=.9$, RMSProp $.03$
-  with $\rho=.9$, and Adam $.03$ with $\beta=(.9,.999)$.
-- **[SHOULD-COVER] Page 79, “Same 100% training accuracy—different learned
-  boundaries.”** Read the boundaries as different fitted functions, not
-  generalization evidence.
-- **[CORE] Pages 81–82, “Checkpoint: what does the XOR result establish?” and
-  “Answer: the implementation bridge is the evidence.”** Answer C: each stored
-  state fits the same backward-pass loop.
-- **[CORE] Page 83, “Notebook 04 makes every control explicit.”** Run the
-  90-second shared-control checkpoint below.
+Budget seven minutes in the canonical class and eight to nine minutes in an
+extended delivery; spend any extra time on the six-shape comparison and the
+Notebook 03 scheduler trace, not by dropping the verbal close.
 
-### 76–79 min · Pages 84–87 · keep constrained models valid
+- **[CORE] Pages 86–87, separator and “One multiplier, every optimizer.”** Write
+  $\boldsymbol\theta_{t+1}=\boldsymbol\theta_t-\eta_t\boldsymbol d_t$ once.
+  The direction $\boldsymbol d_t$ may come from GD, momentum, RMSProp, or Adam;
+  the schedule changes the multiplier, so scheduling is not restricted to SGD.
+- **[CORE] Page 88, “Why decay is especially useful with stochastic
+  gradients.”** At the full-batch optimum the exact gradient is zero, but the
+  individual example gradients need not be. Full-batch GD therefore has no
+  persistent sampling noise at that point; a constant rate may be adequate
+  when it is stable. A stochastic update can keep moving, so its late step scale
+  matters directly.
+- **[CORE] Page 89, “A fixed learning rate forces a choice.”** Compare only the
+  two fixed-rate runs first. With the same seed-12 sampled-index stream, the
+  $.10$ run first crosses a full-loss gap of $.5$ after 8 updates, whereas the
+  $.02$ run takes 56. Say *first crossing*: neither curve is promised to remain
+  below the marker.
+- **[CORE] Pages 90–91, introduce decay and then inspect its late behaviour.**
+  Work $\eta_t=.10/(1+.02t)$ at $t=0,50,350$. The schedule begins with the same
+  $.10$ multiplier, so it preserves the 8-update first crossing. Then compare
+  only fixed $.10$ with decay over the final 99 transitions: `.520` versus
+  `3.794`, or about `14%` as much motion. Pair that shorter path with the lower
+  mean late full-loss gap, `.000201` versus `.004100`; a short path alone would
+  not establish useful refinement. The sampled-index stream and update
+  equations are fixed by design. The learning-rate policy is the intervention;
+  later gradients and optimizer states differ because the parameter paths
+  differ.
+  On Page 91, use the
+  [learning-rate schedule explorer](https://nipunbatra.github.io/dl-teaching/interactives/lr-schedule-explorer.html)
+  in two passes: **Travel early** compares the two fixed rates, then **Settle
+  late** compares fixed $.10$ with decay. Both views reuse Example A and the
+  same seed-12 sampled-index stream.
+- **[SHOULD-COVER] Page 92, “Six common schedule shapes.”** Name inverse-time,
+  exponential, linear, milestone, cosine, and warmup-plus-cosine as families,
+  not as a universal ranking or a requirement to use all six.
+- **[CORE] Page 93, “PyTorch: state the clock explicitly.”** In this deck
+  $t$ counts executed optimizer updates. Each executed `opt.step()` uses
+  $\eta_t$ and advances the clock even when a zero gradient causes no numerical
+  parameter change; the following `sched.step()` prepares $\eta_{t+1}$.
+  Accumulated microbatches do not advance this clock. If `opt.step()` is skipped,
+  for example after an AMP overflow, skip `sched.step()` too.
+- **[CORE, 20-second verbal close]** Even when the coda is not projected, end
+  the live class by retrieving the six decisions aloud: batch size controls
+  noise; momentum remembers direction; RMSProp remembers scale; Adam remembers
+  both; a schedule controls time; and a parameterization controls feasible
+  values.
 
-- **[CORE] Page 84, “Constrained parameters: keep every forward pass valid”.**
-  Use the separator only to change the question: optimization chooses a move,
-  but the model decides which parameter values are legal.
-- **[CORE] Page 85, “A valid optimizer step can produce an invalid model”.**
-  Work the Gaussian-scale counterexample before offering a repair. A scale must
-  satisfy $s>0$, yet from $s_0=.10$, gradient $10$, and $\eta=.02$, the ordinary
-  proposal is $\tilde s_1=.10-.02(10)=-.10$. The subtraction is a valid
-  optimizer operation; the proposed Gaussian is invalid. Ask students where
-  validity should be enforced: in the coordinates or after the proposal.
-- **[CORE] Page 86, “Reparameterize: optimize a raw value”.** Optimize an
-  unrestricted raw parameter and transform it inside every forward pass:
-  `softplus(raw_scale)+s_min` for a positive scale, `sigmoid(raw_logit)` for an
-  interior probability, and `softmax(raw_logits)` for interior simplex weights.
-  Autograd applies the chain rule back to the raw value. Finite raw values give
-  smooth interiors, not exact boundaries; saturation can make raw-coordinate
-  gradients small. Keep the modelling floor $s_{\min}$ distinct from
-  $\epsilon_{\mathrm{opt}}$, and read the minimal PyTorch code as
-  *raw parameter → transform → valid forward*.
-- **[CORE] Page 87, “Project when the boundary itself is valid”.** Use
-  projection only when a boundary such as zero is genuinely permitted. First
-  form the optimizer proposal
-  $\tilde{\boldsymbol\theta}_{t+1}=\boldsymbol\theta_t+
-  \Delta\boldsymbol\theta_t$, then apply
-  $\boldsymbol\theta_{t+1}=\Pi_{\mathcal C}
-  (\tilde{\boldsymbol\theta}_{t+1})$; `clamp_(min=0)` is the nonnegative scalar
-  case. Projection can reach the boundary but is nonsmooth, and the clamp does
-  not clear or rotate momentum/Adam state. Do not clamp a Gaussian scale to zero
-  when zero itself is invalid.
+### Post-80 follow-along coda · Pages 94–110 · constraints and synthesis
 
-### 79–80 min · Pages 88–89 · choose, compress, hand off
+- **[OPTIONAL] Pages 94–100, why the constraints exist.** Page 94 poses the
+  question and Page 95 shows an unconstrained proposal leaving the feasible set.
+  Page 96 motivates a strictly positive Gaussian noise scale for both a shared
+  homoskedastic model and an input-dependent heteroskedastic model. On Page 97,
+  work the actual Gaussian-NLL failure: residual $.05$, $\sigma_0=.10$,
+  gradient $7.5$, and $\eta=.02$ produce the invalid proposal
+  $\widetilde\sigma_1=-.05$. Pages 98–100 motivate, respectively, a blend
+  coefficient in a box, a Bernoulli probability, and coupled simplex weights.
+- **[OPTIONAL] Pages 101–108, four reparameterizations and a projection coda.**
+  Page 101 gives the common raw-parameter → transform → valid-model pattern.
+  Pages 102–105 then apply it without skipping a family: learn
+  $a=\log\sigma$ and use $\sigma=\exp(a)$; map a raw value into a box with an
+  affine sigmoid; train Bernoulli logits with a logits-based loss; and map one
+  logit per component through softmax. Pages 106–107 reserve projection for
+  simple closed constraints and show the PyTorch `clamp_` pattern, including the
+  fact that momentum/Adam state is not projected. Page 108 makes the
+  reparameterization-versus-projection choice explicit. Treat `softplus` only as
+  an alternative positive map, not the primary convention.
+- **[OPTIONAL] Pages 109–110, retrieval and synthesis.** Page 109 is only the
+  final separator. Page 110 is the written version of the 20-second verbal
+  retrieval used to close the core class.
 
-- **[CORE] Page 88, “Choose the repair that matches the symptom”.** Use the
-  separator as the final retrieval prompt: name the observed failure before
-  naming an optimizer or schedule.
-- **[CORE] Page 89, “Optimization in one view”.** Reconstruct the six decisions
-  aloud: examples per gradient, direction memory, coordinate scale, step size
-  over time, valid parameters, and fair evidence. End on the operating rule:
-  *start simple → diagnose one failure → add one mechanism → measure
-  again*. This is the sole final slide; do not append an optimizer catalogue or
-  reference-page tour.
+## 110-minute extended route through the same 110-page handout
 
-## 110-minute extended route through the same 89-page handout
+The extended route keeps the canonical order and spends the extra time on the
+worked states and notebook checks.
 
-The extended route keeps every **[CORE]** item, teaches all
-**[SHOULD-COVER]** items live, and uses the additional 30 minutes for fuller
-derivations and notebook evidence. The timings below are cumulative and total
-exactly 110 minutes.
+### 0–41 min · Pages 2–30 · gradient source, clocks, and estimators
 
-### 0–5 min · Pages 2–4 · bridge, outline, and three anchors
+Use the canonical route, but calculate every Example A row, derive
+$\mathbb E[f(X)]=\sum_x p(x)f(x)$ before substituting the SGD estimator, and
+run Notebook 00 for three minutes. Keep the uniform-sampling assumption explicit.
 
-Use the canonical opening unchanged. On Page 4, ask students to predict which
-example will answer sampling, geometry, and implementation questions.
+### 41–68 min · Pages 31–57 · ravine, EWMA, and momentum
 
-### 5–18 min · Pages 5–16 · define the clocks and derive all three data-per-update cases
+Derive the exact Example B loss from the four rows, connect its 3-D surface to
+the contour view, then use the same temperature observations to contrast
+$m_1=x_1$ with raw zero start $m_0=0$ and correction by $1-\beta^t$. Map that
+empty scalar memory to uncorrected optimizer momentum before working the first
+six GD/momentum updates. Preserve $\boldsymbol m_0=\boldsymbol0$, use the same
+conceptual $\eta=.0195$ for both methods with $\beta=.25$, and make the smaller
+first momentum move explicit before the coordinate-by-coordinate
+reinforcement/cancellation explanation. Finish with the 55-update computed
+evidence and the brief PyTorch `momentum_buffer` mapping.
 
-Work Pages 7–9 line by line and establish the clock vocabulary on Page 12. On
-Page 13 define what is random and state that the update follows $\ell_2$, not
-yet the average. On Page 14 contrast the highlighted sampled proposal with the
-three alternatives, then use Page 15 to total the four loss changes. Calculate
-the Page 16 two-example gradient. Use Page 10 to connect parameter space and
-prediction space.
+### 68–74 min · Pages 58–62 · standardization counterfactual and correlated control
 
-### 18–28 min · Pages 17–19 · averaging intuition, systems caveat, and PyTorch
+First show that $z_2=x_2/10$ removes the scale-only $100{:}1$ curvature.
+Then switch to the exact four-row control: both new feature variances are one,
+correlation is $.8$, and
+$\mathbf H=\begin{bmatrix}1&.8\\.8&1\end{bmatrix}$ has eigenvalues $.2$ and
+$1.8$, condition number $9$, and contour-axis ratio $3$. Compare 18 exact
+updates of GD and EWMA-form momentum at the same conceptual $\eta=1$, with
+$\beta=.25$ for momentum. Then require students to distinguish *standardized*
+from *uncorrelated*.
 
-Use Page 17 only for the fixed-parameter averaging intuition: directions fan
-out, then cluster, then collapse to the exact full-data direction. Use Page 18's
-qualitative table to compare update frequency, noise, and vectorization without
-turning the qualitative comparison into a wall-clock claim. On Page 19, add gradient
-accumulation only after the Page 12 epoch/iteration/update definitions are
-secure.
+### 74–88 min · Pages 63–75 · RMSProp from problem to evidence
 
-### 28–41 min · Pages 20–30 · estimator geometry, theorem, and Notebook 00
+Take Pages 63–75 in order: the Example B data-and-gradient recap, magnitude
+mismatch, why signed averaging is
+insufficient, square → mean → root, the scalar $\tfrac12\theta^2$ formula
+check, $\boldsymbol v_0=\boldsymbol0$, first
+scale build, first rescaled step, second update with history, vectorized
+implementation, and the computed ravine. In Notebook 03 inspect `square_avg`
+and verify the complete parameter/state histories to numerical precision.
+Explicitly say that `square_avg` stores $\boldsymbol v$, while the ruler is
+$\sqrt{\boldsymbol v}+\epsilon_{\rm opt}$.
 
-Use Pages 21–25 to move from rows to individual loss surfaces, update arrows,
-minibatch surfaces, and the arithmetic mean of update vectors. Only then define
-the estimator generically on Page 26:
-$\mathbb E[f(X)]=\sum_x p(x)f(x)$, with unbiasedness defined relative to a
-target. On Page 27, substitute $X=I_t$, $p(i)=1/N$, and
-$f(i)=\nabla_{\boldsymbol\theta}\ell_i(\boldsymbol\theta_t)$; define
-$\hat{\boldsymbol g}_t=f(I_t)=
-\nabla_{\boldsymbol\theta}\ell_{I_t}(\boldsymbol\theta_t)$ before deriving the
-uniform-sampling result.
-Read the qualitative spread diagram on Page 28 and revisit the uphill sampled
-step on Page 29. Spend three minutes at Page 30 executing Notebook 00;
-keep nonuniform sampling, exact subset spreads, and covariance variants there as
-optional extensions.
+### 88–99 min · Pages 76–85 · Adam's two raw moments
 
-### 41–53 min · Pages 31–36 · define the ravine and its learning-rate trade-off
+Define first and second raw moments before the optimizer name. Derive the two
+zero-start corrections by retrieving the temperature mass $1-\beta^t$, then
+changing clocks to optimizer state $t+1$ and mass $1-\beta^{t+1}$. Contrast
+Adam's two explicit corrections with ordinary momentum's uncorrected dynamics,
+then work both displayed updates. Map `exp_avg` and `exp_avg_sq` to the
+uncorrected memories and verify the full vectorized recurrence against PyTorch
+to numerical precision. Use the four-path panel to explain mechanisms, not to
+rank optimizers universally.
 
-Page 31 closes the sampling question: the full-batch gradient is exact, yet one
-global learning rate can still make poor progress. On Page 32, read the deliberate
-$\pm1$ versus $\pm10$ feature scales and stay in the original coordinates with
-$\boldsymbol\theta^\star=(1,-.5)$ and
-$\boldsymbol\theta_0=(-1.4,.35)$. On Page 33, derive
-$\mathcal L(\boldsymbol\theta)=
-\tfrac12(\theta_1-1)^2+50(\theta_2+.5)^2$ and
-$\nabla_{\boldsymbol\theta}\mathcal L=
-(\theta_1-1,100(\theta_2+.5))$, then define curvature in plain language as how
-quickly the slope changes as a parameter moves.
+### 99–107 min · Pages 86–93 · scheduling
 
-Page 34 supplies the geometry vocabulary before any later use: a *ravine* is a
-long, narrow low-loss valley; $\theta_1$ is the shallow parameter direction,
-while $\theta_2$ is the steep parameter direction. On Page 35, distinguish one
-*overshoot* from repeated oscillation while computing the exact $.019$ update.
-Page 36 compares the computed $.005$ and $.019$ paths directly: calming the
-steep $\theta_2$ move also slows progress in the shallow $\theta_1$ direction.
-Define *oscillation* as repeated side-to-side crossings under the shared update
-budget.
+Take the eight-page sequence in order. First separate the optimizer direction
+$\boldsymbol d_t$ from its multiplier $\eta_t$ and state that schedules can wrap
+GD, momentum, RMSProp, or Adam. Contrast the exact full-batch optimum with the
+nonzero per-example gradients that keep stochastic updates moving. Predict the
+early/late trade-off, derive $\eta_t=\eta_0/(1+dt)$, read both the early-threshold
+and last-99-transition comparisons, name the six schedule families without
+ranking them, and trace `opt.step(); sched.step()`. Here the displayed clock is
+executed optimizer updates: gradient accumulation does not advance it, while an
+executed `opt.step()` does even if a zero gradient leaves the parameter values
+unchanged. If AMP overflow or another guard skips `opt.step()`, skip
+`sched.step()` as well.
 
-### 53–68 min · Pages 37–51 · noisy temperature → EWMA → momentum and Notebook 02
+### 107–110 min · Pages 94–108 · four constraints, one reusable pattern
 
-Page 37 is the section question. On Page 38, read the seeded noisy temperature
-observations before any formula and define memory as one running summary carried
-between observations. On Page 39, define $\beta$ as the fraction of the previous
-summary retained and predict why $\beta=.5$ reacts quickly but stays noisy.
-Pages 40–41 change only $\beta$: $.9$ is a useful noise/lag compromise on this
-signal, while $.98$ is very smooth but responds too slowly. Students should
-articulate the trade-off before seeing the recurrence.
+Define $\mathcal C$ on Page 95, then name the model reason before each formula:
+Gaussian likelihood requires $\sigma>0$; an interpolation coefficient must stay
+in its box; a Bernoulli parameter must be a probability; and mixture/class
+weights must be nonnegative and sum to one. Work Page 97's invalid direct-scale
+step, then use Pages 101–105 to state the reusable repair: optimize an
+unrestricted raw value and reconstruct the valid model parameter inside every
+forward pass. Live-derive $a=\log\sigma$, $\sigma=\exp(a)$; assign the affine
+sigmoid, logits, and softmax calculations as immediate follow-along if time is
+tight. Close with Pages 106–108: projection is a simple alternative for closed
+boxes or nonnegative sets, but not the default for strict Gaussian scales or a
+simplex, and projected parameters do not reset stored optimizer state.
 
-Page 42 finally writes
-$m_t=\beta m_{t-1}+(1-\beta)x_t$ and works
-$.9(30)+.1(36)=30.6$. Page 43 gets the full unrolling: substitute twice, identify
-the weight $(1-\beta)\beta^k$ on $x_{t-k}$, and read the concrete $.9$ sequence.
-Keep these pages focused on smoothing; Adam introduces its initialization
-correction later.
+### Post-110 follow-along coda · Pages 109–110 · synthesis
 
-On Page 44, transfer the idea to the current gradient components: the first
-component keeps its sign and reinforces, whereas the second component changes
-sign and partly cancels. Page 45 performs only the zero-memory first update.
-Page 46 then
-remeasures at $\boldsymbol\theta_1=(-1.3544,-1.265)$ and computes reinforcement
-and cancellation component by component before naming
-*measure → remember → move*. The smaller second-component memory is specific
-computed evidence, not a promise of exact cancellation. Page 47 turns the same
-two updates into a graphical three-panel explanation before the longer-run
-comparison.
-
-Use Page 48's actual 55-gradient paths to inspect
-geometry, then Page 49's full-loss trace to judge success: momentum finishes at
-approximately `.00013619` versus GD `.349461` and remains below $.1$ after
-update 26. These are controlled Example B results, not a general superiority
-claim. On Page 50, trace the from-scratch memory tensor; on Page 51, map
-normalized $\eta=.095,\beta=.8$ to restricted PyTorch `lr=.019`, then spend
-three minutes in Notebook 02 comparing
-$\beta=.5,.9,.98$, reproducing both momentum updates, and inspecting the real
-`momentum_buffer` and path agreement.
-
-### 68–71 min · Pages 52–53 · test the preprocessing counterfactual
-
-Only now use Pages 52–53 to answer the preprocessing objection. Standardizing
-$x_2$ as $z_2=x_2/10$ removes the deliberately created $100{:}1$ imbalance, so
-plain GD no longer needs momentum for this particular linear feature-scaling
-failure. Then state why momentum is still relevant: deep networks can create
-coupled, changing parameter-space geometry, and minibatch gradients fluctuate
-even after input normalization. Preprocess poorly scaled inputs first; use
-optimizer memory for the remaining successive-gradient behavior. Page 54 then
-deliberately returns to the original unscaled ravine as a controlled mechanism
-experiment; do not present that reset as a preprocessing recommendation.
-
-### 71–85 min · Pages 54–68 · RMSProp, Adam, and Notebook 03
-
-Use Pages 54–55 to restate the failure before naming RMSProp: one global rate
-acts on an exact starting gradient whose coordinate magnitudes differ by
-$35.4\times$. On Page 56, have students propose a separate recent-magnitude
-“ruler” for each coordinate and read the intuition visual before Page 57's
-elementwise recurrence.
-
-Work the complete Example B chain
-$\boldsymbol\theta_0\to\boldsymbol g_0\to\boldsymbol s_1
-\to\boldsymbol\theta_1$ on
-Page 58, including the $\sqrt{10}$ zero-start inflation. Then read Page 59's
-actual 40-update ravine path as evidence that this repair straightens this
-computed trajectory; do not present the method-specific rate as a fair
-leaderboard. Inspect `square_avg` on Page 60.
-
-Page 61 poses Adam only after both ingredients are understood. On Page 62,
-students must state the distinct failures: momentum remembers signed direction
-but not coordinate scale; RMSProp remembers coordinate scale but not signed
-direction. Page 63 introduces the two raw memories, and Page 64 derives the
-accumulated-mass correction for both zero-initialized memories directly. With
-$\eta=.10$ and $\epsilon_{\mathrm{opt}}$ omitted only for this arithmetic, the
-first corrected Adam update is $\Delta\boldsymbol\theta_0=(.10,-.10)$ and
-$\boldsymbol\theta_1=(-1.30,.25)$.
-
-Use Page 65's shared 55-update Example B evidence to explain all four paths from
-the state each method stores. Read final losses
-`.349461, .000136190, 1.7248e-08, .062601` in method order
-GD, normalized momentum, RMSProp, Adam; the resulting order is
-RMSProp $\ll$ momentum $<$ Adam $<$ GD. Use the method-specific controls shown
-in the figure—especially normalized momentum $\eta=.095,\beta=.8$—and say
-explicitly that this controlled ravine illustrates mechanisms rather than
-ranking optimizers universally. Inspect `exp_avg` and `exp_avg_sq` on
-Page 66, use Page 67 to choose state only after a diagnosed failure, and spend
-three minutes at Page 68 reproducing the analytic states and framework checks
-in Notebook 03. The full progression is therefore problem → intuition →
-mathematics → worked update → computed evidence.
-
-### 85–91 min · Pages 69–74 · decay and explicit schedule clock
-
-On Page 70, ask the early-travel question before revealing `8, 56, 8` updates to
-reach a full-loss gap below $.5$ for fixed $.10$, fixed $.02$, and decay. Then
-ask the late-refinement question before revealing final-100 mean gaps
-`.0040996, .0012871, .0002014`. Use the final-99 path lengths
-`3.79448, .739121, .520387` only as supporting evidence for roaming versus
-tighter refinement. On Page 71, reveal the chain in order: the selected decay
-falls from `.100` to `.0122249`; the final-99 summed update distance falls from
-`3.79447982` to `.520387237` (the fixed path travels `7.29165×` as far); and the resulting late path
-settles more tightly in the contour zoom. Ask students to predict the middle
-panel before revealing it. The two runs share Example A, initialization, seed
-12, and all 360 sampled indices, but their later parameters and gradients can
-differ. Derive the inverse-time form on Page 72 and trace the exact
-`optimizer.step(); scheduler.step()` boundary on Page 73. Page 74 is a
-schedule-shape comparison, not optimizer-performance evidence.
-
-### 91–100 min · Pages 75–83 · controlled XOR lab
-
-State all controls on Pages 76–78, read the different Page 79 boundaries, and
-map the Page 80 optimizer constructors to the shared loop. Require the Page 81
-vote and Page 82 explanation. At Page 83, run three minutes of Notebook 04:
-verify the shared first four minibatches, all four 100% training accuracies, and
-one decision-boundary plot.
-
-### 100–106 min · Pages 84–87 · valid forwards by construction or projection
-
-Page 84 changes the question from *how to move* to *which values are legal*.
-On Page 85, calculate the Gaussian-scale proposal aloud:
-$s_0=.10$, $\nabla_s\mathcal L=10$, and $\eta=.02$ produce
-$\tilde s_1=-.10$. Require students to say why the optimizer arithmetic is
-valid but the model is not.
-
-On Page 86, trace *raw parameter → smooth transform → valid forward* for
-softplus, sigmoid, and softmax. State that these maps represent mathematical
-interiors for finite raw values and that autograd supplies the raw-coordinate
-chain rule; extreme finite-precision logits may still saturate numerically. On
-Page 87, use *proposal → projection* only when the boundary is part of the
-feasible set. Read the `clamp_` line, then state the stored-state caveat:
-projection changes the parameter but does not reconcile momentum or Adam
-buffers. Return to Notebook 03 at Page 87 to compare smooth positivity with an
-exact projected boundary and verify feasibility after every update.
-
-### 106–110 min · Pages 88–89 · retrieve the diagnosis, then synthesize
-
-On Page 88, ask pairs to name one observed symptom and the smallest matching
-repair without looking back. On Page 89, have the room rebuild all six cards:
-data per gradient, direction memory, coordinate scale, schedule, constraints,
-and controlled evidence. Finish by applying
-*start simple → diagnose → add one mechanism → measure again* to a new
-training symptom. There is no optional-extension or references block in the
-handout tail; keep named extensions in the guide or follow-along resources.
+Read the final six-part synthesis as the written counterpart of the canonical
+route's 20-second verbal retrieval.
 
 ## Current numeric control ledger
 
@@ -878,71 +804,117 @@ rate from an older offering or from another notebook panel.
    $34.4375,11.4791667,3.8263889,0$ for $B=1,2,3,4$. Independent
    with-replacement draws instead give $34.4375/B$, so $B=N$ need not be exact
    under that sampler.
-3. **Example B geometry and preprocessing · Pages 32–36 and 52–53:**
+3. **Example B geometry and preprocessing · Pages 32–37 and 58–62:**
    $\boldsymbol\theta^\star=(1,-.5)$,
    $\boldsymbol\theta_0=(-1.4,.35)$,
    $\mathcal L(\boldsymbol\theta)=
    \tfrac12(\theta_1-1)^2+50(\theta_2+.5)^2$, initial loss
    $\mathcal L(\boldsymbol\theta_0)=39.005$, and
    $\mathbf X^\top\mathbf X/N=\operatorname{diag}(1,100)$. The GD prediction
-   controls shown in the deck are $\eta=.005,.019$; Page 52 later standardizes
+   controls shown in the deck are $\eta=.005,.0195$; Page 58 later standardizes
    with $z_2=x_2/10$, producing curvature $(1,1)$ in the rescaled coordinates.
-4. **EWMA and momentum · Pages 37–51:** Page 38 introduces the fixed noisy
-   signal; Pages 39–41 compare $\beta=.5,.9,.98$; Page 42 introduces the EWMA
-   recurrence; Page 43 unrolls it; Pages 44–47 transfer that memory to gradients,
-   work the first two ravine updates, and visualize their reinforcement and
-   cancellation. Normalized momentum uses $\beta=.8$
-   and $\eta=.095$ for 55
-   updates; the equivalent restricted PyTorch setting is `lr=.019`, so the
-   first parameter displacement matches plain GD. The coupled sequence gives
-   $\boldsymbol m_1=(-.48,17)$ and
-   $\boldsymbol m_2=(-.85488,-1.7)$ after remeasuring at
-   $\boldsymbol\theta_1=(-1.3544,-1.265)$. The second gradient components nearly
-   cancel rather than cancelling exactly. Page 49 reports final loss
-   `.000136190` and shows that momentum remains below $\mathcal L=.1$ from
-   update 26 onward. Notebook 02 checks the PyTorch conversion and stored state.
-5. **RMSProp and Adam · Pages 54–68:** Page 54 deliberately returns to the
+   Pages 59–62 then switch to the exact four-row standardized-but-correlated
+   control
+   $\mathbf X=[(-1,-7/5),(-1,-1/5),(1,1/5),(1,7/5)]$ with
+   $\boldsymbol\theta^\star=(1,0)$ and $y=x_1$. Both feature variances are one,
+   correlation is $.8$, and
+   $\mathbf H=\begin{bmatrix}1&.8\\.8&1\end{bmatrix}$ has eigenvalues $.2$ and
+   $1.8$, condition number $9$, and contour-axis ratio $3$. With the same
+   conceptual $\eta=1$ for GD and EWMA-form momentum, $\beta=.25$ for momentum,
+   and an 18-update budget, final losses are approximately `1.62259e-4` for GD
+   and `8.35231e-6` for momentum; both curves decrease strictly.
+4. **EWMA and momentum · Pages 38–57:** Page 39 introduces the fixed noisy
+   signal; Pages 40–42 compare $\beta=.5,.9,.98$; Page 43 introduces the EWMA
+   recurrence; Page 44 derives its weights by repeated substitution. Pages
+   45–46 then reuse the first 12 readings at $\beta=.9$: the first reading is
+   $17.96810897$, raw zero-start state is $1.796810897$, observed weight mass is
+   $.1$, and the corrected value returns to $17.96810897$. The following
+   Page 47 transfers the idea of empty memory to momentum. Ordinary momentum
+   uses the same normalized EWMA form
+   $\boldsymbol m_{t+1}=.25\boldsymbol m_t+.75\boldsymbol g_t$ with
+   $\boldsymbol m_0=\boldsymbol0$. Both methods use the same conceptual
+   $\eta=.0195$. Consequently, the first momentum state is
+   $\boldsymbol m_1=.75\boldsymbol g_0=(-1.8,63.75)$ and the first momentum move
+   is $75\%$ of the plain-GD move; no matched-step rescaling is used.
+   Pages 48–49 compare the first three plain-GD and momentum updates numerically;
+   Page 50 extends the table through update 6, with plain-GD losses
+   `26.426279, 23.994575, 21.794368` and momentum losses
+   `2.493000, 2.447849, 2.303186`; Page 51 plots points 0–6 on the exact contour;
+   Page 52 shows reinforcement in $\theta_1$; and Page 53 shows cancellation in
+   $\theta_2$. EWMA-form momentum uses $\beta=.25$ and $\eta=.0195$ for 55
+   updates; the coupled sequence gives
+   $\boldsymbol m_1=(-1.8,63.75)$ and
+   $\boldsymbol m_2=(-2.223675,-13.546875)$ after remeasuring at
+   $\boldsymbol\theta_1=(-1.3649,-.893125)$. The second gradient components nearly
+   cancel rather than cancelling exactly. The third momentum state is
+   $\boldsymbol m_3=(-2.297073,-13.058789)$ and reaches
+   $\boldsymbol\theta_3=(-1.276745,-.374315)$. Both loss sequences are strictly
+   decreasing; momentum is lower from update 1. Across 55 updates, the path
+   figure shows 55 versus 12 visible/material crossings and across-valley travel
+   `31.1763` versus `1.9751` for GD and momentum, respectively. Page 55 reports
+   final losses `.458144` for GD and `.329775` for momentum.
+   Notebook 02 checks the EWMA recurrence, the PyTorch buffer/rate mapping,
+   parameter path, and stored `momentum_buffer`.
+5. **RMSProp and Adam · Pages 63–85:** Page 63 deliberately returns to the
    original unscaled ravine to isolate the optimizer mechanism; it is not a
-   preprocessing recommendation. Page 55 quantifies the $35.4\times$
-   coordinate-scale mismatch before Page 56 introduces a separate ruler per
-   coordinate. RMSProp uses
-   $\eta=.08,\rho=.9,\epsilon_{\mathrm{opt}}=10^{-8}$; Page 59 shows 40
-   updates. The four-method Page 65 control uses 55 updates: GD $.019$;
-   normalized momentum
-   $.095,\beta=.8$ (restricted PyTorch `lr=.019`); RMSProp $.08,\rho=.9$; Adam
-   $.10,\beta=(.9,.999)$. Final losses are
-   `.349461, .000136190, 1.7248e-08, .062601` in method order GD, momentum,
+   preprocessing recommendation. Page 64 retrieves the four Example B rows,
+   recomputes $\boldsymbol g_0=(-2.4,85)$, and derives the $35.4\times$
+   coordinate-scale mismatch; Page 65 visualizes why one global rate preserves
+   that mismatch. Pages 67–68 define RMSProp, Pages 69–70 compare one scalar
+   GD, momentum, and RMSProp update without skipping intermediate quantities,
+   Pages 71–73 work the first two two-coordinate updates from
+   $\boldsymbol v_0=\boldsymbol0$, and Page 74 maps the
+   state to vectorized code and PyTorch `square_avg`. RMSProp uses
+   $\eta=.08,\beta_2=.9,\epsilon_{\mathrm{opt}}=10^{-8}$; Page 75 shows 40
+   updates. Pages 76–83 build Adam's two raw moments, retrieve the same
+   missing-mass argument with the optimizer's $t+1$ state clock, apply the two
+   bias corrections, and then show two worked updates and vectorized
+   implementation. The four-method Page 84
+   control uses 55 updates: GD $.0195$; EWMA-form momentum
+   $.0195,\beta=.25$ (PyTorch `lr=.014625`); RMSProp $.08,\beta_2=.9$; Adam
+   $.10,\beta_1=.9,\beta_2=.999$. Final losses are
+   `.458144, .329775, 1.7248e-08, .062601` in method order GD, momentum,
    RMSProp, Adam, giving the order
-   RMSProp $\ll$ momentum $<$ Adam $<$ GD. Notebook 03 uses these same four
+   RMSProp $<$ Adam $<$ momentum $<$ GD. Notebook 03 uses these same four
    controls. These
    method-specific rates support a mechanism comparison, not a universal rank.
-6. **Schedule · Pages 70–74:** seed 12; the identical stream of 360 sampled
-   indices; fixed $\eta=.10$, fixed $\eta=.02$, and
-   $\eta_t=.10/(1+.02t)$. Updates to a full-loss gap below $.5$ are
-   `8, 56, 8`; final-100 mean gaps are
-   `.00409961145, .00128710162, .000201402373`; and final-99-transition path
-   lengths are `3.79448, .739121, .520387`, all in large/small/decay order.
-   Page 71 isolates fixed $.10$ versus decay: the rate ends at `.0122249`, and
-   fixed summed final-99 update distance is `7.29165×` the decayed distance.
-   The candidate and Notebook 03 advance $t$ once per optimizer update.
-7. **XOR · Pages 76–83:** seed 2026; $2\rightarrow4$ tanh
-   $\rightarrow1$ logit; one shared initialization; one shared sequence of 400
-   size-2 minibatches. Settings are SGD $.25$; momentum SGD $.12,\beta=.9$;
-   RMSProp $.03,\rho=.9,\epsilon_{\mathrm{opt}}=10^{-8}$; Adam
-   $.03,\beta=(.9,.999),\epsilon_{\mathrm{opt}}=10^{-8}$. Final full-data BCE
-   values are
-   $.09424,.006151,.005770,.03998$ respectively; every run reaches 100%
-   training accuracy. These are reproduction checks, not a ranking.
-8. **Constraints · Pages 85–87:** Page 85 uses a Gaussian scale
-   $s_0=.10$, gradient $10$, and $\eta=.02$, giving the invalid unconstrained
-   proposal $\tilde s_1=-.10$. Page 86's structural snippet maps with
-   `softplus(raw_scale)+1e-6`, `sigmoid(raw_probability)`, and
-   `softmax(simplex_logits)`; `1e-6` is the modelling floor $s_{\min}$, not
-   $\epsilon_{\mathrm{opt}}$. Page 87 forms the optimizer proposal before a
-   nonnegative `clamp_` and leaves stored optimizer state untouched. Notebook 03
-   checks one raw SGD step from $s=.10$ to `.098204`, the exact sigmoid/softmax
-   values, and a 35-step boundary comparison at $\eta=.25$: projection ends at
-   `0`, while softplus ends at `.109119`.
+6. **Schedule · Pages 86–93:** Page 87 writes every optimizer as a direction
+   $\boldsymbol d_t$ multiplied by $\eta_t$; Page 88 distinguishes an exact
+   full-batch optimum from persistent stochastic motion. Page 89 uses seed 12
+   and the identical stream of 360 sampled indices to isolate the fixed-rate
+   trade-off: the $.10$ and $.02$ runs first cross a full-loss gap of $.5$ after
+   `8` and `56` updates. Page 90 introduces
+   $\eta_t=.10/(1+.02t)$ and evaluates it at $t=0,50,350$. Page 91 then isolates
+   fixed $.10$ versus decay. Both first cross after 8 updates, but their
+   final-100 mean gaps are `.00409961145` and `.000201402373`, and their
+   final-99-transition path lengths are `3.79448` and `.520387`. The rate ends
+   at `.0122249`; fixed summed late motion is `7.29165×` the decayed motion.
+   The sampled indices and update equations are shared, but later gradients and
+   stored states differ because the parameter paths differ. Page 92 compares six schedule shapes without
+   ranking them. Page 93 and Notebook 03 advance $t$ once per executed
+   `optimizer.step()`, including a zero-gradient step with no numerical parameter
+   change; when the optimizer step is skipped, the scheduler step is skipped too.
+7. **Constraints · Pages 94–108:** Page 95 shows an unconstrained proposal
+   leaving the feasible set. Page 96 motivates $\sigma>0$ from homoskedastic and
+   heteroskedastic Gaussian likelihoods. Page 97 uses residual `.05`,
+   $\sigma_0=.10$, gradient `7.5`, and $\eta=.02$, giving the invalid direct
+   proposal $\widetilde\sigma_1=-.05$. Pages 98–100 motivate a blend coefficient
+   in $[0,1]$, a Bernoulli probability, and simplex-valued class or mixture
+   weights. Page 101 states the shared raw-coordinate pattern. Page 102 makes
+   the primary positive convention explicit: learn $a=\log\sigma$ and rebuild
+   $\sigma=\exp(a)$ in the forward pass; `softplus` is only an alternative.
+   Pages 103–105 use an affine sigmoid for a box, logits with
+   `binary_cross_entropy_with_logits` for Bernoulli data, and `softmax`/
+   `log_softmax` for simplex weights. Pages 106–107 give the ordinary proposal,
+   simple nonnegative/box projection, PyTorch `clamp_`, and the caveat that
+   projection leaves optimizer state untouched. Page 108 chooses between a
+   smooth interior and an exact closed boundary. Notebook 03 mirrors all four
+   cases: its Gaussian fit learns `mu=.0750`, `sigma=.7980`; its box fit recovers
+   `c=.7000`; its Bernoulli fit learns logit `1.0986` and probability `.7500`;
+   and its simplex fit returns approximately `[.2,.6,.2]` with sum one. In the
+   35-step box-boundary comparison at $\eta=.40$, projection reaches `1.0` while
+   the sigmoid parameterization remains at `.781698`. Pages 109–110 are the
+   final separator and six-part synthesis.
 
 ## Exact notebook checkpoints
 
@@ -956,7 +928,7 @@ extended route.
 1. **“Start with the full-data loss and gradient.”** Expect predictions
    `[3, 2, 1, 0]`, residuals
    `[4, 1, -2, -6]`, full gradient
-   $\boldsymbol g_0=$ `[-0.75, -4.5]`, new parameters
+   $\hat{\boldsymbol g}_0=$ `[-0.75, -4.5]`, new parameters
    $\boldsymbol\theta_1=$ `[2.075, -0.55]`, and loss
    `7.1250 → 5.2153`.
 2. **“Each example defines its own loss surface” and “One sampled SGD
@@ -970,7 +942,7 @@ extended route.
    exact target `[-0.75, -4.5]` rather than equalling it in a finite run.
 4. **“Minibatches preserve the mean and reduce spread.”** Enumerate every
    uniform subset at the fixed $\boldsymbol\theta_0$. For $B=1,2,4$, all three
-   means equal $\boldsymbol g_0$ and the RMS distances contract
+   means equal the exact full-batch target $\boldsymbol g_0$ and the RMS distances contract
    `5.868 → 3.388 → 0.000`. No optimizer update occurs inside this estimator
    comparison.
 5. **“One valid stochastic step need not lower the full loss.”** Verify
@@ -988,10 +960,10 @@ extended route.
 
 Colab: [`notebooks/L05/02_ewma_momentum.ipynb`](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L05/02_ewma_momentum.ipynb)
 
-Use at Page 51 for 90 seconds in the canonical route or three minutes in the
+Use at Page 57 for 90 seconds in the canonical route or three minutes in the
 extended route. In deck order, run the EWMA and momentum cells first; return to
-the notebook's feature-standardization checkpoint when the deck reaches Pages
-52–53.
+the scale-only standardization checkpoint at Page 58 and the separate
+standardized-correlated experiment at Pages 59–62.
 
 1. **“The ravine comes directly from the four rows.”** Read the executed table
    before the matrix summary. At $\boldsymbol\theta_0=(-1.4,.35)$ the predictions
@@ -1001,115 +973,166 @@ the notebook's feature-standardization checkpoint when the deck reaches Pages
    residuals,
    $\mathbf X^\top\mathbf X/N=\operatorname{diag}(1,100)$,
    $\boldsymbol g_0=$ `[-2.4, 85]`, and the full loss is `39.005`.
+   Then inspect the notebook's exact 3-D plot of
+   $\mathcal L(\theta_1,\theta_2)$ and connect its height to the contour levels
+   on Page 35; both views come from this same analytic objective.
 2. **“Build EWMA from three views of the same noisy signal.”** On the fixed-seed
    120-day temperature sequence, compare $\beta=.5,.9,.98$ with all smoothers
    initialized at the first reading. Predict responsiveness and lag before each
    reveal, then verify the worked $.9(30)+.1(36)=30.6$ update and the first
-   exponential weights $(1-\beta),(1-\beta)\beta,(1-\beta)\beta^2$. The
+   exponential weights $(1-\beta),(1-\beta)\beta,(1-\beta)\beta^2$. Reuse those
+   observations—do not generate a second signal—for the cold-start cell. With
+   $m_0=0$, $\beta=.9$, and $x_1=17.96810897$, verify
+   $m_1=1.796810897$, mass $1-\beta=.1$, and
+   $\widehat m_1=m_1/(1-\beta)=17.96810897$. Compare the raw and corrected
+   curves over the first 12 readings and state why neither operation removes
+   measurement noise. The
    [browser explorer](https://nipunbatra.github.io/dl-teaching/interactives/ewma-explorer.html)
    reproduces those same observations, exposes the two numerical terms in each
    selected update, and then applies the same memory to the computed ravine.
-3. **“Couple the momentum state to the path it actually creates.”** Use
-   $\beta=.8$ and EWMA-form $\eta=.095$; explain later why
-   $(1-\beta)\eta=.019$ matches the first displacement of plain GD and
-   restricted PyTorch momentum. Check that every next gradient is evaluated at
-   the parameters produced by the preceding memory. The first two states are
-   $\boldsymbol m_1=$ `[-.48, 17.]` and
-   $\boldsymbol m_2=$ `[-.85488, -1.7]`, with
-   $\boldsymbol\theta_1=$ `[-1.3544, -1.265]` and
-   $\boldsymbol\theta_2=$ `[-1.2731864, -1.1035]`. Read each row as
+3. **“Couple the momentum state to the path it actually creates.”** Use the full
+   recurrence $\boldsymbol m_{t+1}=\beta\boldsymbol m_t+
+   (1-\beta)\boldsymbol g_t$ with $\boldsymbol m_0=\boldsymbol0$. Before
+   inserting numbers, set the same conceptual $\eta=.0195$ for GD and momentum,
+   then choose $\beta=.25$. Thus
+   $\boldsymbol m_1=.75\boldsymbol g_0=(-1.8,63.75)$ and
+   $-\eta\boldsymbol m_1=(.0351,-1.243125)$: because the uncorrected memory is
+   initially empty, the first momentum displacement is $75\%$ of plain GD's.
+   Contrast this uncorrected optimizer state with the missing-mass-corrected
+   temperature average. Check that every next gradient is evaluated at the
+   parameters produced by the preceding memory. Read each row as
    $\boldsymbol\theta_t\to\boldsymbol g_t\to\boldsymbol m_{t+1}\to
-   \boldsymbol\theta_{t+1}$.
+   \boldsymbol\theta_{t+1}$. The exact first-six momentum states are
+   $\boldsymbol m_1=(-1.8,63.75)$,
+   $\boldsymbol m_2=(-2.223675,-13.546875)$,
+   $\boldsymbol m_3=(-2.297073,-13.058789)$,
+   $\boldsymbol m_4=(-2.281827,6.161711)$,
+   $\boldsymbol m_5=(-2.244644,1.955334)$, and
+   $\boldsymbol m_6=(-2.202520,-1.955936)$. They produce
+   $\boldsymbol\theta_1=(-1.3649,-.893125)$,
+   $\boldsymbol\theta_2=(-1.321538,-.628961)$,
+   $\boldsymbol\theta_3=(-1.276745,-.374315)$,
+   $\boldsymbol\theta_4=(-1.232250,-.494468)$,
+   $\boldsymbol\theta_5=(-1.188479,-.532597)$, and
+   $\boldsymbol\theta_6=(-1.145530,-.494456)$, with strictly decreasing losses
+   `10.523739, 3.526316, 3.381626, 2.493000, 2.447849, 2.303186`.
+   For plain GD, the corresponding first-six parameter points are
+   `(-1.3532,-1.3075)`, `(-1.307313,.267125)`,
+   `(-1.262320,-1.228769)`, `(-1.218205,.192330)`,
+   `(-1.174950,-1.157714)`, and `(-1.132538,.124828)`, with losses
+   `35.371588, 32.085884, 29.114240, 26.426279, 23.994575, 21.794368`.
 4. **“Judge momentum on the full objective.”** After 55 exact gradient
-   evaluations, expect final losses `0.349461` for GD at $.019$ and
-   `0.000136190` for normalized momentum at $.095,\beta=.8$. Momentum remains
-   below $\mathcal L=.1$ from update 26 onward. Plain GD is monotone on this
-   quadratic at the displayed rate; momentum's temporary loss increases come
-   from stored motion and overshoot, not minibatch noise. Do not replace this
-   objective evidence with a crossing count or a requirement that every update
-   lower the loss.
-5. **“Why PyTorch's `lr` looks different.”** Define PyTorch's unnormalized
-   `momentum_buffer`, then use
-   `lr_torch = lr_EWMA * (1 - beta) = .019`. Verify the full parameter path and
-   normalized buffer to numerical precision, and inspect `momentum_buffer`
-   rather than comparing only endpoints.
+   evaluations at the same $\eta=.0195$, expect final losses `0.458144` for GD
+   and `0.329775` for EWMA-form momentum with $\beta=.25$. Both losses decrease
+   strictly, and momentum is lower from update 1. The path check reports 55
+   versus 12 material crossings at tolerance $10^{-6}$ and across-valley travel
+   `31.176297` versus `1.975095`; use those as mechanism clues, while the full
+   objective remains the outcome.
+5. **“Map the EWMA state to PyTorch's buffer.”** Define PyTorch's
+   `momentum_buffer` by
+   $\widetilde{\boldsymbol m}_{t+1}=\beta
+   \widetilde{\boldsymbol m}_t+\boldsymbol g_t$. Then
+   $\boldsymbol m=(1-\beta)\widetilde{\boldsymbol m}$ and
+   `lr_torch = eta_EWMA * (1 - beta) = .014625`. Keep this as a brief
+   implementation note after the same-$\eta$ conceptual comparison. Verify the
+   full parameter path and mapped buffer state to numerical precision rather
+   than comparing only endpoints.
 6. **“Now test the preprocessing counterfactual.”** For the identical Example B
    start, predict whether $\theta_2$ crosses its optimum value $-.5$ under
-   $\eta=.005$ and $.019$, then compare the computed paths. Standardize with
+   $\eta=.005$ and $.0195$, then compare the computed paths. Standardize with
    $z_2=x_2/10$ and verify that the curvature changes from $(1,100)$ to $(1,1)$;
    remember that the corresponding learned coefficient is
    $\phi_2=10\theta_2$. This establishes why preprocessing fixes this particular
    ravine without claiming that every deep-network loss becomes round.
+7. **“Standardized does not mean uncorrelated.”** Switch to the separate exact
+   four-row control
+   $\mathbf X=[(-1,-7/5),(-1,-1/5),(1,1/5),(1,7/5)]$ with
+   $\boldsymbol\theta^\star=(1,0)$ and $y=x_1$. Verify zero means, unit
+   variances, correlation $.8$,
+   $\mathbf H=\begin{bmatrix}1&.8\\.8&1\end{bmatrix}$, eigenvalues `.2` and
+   `1.8`, condition number `9`, and contour-axis ratio `3`. Compare GD and
+   EWMA-form momentum at the same conceptual $\eta=1$, with $\beta=.25$ for
+   momentum. Over 18 exact updates both losses decrease strictly; final losses
+   are approximately `1.62259e-4` and `8.35231e-6`. Their first moves differ
+   because momentum uses its uncorrected zero-start memory. Do not mix these
+   parameters with raw-feature Example B.
 
 ### Notebook 03 · `03_adaptive_optimizers_constraints.ipynb`
 
 Colab: [`notebooks/L05/03_adaptive_optimizers_constraints.ipynb`](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L05/03_adaptive_optimizers_constraints.ipynb)
 
-Use at Page 68 for adaptive state, Page 73 for the schedule clock, and Page 87
-for constraints.
+Use at Page 85 for adaptive-state checks, Page 93 for the schedule clock, and
+Pages 97–108 for the worked constraint repairs. Pages 95–100 motivate all four
+constraint families before opening the corresponding notebook sections.
 
-1. **RMSProp first step.** Verify
-   $\boldsymbol s_1=$ `[0.576, 722.5]`,
-   $\boldsymbol g_0/\sqrt{\boldsymbol s_1}=$ `[-3.1623, 3.1623]`, and PyTorch
-   path agreement at `1.11e-16`. The scale-history error is `2.27e-13`.
-2. **Adam first step.** With $\eta=.10$ and $\epsilon_{\mathrm{opt}}$ omitted
-   only for the displayed arithmetic, predict the sign-sized update
-   $\Delta\boldsymbol\theta_0=$ `[0.10, -0.10]`, then obtain
-   $\boldsymbol\theta_1=$ `[-1.3, 0.25]`; the from-scratch and PyTorch paths agree
-   at approximately `8.33e-17`. Trace
-   $\hat{\boldsymbol g}_0\to(\boldsymbol m_1,\boldsymbol v_1)$ and the correction
-   denominators $1-\beta_1^1$, $1-\beta_2^1$. Inspect both `exp_avg` and
-   `exp_avg_sq`.
-3. **Mechanism comparison.** Read the four trajectories only after naming the
-   state each method stores. The notebook and Page 65 deck panel share 55
-   updates and report final losses `.349461, .000136190, 1.7248e-08, .062601`
-   in method order GD, normalized momentum, RMSProp, Adam, so
-   RMSProp $\ll$ momentum $<$ Adam $<$ GD on this run. The rates are
-   method-specific, including normalized momentum $.095,\beta=.8$ (restricted
-   PyTorch `lr=.019`), so neither source supports a universal ranking.
-4. **Decay.** With the same 360-index stochastic stream, predict and verify the
-   early threshold counts `8, 56, 8` for fixed $.10$, fixed $.02$, and
-   $.10/(1+.02t)$. Then verify final-100 mean full-loss gaps
-   `.00409961145, .00128710162, .000201402373` and final-99-transition path
-   lengths `3.79448, .739121, .520387`. For the Page 71 fixed-versus-decay
-   chain, verify the final decay rate `.0122249`, exact late distances
-   `3.79447982` and `.520387237`, and ratio `7.29165`. Check the first eight
-   scheduler rates and that the clock advances after `optimizer.step()`.
-5. **Constraint maps and boundary example.** Reproduce the Page 85 Gaussian
-   checkpoint $y=\mu$, $\mathcal L(s)=\log s$: from $s_0=.10$, gradient `10`,
-   and $\eta=.02$, obtain the invalid proposal `-.10`. Initialize the softplus
-   raw parameter to represent $s=.10$; one raw SGD step at `.02` yields
-   `s=.098204`, still positive. Also verify
-   `sigmoid(.4)=.598688` and
-   `softmax([.2,-.1,.7])=[.295025,.218560,.486415]`.
-6. **Projection versus a smooth interior.** For
-   $\min_{s\ge0}\tfrac12(s+1)^2$ from $s=2$, run 35 SGD updates at $\eta=.25$:
-   projection finishes at `0`, while the softplus parameterization finishes at
-   `.109119`. Name the projected sequence explicitly: optimizer proposal
-   $\tilde{\boldsymbol\theta}_{t+1}$ first, then
-   $\boldsymbol\theta_{t+1}=\Pi_{\mathcal C}
-   (\tilde{\boldsymbol\theta}_{t+1})$. Clamp only after `optimizer.step()`;
-   projection does not clear or rotate stored momentum/Adam state.
-
-### Notebook 04 · `04_xor_optimizer_lab.ipynb`
-
-Colab: [`notebooks/L05/04_xor_optimizer_lab.ipynb`](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L05/04_xor_optimizer_lab.ipynb)
-
-Use at Page 83 for 90 seconds in the canonical route or three minutes in the
-extended route.
-
-1. **Shared controls.** Verify seed `2026`, one copied initial state, 400 size-2
-   minibatches, and first four batches `[[1,2],[3,0],[3,0],[1,2]]`.
-2. **Controlled training runs.** Confirm the four displayed optimizer
-   constructors and the final losses `9.424e-2, 6.151e-3, 5.770e-3, 3.998e-2`.
-   All four runs reach 100% training accuracy.
-3. **Final decision boundaries.** Check that every boundary is evaluated on the
-   same grid. Different boundaries at identical training accuracy show different
-   fitted functions, not comparative generalization.
-4. **Read the evidence carefully.** The lab establishes that the same backward
-   pass can feed four update mechanisms under controlled conditions. It does not
-   establish that Adam, RMSProp, or momentum wins on another model, dataset,
-   budget, or validation metric.
+1. **RMSProp initialization and two updates.** Start from
+   $\boldsymbol v_0=\boldsymbol0$. Reproduce
+   $\boldsymbol v_1=(.576,722.5)$, rulers
+   $\sqrt{\boldsymbol v_1}=(.759,26.879)$, and the first rescaled gradient.
+   Then execute update 2 and confirm that its unequal rescaled magnitudes reflect
+   two-gradient history. State explicitly: PyTorch `square_avg` is
+   the stored $\boldsymbol v$; the denominator ruler is
+   `square_avg.sqrt() + eps`; the equal first-step magnitudes are a zero-start
+   effect only. Compare the complete scratch and PyTorch parameter/state
+   histories to numerical precision rather than citing a brittle exact
+   floating-point difference.
+2. **Adam's two raw moments.** Begin by retrieving the Notebook 02 temperature
+   result: $t$ one-based observations have mass $1-\beta^t$. Then return to the
+   zero-based optimizer clock, where measurement $\hat{\boldsymbol g}_t$ creates
+   state $t+1$ and mass $1-\beta^{t+1}$. With
+   $\boldsymbol m_0=\boldsymbol v_0=\boldsymbol0$, trace update 1 through
+   `exp_avg`, `exp_avg_sq`, both missing-mass corrections, and the sign-sized
+   first move. Explicitly contrast this with Notebook 02's uncorrected ordinary
+   momentum state. On update 2, show that both corrected memories now contain
+   history. Check the complete vectorized and PyTorch paths and both stored-state
+   histories to numerical precision.
+3. **Mechanism comparison.** Name the state before reading each trajectory: GD
+   none, momentum signed direction, RMSProp squared coordinate scale, Adam both.
+   Page 84 and the notebook share 55 exact-gradient updates and method-specific
+   rates; their final-loss order on this one ravine is mechanism evidence, not a
+   universal optimizer ranking. When discussing crossings, distinguish raw sign
+   flips from material crossings above the displayed numerical tolerance.
+4. **Learning-rate scheduling.** Reproduce the identical seed-12 sampled-index
+   stream and all three policies: fixed $.10$, fixed $.02$, and inverse-time
+   $\eta_t=.10/(1+.02t)$. At Page 88, verify why the exact full-batch method
+   stops at the optimum while individual sample gradients remain nonzero. At
+   Page 89, recover the two fixed-rate first crossings, `8` and `56`; Page 90
+   adds the decayed policy, whose first crossing is also `8`. At Page 91,
+   recover the fixed/decayed final-99 distances `3.79448` and `.520387` (the
+   notebook also retains the small-fixed diagnostic `.739121`). The learning-rate policy
+   is the controlled intervention, but later gradients and optimizer states are
+   path-dependent. At Page 93, inspect the scheduler rates and use the same
+   explicit clock as the deck: when `optimizer.step()` executes with $\eta_t$,
+   count one update and then call `scheduler.step()` to prepare $\eta_{t+1}$,
+   even if a zero gradient caused no numerical parameter change. If the optimizer
+   step is skipped, as on an AMP overflow, skip the scheduler step too.
+5. **Positive Gaussian scale.** Reproduce Page 97's direct-scale failure from
+   the actual Gaussian NLL: residual `.05`, $\sigma_0=.10$, gradient `7.5`, and
+   $\eta=.02$ give $\widetilde\sigma_1=-.05$. Then optimize the unrestricted
+   log-scale $a$ and rebuild $\sigma=\exp(a)$ inside every forward pass. The
+   tiny homoskedastic fit should learn `mu=.0750` and `sigma=.7980`, matching the
+   closed-form check; explain that a heteroskedastic network produces one
+   $a(x_i)$ and therefore one positive $\sigma_i$ per input. Mention `softplus`
+   only as an alternative positive map.
+6. **Box, probability, and simplex maps.** Match Pages 103–105. The affine
+   sigmoid experiment should keep all 160 displayed blend coefficients in
+   $(0,1)$ and recover `c=.7000`. The Bernoulli experiment should learn logit
+   `1.0986`, whose sigmoid is `.7500`; emphasize that training uses
+   `BCEWithLogitsLoss`. The three-class experiment should return weights close
+   to `[.2,.6,.2]` and sum to one; categorical training uses `log_softmax` rather
+   than taking `log(softmax(...))` manually. Then run the separate
+   mixture-density cell: logits `(0, log 2, 0)` give weights
+   `[.25,.50,.25]`, and
+   `logsumexp(log_weights + component_log_prob)` gives finite NLL `1.0679` on
+   the displayed observations.
+7. **Projection versus a smooth interior.** For Pages 106–108, form the ordinary
+   proposal first and project second for the closed interval $[0,1]$. With
+   $\eta=.40$ for 35 updates, projection reaches the boundary optimum `1.0`,
+   while the affine-sigmoid parameterization remains at `.781698`. Clamp only
+   after `optimizer.step()` under `torch.no_grad()`, and note that momentum/Adam
+   state is not projected or reset. Use projection only for simple closed convex
+   sets here; a strict Gaussian scale and simplex are clearer through `exp` and
+   `softmax`.
 
 ## Board derivations worth preserving
 
@@ -1127,23 +1150,42 @@ extended route.
    a fresh uniform draw at fixed $\boldsymbol\theta_t$:
    $\mathbb E[\hat{\boldsymbol g}_t\mid\boldsymbol\theta_t]=
    \boldsymbol g_t$.
-4. **[SHOULD-COVER] EWMA:** the concrete
+4. **[SHOULD-COVER] EWMA and missing mass:** the concrete
    $.9(30)+.1(36)=30.6$ blend followed by the three-term exponential expansion.
-5. **[SHOULD-COVER] Momentum:** under the deck control
-   $\beta=.8,\eta=.095$, compute
-   $\boldsymbol m_1=(-.48,17)$ and
-   $\boldsymbol m_2=(-.85488,-1.7)$ after remeasuring
-   $\boldsymbol g_1$ at $\boldsymbol\theta_1=(-1.3544,-1.265)$.
+   On the same fixed-seed readings, switch from $m_1=x_1$ to $m_0=0$ and derive
+   $(1-\beta)\sum_{k=0}^{t-1}\beta^k=1-\beta^t$; verify
+   $1.7968/(1-.9)=17.9681$ on day 1.
+5. **[SHOULD-COVER] Uncorrected momentum:** under the deck control
+   first write
+   $\boldsymbol m_{t+1}=\beta\boldsymbol m_t+
+   (1-\beta)\boldsymbol g_t$ and
+   $\boldsymbol\theta_{t+1}=\boldsymbol\theta_t-\eta\boldsymbol m_{t+1}$.
+   Use the same conceptual $\eta=.0195$ as GD, set $\beta=.25$, and compute
+   $\boldsymbol m_1=(-1.8,63.75)$ and
+   $\boldsymbol\theta_1=(-1.3649,-.893125)$. After remeasuring
+   $\boldsymbol g_1=(-2.3649,-39.3125)$, compute
+   $\boldsymbol m_2=(-2.223675,-13.546875)$ and
+   $\boldsymbol\theta_2=(-1.321538,-.628961)$. State that ordinary momentum
+   applies the uncorrected EWMA state directly, so its first move is $75\%$ of
+   GD's at the same $\eta$; no Adam-style bias correction or matched-step
+   rescaling is used.
 6. **[SHOULD-COVER] RMSProp:** one complete elementwise scale calculation,
-   $\boldsymbol\theta_0\to\boldsymbol g_0\to\boldsymbol s_1
-   \to\boldsymbol\theta_1$, including the
-   $\sqrt{10}$ cold-start magnitude.
-7. **[SHOULD-COVER] Adam:** the bias-corrected first update and its restricted
-   sign-sized interpretation, with $\boldsymbol m_{t+1}$ and
-   $\boldsymbol v_{t+1}$ corrected by exponents $t+1$.
+   $\boldsymbol\theta_0\to\boldsymbol g_0\to\boldsymbol v_1
+   \to\boldsymbol\theta_1$, including the $\sqrt{10}$ cold-start magnitude,
+   followed by $\boldsymbol v_2$ to show how the second update contains genuine
+   history and no longer equalizes the rescaled magnitudes.
+7. **[SHOULD-COVER] Adam:** translate the temperature mass $1-\beta^t$ to the
+   optimizer's state clock $1-\beta^{t+1}$, then perform the bias-corrected first
+   update and its restricted sign-sized interpretation. Correct
+   $\boldsymbol m_{t+1}$ and $\boldsymbol v_{t+1}$ separately because
+   $\beta_1\ne\beta_2$.
 8. **[OPTIONAL] Sampler covariance:** independent draws versus the
    finite-population correction.
-9. **[OPTIONAL] Constraint chain rule:** one softplus raw-coordinate gradient.
+9. **[OPTIONAL] Constraint chain rule:** with $a=\log\sigma$ and
+   $\sigma=\exp(a)$, show
+   $\partial\mathcal L/\partial a=(\partial\mathcal L/\partial\sigma)\sigma$;
+   compare this valid raw-coordinate update with Page 97's invalid direct-scale
+   proposal.
 
 ## Common misconceptions and repairs
 
@@ -1151,13 +1193,29 @@ extended route.
   direction under the chosen coordinates; one global rate may still zigzag in a
   ravine.
 - **“Feature standardization makes momentum unnecessary.”** It removes the
-  deliberately created $100{:}1$ input-scale imbalance in Example B. It does not
-  remove all coupled, changing parameter-space geometry or minibatch
-  fluctuation in a deep network; normalization and momentum address different
-  parts of the problem.
+  deliberately created $100{:}1$ input-scale imbalance in Example B. The
+  separate Pages 59–62 exact four-row control has unit feature variances but
+  correlation $.8$; its curvature eigenvalues are $.2$ and $1.8$, condition
+  number $9$, and contour-axis ratio $3$, so standardization has not made that
+  loss round.
+  It also does not remove changing deep-network geometry or minibatch
+  fluctuation; normalization and momentum address different parts of the
+  problem.
 - **“A larger $\beta$ is always better.”** It smooths more history but responds
   more slowly when the underlying direction changes. The $.5,.9,.98$
   temperature sequence makes that lag visible before gradients are involved.
+- **“Setting $m_0=0$ says the initial temperature or gradient is zero.”** Zero is
+  an empty memory, not an observed value. On the temperature example it leaves
+  only $1-\beta^t$ total weight on readings after day $t$; dividing by that mass
+  removes the artificial attraction to zero but does not denoise the readings.
+- **“Ordinary momentum should use Adam's bias correction.”** In this lecture,
+  ordinary momentum deliberately applies the uncorrected EWMA state
+  $\boldsymbol m_{t+1}=\beta\boldsymbol m_t+
+  (1-\beta)\boldsymbol g_t$ as optimizer dynamics. The conceptual comparison
+  gives GD and momentum the same $\eta=.0195$; the smaller first momentum move
+  is the honest effect of empty memory. Adam instead treats two differently
+  attenuated zero-start memories as moment estimates and normalizes each before
+  taking their ratio.
 - **“`torch.optim.SGD` means batch size one.”** The `DataLoader` and reduction
   define the gradient's data; the optimizer transforms the gradient it receives.
 - **“Unbiased means every sample points downhill.”** It describes the centre of
@@ -1170,15 +1228,20 @@ extended route.
   omit examples and therefore need not have zero variance.
 - **“Iteration, update, and epoch are synonyms.”** They coincide only in a simple
   loop without gradient accumulation or skipped steps.
-- **“Adam's moving-average correction makes SGD unbiased.”** It repairs the
-  artificial early shrinkage caused by zero-initialized moment states. Gradient-
-  estimator unbiasedness is a separate claim about the sampling distribution.
-- **“PyTorch momentum stores the normalized EWMA from the slide.”** It stores
-  the unnormalized buffer $\boldsymbol v$; the relation
-  $\boldsymbol m=(1-\beta)\boldsymbol v$ explains why the displayed PyTorch
-  learning rate is $(1-\beta)\eta$.
+- **“Adam's moving-average correction makes SGD unbiased.”** It is the same
+  missing-weight-mass repair first shown on the zero-start temperature average,
+  now applied separately to $\boldsymbol m$ and $\boldsymbol v$. It repairs
+  initialization shrinkage. Gradient-estimator unbiasedness is a separate claim
+  about the sampling distribution.
+- **“PyTorch stores the same normalized EWMA shown in the conceptual rule.”**
+  PyTorch stores the unnormalized buffer
+  $\widetilde{\boldsymbol m}_{t+1}=\beta
+  \widetilde{\boldsymbol m}_t+\boldsymbol g_t$. Since
+  $\boldsymbol m=(1-\beta)\widetilde{\boldsymbol m}$, the equivalent PyTorch
+  learning rate is $\eta(1-\beta)$. Derive this mapping only after the
+  normalized EWMA-form optimizer is understood.
 - **“RMSProp bias-corrects its square average like Adam.”** Standard PyTorch
-  RMSProp does not. With $\rho=.9$ and zero state, the first normalized
+  RMSProp does not. With $\beta_2=.9$ and zero state, the first normalized
   magnitude is inflated to $\sqrt{10}$ for every nonzero coordinate.
 - **“RMSProp/Adam use one scalar scale.”** Their squares, roots, and divisions are
   elementwise tensors.
@@ -1190,12 +1253,26 @@ extended route.
 - **“Adam always beats SGD.”** The deck compares mechanisms at method-specific
   rates; real comparisons require tuned rates, equal budgets, and held-out
   metrics.
-- **“A scheduler naturally counts epochs.”** Its clock is whatever boundary the
-  code uses. State whether it counts epochs or optimizer updates.
+- **“A scheduler naturally counts epochs.”** A schedule may be driven by
+  optimizer updates, epochs, or a validation event such as a plateau check; the
+  code and API call site define the clock. This deck deliberately uses optimizer
+  updates: each executed `optimizer.step()` uses $\eta_t$ and advances $t$, even
+  if a zero gradient leaves the parameters numerically unchanged; the following
+  `scheduler.step()` prepares $\eta_{t+1}$. Accumulated microbatches do not
+  advance this clock. If `optimizer.step()` is skipped, for example after an AMP
+  overflow, `scheduler.step()` must also be skipped.
 - **“Sigmoid represents the closed interval $[0,1]$ exactly.”** Finite logits
   mathematically represent $(0,1)$; exact endpoints may need projection or
   another model. In finite precision, extreme logits can still round to 0 or 1,
   so prefer logits-based losses.
+- **“We can optimize a Gaussian scale directly and clamp it if needed.”** A
+  Gaussian likelihood requires $\sigma>0$; zero is not a valid scale. Learning
+  $a=\log\sigma$ and rebuilding $\sigma=\exp(a)$ makes every forward pass valid
+  for both shared and input-dependent noise. `softplus` is a possible positive
+  alternative, not this lecture's primary convention.
+- **“Clipping each mixture weight makes a simplex.”** Independent clipping can
+  make every coordinate nonnegative without making the coordinates sum to one.
+  Softmax couples the weights and enforces both requirements together.
 - **“Clamping after Adam is harmless.”** The parameter is projected but stored
   moments are not automatically reconciled with that projection.
 
@@ -1203,31 +1280,48 @@ extended route.
 
 1. Which one-sample update raises the full line-fit loss?
 2. If $B$ doubles under independent sampling, what happens to covariance?
-3. At $\eta=.019$, why does the steep $\theta_2$ component alternate signs?
+3. At the shared rate $\eta=.0195$, why does the steep $\theta_2$
+   component alternate signs?
 4. Which $\beta$ gives more smoothing, and what does it sacrifice?
-5. Why do the first two $\theta_2$ gradient contributions nearly cancel in the
-   $\beta=.8$ momentum state while the $\theta_1$ contributions reinforce?
-6. Why does replacing $x_2$ by $z_2=x_2/10$ remove this example's $100{:}1$
+5. With the same first temperature reading and $\beta=.9$, why does $m_0=0$
+   produce $m_1=1.80^\circ\mathrm C$, and which denominator restores the
+   observed-weight mass to one?
+6. Why does ordinary momentum use its uncorrected EWMA state as optimizer
+   dynamics, while Adam corrects two zero-start moment estimates with different
+   $\beta$ values?
+7. Why do the first two $\theta_2$ gradient contributions nearly cancel in the
+   $\beta=.25$ momentum state while the $\theta_1$ contributions reinforce?
+8. Why does replacing $x_2$ by $z_2=x_2/10$ remove this example's $100{:}1$
    curvature imbalance, and what does it not repair in a deep network?
-7. Why does RMSProp square before averaging?
-8. Which Adam state remembers sign, and which remembers scale?
-9. Does decay change the sampled data, optimizer state definition, or only the
+9. Why does RMSProp square before averaging?
+10. Which Adam state remembers sign, and which remembers scale? Why do the
+    correction exponents use $t+1$ rather than the temperature slide's $t$?
+11. Does decay change the sampled data, optimizer state definition, or only the
    applied step scale in the displayed experiment?
-10. Which transformation would you use for a variance, a probability, and a
-    mixture-weight vector? Which can reach its boundary exactly?
+12. Which raw variables and transforms would you use for a shared or
+    input-dependent Gaussian scale, a blend coefficient in $[0,1]$, a Bernoulli
+    probability, and simplex mixture weights? Which of these models needs a
+    strict interior, and when is projection to an exact boundary appropriate?
 
 ## Follow-along after the 80-minute route
 
+- Read the post-80 coda on Pages 94–110: constrained parameter families,
+  repairs, and the written six-decision synthesis. The live class has
+  already closed with the 20-second verbal version of that retrieval.
 - In Notebook 00, compare uniform subsets with independent draws with
   replacement and state which sampler each variance claim assumes.
-- In Notebook 02, inspect every normalized/PyTorch momentum state and write down
-  the assumptions behind the learning-rate conversion; then verify exactly
-  what the standardization counterfactual changes and leaves unchanged.
-- In Notebook 03, finish the scheduler trace and both constraint experiments;
-  explain mathematical interiors, finite-precision saturation, and projected
-  optimizer state.
-- In Notebook 04, compare all four decision boundaries while keeping the shared
-  controls visible.
+- In Notebook 02, inspect every EWMA-form momentum state and its mapped PyTorch
+  `momentum_buffer`; verify $\boldsymbol m=(1-\beta)
+  \widetilde{\boldsymbol m}$ and
+  `lr_torch = eta_EWMA * (1 - beta) = .014625` for the displayed
+  $\eta=.0195,\beta=.25$ control. Then verify exactly what the scale-only
+  standardization counterfactual changes, and why the exact four-row
+  standardized-correlated control still has correlation $.8$, condition number
+  $9$, and contour-axis ratio $3$.
+- In Notebook 03, finish the scheduler trace and all four constraint maps, then
+  run the projected-box comparison; explain mathematical interiors,
+  finite-precision saturation, logits-based losses, and projected optimizer
+  state.
 
 ## Closing line
 
@@ -1241,6 +1335,13 @@ time; and a parameterization controls which values the model can express.”
   Regularization and Optimization — Week 2*](https://www.youtube.com/playlist?list=PLkDaE6sCZn6Hn0vK8co82zjQtt3T2Nkqc),
   C2W2L01–L09—the approachable minibatch → EWMA → momentum → RMSProp → Adam →
   decay order adapted here.
+- DeepLearning.AI, [*Learning Rate
+  Decay*](https://www.youtube.com/watch?v=QzulmoOg2JE)—the large-early,
+  small-late motivation and schedule intuition adapted in Pages 86–93.
+- *Dive into Deep Learning*, [*Stochastic Gradient
+  Descent*](https://classic.d2l.ai/chapter_optimization/sgd.html) and [*Learning
+  Rate Scheduling*](https://d2l.ai/chapter_optimization/lr-scheduler.html)—the
+  stochastic late-motion motivation and common schedule families.
 - Mitesh M. Khapra, [*Deep Learning (CS7015): Lec 5.4 Momentum Based Gradient
   Descent*](https://www.youtube.com/watch?v=ewN0vFYFJ7A)—the problem → repeated-direction
   intuition → zero-initialized update expansion → actual contour behavior
@@ -1258,6 +1359,9 @@ time; and a parameterization controls which values the model can express.”
   [`RMSprop`](https://docs.pytorch.org/docs/stable/generated/torch.optim.RMSprop.html),
   and [`Adam`](https://docs.pytorch.org/docs/stable/generated/torch.optim.Adam.html)—
   implementation conventions and exposed optimizer state.
+- PyTorch, [*How to adjust learning
+  rate*](https://docs.pytorch.org/docs/main/optim.html#how-to-adjust-learning-rate)—
+  scheduler composition and call-order conventions.
 
 All optimizer trajectories in the deck are generated from the displayed losses
 and update rules. Treat the notebooks as deterministic mechanism checks, not

@@ -1245,12 +1245,12 @@ z
     </g>
    </g>
    <g id="patch_6">
-    <path d="M 151.973639 226.565227 
-Q 123.318076 224.60991 95.889497 222.738316 
+    <path d="M 151.968512 228.682196 
+Q 123.382935 227.967119 96.026811 227.282796 
 " style="fill: none; stroke: #eb811b; stroke-width: 1.1; stroke-linecap: round"/>
-    <path d="M 100.12952 225.232751 
-L 95.889497 222.738316 
-L 100.429058 220.842958 
+    <path d="M 100.370418 229.592141 
+L 96.026811 227.282796 
+L 100.480451 225.193517 
 " style="fill: none; stroke: #eb811b; stroke-width: 1.1; stroke-linecap: round"/>
    </g>
    <g id="text_19">
@@ -1750,12 +1750,12 @@ z
     </g>
    </g>
    <g id="patch_7">
-    <path d="M 87.699346 46.543805 
-Q 90.155453 133.53093 92.516894 217.165289 
+    <path d="M 87.699259 46.540732 
+Q 90.221557 135.872113 92.649189 221.850729 
 " style="fill: none; stroke: #eb811b; stroke-width: 3; stroke-linecap: round"/>
-    <path d="M 95.723616 210.272037 
-L 92.516894 217.165289 
-L 88.926325 210.46396 
+    <path d="M 95.855911 214.957477 
+L 92.649189 221.850729 
+L 89.05862 215.1494 
 z
 " style="fill: #eb811b; stroke: #eb811b; stroke-width: 3; stroke-linecap: round"/>
    </g>
@@ -1792,7 +1792,7 @@ z
 " style="stroke: #ffffff"/>
     </defs>
     <g clip-path="url(#pddae3e7d47)">
-     <use xlink:href="#m567816fe28" x="92.668043" y="222.5185" style="fill: #eb811b; stroke: #ffffff"/>
+     <use xlink:href="#m567816fe28" x="92.800286" y="227.202083" style="fill: #eb811b; stroke: #ffffff"/>
     </g>
    </g>
   </g>

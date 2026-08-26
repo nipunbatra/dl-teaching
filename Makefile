@@ -1,4 +1,4 @@
-.PHONY: all clean help list dirs diagrams l5-typst audit-typst
+.PHONY: all clean help list dirs diagrams l5-figures l5-typst audit-typst
 
 # Directories
 SLIDES_DIR := slides
@@ -204,6 +204,7 @@ help:
 	@echo "  make lec01-html  # Build lecture 01 HTML only (fast)"
 	@echo "  make all         # Build everything"
 	@echo "  make diagrams    # Regenerate all diagrams"
+	@echo "  make l5-figures  # Regenerate computed L5 figures"
 	@echo "  make l5-typst    # Build the L5 handout + presentation PDFs"
 	@echo "  make audit-typst # Check L1/L2/L5 PDFs for clipping and raster regressions"
 	@echo "  make list        # List available slides"
@@ -213,7 +214,11 @@ help:
 
 # Visual-quality gate for the active Typst decks. Deliberate photographs can be
 # allowed by running the script directly with --max-raster-images N.
-l5-typst:
+l5-figures:
+	@uv run --with matplotlib --with torch python lecture5/diagrams/l5_figs.py
+	@uv run --with matplotlib python lecture5/diagrams/standardized_correlated_momentum.py
+
+l5-typst: l5-figures
 	@mkdir -p slides-pdf
 	@typst compile --root . --input handout=true lecture5/L5-optimization.typ slides-pdf/L5.pdf
 	@typst compile --root . lecture5/L5-optimization.typ slides-pdf/L5-presentation.pdf
@@ -221,5 +226,6 @@ l5-typst:
 audit-typst:
 	@python3 scripts/audit_typst_slides.py \
 		slides-pdf/L1.pdf slides-pdf/L1-presentation.pdf \
-		slides-pdf/L2.pdf slides-pdf/L2-presentation.pdf \
+		slides-pdf/L2.pdf slides-pdf/L2-presentation.pdf
+	@python3 scripts/audit_typst_slides.py --max-raster-images 31 \
 		slides-pdf/L5.pdf slides-pdf/L5-presentation.pdf

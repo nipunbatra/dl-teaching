@@ -475,14 +475,15 @@ Generic form:
 =
 \theta_{t,j}
 -
-\frac{\eta}{\sqrt{s_{t,j}}+\epsilon}
-g_{t,j}
+\frac{\eta}{\sqrt{v_{t+1,j}}+\epsilon}
+\widehat g_{t,j}
 \]
 
 ### 25. Squared-gradient accumulator
 
 \[
-s_t=\rho s_{t-1}+(1-\rho)g_t^2
+v_{t+1}=\beta_2v_t+(1-\beta_2)\widehat g_t^2,
+\qquad v_0=0
 \]
 
 elementwise.
@@ -495,7 +496,7 @@ Then:
 \theta_t
 -
 \eta
-\frac{g_t}{\sqrt{s_t}+\epsilon}.
+\frac{\widehat g_t}{\sqrt{v_{t+1}}+\epsilon}.
 \]
 
 This is RMSProp-style intuition.
@@ -505,7 +506,7 @@ This is RMSProp-style intuition.
 If a coordinate has large historical gradient magnitude:
 
 \[
-s_{t,j}\text{ large}
+v_{t+1,j}\text{ large}
 \Rightarrow
 \text{smaller step}.
 \]
@@ -513,7 +514,7 @@ s_{t,j}\text{ large}
 If small:
 
 \[
-s_{t,j}\text{ small}
+v_{t+1,j}\text{ small}
 \Rightarrow
 \text{larger step}.
 \]
@@ -531,13 +532,13 @@ Adam maintains:
 First moment:
 
 \[
-m_t=\beta_1m_{t-1}+(1-\beta_1)g_t
+m_{t+1}=\beta_1m_t+(1-\beta_1)\widehat g_t
 \]
 
 Second moment:
 
 \[
-v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2
+v_{t+1}=\beta_2v_t+(1-\beta_2)\widehat g_t^2
 \]
 
 Adam was proposed as an efficient first-order stochastic optimizer using adaptive estimates of lower-order moments.
@@ -547,13 +548,13 @@ Adam was proposed as an efficient first-order stochastic optimizer using adaptiv
 Initialize:
 
 \[
-m_0=0.
+m_0=0,\qquad v_0=0.
 \]
 
 Then:
 
 \[
-m_1=(1-\beta_1)g_1.
+m_1=(1-\beta_1)\widehat g_0.
 \]
 
 So early \(m_t\) is biased toward zero.
@@ -565,11 +566,11 @@ Similarly \(v_t\) is biased toward zero.
 Adam uses:
 
 \[
-\hat m_t=\frac{m_t}{1-\beta_1^t}
+\hat m_{t+1}=\frac{m_{t+1}}{1-\beta_1^{t+1}}
 \]
 
 \[
-\hat v_t=\frac{v_t}{1-\beta_2^t}
+\hat v_{t+1}=\frac{v_{t+1}}{1-\beta_2^{t+1}}
 \]
 
 Update:
@@ -580,7 +581,7 @@ Update:
 \theta_t
 -
 \eta
-\frac{\hat m_t}{\sqrt{\hat v_t}+\epsilon}.
+\frac{\hat m_{t+1}}{\sqrt{\hat v_{t+1}}+\epsilon}.
 \]
 
 ### 30. Worked Adam example

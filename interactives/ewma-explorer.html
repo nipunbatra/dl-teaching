@@ -1457,8 +1457,8 @@
         <span>θ* = (1, −0.5)</span>
         <span>L(θ) = 0.5(θ₁ − 1)² + 50(θ₂ + 0.5)²</span>
         <span>gₜ = (θₜ,₁ − 1, 100(θₜ,₂ + 0.5))</span>
-        <span>mₜ₊₁ = .8mₜ + .2gₜ</span>
-        <span>θₜ₊₁ = θₜ − .095mₜ₊₁</span>
+        <span>mₜ₊₁ = βmₜ + (1−β)gₜ, &nbsp;m₀ = (0, 0)</span>
+        <span>β = .25; &nbsp;θₜ₊₁ = θₜ − ηmₜ₊₁, &nbsp;η = .0195</span>
       </div>
     </header>
 
@@ -1468,18 +1468,18 @@
         <p>Plain GD uses only today’s gradient, so its step shrinks as the
         remaining error shrinks. Momentum keeps part of earlier, agreeing
         gradients—like repeated pushes in the same direction.</p>
-        <span class="pushes">actual θ₁ moves: GD +.0456 → +.0447 · momentum +.0456 → +.0812</span>
+        <span class="pushes">actual θ₁ moves: GD +.0468 → +.0459 · momentum +.0351 → +.0434</span>
       </article>
       <article class="intuition-case reversal">
         <h3>Direction reverses: brake the zigzag</h3>
         <p>Across the valley the gradient flips sign. Old and new contributions
         oppose each other, so the stored direction becomes much smaller.</p>
-        <span class="pushes">actual update 2 in θ₂: plain GD +1.454 · momentum +.162</span>
+        <span class="pushes">actual update 2 in θ₂: plain GD +1.5746 · momentum +.2642</span>
       </article>
-      <p class="intuition-caveat">The rates here are matched so both methods
-      make the same first move. The rolling-ball picture is an intuition for
-      accumulated direction, not a literal force law or a guarantee that every
-      momentum step lowers the loss.</p>
+      <p class="intuition-caveat">Both methods use the same learning rate,
+      η = .0195. Momentum starts with a smaller move because m₀ = 0 gives
+      m₁ = .75g₀. From update 2 onward, it blends old and new directions.
+      The rolling-ball picture is an intuition, not a literal force law.</p>
     </section>
 
     <div class="momentum-init" aria-label="Momentum initialization">
@@ -1500,9 +1500,9 @@
         <div class="momentum-legend" aria-label="Momentum chart legend">
           <span class="legend-item"><span class="legend-line path"></span>path so far</span>
           <span class="legend-item"><span class="legend-line raw-direction"></span>measured descent direction −gₜ</span>
-          <span class="legend-item"><span class="legend-line" style="color:#6e7f82;border-top-style:dashed"></span>retained −.8mₜ</span>
+          <span class="legend-item"><span class="legend-line" style="color:#6e7f82;border-top-style:dashed"></span>retained −.25mₜ</span>
           <span class="legend-item"><span class="legend-line ewma"></span>sum −mₜ₊₁</span>
-          <span class="legend-item"><span class="legend-line update-direction"></span>actual move −.095mₜ₊₁</span>
+          <span class="legend-item"><span class="legend-line update-direction"></span>actual move −.0195mₜ₊₁</span>
         </div>
         <svg id="predictionChart" viewBox="0 0 720 190" role="img"
              aria-labelledby="predictionChartTitle predictionChartDescription">
@@ -1559,21 +1559,21 @@
         <article class="worked-update">
           <h4>Update 1 · start from m₀ = (0, 0)</h4>
           <p>g₀ = (−2.4, 85)</p>
-          <p>m₁ = .8(0, 0) + .2(−2.4, 85) = (−.48, 17)</p>
-          <p>θ₁ = (−1.4, .35) − .095(−.48, 17) = (−1.3544, −1.265)</p>
+          <p>m₁ = .25(0, 0) + .75(−2.4, 85) = (−1.8, 63.75)</p>
+          <p>θ₁ = (−1.4, .35) − .0195(−1.8, 63.75) = (−1.3649, −.893125)</p>
         </article>
         <article class="worked-update">
           <h4>Update 2 · remeasure at θ₁</h4>
-          <p>g₁ = (−2.3544, −76.5)</p>
-          <p>m₂ = .8(−.48, 17) + .2(−2.3544, −76.5) = (−.85488, −1.7)</p>
-          <p>θ₂ = (−1.3544, −1.265) − .095(−.85488, −1.7) = (−1.2732, −1.1035)</p>
+          <p>g₁ = (−2.3649, −39.3125)</p>
+          <p>m₂ = .25(−1.8, 63.75) + .75(−2.3649, −39.3125) = (−2.223675, −13.546875)</p>
+          <p>θ₂ = (−1.3649, −.893125) − .0195(−2.223675, −13.546875) = (−1.32153834, −.62896094)</p>
         </article>
       </div>
       <p class="cancellation-note">
         <strong>Along the valley:</strong> the θ₁ gradient components stay negative, so
-        their memory reinforces. <strong>Across the valley:</strong> .8(17) =
-        13.6 and .2(−76.5) = −15.3 partly cancel, leaving m₂,₂ = −1.7 rather
-        than another large swing.
+        their memory reinforces. <strong>Across the valley:</strong> .25(63.75) =
+        15.9375 and .75(−39.3125) = −29.484375 partly cancel, leaving
+        m₂,₂ = −13.546875 rather than another large swing.
       </p>
     </section>
 
@@ -1718,8 +1718,8 @@
   var state = Object.assign({}, DEFAULTS);
   var series = null;
   var playTimer = null;
-  var MOMENTUM_BETA = 0.8;
-  var MOMENTUM_ETA = 0.095;
+  var MOMENTUM_BETA = 0.25;
+  var MOMENTUM_ETA = 0.0195;
   var MOMENTUM_STEPS = 10;
   var THETA_STAR = [1, -0.5];
   var THETA_ZERO = [-1.4, 0.35];
@@ -2346,14 +2346,15 @@
       setCycleState(els.moveValue, 0,
         "Reset returns to θ₀ and m₀ = (0, 0).", "", 6);
       els.momentumInsight.textContent =
-        "The path still crosses the valley, but it also travels along the shallow θ₁ direction. Momentum is helping on this example; it is not a guarantee of lower loss at every update.";
+        "With the same η = .0195 used by plain GD, momentum reduces the loss from 39.0050 to " +
+        fixed(ravineLoss(finalTheta), 4) + " in 10 updates by damping the alternating steep-direction motion.";
       return;
     }
 
     var update = momentumData.updates[momentumStep];
-    var betaText = fixed(MOMENTUM_BETA, 1);
-    var newWeightText = fixed(1 - MOMENTUM_BETA, 1);
-    var etaText = fixed(MOMENTUM_ETA, 3);
+    var betaText = fixed(MOMENTUM_BETA, 2);
+    var newWeightText = fixed(1 - MOMENTUM_BETA, 2);
+    var etaText = fixed(MOMENTUM_ETA, 4);
     var phaseForDisplay = momentumStep === 0 ? momentumPhase : 5;
 
     setCycleState(els.initialValue, 0,
@@ -2397,10 +2398,10 @@
       var firstInsights = [
         "m is the optimizer’s running memory of earlier gradients. We set m₀ = (0, 0) because no gradient has been seen yet; this does not say that g₀ is zero.",
         "Now measure g₀ at θ₀. The steep coordinate is large: g₀ = (−2.4, 85). We still have not changed θ.",
-        "Keep βm₀ = .8(0, 0) = (0, 0). There is no retained arrow because a zero vector has no direction.",
-        "Add the current evidence: (1−β)g₀ = .2g₀ = (−.48, 17). On the first update, this is the only nonzero ingredient.",
-        "Combine old and new information. Because the old memory is zero, m₁ = .2g₀. Later updates will combine two nonzero terms.",
-        "Only now do we move: θ₁ = θ₀ − ηm₁. The orange arrow is the actual parameter update, and the table now contains the completed first row."
+        "Keep βm₀ = .25(0, 0) = (0, 0). There is no retained arrow because a zero vector has no direction.",
+        "Add the current evidence: (1−β)g₀ = .75g₀ = (−1.8, 63.75). On the first update, this is the only nonzero ingredient.",
+        "Combine old and new information. Because the old memory is zero, m₁ = .75g₀. Later updates will combine two nonzero terms.",
+        "Only now do we move: θ₁ = θ₀ − .0195m₁ = (−1.3649, −.893125). With the same η as plain GD, this first momentum step is smaller because m₁ = .75g₀."
       ];
       els.momentumStepHeading.textContent = firstHeadings[momentumPhase];
       els.momentumCounter.textContent = "first update · step " + (momentumPhase + 1) + " of 6";
@@ -2411,7 +2412,7 @@
       els.momentumCounter.textContent = "update 2 of 10";
       els.momentumNext.textContent = "Next update";
       els.momentumInsight.textContent =
-        "In the θ₂ component, retained history contributes +13.6 while the new gradient contributes −15.3. They nearly cancel to −1.7. In θ₁, both contributions are negative and reinforce.";
+        "In the θ₂ component, retained history contributes +15.9375 while the new gradient contributes −29.484375. They partly cancel to −13.546875. In θ₁, both contributions are negative and reinforce.";
     } else {
       els.momentumStepHeading.textContent = "Update " + (momentumStep + 1);
       els.momentumCounter.textContent = "update " + (momentumStep + 1) + " of 10";

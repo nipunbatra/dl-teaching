@@ -264,7 +264,7 @@ def f_per_example_contours():
         ax.text(
             0.03,
             0.045,
-            rf"$\mathbf{{g}}_{i + 1}(\boldsymbol{{\theta}}_0)=({gradient[0]:.0f},{gradient[1]:.0f})$",
+            rf"$\boldsymbol{{g}}_{i + 1}(\boldsymbol{{\theta}}_0)=({gradient[0]:.0f},{gradient[1]:.0f})$",
             transform=ax.transAxes,
             fontsize=11.2,
             color=INK,
@@ -365,7 +365,7 @@ def f_bad_sample_step():
         ),
         (
             0.570,
-            r"$\widehat{\mathbf{g}}_0=(2-1)(1,0)=(1,0)$",
+            r"$\widehat{\boldsymbol{g}}_0=(2-1)(1,0)=(1,0)$",
             TEAL,
             "white",
         ),
@@ -1213,18 +1213,18 @@ def f_estimator_clouds():
         ax.set(
             xlim=(-6.7, 4.7),
             ylim=(-12.7, 1.2),
-            xlabel=r"gradient component  $\widehat g_b$",
+            xlabel=r"gradient component  $\widehat g_{0,b}$",
         )
         ax.set_aspect("equal")
         # This slide is about centre and spread, not numerical covariance.
         ax.tick_params(labelbottom=False, labelleft=False, length=0)
         clean(ax)
-    axes[0].set_ylabel(r"gradient component  $\widehat g_w$")
+    axes[0].set_ylabel(r"gradient component  $\widehat g_{0,w}$")
     fig.text(
         0.50,
         0.018,
         r"labels identify the selected row(s) $\cdot$ orange diamond: the same mean"
-        r" $=\boldsymbol{g}_{\mathrm{full}}$ in every panel",
+        r" $=\boldsymbol{g}_0$ in every panel",
         ha="center",
         va="bottom",
         fontsize=12.1,
@@ -1633,11 +1633,11 @@ def f_estimator_spread():
         ax.scatter(values[:, 0], values[:, 1], s=72, color=color, alpha=0.84, edgecolor="white", linewidth=0.7)
         ax.scatter(*centroid, marker="X", s=125, color=RED, edgecolor="white", linewidth=0.7, zorder=6)
         ax.set_title(rf"$B={batch_size}$ · $\mathrm{{tr}}(\mathrm{{Cov}})={trace_cov:.2f}$")
-        ax.set(xlabel=r"bias component $\hat g_b$", xlim=(-7.0, 5.0), ylim=(-13.0, 1.8))
+        ax.set(xlabel=r"bias component $\widehat g_{0,b}$", xlim=(-7.0, 5.0), ylim=(-13.0, 1.8))
         ax.set_aspect("equal")
         clean(ax)
-    axes[0].set_ylabel(r"slope component $\hat g_w$")
-    fig.text(0.5, 0.01, r"red X: vector centroid $=(-0.75,-4.5)$ in every panel", ha="center", color=RED, fontsize=10.5)
+    axes[0].set_ylabel(r"slope component $\widehat g_{0,w}$")
+    fig.text(0.5, 0.01, r"red X: vector centroid $=\boldsymbol{g}_0=(-0.75,-4.5)$ in every panel", ha="center", color=RED, fontsize=10.5)
     fig.tight_layout(rect=(0, 0.055, 1, 1))
     save(fig, "story_estimator_spread")
 
@@ -1651,6 +1651,14 @@ X2 = np.array([[-1.0, -10.0], [-1.0, 10.0], [1.0, -10.0], [1.0, 10.0]])
 THETA2_STAR = np.array([1.0, -0.5])
 Y2 = X2 @ THETA2_STAR
 THETA2_0 = np.array([-1.4, 0.35])
+
+# The worked comparison uses one conceptual learning rate for both algorithms.
+# Momentum follows the normalized EWMA recurrence used for temperature:
+# m <- beta*m + (1-beta)*g.  PyTorch's differently scaled internal buffer is
+# discussed only as an implementation mapping after this derivation.
+RAVINE_GD_ETA = 0.0195
+RAVINE_MOMENTUM_BETA = 0.25
+RAVINE_MOMENTUM_ETA = RAVINE_GD_ETA
 
 
 def ravine_loss(theta):
@@ -1711,43 +1719,59 @@ def momentum_path(eta, beta, steps):
     return momentum_run(eta, beta, steps)[0]
 
 
-def rmsprop_run(eta, rho, steps, eps=1e-8):
+def rmsprop_run(eta, beta2, steps, eps=1e-8):
     theta = THETA2_0.copy()
-    scale = np.zeros(2)
+    v = np.zeros(2)
     path = [theta.copy()]
-    scales = [scale.copy()]
+    v_history = [v.copy()]
     normalized = []
     losses = [ravine_loss(theta)]
     for _ in range(steps):
         gradient = ravine_grad(theta)
-        scale = rho * scale + (1 - rho) * gradient**2
-        normalized_gradient = gradient / (np.sqrt(scale) + eps)
+        v = beta2 * v + (1 - beta2) * gradient**2
+        normalized_gradient = gradient / (np.sqrt(v) + eps)
         theta = theta - eta * normalized_gradient
         path.append(theta.copy())
-        scales.append(scale.copy())
+        v_history.append(v.copy())
         normalized.append(normalized_gradient.copy())
         losses.append(ravine_loss(theta))
-    return np.asarray(path), np.asarray(scales), np.asarray(normalized), np.asarray(losses)
+    return np.asarray(path), np.asarray(v_history), np.asarray(normalized), np.asarray(losses)
 
 
-def rmsprop_path(eta, rho, steps, eps=1e-8):
-    return rmsprop_run(eta, rho, steps, eps)[0]
+def rmsprop_path(eta, beta2, steps, eps=1e-8):
+    return rmsprop_run(eta, beta2, steps, eps)[0]
 
 
 def adam_path(eta, beta1, beta2, steps, eps=1e-8):
     theta = THETA2_0.copy()
-    first = np.zeros(2)
-    second = np.zeros(2)
+    m = np.zeros(2)
+    v = np.zeros(2)
     out = [theta.copy()]
     for t in range(1, steps + 1):
         gradient = ravine_grad(theta)
-        first = beta1 * first + (1 - beta1) * gradient
-        second = beta2 * second + (1 - beta2) * gradient**2
-        first_hat = first / (1 - beta1**t)
-        second_hat = second / (1 - beta2**t)
-        theta = theta - eta * first_hat / (np.sqrt(second_hat) + eps)
+        m = beta1 * m + (1 - beta1) * gradient
+        v = beta2 * v + (1 - beta2) * gradient**2
+        m_hat = m / (1 - beta1**t)
+        v_hat = v / (1 - beta2**t)
+        theta = theta - eta * m_hat / (np.sqrt(v_hat) + eps)
         out.append(theta.copy())
     return np.asarray(out)
+
+
+def material_crossing_count(path, coordinate=1, tolerance=1e-6):
+    """Count genuine side-to-side crossings, excluding roundoff-scale flips."""
+    error = path[:, coordinate] - THETA2_STAR[coordinate]
+    changed_side = np.signbit(error[1:]) != np.signbit(error[:-1])
+    away_from_roundoff = (
+        np.maximum(np.abs(error[1:]), np.abs(error[:-1])) > tolerance
+    )
+    return int(np.count_nonzero(changed_side & away_from_roundoff))
+
+
+def raw_crossing_count(path, coordinate=1):
+    """Count every sign change, including numerical-scale late oscillations."""
+    error = path[:, coordinate] - THETA2_STAR[coordinate]
+    return int(np.count_nonzero(np.signbit(error[1:]) != np.signbit(error[:-1])))
 
 
 def draw_ravine(ax):
@@ -1761,6 +1785,123 @@ def draw_ravine(ax):
     # Equal data aspect preserves the Euclidean geometry used by the gradient.
     ax.set_aspect("equal")
     clean(ax)
+
+
+def f_ravine_surface():
+    """Show Example B's exact full loss as a three-dimensional ravine."""
+    theta1 = np.linspace(-1.70, 1.50, 110)
+    theta2 = np.linspace(-1.10, 0.10, 90)
+    THETA1, THETA2 = np.meshgrid(theta1, theta2)
+    loss = 0.5 * (THETA1 - THETA2_STAR[0]) ** 2 + 50 * (
+        THETA2 - THETA2_STAR[1]
+    ) ** 2
+
+    # The centre line theta_2 = -0.5 is the bottom of the ravine.  Its height
+    # still changes slowly with theta_1 and reaches zero at the optimum.
+    floor_theta1 = np.linspace(theta1.min(), theta1.max(), 240)
+    floor_theta2 = np.full_like(floor_theta1, THETA2_STAR[1])
+    floor_loss = 0.5 * (floor_theta1 - THETA2_STAR[0]) ** 2
+    assert np.allclose(
+        floor_loss,
+        [ravine_loss(np.array([value, THETA2_STAR[1]])) for value in floor_theta1],
+    )
+
+    fig = plt.figure(figsize=(10.8, 5.2))
+    # Manual z-order keeps the highlighted floor and optimum above the
+    # translucent surface in both the PNG and SVG renderers.
+    ax = fig.add_subplot(111, projection="3d", computed_zorder=False)
+    surface_cmap = mpl.colors.LinearSegmentedColormap.from_list(
+        "lecture5_ravine",
+        ["#EDF7F6", "#B7DEDA", "#5AA7A5", TEAL],
+    )
+    ax.plot_surface(
+        THETA1,
+        THETA2,
+        loss,
+        cmap=surface_cmap,
+        rcount=64,
+        ccount=82,
+        linewidth=0,
+        antialiased=True,
+        alpha=0.76,
+        shade=True,
+        zorder=1,
+    )
+
+    # A contour map projected beneath the surface connects the familiar
+    # top-down view to the three-dimensional loss landscape.
+    base_height = -1.6
+    levels = [0.1, 0.4, 1.0, 2.0, 4.0, 8.0, 14.0, 20.0]
+    ax.contour(
+        THETA1,
+        THETA2,
+        loss,
+        zdir="z",
+        offset=base_height,
+        levels=levels,
+        colors=[TEAL],
+        linewidths=0.85,
+        alpha=0.58,
+        zorder=0,
+    )
+
+    # Lift the centre line by a tiny amount so it remains visible over the
+    # rendered surface without changing the plotted loss appreciably.
+    ax.plot(
+        floor_theta1,
+        floor_theta2,
+        floor_loss + 0.035,
+        color=BLUE,
+        linewidth=4.0,
+        zorder=12,
+    )
+    ax.scatter(
+        [THETA2_STAR[0]],
+        [THETA2_STAR[1]],
+        [0.08],
+        marker="*",
+        s=210,
+        color=RED,
+        edgecolor="white",
+        linewidth=0.9,
+        depthshade=False,
+        zorder=15,
+    )
+    # Empty artists give the two important landmarks a readable, stable key;
+    # placing text in 3D would let the surface hide it at some view angles.
+    ax.plot([], [], [], color=BLUE, linewidth=4.0, label=r"valley floor  ($\theta_2=-0.5$)")
+    ax.scatter(
+        [], [], [], marker="*", s=140, color=RED, edgecolor="white",
+        linewidth=0.8, label="optimum",
+    )
+    ax.legend(loc="upper left", bbox_to_anchor=(0.02, 0.91), frameon=False, fontsize=12.0)
+
+    ax.set_xlim(theta1.min(), theta1.max())
+    ax.set_ylim(theta2.min(), theta2.max())
+    ax.set_zlim(base_height, 23.0)
+    ax.set_xlabel(r"parameter $\theta_1$", labelpad=9)
+    ax.set_ylabel(r"parameter $\theta_2$", labelpad=9)
+    ax.set_zlabel(r"full loss $\mathcal{L}(\boldsymbol{\theta})$", labelpad=8)
+    ax.set_xticks([-1.5, -0.5, 0.5, 1.0])
+    ax.set_yticks([-1.0, -0.5, 0.0])
+    ax.set_zticks([0, 10, 20])
+    ax.tick_params(axis="both", which="major", labelsize=10.5, pad=1)
+    ax.view_init(elev=25, azim=-62)
+    ax.set_box_aspect((3.55, 1.55, 1.75))
+    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
+        axis.pane.set_facecolor((1, 1, 1, 0))
+        axis.pane.set_edgecolor((0.43, 0.50, 0.51, 0.32))
+    ax.grid(False)
+    fig.text(
+        0.08, 0.965, r"ALONG the valley  ·  $\theta_1$  ·  loss changes gently",
+        ha="left", va="top", color=BLUE, fontsize=13.5, weight="bold",
+    )
+    fig.text(
+        0.57, 0.965, r"ACROSS the valley  ·  $\theta_2$  ·  loss changes steeply",
+        ha="left", va="top", color=ACC, fontsize=13.5, weight="bold",
+    )
+    fig.subplots_adjust(left=0.02, right=0.95, bottom=0.06, top=0.91)
+    save(fig, "story_ravine_surface")
 
 
 def f_ravine_geometry():
@@ -1788,19 +1929,9 @@ def f_ravine_geometry():
     )
     ax.annotate(
         "",
-        xy=(0.45, -1.06),
-        xytext=(-1.20, -1.06),
+        xy=(0.45, THETA2_STAR[1]),
+        xytext=(-1.20, THETA2_STAR[1]),
         arrowprops=dict(arrowstyle="<->", color=BLUE, lw=2.4),
-    )
-    ax.text(
-        -0.37,
-        -1.20,
-        "along the valley\nshallow: loss changes slowly",
-        ha="center",
-        va="top",
-        fontsize=11.2,
-        color=BLUE,
-        weight="bold",
     )
     ax.annotate(
         "",
@@ -1818,8 +1949,12 @@ def f_ravine_geometry():
         color=ACC,
         weight="bold",
     )
-    ax.set_title("a ravine is a long, narrow low-loss valley", fontsize=14.0, weight="bold", pad=8)
-    ax.set_xlabel(r"parameter  $\theta_1$")
+    ax.set_xlabel(
+        "along the valley  ·  " + r"parameter $\theta_1$" + "\nshallow: loss changes slowly",
+        color=BLUE,
+        weight="bold",
+        labelpad=8,
+    )
     ax.set_ylabel(r"parameter  $\theta_2$")
 
     fig.text(
@@ -1836,13 +1971,13 @@ def f_ravine_geometry():
 
 def f_ravine_first_step():
     """Show one correct step overshooting across the ravine."""
-    eta = 0.019
+    eta = RAVINE_GD_ETA
     gradient = ravine_grad(THETA2_0)
     delta = -eta * gradient
     theta_after_1 = THETA2_0 + delta
     assert np.allclose(gradient, [-2.4, 85.0])
-    assert np.allclose(delta, [0.0456, -1.615])
-    assert np.allclose(theta_after_1, [-1.3544, -1.265])
+    assert np.allclose(delta, [0.0468, -1.6575])
+    assert np.allclose(theta_after_1, [-1.3532, -1.3075])
 
     fig, ax = plt.subplots(figsize=(7.8, 4.25))
     draw_ravine(ax)
@@ -1871,7 +2006,12 @@ def f_ravine_first_step():
 def f_ravine_learning_rates():
     specs = [
         (0.005, 32, r"small rate $\eta=.005$" + "\n" + "little oscillation, little progress", BLUE),
-        (0.019, 32, r"larger rate $\eta=.019$" + "\n" + "more progress, repeated crossings", ACC),
+        (
+            RAVINE_GD_ETA,
+            32,
+            r"larger rate $\eta=.0195$" + "\n" + "more progress, repeated crossings",
+            ACC,
+        ),
     ]
     fig, axes = plt.subplots(1, 2, figsize=(9.2, 4.0), sharex=True, sharey=True)
     for ax, (eta, steps, title, color) in zip(axes, specs):
@@ -1897,7 +2037,7 @@ def f_ravine_learning_rates():
 
 def f_feature_scaling_fix():
     """Show that standardizing the constructed feature removes this ravine."""
-    raw = gd_path(0.019, 10)
+    raw = gd_path(RAVINE_GD_ETA, 10)
     # With z_2 = x_2 / 10, the corresponding coefficient is phi_2 = 10 theta_2.
     # Transform both the start and optimum, so both panels represent the same model.
     scaled_star = np.array([THETA2_STAR[0], 10.0 * THETA2_STAR[1]])
@@ -1914,7 +2054,11 @@ def f_feature_scaling_fix():
     draw_ravine(axes[0])
     axes[0].plot(raw[:, 0], raw[:, 1], "o-", color=ACC, lw=1.8, ms=2.7)
     axes[0].scatter(*THETA2_0, color=INK, s=42, zorder=8)
-    axes[0].set_title(r"raw $x_2$: curvature $(1,100)$, $\eta=.019$", fontsize=11.4, weight="bold")
+    axes[0].set_title(
+        r"raw $x_2$: curvature $(1,100)$, $\eta=.0195$",
+        fontsize=11.4,
+        weight="bold",
+    )
     axes[0].set_xlabel(r"parameter $\theta_1$")
     axes[0].set_ylabel(r"parameter $\theta_2$")
 
@@ -1948,7 +2092,7 @@ def f_feature_scaling_fix():
 
 
 def f_ravine_rate_traces():
-    eta = 0.019
+    eta = RAVINE_GD_ETA
     path = gd_path(eta, 28)
     t = np.arange(len(path))
     losses = np.array([ravine_loss(theta) for theta in path])
@@ -1965,7 +2109,7 @@ def f_ravine_rate_traces():
         xlabel="update $t$",
         ylabel=r"parameter $\theta_1$",
     )
-    axes[0].text(0.04, 0.08, "same side; 98.1% remains each step", transform=axes[0].transAxes,
+    axes[0].text(0.04, 0.08, "same side; 98.05% remains each step", transform=axes[0].transAxes,
                  fontsize=10.2, color=BLUE, weight="bold")
 
     axes[1].axhline(THETA2_STAR[1], color=MUTED, lw=0.8)
@@ -1975,7 +2119,7 @@ def f_ravine_rate_traces():
         xlabel="update $t$",
         ylabel=r"parameter $\theta_2$",
     )
-    axes[1].text(0.04, 0.08, "crosses sides; 90% remains each step", transform=axes[1].transAxes,
+    axes[1].text(0.04, 0.08, "crosses sides; 95% remains each step", transform=axes[1].transAxes,
                  fontsize=10.2, color=ACC, weight="bold")
 
     axes[2].semilogy(t, losses, "o-", color=TEAL, markersize=3.5)
@@ -1991,7 +2135,7 @@ def f_ravine_rate_traces():
     fig.text(
         0.5,
         0.015,
-        r"one near-limit run, $\eta=.019$ $\cdot$ exact full-batch gradient at every update",
+        r"one oscillating run, $\eta=.0195$ $\cdot$ exact full-batch gradient at every update",
         ha="center",
         color=MUTED,
         fontsize=10.6,
@@ -2001,7 +2145,7 @@ def f_ravine_rate_traces():
 
 
 def f_ravine_gradients():
-    path = gd_path(0.019, 14)
+    path = gd_path(RAVINE_GD_ETA, 14)
     gradients = np.array([ravine_grad(theta) for theta in path[:-1]])
     t = np.arange(len(gradients))
     fig, axes = plt.subplots(1, 2, figsize=(8.5, 3.05), sharex=True)
@@ -2017,7 +2161,7 @@ def f_ravine_gradients():
     axes[0].set_ylabel("gradient component")
     fig.text(
         0.5, 0.01,
-        r"full-batch gradients along the actual $\eta=.019$ path · $\mathbf{g}_t=(\theta_{t,1}-1,\ 100(\theta_{t,2}+.5))$",
+        r"full-batch gradients along the actual $\eta=.0195$ path · $\boldsymbol{g}_t=(\theta_{t,1}-1,\ 100(\theta_{t,2}+.5))$",
         ha="center", color=MUTED, fontsize=10.3,
     )
     fig.tight_layout(rect=(0, 0.06, 1, 1))
@@ -2064,9 +2208,9 @@ def draw_temperature_raw(ax):
 def f_ewma_raw():
     fig, ax = plt.subplots(figsize=(8.8, 3.7))
     draw_temperature_raw(ax)
-    ax.set_title("daily readings are noisy; the slower pattern is hard to see", fontsize=13.5, weight="bold")
+    ax.set_title("Daily readings fluctuate around a slower trend", fontsize=13.5, weight="bold")
     ax.annotate(
-        "a one-day jump may be noise",
+        "one unusually warm day",
         xy=(47, temperature_signal()[2][46]),
         xytext=(60, 39),
         fontsize=11.0,
@@ -2121,7 +2265,11 @@ def f_ewma_beta098():
 
 
 def f_ewma_bias():
-    values = np.array([29, 31, 30, 32, 36, 35, 34, 38, 37, 39, 40, 38], dtype=float)
+    # Reuse the first twelve readings from the exact fixed-seed temperature
+    # signal shown in the EWMA slides.  This keeps the cold-start comparison
+    # tied to the same example rather than introducing a second sequence.
+    _, _, full_values = temperature_signal()
+    values = full_values[:12]
     beta = 0.9
     t = np.arange(1, len(values) + 1)
     raw = ewma(values, beta)
@@ -2134,12 +2282,17 @@ def f_ewma_bias():
     ax.plot(t, raw, "o-", color=ACC, markersize=3.5, label="raw zero-start state")
     ax.plot(t, corrected, "o-", color=TEAL, markersize=3.5, label="missing-mass corrected")
     ax.annotate(
-        rf"day 1: ${raw[0]:.1f}\rightarrow{corrected[0]:.0f}$",
-        xy=(1, corrected[0]), xytext=(2.2, 20), color=TEAL, fontsize=10.5,
+        rf"day 1: raw ${raw[0]:.1f}$ °C; corrected ${corrected[0]:.1f}$ °C",
+        xy=(1, corrected[0]), xytext=(2.15, 8.1), color=TEAL, fontsize=10.5,
         arrowprops=dict(arrowstyle="->", color=TEAL, lw=1.2),
     )
-    ax.set(xlabel="day $t$", ylabel="temperature (°C)", title="starting from zero pulls the early estimate down")
-    ax.legend(frameon=False, ncol=3, fontsize=9.2, loc="lower right")
+    ax.set(
+        xlabel="day $t$",
+        ylabel="temperature (°C)",
+        xlim=(0.8, 12.2),
+        ylim=(0, 27.5),
+    )
+    ax.legend(frameon=False, ncol=3, fontsize=9.2, loc="lower center")
     clean(ax, grid=True)
     fig.tight_layout()
     save(fig, "story_ewma_bias")
@@ -2169,184 +2322,129 @@ def f_ewma_weights():
 
 
 def f_gradient_filter():
-    """Show, on Example B, exactly how memory addresses ravine oscillation."""
-    beta = 0.8
-    eta = 0.095
-    gradient_0 = ravine_grad(THETA2_0)
-    memory_0 = np.zeros(2)
-    memory_1 = beta * memory_0 + (1 - beta) * gradient_0
-    theta_after_1 = THETA2_0 - eta * memory_1
-    gradient_1 = ravine_grad(theta_after_1)
-    old_contribution = beta * memory_1
-    new_contribution = (1 - beta) * gradient_1
-    memory_2 = old_contribution + new_contribution
-    theta_after_2 = theta_after_1 - eta * memory_2
+    """Compare the first six exact updates in native parameter space."""
+    gd_eta = RAVINE_GD_ETA
+    beta = RAVINE_MOMENTUM_BETA
+    momentum_eta = RAVINE_MOMENTUM_ETA
+    updates = 6
 
-    assert np.allclose(gradient_0, [-2.4, 85.0])
-    assert np.allclose(memory_1, [-0.48, 17.0])
-    assert np.allclose(theta_after_1, [-1.3544, -1.265])
-    assert np.allclose(gradient_1, [-2.3544, -76.5])
-    assert np.allclose(old_contribution, [-0.384, 13.6])
-    assert np.allclose(new_contribution, [-0.47088, -15.3])
-    assert np.allclose(memory_2, [-0.85488, -1.7])
-    assert np.allclose(theta_after_2, [-1.2731864, -1.1035])
+    gd = gd_path(gd_eta, updates)
+    momentum, _memory, _loss = momentum_run(momentum_eta, beta, updates)
 
-    fig, axes = plt.subplots(
-        1,
-        3,
-        figsize=(12.0, 3.85),
-        gridspec_kw={"width_ratios": [1.05, 1.28, 0.88]},
-    )
+    assert gd.shape == momentum.shape == (updates + 1, 2)
+    assert np.allclose(gd[0], THETA2_0)
+    assert np.allclose(momentum[0], THETA2_0)
+    assert np.allclose(gd[1], [-1.3532, -1.3075])
+    assert np.allclose(momentum[1], [-1.3649, -0.893125])
+    assert not np.allclose(gd[1:], momentum[1:])
+    assert np.allclose(gd[-1], [-1.13253825, 0.12482811])
+    assert np.allclose(momentum[-1], [-1.14553008, -0.49445617])
+    assert ravine_loss(momentum[-1]) < ravine_loss(gd[-1])
 
-    # 1. Repeat the concrete failure that motivates memory.
-    ax = axes[0]
-    draw_ravine(ax)
-    ax.scatter(*THETA2_0, s=58, color=INK, edgecolor="white", linewidth=0.9, zorder=9)
-    ax.scatter(*theta_after_1, s=58, color=ACC, edgecolor="white", linewidth=0.9, zorder=9)
-    ax.annotate(
-        "",
-        xy=theta_after_1,
-        xytext=THETA2_0,
-        arrowprops=dict(arrowstyle="-|>", color=ACC, lw=2.8, mutation_scale=15),
-        zorder=8,
-    )
-    ax.text(
-        0.34,
-        0.97,
-        r"$\mathbf{g}_0=(-2.4,\ 85)$" "\n" r"$\mathbf{m}_1=.2\mathbf{g}_0=(-.48,\ 17)$",
-        transform=ax.transAxes,
-        va="top",
-        fontsize=9.7,
-        color=INK,
-        bbox=dict(boxstyle="round,pad=.25", facecolor="white", edgecolor="none"),
-        zorder=10,
-    )
-    ax.text(THETA2_0[0] + 0.08, THETA2_0[1] - 0.03, "start", color=INK, fontsize=9.8,
-            weight="bold", va="top", zorder=10)
-    ax.text(theta_after_1[0] + 0.08, theta_after_1[1] - 0.03, "after 1", color=ACC,
-            fontsize=9.8, weight="bold", va="top", zorder=10)
-    ax.set_ylabel(r"parameter  $\theta_2$")
-    ax.set_title("1 · the same first step crosses", fontsize=12.5, weight="bold", pad=7)
+    fig, axes = plt.subplots(1, 2, figsize=(9.8, 4.55), sharex=True, sharey=True)
+    specifications = [
+        (axes[0], gd, ACC, "Plain gradient descent", r"$\eta=.0195$"),
+        (
+            axes[1], momentum, TEAL,
+            "Gradient descent with momentum",
+            r"$\beta=.25,\ \eta=.0195$",
+        ),
+    ]
+    labelled_updates = {0, 1, 3, 6}
 
-    # 2. Draw the two component calculations as arrows, not a dense table.
-    ax = axes[1]
-    ax.set_xlim(0, 1)
-    ax.set_ylim(0, 1)
-    ax.axis("off")
-    ax.set_title("2 · memory combines old + new", fontsize=12.5, weight="bold", pad=7)
-    ax.text(
-        0.5,
-        0.94,
-        r"after crossing:  $\mathbf{g}_1=(-2.3544,\ -76.5)$",
-        ha="center",
-        va="center",
-        fontsize=10.6,
-        color=INK,
-    )
+    for ax, path, color, title, settings in specifications:
+        draw_ravine(ax)
+        ax.plot(
+            path[:, 0], path[:, 1], color=color, linewidth=2.8,
+            solid_capstyle="round", zorder=8,
+        )
 
-    along_box = mpl.patches.FancyBboxPatch(
-        (0.025, 0.49), 0.95, 0.37,
-        boxstyle="round,pad=0.018,rounding_size=0.022",
-        linewidth=1.2, edgecolor=BLUE, facecolor="#EFF5FB",
-    )
-    across_box = mpl.patches.FancyBboxPatch(
-        (0.025, 0.05), 0.95, 0.34,
-        boxstyle="round,pad=0.018,rounding_size=0.022",
-        linewidth=1.2, edgecolor=ACC, facecolor="#FFF4E8",
-    )
-    ax.add_patch(along_box)
-    ax.add_patch(across_box)
+        # Small arrowheads make the order legible without labelling every
+        # tightly spaced point on the oscillating path.
+        for previous, current in zip(path[:-1], path[1:]):
+            ax.annotate(
+                "",
+                xy=current,
+                xytext=previous,
+                arrowprops=dict(
+                    arrowstyle="-|>", color=color, linewidth=1.8,
+                    mutation_scale=11, shrinkA=8, shrinkB=8,
+                ),
+                zorder=9,
+            )
 
-    ax.text(0.07, 0.81, r"first parameter  $(\theta_1)$", color=BLUE, fontsize=10.7, weight="bold")
-    ax.annotate("", xy=(0.17, 0.67), xytext=(0.45, 0.67),
-                arrowprops=dict(arrowstyle="-|>", color=TEAL, lw=2.4, mutation_scale=13))
-    ax.annotate("", xy=(0.17, 0.57), xytext=(0.45, 0.57),
-                arrowprops=dict(arrowstyle="-|>", color=ACC, lw=2.4, mutation_scale=13))
-    ax.text(0.48, 0.67, r"$.8m_{1,1}=-.384$", va="center", fontsize=10.0, color=TEAL)
-    ax.text(0.48, 0.57, r"$.2g_{1,1}=-.471$", va="center", fontsize=10.0, color=ACC)
-    ax.text(0.50, 0.50, r"same sign $\Rightarrow\ m_{2,1}=-.855$", ha="center",
-            va="bottom", fontsize=10.4, color=BLUE, weight="bold")
+        for update, point in enumerate(path):
+            marker_color = INK if update < 2 else color
+            ax.scatter(
+                *point, s=132 if update in labelled_updates else 82,
+                color=marker_color, edgecolor="white",
+                linewidth=1.2, zorder=10,
+            )
+            if update in labelled_updates:
+                ax.text(
+                    point[0], point[1], str(update), ha="center", va="center",
+                    color="white", fontsize=8.8, weight="bold", zorder=11,
+                )
 
-    ax.text(0.07, 0.34, r"second parameter  $(\theta_2)$", color=ACC, fontsize=10.7, weight="bold")
-    ax.annotate("", xy=(0.29, 0.30), xytext=(0.29, 0.13),
-                arrowprops=dict(arrowstyle="-|>", color=TEAL, lw=2.4, mutation_scale=13))
-    ax.annotate("", xy=(0.43, 0.13), xytext=(0.43, 0.30),
-                arrowprops=dict(arrowstyle="-|>", color=ACC, lw=2.4, mutation_scale=13))
-    ax.text(0.49, 0.27, r"$.8m_{1,2}=+13.6$", va="center", fontsize=10.0, color=TEAL)
-    ax.text(0.49, 0.17, r"$.2g_{1,2}=-15.3$", va="center", fontsize=10.0, color=ACC)
-    ax.text(0.50, 0.065, r"opposite signs $\Rightarrow\ m_{2,2}=-1.7$", ha="center",
-            va="bottom", fontsize=10.4, color=RED, weight="bold")
+        ax.annotate(
+            r"optimum  $\boldsymbol{\theta}^*$",
+            xy=THETA2_STAR,
+            xytext=(0.42, -0.74),
+            color=RED,
+            fontsize=10.8,
+            weight="bold",
+            arrowprops=dict(arrowstyle="->", color=RED, lw=1.2),
+            zorder=12,
+        )
+        ax.set_title(title + "\n" + settings, fontsize=12.4, weight="bold", pad=8)
+        ax.set_xlabel(r"parameter $\theta_1$")
 
-    # 3. Make the answer to the motivating problem visually explicit.
-    ax = axes[2]
-    ax.set_xlim(-1.0, 1.0)
-    ax.set_ylim(-1.0, 1.0)
-    ax.axis("off")
-    ax.set_title("3 · the next second-parameter move is much smaller", fontsize=12.5, weight="bold", pad=7)
-    ax.add_patch(
-        mpl.patches.Rectangle((-1.0, -0.15), 2.0, 0.30, facecolor="#EAF5F5",
-                              edgecolor="none", zorder=0)
-    )
-    ax.annotate("", xy=(0.92, 0), xytext=(-0.92, 0),
-                arrowprops=dict(arrowstyle="->", color=MUTED, lw=1.1))
-    ax.annotate("", xy=(0, 0.92), xytext=(0, -0.92),
-                arrowprops=dict(arrowstyle="->", color=MUTED, lw=1.1))
-    ax.scatter([0], [0], s=66, color=ACC, edgecolor="white", linewidth=0.9, zorder=5)
-    ax.annotate(
-        "",
-        xy=(0.62, 0.34),
-        xytext=(0, 0),
-        arrowprops=dict(arrowstyle="-|>", color=BLUE, lw=4.0, mutation_scale=17),
-    )
-    ax.text(0.34, 0.25, r"update  $-\eta\mathbf{m}_2$", ha="center", color=BLUE,
-            fontsize=10.5, weight="bold")
-    ax.text(-0.10, 0.62, r"$\theta_2$" "\nupdate", ha="right", color=MUTED, fontsize=10.0)
-    ax.text(0.72, -0.16, r"$\theta_1$ update", ha="center", va="top", color=MUTED, fontsize=10.0)
-    ax.text(0.0, -0.46, r"$\mathbf{m}_2=(-.855,\ -1.7)$", ha="center", fontsize=12.0,
-            color=INK, weight="bold")
-    ax.text(0.0, -0.68, "second-parameter move: +.162\nplain GD would move +1.454", ha="center",
-            va="top", fontsize=10.8, color=TEAL, weight="bold")
-
+    axes[0].set_ylabel(r"parameter $\theta_2$")
+    axes[1].set_ylabel("")
     fig.text(
         0.5,
-        0.008,
-        r"computed from Example B · first displacement matches GD $\eta=.019$ · normalized memory $\beta=.8$, $\eta=.095$",
+        0.052,
+        r"After 6 exact gradients, momentum is near the valley centre: $\theta_2=-.494$ versus $.125$.",
+        ha="center",
+        color=INK,
+        fontsize=10.8,
+        weight="bold",
+    )
+    fig.text(
+        0.5,
+        0.012,
+        r"computed from Example B · same start and $\eta=.0195$ · normalized EWMA momentum · updates 0–6",
         ha="center",
         color=MUTED,
-        fontsize=10.1,
+        fontsize=9.5,
     )
-    fig.tight_layout(rect=(0, 0.06, 1, 1), w_pad=1.2)
+    fig.tight_layout(rect=(0, 0.115, 1, 1), w_pad=1.8)
     save(fig, "story_gradient_filter")
 
 
 def f_momentum_ravine():
     steps = 55
-    gd_eta = 0.019
-    beta = 0.80
-    mom_eta = 0.095
-    pytorch_lr = mom_eta * (1 - beta)
+    gd_eta = RAVINE_GD_ETA
+    beta = RAVINE_MOMENTUM_BETA
+    mom_eta = RAVINE_MOMENTUM_ETA
     gd = gd_path(gd_eta, steps)
     momentum, memory, momentum_loss = momentum_run(mom_eta, beta, steps)
     gd_loss = np.array([ravine_loss(theta) for theta in gd])
 
     transverse_gd = np.abs(np.diff(gd[:, 1])).sum()
     transverse_momentum = np.abs(np.diff(momentum[:, 1])).sum()
-    gd_error2 = gd[:, 1] - THETA2_STAR[1]
-    momentum_error2 = momentum[:, 1] - THETA2_STAR[1]
-    crossings_gd = np.count_nonzero(np.signbit(gd_error2[1:]) != np.signbit(gd_error2[:-1]))
-    crossings_momentum = np.count_nonzero(
-        np.signbit(momentum_error2[1:]) != np.signbit(momentum_error2[:-1])
-    )
+    crossings_gd = material_crossing_count(gd)
+    crossings_momentum = material_crossing_count(momentum)
     assert transverse_momentum < transverse_gd
-    assert crossings_momentum < crossings_gd
+    assert (crossings_gd, crossings_momentum) == (55, 12)
     assert momentum_loss[-1] < gd_loss[-1]
-    assert np.isclose(pytorch_lr, gd_eta)
+    assert np.isclose(mom_eta, gd_eta)
     assert np.isclose(ravine_grad(THETA2_0)[1], 85.0)
-    assert np.isclose(memory[1, 1], 17.0)
-    assert np.isclose(momentum[1, 1], -1.265)
-    assert np.isclose(ravine_grad(momentum[1])[1], -76.5)
-    assert np.isclose(memory[2, 1], -1.7)
-    assert np.isclose(momentum[2, 1], -1.1035)
+    assert np.allclose(memory[1], [-1.8, 63.75])
+    assert np.allclose(momentum[1], [-1.3649, -0.893125])
+    assert np.allclose(ravine_grad(momentum[1]), [-2.3649, -39.3125])
+    assert np.allclose(memory[2], [-2.223675, -13.546875])
+    assert np.allclose(momentum[2], [-1.32153834, -0.62896094])
 
     fig, axes = plt.subplots(1, 2, figsize=(9.4, 4.05), sharex=True, sharey=True)
     draw_ravine(axes[0])
@@ -2354,7 +2452,7 @@ def f_momentum_ravine():
     axes[0].scatter(*THETA2_0, color=INK, s=38, zorder=7)
     axes[0].set(ylabel=r"parameter $\theta_2$",
                 xlabel=r"parameter $\theta_1$",
-                title=rf"plain GD · {crossings_gd} crossings" "\n" rf"$L_{{55}}={gd_loss[-1]:.3f}$")
+                title=rf"plain GD · {crossings_gd} visible crossings" "\n" rf"$L_{{55}}={gd_loss[-1]:.3f}$")
     axes[0].legend(frameon=False, fontsize=9.8, loc="lower right")
 
     draw_ravine(axes[1])
@@ -2364,12 +2462,12 @@ def f_momentum_ravine():
     )
     axes[1].scatter(*THETA2_0, color=INK, s=38, zorder=7)
     axes[1].set(ylabel="", xlabel=r"parameter $\theta_1$",
-                title=rf"momentum · {crossings_momentum} crossings" "\n" rf"$L_{{55}}={momentum_loss[-1]:.1e}$")
+                title=rf"momentum · {crossings_momentum} visible crossings" "\n" rf"$L_{{55}}={momentum_loss[-1]:.1e}$")
     axes[1].legend(frameon=False, fontsize=9.8, loc="lower right")
 
     fig.text(
         0.5, 0.01,
-        rf"55 exact full-batch gradient evaluations each · same start and first displacement · GD $\eta=.019$ · normalized momentum $\eta=.095,\ \beta=.8$",
+        rf"same start and learning rate $\eta=.0195$ · normalized momentum $\beta=.25$ · exact full-batch gradients",
         ha="center", color=MUTED, fontsize=10.3,
     )
     fig.tight_layout(rect=(0, 0.06, 1, 1))
@@ -2377,47 +2475,45 @@ def f_momentum_ravine():
 
 
 def f_momentum_loss():
-    """Make momentum's improvement visible on the full empirical loss."""
+    """Show two smooth loss curves and the point where momentum pulls ahead."""
     steps = 55
-    gd = gd_path(0.019, steps)
-    momentum, _memory, momentum_loss = momentum_run(0.095, 0.8, steps)
+    gd = gd_path(RAVINE_GD_ETA, steps)
+    momentum, _memory, momentum_loss = momentum_run(
+        RAVINE_MOMENTUM_ETA, RAVINE_MOMENTUM_BETA, steps
+    )
     gd_loss = np.array([ravine_loss(theta) for theta in gd])
     update = np.arange(steps + 1)
-    threshold = 0.1
-    permanently_below = int(next(
-        i for i in range(len(momentum_loss)) if np.all(momentum_loss[i:] < threshold)
+    crossover_update = int(next(
+        i
+        for i in range(1, len(momentum_loss))
+        if momentum_loss[i] < gd_loss[i]
+        and np.all(momentum_loss[i:] < gd_loss[i:])
     ))
-    rise_updates = np.flatnonzero(np.diff(momentum_loss) > 0) + 1
-    overshoot_update = 3
-    assert permanently_below == 26
-    assert not np.any(gd_loss < threshold)
+    assert crossover_update == 1
     assert np.all(np.diff(gd_loss) < 0)
-    assert overshoot_update in rise_updates
+    assert np.all(np.diff(momentum_loss) < 0)
+    assert momentum_loss[-1] < gd_loss[-1]
 
     fig, ax = plt.subplots(figsize=(8.6, 3.75))
-    ax.semilogy(update, gd_loss, color=ACC, lw=2.6, label="plain GD · monotone here")
+    ax.semilogy(update, gd_loss, color=ACC, lw=2.6, label=r"plain GD  $\eta=.0195$")
     ax.semilogy(update, momentum_loss, color=TEAL, lw=3.0,
-                label=r"momentum  $\beta=.8$ · stored motion")
-    ax.scatter([overshoot_update], [momentum_loss[overshoot_update]],
-               s=54, color=TEAL, zorder=7)
+                label=r"momentum  $\beta=.25,\ \eta=.0195$")
+    ax.axvline(crossover_update, color=MUTED, lw=1.0, linestyle="--", alpha=0.8)
+    ax.scatter([crossover_update], [momentum_loss[crossover_update]],
+               s=58, color=TEAL, edgecolor="white", linewidth=0.8, zorder=7)
     ax.annotate(
-        rf"stored motion overshoots:  $L_2={momentum_loss[2]:.1f}\rightarrow "
-        rf"L_3={momentum_loss[3]:.1f}$",
-        xy=(overshoot_update, momentum_loss[overshoot_update]),
-        xytext=(8.0, 17),
+        "momentum damps the steep oscillation\nand remains lower",
+        xy=(crossover_update, momentum_loss[crossover_update]),
+        xytext=(10.0, 8.5),
         color=TEAL,
         fontsize=10.5,
         weight="bold",
         arrowprops=dict(arrowstyle="->", color=TEAL, lw=1.3),
     )
-    ax.text(54, gd_loss[-1] * 1.15, rf"GD: ${gd_loss[-1]:.3f}$", color=ACC,
-            ha="right", va="bottom", fontsize=11.0, weight="bold")
-    ax.text(54, momentum_loss[-1] * 1.25, rf"momentum: ${momentum_loss[-1]:.1e}$", color=TEAL,
-            ha="right", va="bottom", fontsize=11.0, weight="bold")
     ax.set(
         xlabel="exact full-batch gradient evaluations",
         ylabel="full empirical loss (log scale)",
-        title="full-batch loss after every update · no sampling noise",
+        title="same learning rate; both losses decrease",
         xlim=(0, 55),
     )
     ax.legend(frameon=False, loc="upper right")
@@ -2428,10 +2524,10 @@ def f_momentum_loss():
 
 def f_rmsprop_ruler():
     """Turn Example B's unequal gradient coordinates into two local rulers."""
-    rho = 0.90
+    beta2 = 0.90
     gradient = ravine_grad(THETA2_0)
     raw_magnitude = np.abs(gradient)
-    second_moment = (1 - rho) * gradient**2
+    second_moment = (1 - beta2) * gradient**2
     ruler = np.sqrt(second_moment)
     # Omit epsilon only in this arithmetic illustration, as is customary when
     # explaining the mechanism. The actual optimizer below uses epsilon=1e-8.
@@ -2466,10 +2562,10 @@ def f_rmsprop_ruler():
         weight="bold",
     )
     axes[1].set_ylim(0, 31)
-    axes[1].set_ylabel(r"local ruler $\sqrt{s_{1,j}}$")
+    axes[1].set_ylabel(r"local ruler $\sqrt{v_{1,j}}$")
     axes[1].set_title("2 · remember squared magnitude\nwith one ruler per coordinate", weight="bold", pad=9)
     axes[1].text(
-        0.04, 0.62, r"$s_1=.9s_0+.1g_0^2$",
+        0.04, 0.62, r"$\boldsymbol{v}_1=.9\boldsymbol{v}_0+.1\boldsymbol{g}_0^2$",
         transform=axes[1].transAxes, ha="left", color=TEAL, fontsize=11.0, weight="bold",
         bbox=dict(boxstyle="round,pad=0.18", facecolor="white", edgecolor="none", alpha=0.92),
     )
@@ -2480,7 +2576,7 @@ def f_rmsprop_ruler():
         bars, labels=["3.162", "3.162"], padding=4, fontsize=12.0, weight="bold"
     )
     axes[2].set_ylim(0, 3.75)
-    axes[2].set_ylabel(r"rescaled magnitude $|g_{0,j}|/\sqrt{s_{1,j}}$")
+    axes[2].set_ylabel(r"rescaled magnitude $|g_{0,j}|/\sqrt{v_{1,j}}$")
     axes[2].set_title("3 · divide each coordinate\nby its own recent scale", weight="bold", pad=9)
     clean(axes[2], grid=True)
 
@@ -2498,7 +2594,7 @@ def f_rmsprop_ruler():
     fig.text(
         0.5,
         0.008,
-        r"computed from Example B at $\theta_0=(-1.4,.35)$ · $\rho=.9$ · $\epsilon$ omitted only from this arithmetic illustration",
+        r"computed from Example B at $\theta_0=(-1.4,.35)$ · $\beta_2=.9$ · $\epsilon$ omitted only from this arithmetic illustration",
         ha="center",
         va="bottom",
         color=MUTED,
@@ -2508,33 +2604,151 @@ def f_rmsprop_ruler():
     save(fig, "story_rmsprop_ruler")
 
 
+def f_rmsprop_gradient_sizes():
+    """Show the coordinate-scale failure before introducing RMSProp."""
+    gradient = ravine_grad(THETA2_0)
+    magnitudes = np.abs(gradient)
+    assert np.allclose(gradient, [-2.4, 85.0])
+    assert np.isclose(magnitudes[1] / magnitudes[0], 35.416666666666664)
+
+    fig, ax = plt.subplots(figsize=(7.1, 3.25))
+    labels = [r"shallow coordinate $\theta_1$", r"steep coordinate $\theta_2$"]
+    bars = ax.bar(labels, magnitudes, color=[BLUE, ACC], width=0.54, alpha=0.94)
+    ax.bar_label(bars, labels=["2.4", "85"], padding=4, fontsize=13, weight="bold")
+    ax.set_ylim(0, 98)
+    ax.set_ylabel(r"current gradient magnitude $|g_{0,j}|$")
+    ax.set_title(r"same learning rate, but $|g_{0,2}|$ is $35.4\times$ larger", weight="bold")
+    ax.text(
+        0.04, 0.80,
+        r"$\Delta\theta_{0,j}=-\eta g_{0,j}$ uses the same $\eta$ twice",
+        transform=ax.transAxes, color=INK, fontsize=11.2, weight="bold",
+        bbox=dict(boxstyle="round,pad=0.24", facecolor="white", edgecolor=TEAL, linewidth=1),
+    )
+    clean(ax, grid=True)
+    fig.tight_layout()
+    save(fig, "story_rmsprop_gradient_sizes")
+
+
+def f_rmsprop_why_square():
+    """Use the actual GD failure path to show why scale memory squares signs."""
+    path = gd_path(RAVINE_GD_ETA, 5)
+    gradients = np.asarray([ravine_grad(theta) for theta in path[:-1]])
+    steep = gradients[:, 1]
+    steep_sq = steep**2
+    expected = np.array([85.0, -80.75, 76.7125, -72.876875, 69.23303125])
+    assert np.allclose(steep, expected)
+    assert np.all(steep_sq > 0)
+
+    updates = np.arange(len(steep))
+    fig, axes = plt.subplots(1, 2, figsize=(9.4, 3.25), gridspec_kw={"width_ratios": [1, 1]})
+    axes[0].axhline(0, color=MUTED, linewidth=0.9)
+    markerline, stemlines, baseline = axes[0].stem(updates, steep)
+    plt.setp(markerline, marker="o", markersize=6, markerfacecolor=ACC, markeredgecolor=ACC)
+    plt.setp(stemlines, color=ACC, linewidth=2.2)
+    plt.setp(baseline, color=MUTED, linewidth=0.8)
+    for t, value in zip(updates, steep):
+        axes[0].text(t, value + (5 if value >= 0 else -8), f"{value:.1f}", ha="center", color=ACC, fontsize=9.5)
+    axes[0].set(
+        xlabel="update $t$", ylabel=r"signed $g_{t,2}$",
+        title="signs alternate\nso a signed average can cancel",
+        xticks=updates,
+    )
+    clean(axes[0], grid=True)
+
+    bars = axes[1].bar(updates, steep_sq, color=GREEN, width=0.62, alpha=0.92)
+    axes[1].bar_label(bars, labels=[f"{x:.0f}" for x in steep_sq], padding=3, fontsize=9.3)
+    axes[1].set(
+        xlabel="update $t$", ylabel=r"squared $g_{t,2}^2$",
+        title="squares stay positive\nso large magnitude remains visible",
+        xticks=updates,
+    )
+    clean(axes[1], grid=True)
+    fig.text(
+        0.5, 0.01,
+        r"computed from the first five exact gradients on the plain-GD ravine path, $\eta=.0195$",
+        ha="center", color=MUTED, fontsize=9.5,
+    )
+    fig.tight_layout(rect=(0, 0.06, 1, 1), w_pad=2.2)
+    save(fig, "story_rmsprop_why_square")
+
+
+def f_rmsprop_build_rulers():
+    """Separate the first RMSProp scale state from the final division."""
+    beta2 = 0.90
+    gradient = ravine_grad(THETA2_0)
+    square_avg = (1 - beta2) * gradient**2
+    rulers = np.sqrt(square_avg)
+    assert np.allclose(square_avg, [0.576, 722.5])
+    assert np.allclose(rulers, [0.758946638440411, 26.879360111431225])
+
+    labels = [r"$\theta_1$", r"$\theta_2$"]
+    fig, axes = plt.subplots(1, 2, figsize=(9.4, 3.25))
+    bars = axes[0].bar(labels, square_avg, color=[BLUE, ACC], width=0.54, alpha=0.94)
+    axes[0].bar_label(bars, labels=["0.576", "722.5"], padding=4, fontsize=11.5, weight="bold")
+    axes[0].set(yscale="log", ylabel=r"running mean square $v_{1,j}$",
+                title=r"mean square: $\boldsymbol{v}_1=.9\boldsymbol{v}_0+.1\boldsymbol{g}_0^2$")
+    clean(axes[0], grid=True)
+
+    bars = axes[1].bar(labels, rulers, color=[BLUE, ACC], width=0.54, alpha=0.94)
+    axes[1].bar_label(bars, labels=["0.759", "26.879"], padding=4, fontsize=11.5, weight="bold")
+    axes[1].set(ylabel=r"root-mean-square ruler $\sqrt{v_{1,j}}$",
+                title="root: return to gradient units")
+    clean(axes[1], grid=True)
+    fig.text(
+        0.5, 0.01,
+        r"Example B · $\boldsymbol{v}_0=\boldsymbol{0}$ · $\beta_2=.9$ · one ruler is carried for each parameter coordinate",
+        ha="center", color=MUTED, fontsize=9.5,
+    )
+    fig.tight_layout(rect=(0, 0.06, 1, 1), w_pad=2.2)
+    save(fig, "story_rmsprop_build_rulers")
+
+
+def f_rmsprop_rescaled_direction():
+    """Show the large denominator shrinking only the large coordinate."""
+    beta2 = 0.90
+    gradient = ravine_grad(THETA2_0)
+    rulers = np.sqrt((1 - beta2) * gradient**2)
+    scaled = gradient / rulers
+    assert np.allclose(scaled, [-np.sqrt(10), np.sqrt(10)])
+
+    labels = [r"$\theta_1$", r"$\theta_2$"]
+    fig, axes = plt.subplots(1, 2, figsize=(9.4, 3.25))
+    bars = axes[0].bar(labels, np.abs(gradient), color=[BLUE, ACC], width=0.54, alpha=0.94)
+    axes[0].bar_label(bars, labels=["2.4", "85"], padding=4, fontsize=11.5, weight="bold")
+    axes[0].set(yscale="log", ylabel="magnitude", title="before: raw gradient")
+    clean(axes[0], grid=True)
+
+    bars = axes[1].bar(labels, np.abs(scaled), color=[BLUE, ACC], width=0.54, alpha=0.94)
+    axes[1].bar_label(bars, labels=["3.162", "3.162"], padding=4, fontsize=11.5, weight="bold")
+    axes[1].set(ylim=(0, 3.75), ylabel="magnitude", title=r"after: $|g_{0,j}|/\sqrt{v_{1,j}}$")
+    clean(axes[1], grid=True)
+    fig.text(
+        0.5, 0.01,
+        "the 26.879 denominator strongly shrinks the steep coordinate; the 0.759 denominator preserves the shallow one",
+        ha="center", color=INK, fontsize=10.1, weight="bold",
+    )
+    fig.tight_layout(rect=(0, 0.08, 1, 1), w_pad=2.2)
+    save(fig, "story_rmsprop_rescaled_direction")
+
+
 def f_rmsprop_ravine():
     steps = 40
-    gd_eta = 0.019
+    gd_eta = RAVINE_GD_ETA
     eta = 0.08
-    rho = 0.90
+    beta2 = 0.90
     eps = 1e-8
     gd = gd_path(gd_eta, steps)
-    path, scales, normalized, losses = rmsprop_run(eta, rho, steps, eps)
+    path, scales, normalized, losses = rmsprop_run(eta, beta2, steps, eps)
     gd_losses = np.array([ravine_loss(theta) for theta in gd])
-    gd_error2 = gd[:, 1] - THETA2_STAR[1]
-    rmsprop_error2 = path[:, 1] - THETA2_STAR[1]
-    def material_crossings(error, tolerance=1e-6):
-        changed_side = np.signbit(error[1:]) != np.signbit(error[:-1])
-        away_from_roundoff = (
-            np.maximum(np.abs(error[1:]), np.abs(error[:-1])) > tolerance
-        )
-        return int(np.count_nonzero(changed_side & away_from_roundoff))
-
-    gd_crossings = material_crossings(gd_error2)
-    rmsprop_crossings = material_crossings(rmsprop_error2)
+    gd_crossings = material_crossing_count(gd)
+    rmsprop_crossings = material_crossing_count(path)
     assert np.allclose(scales[1], [0.576, 722.5])
     assert np.allclose(np.abs(normalized[0]), [np.sqrt(10), np.sqrt(10)], atol=1e-6)
-    expected_scale_2 = rho * scales[1] + (1 - rho) * ravine_grad(path[1]) ** 2
+    expected_scale_2 = beta2 * scales[1] + (1 - beta2) * ravine_grad(path[1]) ** 2
     assert np.allclose(scales[2], expected_scale_2)
     assert gd_crossings == 40
     assert rmsprop_crossings == 0
-    assert np.isclose(gd_losses[-1], 0.6286371741979371)
+    assert np.isclose(gd_losses[-1], 1.1925548690816135)
     assert np.isclose(losses[-1], 0.0008152220927773283)
     assert losses[-1] < gd_losses[-1]
     assert np.all(np.diff(gd_losses) < 0)
@@ -2563,13 +2777,13 @@ def f_rmsprop_ravine():
     )
     axes[0].legend(frameon=False, fontsize=10.1, loc="lower right")
     axes[0].text(
-        0.98, 0.96, f"GD: {gd_crossings} crossings",
+        0.98, 0.96, f"GD: {gd_crossings} visible crossings",
         transform=axes[0].transAxes, ha="right", va="top", color=ACC,
         fontsize=10.5, weight="bold",
         bbox=dict(boxstyle="round,pad=0.12", facecolor="white", edgecolor="none", alpha=0.90),
     )
     axes[0].text(
-        0.98, 0.89, f"RMSProp: {rmsprop_crossings} crossings",
+        0.98, 0.89, f"RMSProp: {rmsprop_crossings} visible crossings",
         transform=axes[0].transAxes, ha="right", va="top", color=GREEN,
         fontsize=10.5, weight="bold",
         bbox=dict(boxstyle="round,pad=0.12", facecolor="white", edgecolor="none", alpha=0.90),
@@ -2604,7 +2818,7 @@ def f_rmsprop_ravine():
     fig.text(
         0.5,
         0.012,
-        rf"computed Example B · 40 exact full-batch gradients · GD $\eta={gd_eta}$ · RMSProp $\eta={eta},\ \rho={rho},\ \epsilon={eps:.0e}$ · method-specific rates, not a benchmark",
+        rf"computed Example B · 40 exact full-batch gradients · GD $\eta={gd_eta}$ · RMSProp $\eta={eta},\ \beta_2={beta2},\ \epsilon={eps:.0e}$ · method-specific rates, not a benchmark",
         ha="center",
         color=MUTED,
         fontsize=10.0,
@@ -2616,55 +2830,58 @@ def f_rmsprop_ravine():
 def f_optimizer_paths():
     steps = 55
     specs = [
-        (gd_path(0.019, steps), "GD", r"$\eta=.019$", ACC),
-        (momentum_path(0.095, 0.8, steps), "momentum", r"$\eta_{\rm EWMA}=.095,\ \beta=.8$" "\n" r"(PyTorch lr $=.019$)", TEAL),
-        (rmsprop_path(0.08, 0.9, steps), "RMSProp", r"$\eta=.08,\ \rho=.9$", GREEN),
-        (adam_path(0.10, 0.9, 0.999, steps), "Adam", r"$\eta=.10,\ \beta=(.9,.999)$", PURPLE),
+        (gd_path(RAVINE_GD_ETA, steps), "GD", r"$\eta=.0195$", ACC),
+        (
+            momentum_path(
+                RAVINE_MOMENTUM_ETA, RAVINE_MOMENTUM_BETA, steps
+            ),
+            "momentum",
+            r"$\eta=.0195,\ \beta=.25$",
+            TEAL,
+        ),
+        (rmsprop_path(0.08, 0.9, steps), "RMSProp", r"$\eta=.08,\ \beta_2=.9$", GREEN),
+        (
+            adam_path(0.10, 0.9, 0.999, steps),
+            "Adam",
+            r"$\eta=.10,\ \beta_1=.9,\ \beta_2=.999$",
+            PURPLE,
+        ),
     ]
     loss_series = {
         method: np.array([ravine_loss(theta) for theta in path])
         for path, method, _settings, _color in specs
     }
     expected_endpoints = {
-        "GD": 0.34946145743566004,
-        "momentum": 0.00013618968018459663,
-        "RMSProp": 1.7248121651950545e-08,
-        "Adam": 0.06260063530642346,
+        "GD": 0.4581442126753134,
+        "momentum": 0.3297748786564119,
+        "RMSProp": 1.724812165202376e-08,
+        "Adam": 0.06260063530642353,
     }
 
-    def material_crossings(path, tolerance=1e-6):
-        theta2_error = path[:, 1] - THETA2_STAR[1]
-        changed_sign = np.signbit(theta2_error[1:]) != np.signbit(theta2_error[:-1])
-        away_from_roundoff = (
-            np.maximum(np.abs(theta2_error[1:]), np.abs(theta2_error[:-1]))
-            > tolerance
-        )
-        return int(np.count_nonzero(changed_sign & away_from_roundoff))
-
     crossings = {
-        method: material_crossings(path)
+        method: material_crossing_count(path)
         for path, method, _settings, _color in specs
     }
     raw_crossings = {
-        method: int(np.count_nonzero(
-            np.signbit(path[1:, 1] - THETA2_STAR[1])
-            != np.signbit(path[:-1, 1] - THETA2_STAR[1])
-        ))
+        method: raw_crossing_count(path)
         for path, method, _settings, _color in specs
     }
-    assert crossings == {"GD": 55, "momentum": 29, "RMSProp": 0, "Adam": 3}
+    assert crossings == {"GD": 55, "momentum": 12, "RMSProp": 0, "Adam": 3}
     # RMSProp's extra raw centre crossings occur only after the theta_2 error has reached
     # numerical roundoff; report material crossings in the teaching visual.
-    assert raw_crossings == {"GD": 55, "momentum": 29, "RMSProp": 4, "Adam": 3}
+    assert raw_crossings == {"GD": 55, "momentum": 30, "RMSProp": 4, "Adam": 3}
     assert all(len(path) == steps + 1 for path, *_ in specs)
     assert all(np.allclose(path[0], THETA2_0) for path, *_ in specs)
     assert all(np.isfinite(path).all() for path, *_ in specs)
     assert all(np.isfinite(losses).all() for losses in loss_series.values())
-    assert all(np.isclose(loss_series[name][-1], value) for name, value in expected_endpoints.items())
+    assert all(
+        np.isclose(loss_series[name][-1], value, rtol=1e-10, atol=1e-14)
+        for name, value in expected_endpoints.items()
+    )
     assert (
         loss_series["RMSProp"][-1]
-        < loss_series["momentum"][-1]
         < loss_series["Adam"][-1]
+        < loss_series["momentum"][-1]
         < loss_series["GD"][-1]
     )
 
@@ -2690,9 +2907,9 @@ def f_optimizer_paths():
         title="same ravine · same start · 55 exact full-batch updates each",
     )
     endpoint_labels = [
-        ("GD", 0.54, r"GD  $0.349$"),
-        ("momentum", 2.2e-4, r"momentum  $1.36\times10^{-4}$"),
-        ("Adam", 0.043, r"Adam  $0.0626$"),
+        ("GD", 0.78, r"GD  $0.458$"),
+        ("momentum", 0.20, r"momentum  $0.330$"),
+        ("Adam", 0.038, r"Adam  $0.0626$"),
         ("RMSProp", 1.8e-8, r"RMSProp  $1.72\times10^{-8}$"),
     ]
     colors = {method: color for _path, method, _settings, color in specs}
@@ -2710,7 +2927,7 @@ def f_optimizer_paths():
     loss_ax.text(
         0.025,
         0.055,
-        r"Final loss here:  RMSProp  $<$  momentum  $<$  Adam  $<$  GD",
+        r"Final loss here:  RMSProp  $<$  Adam  $<$  momentum  $<$  GD",
         transform=loss_ax.transAxes,
         color=INK,
         fontsize=11.0,
@@ -2752,7 +2969,7 @@ def f_optimizer_paths():
     fig.text(
         0.5,
         0.038,
-        r"method-specific settings: GD $\eta=.019$ · normalized momentum $\eta=.095,\beta=.8$ (PyTorch lr $=.019$) · RMSProp $\eta=.08,\rho=.9$ · Adam $\eta=.10,\beta=(.9,.999)$",
+        r"GD and normalized momentum share $\eta=.0195$ · momentum $\beta=.25$ · RMSProp $\eta=.08,\beta_2=.9$ · Adam $\eta=.10,\beta_1=.9,\beta_2=.999$",
         ha="center",
         color=MUTED,
         fontsize=9.5,
@@ -2760,7 +2977,7 @@ def f_optimizer_paths():
     fig.text(
         0.5,
         0.006,
-        "controlled Example B mechanism comparison · method-specific rates · not a universal optimizer ranking",
+        "one worked example with method-specific settings · not a universal optimizer ranking",
         ha="center",
         color=RED,
         fontsize=9.8,
@@ -2779,6 +2996,153 @@ def sgd_stream(indices, schedule):
         losses.append(line_loss(theta))
         path.append(theta.copy())
     return np.asarray(path), np.asarray(losses)
+
+
+def full_batch_stream(schedule, updates):
+    """Run exact full-batch GD on Example A with a supplied rate schedule."""
+    theta = THETA0.copy()
+    path = [theta.copy()]
+    losses = [line_loss(theta)]
+    for t in range(updates):
+        theta = theta - schedule(t) * line_grad(theta)
+        path.append(theta.copy())
+        losses.append(line_loss(theta))
+    return np.asarray(path), np.asarray(losses)
+
+
+def f_schedule_exact_gd():
+    """Show that schedules can also damp an aggressive exact-GD trajectory."""
+    updates = 16
+    eta0 = 0.90
+    decay_rate = 0.10
+    fixed_path, fixed_loss = full_batch_stream(lambda _t: eta0, updates)
+    decay_path, decay_loss = full_batch_stream(
+        lambda t: eta0 / (1 + decay_rate * t), updates
+    )
+    optimum_loss = line_loss(THETA_STAR)
+    fixed_gap = fixed_loss - optimum_loss
+    decay_gap = decay_loss - optimum_loss
+
+    assert np.allclose(fixed_path[0], decay_path[0])
+    assert np.allclose(fixed_path[1], decay_path[1])
+    assert np.all(np.diff(fixed_loss) < 0)
+    assert np.all(np.diff(decay_loss) < 0)
+    assert decay_gap[6] < fixed_gap[6] / 40
+    assert np.isclose(fixed_gap[6], 0.01860004200968747)
+    assert np.isclose(decay_gap[6], 0.0003907876433136073)
+
+    fig, axes = plt.subplots(1, 2, figsize=(11.8, 3.75))
+    B, W, loss = line_loss_grid(b_lim=(0.65, 2.95), w_lim=(-1.35, 3.45))
+    levels = optimum_loss + np.array(
+        [0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 7.0]
+    )
+    axes[0].contour(
+        B, W, loss, levels=levels, colors=[MUTED], linewidths=0.75, alpha=0.50
+    )
+    shown = 9
+    axes[0].plot(
+        fixed_path[:shown, 0], fixed_path[:shown, 1],
+        color=ACC, marker="o", markersize=4.1, linewidth=2.0,
+        label=rf"fixed $\eta={eta0:.1f}$",
+    )
+    axes[0].plot(
+        decay_path[:shown, 0], decay_path[:shown, 1],
+        color=TEAL, marker="o", markersize=4.1, linewidth=2.2,
+        label=rf"$\eta_t={eta0:.1f}/(1+{decay_rate:.1f}t)$",
+    )
+    axes[0].scatter(*THETA0, s=58, color=INK, zorder=8)
+    axes[0].scatter(*THETA_STAR, marker="*", s=165, color=RED, zorder=9)
+    axes[0].annotate(
+        "same first step", xy=fixed_path[1], xytext=(2.55, 2.15),
+        color=INK, fontsize=9.8, weight="bold",
+        arrowprops=dict(arrowstyle="->", color=INK, lw=1.0),
+    )
+    axes[0].set(
+        xlim=(0.65, 2.95), ylim=(-1.35, 3.45),
+        xlabel="bias $b$", ylabel="slope $w$",
+        title="exact full-batch paths · no sampling noise",
+    )
+    axes[0].legend(frameon=False, loc="lower right", fontsize=9.7)
+    clean(axes[0])
+
+    step = np.arange(updates + 1)
+    axes[1].semilogy(step, fixed_gap, color=ACC, marker="o", markersize=3.5,
+                    linewidth=2.0, label=rf"fixed $\eta={eta0:.1f}$")
+    axes[1].semilogy(step, decay_gap, color=TEAL, marker="o", markersize=3.5,
+                    linewidth=2.2, label="decayed rate")
+    axes[1].annotate(
+        f"after 6 updates\n{fixed_gap[6] / decay_gap[6]:.0f}× smaller gap",
+        xy=(6, decay_gap[6]), xytext=(8.0, 0.02),
+        color=TEAL, fontsize=10.0, weight="bold",
+        arrowprops=dict(arrowstyle="->", color=TEAL, lw=1.0),
+    )
+    axes[1].set(
+        xlim=(0, updates), xlabel="exact full-batch update",
+        ylabel="full-loss gap (log scale)",
+        title="decay damps an intentionally aggressive rate",
+    )
+    axes[1].legend(frameon=False, fontsize=9.8, loc="upper right")
+    clean(axes[1], grid=True)
+    fig.tight_layout(w_pad=1.7)
+    save(fig, "story_schedule_exact_gd")
+
+
+def f_schedule_noise_at_optimum():
+    """At the empirical optimum, exact GD stops but sampled gradients do not."""
+    per_example = np.array(
+        [line_grad(THETA_STAR, [i]) for i in range(len(X1))]
+    )
+    full_gradient = line_grad(THETA_STAR)
+    eta = 0.25
+    endpoints = THETA_STAR - eta * per_example
+
+    assert np.allclose(full_gradient, np.zeros(2), atol=1e-12)
+    assert np.allclose(per_example.mean(axis=0), full_gradient, atol=1e-12)
+    assert np.all(np.linalg.norm(per_example, axis=1) > 0)
+
+    fig, axes = plt.subplots(1, 2, figsize=(11.8, 3.6))
+    B, W, loss = line_loss_grid(b_lim=(0.88, 1.30), w_lim=(2.05, 2.53))
+    optimum_loss = line_loss(THETA_STAR)
+    levels = optimum_loss + np.array([0.0003, 0.001, 0.003, 0.01, 0.03, 0.08])
+    for ax in axes:
+        ax.contour(B, W, loss, levels=levels, colors=[MUTED], linewidths=0.8, alpha=0.52)
+        ax.scatter(*THETA_STAR, marker="*", s=180, color=RED, zorder=9)
+        ax.set(xlim=(0.88, 1.30), ylim=(2.05, 2.53), xlabel="bias $b$")
+        ax.set_aspect("equal")
+        clean(ax)
+    axes[0].set_ylabel("slope $w$")
+    axes[0].set_title("full-batch gradient: the mean is zero")
+    axes[0].text(
+        0.50, 0.13, r"$g_{\mathrm{full}}=\frac{1}{4}\sum_i g_i=(0,0)$",
+        transform=axes[0].transAxes, ha="center", color=INK,
+        fontsize=11.0, weight="bold",
+        bbox=dict(boxstyle="round,pad=0.22", facecolor="white", edgecolor="none", alpha=0.92),
+    )
+    axes[0].text(
+        0.50, 0.05, "exact GD stops", transform=axes[0].transAxes,
+        ha="center", color=TEAL, fontsize=10.5, weight="bold",
+    )
+
+    colors = [BLUE, ACC, TEAL, PURPLE]
+    for i, (gradient, endpoint, color) in enumerate(zip(per_example, endpoints, colors), 1):
+        axes[1].annotate(
+            "", xy=endpoint, xytext=THETA_STAR,
+            arrowprops=dict(arrowstyle="-|>", color=color, lw=2.2, mutation_scale=14),
+        )
+        axes[1].scatter(*endpoint, s=92, color=color, edgecolor="white", linewidth=0.8, zorder=8)
+        axes[1].text(
+            endpoint[0], endpoint[1], str(i),
+            color="white", ha="center", va="center", fontsize=8.5, weight="bold", zorder=9,
+        )
+    axes[1].set_title("one sampled gradient: four possible moves")
+    axes[1].text(
+        0.50, 0.05, "SGD can move even at the empirical optimum",
+        transform=axes[1].transAxes, ha="center", color=ACC,
+        fontsize=10.3, weight="bold",
+        bbox=dict(boxstyle="round,pad=0.18", facecolor="white", edgecolor="none", alpha=0.92),
+    )
+    fig.tight_layout(w_pad=1.8)
+    save(fig, "story_schedule_noise_at_optimum")
 
 
 def f_decay_noise():
@@ -2814,128 +3178,78 @@ def f_decay_noise():
     decay_extent = np.ptp(decay_path[-100:], axis=0)
     assert np.all(fixed_extent > 5 * decay_extent)
 
-    fig, axes = plt.subplots(
-        1,
-        3,
-        figsize=(11.8, 3.75),
-        gridspec_kw={"width_ratios": [1.0, 0.72, 1.18]},
-    )
-
-    axes[0].plot(updates, fixed_schedule, color=ACC, linewidth=2.5)
-    axes[0].plot(updates, decay_schedule, color=TEAL, linewidth=2.5)
-    axes[0].scatter([updates[-1]], [fixed_schedule[-1]], color=ACC, s=42, zorder=6)
-    axes[0].scatter([updates[-1]], [decay_schedule[-1]], color=TEAL, s=42, zorder=6)
-    axes[0].text(
-        348, 0.104, r"fixed: $.100$", color=ACC, ha="right", va="bottom",
-        fontsize=10.4, weight="bold",
-        bbox=dict(boxstyle="round,pad=0.10", facecolor="white", edgecolor="none", alpha=0.90),
-    )
-    axes[0].text(
-        348, 0.018, r"decay: $.100\rightarrow.0122$", color=TEAL,
-        ha="right", va="bottom", fontsize=10.4, weight="bold",
-        bbox=dict(boxstyle="round,pad=0.10", facecolor="white", edgecolor="none", alpha=0.90),
-    )
-    axes[0].set(
-        xlim=(0, len(indices) - 1),
-        ylim=(0, 0.116),
-        xlabel="optimizer update",
-        ylabel=r"chosen learning rate $\eta_t$",
-        title="1 · WHAT WE CHOOSE\nrate over training",
-    )
-    clean(axes[0], grid=True)
-
-    bars = axes[1].barh(
-        [0, 1],
-        [fixed_late_distance, decay_late_distance],
-        color=[ACC, TEAL],
-        height=0.52,
-        alpha=0.92,
-    )
-    axes[1].invert_yaxis()
-    axes[1].set_yticks([0, 1], [r"fixed $.10$", "decay"])
-    axes[1].bar_label(
-        bars,
-        labels=[f"{fixed_late_distance:.3f}", f"{decay_late_distance:.3f}"],
-        padding=5,
-        fontsize=11.0,
-        weight="bold",
-    )
-    axes[1].text(
-        0.96,
-        0.08,
-        f"decay = {100 / distance_ratio:.0f}%\nof fixed motion",
-        transform=axes[1].transAxes,
-        ha="right",
-        va="bottom",
-        color=TEAL,
-        fontsize=11.0,
-        weight="bold",
-        bbox=dict(boxstyle="round,pad=0.18", facecolor="white", edgecolor="none", alpha=0.90),
-    )
-    axes[1].set(
-        xlim=(0, 4.25),
-        xlabel="total parameter distance\n(final 99 transitions)",
-        title="2 · WHAT IT CHANGES\nactual update distance",
-    )
-    clean(axes[1], grid=True)
-
+    # Keep the slide focused on one comparison: how far the parameters keep
+    # moving late in training.  A shared coordinate system makes the different
+    # spreads immediately visible, while unconnected dots avoid a dense,
+    # directionless "spaghetti" trace.  The explorer retains the step-by-step
+    # paths for instructors who want to reveal them progressively.
+    fig, ax = plt.subplots(figsize=(7.6, 5.0))
     B, W, loss = line_loss_grid(b_lim=(0.95, 1.25), w_lim=(2.14, 2.42))
     optimum = line_loss(THETA_STAR)
     levels = optimum + np.array([0.0001, 0.0003, 0.001, 0.003, 0.01, 0.03])
-    axes[2].contour(
-        B, W, loss, levels=levels, colors=[MUTED], linewidths=0.75, alpha=0.48
+    ax.contour(
+        B,
+        W,
+        loss,
+        levels=levels,
+        colors=[MUTED],
+        linewidths=0.9,
+        alpha=0.48,
     )
-    axes[2].plot(
-        fixed_path[-100:, 0],
-        fixed_path[-100:, 1],
+
+    fixed_late = fixed_path[-100:]
+    decay_late = decay_path[-100:]
+    ax.scatter(
+        fixed_late[:, 0],
+        fixed_late[:, 1],
+        s=27,
         color=ACC,
-        linewidth=1.8,
-        marker="o",
-        markersize=2.3,
-        markevery=9,
-        alpha=0.86,
-        label="fixed · roaming",
+        alpha=0.32,
+        edgecolors="none",
+        label=r"fixed $\eta=.10$",
+        zorder=4,
     )
-    axes[2].plot(
-        decay_path[-100:, 0],
-        decay_path[-100:, 1],
+    ax.scatter(
+        decay_late[:, 0],
+        decay_late[:, 1],
+        s=30,
         color=TEAL,
-        linewidth=2.2,
-        marker="o",
-        markersize=2.5,
-        markevery=9,
-        alpha=0.94,
-        label="decay · settling",
+        alpha=0.82,
+        edgecolors="white",
+        linewidths=0.25,
+        label=r"inverse-time decay",
+        zorder=5,
     )
-    axes[2].scatter(*THETA_STAR, marker="*", s=165, color=RED, zorder=8)
-    axes[2].annotate(
-        "least-squares optimum",
+    ax.scatter(*THETA_STAR, marker="*", s=210, color=RED, zorder=8)
+    ax.annotate(
+        "optimum",
         xy=THETA_STAR,
-        xytext=(0.965, 2.405),
+        xytext=(1.135, 2.265),
         color=RED,
-        fontsize=9.7,
+        fontsize=11.0,
         weight="bold",
         arrowprops=dict(arrowstyle="->", color=RED, lw=1.0),
     )
-    axes[2].set(
+    ax.annotate(
+        "decay keeps the late\nparameter values close",
+        xy=tuple(decay_late.mean(axis=0)),
+        xytext=(0.975, 2.395),
+        color=TEAL,
+        fontsize=11.0,
+        weight="bold",
+        arrowprops=dict(arrowstyle="->", color=TEAL, lw=1.2),
+    )
+    ax.set(
         xlim=(0.95, 1.25),
         ylim=(2.14, 2.42),
         xlabel="bias $b$",
         ylabel="slope $w$",
-        title="3 · WHAT WE SEE\ndecayed path settles",
+        title="each dot is one of the final 100 parameter values",
     )
-    axes[2].set_aspect("equal")
-    axes[2].legend(
-        frameon=True,
-        facecolor="white",
-        edgecolor="none",
-        framealpha=0.90,
-        fontsize=9.5,
-        loc="lower right",
-    )
-    clean(axes[2])
-
-    fig.tight_layout(w_pad=1.6)
+    ax.set_aspect("equal")
+    ax.legend(frameon=False, fontsize=11.0, loc="lower right")
+    clean(ax)
+    fig.tight_layout()
     save(fig, "story_decay_noise")
 
 
@@ -2992,46 +3306,48 @@ def f_schedule_two_jobs():
     assert all(np.isfinite(path).all() for path in paths.values())
     assert all(np.isfinite(values).all() and np.all(values >= 0) for values in gaps.values())
 
-    fig, axes = plt.subplots(1, 2, figsize=(11.8, 4.2))
+    # First establish the fixed-rate trade-off.  The decay curve is introduced
+    # only after its formula, on the following slide.
+    fig, ax = plt.subplots(figsize=(9.5, 4.4))
 
     early_horizon = 80
     early_updates = np.arange(early_horizon + 1)
     start_gap = line_loss(THETA0) - optimum_loss
-    for name in ["large fixed", "small fixed", "decay"]:
+    for name in ["large fixed", "small fixed"]:
         early_gap = np.r_[start_gap, gaps[name][:early_horizon]]
         label = {
             "large fixed": r"fixed $\eta=.10$",
             "small fixed": r"fixed $\eta=.02$",
             "decay": r"decay from $\eta=.10$",
         }[name]
-        axes[0].semilogy(
+        ax.semilogy(
             early_updates, early_gap, color=colors[name], linewidth=2.35, label=label
         )
         hit = travel_updates[name]
-        axes[0].scatter(
+        ax.scatter(
             [hit], [gaps[name][hit - 1]], color=colors[name], s=45, zorder=7
         )
-    axes[0].axhline(travel_target, color=MUTED, linewidth=1.0, linestyle="--")
-    axes[0].text(
+    ax.axhline(travel_target, color=MUTED, linewidth=1.0, linestyle="--")
+    ax.text(
         78,
         travel_target * 1.13,
-        r"travel target: loss gap $<.5$",
+        r"useful-region marker: full-loss gap $<.5$",
         ha="right",
         va="bottom",
         color=MUTED,
         fontsize=10.0,
     )
-    axes[0].annotate(
-        "large + decay: 8 updates",
+    ax.annotate(
+        "first crossing: update 8",
         xy=(8, travel_target),
         xytext=(16, 1.25),
-        color=TEAL,
+        color=ACC,
         fontsize=10.4,
         weight="bold",
-        arrowprops=dict(arrowstyle="->", color=TEAL, lw=1.1),
+        arrowprops=dict(arrowstyle="->", color=ACC, lw=1.1),
     )
-    axes[0].annotate(
-        "small: 56 updates",
+    ax.annotate(
+        "first crossing: update 56",
         xy=(56, gaps["small fixed"][55]),
         xytext=(42, 2.1),
         color=BLUE,
@@ -3039,110 +3355,82 @@ def f_schedule_two_jobs():
         weight="bold",
         arrowprops=dict(arrowstyle="->", color=BLUE, lw=1.1),
     )
-    axes[0].set(
+    ax.set(
         xlim=(0, early_horizon),
         ylim=(3e-4, 10),
         xlabel="stochastic update",
         ylabel="full-loss gap (log scale)",
-        title="EARLY · travel into a useful region",
+        title="same sampled indices; only the fixed learning rate changes",
     )
-    axes[0].legend(frameon=False, fontsize=10.0, loc="lower left")
-    clean(axes[0], grid=True)
-
-    B, W, loss = line_loss_grid(b_lim=(0.95, 1.25), w_lim=(2.14, 2.42))
-    contour_levels = optimum_loss + np.array([0.0001, 0.0003, 0.001, 0.003, 0.01, 0.03])
-    axes[1].contour(
-        B, W, loss, levels=contour_levels, colors=[MUTED], linewidths=0.75, alpha=0.48
-    )
-    for name in ["large fixed", "small fixed", "decay"]:
-        late = paths[name][-100:]
-        label = {
-            "large fixed": rf"$\eta=.10$ · mean gap {late_mean_gap[name]:.4f}",
-            "small fixed": rf"$\eta=.02$ · mean gap {late_mean_gap[name]:.4f}",
-            "decay": rf"decay · mean gap {late_mean_gap[name]:.5f}",
-        }[name]
-        axes[1].plot(
-            late[:, 0],
-            late[:, 1],
-            color=colors[name],
-            linewidth=1.75 if name != "decay" else 2.15,
-            marker="o",
-            markersize=2.4,
-            markevery=9,
-            alpha=0.88,
-            label=label,
-        )
-    axes[1].scatter(*THETA_STAR, marker="*", s=165, color=RED, zorder=8)
-    axes[1].set(
-        xlim=(0.95, 1.25),
-        ylim=(2.14, 2.42),
-        xlabel="bias $b$",
-        ylabel="slope $w$",
-        title="LATE · last 100 updates refine the fit",
-    )
-    axes[1].set_aspect("equal")
-    axes[1].legend(
-        frameon=True,
-        facecolor="white",
-        edgecolor="none",
-        framealpha=0.90,
-        fontsize=9.5,
-        loc="upper right",
-    )
-    axes[1].text(
-        0.035,
-        0.055,
-        "large rate keeps roaming;\nsmall and decayed rates stay closer",
-        transform=axes[1].transAxes,
-        color=INK,
-        fontsize=10.1,
-        weight="bold",
-        bbox=dict(boxstyle="round,pad=0.22", facecolor="white", edgecolor="none", alpha=0.90),
-    )
-    clean(axes[1])
+    ax.legend(frameon=False, fontsize=10.8, loc="lower left")
+    clean(ax, grid=True)
 
     # The slide supplies the provenance and takeaway below the figure; keep the
     # asset itself focused on the two computed comparisons.
-    fig.tight_layout(rect=(0, 0.02, 1, 1), w_pad=1.6)
+    fig.tight_layout()
     save(fig, "story_schedule_two_jobs")
 
 
 def f_schedule_shapes():
     horizon = 100
-    eta0 = 0.10
-    decay = 0.02
+    eta_max = 0.10
+    eta_min = 0.01
     update = np.arange(horizon + 1)
-    inverse_time = eta0 / (1 + decay * update)
-    exponential = eta0 * np.exp(-decay * update)
-    cosine = 0.5 * eta0 * (1 + np.cos(np.pi * update / horizon))
+    u = update / horizon
+    inverse_time = eta_max / (1 + 9 * u)
+    exponential = eta_max * (eta_min / eta_max) ** u
+    linear = eta_max + (eta_min - eta_max) * u
+    milestone = np.select(
+        [u < 1 / 3, u < 2 / 3],
+        [eta_max, np.sqrt(eta_max * eta_min)],
+        default=eta_min,
+    )
+    cosine = eta_min + 0.5 * (eta_max - eta_min) * (1 + np.cos(np.pi * u))
+    warmup_end = 0.10
+    warmup_cosine = np.empty_like(u)
+    warm = u <= warmup_end
+    warmup_cosine[warm] = eta_min + (eta_max - eta_min) * (u[warm] / warmup_end)
+    after = (u[~warm] - warmup_end) / (1 - warmup_end)
+    warmup_cosine[~warm] = eta_min + 0.5 * (eta_max - eta_min) * (
+        1 + np.cos(np.pi * after)
+    )
     schedules = [
-        (inverse_time, rf"inverse-time $\eta_t={eta0:.2f}/(1+{decay:.2f}t)$", ACC),
-        (exponential, rf"exponential $\eta_t={eta0:.2f}e^{{-{decay:.2f}t}}$", TEAL),
-        (cosine, rf"cosine $\eta_t=\frac{{{eta0:.2f}}}{{2}}[1+\cos(\pi t/{horizon})]$", PURPLE),
+        (inverse_time, "inverse-time", r"$.10/(1+9t/T)$", ACC),
+        (exponential, "exponential", r"$.10(.1)^{t/T}$", TEAL),
+        (linear, "linear", r"$.10-.09t/T$", BLUE),
+        (milestone, "milestone / step", r"$.10\rightarrow.0316\rightarrow.01$", GREEN),
+        (cosine, "cosine", r"$.01+.045[1+\cos(\pi t/T)]$", PURPLE),
+        (warmup_cosine, "warmup + cosine", "rise for 10 updates, then decay", RED),
     ]
-    for values, _label, _color in schedules:
-        assert np.isclose(values[0], eta0)
+    for values, _name, _formula, _color in schedules[:-1]:
+        assert np.isclose(values[0], eta_max)
+        assert np.isclose(values[-1], eta_min)
         assert np.all(np.diff(values) <= 1e-12)
         assert np.all(values >= 0)
-    assert np.isclose(cosine[-1], 0.0)
+    assert np.isclose(warmup_cosine[0], eta_min)
+    assert np.isclose(warmup_cosine[10], eta_max)
+    assert np.isclose(warmup_cosine[-1], eta_min)
 
-    fig, ax = plt.subplots(figsize=(8.4, 3.2))
-    for values, label, color in schedules:
-        ax.plot(update, values, color=color, lw=2.4, label=label)
-        ax.scatter([horizon], [values[-1]], color=color, s=28, zorder=5)
-    ax.set(
-        xlim=(0, horizon), ylim=(-0.003, eta0 * 1.06),
-        xlabel="optimizer update $t$", ylabel=r"learning rate $\eta_t$",
-        title=rf"same start $\eta_0={eta0:.2f}$ and same {horizon}-update horizon",
+    fig, axes = plt.subplots(2, 3, figsize=(11.8, 5.15), sharex=True, sharey=True)
+    for ax, (values, name, formula, color) in zip(axes.flat, schedules):
+        ax.plot(update, values, color=color, lw=2.5)
+        ax.scatter([0, horizon], [values[0], values[-1]], color=color, s=22, zorder=5)
+        if name == "warmup + cosine":
+            ax.scatter([10], [eta_max], color=color, s=30, zorder=6)
+        ax.set_title(name, fontsize=12.0, weight="bold", color=INK, pad=5)
+        ax.text(0.5, 0.76, formula, transform=ax.transAxes, ha="center",
+                color=color, fontsize=10.4, weight="bold")
+        ax.set(xlim=(0, horizon), ylim=(0, eta_max * 1.08))
+        clean(ax, grid=True)
+    for ax in axes[:, 0]:
+        ax.set_ylabel(r"learning rate $\eta_t$")
+    for ax in axes[1, :]:
+        ax.set_xlabel("optimizer update $t$")
+    fig.suptitle(
+        r"illustrative schedules over $T=100$ updates · shapes are not optimizer rankings",
+        fontsize=13.0, y=0.995,
     )
-    ax.legend(frameon=False, fontsize=9.5, loc="upper right")
-    clean(ax, grid=True)
-    fig.text(
-        0.5, 0.01,
-        "schedule shapes only · curves do not imply optimizer performance · inverse-time is applied once per optimizer update",
-        ha="center", color=RED, fontsize=9.6, weight="bold",
-    )
-    fig.tight_layout(rect=(0, 0.07, 1, 1))
+    fig.tight_layout(rect=(0, 0, 1, 0.96), w_pad=1.2, h_pad=1.2)
     save(fig, "story_schedule_shapes")
 
 
@@ -3185,19 +3473,19 @@ def xor_optimizer_results():
             "momentum SGD",
             lambda params: torch.optim.SGD(params, lr=0.12, momentum=0.9),
             TEAL,
-            r"$\eta=.12,\ \beta=.9$",
+            r"PyTorch $\mathrm{lr}=.12,\ \beta=.9$",
         ),
         (
             "RMSProp",
             lambda params: torch.optim.RMSprop(params, lr=0.03, alpha=0.9, eps=1e-8),
             GREEN,
-            r"$\eta=.03,\ \rho=.9$",
+            r"$\eta=.03,\ \beta_2=.9$",
         ),
         (
             "Adam",
             lambda params: torch.optim.Adam(params, lr=0.03, betas=(0.9, 0.999), eps=1e-8),
             PURPLE,
-            r"$\eta=.03,\ \beta=(.9,.999)$",
+            r"$\eta=.03,\ \beta_1=.9,\ \beta_2=.999$",
         ),
     ]
     criterion = torch.nn.BCEWithLogitsLoss()
@@ -3331,15 +3619,16 @@ def f_xor_decision_boundaries():
 def f_constraint_failure():
     """Show one exact unconstrained step making a Gaussian scale invalid."""
     scale_0 = 0.10
+    residual = 0.05
     eta = 0.02
-    gradient_0 = 1 / scale_0
+    gradient_0 = 1 / scale_0 - residual**2 / scale_0**3
     scale_1 = scale_0 - eta * gradient_0
 
-    assert np.isclose(gradient_0, 10.0)
-    assert np.isclose(scale_1, -0.10)
+    assert np.isclose(gradient_0, 7.5)
+    assert np.isclose(scale_1, -0.05)
     assert scale_0 > 0
     assert scale_1 < 0
-    assert scale_0 - scale_1 == 0.20
+    assert np.isclose(scale_0 - scale_1, 0.15)
 
     fig, axes = plt.subplots(
         1,
@@ -3355,22 +3644,19 @@ def f_constraint_failure():
         color=TEAL, fontsize=12.0, weight="bold",
     )
     start_ax.text(
-        0.5, 0.70, r"one observation: $y=\mu$", ha="center", va="center",
+        0.5, 0.72, r"one residual: $y-\mu=.05$", ha="center", va="center",
         color=INK, fontsize=12.0,
     )
     start_ax.text(
-        0.5, 0.52, r"$\mathcal{L}(s)=\log s$", ha="center", va="center",
-        color=INK, fontsize=17.0, weight="bold",
+        0.5, 0.53,
+        r"$\mathcal{L}(\sigma)=\log\sigma+\dfrac{(y-\mu)^2}{2\sigma^2}$",
+        ha="center", va="center", color=INK, fontsize=12.5, weight="bold",
     )
     start_ax.text(
         0.5, 0.25,
-        r"$s_0=.10$" "\n" r"$\left.\dfrac{\partial\mathcal{L}}{\partial s}\right|_{s_0}=10$",
+        r"$\sigma_0=.10$" "\n" r"$\left.\dfrac{\partial\mathcal{L}}{\partial\sigma}\right|_{\sigma_0}=7.5$",
         ha="center", va="center", color=INK, fontsize=13.3,
         bbox=dict(boxstyle="round,pad=0.35", facecolor="#F4F8F7", edgecolor=TEAL, linewidth=1.1),
-    )
-    start_ax.text(
-        0.5, 0.015, "(up to an additive constant)", ha="center", va="center",
-        color=MUTED, fontsize=9.6,
     )
 
     step_ax = axes[1]
@@ -3394,37 +3680,37 @@ def f_constraint_failure():
     )
     step_ax.text(
         0.08, 0.60, "FEASIBLE", ha="center", va="center",
-        color=GREEN, fontsize=11.0, weight="bold",
+        color=GREEN, fontsize=12.5, weight="bold",
     )
     step_ax.text(
-        0.08, 0.43, r"$s\in(0,\infty)$", ha="center", va="center",
+        0.08, 0.43, r"$\sigma\in(0,\infty)$", ha="center", va="center",
         color=INK, fontsize=13.0,
     )
     step_ax.text(
         -0.08, 0.60, "INVALID", ha="center", va="center",
-        color=RED, fontsize=11.0, weight="bold",
+        color=RED, fontsize=12.5, weight="bold",
     )
     step_ax.text(
-        -0.08, 0.43, r"$s<0$", ha="center", va="center",
+        -0.08, 0.43, r"$\sigma<0$", ha="center", va="center",
         color=INK, fontsize=13.0,
     )
     step_ax.text(
         0, 0.14, "boundary 0", ha="center", va="bottom",
-        color=RED, fontsize=10.0, weight="bold",
+        color=RED, fontsize=11.5, weight="bold",
         bbox=dict(boxstyle="round,pad=0.10", facecolor="white", edgecolor="none", alpha=0.94),
     )
     step_ax.text(
-        scale_0, -0.20, r"current $s_0=.10$", ha="center", va="top",
-        color=TEAL, fontsize=10.5, weight="bold",
+        scale_0, -0.20, r"current $\sigma_0=.10$", ha="center", va="top",
+        color=TEAL, fontsize=12.0, weight="bold",
         bbox=dict(boxstyle="round,pad=0.10", facecolor="white", edgecolor="none", alpha=0.94),
     )
     step_ax.text(
-        scale_1, -0.20, r"proposal $s_1=-.10$", ha="center", va="top",
-        color=RED, fontsize=10.5, weight="bold",
+        scale_1, -0.20, r"proposal $\widetilde{\sigma}_1=-.05$", ha="center", va="top",
+        color=RED, fontsize=12.0, weight="bold",
         bbox=dict(boxstyle="round,pad=0.10", facecolor="white", edgecolor="none", alpha=0.94),
     )
     step_ax.text(
-        0, -0.52, r"$s_1=.10-.02(10)=-.10$", ha="center", va="center",
+        0, -0.52, r"$\sigma_1=.10-.02(7.5)=-.05$", ha="center", va="center",
         color=INK, fontsize=14.0, weight="bold",
     )
     step_ax.set_title("ONE UNCONSTRAINED GRADIENT STEP", fontsize=12.0, weight="bold", pad=8)
@@ -3444,11 +3730,11 @@ def f_constraint_failure():
         color=RED, fontsize=40.0, weight="bold",
     )
     failure_ax.text(
-        0.5, 0.40, r"$\log(s_1)$ is undefined", ha="center", va="center",
+        0.5, 0.40, r"$\log(\sigma_1)$ is undefined", ha="center", va="center",
         color=INK, fontsize=13.0, weight="bold",
     )
     failure_ax.text(
-        0.5, 0.20, r"Normal$(\mu,\ \mathrm{scale}=s_1)$" "\n" "rejects a negative scale",
+        0.5, 0.20, r"Normal$(\mu,\ \mathrm{scale}=\sigma_1)$" "\n" "rejects a negative scale",
         ha="center", va="center", color=INK, fontsize=11.2,
         bbox=dict(boxstyle="round,pad=0.35", facecolor="#FCEDEE", edgecolor=RED, linewidth=1.1),
     )
@@ -3513,6 +3799,7 @@ FIGURES = [
     f_batch_paths,
     f_batch_loss,
     f_estimator_spread,
+    f_ravine_surface,
     f_ravine_geometry,
     f_ravine_first_step,
     f_ravine_learning_rates,
@@ -3529,13 +3816,17 @@ FIGURES = [
     f_momentum_ravine,
     f_momentum_loss,
     f_rmsprop_ruler,
+    f_rmsprop_gradient_sizes,
+    f_rmsprop_why_square,
+    f_rmsprop_build_rulers,
+    f_rmsprop_rescaled_direction,
     f_rmsprop_ravine,
     f_optimizer_paths,
+    f_schedule_exact_gd,
+    f_schedule_noise_at_optimum,
     f_decay_noise,
     f_schedule_two_jobs,
     f_schedule_shapes,
-    f_xor_optimizer_lab,
-    f_xor_decision_boundaries,
     f_constraint_failure,
     f_constraint_maps,
 ]
