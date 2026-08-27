@@ -454,6 +454,69 @@
   edge((3.9, 0), (5.1, 0), "-|>", stroke: 0.9pt + FORWARD)
 }))
 
+// Keep the whole two-output dense graph visible while tracing one scalar
+// coordinate. The inactive second-neuron path is deliberately quiet; the
+// forward path is dark, the arriving gradient is teal, and the returned
+// contribution is orange.
+#let dense-neuron1-focus = align(center, diagram(spacing: (16mm, 10mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  let value-label(symbol, value, quiet: false) = stack(
+    dir: ttb, spacing: 1pt,
+    text(size: 13pt, fill: if quiet { MUTED } else { INK })[#symbol],
+    text(size: 8.5pt, fill: MUTED)[#value],
+  )
+  let active-stroke = 1.1pt + INK
+  let quiet-stroke = 0.7pt + MUTED.lighten(35%)
+
+  node((0, 0), value-label($bold(x)$, $(2,-1)^top$), radius: 11mm,
+    fill: LEAF_FILL, stroke: active-stroke)
+
+  node((1.8, -0.78), stack(
+      dir: ttb, spacing: 1pt,
+      text(size: 11pt, weight: 650)[neuron 1],
+      text(size: 8.5pt, fill: MUTED)[$bold(w)_1^top=(1,3), b_1=0$],
+    ), shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 6pt,
+    fill: OP_FILL, stroke: 1.2pt + LOCAL)
+  node((1.8, 0.78), stack(
+      dir: ttb, spacing: 1pt,
+      text(size: 10.5pt, fill: MUTED)[neuron 2],
+      text(size: 8pt, fill: MUTED)[$bold(w)_2^top=(-2,1), b_2=1$],
+    ), shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 6pt,
+    fill: white, stroke: quiet-stroke)
+
+  node((3.45, -0.78), value-label($z_1$, $-1$), radius: 9.5mm,
+    fill: VALUE_FILL, stroke: active-stroke)
+  node((3.45, 0.78), value-label($z_2$, $-4$, quiet: true), radius: 9.5mm,
+    fill: white, stroke: quiet-stroke)
+  node((4.75, 0), [stack], shape: fletcher.shapes.rect,
+    corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((6.05, 0), value-label($bold(z)$, $(-1,-4)^top$), radius: 12mm,
+    fill: VALUE_FILL, stroke: active-stroke)
+  node((7.45, 0), $cal(L)$, radius: 6mm,
+    fill: LOSS_FILL, stroke: 1.1pt + DOWNSTREAM)
+
+  // Forward evaluation: emphasize only the coordinate-1 route.
+  edge((0, 0), (1.8, -0.78), "-|>", stroke: 1.25pt + INK)
+  edge((1.8, -0.78), (3.45, -0.78), "-|>", stroke: 1.25pt + INK)
+  edge((3.45, -0.78), (4.75, 0), "-|>", stroke: 1.25pt + INK)
+  edge((4.75, 0), (6.05, 0), "-|>", stroke: 1.25pt + INK)
+  edge((6.05, 0), (7.45, 0), "-|>", stroke: 1.25pt + INK)
+  edge((0, 0), (1.8, 0.78), "-|>", stroke: quiet-stroke)
+  edge((1.8, 0.78), (3.45, 0.78), "-|>", stroke: quiet-stroke)
+  edge((3.45, 0.78), (4.75, 0), "-|>", stroke: quiet-stroke)
+
+  // Reverse sweep: select coordinate 1, then apply its scalar affine rule.
+  edge((7.45, 0), (6.05, 0), text(size: 9pt, fill: UPSTREAM)[$bold(g)_z=(4,-2)^top$],
+    "-|>", bend: 27deg, stroke: 1.2pt + UPSTREAM, label-sep: 6pt)
+  edge((6.05, 0), (3.45, -0.78), "-|>", bend: 24deg,
+    stroke: 1.25pt + UPSTREAM)
+  node((4.72, -0.62), text(size: 9pt, fill: UPSTREAM)[arriving $g_1=4$],
+    stroke: none, fill: none)
+  edge((3.45, -0.78), (1.8, -0.78), "-|>", bend: -20deg,
+    stroke: 1.2pt + DOWNSTREAM)
+  edge((1.8, -0.78), (0, 0), "-|>", bend: -25deg,
+    stroke: 1.2pt + DOWNSTREAM)
+}))
+
 // Expanded scalar view of a 2 x 2 vector map: every output depends on every input.
 #let jacobianexamplegraph = align(center, diagram(spacing: (21mm, 12mm), node-stroke: 0.9pt + INK, node-fill: white, {
   node((0, -0.75), $x_1$, radius: 5.5mm, fill: LEAF_FILL, stroke: 1pt + INK)
@@ -1449,9 +1512,24 @@ Read this vector as two scalar messages:
 #pause
 #result[a vector gradient is simply one arriving number for each output coordinate]
 
-== Backward through neuron 1 #D
+== Backward through neuron 1: trace one scalar path #V
 
-Neuron 1 receives #upstream[$g_1=4$]. Reuse the scalar affine rule:
+#dense-neuron1-focus
+#pause
+#align(center, text(size: 17.5pt)[
+  $bold(W)_[1,:]=bold(w)_1^top=(1,3)$ #h(8pt) $bold(b)_[1]=b_1=0$
+  #h(8pt) $bold(z)_[1]=z_1=-1$ #h(8pt) $bold(g)_z[1]=g_1=4$
+])
+#pause
+#align(center, text(size: 16.5pt)[
+  orange path to $bold(x)$: #downstream[$g_1 bold(w)_1 = 4(1,3)^top = (4,12)^top$]
+])
+#pause
+#result[one matrix row and one vector coordinate recover the scalar neuron we already know]
+
+== Neuron 1 returns gradients to its row, bias, and input #D
+
+The highlighted node receives #upstream[$g_1=4$]. Reuse the scalar affine rule:
 #pause
 #align(center, table(
   columns: (58mm, 70mm, 76mm), stroke: 0.5pt + MUTED,
@@ -1472,9 +1550,9 @@ Neuron 2 receives #upstream[$g_2=-2$]. Apply the same rule again:
   columns: (58mm, 70mm, 76mm), stroke: 0.5pt + MUTED,
   inset: (x: 10pt, y: 7pt), align: center,
   table.header([*Recipient*], [*Local derivative*], [*Gradient returned*]),
-  [$bold(w)_2$], [#localterm[$partial z_2\/partial bold(w)_2=bold(x)$]], [#downstream[$g_2 bold(x)=(-2)mat(2;-1)=mat(-4;2)$]],
+  [$bold(w)_2$], [#localterm[$partial z_2\/partial bold(w)_2=bold(x)$]], [#downstream[$g_2 bold(x)=(-2)(2,-1)^top=(-4,2)^top$]],
   [$b_2$], [#localterm[$partial z_2\/partial b_2=1$]], [#downstream[$g_2=-2$]],
-  [$bold(x)$], [#localterm[$partial z_2\/partial bold(x)=bold(w)_2$]], [#downstream[$g_2 bold(w)_2=(-2)mat(-2;1)=mat(4;-2)$]],
+  [$bold(x)$], [#localterm[$partial z_2\/partial bold(x)=bold(w)_2$]], [#downstream[$g_2 bold(w)_2=(-2)(-2,1)^top=(4,-2)^top$]],
 ))
 #pause
 #result[neuron 2 updates row 2 and returns its own contribution to $bold(x)$]
