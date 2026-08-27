@@ -1678,27 +1678,31 @@ Keep the same parameters
 
 == Two outputs mean a length-2 target per example #D
 
-Here $m=2$: each example predicts two numbers, so its matching target is a vector
-$bold(y)^(n) in RR^2$. Stack the $B=2$ target vectors as rows:
+Let $n in {1,2}$ be the *example (row) index*; the parenthesized superscript
+$(n)$ is a label, not a power. Here $m=2$, so $bold(y)^(n) in RR^2$.
 #align(center, text(size: 22pt)[
   $bold(Y)=mat((bold(y)^(1))^top;(bold(y)^(2))^top)=mat(-5,-2;7,1)
   in RR^(B times m)=RR^(2 times 2).$
 ])
 #pause
 #align(center, table(
-  columns: (35mm, 52mm, 52mm, 52mm, 30mm), stroke: 0.5pt + MUTED,
+  columns: (43mm, 58mm, 58mm, 66mm), stroke: 0.5pt + MUTED,
   inset: (x: 8pt, y: 7pt), align: center,
-  table.header([*Example*], [$bold(z)$], [$bold(y)$], [$bold(r)=bold(z)-bold(y)$], [$ell$]),
-  [1], [$(-1,-4)$], [$(-5,-2)$], [#upstream[$(4,-2)$]], [$10$],
-  [2], [$(5,5)$], [$(7,1)$], [#upstream[$(-2,4)$]], [$10$],
+  table.header([*Example index $n$*], [$bold(z)^(n)$], [$bold(y)^(n)$], [$bold(r)^(n)=bold(z)^(n)-bold(y)^(n)$]),
+  [1], [$(-1,-4)$], [$(-5,-2)$], [#upstream[$(4,-2)$]],
+  [2], [$(5,5)$], [$(7,1)$], [#upstream[$(-2,4)$]],
 ))
 #pause
-#align(center, text(size: 21pt)[
-  $ell_n=1/2 norm(bold(r)^(n))^2, quad
-  partial ell_n\/partial bold(z)^(n)=bold(r)^(n).$
-])
+#two(
+  align(center, text(size: 19pt)[
+    $n=1: quad ell_1=1/2(4^2+(-2)^2)=10$
+  ]),
+  align(center, text(size: 19pt)[
+    $n=2: quad ell_2=1/2((-2)^2+4^2)=10$
+  ]),
+)
 #pause
-#result[$bold(y)^(n)$ and $bold(r)^(n)$ are vectors; $ell_n$ is one scalar loss]
+#result[each $bold(r)^(n)$ is a vector; squaring and summing its coordinates gives scalar $ell_n$]
 #neat-caption[Scalar-output special case: if $m=1$, each target $y^(n)$ is a scalar and $bold(Y)$ has shape $B times 1$.]
 
 == The mean loss scales both arriving gradients #D
