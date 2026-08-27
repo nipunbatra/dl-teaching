@@ -1587,7 +1587,7 @@ The same $bold(x)$ fed both neurons, so its two backward paths add:
 #pause
 The compact rules are
 #align(center, text(size: 25pt, weight: 600)[
-  #downstream[$bold(g)_W$] $=$ #upstream[$bold(g)_z$] #localterm[$bold(x)^top$], quad
+  #downstream[$bold(g)_W$] $=$ #upstream[$bold(g)_z$] #localterm[$bold(x)^top$] #h(24pt)
   #downstream[$bold(g)_b$] $=$ #upstream[$bold(g)_z$].
 ])
 #pause
