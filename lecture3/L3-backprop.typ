@@ -330,7 +330,13 @@
   node((7,0), [squared loss], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
   node((8,0), $cal(L)$, radius: 5.8mm, fill: LOSS_FILL, stroke: 1pt + DOWNSTREAM)
   for i in range(8) { edge((i, 0), (i + 1, 0), "-|>", stroke: 0.75pt + FORWARD) }
-  let active = if stage == "right" { ((8,6), (6,4)) } else { ((4,2), (2,0)) }
+  let active = if stage == "loss" {
+    ((8,6),)
+  } else if stage == "dense2" {
+    ((6,4),)
+  } else {
+    ((4,2), (2,0))
+  }
   for (right, left) in active {
     edge((right,0), (left,0), "-|>", bend: 25deg, stroke: 1.5pt + DOWNSTREAM)
   }
@@ -1303,344 +1309,445 @@ print(x.grad, b.grad)      # tensor([-2., -6.]), tensor(-2.)
 // ═══════════════════════════ PART V — Dense layer ═══════════════════════════
 = From one scalar output to a vector output
 
-== A dense layer repeats one familiar neuron #V
+== One neuron still produces one scalar #V
 
-Every row of $bold(W)$ is one affine neuron. All rows read the same input $bold(x)$.
-#denseforwardgraph
-#pause
-#grid(
-  columns: 2, gutter: 14pt,
-  neat-card([ROW 1 · neuron 1], [$z_1=bold(w)_1^top bold(x)+b_1$], color: BLUE, width: 103mm),
-  neat-card([ROW 2 · neuron 2], [$z_2=bold(w)_2^top bold(x)+b_2$], color: TEAL, width: 103mm),
-)
-#pause
-#result[stack the outputs: $bold(z)=bold(W)bold(x)+bold(b)$]
-
-== Forward, row 1: do one dot product #D
-
-#align(center, text(size: 22pt)[
-  $bold(x)=mat(2;-1), quad bold(w)_1^top=(1,3), quad b_1=0$
+Start with the affine rule we already know:
+#align(center, text(size: 26pt, weight: 600)[
+  $z=bold(w)^top bold(x)+b.$
 ])
 #pause
-#align(center, text(size: 29pt, weight: 600)[
-  $z_1 = underbrace(1(2), "first input") + underbrace(3(-1), "second input") + 0 = -1$
-])
-#pause
-#notebox[Nothing new happened: multiply matching entries, add them, then add the bias.]
-
-== Forward, row 2: repeat, then stack #D
-
-#align(center, text(size: 22pt)[
-  $bold(w)_2^top=(-2,1), quad b_2=1$
-])
-#pause
-#align(center, text(size: 29pt, weight: 600)[
-  $z_2 = (-2)(2) + 1(-1) + 1 = -4$
-])
-#pause
-#align(center, text(size: 23pt)[
-  $bold(z)=mat(z_1;z_2)=mat(-1;-4)$
-])
-#pause
-#result[$bold(W)=mat(1,3;-2,1)$ simply stores the two neuron rows together]
-
-== Backward: reuse the scalar affine rule for each row #D
-
-Use column vectors: $bold(x) in RR^(d times 1)$, $bold(W) in RR^(m times d)$, and $bold(z) in RR^(m times 1)$.
-Suppose the later loss sends #upstream[$bold(g)_z=partial cal(L)\/partial bold(z)=mat(4;-2)$] back.
-#pause
-For output row $i$,
-$ z_i = sum_j W_(i,j)x_j+b_i, quad g_i := partial cal(L)\/partial z_i. $
-#pause
-#grid(
-  columns: 3, gutter: 8pt,
-  neat-card([TO $x_j$], [#localterm[$partial z_i\/partial x_j=W_(i,j)$] #linebreak() contribution #downstream[$g_i W_(i,j)$]], color: BLUE, width: 69mm),
-  neat-card([TO $W_(i,j)$], [#localterm[$partial z_i\/partial W_(i,j)=x_j$] #linebreak() contribution #downstream[$g_i x_j$]], color: TEAL, width: 69mm),
-  neat-card([TO $b_i$], [#localterm[$partial z_i\/partial b_i=1$] #linebreak() contribution #downstream[$g_i$]], color: ACC, width: 69mm),
-)
-#pause
-#result[$bold(g)_z=(4,-2)^top$ means two scalar arrivals: $g_1=4$ and $g_2=-2$]
-
-== Input gradient: shared paths add #D
-
-The same $bold(x)$ enters both output rows, so both rows return a contribution.
-#pause
-#grid(
-  columns: 2, gutter: 14pt,
-  neat-card([ROW 1 RETURNS], [#downstream[$g_1 bold(w)_1$] $=4mat(1;3)=mat(4;12)$], color: BLUE, width: 103mm),
-  neat-card([ROW 2 RETURNS], [#downstream[$g_2 bold(w)_2$] $=(-2)mat(-2;1)=mat(4;-2)$], color: TEAL, width: 103mm),
-)
-#pause
-#align(center, text(size: 25pt, weight: 600)[
-  #downstream[$bold(g)_x$] $=mat(4;12)+mat(4;-2)=mat(8;10)$
-])
-#pause
-#align(center, text(size: 21pt)[
-  $(g_x)_j=sum_i g_i W_(i,j) quad arrow.r quad bold(g)_x=bold(W)^top bold(g)_z$
-])
-#pause
-#notebox[Shape check: $(d times 1)=(d times m)(m times 1)$. The transpose arranges the row contributions so shared input paths add.]
-
-== Weight and bias gradients: separate rows stack #D
-
-Output $i$ owns row $i$ of $bold(W)$, so that gradient row is $g_i bold(x)^top$.
-#pause
-#grid(
-  columns: 2, gutter: 14pt,
-  neat-card([ROW 1], [$g_1 bold(x)^top=4(2,-1)=(8,-4)$], color: BLUE, width: 103mm),
-  neat-card([ROW 2], [$g_2 bold(x)^top=(-2)(2,-1)=(-4,2)$], color: TEAL, width: 103mm),
-)
-#pause
-#align(center, text(size: 25pt, weight: 600)[
-  #downstream[$bold(g)_W$] $=mat(8,-4;-4,2)=$ #upstream[$bold(g)_z$] #localterm[$bold(x)^top$]
-])
-#pause
-Each bias has local derivative $1$, so
-#align(center, text(size: 23pt)[
-  #downstream[$bold(g)_b$] $=mat(g_1;g_2)=$ #upstream[$bold(g)_z$] $=mat(4;-2)$.
-])
-#pause
-#result[returns to a shared input add · returns to separate parameter rows stack]
-
-== Dense backward: derive first, then check shapes #D
-
 #align(center, table(
-  columns: (32mm, 78mm, 54mm, 52mm), stroke: 0.5pt + MUTED,
-  inset: (x: 8pt, y: 6pt), align: (left, center, center, center),
-  table.header([*Recipient*], [*Coordinate rule*], [*Stacked rule*], [*Shape check*]),
-  [$bold(x)$], [$(g_x)_j=sum_i g_i W_(i,j)$], [#downstream[$bold(g)_x$] $=$ #localterm[$bold(W)^top$] #upstream[$bold(g)_z$]], [$(d times 1)=(d times m)(m times 1)$],
-  [$bold(W)$], [$(g_W)_(i,j)=g_i x_j$], [#downstream[$bold(g)_W$] $=$ #upstream[$bold(g)_z$] #localterm[$bold(x)^top$]], [$(m times d)=(m times 1)(1 times d)$],
-  [$bold(b)$], [$(g_b)_i=g_i$], [#downstream[$bold(g)_b$] $=$ #upstream[$bold(g)_z$]], [$(m times 1)=(m times 1)$],
+  columns: (54mm, 54mm, 54mm, 54mm), stroke: 0.5pt + MUTED,
+  inset: (x: 10pt, y: 7pt), align: center,
+  table.header([*Quantity*], [$bold(w)^top$], [$bold(x)$], [$z$]),
+  [*Shape*], [$(1 times d)$], [$(d times 1)$], [$(1 times 1)$],
 ))
 #pause
-#notebox[The coordinate rules *derive* the gradients. Shape matching then verifies their orientation: $bold(g)_z bold(x)^top$ has the same row-by-column shape as $bold(W)$.]
+#align(center, text(size: 23pt)[
+  $(1 times d)(d times 1) = (1 times 1)$
+])
+#pause
+#result[one weight row dotted with one input vector produces one number]
+
+== Two neurons produce two scalars #V
+
+Give each neuron its own weight row and bias; both read the same $bold(x)$.
+#denseforwardgraph
+#pause
+#align(center, text(size: 22pt)[
+  $z_1=bold(w)_1^top bold(x)+b_1, quad
+  z_2=bold(w)_2^top bold(x)+b_2.$
+])
+#pause
+#result[stack the two numbers into $bold(z)=mat(z_1;z_2)$]
+
+== Stacking the two neurons gives one dense layer #D
+
+#align(center, text(size: 22pt)[
+  $bold(W)=mat(bold(w)_1^top;bold(w)_2^top), quad
+  bold(b)=mat(b_1;b_2), quad
+  bold(z)=bold(W)bold(x)+bold(b).$
+])
+#pause
+#align(center, table(
+  columns: (47mm, 47mm, 47mm, 47mm), stroke: 0.5pt + MUTED,
+  inset: (x: 9pt, y: 7pt), align: center,
+  table.header([$bold(W)$], [$bold(x)$], [$bold(b)$], [$bold(z)$]),
+  [$(m times d)$], [$(d times 1)$], [$(m times 1)$], [$(m times 1)$],
+))
+#pause
+#align(center, text(size: 22pt, weight: 600)[
+  $(m times d)(d times 1)+(m times 1)=(m times 1)$
+])
+#pause
+#notebox[$d$ is the number of input features; $m$ is the number of output neurons.]
+
+== Work out output 1 #D
+
+Use
+#align(center, text(size: 22pt)[
+  $bold(x)=mat(2;-1), quad bold(w)_1^top=(1,3), quad b_1=0.$
+])
+#pause
+#align(center, text(size: 30pt, weight: 600)[
+  $z_1=1(2)+3(-1)+0=-1.$
+])
+#pause
+#align(center, text(size: 19pt, fill: MUTED)[
+  $(1 times 2)(2 times 1)+(1 times 1)=(1 times 1)$
+])
+#pause
+#result[multiply matching entries, add them, then add the bias]
+
+== Work out output 2, then stack #D
+
+The second neuron uses a different row:
+#align(center, text(size: 22pt)[
+  $bold(w)_2^top=(-2,1), quad b_2=1.$
+])
+#pause
+#align(center, text(size: 29pt, weight: 600)[
+  $z_2=(-2)(2)+1(-1)+1=-4.$
+])
+#pause
+#align(center, text(size: 24pt)[
+  $bold(z)=mat(z_1;z_2)=mat(-1;-4), quad
+  bold(W)=mat(1,3;-2,1).$
+])
+#pause
+#result[matrix notation only stacks the two familiar dot products]
+
+== Backward starts with one arrival per output #D
+
+Suppose the later loss returns
+#align(center, text(size: 28pt, weight: 600)[
+  #upstream[$bold(g)_z = partial cal(L)\/partial bold(z) = mat(4;-2)$].
+])
+#pause
+Read this vector as two scalar messages:
+#align(center, table(
+  columns: (54mm, 72mm, 72mm), stroke: 0.5pt + MUTED,
+  inset: (x: 10pt, y: 7pt), align: center,
+  table.header([*Output*], [*Arriving gradient*], [*Meaning*]),
+  [$z_1$], [#upstream[$g_1=partial cal(L)\/partial z_1=4$]], [nudge $z_1$ upward; loss rises at rate $4$],
+  [$z_2$], [#upstream[$g_2=partial cal(L)\/partial z_2=-2$]], [nudge $z_2$ upward; loss falls at rate $2$],
+))
+#pause
+#result[a vector gradient is simply one arriving number for each output coordinate]
+
+== Backward through neuron 1 #D
+
+Neuron 1 receives #upstream[$g_1=4$]. Reuse the scalar affine rule:
+#pause
+#align(center, table(
+  columns: (58mm, 70mm, 76mm), stroke: 0.5pt + MUTED,
+  inset: (x: 10pt, y: 7pt), align: center,
+  table.header([*Recipient*], [*Local derivative*], [*Gradient returned*]),
+  [$bold(w)_1$], [#localterm[$partial z_1\/partial bold(w)_1=bold(x)$]], [#downstream[$g_1 bold(x)=4mat(2;-1)=mat(8;-4)$]],
+  [$b_1$], [#localterm[$partial z_1\/partial b_1=1$]], [#downstream[$g_1=4$]],
+  [$bold(x)$], [#localterm[$partial z_1\/partial bold(x)=bold(w)_1$]], [#downstream[$g_1 bold(w)_1=4mat(1;3)=mat(4;12)$]],
+))
+#pause
+#result[neuron 1 updates only row 1 of $bold(W)$, but it also returns a contribution to the shared input]
+
+== Backward through neuron 2 #D
+
+Neuron 2 receives #upstream[$g_2=-2$]. Apply the same rule again:
+#pause
+#align(center, table(
+  columns: (58mm, 70mm, 76mm), stroke: 0.5pt + MUTED,
+  inset: (x: 10pt, y: 7pt), align: center,
+  table.header([*Recipient*], [*Local derivative*], [*Gradient returned*]),
+  [$bold(w)_2$], [#localterm[$partial z_2\/partial bold(w)_2=bold(x)$]], [#downstream[$g_2 bold(x)=(-2)mat(2;-1)=mat(-4;2)$]],
+  [$b_2$], [#localterm[$partial z_2\/partial b_2=1$]], [#downstream[$g_2=-2$]],
+  [$bold(x)$], [#localterm[$partial z_2\/partial bold(x)=bold(w)_2$]], [#downstream[$g_2 bold(w)_2=(-2)mat(-2;1)=mat(4;-2)$]],
+))
+#pause
+#result[neuron 2 updates row 2 and returns its own contribution to $bold(x)$]
+
+== The shared input receives both contributions #D
+
+The same $bold(x)$ fed both neurons, so its two backward paths add:
+#pause
+#align(center, text(size: 27pt, weight: 600)[
+  #downstream[$bold(g)_x$]
+  $=underbrace(mat(4;12), "from neuron 1")+underbrace(mat(4;-2), "from neuron 2")
+  =mat(8;10).$
+])
+#pause
+#align(center, text(size: 22pt)[
+  #downstream[$bold(g)_x$] $=$ #localterm[$bold(W)^top$] #upstream[$bold(g)_z$]
+])
+#pause
+#align(center, text(size: 19pt, fill: MUTED)[
+  $(2 times 1)=(2 times 2)(2 times 1)$
+])
+#pause
+#notebox[The transpose lines up the two output contributions for each input coordinate; the matrix multiplication performs the required addition.]
+
+== Parameter gradients keep the two rows separate #D
+
+#align(center, text(size: 23pt)[
+  #downstream[$bold(g)_W$]
+  $=mat(8,-4;-4,2), quad
+  #downstream[$bold(g)_b$]=mat(4;-2).$
+])
+#pause
+The compact rules are
+#align(center, text(size: 25pt, weight: 600)[
+  #downstream[$bold(g)_W$] $=$ #upstream[$bold(g)_z$] #localterm[$bold(x)^top$], quad
+  #downstream[$bold(g)_b$] $=$ #upstream[$bold(g)_z$].
+])
+#pause
+#align(center, text(size: 19pt, fill: MUTED)[
+  $(2 times 2)=(2 times 1)(1 times 2), quad (2 times 1)=(2 times 1)$
+])
+#pause
+#result[one output coordinate creates one row of the weight gradient]
+
+== Dense backward: three rules, with shapes #V
+
+#align(center, table(
+  columns: (35mm, 88mm, 78mm), stroke: 0.5pt + MUTED,
+  inset: (x: 9pt, y: 7pt), align: (left, center, center),
+  table.header([*Returned to*], [*Rule*], [*Shape*]),
+  [$bold(x)$], [#downstream[$bold(g)_x$] $=$ #localterm[$bold(W)^top$] #upstream[$bold(g)_z$]], [$(d times 1)=(d times m)(m times 1)$],
+  [$bold(W)$], [#downstream[$bold(g)_W$] $=$ #upstream[$bold(g)_z$] #localterm[$bold(x)^top$]], [$(m times d)=(m times 1)(1 times d)$],
+  [$bold(b)$], [#downstream[$bold(g)_b$] $=$ #upstream[$bold(g)_z$]], [$(m times 1)=(m times 1)$],
+))
+#pause
+#notebox[Do the scalar reasoning first. Use the shapes as a check that the stacked formula has the correct orientation.]
+
+== PyTorch stores gradients in matching shapes #I
+
+#codebox(size: 12.5pt)[```python
+import torch
+
+x = torch.tensor([2., -1.], requires_grad=True)       # (2,)
+W = torch.tensor([[1., 3.], [-2., 1.]],
+                 requires_grad=True)                  # (2, 2)
+b = torch.tensor([0., 1.], requires_grad=True)        # (2,)
+
+z = W @ x + b                                         # (2,)
+z.backward(torch.tensor([4., -2.]))                   # arriving g_z
+
+print(x.grad)  # tensor([ 8., 10.])
+print(W.grad)  # tensor([[ 8., -4.], [-4.,  2.]])
+print(b.grad)  # tensor([ 4., -2.])
+```]
+#pause
+#result[every tensor and its gradient have the same shape]
 
 = From one example to a batch
 
-== A batch adds an axis—not new parameters #V
+== A batch is a stack of examples #V
 
-One example remains a column $bold(x)^(n) in RR^(d times 1)$. A framework stores their transposes as rows of
+Use two examples so every calculation remains visible:
 #align(center, text(size: 25pt, weight: 600)[
-  $bold(X)=mat(2,-1;-1,2;2,2) in RR^(3 times 2)$.
+  $bold(X)=mat(2,-1;-1,2).$
 ])
 #pause
-#grid(
-  columns: 2, gutter: 14pt,
-  neat-card([SHARED PARAMETERS], [
-    $bold(W) in RR^(m times d)$ #linebreak()
-    $bold(b) in RR^(m times 1)$ #linebreak()
-    the same values serve every row
-  ], color: TEAL, width: 103mm),
-  neat-card([BATCH FORWARD], [
-    $bold(Z)=bold(X)bold(W)^top+bold(1)_B bold(b)^top$ #linebreak()
-    $(B times m)=(B times d)(d times m)$ #linebreak()
-    PyTorch: `X @ W.T + b`
-  ], color: BLUE, width: 103mm),
-)
+#align(center, table(
+  columns: (42mm, 60mm, 82mm), stroke: 0.5pt + MUTED,
+  inset: (x: 10pt, y: 7pt), align: center,
+  table.header([*Row*], [*Example*], [*Meaning*]),
+  [1], [$bold(x)^(1)^top=(2,-1)$], [first training example],
+  [2], [$bold(x)^(2)^top=(-1,2)$], [second training example],
+))
 #pause
-#result[batching adds an example axis; every row still uses the same $bold(W),bold(b)$]
-
-== Three examples, three residuals #V
-
-For row $n$, first compute $bold(z)^(n)$, then $bold(r)^(n)=bold(z)^(n)-bold(y)^(n)$.
-#pause
-#align(center, text(size: 15.5pt)[
-  #table(
-    columns: (14mm, 39mm, 39mm, 39mm, 39mm, 24mm), stroke: 0.5pt + MUTED,
-    inset: (x: 6pt, y: 5pt), align: center,
-    table.header([$n$], [$bold(x)^(n)^top$], [$bold(z)^(n)^top$], [$bold(y)^(n)^top$], [$bold(r)^(n)^top$], [$ell_n$]),
-    [1], [$(2,-1)$], [$(-1,-4)$], [$(-5,-2)$], [#upstream[$(4,-2)$]], [$10$],
-    [2], [$(-1,2)$], [$(5,5)$], [$(7,1)$], [#upstream[$(-2,4)$]], [$10$],
-    [3], [$(2,2)$], [$(8,-1)$], [$(7,-2)$], [#upstream[$(1,1)$]], [$1$],
-  )
+#align(center, text(size: 21pt)[
+  $bold(X) in RR^(B times d)=RR^(2 times 2)$
 ])
 #pause
-#result[row 1 reproduces the earlier single example: its residual $(4,-2)^top$ is the arriving $bold(g)_z$]
+#result[the new first axis counts examples; it does not create new parameters]
 
-== Why the loss sends residuals backward #D
+== The same dense layer processes both rows #D
 
-For one example, use half-squared error:
-#align(center, text(size: 25pt, weight: 600)[
-  $ell_n=1/2 sum_k (z_k^(n)-y_k^(n))^2.$
-])
-#pause
-#align(center, text(size: 23pt)[
-  $partial ell_n\/partial z_k^(n)=z_k^(n)-y_k^(n)=r_k^(n)$
-])
-#pause
-#grid(
-  columns: 2, gutter: 14pt,
-  neat-card([THREE LOSSES], [$ell_1=10, quad ell_2=10, quad ell_3=1$], color: BLUE, width: 103mm),
-  neat-card([ONE SCALAR MEAN], [$cal(L)=1/3(10+10+1)=7$], color: TEAL, width: 103mm),
-)
-#pause
-#align(center, text(size: 23pt, weight: 600)[
-  #upstream[$bold(G)_Z=partial cal(L)\/partial bold(Z)$]
-  $=1/3 bold(R)$
-])
-#pause
-#notebox[The residual is the upstream gradient from each example's loss. The mean contributes the factor $1/B=1/3$.]
-
-== One example proposes one dense-layer gradient #D
-
-Reuse the single-example rules on example 1, before doing any batch algebra.
-#pause
-#grid(
-  columns: 3, gutter: 8pt,
-  neat-card([TO $bold(W)$], [
-    $bold(G)_W^1=bold(r)^1(bold(x)^1)^top$ #linebreak()
-    $=mat(8,-4;-4,2)$
-  ], color: BLUE, width: 69mm),
-  neat-card([TO $bold(b)$], [
-    $bold(g)_b^1=bold(r)^1$ #linebreak()
-    $=mat(4;-2)$
-  ], color: ACC, width: 69mm),
-  neat-card([TO $bold(x)^1$], [
-    $bold(g)_x^1=bold(W)^top bold(r)^1$ #linebreak()
-    $=mat(8;10)$
-  ], color: TEAL, width: 69mm),
-)
-#pause
-#result[these are unscaled example-1 returns; its contribution to the *mean* loss is each value divided by $3$]
-
-== Shared parameters add, then the mean scales #D
-
-Each example proposes one outer product for the *same* $bold(W)$. Shared paths add; the mean loss scales the final sum.
-#pause
-#grid(
-  columns: 3, gutter: 8pt,
-  neat-card([EXAMPLE 1], [$bold(G)_W^1=mat(8,-4;-4,2)$], color: BLUE, width: 69mm),
-  neat-card([EXAMPLE 2], [$bold(G)_W^2=mat(2,-4;-4,8)$], color: TEAL, width: 69mm),
-  neat-card([EXAMPLE 3], [$bold(G)_W^3=mat(2,2;2,2)$], color: ACC, width: 69mm),
-)
-#pause
+Keep the same parameters
 #align(center, text(size: 22pt)[
-  $bold(G)_W^1+bold(G)_W^2+bold(G)_W^3=mat(12,-6;-6,12)$
+  $bold(W)=mat(1,3;-2,1), quad bold(b)=mat(0;1).$
 ])
 #pause
-#grid(
-  columns: 2, gutter: 14pt,
-  neat-card([MEAN WEIGHT GRADIENT], [#downstream[$bold(g)_W$] $=1/3 mat(12,-6;-6,12)=mat(4,-2;-2,4)$], color: TEAL, width: 103mm),
-  neat-card([MEAN BIAS GRADIENT], [#downstream[$bold(g)_b$] $=1/3(mat(4;-2)+mat(-2;4)+mat(1;1))=mat(1;1)$], color: ACC, width: 103mm),
-)
-
-== Batch matrix rules stack the same arithmetic #D
-
-Let $bold(G)_Z=bold(R)/B in RR^(B times m)$. The formulas below package the rowwise returns; they do not replace the derivation.
+#align(center, text(size: 24pt, weight: 600)[
+  $bold(Z)=bold(X)bold(W)^top+bold(1)_B bold(b)^top
+  =mat(-1,-4;5,5).$
+])
 #pause
-#align(center, text(size: 17pt)[
-  #table(
-    columns: (27mm, 77mm, 106mm), stroke: 0.5pt + MUTED,
-    inset: (x: 7pt, y: 6pt), align: (left, center, center),
-    table.header([*Recipient*], [*Stacked rule*], [*Operand shapes*]),
-    [$bold(W)$], [#downstream[$bold(g)_W$] $=bold(G)_Z^top bold(X)$], [$(m times d)=(m times B)(B times d)$],
-    [$bold(b)$], [#downstream[$bold(g)_b$] $=bold(G)_Z^top bold(1)_B$], [$(m times 1)=(m times B)(B times 1)$],
-    [$bold(X)$], [#downstream[$bold(g)_X$] $=bold(G)_Z bold(W)$], [$(B times d)=(B times m)(m times d)$],
-  )
+#align(center, text(size: 19pt, fill: MUTED)[
+  $(B times m)=(B times d)(d times m)+(B times 1)(1 times m)$
 ])
 #pause
 #align(center, text(size: 20pt)[
-  #downstream[$bold(g)_X$]
-  $=1/3 mat(8,10;-10,-2;-1,4)$
+  row 1: $(2,-1)bold(W)^top+bold(b)^top=(-1,-4)$ #linebreak()
+  row 2: $(-1,2)bold(W)^top+bold(b)^top=(5,5)$
 ])
 #pause
-#notebox[$bold(W),bold(b)$ are shared, so their example paths add. The three input rows are distinct, so their gradients stay in three separate rows.]
+#result[each row runs the same forward calculation with the same $bold(W),bold(b)$]
 
-== Sum or mean? The reduction chooses the scale #D
+== Each example contributes one loss #D
 
-#grid(
-  columns: 2, gutter: 14pt,
-  neat-card([SUM OVER EXAMPLES], [
-    $cal(L)_("sum")=sum_n ell_n$ #linebreak()
-    $bold(G)_Z=bold(R)$ #linebreak()
-    $bold(g)_W=bold(R)^top bold(X)$
-  ], color: BLUE, width: 103mm),
-  neat-card([MEAN OVER EXAMPLES], [
-    $cal(L)_("mean")=1/B sum_n ell_n$ #linebreak()
-    $bold(G)_Z=bold(R)/B$ #linebreak()
-    $bold(g)_W=bold(R)^top bold(X)/B$
-  ], color: TEAL, width: 103mm),
-)
+Choose targets
+$bold(Y)=mat(-5,-2;7,1)$ and use half-squared error.
+#pause
+#align(center, table(
+  columns: (25mm, 52mm, 52mm, 52mm, 32mm), stroke: 0.5pt + MUTED,
+  inset: (x: 8pt, y: 7pt), align: center,
+  table.header([*Example*], [$bold(z)$], [$bold(y)$], [$bold(r)=bold(z)-bold(y)$], [$ell$]),
+  [1], [$(-1,-4)$], [$(-5,-2)$], [#upstream[$(4,-2)$]], [$10$],
+  [2], [$(5,5)$], [$(7,1)$], [#upstream[$(-2,4)$]], [$10$],
+))
+#pause
+#align(center, text(size: 21pt)[
+  $ell_n=1/2 norm(bold(r)^(n))^2, quad
+  partial ell_n\/partial bold(z)^(n)=bold(r)^(n).$
+])
+#pause
+#result[for squared error, the residual is the gradient returned by that example's loss]
+
+== The mean loss scales both arriving gradients #D
+
+#align(center, text(size: 26pt, weight: 600)[
+  $cal(L)=1/2(ell_1+ell_2)=10.$
+])
+#pause
+Therefore
+#align(center, text(size: 26pt)[
+  #upstream[$bold(G)_Z=partial cal(L)\/partial bold(Z)$]
+  $=1/2 mat(4,-2;-2,4)=mat(2,-1;-1,2).$
+])
+#pause
+#align(center, text(size: 19pt, fill: MUTED)[
+  $bold(G)_Z in RR^(B times m)=RR^(2 times 2)$
+])
+#pause
+#notebox[Rows still correspond to examples; columns still correspond to output neurons. The factor $1/B$ comes only from taking the mean.]
+
+== Example 1 proposes a parameter gradient #D
+
+Before averaging, example 1 has
+$bold(r)^(1)=mat(4;-2)$ and $bold(x)^(1)=mat(2;-1)$.
+#pause
+#align(center, text(size: 25pt, weight: 600)[
+  $bold(G)_W^(1)=bold(r)^(1)(bold(x)^(1))^top
+  =mat(8,-4;-4,2).$
+])
+#pause
+#align(center, text(size: 19pt, fill: MUTED)[
+  $(m times d)=(m times 1)(1 times d)$
+])
+#pause
+#align(center, text(size: 22pt)[
+  $bold(g)_b^(1)=bold(r)^(1)=mat(4;-2).$
+])
+#pause
+#result[this is the same single-example outer product derived on the previous slides]
+
+== Example 2 proposes another gradient #D
+
+Example 2 has
+$bold(r)^(2)=mat(-2;4)$ and $bold(x)^(2)=mat(-1;2)$.
+#pause
+#align(center, text(size: 25pt, weight: 600)[
+  $bold(G)_W^(2)=bold(r)^(2)(bold(x)^(2))^top
+  =mat(2,-4;-4,8).$
+])
+#pause
+Both examples used the same parameters, so their paths add; the mean divides by $2$:
+#align(center, text(size: 24pt)[
+  #downstream[$bold(g)_W$]
+  $=1/2(bold(G)_W^(1)+bold(G)_W^(2))
+  =mat(5,-4;-4,5).$
+])
+#pause
+#align(center, text(size: 22pt)[
+  #downstream[$bold(g)_b$] $=1/2(mat(4;-2)+mat(-2;4))=mat(1;1).$
+])
+
+== Batch matrix multiplication performs the same sum #D
+
+Let $bold(G)_Z=bold(R)/B$. Then
+#align(center, text(size: 25pt, weight: 600)[
+  #downstream[$bold(g)_W$] $=bold(G)_Z^top bold(X).$
+])
+#pause
+#align(center, text(size: 19pt, fill: MUTED)[
+  $(m times d)=(m times B)(B times d)$
+])
+#pause
+#align(center, text(size: 23pt)[
+  $mat(2,-1;-1,2) mat(2,-1;-1,2)=mat(5,-4;-4,5).$
+])
+#pause
+#notebox[The middle dimension $B$ disappears because matrix multiplication sums the contribution from every example.]
+
+== Batch gradients have one simple shape story #V
+
+#align(center, table(
+  columns: (34mm, 88mm, 79mm), stroke: 0.5pt + MUTED,
+  inset: (x: 9pt, y: 7pt), align: (left, center, center),
+  table.header([*Returned to*], [*Rule*], [*Shape*]),
+  [$bold(W)$], [#downstream[$bold(g)_W$] $=bold(G)_Z^top bold(X)$], [$(m times d)=(m times B)(B times d)$],
+  [$bold(b)$], [#downstream[$bold(g)_b$] $=bold(G)_Z^top bold(1)_B$], [$(m times 1)=(m times B)(B times 1)$],
+  [$bold(X)$], [#downstream[$bold(g)_X$] $=bold(G)_Z bold(W)$], [$(B times d)=(B times m)(m times d)$],
+))
+#pause
+#align(center, text(size: 22pt)[
+  #downstream[$bold(g)_X$] $=mat(4,5;-5,-1).$
+])
+#pause
+#result[shared parameter gradients add across rows; input gradients remain one row per example]
+
+== Sum and mean differ only by scale #D
+
+#align(center, table(
+  columns: (54mm, 78mm, 78mm), stroke: 0.5pt + MUTED,
+  inset: (x: 10pt, y: 8pt), align: center,
+  table.header([*Reduction*], [*Arriving gradient*], [*Weight gradient*]),
+  [sum], [$bold(G)_Z=bold(R)$], [$bold(g)_W=bold(R)^top bold(X)$],
+  [mean], [$bold(G)_Z=bold(R)/B$], [$bold(g)_W=bold(R)^top bold(X)/B$],
+))
 #pause
 #codebox(size: 15pt)[```python
 loss = 0.5 * ((Z - Y)**2).sum(dim=1).mean()
 # sum output coordinates inside each example; mean over examples
 ```]
 #pause
-#result[the dense local rules do not change; the scalar loss reduction chooses their final scale]
+#result[the dense-layer rule is unchanged; the final scalar reduction chooses the scale]
 
-== PyTorch verifies the single example and the batch #I
+== PyTorch reproduces the two-example calculation #I
 
 #codebox(size: 12.2pt)[```python
-X = torch.tensor([[ 2., -1.], [-1., 2.], [2., 2.]],
-                 requires_grad=True)
-Y = torch.tensor([[-5., -2.], [ 7., 1.], [7., -2.]])
-W = torch.tensor([[1., 3.], [-2., 1.]], requires_grad=True)
-b = torch.tensor([0., 1.], requires_grad=True)
+X = torch.tensor([[ 2., -1.], [-1., 2.]], requires_grad=True)  # (B=2, d=2)
+Y = torch.tensor([[-5., -2.], [ 7., 1.]])                     # (2, 2)
+W = torch.tensor([[1., 3.], [-2., 1.]], requires_grad=True)   # (m=2, d=2)
+b = torch.tensor([0., 1.], requires_grad=True)                # (2,)
 
-Z = X @ W.T + b
-loss = 0.5 * ((Z - Y)**2).sum(dim=1).mean()
+Z = X @ W.T + b                                               # (B, m)
+loss = 0.5 * ((Z - Y)**2).sum(dim=1).mean()                   # scalar
 loss.backward()
 
-print(loss.item())  # 7.0
-print(W.grad)        # [[ 4., -2.], [-2.,  4.]]
+print(loss.item())  # 10.0
+print(W.grad)        # [[ 5., -4.], [-4., 5.]]
 print(b.grad)        # [1., 1.]
-print(X.grad)        # [[ 8/3, 10/3], [-10/3, -2/3], [-1/3, 4/3]]
+print(X.grad)        # [[ 4., 5.], [-5., -1.]]
 ```]
 #pause
-#notebox[
-  Continue in the #link(NB + "00_backprop_autograd_complete.ipynb")[complete lecture Colab ↗]: checkpoints 11–16 derive the dense VJP, expose every batch contribution, verify microbatches, run one update, and finish with the tiny MLP.
-]
+#result[`backward()` carries out the same rowwise contributions and additions]
 
-== The training loop now has a concrete batch #I
+== The training loop repeats this batch calculation #I
 
 #codebox(size: 13pt)[```python
 for X, Y in loader:
-    optimizer.zero_grad()       # clear the previous update's buffers
-    Z = model(X)                # all examples reuse the same parameters
-    loss = loss_fn(Z, Y)        # reduce example losses to one scalar
-    loss.backward()             # aggregate this batch's contributions
-    optimizer.step()            # update once
+    optimizer.zero_grad()       # discard gradients from the previous update
+    Z = model(X)                # batch forward: (B, d) -> (B, m)
+    loss = loss_fn(Z, Y)        # reduce B examples to one scalar
+    loss.backward()             # add this batch's parameter contributions
+    optimizer.step()            # update parameters once
 ```]
 #pause
-#align(center, table(
-  columns: (52mm, 162mm), stroke: 0.5pt + MUTED,
-  inset: (x: 9pt, y: 5pt), align: (left, left),
-  [`zero_grad()`], [starts one intentional update window],
-  [`model(X)`], [records one graph whose rows share the same parameters],
-  [`loss.backward()`], [returns the reduction's sum or mean parameter gradient],
-  [`step()`], [uses that gradient; it neither computes nor clears it],
-))
-#pause
-#result[clear → batch forward → scalar loss → batch backward → update]
-
-= One batch can arrive in pieces
-
-== Microbatches can reproduce the same mean gradient #D
-
-#grid(
-  columns: 2, gutter: 14pt,
-  neat-card([ONE FULL BATCH], [
-    `zero_grad()` #linebreak()
-    `((ell1 + ell2 + ell3) / 3).backward()` #linebreak()
-    `step()`
-  ], color: BLUE, width: 103mm, body-align: left),
-  neat-card([THREE PIECES · ONE UPDATE], [
-    `zero_grad()` #linebreak()
-    `(ell1 / 3).backward()` #linebreak()
-    `(ell2 / 3).backward()` #linebreak()
-    `(ell3 / 3).backward()` #linebreak()
-    `step()`
-  ], color: TEAL, width: 103mm, body-align: left),
-)
-#pause
-#align(center, text(size: 18pt)[
-  $bold(W)."grad": quad bold(G)_W^1/3 arrow.r (bold(G)_W^1+bold(G)_W^2)/3 arrow.r mat(4,-2;-2,4)$
+#align(center, text(size: 20pt)[
+  clear $arrow.r$ forward $arrow.r$ scalar loss $arrow.r$ backward $arrow.r$ update
 ])
 #pause
-#notebox[Equivalence requires fixed parameters, the same overall reduction, no `step()`, and no `zero_grad()` between pieces. Batch-coupled operations such as BatchNorm need extra care.]
+#notebox[`step()` uses the gradients; it does not compute or clear them. That is why the next iteration begins with `zero_grad()`.]
+
+== Microbatches split one batch without changing the goal #D
+
+#codebox(size: 13.5pt)[```python
+optimizer.zero_grad()
+(loss_example_1 / 2).backward()   # first half of the mean gradient
+(loss_example_2 / 2).backward()   # second half accumulates
+optimizer.step()
+```]
 #pause
-#result[clear once before the update window · add every scaled piece · step once after it]
+#align(center, text(size: 22pt)[
+  $bold(W)."grad": quad bold(G)_W^(1)/2
+  arrow.r (bold(G)_W^(1)+bold(G)_W^(2))/2$
+])
+#pause
+#notebox[For equivalence, keep parameters fixed, preserve the same overall scaling, and do not call `zero_grad()` or `step()` between pieces.]
+#pause
+#result[one update window may contain one full batch or several correctly scaled pieces]
 
 // ═══════════════════════════ PART VI — MLP ═══════════════════════════
 = A tiny neural network
@@ -1657,35 +1764,73 @@ $ quad = (bold(W)_2 bold(W)_1)bold(x)+(bold(W)_2 bold(b)_1+bold(b)_2). $
 
 == A tiny MLP composes three vector blocks #V
 
-The network now repeats the operations we already know: affine map, elementwise ReLU, affine map, scalar loss.
-#pause
 #mlpforward
 #pause
-$ bold(z)_1=bold(W)_1bold(x)+bold(b)_1 $
-$ bold(h)="ReLU"(bold(z)_1) $
-$ bold(hat(y))=bold(W)_2bold(h)+bold(b)_2 $
-$ cal(L)=sum_i (hat(y)_i-y_i)^2 $
+#align(center, table(
+  columns: (45mm, 72mm, 76mm), stroke: 0.5pt + MUTED,
+  inset: (x: 9pt, y: 6pt), align: center,
+  table.header([*Value*], [*Rule*], [*Shape*]),
+  [$bold(z)_1$], [$bold(W)_1bold(x)+bold(b)_1$], [$(h times d)(d times 1)+(h times 1)=h times 1$],
+  [$bold(h)$], [$"ReLU"(bold(z)_1)$], [$h times 1$],
+  [$bold(hat(y))$], [$bold(W)_2bold(h)+bold(b)_2$], [$(m times h)(h times 1)+(m times 1)=m times 1$],
+  [$cal(L)$], [$sum_i (hat(y)_i-y_i)^2$], [scalar],
+))
 #pause
-#result[dense → ReLU → dense → squared loss]
+#result[$d$ input features → $h$ hidden features → $m$ output coordinates → one loss]
 
-== Backward, part 1: loss → dense 2 → hidden activations #D
+== MLP forward, one block at a time #D
 
-#mlpbackward-focus("right")
+#align(center, text(size: 24pt, weight: 600)[
+  $bold(z)_1=bold(W)_1bold(x)+bold(b)_1 in RR^(h times 1)$
+])
+#pause
+#align(center, text(size: 24pt, weight: 600)[
+  $bold(h)="ReLU"(bold(z)_1) in RR^(h times 1)$
+])
+#pause
+#align(center, text(size: 24pt, weight: 600)[
+  $bold(hat(y))=bold(W)_2bold(h)+bold(b)_2 in RR^(m times 1)$
+])
+#pause
+#align(center, text(size: 24pt, weight: 600)[
+  $cal(L)=sum_i (hat(y)_i-y_i)^2 in RR$
+])
+#pause
+#result[forward changes the representation shape; the loss finally collapses it to one number]
+
+== Backward, part 1: loss → predictions #D
+
+#mlpbackward-focus("loss")
 #pause
 *1. Squared loss.* Start with the seed $partial cal(L)\/partial cal(L)=1$. The loss operation returns
 #align(center, text(size: 21pt)[
   #downstream[$bold(g)_(hat(y))$] $= 2(bold(hat(y))-bold(y)).$
 ])
-This says how increasing each prediction coordinate would change the loss.
+#align(center, text(size: 17pt, fill: MUTED)[$bold(g)_(hat(y)) in RR^(m times 1)$])
 #pause
-*2. Second dense layer.* It receives #upstream[$bold(g)_(hat(y))$] and returns a gradient to its input $bold(h)$:
+#notebox[There is one returned number for each prediction coordinate: positive means increasing that prediction increases the loss; negative means it decreases the loss.]
+#pause
+#result[$bold(g)_(hat(y))$ now arrives at the second dense layer]
+
+== Backward, part 2: dense 2 → hidden activations #D
+
+#mlpbackward-focus("dense2")
+#pause
+*2. Second dense layer.* It receives #upstream[$bold(g)_(hat(y)) in RR^(m times 1)$] and returns a gradient to its input $bold(h)$:
 #align(center, text(size: 21pt)[
   #downstream[$bold(g)_h$] $=$ #localterm[$bold(W)_2^top$] #upstream[$bold(g)_(hat(y))$].
+])
+#align(center, text(size: 17pt, fill: MUTED)[$(h times 1)=(h times m)(m times 1)$])
+#pause
+It also returns parameter gradients
+#align(center, text(size: 19pt)[
+  $partial cal(L)\/partial bold(W)_2=bold(g)_(hat(y))bold(h)^top in RR^(m times h), quad
+  partial cal(L)\/partial bold(b)_2=bold(g)_(hat(y)) in RR^(m times 1).$
 ])
 #pause
 #result[the returned $bold(g)_h$ is now the arriving gradient at ReLU]
 
-== Backward, part 2: ReLU → dense 1 → input #D
+== Backward, part 3: ReLU → dense 1 → input #D
 
 #mlpbackward-focus("left")
 #pause
@@ -1693,13 +1838,16 @@ This says how increasing each prediction coordinate would change the loss.
 #align(center, text(size: 21pt)[
   #downstream[$bold(g)_(z_1)$] $=$ #upstream[$bold(g)_h$] #localterm[$dot.o bb(1)[bold(z)_1>0]$].
 ])
-An active unit passes its arriving gradient; an inactive unit returns zero.
+#align(center, text(size: 17pt, fill: MUTED)[$(h times 1)=(h times 1) dot.o (h times 1)$])
 #pause
 *4. First dense layer.* It receives #upstream[$bold(g)_(z_1)$] and returns
 #align(center, text(size: 20pt)[
   #downstream[$bold(g)_x$] $=$ #localterm[$bold(W)_1^top$] #upstream[$bold(g)_(z_1)$], $quad$
   #downstream[$partial cal(L)\/partial bold(W)_1$] $=$ #upstream[$bold(g)_(z_1)$] #localterm[$bold(x)^top$], $quad$
   #downstream[$partial cal(L)\/partial bold(b)_1$] $=$ #upstream[$bold(g)_(z_1)$].
+])
+#align(center, text(size: 16.5pt, fill: MUTED)[
+  $bold(g)_x: d times 1 quad dot quad partial cal(L)\/partial bold(W)_1: h times d quad dot quad partial cal(L)\/partial bold(b)_1: h times 1$
 ])
 #pause
 #result[each returned gradient becomes the arriving gradient for the block immediately to its left]
@@ -1748,6 +1896,29 @@ $ (partial cal(L))/(partial h_0) = (partial cal(L))/(partial h_L) dot f_L'(h_(L-
 #result[depth creates a product of many local slopes]
 #pause
 #notebox[Vector layers do the same operation with matrix–vector products. The intuition is unchanged: repeatedly small factors shrink a gradient; repeatedly large factors grow it.]
+
+== In a vector layer, the returned shape matches the previous value #D
+
+For layer $ell$,
+#align(center, text(size: 23pt)[
+  $bold(z)_ell=bold(W)_ell bold(h)_(ell-1)+bold(b)_ell.$
+])
+#pause
+#align(center, table(
+  columns: (50mm, 70mm, 78mm), stroke: 0.5pt + MUTED,
+  inset: (x: 9pt, y: 7pt), align: center,
+  table.header([*Quantity*], [*Shape*], [*Backward role*]),
+  [$bold(g)_(z_ell)$], [$n_ell times 1$], [arrives from the layer to the right],
+  [$bold(W)_ell^top$], [$n_(ell-1) times n_ell$], [local linear map],
+  [$bold(g)_(h_(ell-1))$], [$n_(ell-1) times 1$], [returns to the previous layer],
+))
+#pause
+#align(center, text(size: 24pt, weight: 600)[
+  #downstream[$bold(g)_(h_(ell-1))$]
+  $=$ #localterm[$bold(W)_ell^top$] #upstream[$bold(g)_(z_ell)$].
+])
+#pause
+#result[each layer receives a gradient shaped like its output and returns one shaped like its input]
 
 == Ten ordinary-looking slopes can create three regimes #V
 
