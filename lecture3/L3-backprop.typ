@@ -1705,23 +1705,31 @@ $(n)$ is a label, not a power. Here $m=2$, so $bold(y)^(n) in RR^2$.
 #result[each $bold(r)^(n)$ is a vector; squaring and summing its coordinates gives scalar $ell_n$]
 #neat-caption[Scalar-output special case: if $m=1$, each target $y^(n)$ is a scalar and $bold(Y)$ has shape $B times 1$.]
 
-== The mean loss scales both arriving gradients #D
+== The mean scales each example's residual by $1/2$ #D
 
-#align(center, text(size: 26pt, weight: 600)[
-  $cal(L)=1/2(ell_1+ell_2)=10.$
+First recompute the two residual vectors from the previous slide:
+#two(
+  align(center, text(size: 19pt)[
+    $bold(r)^(1)=(-1,-4)-(-5,-2)=(4,-2)$
+  ]),
+  align(center, text(size: 19pt)[
+    $bold(r)^(2)=(5,5)-(7,1)=(-2,4)$
+  ]),
+)
+#pause
+Stack the residuals as rows:
+#align(center, text(size: 24pt)[
+  $bold(R)=mat((bold(r)^(1))^top;(bold(r)^(2))^top)
+  =mat(4,-2;-2,4).$
 ])
 #pause
-Therefore
-#align(center, text(size: 26pt)[
+Because $cal(L)=1/2(ell_1+ell_2)$, both rows are halved:
+#align(center, text(size: 24pt)[
   #upstream[$bold(G)_Z=partial cal(L)\/partial bold(Z)$]
-  $=1/2 mat(4,-2;-2,4)=mat(2,-1;-1,2).$
+  $=1/2 bold(R)=mat(2,-1;-1,2).$
 ])
 #pause
-#align(center, text(size: 19pt, fill: MUTED)[
-  $bold(G)_Z in RR^(B times m)=RR^(2 times 2)$
-])
-#pause
-#notebox[Rows still correspond to examples; columns still correspond to output neurons. The factor $1/B$ comes only from taking the mean.]
+#notebox[Row $n$ is $1/2 bold(r)^(n)$. Rows are examples; columns are output neurons.]
 
 == Example 1 proposes a parameter gradient #D
 
