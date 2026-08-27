@@ -1306,6 +1306,40 @@ print(x.grad, b.grad)      # tensor([-2., -6.]), tensor(-2.)
 #pause
 #result[`@` performs the dot product; `backward()` still applies the same local rules]
 
+== Under the hood: the affine backward rule #D
+
+For this one-output affine node, PyTorch sends the #upstream[upstream gradient]
+`grad_z` into a backward rule. A readable teaching equivalent is:
+
+#codebox(size: 12pt)[```python
+class Affine(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, x, w, b):
+        ctx.save_for_backward(x, w)   # needed later
+        return w @ x + b
+
+    @staticmethod
+    def backward(ctx, grad_z):        # grad_z = dL/dz
+        x, w = ctx.saved_tensors
+        grad_x = grad_z * w           # dL/dx = dL/dz * dz/dx
+        grad_w = grad_z * x           # dL/dw = dL/dz * dz/dw
+        grad_b = grad_z               # dL/db = dL/dz * 1
+        return grad_x, grad_w, grad_b # one gradient per input
+```]
+#pause
+#result[
+  `backward` receives #upstream[$partial cal(L) / partial z$]
+  and returns #downstream[$partial cal(L) / partial bold(x)$],
+  #downstream[$partial cal(L) / partial bold(w)$], and
+  #downstream[$partial cal(L) / partial b$]
+]
+#pause
+#neat-caption[
+  Teaching equivalent. `nn.Linear.forward` calls `F.linear`; production autograd
+  uses generated native kernels. #link("https://github.com/pytorch/pytorch/blob/main/torch/nn/modules/linear.py")[Linear source ↗]
+  · #link("https://github.com/pytorch/pytorch/blob/main/tools/autograd/derivatives.yaml")[derivative rules ↗]
+]
+
 // ═══════════════════════════ PART V — Dense layer ═══════════════════════════
 = From one scalar output to a vector output
 
