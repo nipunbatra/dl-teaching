@@ -1676,13 +1676,17 @@ Keep the same parameters
 #pause
 #result[each row runs the same forward calculation with the same $bold(W),bold(b)$]
 
-== Each example contributes one loss #D
+== Two outputs mean a length-2 target per example #D
 
-Choose targets
-$bold(Y)=mat(-5,-2;7,1)$ and use half-squared error.
+Here $m=2$: each example predicts two numbers, so its matching target is a vector
+$bold(y)^(n) in RR^2$. Stack the $B=2$ target vectors as rows:
+#align(center, text(size: 22pt)[
+  $bold(Y)=mat((bold(y)^(1))^top;(bold(y)^(2))^top)=mat(-5,-2;7,1)
+  in RR^(B times m)=RR^(2 times 2).$
+])
 #pause
 #align(center, table(
-  columns: (25mm, 52mm, 52mm, 52mm, 32mm), stroke: 0.5pt + MUTED,
+  columns: (35mm, 52mm, 52mm, 52mm, 30mm), stroke: 0.5pt + MUTED,
   inset: (x: 8pt, y: 7pt), align: center,
   table.header([*Example*], [$bold(z)$], [$bold(y)$], [$bold(r)=bold(z)-bold(y)$], [$ell$]),
   [1], [$(-1,-4)$], [$(-5,-2)$], [#upstream[$(4,-2)$]], [$10$],
@@ -1694,7 +1698,8 @@ $bold(Y)=mat(-5,-2;7,1)$ and use half-squared error.
   partial ell_n\/partial bold(z)^(n)=bold(r)^(n).$
 ])
 #pause
-#result[for squared error, the residual is the gradient returned by that example's loss]
+#result[$bold(y)^(n)$ and $bold(r)^(n)$ are vectors; $ell_n$ is one scalar loss]
+#neat-caption[Scalar-output special case: if $m=1$, each target $y^(n)$ is a scalar and $bold(Y)$ has shape $B times 1$.]
 
 == The mean loss scales both arriving gradients #D
 
