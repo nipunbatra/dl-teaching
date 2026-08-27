@@ -1,0 +1,160 @@
+{
+  "architecture": {
+    "name": "SmallCifarCNN",
+    "notes": "No batch normalization; dropout modules have p=0 outside the dropout condition, so all conditions have identical parameters.",
+    "parameter_count": 666538
+  },
+  "classes": [
+    "airplane",
+    "automobile",
+    "bird",
+    "cat",
+    "deer",
+    "dog",
+    "frog",
+    "horse",
+    "ship",
+    "truck"
+  ],
+  "conditions": [
+    {
+      "augmentation": false,
+      "classifier_dropout": 0.0,
+      "conv_dropout": 0.0,
+      "label_smoothing": 0.0,
+      "name": "baseline",
+      "weight_decay": 0.0
+    },
+    {
+      "augmentation": false,
+      "classifier_dropout": 0.0,
+      "conv_dropout": 0.0,
+      "label_smoothing": 0.0,
+      "name": "weight_decay",
+      "weight_decay": 0.01
+    },
+    {
+      "augmentation": true,
+      "classifier_dropout": 0.0,
+      "conv_dropout": 0.0,
+      "label_smoothing": 0.0,
+      "name": "augmentation",
+      "weight_decay": 0.0
+    },
+    {
+      "augmentation": false,
+      "classifier_dropout": 0.5,
+      "conv_dropout": 0.15,
+      "label_smoothing": 0.0,
+      "name": "dropout",
+      "weight_decay": 0.0
+    },
+    {
+      "augmentation": false,
+      "classifier_dropout": 0.0,
+      "conv_dropout": 0.0,
+      "label_smoothing": 0.1,
+      "name": "label_smoothing",
+      "weight_decay": 0.0
+    }
+  ],
+  "environment": {
+    "deterministic_algorithms": "enabled with warn_only=True",
+    "device": "mps",
+    "mps_available": true,
+    "mps_built": true,
+    "numpy": "1.26.4",
+    "platform": "macOS-15.7.7-arm64-arm-64bit",
+    "python": "3.11.11",
+    "torch": "2.13.0"
+  },
+  "normalization": {
+    "mean": [
+      0.4914,
+      0.4822,
+      0.4465
+    ],
+    "std": [
+      0.247,
+      0.2435,
+      0.2616
+    ]
+  },
+  "purpose": "single-seed controlled lecture demonstration, not a benchmark",
+  "script": "/Users/nipun/git/dl-teaching/lecture7/diagrams/cifar_regularization_experiment.py",
+  "script_sha256_at_start": "e3d661b27f3ef500502da8f1a09f17b5682d0147b5f1a6ea3c36544fa70c96c2",
+  "source_data_dir": "/Users/nipun/git/stt-ai-teaching/lecture-demos/week05/data/cifar-10-batches-py",
+  "source_files_sha256": {
+    "data_batch_1": "54636561a3ce25bd3e19253c6b0d8538147b0ae398331ac4a2d86c6d987368cd",
+    "data_batch_2": "766b2cef9fbc745cf056b3152224f7cf77163b330ea9a15f9392beb8b89bc5a8",
+    "data_batch_3": "0f00d98ebfb30b3ec0ad19f9756dc2630b89003e10525f5e148445e82aa6a1f9",
+    "data_batch_4": "3f7bb240661948b8f4d53e36ec720d8306f5668bd0071dcb4e6c947f78e9682b",
+    "data_batch_5": "d91802434d8376bbaeeadf58a737e3a1b12ac839077e931237e0dcd43adcb154",
+    "test_batch": "f53d8d457504f7cff4ea9e021afcf0e0ad8e24a91f3fc42091b8adef61157831"
+  },
+  "split": {
+    "indices_file": "cifar_regularization_split_indices.npz",
+    "method": "stratified without replacement",
+    "seed": 20260827,
+    "source": "official CIFAR-10 training batches only",
+    "train_class_counts": [
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200
+    ],
+    "train_per_class": 200,
+    "train_size": 2000,
+    "validation_class_counts": [
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500
+    ],
+    "validation_per_class": 500,
+    "validation_size": 5000
+  },
+  "test": {
+    "class_counts": [
+      1000,
+      1000,
+      1000,
+      1000,
+      1000,
+      1000,
+      1000,
+      1000,
+      1000,
+      1000
+    ],
+    "policy": "evaluate exactly once per condition after checkpoint selection; never use for tuning",
+    "size": 10000,
+    "source": "official CIFAR-10 test batch"
+  },
+  "training": {
+    "augmentation_seed": 271828,
+    "batch_size": 128,
+    "checkpoint_rule": "minimum validation cross-entropy",
+    "epochs": 35,
+    "eval_batch_size": 256,
+    "evaluation_loss": "hard-label cross-entropy for every condition",
+    "hyperparameter_selection": "Conventional teaching-scale settings, checked against validation behavior only; test metrics were not used to choose settings.",
+    "learning_rate": 0.001,
+    "minibatch_order_seed": 314159,
+    "model_seed": 1701,
+    "optimizer": "AdamW",
+    "scheduler": null
+  }
+}
