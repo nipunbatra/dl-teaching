@@ -26,8 +26,8 @@ def f_failure_modes():
     L=np.arange(0,41)
     fig,axes=plt.subplots(2,2,figsize=(8.4,4.4))
     panels=[
-      (axes[0,0],'activations vanish  →0', 1.0*0.72**L, RED,   r'$q_\ell=\mathrm{Var}(h^{(\ell)})$'),
-      (axes[0,1],'activations explode  →∞', 1.0*1.30**L, ACC,  r'$q_\ell=\mathrm{Var}(h^{(\ell)})$'),
+      (axes[0,0],'activations vanish  →0', 1.0*0.72**L, RED,   r'$q_\ell=\mathbb{E}[(h^{(\ell)})^2]$'),
+      (axes[0,1],'activations explode  →∞', 1.0*1.30**L, ACC,  r'$q_\ell=\mathbb{E}[(h^{(\ell)})^2]$'),
       (axes[1,0],'gradients vanish  →0',   1.0*0.68**L, BLUE,  r'$g_\ell=\Vert\partial L/\partial h^{(\ell)}\Vert^2$'),
       (axes[1,1],'gradients explode  →∞',  1.0*1.34**L, TEAL,  r'$g_\ell=\Vert\partial L/\partial h^{(\ell)}\Vert^2$'),
     ]
@@ -64,7 +64,10 @@ def f_activation_zoo():
         ax.plot(z,d,color=ACC,lw=1.6,ls='--',alpha=.9)
         ax.axhline(0,color=MUTED,lw=.6); ax.axvline(0,color=MUTED,lw=.6)
         ax.set_title(nm,fontsize=12,pad=4)
-        ax.set_xticks([]); ax.set_yticks([]); ax.set_ylim(-1.4,2.2)
+        ax.set_xlim(-4,4); ax.set_ylim(-1.4,2.2)
+        ax.set_xticks([-4,0,4]); ax.set_yticks([-1,0,1,2])
+        ax.tick_params(labelsize=8)
+        ax.grid(alpha=.18,lw=.6)
     axes[0,0].plot([],[],color=INK,label=r'$\phi$')
     axes[0,0].plot([],[],color=ACC,ls='--',label=r"$\phi'$")
     axes[0,0].legend(frameon=False,fontsize=10,loc='upper left')

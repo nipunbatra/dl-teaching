@@ -1,0 +1,133 @@
+{
+  "cloned": {
+    "final_parameters": {
+      "hidden_bias": [
+        -1.0860259532928467,
+        -1.0860259532928467,
+        -1.0860259532928467,
+        -1.0860259532928467
+      ],
+      "hidden_weight": [
+        [
+          1.3669184446334839,
+          1.4996931552886963
+        ],
+        [
+          1.3669184446334839,
+          1.4996931552886963
+        ],
+        [
+          1.3669184446334839,
+          1.4996931552886963
+        ],
+        [
+          1.3669184446334839,
+          1.4996931552886963
+        ]
+      ],
+      "output_bias": [
+        0.6919722557067871
+      ],
+      "output_weight": [
+        [
+          -1.301491618156433,
+          -1.301491618156433,
+          -1.301491618156433,
+          -1.301491618156433
+        ]
+      ]
+    },
+    "metrics": {
+      "accuracy": 0.75,
+      "activation_rank": 1,
+      "final_parameter_spread": 0.0,
+      "initial_parameter_spread": 0.0,
+      "loss": 0.4775802195072174
+    }
+  },
+  "configuration": {
+    "architecture": "2 -> 4 ReLU -> 1",
+    "bias_initialization": "zeros",
+    "centers": [
+      [
+        -1,
+        -1
+      ],
+      [
+        -1,
+        1
+      ],
+      [
+        1,
+        -1
+      ],
+      [
+        1,
+        1
+      ]
+    ],
+    "data_seed": 7,
+    "hidden_initialization": "kaiming_normal_(mode='fan_in', nonlinearity='relu')",
+    "labels": [
+      0,
+      1,
+      1,
+      0
+    ],
+    "learning_rate": 0.03,
+    "loss": "BCEWithLogits (full batch)",
+    "optimizer": "Adam",
+    "output_initialization": "xavier_normal_",
+    "points_per_blob": 80,
+    "sigma": 0.18,
+    "updates": 300,
+    "weight_seed": 1
+  },
+  "experiment": "hidden-unit symmetry on four-Gaussian XOR",
+  "independent": {
+    "final_parameters": {
+      "hidden_bias": [
+        0.15962442755699158,
+        0.149701789021492,
+        -0.13920293748378754,
+        -0.044266071170568466
+      ],
+      "hidden_weight": [
+        [
+          2.556309938430786,
+          -1.8890953063964844
+        ],
+        [
+          -2.300093412399292,
+          -1.9893708229064941
+        ],
+        [
+          2.1915719509124756,
+          2.4182627201080322
+        ],
+        [
+          -2.3349461555480957,
+          2.235995292663574
+        ]
+      ],
+      "output_bias": [
+        0.09787296503782272
+      ],
+      "output_weight": [
+        [
+          1.8116496801376343,
+          -1.8430936336517334,
+          -2.255059242248535,
+          2.0180304050445557
+        ]
+      ]
+    },
+    "metrics": {
+      "accuracy": 1.0,
+      "activation_rank": 4,
+      "final_parameter_spread": 4.891256332397461,
+      "initial_parameter_spread": 2.509228229522705,
+      "loss": 0.0009097579750232399
+    }
+  }
+}

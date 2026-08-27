@@ -1,443 +1,868 @@
 # Lecture 6 · Making Deep Networks Trainable · Teaching Guide
-*First-time-instructor companion. Audience: undergraduates who have completed the public Lectures 1–5.*
 
-## The spine (say this in two sentences)
+Audience: undergraduates who have completed Lectures 1–5. Pace from the
+104-page handout (one title, seven section canvases, 90 teaching canvases, one
+sources page, and five optional canvases) rather than the 209 progressive-
+reveal frames in the presentation build.
 
-A deep network repeats the same local operation, so a modest scale error or an unhelpful derivative is multiplied many times: signals can disappear or explode on the way forward, and gradients can do the same on the way back. Keep two layerwise gauges visible while adding four complementary controls—activation, initialization, normalization, and a residual path—and make students predict every intervention on one width-4, five-layer ReLU network before showing a trace.
+## The spine
+
+Open by retrieving the central fact from backpropagation: depth multiplies
+local derivatives. Strip the network down to a repeated scalar multiplication,
+work the forward and backward products, and show how $0.9^{30}$ and
+$1.1^{30}$ turn a small per-layer mismatch into vanishing or exploding scale.
+Only then ask how the initial weight distribution can make the typical
+per-layer gain close to one.
+
+Derive the answer from one neuron. Random initialization has two jobs: break
+symmetry and choose a scale. After the symmetry and all-zero examples, stop at
+the explicit remaining question: how large should the random weights be? For
+the scale calculation, predict the RMS of a 100-term sum, show why unit-RMS
+terms produce RMS 10, repair the linear sum with weight standard deviation
+0.1, and only then generalize to fan-in. Follow with the backward fan-out sum,
+Xavier, the ReLU half-second-moment example, and finally He/Kaiming. The
+30-layer spiral is the empirical test of that calculation: data, architecture,
+loss, Adam learning rate, seed, and weight directions are fixed while only
+$W_\ell\leftarrow\alpha W_\ell$ changes for
+$\alpha\in\{0.5,1,1.5\}$.
+
+The lecture is one cumulative argument, not four mini-lectures. Repeated
+multiplication creates the problem; initialization controls update-zero scale;
+the $\alpha$ experiment checks the prediction; normalization controls scale
+using current activations; residual connections add a direct gradient path.
+Every mechanism returns to the same fixed spiral experiment.
 
 ## Where it sits
 
-**Prerequisites in the public sequence:**
-
-- **Lecture 2 · From Linear Models to Neural Networks:** an MLP composes affine maps and nonlinearities; depth means repeating that composition.
-- **Lecture 3 · Calculus Toolkit:** gradients, Jacobians, the chain rule, and transposes for column-gradient notation.
-- **Lecture 4 · Computation Graphs & Backpropagation:** backprop supplies the gradients by multiplying local Jacobians and accumulating contributions along multiple paths.
-- **Lecture 5 · Optimization for Deep Learning:** the optimizer turns those measured gradients into parameter updates, using direction memory, scale memory, and a learning-rate clock.
-
-This lecture asks an earlier architectural question: **do useful forward signals and backward gradients survive the trip through depth in the first place?** Lecture 4 supplies gradients; Lecture 5 chooses updates; Lecture 6 makes the network a route through which both can travel.
-
-**Handoff:** **Lecture 7 · Generalization & Regularization** asks whether a trainable network performs well beyond its training data. Do not turn this lecture into the old regularization lecture: BatchNorm may have stochastic side effects and architectural choices may affect generalization, but today’s contract is optimization and signal propagation. The clean transition is **first make the training objective reachable; next keep fitting it from becoming the whole goal**.
+- Lecture 2 established affine maps, activations, MLP composition, and the gap
+  between expressivity and learnability.
+- Lectures 3–4 established Jacobians, local derivative gates, and reverse-mode
+  backpropagation.
+- Lecture 5 established that the gradient and optimizer update are different
+  objects and made Adam the current baseline.
+- Lecture 6 asks whether the forward representation and backward sensitivity
+  remain usable before the optimizer acts.
+- Lecture 7 will ask whether a trainable network generalizes. Keep BatchNorm's
+  possible regularization effects subordinate to today's trainability contract.
 
 ## Learning contract
 
 By the end, students should be able to:
 
-1. define and interpret the layerwise signal gauge $q_\ell=\mathbb E[(h^{(\ell)})^2]$ and gradient gauge $g_\ell=\mathbb E[(\bar h^{(\ell)})^2]$;
-2. explain why local scale multipliers and activation derivatives compound with depth;
-3. derive the fan-in variance rule and distinguish Xavier from He initialization;
-4. calculate the five-layer ReLU prediction for Xavier and He from $q_0=g_5=1$;
-5. calculate BatchNorm on $[1,2,3,4]$, including the normalization axis, affine parameters, and $\epsilon$ convention;
-6. distinguish BatchNorm from LayerNorm by **which entries share statistics** and by train/eval behavior;
-7. derive the residual gradient equation using column gradients and calculate the five-block plain-versus-residual comparison; and
-8. diagnose a failure by moving from **symptom → measurement → one controlled test**, rather than stacking fixes.
+1. explain examplewise ReLU gating, define a neuron that is dead on a training
+   set, and show why cloned or all-zero hidden neurons cannot specialize;
+2. distinguish symmetry breaking from scale selection;
+3. explain vanishing and exploding activations and gradients as repeated local
+   gain errors;
+4. use RMS rather than a width-dependent raw norm;
+5. derive the fan-in rule, Xavier initialization, and He initialization;
+6. interpret BatchNorm and LayerNorm by naming the entries that share
+   statistics and by stating train/eval behavior;
+7. explain how $h_{\ell+1}=h_\ell+F_\ell(h_\ell)$ creates an identity
+   contribution in backpropagation;
+8. diagnose a failing deep network from layerwise measurements before stacking
+   fixes.
 
-## The persistent board model: two gauges, one network
+## The fixed experiment
 
-Draw this once and keep it available for the entire lecture:
+Use the exact experiment implemented in
+`lecture6/diagrams/trainability_experiment.py` and the executed notebook
+`notebooks/L06/deep_network_trainability_autopsy.ipynb`.
+
+```text
+dataset        3-class 2-D spiral; 300 points per class; seed 7
+architecture   2 → [Linear(128) → ReLU] × 30 → 3
+loss           full-batch cross-entropy
+optimizer      Adam, learning rate 3e-4
+weight seed    11
+base weights   hidden layers: He/Kaiming Normal(0, 2/fan_in); zero biases
+only change    W_l ← α W_l, α ∈ {0.5, 1.0, 1.5}
+```
+
+The constructor resets the same seed before each model. The output layer also
+uses `Normal(0, 2/fan_in)` in this controlled experiment, although no ReLU
+follows it; this keeps the common scaling relation exact and is not a general
+recommendation for output heads. Verify
+`W_0.5 == 0.5 * W_1.0` and `W_1.5 == 1.5 * W_1.0` before interpreting the
+curves. The output layer is scaled in the same way as the hidden layers.
+Every update uses all 900 examples. This matters later: the BatchNorm repair
+uses a fixed full batch, so batch composition does not change from one update
+to the next.
+
+The fixed-seed evidence at initialization is:
+
+| $\alpha$ | input activation RMS | layer-30 activation RMS | input-gradient RMS | final active fraction |
+|---:|---:|---:|---:|---:|
+| 0.5 | 0.419 | $1.02\times10^{-9}$ | $4.57\times10^{-13}$ | 0.493 |
+| 1.0 | 0.419 | 1.10 | $1.01\times10^{-3}$ | 0.493 |
+| 1.5 | 0.419 | $2.10\times10^5$ | $4.15\times10^2$ | 0.493 |
+
+All three runs are finite at initialization. Positive scaling preserves every
+preactivation sign, so the active-fraction traces are identical. This is a key
+diagnostic lesson: finite and half-active do not imply a usable scale.
+
+Return to the exact positive-homogeneity calculation at each measurement. With
+zero biases, positive $\alpha$, and identical weight directions,
 
 \[
-h^{(\ell)}=\operatorname{ReLU}(W_\ell h^{(\ell-1)}),
-\qquad \ell=1,\ldots,5,
+\operatorname{ReLU}(\alpha z)=\alpha\operatorname{ReLU}(z)
+\quad\Longrightarrow\quad
+h_\ell^{(\alpha)}=\alpha^\ell h_\ell^{(1)}.
 \]
 
-with width $4$ at every hidden layer, zero biases for the scale calculation, independent zero-mean weights, and
+Do not jump directly from this per-example statement to the reported RMS.
+Stack the 900 examples first and then use the homogeneity of RMS:
 
 \[
-q_\ell:=\mathbb E[(h^{(\ell)})^2],
+H_\ell^{(\alpha)}=\alpha^\ell H_\ell^{(1)},
 \qquad
-g_\ell:=\mathbb E[(\bar h^{(\ell)})^2],
-\qquad
-q_0=g_5=1.
+\operatorname{RMS}(H_\ell^{(\alpha)})
+=\alpha^\ell\operatorname{RMS}(H_\ell^{(1)}).
 \]
 
-The expectation is over examples, coordinates, and—in the initialization argument—random draws. These are **raw second moments**; their square roots are RMS scales. They are not automatically variances, especially after ReLU makes the activation mean positive.
+Before the symbols, show the two relative-scale tracks:
 
-For a symmetric pre-activation, ReLU passes roughly half the squared energy. With fan-in $n=4$, the approximate per-layer second-moment multiplier is
+```text
+alpha = 0.5:  1 -> 0.5 -> 0.25 -> 0.125 -> ... -> 9.31e-10
+alpha = 1.5:  1 -> 1.5 -> 2.25 -> 3.375 -> ... -> 1.92e5
+```
+
+The value $\operatorname{RMS}(H_{30}^{(1)})=1.0969$ is a measured reference
+from the $\alpha=1$ forward pass, not a theoretical prediction. It calibrates
+the absolute scale; $\alpha^{30}$ predicts the other two runs:
 
 \[
-c\approx \frac12 n\operatorname{Var}(W)=2\operatorname{Var}(W).
+1.0969(0.5)^{30}=1.02\times10^{-9},\qquad
+1.0969(1.5)^{30}=2.10\times10^5.
 \]
 
-In this equal-width mean-field calculation, the backward gauge has the same approximate multiplier when read from layer $5$ toward layer $0$.
+Both predictions match the actual layer-30 tensors to displayed precision.
+Keep returning to this worked example: predict the tensor first, inspect the
+measurement second, and connect the result back to the He rule already derived.
 
-| Initialization | $\operatorname{Var}(W)$ | ReLU multiplier $c$ | $q_5=c^5q_0$ | $g_0=c^5g_5$ |
-|---|---:|---:|---:|---:|
-| Xavier, $2/(4+4)$ | $1/4$ | $0.5$ | $0.5^5=0.03125$ | $0.5^5=0.03125$ |
-| He, $2/4$ | $1/2$ | $1$ | $1^5=1$ | $1^5=1$ |
+Before moving from activation scale to the dataset-average loss, hold one
+example fixed: sample 132 has
+$x=(0.428801,-0.410058)$ and true class $y=0$. The 30 hidden weight matrices
+and the output matrix are all scaled, so zero biases and ReLU homogeneity give
 
-Make students say what the table does **not** claim: an individual He-initialized network does not preserve every coordinate or every layer exactly. The table is an approximate scale prediction at initialization under simplifying assumptions.
+\[
+z^{(\alpha)}=\alpha^{31}z^{(1)}.
+\]
 
-Use this same model four ways:
+Work softmax for the $\alpha=1$ row on the board, including the stable
+subtract-the-maximum step, and then compare all three scales:
 
-1. **Activation:** the ReLU derivative is a local gate in $g_\ell$.
-2. **Initialization:** Xavier gives $c=0.5$ here; He restores the lost factor of two.
-3. **Normalization:** take one feature’s four-example slice to be $[1,2,3,4]$ and reset its scale explicitly.
-4. **Residual path:** reinterpret the five transformations as blocks and compare a branch derivative $F'=-0.1$ with the total residual derivative $1+F'=0.9$.
+| $\alpha$ | logits $(z_0,z_1,z_2)$ | probabilities $(p_0,p_1,p_2)$ | predicted class | this point's CE |
+|---:|---|---|---:|---:|
+| 0.5 | $(-6.1\times10^{-10},-3.2\times10^{-11},-4.9\times10^{-10})$ | $\approx(0.333,0.333,0.333)$ | 1 | 1.099 |
+| 1.0 | $(-1.313,-0.070,-1.047)$ | $(0.173,0.601,0.226)$ | 1 | 1.753 |
+| 1.5 | $(-377633,-20019,-301145)$ | $\approx(0,1,0)$ | 1 | 357614 |
+
+Positive scaling preserves $z_1>z_2>z_0$, hence the same argmax, but softmax
+responds to the gaps. Larger gaps make the same wrong class-1 prediction more
+confident, so $-\log p_0$ grows enormously. The displayed $p_0=0$ in the last
+row is float32 underflow/rounding; PyTorch's stable log-sum-exp cross-entropy
+is finite. Keep saying “this point's loss”: it is not the 900-example mean
+reported in the training table below.
+
+After 150 Adam updates:
+
+| $\alpha$ | initial loss | final loss | final training accuracy | first non-finite |
+|---:|---:|---:|---:|---:|
+| 0.5 | 1.09861 | 1.09861 | 0.333 | none |
+| 1.0 | 1.22422 | $8.07\times10^{-5}$ | 1.000 | none |
+| 1.5 | 189359 | 0.0819 | 0.994 | none |
+
+Do not call the $\alpha=1.5$ run a NaN run. It is an *exploded-scale* run that
+remains finite in float32 and eventually recovers noisily under Adam. This is
+more instructive than manufacturing a non-finite result: optimizer adaptation
+can survive a terrible scale without making the scale healthy.
 
 ## Exact 80-minute route
 
-### ⭐ Core · exactly 55 minutes
+| Time | Act | Teaching move |
+|---:|---|---|
+| 0–10 | why gradients vanish or explode | Draw the repeated deep transformation, work the four-layer scalar forward and backward products, calculate RMS and one per-layer RMS gain from numbers, then compute the 30-layer effect. Connect the gradient reaching layer 1 to its parameter update. |
+| 10–34 | initialization from one neuron | Separate symmetry breaking from scale selection. Work one clone update, state the lost-capacity consequence, and compare the XOR decision surfaces. Recall the ReLU gate with positive and negative numbers, distinguish an inactive example from a dead neuron, and then calculate both blocked gradient paths at all-zero initialization. Reopen the scale question explicitly. Predict the 100-term RMS, work the 10-to-1 numerical repair, then derive fan-in, fan-out, Xavier, and He. |
+| 34–49 | test on the 30-layer spiral | Reveal runs A–C, define the network tensors, apply the $0.125$ He standard deviation, and introduce the controlled $\alpha$ perturbation. Predict $\alpha^\ell$, check layer 30, run the compact notebook, and interpret activation, probability, loss, and gradient consequences. |
+| 49–63 | normalization | Work one feature $[1,2,3,4]$ through centering, standardization, and $\gamma,\beta$; define $Z_\ell\in\mathbb R^{B\times D}$; compare BN columns with LN rows; show batch dependence, eval behavior, placement, and the measured repair. |
+| 63–73 | residual route | Ask whether a block can copy $h_\ell$, introduce the same-shape addition, state the limitations of the lecture toy, differentiate a scalar block before the vector Jacobian, then compare the three spiral variants. |
+| 73–80 | diagnosis | Work the collapsed trace from symptom to controlled test, assign the different exit trace, and return to all three values of $\alpha$. |
 
-- Opening commitment and the two gauges: 5 min.
-- Depth as a product; width-4/five-layer prediction: 7 min.
-- Activations as gradient gates, including saturation and inactive ReLUs: 8 min.
-- Fan-in derivation, Xavier/He, and the persistent numeric: 14 min.
-- Normalization formula and the exact BatchNorm calculation: 10 min.
-- Residual forward/backward paths and the five-block numeric: 8 min.
-- Final two-gauge synthesis and Lecture 7 handoff: 3 min.
-
-### ⭐⭐ Should cover · exactly 15 minutes
-
-- BatchNorm versus LayerNorm axes, CNN axes, and train/eval behavior: 9 min.
-- One complete symptom → measurement → controlled-test diagnosis: 6 min.
-
-### ⭐⭐⭐ Optional · exactly 10 minutes
-
-- Selected notebook reveal or RMSNorm/pre-activation extension: 5 min.
-- Convolutional fan-in, projection shortcuts, and modern recipe caveats: 5 min.
-
-### Suggested clock
-
-| Time | Route | Teaching move |
-|---|---|---|
-| 0–5 | ⭐ | Show the width-4, five-layer ReLU chain and make students choose Xavier normal, variance-matched Xavier uniform, He normal, or all-zero weights. Keep the answer hidden. |
-| 5–12 | ⭐ | Turn a local multiplier into $c^L$; establish the width-4, five-layer board model. |
-| 12–20 | ⭐ | Compare sigmoid/tanh/ReLU derivative gates; define an all-example inactive ReLU carefully. |
-| 20–34 | ⭐ | Derive fan-in scaling, balance Xavier, add ReLU’s factor of two, and calculate $0.5^5$. |
-| 34–44 | ⭐ | Insert normalization and work $[1,2,3,4]$ through $\mu$, $\sigma^2$, $\hat x$, $\gamma$, and $\beta$. |
-| 44–52 | ⭐ | Add the residual route; derive the transpose equation and calculate $10^{-5}$ versus $0.59049$. |
-| 52–61 | ⭐⭐ | Contrast BN/LN axes and their own train/eval behavior; include batched-inference nuance. |
-| 61–67 | ⭐⭐ | Diagnose one failure from saved layerwise measurements and change exactly one cause. |
-| 67–72 | ⭐⭐⭐ | Reveal one notebook experiment selected from the choreography below. |
-| 72–77 | ⭐⭐⭐ | Choose one extension: conv fan-in, pre-activation, RMSNorm, or projection shortcuts. |
-| 77–80 | ⭐ | Revisit both gauges, complete the exit ticket, and hand off to generalization. |
-
-The labels sum to **55 core + 15 should-cover + 10 optional = 80 minutes**. If you omit optional material, spend the recovered time on predictions and student calculations rather than adding another technique.
+The 86 teaching canvases form the core narrative; the sources page and five
+explicitly optional canvases are outside the normal route. The optional pages
+hold the unequal-input-unit example, sigmoid tangent, PyTorch initialization
+line, and two extra diagnostic cases. If discussion runs long, reduce audience
+discussion time on the clone calculation and show only the conclusion of the
+drift plot. Preserve the layerwise measurements, the He derivation, the complete
+four-number normalization calculation, the scalar-to-vector residual
+derivative, and the final diagnosis.
 
 ## Teach it like this
 
-Open on the persistent width-4, five-layer ReLU network and ask which zero-mean start should keep **both end-to-end RMS gauges** closest to one: Xavier normal with variance $1/4$, Xavier uniform with the same variance, He normal with variance $1/2$, or all-zero weights. Require a private commitment and keep the answer hidden until ReLU’s gain earns He’s factor of two. Then put two empty traces on the board: $q_0\rightarrow q_5$ forward and $g_5\rightarrow g_0$ backward. Use the scalar $0.8^{20}\approx0.0115$ only as the follow-up compounding example or in notebook 01.
+### Cold open
 
-Keep the causal chain tight:
+Begin with the same deep chain students met in backpropagation. Temporarily set
+the activation to the identity and the biases to zero so there is only one
+mechanism to inspect: repeated multiplication. Work $h_\ell=qh_{\ell-1}$ with
+$q=0.5,1,1.5$ for four layers, then repeat the calculation backward with an
+arriving output gradient of one. Generalize only after the numbers are visible.
 
-1. **Depth exposes the failure.** Backprop is a product of local Jacobians; the forward computation is also a repeated product-and-gate process.
-2. **Activation controls the local gate.** A saturated sigmoid has a tiny derivative; an active ReLU passes a derivative of one, while an inactive ReLU blocks that example’s path.
-3. **Initialization sets the starting scale.** Random weights break symmetry, fan-in determines forward spread, fan-out matters backward, and the activation changes the gain that must be matched.
-4. **Normalization recomputes a reference scale during training.** It also changes the optimizer’s parameterization; it is not adequately explained by chanting “internal covariate shift.”
-5. **Residual addition creates a short path.** The arriving gradient gets an identity contribution plus a residual-Jacobian contribution.
-6. **Measurement decides what to try.** Re-read $q_\ell$ and $g_\ell$ after every intervention; do not infer the failure mechanism from loss alone.
+Before saying “RMS gain,” calculate one. For
+$g=(2,-2,1,-1)$, the ordinary mean is zero even though the coordinates are not
+small, while
+$\operatorname{RMS}(g)=\sqrt{(4+4+1+1)/4}=1.58$. Then compare two adjacent
+gradient vectors with
+$q_\ell=\operatorname{RMS}(g_{\ell-1})/\operatorname{RMS}(g_\ell)$; the slide's
+$0.90/1.00=0.90$ means that one layer reduced a typical coordinate by 10%.
+Only after this definition should $q^{30}$ appear.
 
-At each checkpoint, use **predict → calculate → reveal → explain**. Ask for the direction of change before asking for a decimal. The same visual grammar should survive the lecture: forward signal, backward gradient, chosen scale, and identity path should not change meaning between diagrams.
+At depth 30, use $q=0.9,1,1.1$ to show that even a 10% local mismatch gives
+$0.042,1,17.45$. Name the consequences precisely: an early layer with a tiny
+gradient barely changes; an enormous gradient can create unstable or
+non-finite updates. This retrieves Lecture 3 and creates the need for the
+initialization calculation. The spiral curves come after He/Kaiming has been
+derived; they test a prediction rather than introduce unexplained notation.
 
-## Live numeric 1 · initialization on the width-4 ReLU stack
+### One neuron before layer notation
 
-For one coordinate of a linear pre-activation,
+Use generic symbols on the first pass. Draw $h_1,\ldots,h_n$ entering one
+neuron and write
 
 \[
-z=\sum_{i=1}^{n}w_ix_i.
+u_i=w_i h_i,
+\qquad
+z=u_1+\cdots+u_n.
 \]
 
-Under independent, zero-mean terms with weights independent of inputs,
+Only two definitions are needed here: a weighted contribution is $u_i$, and
+the number of incoming values $n$ is the fan-in. Do not introduce
+$\ell,i,j,d_\ell$ before the numerical idea is visible. Present the scale
+calculation in this order:
+
+1. state the bridge from the preceding slides: independent nonzero weights
+   solve symmetry, but their standard deviation still sets the one-layer gain;
+2. ask whether 100 independent, zero-mean, unit-RMS contributions produce a
+   sum with RMS closer to 1, 10, or 100;
+3. reveal the pattern $n=1\mapsto1$, $n=4\mapsto2$,
+   $n=100\mapsto10$, and calculate
+   $\mathbb E[z^2]=100$, $\operatorname{RMS}(z)=10$;
+4. keep fan-in 100 fixed and compare $\operatorname{Std}(w)=1$ with
+   $\operatorname{Std}(w)=0.1$: the latter gives
+   $\sqrt{100}(0.1)=1$ for the linear sum;
+5. generalize to
+   $\operatorname{Var}(w)=1/n$ and
+   $\operatorname{Std}(w)=1/\sqrt n$;
+6. define fan-out on its own branching diagram, derive the backward
+   $1/n_{\text{out}}$ preference, and only then introduce Xavier;
+7. use the four-number ReLU example to show that ReLU keeps half the second
+   moment, so fan-in 100 changes from 0.1 to
+   $\sqrt{2/100}\approx0.141$;
+8. apply He/Kaiming to width 128, obtaining 0.125, and then define
+   $\alpha=0.5,1,1.5$ as controlled perturbations of the same random
+   directions.
+
+The 0.1 result is explicitly for the linear sum before ReLU. This avoids an
+apparent contradiction when 0.141 appears two slides later. Distinguish the
+two scaling statements aloud:
 
 \[
-\operatorname{Var}(z)
-=\sum_{i=1}^{n}\operatorname{Var}(w_ix_i)
-=n\operatorname{Var}(w)\operatorname{Var}(x).
+\operatorname{Std}(w)\propto\frac1{\sqrt n},
+\qquad
+\operatorname{Var}(w)\propto\frac1n.
 \]
 
-For a linear or near-linear layer, preserving the forward variance suggests $\operatorname{Var}(W)\approx1/n_{\text{in}}$; preserving the backward variance suggests $1/n_{\text{out}}$. Xavier balances the two:
+When the deck returns to the actual 30-layer MLP, draw the node-level network
+and then read the convention aloud:
+
+```text
+ell = hidden-layer number
+i   = coordinate entering that layer
+j   = neuron receiving those coordinates
+s   = training example, introduced only when the batch is shown
+```
+
+At that point map the generic sum to
+$z_{\ell,j}=\sum_i W_{\ell,ji}h_{\ell-1,i}+b_{\ell,j}$ and point out that a
+row of $W_\ell$ has fan-in $d_{\ell-1}$ while a column participates in
+fan-out $d_\ell$.
+
+Do not lead with $W=\alpha\sqrt{2/\text{fan-in}}\,\epsilon$. By the time that
+formula appears, every factor should already have a numerical meaning.
+
+### Symmetry before variance
+
+Draw two hidden neurons with identical incoming *and outgoing* parameters.
+Students should
+say the chain aloud:
+
+```text
+same weights → same preactivation → same activation → same gradient → same update
+```
+
+Then distinguish two questions:
+
+- randomness gives neurons different directions;
+- variance determines whether the repeated computation has a usable scale.
+
+Do not stop at “the gradients are equal.” State the capacity consequence. If
+all four hidden units have the same incoming weights, bias, and outgoing
+coefficient, then
+
+\[
+h_1(x)=\cdots=h_4(x)=h(x),\qquad
+s(x)=\sum_{j=1}^4v h_j(x)+c=4v h(x)+c.
+\]
+
+The layer contains four parameterized neurons but only one distinct hidden
+feature. The output can rescale that feature; it cannot manufacture three new
+directions. Use the XOR comparison immediately afterward. The controlled
+model is `Linear(2,4) → ReLU → Linear(4,1)` on four Gaussian blobs at
+$(\pm1,\pm1)$. With cloned parameters its hidden activation matrix stays rank
+one and one blob remains on the wrong side of the boundary; independent
+initialization lets the hidden units specialize and separate all four blobs.
+Ask students to identify the overlapping hidden hinge lines before revealing
+the accuracy.
+
+The browser lab linked from the slide has three reset modes: exactly cloned,
+slightly perturbed, and independent. Use one-step mode first. In the cloned
+run, point out that the maximum separation between corresponding hidden
+parameters remains zero even though they are separate parameters. Then reset
+to the perturbed mode and show the units begin to diverge. The lesson is lost
+nonlinear capacity, not “the network cannot learn anything”: the cloned model
+can still learn one useful linear split and typically reaches 75% on the four
+balanced blobs.
+
+Keep the two reproducible implementations distinct when quoting numbers. The
+static slide comes from `lecture6/diagrams/symmetry_experiment.py`: 320 Gaussian
+points, seed 7, PyTorch Adam at 0.03 for 300 full-batch updates. Its audited
+results are cloned 75%, BCE 0.47758, rank 1 versus independent 100%, BCE
+0.00091, rank 4; the exact configuration and final tensors are recorded in
+`lecture6/evidence/symmetry_experiment.json`. The browser lab is a lighter
+teaching model: a deterministic 100-point XOR grid and full-batch gradient
+descent at 0.20. Use it to inspect invariance step by step, not as a second
+claim about the PyTorch optimizer trace.
+
+Keep the qualification precise: equal incoming rows alone do not guarantee the
+symmetry. Hidden biases and outgoing coefficients must also match. Ordinary
+full-batch or minibatch gradient descent preserves exact clones; dropout or
+independent noise can break them. Do not implement this demonstration with a
+single shared parameter, because gradient accumulation and Adam state then
+describe weight tying rather than cloned initialization.
+
+### ReLU death before all-zero initialization
+
+Do not jump from the clone example directly to $\operatorname{ReLU}'(0)$.
+Retrieve the gate first:
+
+\[
+z=w^\top x+b,\qquad h=\operatorname{ReLU}(z),\qquad
+\frac{\partial\mathcal L}{\partial z}
+=\frac{\partial\mathcal L}{\partial h}\mathbf 1[z>0].
+\]
+
+On the first new slide, use the same arriving gradient, $\partial\mathcal
+L/\partial h=4$, for both numerical cases. With $x=2,w=-1,b=-1$, the
+preactivation is $-3$, so the gate is closed and the gradients for $w$ and $b$
+are zero. With $x=2,w=1,b=-1$, the preactivation is $1$, so the gate is open,
+$\partial\mathcal L/\partial w=8$, and $\partial\mathcal L/\partial b=4$.
+Keep saying *preactivation*: a ReLU activation itself is never negative.
+
+Then define death over data rather than over one example. For
+$x\in\{-1,0,1\}$, $w=1$, and $b=-0.2$, two examples are inactive but the
+third opens the gate; the neuron can still receive a data gradient. With
+$b=-2$, all three preactivations are strictly negative and every example's
+incoming-gradient contribution is zero. Call this “dead on this training set”
+or “dead for this fixed representation.” An inactive minibatch alone does not
+establish dataset-wide death, and a deeper unit can sometimes revive if an
+earlier layer changes its inputs.
+
+Only then move to zero initialization. At $z=0$ the ReLU derivative is
+mathematically undefined; PyTorch chooses zero. For the complete two-layer
+zero initialization, however, do not blame only that convention. The two
+blocked paths are
+
+\[
+\frac{\partial\mathcal L}{\partial v_i}
+=(\hat y-y)h_i=0
+\quad\text{because }h_i=0,
+\]
+
+\[
+\frac{\partial\mathcal L}{\partial w_i}
+=(\hat y-y)v_i\operatorname{ReLU}'(0)x=0
+\quad\text{because }v_i=0
+\text{ and PyTorch closes the gate at zero}.
+\]
+
+Finish the update: $w_i^+=v_i^+=0$, so the next step starts from exactly the
+same state. Contrast it explicitly with the previous failure: nonzero clones
+can move but learn one shared feature; all-zero units do not begin learning a
+hidden feature. Zero biases remain perfectly compatible with He/Kaiming when
+the weights are independently random. If an output bias exists, it may learn a
+constant or class base rate while the hidden features stay frozen.
+
+For caveats in discussion: fresh SGD or Adam state cannot escape an exact zero
+data gradient; accumulated momentum, regularization on nonzero parameters,
+noise, or reinitialization can alter a unit later. Leaky ReLU passes a
+negative-side gradient, but it still does not rescue a completely zero
+two-layer network when the outgoing weights and hidden activations are both
+zero.
+
+### Depth and gates
+
+Use the actual network depth before introducing matrix language:
+$0.9^{30}\approx0.042$ and $1.1^{30}\approx17.45$. The scalar example earns
+the qualitative claim; singular values are only an intuitive note.
+
+For an activation, keep both roles visible:
+
+\[
+h=\phi(z),\qquad \bar z=\phi'(z)\bar h.
+\]
+
+The sigmoid calculation is now a backup slide, not part of the 80-minute core.
+If students need the contrast, at $z=5$, $\sigma'(5)\approx0.00665$, so ten
+such gates contribute about $1.7\times10^{-22}$. State the qualification:
+sigmoid is appropriate for a binary output probability; the failure is
+repeating saturated gates inside a deep hidden stack. The core route stays
+with the actual ReLU model: one side passes and one side blocks.
+
+The active-fraction reveal should surprise students: all three $\alpha$ traces
+are exactly the same because positive scaling does not change signs. Ask what
+additional measurement is needed; the answer is activation and gradient RMS.
+
+## Reproducible derivation: Xavier and He
+
+Track raw second moments because ReLU outputs are not zero-mean.
+
+For one preactivation,
+
+\[
+z=\sum_{i=1}^{n_{\text{in}}}w_i h_i.
+\]
+
+First fix 100 incoming coordinates with RMS one, so
+$\sum_i h_i^2=100$. Across independent zero-mean initializations with
+$\operatorname{Std}(w)=1$,
+
+\[
+\mathbb E_W[z\mid h]=0,
+\qquad
+\operatorname{Var}_W(z\mid h)
+=\sum_i h_i^2\operatorname{Var}(w_i)=100,
+\]
+
+and therefore $\operatorname{Std}_W(z\mid h)=10$. Repeating the same
+calculation with $\operatorname{Std}(w)=0.1$ gives variance one and standard
+deviation one. The statement concerns a distribution over random
+initializations; one realized preactivation need not equal 10.
+
+Under independent zero-mean weights, weights independent of activations, and
+comparable coordinate second moments,
+
+\[
+\mathbb E[z^2]
+=n_{\text{in}}\operatorname{Var}(w)\mathbb E[h^2].
+\]
+
+The cross terms vanish because $\mathbb E[w_iw_j]=0$ for $i\ne j$. Forward
+preservation therefore prefers
+$\operatorname{Var}(w)\approx1/n_{\text{in}}$, equivalently
+$\operatorname{Std}(w)\approx1/\sqrt{n_{\text{in}}}$. Use
+$\mathbb E[h^2]$, not $\operatorname{Var}(h)$: after ReLU the activation has a
+positive mean, so those quantities differ.
+
+Backward propagation gives
+
+\[
+\bar h_{\ell-1}=W_\ell^\top\bar z_\ell,
+\]
+
+so the matching approximation prefers $1/n_{\text{out}}$. Xavier balances the
+two:
 
 \[
 \operatorname{Var}(W)=\frac{2}{n_{\text{in}}+n_{\text{out}}}.
 \]
 
-For $n_{\text{in}}=n_{\text{out}}=4$, Xavier has $\operatorname{Var}(W)=1/4$. ReLU then keeps about half the pre-activation second moment:
+For a symmetric preactivation,
 
 \[
-c_{\text{Xavier+ReLU}}
-\approx \frac12(4)\left(\frac14\right)=\frac12.
+\mathbb E[\operatorname{ReLU}(z)^2]=\frac12\mathbb E[z^2].
 \]
 
-Starting at $q_0=1$ gives
+Matching this gate requires
 
 \[
-q_1=0.5,\quad q_2=0.25,\quad q_3=0.125,\quad q_4=0.0625,\quad q_5=0.03125.
+\frac12 n_{\text{in}}\operatorname{Var}(w)\approx1
+\quad\Longrightarrow\quad
+\operatorname{Var}(W)=\frac{2}{n_{\text{in}}}.
 \]
 
-Under the matching backward assumptions and $g_5=1$,
+For 100 ReLU inputs, $\operatorname{Std}(W)=\sqrt{2/100}\approx0.141$;
+equal-width Xavier gives 0.1. State the limitation precisely: these rules aim
+for a sensible second-moment scale at initialization under simplifying
+assumptions; they do not keep the variance exactly one throughout training.
+
+Immediately put the formula back into the fixed model. The $2\to128$ stem has He
+standard deviation $\sqrt{2/2}=1$; every $128\to128$ hidden map has
+$\sqrt{2/128}=0.125$. Multiplying the shared samples by
+$\alpha\in\{0.5,1,1.5\}$ produces $0.0625,0.125,0.1875$, hence expected
+per-layer RMS multipliers of roughly $0.5,1,1.5$. These are the multipliers
+seen in the measured $\alpha^{30}$ traces.
+
+## Live normalization calculation
+
+Start from the drift measurement: He initialization chooses a scale at update
+0, but after 20 updates the weights and preactivation distribution have moved.
+Normalization recomputes a reference from the current preactivations.
+
+Use $Z_\ell\in\mathbb R^{B\times D}$ for the preactivation matrix before
+ReLU. Rows are examples and columns are hidden features. Treat
+$z_{\cdot d}=[1,2,3,4]$ as one selected feature across four examples. Work all
+four steps rather than jumping to the final formula.
+
+1. Identify the set: four values of feature $d$, one from each example.
+2. Subtract their mean:
+
+   \[
+   \mu_d=2.5,
+   \qquad z_{\cdot d}-\mu_d=[-1.5,-0.5,0.5,1.5].
+   \]
+
+3. Compute the divisor-$B$ variance and standardize:
+
+   \[
+   \sigma_d^2
+   =\frac{(-1.5)^2+(-0.5)^2+0.5^2+1.5^2}{4}=1.25,
+   \]
+
+   \[
+   \hat z_{\cdot d}
+   =\frac{z_{\cdot d}-\mu_d}{\sqrt{\sigma_d^2}}
+   \approx[-1.342,-0.447,0.447,1.342].
+   \]
+
+   Check that the standardized values have mean zero and RMS one. BatchNorm
+   computes a variance; RMS is only the lecture's reporting metric. They agree
+   here after centering. In code the denominator is
+   $\sqrt{\sigma_d^2+\epsilon}$.
+
+4. Apply the learned affine transformation. Starting values
+   $\gamma_d=1,\beta_d=0$ leave the standardized feature unchanged. For a
+   numerical example, use $\gamma_d=2,\beta_d=1$:
+
+   \[
+   y_{\cdot d}=2\hat z_{\cdot d}+1
+   \approx[-1.683,0.106,1.894,3.683].
+   \]
+
+Only after this calculation introduce a general selected set $S$:
 
 \[
-g_4=0.5,\quad g_3=0.25,\quad g_2=0.125,\quad g_1=0.0625,\quad g_0=0.03125.
+\mu_S=\frac{1}{|S|}\sum_{i\in S}z_i,\qquad
+\sigma_S^2=\frac{1}{|S|}\sum_{i\in S}(z_i-\mu_S)^2,
 \]
 
-He initialization restores the ReLU loss:
+\[
+\hat z_i=\frac{z_i-\mu_S}{\sqrt{\sigma_S^2+\epsilon}},\qquad
+y_i=\gamma_i\hat z_i+\beta_i.
+\]
+
+Then ask which entries belong to $S$. BatchNorm selects one feature column of
+$Z_\ell$ across examples. LayerNorm selects one example row across features.
+For the matrix shown in the deck, BatchNorm repeats the complete
+$[1,2,3,4]$ calculation for the first column; LayerNorm instead standardizes
+the first row $[1,2,6]$ to approximately
+$[-0.926,-0.463,1.389]$.
+
+Make BatchNorm's training-time batch dependence numerical. Hold the raw value
+$z=1$ fixed:
 
 \[
-\operatorname{Var}(W)=\frac{2}{n_{\text{in}}}=\frac12,
+1\text{ in }[1,2,3,4]\longmapsto-1.342,
 \qquad
-c_{\text{He+ReLU}}\approx\frac12(4)\left(\frac12\right)=1.
+1\text{ in }[-2,-1,0,1]\longmapsto+1.342.
 \]
 
-Thus the mean-field prediction is $q_5=1$ and $g_0=1$. Say **“second-moment scale is preserved approximately at initialization,”** not “the variance is exactly one forever.”
+The raw value did not change; only the other examples in its batch did. During evaluation,
+BatchNorm uses running mean and variance accumulated during training. LayerNorm
+uses the same per-example operation in training and evaluation. Do not imply
+that BatchNorm forbids batched inference.
 
-### Distribution convention
+Place the operation explicitly in the model:
 
-Xavier and He specify a target variance, not a unique distribution. For Xavier, these common choices are variance-matched:
+```text
+H_(l-1) → Linear → Z_l → BatchNorm → ReLU → H_l
+```
+
+In code this is `h = relu(batch_norm(linear(h)))`, so statistics are computed
+from preactivations, not post-ReLU activations.
+
+Before revealing the BatchNorm repair, predict its ReLU output RMS:
 
 \[
-W_{ij}\sim\mathcal N\!\left(0,\frac{2}{n_{\text{in}}+n_{\text{out}}}\right)
+\mathbb E[\hat z^2]\approx1
+\quad\Longrightarrow\quad
+\operatorname{RMS}(\operatorname{ReLU}(\hat z))\approx\sqrt{1/2}=0.707.
 \]
 
-or
+The measured layer-30 value is 0.713. Connect this prediction to the earlier He
+calculation so normalization continues the same scale analysis.
 
-\[
-W_{ij}\sim\mathcal U\!\left[-\sqrt{\frac{6}{n_{\text{in}}+n_{\text{out}}}},
-\sqrt{\frac{6}{n_{\text{in}}+n_{\text{out}}}\right].
-\]
+For $Z_\ell\in\mathbb R^{B\times D}$:
 
-They have the same variance but are not identical distributions; higher moments, truncation, finite width, and framework-specific gain conventions can change realized traces. For a $k_h\times k_w$ convolution, use $n_{\text{in}}=k_hk_wC_{\text{in}}$, not just the channel count.
-
-## Live numeric 2 · BatchNorm exactly on one feature
-
-Treat $x=[1,2,3,4]$ as **one feature measured on four examples**, i.e. one column of a $B\times D$ activation matrix. Use the BatchNorm training-forward convention with divisor $B$:
-
-\[
-\mu=\frac{1+2+3+4}{4}=\frac52=2.5,
-\]
-
-\[
-\sigma^2
-=\frac{(1-2.5)^2+(2-2.5)^2+(3-2.5)^2+(4-2.5)^2}{4}
-=\frac{5}{4}=1.25.
-\]
-
-With $\hat x=(x-\mu)/\sqrt{\sigma^2+\epsilon}$,
-
-\[
-\hat x
-=\frac{[-3,-1,1,3]}{\sqrt{5+4\epsilon}}.
-\]
-
-If the hand calculation explicitly takes $\epsilon=0$,
-
-\[
-\hat x
-=\left[-\frac{3}{\sqrt5},-\frac{1}{\sqrt5},
-\frac{1}{\sqrt5},\frac{3}{\sqrt5}\right]
-\approx[-1.342,-0.447,0.447,1.342].
-\]
-
-For $\gamma=2$ and $\beta=1$,
-
-\[
-y=2\hat x+1
-=\left[1-\frac{6}{\sqrt5},1-\frac{2}{\sqrt5},
-1+\frac{2}{\sqrt5},1+\frac{6}{\sqrt5}\right]
-\approx[-1.683,0.106,1.894,3.683].
-\]
-
-**State the convention before calculating.** The deck’s displayed decimals neglect $\epsilon$ after writing the general formula. Real implementations place a small positive $\epsilon$ inside the square root, so the normalized variance is $\sigma^2/(\sigma^2+\epsilon)$—near, but not exactly, one. Also distinguish the divisor-$B$ variance used in the training normalization from any library detail used to update a stored running-variance estimate; those bookkeeping conventions are not interchangeable.
-
-## BatchNorm and LayerNorm: make the axes physical
-
-For $X\in\mathbb R^{B\times D}$, draw rows as examples and columns as features.
-
-| Question | BatchNorm (MLP) | LayerNorm |
+| Question | BatchNorm | LayerNorm |
 |---|---|---|
-| Which entries share $\mu,\sigma^2$? | One feature column across $B$ examples | One example row across its $D$ features |
-| Parameters | One $\gamma_j,\beta_j$ per feature | Usually one $\gamma_j,\beta_j$ per normalized feature |
-| Does another batch member affect this output during training? | Yes | No |
-| Statistics used by the norm in training | Current batch statistics | Current example’s feature statistics |
-| Statistics used by the norm in evaluation | Stored running statistics | Same per-example computation as training |
-| Small-batch sensitivity | Often substantial | No batch-statistic sensitivity |
-| Common home | CNNs | Transformers and sequence models |
+| shared statistics | one feature column across examples | one example row across features |
+| another batch member matters in training | yes | no |
+| evaluation | stored running statistics | same per-example operation |
+| CNN interpretation | one channel over $B,H,W$ | not the usual CNN default |
 
-For convolutional BatchNorm, normalize each channel over $(B,H,W)$ and keep one affine pair per channel. For a Transformer-style LayerNorm, normalization is commonly over the hidden-feature axis for each token/example position; it is not “over the entire sequence and batch.”
+In this repair experiment, $B=900$: every training update contains the entire
+spiral dataset. The composition of the batch is therefore identical across
+updates. This is a deliberately controlled demonstration of normalization's
+scale effect, not an experiment on mini-batch noise. Do not teach “internal
+covariate shift” as a complete settled explanation; keep the claim tied to the
+measured activation and gradient scales.
 
-Be precise about inference: **BatchNorm inference can absolutely be batched.** Evaluation mode uses frozen running statistics whether the inference batch contains one example or many; it does not normalize using the current inference batch. LayerNorm’s own computation has no train/eval switch or running statistics, although the surrounding model may still contain dropout or other mode-dependent operations.
+## Residual numeric
 
-## Live numeric 3 · the residual route
-
-For a residual block
-
-\[
-x_{\ell+1}=x_\ell+F_\ell(x_\ell),
-\]
-
-use column gradients $\bar x_\ell:=\nabla_{x_\ell}\mathcal L$ and the Jacobian $J_{F_\ell}:=\partial F_\ell/\partial x_\ell$. The chain rule gives
+Start from
 
 \[
-\boxed{
-\bar x_\ell
-=(I+J_{F_\ell})^\top\bar x_{\ell+1}
-=\bar x_{\ell+1}+J_{F_\ell}^{\top}\bar x_{\ell+1}
-}.
+h_{\ell+1}=h_\ell+F_\ell(h_\ell).
 \]
 
-The transpose is required with column-gradient notation. If a source writes gradients as row vectors, the same chain rule appears with multiplication on the other side; choose one convention and do not mix them.
+First establish the representation question with the scalar identity task:
+$h_\ell=3$ and target $y=3$. A plain scalar layer $\hat y=wh_\ell$ must learn
+$w=1$; the residual parameterization $\hat y=h_\ell+wh_\ell$ already copies
+the input when $w=0$. Then show the vector addition
+$[2,-1]^\top+[0.3,0.2]^\top=[2.3,-0.8]^\top$ and state that the two terms must
+have the same shape.
 
-Now take the scalar branch $F(x)=-0.1x$, so $F'(x)=-0.1$:
+Differentiate one scalar block before showing a Jacobian. Let the arriving
+gradient be $g_{\ell+1}=\partial\mathcal L/\partial h_{\ell+1}=4$. For an
+abstract local derivative $F'_\ell(h_\ell)=-0.01$,
 
-| Stack | Local derivative | Five-block derivative | Gradient magnitude from unit upstream gradient |
+\[
+g_\ell=g_{\ell+1}\bigl(1+F'_\ell(h_\ell)\bigr)
+=4(1-0.01)=3.96.
+\]
+
+Label $-0.01$ as an illustrative derivative, not a measurement from the
+spiral model. Once the scalar rule is clear, define
+$J_{F_\ell}=\partial F_\ell(h_\ell)/\partial h_\ell\in\mathbb R^{D\times D}$
+and column gradients $g_\ell=\partial\mathcal L/\partial h_\ell$:
+
+\[
+g_\ell=(I+J_{F_\ell})^\top g_{\ell+1}
+=g_{\ell+1}+J_{F_\ell}^\top g_{\ell+1}.
+\]
+
+Continue the same abstract derivative through 20 blocks:
+
+\[
+(-0.01)^{20}=10^{-40}\quad\text{for a branch-only stack},
+\qquad
+|1+F'|^{20}=0.99^{20}\approx0.818.
+\]
+
+These are different parameterizations and therefore different initial maps;
+the comparison isolates the algebraic effect of the identity term. The lecture
+experiment first maps $\mathbb R^2\to\mathbb R^{128}$ with a stem, then uses 29
+matching-width blocks
+
+\[
+h_{\ell+1}=h_\ell+\operatorname{ReLU}(W_\ell h_\ell).
+\]
+
+This branch is deliberately minimal. It is not a standard modern ResNet block,
+and the experiment does not initialize the whole model to the exact identity.
+Because the branch output is a ReLU, it adds only nonnegative coordinate
+corrections. Its purpose is to isolate the direct $h_\ell$ route. State the
+remaining caveats: the branch can still explode; $I$ and $J_F$ can cancel along
+a direction; and mismatched shapes require a projection.
+
+## Repair experiment
+
+Return to the collapsed $\alpha=0.5$ case. Keep data, depth, width, loss, Adam,
+learning rate, and seed fixed. Compare:
+
+1. plain `Linear → ReLU`;
+2. `Linear → BatchNorm → ReLU`;
+3. one input stem followed by the lecture toy
+   `h + ReLU(Linear(h))` blocks.
+
+Before training, show the measurements that distinguish the mechanisms:
+
+| route | layer-30 activation RMS | input-gradient RMS | initial loss |
 |---|---:|---:|---:|
-| Plain branch only | $-0.1$ | $(-0.1)^5=-0.00001$ | $10^{-5}$ |
-| Residual $x+F(x)$ | $1-0.1=0.9$ | $0.9^5=0.59049$ | $0.59049$ |
+| plain | $1.02\times10^{-9}$ | $4.57\times10^{-13}$ | 1.09861 |
+| BatchNorm | 0.713 | 0.225 | 1.11666 |
+| residual toy | 698.57 | 0.329 | 177.84 |
 
-The identity term creates a short additive path; it does **not** guarantee a healthy gradient. The residual Jacobian can reinforce, rotate, amplify, or partly cancel the identity contribution, multiple blocks still multiply their total Jacobians, and a projection shortcut is not an exact identity.
+After 150 updates:
 
-## Notebook demo choreography
+| route | initial loss | final loss | final accuracy |
+|---|---:|---:|---:|
+| plain | 1.09861 | 1.09861 | 0.333 |
+| BatchNorm | 1.11666 | 0.00550 | 1.000 |
+| residual toy | 177.84 | 0.2434 | 0.986 |
 
-All three notebooks are deterministic NumPy mechanism checks with retained outputs. Do not run them as a rapid slideshow. For each one, stop after the prompt, collect a prediction, calculate at least one value on the board, then reveal the trace.
+The residual toy begins with very large activations and loss because each
+positive branch output is added to the state. Its usable input-gradient RMS
+shows what the direct term changes, while the large activation RMS shows what
+it does not fix. This comparison demonstrates mechanisms on one controlled
+case; it is not a universal ranking of architectures.
 
-### `notebooks/L06/01_signal_gradient_autopsy.ipynb`
+## Notebook choreography
 
-**Cue:** immediately after defining $q_\ell$ and $g_\ell$.
+### Minimal scale-through-depth notebook
 
-1. Predict $a^{20}$ for the scalar chain with $a\in\{0.8,1.0,1.2\}$.
-2. Ask which case vanishes, preserves, or explodes in both directions.
-3. Run the scalar section and explain why a harmless-looking local mismatch compounds.
-4. Before the random-network section, predict sigmoid + Xavier versus ReLU + He.
-5. Inspect the layer where the sigmoid gradient first becomes tiny and ask whether He preserves each realization or only a useful scale range.
+Use `notebooks/L06/01_activation_scale_through_depth.ipynb` immediately after
+the $\alpha^\ell$ prediction. This is the small executable version shown in
+the deck. Its `forward()` method explicitly returns the 30 post-ReLU tensors,
+so students see exactly where each RMS value comes from without first learning
+hooks.
 
-Use the first half in the core route. The random-network comparison can be the optional five-minute reveal.
+The notebook keeps the spiral, 30-by-128 ReLU architecture, seed 11, zero
+biases, and common weight directions fixed. It then:
 
-### `notebooks/L06/02_variance_propagation.ipynb`
+1. verifies all 31 weight matrices are scaled copies of the $\alpha=1$ run;
+2. checks the complete tensor identity
+   $H_\ell^{(\alpha)}=\alpha^\ell H_\ell^{(1)}$ at every hidden layer;
+3. plots activation RMS through depth;
+4. measures logit RMS, softmax confidence, entropy, cross-entropy, and accuracy
+   before any optimizer step;
+5. runs one backward pass and plots gradient RMS from $H_{30}$ back to $X$.
 
-**Cue:** immediately after deriving $\operatorname{Var}(z)=n\operatorname{Var}(w)\operatorname{Var}(x)$.
+Pause before each output cell and ask for a prediction. Emphasize that the
+input-gradient RMS is a propagation diagnostic, not a parameter update, and
+that the $\alpha=1.5$ run is badly scaled but finite. The full autopsy notebook
+adds training, normalization, and residual comparisons later.
 
-1. Reuse the exact anchor: width $n=4$, depth $L=5$, and boundary squared gauges $q_0=g_5=1$.
-2. Calculate $c=\tfrac12n\operatorname{Var}(W)$ for Xavier variance $1/4$ and He variance $2/4=1/2$, then predict $c^5$.
-3. Before the independent one-layer simulation, predict post-ReLU $q_1\approx0.5$ for Xavier and $q_1\approx1$ for He. Compare the empirical averages with those predictions; fresh width-4 inputs and weights across trials estimate the expectation rather than showcase one lucky matrix.
-4. Inspect the full indexed ledgers $q_\ell=c^\ell q_0$ and $g_\ell=c^{5-\ell}g_5$, including the exact endpoints $q_5=g_0=0.03125$ for Xavier and $1$ for He.
-5. Ask why $0.03125$ is a **squared-gauge ratio**: the corresponding RMS ratio is $\sqrt{0.03125}\approx0.17678$, not $0.03125$. Then name which independence and half-active assumptions training will erode.
+### PyTorch hooks tutorial
 
-Use this notebook to calculate and empirically check the same persistent width-4 ledger carried by the lecture.
+Use `notebooks/L06/00_pytorch_hooks_for_layerwise_diagnostics.ipynb` as a
+short prerequisite or follow-up tutorial. The main deck should teach only the
+conceptual boundary:
 
-### `notebooks/L06/03_xavier_vs_he.ipynb`
+```text
+h_(l-1) → Linear → z_l → ReLU → h_l
+                   ↑              ↑
+             Linear hook     ReLU hook
+```
 
-**Cue:** after all four controls have been introduced.
+A hook on `Linear` records the preactivation $z_\ell$; a hook on `ReLU`
+records the post-ReLU activation $h_\ell$ used by the layerwise RMS trace. The
+notebook then works from one deterministic layer to a complete 30-layer probe:
 
-1. Predict the **forward RMS and backward RMS separately** for sigmoid/variance-one, sigmoid/Xavier, ReLU/Xavier, and ReLU/He before revealing the 24-layer traces. Do not force one total ranking: the two directions can disagree. Choose the configuration expected to be healthiest on both and justify it using weight gain and activation derivative.
-2. On the $B\times D$ array, point to the entries that share statistics under BN, then under LN; ask what changes when a fifth example joins the batch.
-3. Calculate $(-0.1)^5$ and $0.9^5$ before running the residual section.
-4. End by having students complete: activation controls the local gate; initialization controls starting scale; normalization controls scale over a chosen axis during training; residual addition changes $J_F$ to $I+J_F$.
+1. compute $z_1$ and $h_1$ manually;
+2. register and remove forward hooks;
+3. verify the Linear-versus-ReLU distinction numerically;
+4. explain non-leaf gradients and `retain_grad()`;
+5. record $\partial\mathcal L/\partial h_\ell$ with a tensor gradient hook;
+6. contrast tensor hooks with `register_full_backward_hook()`;
+7. store detached scalars, clear records, and remove handles;
+8. collect activation RMS, active fraction, finite status, and gradient RMS
+   across a 30-layer MLP.
 
-If class time is tight, assign this third notebook as the post-class synthesis because it joins all four controls.
+Keep hooks out of the initialization derivation. They are an implementation
+tool for observing the tensors already defined by the mathematics. If a model
+is under your control and only a few intermediates are needed, returning them
+explicitly from `forward()` is often clearer.
 
-## Diagnose: symptom → measurement → controlled test
+### Trainability experiment
 
-Save an initialization-time forward/backward pass before changing the model. Log activation mean and RMS, pre-activation range, per-unit ReLU inactivity, gradient RMS or norm by depth, gradient-to-weight ratio, update-to-weight ratio, and finite-value checks. There is no universal healthy gradient-to-weight threshold; the useful evidence is an abrupt layerwise change or a reproducible trend.
+The executed `deep_network_trainability_autopsy.ipynb` is one follow-along
+sequence:
 
-| Symptom | Measurement next | One controlled test |
-|---|---|---|
-| Activation RMS shrinks layer by layer before any update | $q_\ell$ before and after each activation | With seed, data, depth, and activation fixed, replace only Xavier by He for the ReLU layers. |
-| Signal explodes or becomes non-finite | First layer where activation/pre-activation RMS jumps; weight scale | Before training, rerun with only the initialization gain reduced. If failure begins only after updates, test the learning rate separately. |
-| Many ReLUs output zero | Fraction zero per example **and** units negative for every measured example | Keep weights/data fixed and replace only the gate with a small-slope leaky ReLU for one diagnostic run. |
-| Early-layer gradients are tiny while late gradients are finite | $g_\ell$ or gradient RMS by depth on the same batch | Add a matched identity shortcut to one stack while preserving branch weights and compare the trace. |
-| Training works shallow but fails when depth increases | Both gauges at matched initialization and width | Hold seed, width, data, optimizer, and update budget fixed; change only depth. |
-| BN model differs sharply between training and evaluation | Current-batch statistics, stored running statistics, and module mode | On a cloned/frozen model and the same inputs, compare batch-stat and running-stat outputs without an optimizer update. |
-| Tiny batches make training noisy | Variation of per-channel BN mean/variance across batches | Replace only BN with a batch-independent norm appropriate to the architecture and repeat the same-seed run. |
+1. generate and inspect the spiral;
+2. define the 30-layer model and the RMS helper;
+3. verify that the three models share weight directions;
+4. predict $h_{30}^{(\alpha)}=\alpha^{30}h_{30}^{(1)}$ and verify it numerically;
+5. inspect activation histograms at layers 1, 10, 20, and 30;
+6. reveal activation, gradient, active-fraction, and finite traces;
+7. train all three $\alpha$ values with the same Adam configuration;
+8. inspect decision regions after 50 updates;
+9. show that the healthy initialization drifts after 20 updates;
+10. compare the collapsed $\alpha=0.5$ model with BatchNorm and the deliberately
+    minimal residual toy;
+11. write symptom → measurement → smallest controlled test.
 
-The test identifies a mechanism; it is not automatically the final production recipe. Once evidence changes, re-measure both gauges before making a second change.
+The notebook retains outputs and should run in under one minute on an ordinary
+CPU. The deck figures are regenerated by the separate evidence script so slide
+builds do not depend on notebook state.
 
-## Heads-up for the instructor
+## Misconceptions to intercept
 
-- **RMS/second moment is not variance.** $q_\ell=\mathbb E[h^2]$ and $g_\ell=\mathbb E[\bar h^2]$ are raw second moments; RMS is their square root. Variance subtracts the squared mean. ReLU outputs are generally positive-mean, so calling $q_\ell$ “the variance” is wrong.
-- **The derivations are mean-field approximations.** Independence, zero-mean weights, weak correlations, symmetric pre-activations, comparable coordinates, and activation-gate independence are most plausible at initialization and finite width only approximates them. Training builds correlations and changes the distributions.
-- **A scalar gauge can hide bad directions.** Average RMS may look healthy while a Jacobian has a few exploding or collapsing singular directions. The gauge is a useful first diagnostic, not a proof of dynamical isometry.
-- **Randomness breaks symmetry; scale controls propagation.** All-zero weights give identical hidden units identical gradients. Zero biases are usually fine because random incoming weights already distinguish units.
-- **Xavier’s Gaussian and uniform forms are variance-matched alternatives.** Do not call them the same distribution. Xavier is a compromise between forward fan-in and backward fan-out, best motivated for linear/near-linear or tanh-like layers; it does not cure saturation.
-- **He matches ReLU’s approximate gain.** The factor two comes from $\mathbb E[\operatorname{ReLU}(z)^2]\approx\tfrac12\mathbb E[z^2]$ for symmetric $z$, not from a universal law that half of every finite batch is active.
-- **Initialization governs the start, not the whole run.** Normalization can reduce sensitivity, but neither normalization nor residuals makes initialization irrelevant. The learning rate and optimizer from Lecture 5 can move the model out of its initial regime immediately.
-- **“Dead ReLU” needs a data qualifier.** If a unit is negative for every current example, its own incoming parameters receive zero gradient from those examples. A changing upstream representation can later move its pre-activation positive, so “a ReLU can never revive” is too absolute; for a fixed input representation and fixed incoming parameters, it cannot revive itself through that zero local derivative.
-- **BatchNorm is more than an internal-covariate-shift story.** It explicitly controls scale and changes the parameterization/optimization geometry; batch noise may also matter. The original ICS motivation is historically important, but it is not a sufficient settled explanation of why BN helps.
-- **BatchNorm’s clocks and estimators must be named.** Training normalizes with current-batch statistics and updates running state; evaluation normalizes with frozen running state. Framework conventions for momentum and stored variance can differ. `model.eval()` does not mean inference must be unbatched.
-- **LayerNorm’s own operation is mode-independent.** It uses each example/token’s normalized features in both modes and has no running statistics. Do not generalize this statement to the whole model if dropout is present.
-- **Residual means path, not guarantee.** $I+J_F$ can still have small or large singular values, and a projection shortcut changes the direct term to the projection Jacobian. Branch scaling, normalization placement, activation placement, and learning rate remain coupled choices.
-- **Pre-activation has a precise advantage.** Keeping norm and activation inside $F$ can leave the addition’s identity route ungated. Post-activation places another derivative after the addition. This is an architectural tendency, not proof that every pre-norm or pre-activation model is stable.
-- **Modern recipes are starting points, not laws.** ReLU/He is a strong MLP/CNN baseline; CNNs often pair He-like init, BN, and residual blocks; Transformers often use LayerNorm or RMSNorm, residual streams, GELU/SiLU, warmup, and architecture-specific residual scaling. GELU/SiLU gains, pre/post-norm choice, depth scaling, and parameterization differ across model families. Fixup-style results also show that carefully scaled residual networks can train without normalization.
+- **“Adam fixes vanishing gradients.”** Adam adapts the update from the gradient
+  that arrives. In this run the collapsed gradients are far below Adam's
+  default $\epsilon$, so its actual early-layer updates are operationally
+  negligible. State the measured mechanism rather than claiming that no
+  optimizer could ever revive the model.
+- **“Zero initialization only makes learning slow.”** Identical hidden units
+  remain identical. When hidden and outgoing weights are all zero, hidden
+  activations and both sets of weight gradients are zero, so the same state
+  repeats.
+- **“A negative preactivation means the ReLU is dead.”** A closed gate for one
+  example is ordinary ReLU behavior. Call the neuron dead on the training set
+  only when no training example opens it.
+- **“One hundred unit-RMS terms produce an RMS of 100.”** For independent,
+  zero-mean terms, second moments add: $\mathbb E[z^2]=100$, so the RMS is
+  $\sqrt{100}=10$.
+- **“Variance scales as $1/\sqrt n$.”** Standard deviation scales as
+  $1/\sqrt n$; variance is its square and scales as $1/n$.
+- **“The 0.1 linear rule contradicts the 0.141 He rule.”** With fan-in 100,
+  0.1 preserves the linear sum. A following ReLU removes half the second
+  moment, so He uses $\sqrt{2/100}\approx0.141$.
+- **“He keeps variance exactly one.”** It matches an approximate second-moment
+  gain at initialization under simplifying assumptions.
+- **“Half the ReLUs are active, so the network is healthy.”** The three
+  $\alpha$ runs have identical active fractions and radically different RMS.
+- **“BatchNorm forbids batched inference.”** Evaluation uses stored statistics;
+  the batch may still contain many examples.
+- **“BatchNorm's complete explanation is internal covariate shift.”** Prefer
+  operational claims about scale robustness, conditioning, parameterization,
+  and training-time batch noise.
+- **“Residuals guarantee non-vanishing gradients.”** The identity contribution
+  helps, but the branch may explode or cancel it along a direction.
+- **“A non-finite check passed, so the run is healthy.”** The $\alpha=1.5$ model
+  is finite while already $2\times10^5$ in layer-30 activation RMS.
 
-## Where students stumble—and the fix
-
-- **“$q_\ell$ is the activation variance.”** Ask whether ReLU output has mean zero. Rewrite $\operatorname{Var}(h)=\mathbb E[h^2]-\mathbb E[h]^2$ and label the gauge “second moment / RMS.”
-- **“A $0.5$ multiplier leaves half the signal after five layers.”** Make them multiply: $0.5^5=0.03125$. Depth compounds; it does not subtract.
-- **“Xavier preserves ReLU networks.”** Return to the width-4 row: Xavier preserves the linear pre-activation scale, then ReLU loses roughly half the squared energy. He restores that factor.
-- **“He makes every layer exactly unit variance.”** Contrast a distributional initialization prediction with one finite realization, then inspect the notebook trace.
-- **“Sigmoid has a derivative, so it passes gradients.”** Calculate $\sigma'(5)\approx0.00665$ and ask what five such gates multiply to.
-- **“Every zero ReLU output is a dead unit.”** One zero on one example is normal. A useful diagnostic is whether the same unit is inactive for every relevant example.
-- **“A dead ReLU can never return.”** Separate its zero local parameter gradient from changes in the representation feeding it. Earlier layers can move its input distribution.
-- **“BatchNorm normalizes each example.”** Point down a feature column of the $B\times D$ grid. LayerNorm points across a row.
-- **“BatchNorm cannot serve a batch at inference.”** It can serve any inference batch size; evaluation uses stored running statistics rather than that batch’s statistics.
-- **“BN works because it eliminates internal covariate shift.”** Replace the slogan with what is directly visible: controlled scale and a changed, often easier-to-optimize parameterization.
-- **“Residual means the gradient is one.”** The local Jacobian is $I+J_F$, not just $I$. In the numeric it is $0.9$, and across five blocks it is $0.59049$.
-- **“The deeper plain model’s higher error is overfitting.”** If its **training** error is higher, that is an optimization degradation problem. Generalization error belongs to Lecture 7.
-- **“Use activation + He + BN + residuals everywhere.”** Ask which measured failure each proposed change targets. Architecture-specific recipes and controlled comparisons beat ritual stacking.
-
-## If a student asks…
-
-- **“Why use RMS instead of standard deviation?”** RMS is $\sqrt{\mathbb E[h^2]}$ and tracks total squared signal energy even when the activation mean is nonzero. Standard deviation removes the mean; after ReLU that can hide part of the propagated scale.
-- **“Why does backward scaling involve fan-out?”** Each input receives a sum of contributions from the units it feeds. Under the same independence argument, the number of outgoing terms controls the backward sum’s second moment.
-- **“Why not satisfy fan-in and fan-out exactly?”** If they differ, one scalar weight variance cannot equal both $1/n_{\text{in}}$ and $1/n_{\text{out}}$. Xavier uses a symmetric compromise; other parameterizations may prioritize one direction.
-- **“Is Xavier uniform better than Xavier normal?”** Neither follows from the variance derivation. They share the target variance but differ in higher moments and tails; use the architecture/framework convention and verify actual traces.
-- **“Should GELU always use He initialization?”** There is no single universal gain for every smooth gate and architecture. Start from the model family’s validated initialization and residual-scaling recipe, then measure both gauges.
-- **“If He works, why normalize?”** He targets the starting distribution under approximations. Normalization recomputes a reference scale as parameters and representations change and also alters the optimization parameterization.
-- **“Does BatchNorm require one example at inference?”** No. It supports one or many. Evaluation mode uses stored running statistics for each example; the current inference batch does not define the normalization.
-- **“Why do Transformers prefer LayerNorm or RMSNorm?”** Their normalization is batch-independent and naturally applies along the hidden-feature axis for each token. This avoids coupling predictions to other batch members and avoids running-statistic bookkeeping.
-- **“Is BatchNorm a regularizer?”** Its batch dependence can add noise and influence generalization, but its role here is trainability through scale control and reparameterization. Treat any regularization effect as recipe-dependent and defer the generalization question to Lecture 7.
-- **“Do residuals remove vanishing gradients?”** They provide shorter additive routes. They do not force $I+J_F$ to preserve every direction, and poor branch scale, norm placement, or learning rate can still destabilize the stack.
-- **“What if the block changes width?”** Replace the identity with a projection $P$: $x_{\ell+1}=P_\ell x_\ell+F_\ell(x_\ell)$. The direct backward term is then $P_\ell^\top\bar x_{\ell+1}$, so it is no longer an untouched identity path.
-- **“Can a very deep residual network train without normalization?”** Yes, with carefully designed branch scaling and initialization, as Fixup demonstrates. That is evidence that initialization, normalization, and residual paths are coupled controls—not that normalization never helps.
-
-## Exit ticket
-
-Give students these three prompts before the closing line:
-
-1. With width $4$, ReLU, and Xavier variance $1/4$, what is $q_5$ from $q_0=1$? Why does He change the answer?
-2. In a $B\times D$ table, which axis does BN reduce and which axis does LN reduce? What changes at evaluation?
-3. With column gradients, where does the transpose appear in the residual backward equation, and why is the identity term a path rather than a guarantee?
-
-Expected compression: **activation chooses the local gate; initialization chooses the starting multiplier; normalization resets scale over a declared axis; residual addition supplies a short identity contribution.**
-
-## If you are short on time
-
-Cut the activation-zoo comparison, convolutional fan-in calculation, RMSNorm details, projection shortcuts, pre- versus post-activation comparison, historical ICS discussion, and in-class notebook execution. Assign all three notebooks as predict-before-run follow-along work.
+## If short on time
 
 Never cut:
 
-1. both gauges and the distinction between second moment, RMS, and variance;
-2. the width-4, five-layer calculation $0.5^5=0.03125$ versus $1^5=1$;
-3. the exact $[1,2,3,4]$ BatchNorm calculation and the $\epsilon$ convention;
-4. BN versus LN axes plus BatchNorm train/eval behavior;
-5. the column-gradient residual equation and $10^{-5}$ versus $0.59049$;
-6. one symptom → measurement → controlled test; and
-7. the handoff from trainability to Lecture 7 generalization.
+1. the scalar forward/backward product and its 30-layer consequence;
+2. the negative-versus-positive ReLU example, the definition of dataset-wide
+   death, and the two blocked all-zero gradient paths;
+3. the 100-term RMS prediction, the 0.1 linear repair, the variance-versus-
+   standard-deviation distinction, and the Xavier/He application to the
+   128-wide model;
+4. the controlled $\alpha$ prediction, the compact notebook, and the measured
+   activation/gradient consequences;
+5. all four steps of the $[1,2,3,4]$ normalization example, the BN/LN axis
+   distinction, `Linear → BatchNorm → ReLU`, and train/eval distinction;
+6. the scalar residual derivative before the vector Jacobian and the caveat
+   that the lecture branch is only an isolation toy;
+7. the final spiral comparison and symptom → suspect → test exit ticket.
 
-### 45-minute emergency route
+Cut in this order:
 
-| Time | Teaching move |
-|---|---|
-| 0–4 | Opening commitment and define $q_\ell,g_\ell$. |
-| 4–10 | Depth compounding on the persistent network. |
-| 10–16 | Activation gates: one sigmoid numeric and the careful inactive-ReLU definition. |
-| 16–26 | Fan-in derivation, Xavier/He, and $0.5^5$ versus $1^5$. |
-| 26–34 | BatchNorm calculation, BN/LN axes, and train/eval distinction. |
-| 34–41 | Residual transpose equation and five-block numeric. |
-| 41–43 | One diagnosis from the table. |
-| 43–45 | Exit ticket, synthesis, and Lecture 7 handoff. |
+1. every slide after “Primary sources and reproducible evidence” — they are backups;
+2. detailed discussion of the initialization histograms after students have
+   seen the RMS traces;
+3. the full symmetry derivation after showing one complete clone update;
+4. the full repair-curve discussion—show the initialization table and final
+   decision regions instead.
 
-## Closing line
-
-“Backprop supplies the gradient and the optimizer chooses the update; activation, initialization, normalization, and residual paths make sure useful signals and gradients can survive the depth. Now that the network can reach a low training loss, Lecture 7 asks whether what it learned will generalize.”
-
-## Primary references
-
-- Glorot & Bengio (2010), [*Understanding the Difficulty of Training Deep Feedforward Neural Networks*](https://proceedings.mlr.press/v9/glorot10a.html).
-- He et al. (2015), [*Delving Deep into Rectifiers: Surpassing Human-Level Performance on ImageNet Classification*](https://arxiv.org/abs/1502.01852).
-- Ioffe & Szegedy (2015), [*Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift*](https://arxiv.org/abs/1502.03167).
-- Santurkar et al. (2018), [*How Does Batch Normalization Help Optimization?*](https://arxiv.org/abs/1805.11604).
-- Ba, Kiros & Hinton (2016), [*Layer Normalization*](https://arxiv.org/abs/1607.06450).
-- He et al. (2016), [*Deep Residual Learning for Image Recognition*](https://arxiv.org/abs/1512.03385).
-- He et al. (2016), [*Identity Mappings in Deep Residual Networks*](https://arxiv.org/abs/1603.05027).
-- Zhang et al. (2019), [*Fixup Initialization: Residual Learning Without Normalization*](https://openreview.net/forum?id=H1gsz30cKX).
-
-Treat the derivations as initialization-scale arguments and the deterministic notebooks as mechanism checks, not universal guarantees or benchmark evidence.
+For a 45-minute route: repeated-product motivation 6 min; symmetry, the compact
+ReLU/death sequence, and the numerical fan-in/Xavier/He derivation 15 min;
+controlled $\alpha$ prediction and measured traces 6 min; the complete normalization
+example, axes, placement, and evaluation behavior 7 min; scalar-to-vector
+residual derivation and the three-way initialization table 7 min; diagnosis
+and return to the spiral 4 min. State the drift observation verbally and leave
+all optional pages out.
