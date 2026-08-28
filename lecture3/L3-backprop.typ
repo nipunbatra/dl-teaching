@@ -1581,8 +1581,8 @@ The same $bold(x)$ fed both neurons, so its two backward paths add:
 
 #align(center, text(size: 23pt)[
   #downstream[$bold(g)_W$]
-  $=mat(8,-4;-4,2), quad
-  #downstream[$bold(g)_b$]=mat(4;-2).$
+  $=mat(8,-4;-4,2),$ #h(24pt)
+  #downstream[$bold(g)_b$] $=mat(4;-2).$
 ])
 #pause
 The compact rules are
