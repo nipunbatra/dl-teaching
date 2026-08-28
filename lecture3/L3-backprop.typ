@@ -1676,10 +1676,19 @@ Keep the same parameters
 #pause
 #result[each row runs the same forward calculation with the same $bold(W),bold(b)$]
 
-== Two outputs mean a length-2 target per example #D
+== Each example has a target vector; the batch has a target matrix #D
 
-Let $n in {1,2}$ be the *example (row) index*; the parenthesized superscript
-$(n)$ is a label, not a power. Here $m=2$, so $bold(y)^(n) in RR^2$.
+For $n in {1,2}$, $bold(y)^(n)$ is the *length-2 target vector for example $n$* (not a power):
+#two(
+  align(center, text(size: 19pt)[
+    $bold(y)^(1)=mat(-5;-2) in RR^2$
+  ]),
+  align(center, text(size: 19pt)[
+    $bold(y)^(2)=mat(7;1) in RR^2$
+  ]),
+)
+#pause
+Stack their transposes as rows to form the *batch target matrix*:
 #align(center, text(size: 22pt)[
   $bold(Y)=mat((bold(y)^(1))^top;(bold(y)^(2))^top)=mat(-5,-2;7,1)
   in RR^(B times m)=RR^(2 times 2).$
@@ -1703,7 +1712,6 @@ $(n)$ is a label, not a power. Here $m=2$, so $bold(y)^(n) in RR^2$.
 )
 #pause
 #result[each $bold(r)^(n)$ is a vector; squaring and summing its coordinates gives scalar $ell_n$]
-#neat-caption[Scalar-output special case: if $m=1$, each target $y^(n)$ is a scalar and $bold(Y)$ has shape $B times 1$.]
 
 == The mean scales each example's residual by $1/2$ #D
 
