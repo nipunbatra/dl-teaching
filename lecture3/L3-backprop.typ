@@ -358,6 +358,24 @@
   edge((2.6, -1.1), (3.9, 0), "-|>", stroke: 0.85pt + MUTED)
 }))
 
+// One row of a batch: prediction and target produce a residual vector,
+// then a squared-norm operation produces one scalar loss.
+#let examplelossflow = align(center, diagram(spacing: (20mm, 10mm), node-stroke: 0.9pt + INK, node-fill: white, {
+  node((0, 0), $bold(z)^(n)$, radius: 5.8mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((0, 1.15), $bold(y)^(n)$, radius: 5.8mm, fill: LEAF_FILL, stroke: 1pt + INK)
+  node((1.3, 0), [subtract], shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((2.6, 0), $bold(r)^(n)$, radius: 5.8mm, fill: VALUE_FILL, stroke: 1pt + INK)
+  node((3.9, 0), $1/2 norm(dot)^2$, shape: fletcher.shapes.rect, corner-radius: 4pt, inset: 5pt, fill: OP_FILL, stroke: 1pt + LOCAL)
+  node((5.2, 0), $ell_n$, radius: 5.8mm, fill: LOSS_FILL, stroke: 1.1pt + DOWNSTREAM)
+  edge((0, 0), (1.3, 0), "-|>", stroke: 0.9pt + FORWARD)
+  edge((0, 1.15), (1.3, 0), "-|>", stroke: 0.9pt + FORWARD)
+  edge((1.3, 0), (2.6, 0), "-|>", stroke: 0.9pt + FORWARD)
+  edge((2.6, 0), (3.9, 0), "-|>", stroke: 0.9pt + FORWARD)
+  edge((3.9, 0), (5.2, 0), "-|>", stroke: 0.9pt + FORWARD)
+  node((1.3, 0.78), text(size: 10pt, fill: LOCAL)[$bold(r)^(n)=bold(z)^(n)-bold(y)^(n)$], stroke: none, fill: none)
+  node((3.9, 0.78), text(size: 10pt, fill: LOCAL)[$ell_n=1/2 sum_j (r_j^(n))^2$], stroke: none, fill: none)
+}))
+
 #let densebackgraph = align(center, diagram(spacing: (18mm, 11mm), node-stroke: 0.9pt + INK, node-fill: white, {
   node((0, 0), $bold(x)$, radius: 5.5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
   node((0, 1.1), $bold(W)$, radius: 5.5mm, fill: LEAF_FILL, stroke: 0.9pt + INK)
@@ -1694,24 +1712,59 @@ Stack their transposes as rows to form the *batch target matrix*:
   in RR^(B times m)=RR^(2 times 2).$
 ])
 #pause
-#align(center, table(
-  columns: (43mm, 58mm, 58mm, 66mm), stroke: 0.5pt + MUTED,
-  inset: (x: 8pt, y: 7pt), align: center,
-  table.header([*Example index $n$*], [$bold(z)^(n)$], [$bold(y)^(n)$], [$bold(r)^(n)=bold(z)^(n)-bold(y)^(n)$]),
-  [1], [$(-1,-4)$], [$(-5,-2)$], [#upstream[$(4,-2)$]],
-  [2], [$(5,5)$], [$(7,1)$], [#upstream[$(-2,4)$]],
-))
+#notebox[$bold(y)^(n)$ is one example's target vector. $bold(Y)$ stores both target vectors—one per row.]
+
+== For example $n$, one residual vector gives one scalar loss #D
+
+$n in {1,2}$ selects *one example (one row)*. Follow that row through the loss:
+#examplelossflow
 #pause
-#two(
-  align(center, text(size: 19pt)[
-    $n=1: quad ell_1=1/2(4^2+(-2)^2)=10$
-  ]),
-  align(center, text(size: 19pt)[
-    $n=2: quad ell_2=1/2((-2)^2+4^2)=10$
-  ]),
-)
+#align(center, text(size: 20pt)[
+  $bold(r)^(n)=bold(z)^(n)-bold(y)^(n), quad
+  ell_n=1/2 norm(bold(r)^(n))^2=1/2 sum_(j=1)^2 (r_j^(n))^2.$
+])
 #pause
-#result[each $bold(r)^(n)$ is a vector; squaring and summing its coordinates gives scalar $ell_n$]
+#notebox[The residual has two coordinates; squaring and adding them collapses that vector to one scalar $ell_n$.]
+
+== Example 1: subtract coordinate by coordinate #D
+
+Choose the first row, so $n=1$:
+#align(center, text(size: 23pt)[
+  $bold(z)^(1)=(-1,-4), quad bold(y)^(1)=(-5,-2).$
+])
+#pause
+Subtract the matching target coordinate from each prediction coordinate:
+#align(center, text(size: 25pt, weight: 600)[
+  $bold(r)^(1)=mat(-1-(-5);-4-(-2))=mat(4;-2).$
+])
+#pause
+Square the two residual coordinates, add them, and divide by $2$:
+#align(center, text(size: 25pt)[
+  $ell_1=1/2((r_1^(1))^2+(r_2^(1))^2)
+  =1/2(4^2+(-2)^2)=10.$
+])
+#pause
+#result[example 1 contributes the scalar loss $ell_1=10$]
+
+== Example 2 repeats the same calculation #D
+
+Choose the second row, so $n=2$:
+#align(center, text(size: 23pt)[
+  $bold(z)^(2)=(5,5), quad bold(y)^(2)=(7,1).$
+])
+#pause
+Subtract target from prediction, coordinate by coordinate:
+#align(center, text(size: 25pt, weight: 600)[
+  $bold(r)^(2)=mat(5-7;5-1)=mat(-2;4).$
+])
+#pause
+Apply the same scalar-loss rule:
+#align(center, text(size: 25pt)[
+  $ell_2=1/2((r_1^(2))^2+(r_2^(2))^2)
+  =1/2((-2)^2+4^2)=10.$
+])
+#pause
+#result[example 2 contributes the scalar loss $ell_2=10$]
 
 == The mean scales each example's residual by $1/2$ #D
 
