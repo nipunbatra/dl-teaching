@@ -7,6 +7,13 @@ This site contains the lecture materials for ES 667. Course dates, grading, and 
 
 ## Current material
 
+**Constraints by Construction · Lecture 5B**
+
+- [Slides (PDF)](slides-pdf/L5B.pdf)
+- [Presentation mode](slides-pdf/L5B-presentation.pdf)
+
+How can a neural network produce parameters that are always valid? This mini-lecture builds positive scales, probabilities, simplex vectors, and positive-definite covariances from unconstrained outputs, with stable PyTorch implementations.
+
 **Learning Rate Decay · Lecture 5C**
 
 - [Slides (PDF)](slides-pdf/L5C.pdf)
