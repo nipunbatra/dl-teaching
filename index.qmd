@@ -7,6 +7,13 @@ This site contains the lecture materials for ES 667. Course dates, grading, and 
 
 ## Current material
 
+**Learning Rate Decay · Lecture 5C**
+
+- [Slides (PDF)](slides-pdf/L5C.pdf)
+- [Presentation mode](slides-pdf/L5C-presentation.pdf)
+
+Why begin and finish training with the same-sized step? This compact lecture builds the intuition from noisy SGD, compares useful decay rules, explains warmup, and shows where PyTorch schedulers belong in a complete training loop.
+
 **Computation Graphs, Backpropagation & Autograd**
 
 - [Slides (PDF)](slides-pdf/L3.pdf)
