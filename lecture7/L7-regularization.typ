@@ -4,8 +4,9 @@
 //   typst compile --root . lecture7/L7-regularization.typ slides-pdf/L7-presentation.pdf
 //
 // Design: one seeded 10-point regression lab gives exact mathematics for
-// diagnosis, weight decay, and early stopping. A real CIFAR-10 image pair then
-// carries augmentation, MixUp/CutMix, dropout, label smoothing, and PyTorch.
+// diagnosis, weight decay, and early stopping. High-resolution course-owned
+// teaching photographs make augmentation and mixing visible; a controlled CIFAR-10
+// run later supplies measured PyTorch evidence.
 // The companion lab lecture7/diagrams/verify_numbers.typ independently checks
 // the computed regression numbers.
 
@@ -16,14 +17,13 @@
 
 #show: metropolis-deck.with(
   title: [Generalization and Regularization],
-  subtitle: [Diagnose the gap · change one lever · measure again],
+  subtitle: [Learning curves, regularization, and model selection],
 )
 
 #let IA = "https://nipunbatra.github.io/interactive-articles/"
 #let NB = "https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L07/"
 #let PT = "https://docs.pytorch.org/docs/stable/"
 #let PTV = "https://docs.pytorch.org/vision/stable/"
-#let MC = "https://proceedings.mlr.press/v48/gal16.html"
 
 // ── semantic colour grammar, used in prose, tables, and every figure ──
 // TEAL  = the data-fitting force (training loss, training curves)
@@ -61,7 +61,7 @@
   #sw(GREEN, [kept model])
 ])
 #let provenance = align(center, text(size: 11.5pt, weight: 650, fill: MUTED)[
-  SYNTHETIC · COMPUTED — seeded 10-point teaching case; every curve and number on this slide is recomputed from it at compile time
+  SYNTHETIC · COMPUTED: seeded 10-point teaching case. Every curve and number on this slide is recomputed at compile time.
 ])
 
 // ═══════════════════ THE SPINE: one dataset for the whole lecture ═══════════════════
@@ -156,9 +156,80 @@
 #let curve-of(w) = XG.map(x => polyval(w, x))
 #let truth-curve = XG.map(truth)
 #let truth-stroke = (paint: MUTED, thickness: 1.5pt, dash: "dashed")
+
+// ── exact bias–variance quantities for the fixed-design teaching example ──
+// Both estimators are linear in the observed labels y. Their mean prediction is
+// therefore the same fit applied to the noiseless labels f(x_i). Pointwise
+// variance follows exactly from their responses to the ten unit label vectors:
+//   Var_D[f_hat(x)] = sigma^2 sum_i h_i(x)^2.
+#let bv-truth-labels = xs.map(truth)
+#let bv-linear-fit(labels) = ml.linreg(xs.map(x => (1.0, x)), labels)
+#let bv-linear-predict(w, points) = points.map(x => w.at(0) + w.at(1) * x)
+#let bv-poly-predict(w, points) = points.map(x => polyval(w, x))
+#let bv-linear-curve(w) = bv-linear-predict(w, XG)
+#let bv-mean-1 = bv-linear-curve(bv-linear-fit(bv-truth-labels))
+#let bv-mean-9 = curve-of(la.solve(VD, bv-truth-labels))
+#let bv-bias-1 = range(XG.len()).map(i => bv-mean-1.at(i) - truth-curve.at(i))
+#let bv-bias-9 = range(XG.len()).map(i => bv-mean-9.at(i) - truth-curve.at(i))
+
+#let bv-unit-labels = range(NTR).map(j =>
+  range(NTR).map(i => if i == j { 1.0 } else { 0.0 })
+)
+#let bv-response-1 = bv-unit-labels.map(labels => bv-linear-curve(bv-linear-fit(labels)))
+#let bv-response-9 = bv-unit-labels.map(labels => curve-of(la.solve(VD, labels)))
+#let bv-variance(responses) = range(responses.at(0).len()).map(k =>
+  NOISE * NOISE * responses.map(r => calc.pow(r.at(k), 2)).sum()
+)
+#let bv-var-1 = bv-variance(bv-response-1)
+#let bv-var-9 = bv-variance(bv-response-9)
+#let bv-sd-1 = bv-var-1.map(calc.sqrt)
+#let bv-sd-9 = bv-var-9.map(calc.sqrt)
+#let bv-lower-1 = range(XG.len()).map(i => bv-mean-1.at(i) - bv-sd-1.at(i))
+#let bv-upper-1 = range(XG.len()).map(i => bv-mean-1.at(i) + bv-sd-1.at(i))
+#let bv-lower-9 = range(XG.len()).map(i => bv-mean-9.at(i) - bv-sd-9.at(i))
+#let bv-upper-9 = range(XG.len()).map(i => bv-mean-9.at(i) + bv-sd-9.at(i))
+#let bv-average(values) = values.sum() / values.len()
+#let bv-bias2-1 = bv-average(bv-bias-1.map(v => v * v))
+#let bv-bias2-9 = bv-average(bv-bias-9.map(v => v * v))
+#let bv-varbar-1 = bv-average(bv-var-1)
+#let bv-varbar-9 = bv-average(bv-var-9)
+#let bv-noise = NOISE * NOISE
+#let bv-total-1 = bv-bias2-1 + bv-varbar-1 + bv-noise
+#let bv-total-9 = bv-bias2-9 + bv-varbar-9 + bv-noise
+
+// The summary table uses the same nine validation midpoints as the running
+// example, so its expected MSE is directly comparable to the observed val MSE.
+#let bv-mean-val-1 = bv-linear-predict(bv-linear-fit(bv-truth-labels), xv)
+#let bv-mean-val-9 = bv-poly-predict(la.solve(VD, bv-truth-labels), xv)
+#let bv-bias-val-1 = range(xv.len()).map(i => bv-mean-val-1.at(i) - truth(xv.at(i)))
+#let bv-bias-val-9 = range(xv.len()).map(i => bv-mean-val-9.at(i) - truth(xv.at(i)))
+#let bv-response-val-1 = bv-unit-labels.map(labels =>
+  bv-linear-predict(bv-linear-fit(labels), xv)
+)
+#let bv-response-val-9 = bv-unit-labels.map(labels =>
+  bv-poly-predict(la.solve(VD, labels), xv)
+)
+#let bv-bias2-val-1 = bv-average(bv-bias-val-1.map(v => v * v))
+#let bv-bias2-val-9 = bv-average(bv-bias-val-9.map(v => v * v))
+#let bv-varbar-val-1 = bv-average(bv-variance(bv-response-val-1))
+#let bv-varbar-val-9 = bv-average(bv-variance(bv-response-val-9))
+#let bv-total-val-1 = bv-bias2-val-1 + bv-varbar-val-1 + bv-noise
+#let bv-total-val-9 = bv-bias2-val-9 + bv-varbar-val-9 + bv-noise
+
+// Twelve example refits are shown only to make the expectation tangible; the
+// solid mean and every reported bias/variance number above are analytic.
+#let bv-refits = range(12).map(s => {
+  let labels = xs.enumerate().map(((i, x)) => truth(x) + NOISE * rnd.randn(SEED + 500 + s, i))
+  (bv-linear-curve(bv-linear-fit(labels)), curve-of(la.solve(VD, labels)))
+})
+
 #let spine-fig(
   curves: (),                    // ((y-array, stroke), …) drawn back to front
   show-train: true, show-val: false,
+  train-color: INK, val-color: BLUE,
+  train-size: 8pt, val-size: 8pt,
+  train-mark: "o", val-mark: "s",
+  train-stroke: 0.9pt + white, val-stroke: 0.9pt + white,
   width: 148mm, height: 54mm, ylim: (-2.7, 3.7),
 ) = align(center, {
   set text(size: 13pt)
@@ -170,31 +241,44 @@
     xaxis: (ticks: (-1, 0, 1), subticks: none, mirror: false),
     yaxis: (ticks: (-2, 0, 2), subticks: none, mirror: false),
     ..curves.map(c => lq.plot(XG, c.at(0), stroke: c.at(1), mark: none)),
-    ..(if show-train { (lq.scatter(xs, ys, color: INK, size: 4.6pt),) } else { () }),
-    ..(if show-val { (lq.scatter(xv, yv, color: BLUE, size: 4.6pt),) } else { () }),
+    ..(if show-train { (lq.scatter(xs, ys, color: train-color, size: train-size,
+      mark: train-mark, stroke: train-stroke),) } else { () }),
+    ..(if show-val { (lq.scatter(xv, yv, color: val-color, size: val-size,
+      mark: val-mark, stroke: val-stroke),) } else { () }),
   )
 })
 
 // ── the regularization map: one pipeline, five injection sites ──
 // Re-drawn at every section start with that section's site highlighted, so
 // students always know WHERE the current method enters the training pipeline.
-#let reg-map(active: none) = {
-  let site(key, label) = {
-    let on = active == key or active == "all"
+#let reg-map(active: none, named: false, focus-method: none) = {
+  let site(key, base, default-method) = {
+    let on = active == key or active == "all" or (active == "mixing" and (key == "data" or key == "targets"))
+    let method = if focus-method != none and on and active != "all" { focus-method } else { default-method }
+    let tcol = if on { INK } else { MUTED }
+    let label = if named {
+      block(inset: (top: 1.5pt, bottom: 2pt), stack(
+        // Keep the method name clear of subscripts and accents in the site label.
+        dir: ttb, spacing: 10pt,
+        base,
+        text(size: 10pt, weight: 700, fill: if on { ACC } else { MUTED.lighten(10%) }, method),
+      ))
+    } else { base }
     (label, if on { 1.4pt + ACC } else { 0.8pt + MUTED.lighten(25%) },
-     if on { ACC.lighten(90%) } else { white },
-     if on { INK } else { MUTED })
+     if on { ACC.lighten(90%) } else { white }, tcol)
   }
-  let (d-l, d-s, d-f, d-t) = site("data", [data $(x, y)$])
-  let (m-l, m-s, m-f, m-t) = site("model", [model $f_theta$ · hidden $h$])
-  let (o-l, o-s, o-f, o-t) = site("objective", [penalty $lambda Omega(theta)$])
-  let (t-l, t-s, t-f, t-t) = site("targets", [targets $tilde(y)$])
-  let (l-l, l-s, l-f, l-t) = site("training", [training loop: update $theta$, stop at $t^star$])
+  let (d-l, d-s, d-f, d-t) = site("data", [data $(x, y)$], [augmentation])
+  let (m-l, m-s, m-f, m-t) = site("model", [model $f_theta$ · hidden $h$], [dropout])
+  let (o-l, o-s, o-f, o-t) = site("objective", [penalty $lambda Omega(theta)$], [weight decay])
+  let (t-l, t-s, t-f, t-t) = site("targets", [targets $tilde(y)$], [label smoothing])
+  let (l-l, l-s, l-f, l-t) = site("training", [training loop: update $theta$, stop at $t^star$], [early stopping])
   align(center, diagram(
-    spacing: (23mm, 8.5mm), node-stroke: 0.9pt + INK, node-fill: white,
+    spacing: (if named { 35mm } else { 23mm }, if named { 11mm } else { 8.5mm }),
+    node-stroke: 0.9pt + INK, node-fill: white,
     {
       let box-node(pos, label, stroke, fill, tcol) = node(pos, text(size: 12.5pt, fill: tcol)[#label],
-        shape: fletcher.shapes.rect, corner-radius: 3pt, inset: 6.5pt, stroke: stroke, fill: fill)
+        shape: fletcher.shapes.rect, corner-radius: 3pt,
+        inset: if named { 8.5pt } else { 6.5pt }, stroke: stroke, fill: fill)
       box-node((0, 0), d-l, d-s, d-f, d-t)
       box-node((1, 0), m-l, m-s, m-f, m-t)
       node((2, 0), text(size: 12.5pt, fill: MUTED)[prediction $p$], shape: fletcher.shapes.rect,
@@ -214,60 +298,37 @@
   ))
 }
 
-// Compact one-row variant of the map for mid-section orientation (the full
-// reg-map appears only twice: at the concept's introduction and the synthesis).
-#let reg-strip(active) = {
-  let chip(key, label) = {
-    let on = active == key or active == "all"
-    box(fill: if on { ACC.lighten(88%) } else { white },
-      stroke: if on { 1.2pt + ACC } else { 0.7pt + MUTED.lighten(30%) },
-      radius: 3pt, inset: (x: 8pt, y: 4pt),
-      text(size: 13pt, fill: if on { INK } else { MUTED },
-        weight: if on { 700 } else { 400 }, label))
-  }
-  align(center, {
-    let arrow = text(size: 12pt, fill: MUTED.lighten(20%))[ #sym.arrow.r ]
-    chip("data", [data])
-    arrow
-    chip("model", [model / features])
-    arrow
-    chip("objective", [objective + penalty])
-    arrow
-    chip("targets", [targets])
-    arrow
-    chip("training", [training loop])
-  })
-}
-
 #title-slide()
 
 // ═══════════════════════ PART I — THE PERFECT FIT THAT FAILS ═══════════════════════
-== Four lectures made training loss go down — that was the easy part
+== Training loss does not measure generalization
 
-#align(center, grid(columns: (1fr, 1fr), gutter: 26pt,
-  hairline([Keep from L3–L6], [
-    backprop measures $g_t$, AdamW turns it into reliable updates, initialization and normalization keep both alive through depth
-  ], color: TEAL),
-  hairline([Today's problem], [
-    the number those tools minimize is computed on data the model has *already seen*
-  ], color: BLUE),
-))
+#align(center, [
+  #text(size: 22pt)[Training loss is computed on the examples used to fit $theta$.]
+  #v(14pt)
+  $ min_theta cal(L)_"train" (theta) quad eq.not quad min_theta cal(L)_"new data" (theta) $
+  #v(16pt)
+  #grid(columns: (1fr, 1fr), gutter: 26pt,
+    hairline([Training loss], [
+      How well the model fits examples used during optimization.
+    ], color: TEAL),
+    hairline([New-data loss], [
+      How well the learned rule transfers to unseen examples.
+    ], color: BLUE),
+  )
+])
 
 #pause
-$ min_theta cal(L)_"train" (theta) quad eq.not quad min_theta cal(L)_"new data" (theta) $
+#note[Training loss can fall while new-data loss rises. Validation curves expose that gap.]
 
-#note[
-  Today's question: when driving $cal(L)_"train"$ down stops helping, *what else can training express — and where does it enter the pipeline?*
-]
-
-== Start here: the two curves disagree #V
+== Learning curves reveal overfitting #V
 
 #align(center, image("figures/train_val.png", width: 62%))
 
 #pause
-#punch[$cal(L)_"train" arrow.b$ throughout, while $cal(L)_"val" arrow.b$ then $arrow.t$: the model keeps fitting — but what it learns stops transferring.]
+#punch[$cal(L)_"train" arrow.b$ throughout, while $cal(L)_"val" arrow.b$ then $arrow.t$. Training continues, but generalization gets worse.]
 
-== Three splits, three different jobs #D
+== Train, validation, and test splits #D
 
 #align(center, table(
   columns: (42mm, 72mm, 68mm), stroke: 0.5pt + MUTED,
@@ -275,124 +336,279 @@ $ min_theta cal(L)_"train" (theta) quad eq.not quad min_theta cal(L)_"new data" 
   table.header([split], [job], [allowed decisions]),
   [#fitc[training]], [fit parameters $theta$], [gradients; optimizer updates],
   [#valc[validation]], [choose the recipe], [$lambda$, stopping time, $p$, augmentation, $epsilon$],
-  [#text(fill: INK, weight: 650)[test]], [estimate final generalization], [*none* — spend once after the recipe is frozen],
+  [#text(fill: INK, weight: 650)[test]], [estimate final generalization], [*none.* #h(2pt) Use once after the recipe is frozen.],
 ))
 
 #pause
-#warning[Using test accuracy to choose even one regularization knob turns the test set into another validation set. Our toy spine therefore seals a separate dense test draw until the finale.]
+#warning[Using test accuracy to choose even one regularization knob turns the test set into another validation set. The running example keeps a separate dense test draw sealed until final evaluation.]
 
 == Outline
 
 #[
 #set text(size: 22pt)
 #enum(
-  [*Diagnose* — one tiny dataset, a perfect fit, and the gap that exposes it],
-  [*Weight decay* — charge the objective for coefficient magnitude; AdamW],
-  [*Early stopping* — treat training time itself as a capacity knob],
-  [*Augmentation + Mixup/CutMix* — encode task-valid invariances],
-  [*Dropout* — train overlapping subnetworks; prepare MC Dropout],
-  [*Label smoothing* — soften targets and temper confidence],
+  [*Diagnose:* find the gap on a tiny dataset with a perfect training fit],
+  [*Weight decay:* penalize coefficient magnitude; tune its strength on validation],
+  [*Early stopping:* use training time as a capacity control],
+  [*Augmentation + input noise + mixing:* regularize in data space],
+  [*Dropout:* mask hidden activations during training; disable it at evaluation],
+  [*Label smoothing:* soften targets to limit confidence],
   spacing: 9pt,
 )
 ]
 
-== Ten measurements and a model family you already know #V
+== Running example: degree-9 polynomial regression #V
 
 We measure a smooth signal at ten inputs; every reading carries noise:
 
 $ y_i = f(x_i) + epsilon_i, quad epsilon_i tilde cal(N)(0, 0.25^2). $
 
 #spine-fig(curves: ((truth-curve, truth-stroke),), height: 50mm, ylim: (-1.8, 1.8))
-#align(center, text(size: 13pt)[#sw(INK, [10 training points]) #h(13pt) #sw(MUTED, [the hidden truth $f$])])
+#align(center, text(size: 13pt)[
+  #text(size: 17pt, fill: INK)[●] #text(fill: INK, weight: 650)[10 training measurements]
+  #h(13pt) #sw(MUTED, [hidden truth $f$])
+])
 
 #note[
   From ES 335: expand features as $phi(x) = (1, x, x^2, dots, x^9)$ and fit
-  $hat(y) = bold(w)^top phi(x)$ — a linear model with 10 weights, flexible enough to bend anywhere.
+  $hat(y) = bold(w)^top phi(x)$. This is a linear model with 10 weights and enough flexibility to bend between samples.
 ]
 
-== The training loss reaches zero — exactly #V
+== A degree-9 polynomial interpolates the training data #V
 
 Ten equations, ten weights: the least-squares fit passes through *every* point.
 
 #spine-fig(curves: ((truth-curve, truth-stroke), (curve-of(w9), 2.2pt + RED)))
-#align(center, text(size: 13pt)[#sw(RED, [degree-9 fit · train MSE #fnum(mse(w9, xs, ys), d: 4)]) #h(13pt) #sw(MUTED, [truth])])
+#align(center, text(size: 13pt)[
+  #text(size: 17pt, fill: INK)[●] #text(fill: INK, weight: 650)[training data] #h(11pt)
+  #sw(RED, [degree-9 fit · train MSE #fnum(mse(w9, xs, ys), d: 4)]) #h(11pt)
+  #sw(MUTED, [truth])
+])
 
 #pause
-#punch[A training loss of 0.0000 is a #failc[red flag], not a finish line.]
+#punch[A training loss of 0.0000 shows interpolation of these points. It does not establish generalization.]
 
-== Nine points in between expose the failure #V
+== Validation reveals poor interpolation between samples #V
 
-Measure the same signal at the nine #valc[midpoints] the model never saw:
+#align(center, text(size: 14.5pt, weight: 600)[
+  #text(size: 19pt, fill: TEAL)[●] #fitc[TRAIN]: 10 measured points used to fit
+  #h(18pt)
+  #text(size: 17pt, fill: BLUE)[■] #valc[VALIDATION]: 9 unseen midpoints used only to evaluate
+])
 
-#spine-fig(curves: ((truth-curve, truth-stroke), (curve-of(w9), 2.2pt + RED)), show-val: true, height: 41mm)
-#align(center, text(size: 13pt)[#sw(INK, [train]) #h(13pt) #sw(BLUE, [validation (new)]) #h(13pt) #sw(RED, [the perfect fit])])
+#spine-fig(
+  curves: ((truth-curve, truth-stroke), (curve-of(w9), 2.2pt + RED)),
+  show-val: true, height: 41mm,
+  train-color: TEAL, val-color: BLUE,
+  train-size: 8pt, val-size: 8pt,
+  train-mark: "o", val-mark: "s",
+  train-stroke: 0.9pt + white, val-stroke: 0.9pt + white,
+)
+#align(center, text(size: 13pt)[#sw(MUTED, [hidden truth]) #h(13pt) #sw(RED, [degree-9 interpolating fit])])
 
-#align(center, table(
-  columns: 3, stroke: 0.5pt + MUTED, inset: (x: 14pt, y: 5.5pt),
-  align: (left, center, center),
-  table.header([degree-9 fit], [#fitc[train MSE]], [#valc[validation MSE]]),
-  [same ten weights], [$#fnum(mse(w9, xs, ys), d: 4)$], [$#failc[#fnum(mse(w9, xv, yv), d: 2)]$],
-))
+#align(center, text(size: 17pt, weight: 650)[
+  Same fitted polynomial:
+  #h(12pt) #fitc[train MSE $#fnum(mse(w9, xs, ys), d: 4)$]
+  #h(18pt) #valc[validation MSE] #failc[$#fnum(mse(w9, xv, yv), d: 2)$]
+])
 
 #pause
-#note[Even the true $f$ would score $approx sigma^2 = 0.0625$ here; the perfect memorizer is $#fnum(mse(w9, xv, yv) / (NOISE * NOISE), d: 0) times$ worse — *between* the points it memorized.]
+#note[Even the true $f$ would score $approx sigma^2 = 0.0625$ here. The interpolating polynomial scores $#fnum(mse(w9, xv, yv) / (NOISE * NOISE), d: 0) times$ worse on these unseen midpoints.]
 
-== Learning curves separate three diagnoses #D
+== Diagnosing learning curves #D
 
-The pair $(cal(L)_"train", cal(L)_"val")$ — read levels, gap, and trend:
+Read the levels, gap, and trend of $(cal(L)_"train", cal(L)_"val")$ together:
 
 #align(center, table(
   columns: (44mm, 50mm, 62mm, 42mm), stroke: 0.45pt + MUTED,
   inset: (x: 9pt, y: 6pt), align: (left, left, left, left),
   table.header([training], [validation], [diagnosis], [first move]),
-  [high], [high, similar], [underfit or broken optimization], [repair fit (L5–L6)],
+  [high], [high, similar], [underfit or broken optimization], [repair fit (L5 to L6)],
   [low], [much higher], [#failc[overfitting]], [#knobc[regularize]],
-  [low], [low, similar], [fit transfers to this split], [stress-test, ship],
+  [low], [low, similar], [fit transfers to this split], [run stress tests],
 ))
 
 #pause
-#note([A small gap alone is not success — both losses can agree because both are bad. Our spine: train $#fnum(mse(w9, xs, ys), d: 2)$, validation $#fnum(mse(w9, xv, yv), d: 2)$ — the second row.], color: BLUE)
+#note([A small gap is not enough; both losses can be high. The running example has train MSE $#fnum(mse(w9, xs, ys), d: 2)$ and validation MSE $#fnum(mse(w9, xv, yv), d: 2)$, which matches the second row.], color: BLUE)
 
-== Same recipe, fresh noise: the fit is nervous #V
+== Same $x$-locations, new noisy $y$-values, different fits #V
 
-Re-draw the ten noise values four times and refit each dataset:
+#align(center, stack(spacing: 2pt,
+  text(size: 16pt)[*Fixed design:* keep the $x_i$, redraw $epsilon_i$, and get new $y_i = f(x_i) + epsilon_i$. The points move vertically.],
+  text(size: 14.5pt, fill: MUTED)[A random-design experiment would redraw the $x_i$ too.],
+))
 
 #let var-curves = (7, 8, 9, 10).map(s => {
   let yy = xs.enumerate().map(((i, x)) => truth(x) + NOISE * rnd.randn(s, i))
-  (la.solve(VD, yy), ml.linreg(xs.map(x => (1.0, x)), yy))
+  (yy, la.solve(VD, yy), ml.linreg(xs.map(x => (1.0, x)), yy))
 })
 #align(center, stack(dir: ltr, spacing: 8mm,
   {
     set text(size: 12.5pt)
     lq.diagram(
-      width: 82mm, height: 46mm, xlim: (-1.06, 1.06), ylim: (-2.9, 2.9), margin: 0%,
+      width: 82mm, height: 42mm, xlim: (-1.06, 1.06), ylim: (-2.9, 2.9), margin: 0%,
       xlabel: [$x$], title: [degree 1 · four refits],
       xaxis: (ticks: (-1, 0, 1), subticks: none, mirror: false),
       yaxis: (ticks: (-2, 0, 2), subticks: none, mirror: false),
       lq.plot(XG, truth-curve, stroke: truth-stroke, mark: none),
-      ..var-curves.map(c => lq.plot(XG, XG.map(x => c.at(1).at(0) + c.at(1).at(1) * x),
+      ..var-curves.map(c => lq.plot(XG, XG.map(x => c.at(2).at(0) + c.at(2).at(1) * x),
         stroke: 1.4pt + TEAL.transparentize(20%), mark: none)),
+      ..var-curves.map(c => lq.scatter(xs, c.at(0), color: TEAL.transparentize(35%), size: 3.4pt)),
     )
   },
   {
     set text(size: 12.5pt)
     lq.diagram(
-      width: 82mm, height: 46mm, xlim: (-1.06, 1.06), ylim: (-2.9, 2.9), margin: 0%,
+      width: 82mm, height: 42mm, xlim: (-1.06, 1.06), ylim: (-2.9, 2.9), margin: 0%,
       xlabel: [$x$], title: [degree 9 · four refits],
       xaxis: (ticks: (-1, 0, 1), subticks: none, mirror: false),
       yaxis: (ticks: (-2, 0, 2), subticks: none, mirror: false),
       lq.plot(XG, truth-curve, stroke: truth-stroke, mark: none),
-      ..var-curves.map(c => lq.plot(XG, curve-of(c.at(0)), stroke: 1.3pt + RED.transparentize(30%), mark: none)),
+      ..var-curves.map(c => lq.plot(XG, curve-of(c.at(1)), stroke: 1.3pt + RED.transparentize(30%), mark: none)),
+      ..var-curves.map(c => lq.scatter(xs, c.at(0), color: RED.transparentize(35%), size: 3.4pt)),
     )
   },
 ))
 
 #align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
-  hairline([Rigid model], [barely reacts to the noise — but cannot express the signal (*bias*)], color: TEAL),
-  hairline([Flexible model], [swings with every noise draw — the noise *is* in the fit (*variance*)], color: RED),
+  hairline([Rigid model], [stable across draws but wrong on average (*bias*)], color: TEAL),
+  hairline([Flexible model], [changes sharply across draws (*variance*)], color: RED),
 ))
 
-== Both of these fits have zero training loss #V
+== Mean prediction across training sets #D
+
+#align(center, text(size: 17pt)[At each $x$, average the predictions from many training sets:
+  $mu_d thin (x) := EE_(cal(D))[hat(f)_(d, cal(D)) thin (x)]$.])
+
+#align(center, stack(dir: ltr, spacing: 8mm,
+  {
+    set text(size: 12.5pt)
+    lq.diagram(
+      width: 82mm, height: 42mm, xlim: (-1.06, 1.06), ylim: (-2.5, 2.5), margin: 0%,
+      xlabel: [$x$], title: [degree 1],
+      grid: (stroke: 0.35pt + MUTED.transparentize(78%)),
+      xaxis: (ticks: (-1, 0, 1), subticks: none, mirror: false),
+      yaxis: (ticks: (-2, 0, 2), subticks: none, mirror: false),
+      ..bv-refits.map(r => lq.plot(XG, r.at(0),
+        stroke: 0.9pt + TEAL.transparentize(74%), mark: none, z-index: 1)),
+      lq.plot(XG, truth-curve, stroke: truth-stroke, mark: none, z-index: 2),
+      lq.plot(XG, bv-mean-1, stroke: 2.6pt + INK, mark: none, z-index: 3),
+    )
+  },
+  {
+    set text(size: 12.5pt)
+    lq.diagram(
+      width: 82mm, height: 42mm, xlim: (-1.06, 1.06), ylim: (-2.5, 2.5), margin: 0%,
+      xlabel: [$x$], title: [degree 9],
+      grid: (stroke: 0.35pt + MUTED.transparentize(78%)),
+      xaxis: (ticks: (-1, 0, 1), subticks: none, mirror: false),
+      yaxis: (ticks: (-2, 0, 2), subticks: none, mirror: false),
+      ..bv-refits.map(r => lq.plot(XG, r.at(1),
+        stroke: 0.8pt + RED.transparentize(82%), mark: none, z-index: 1)),
+      lq.plot(XG, truth-curve, stroke: truth-stroke, mark: none, z-index: 2),
+      lq.plot(XG, bv-mean-9, stroke: 2.6pt + INK, mark: none, z-index: 3),
+    )
+  },
+))
+
+#align(center, text(size: 13.5pt)[
+  #text(fill: MUTED)[faint coloured curves = 12 possible fits] #h(13pt)
+  #sw(INK, [exact mean prediction $mu_d$]) #h(13pt)
+  #text(fill: MUTED)[dashed = truth $f$]
+])
+
+#caption[Here $cal(D)$ changes only through label noise at fixed $x_i$. The input locations stay fixed.]
+
+== Bias is the error of the mean prediction #D
+
+$ b_d thin (x) := mu_d thin (x) - f(x), quad "and squared bias" = (b_d thin (x))^2. $
+
+#let bv-bias-panel(mean-curve, color, panel-title) = {
+  set text(size: 12.5pt)
+  lq.diagram(
+    width: 82mm, height: 44mm, xlim: (-1.06, 1.06), ylim: (-1.35, 1.35), margin: 0%,
+    xlabel: [$x$], title: panel-title,
+    grid: (stroke: 0.35pt + MUTED.transparentize(78%)),
+    xaxis: (ticks: (-1, 0, 1), subticks: none, mirror: false),
+    yaxis: (ticks: (-1, 0, 1), subticks: none, mirror: false),
+    lq.fill-between(XG, mean-curve, y2: truth-curve,
+      fill: ACC.transparentize(82%), stroke: none, z-index: 1),
+    lq.plot(XG, truth-curve, stroke: truth-stroke, mark: none, z-index: 2),
+    lq.plot(XG, mean-curve, stroke: 2.5pt + color, mark: none, z-index: 3),
+  )
+}
+
+#align(center, stack(dir: ltr, spacing: 8mm,
+  bv-bias-panel(bv-mean-1, TEAL, [degree 1 · high bias]),
+  bv-bias-panel(bv-mean-9, RED, [degree 9 · almost no bias]),
+))
+
+#align(center, text(size: 13.5pt, grid(columns: (1fr, 1fr), gutter: 22pt,
+  [#fitc[degree 1] · mean $b^2$ at the 9 validation midpoints: *#fnum(bv-bias2-val-1, d: 3)*],
+  [#failc[degree 9] · mean $b^2$: *$#fnum(bv-bias2-val-9 * calc.pow(10, 10), d: 1) times 10^(-10)$*],
+)))
+
+#caption[Orange shading shows signed bias. MSE uses squared bias. The tiny degree-9 bias is specific to this smooth signal and fixed design.]
+
+== Variance measures sensitivity to label noise #D
+
+$ "Var"_cal(D)[hat(f)_d thin (x)] := EE_cal(D)[(hat(f)_d thin (x) - mu_d thin (x))^2]. $
+
+#let bv-band-panel(mean-curve, lower, upper, color, panel-title) = {
+  set text(size: 12.5pt)
+  lq.diagram(
+    width: 82mm, height: 44mm, xlim: (-1.06, 1.06), ylim: (-2.5, 2.5), margin: 0%,
+    xlabel: [$x$], title: panel-title,
+    grid: (stroke: 0.35pt + MUTED.transparentize(78%)),
+    xaxis: (ticks: (-1, 0, 1), subticks: none, mirror: false),
+    yaxis: (ticks: (-2, 0, 2), subticks: none, mirror: false),
+    lq.fill-between(XG, lower, y2: upper,
+      fill: color.transparentize(80%), stroke: none, z-index: 1),
+    lq.plot(XG, truth-curve, stroke: truth-stroke, mark: none, z-index: 2),
+    lq.plot(XG, mean-curve, stroke: 2.5pt + color, mark: none, z-index: 3),
+  )
+}
+
+#align(center, stack(dir: ltr, spacing: 8mm,
+  bv-band-panel(bv-mean-1, bv-lower-1, bv-upper-1, TEAL, [degree 1 · narrow spread]),
+  bv-band-panel(bv-mean-9, bv-lower-9, bv-upper-9, RED, [degree 9 · wide spread]),
+))
+
+#align(center, text(size: 13.5pt, grid(columns: (1fr, 1fr), gutter: 22pt,
+  [#fitc[degree 1] · mean variance at the 9 validation midpoints: *#fnum(bv-varbar-val-1, d: 3)*],
+  [#failc[degree 9] · mean variance: *#fnum(bv-varbar-val-9, d: 3)*],
+)))
+
+#caption[Shading shows $mu_d thin (x) plus.minus 1$ SD across training sets. It is not a prediction interval for a new noisy target.]
+
+== Expected test MSE has three components #D
+
+For a fresh target $Y = f(x) + epsilon_"test"$, with independent zero-mean noise:
+
+#align(center, text(size: 18.5pt)[$
+  EE_(cal(D), epsilon_"test") [(hat(f)_d thin (x) - Y)^2] =
+  underbrace((b_d thin (x))^2, #knobc[squared bias])
+  + underbrace("Var"_cal(D)[hat(f)_d thin (x)], #failc[variance])
+  + underbrace(sigma^2, #text(fill: MUTED, weight: 650)[noise])
+$])
+
+#align(center, [
+  #set text(size: 14.5pt)
+  #table(
+    columns: (36mm, 38mm, 38mm, 32mm, 42mm), stroke: 0.5pt + MUTED,
+    inset: (x: 8pt, y: 5.5pt), align: (left, center, center, center, center),
+    table.header([model], [#knobc[mean bias²]], [#failc[mean variance]], [noise], [expected MSE]),
+    [degree 1], [$#fnum(bv-bias2-val-1, d: 3)$], [$#fnum(bv-varbar-val-1, d: 3)$], [$#fnum(bv-noise, d: 3)$], [$#fnum(bv-total-val-1, d: 3)$],
+    [degree 9], [$approx 0$], [$#fnum(bv-varbar-val-9, d: 3)$], [$#fnum(bv-noise, d: 3)$], [$#fnum(bv-total-val-9, d: 3)$],
+  )
+])
+
+#caption[These are exact expectations at the same nine validation midpoints. Cross-terms vanish under independent zero-mean noise. The observed MSE $1.70$ is one realization.]
+
+#pause
+#punch[The degree-9 fit removes bias here, but its high variance raises the expected test error.]
+
+== Many functions can interpolate the training data #V
 
 Narrow radial bumps through the same ten points *also* score $0.0000$:
 
@@ -400,46 +616,48 @@ Narrow radial bumps through the same ten points *also* score $0.0000$:
   (truth-curve, truth-stroke),
   (curve-of(w9), 1.9pt + RED),
   (XG.map(rbfval), 1.9pt + TEAL),
-), height: 43mm)
-#align(center, text(size: 13pt)[#sw(RED, [polynomial interpolant]) #h(12pt) #sw(TEAL, [narrow-bump interpolant]) #h(12pt) — both: train MSE $= 0$])
+), height: 38mm)
+#align(center, text(size: 13pt)[#sw(RED, [polynomial interpolant]) #h(12pt) #sw(TEAL, [narrow-bump interpolant]) #h(12pt) both have train MSE $= 0$])
 
 #pause
-#punch[Training data cannot choose between them. They differ exactly *where the data is silent*.]
+#punch[Both fits agree at the 10 training points but make different predictions between them.]
 
-#note[Modern deep networks live here: many settings reach zero training error — even on *random labels* (Zhang et al., 2017). Which rule you get is decided by everything else about training.]
+#note[
+  #set text(size: 17.5pt)
+  Large neural networks can memorize randomly shuffled labels (Zhang et al., 2017).
+  Zero training error shows *capacity* but says nothing about generalization.
+  Architecture, optimization, augmentation, weight decay, and stopping determine
+  which zero-error predictor training finds.
+]
 
-== Regularization is a policy for the silent regions #V
+== Weight decay changes the objective #V
 
-#reg-map(active: "all")
+Regularizers differ mainly in where they enter training. Weight decay adds a preference for smaller parameters to the objective:
 
-#v(6pt)
+#v(3pt)
+#reg-map(active: "objective", named: true)
+
+#v(10pt)
 #pause
-#punch[Each method today is one *preference for simpler behaviour*, injected at one site, with one knob — and #valc[validation] sets every knob.]
-
-#v(6pt)
-#semantic-legend
+#punch[Make large weights costly, steering training away from coefficient-heavy fits that match noise; #valc[validation] chooses $lambda$.]
 
 // ═══════════════════════ PART II — WEIGHT DECAY ═══════════════════════
-= Weight decay: charge the objective for magnitude
 
-== Add the preference directly to the objective #D
+== $L_2$ regularization adds a norm penalty #D
 
-#reg-strip("objective")
-
-#v(4pt)
 $ cal(L)_"data"(w) = 1/(2n) norm(X w - y)_2^2, quad
   cal(J)(w) = underbrace(cal(L)_"data"(w), #fitc[fit]) + underbrace(lambda_"wd" / 2 norm(w)_2^2, #knobc[shrink]) $
 
 #pause
 #note[
   *Convention:* the $1/2$ factors make $nabla cal(J) = X^top(X w - y)/n + lambda_"wd" w$.
-  Lecture 1 derived the Gaussian-prior view; today we watch what the same term does to a fit and an optimizer.
+  Lecture 1 derived the Gaussian-prior view. Here we examine how the same term changes the fitted function and the optimizer update.
   #text(size: 14pt, fill: MUTED)[Revisit: #link(IA + "map-regularization/")[interactive-articles/map-regularization]]
 ]
 
-== What the perfect fit paid in coefficients #V
+== The interpolating polynomial has large coefficients #V
 
-The zero-training-loss polynomial needed enormous, cancelling weights:
+The zero-training-loss polynomial uses large coefficients that cancel each other:
 
 #align(center, bars(
   w9.map(v => calc.round(v, digits: 1)),
@@ -447,16 +665,14 @@ The zero-training-loss polynomial needed enormous, cancelling weights:
   annotate: false, bar: 8mm, span: 36mm,
   color: (i, v) => RED.transparentize(12%),
 ))
-#caption[weights of the degree-9 interpolant · largest #fnum(calc.max(..w9.map(calc.abs)), d: 0) in magnitude · $norm(bold(w))_2 = #fnum(la.norm(w9), d: 0)$]
+#caption[Degree-9 interpolant: largest coefficient magnitude $=#fnum(calc.max(..w9.map(calc.abs)), d: 0)$; $norm(bold(w))_2 = #fnum(la.norm(w9), d: 0)$.]
 
 #pause
-#punch[Wild wiggles require huge coefficients. #knobc[Penalizing magnitude] is a direct tax on wiggling.]
+#punch[In this polynomial basis, the oscillations require large coefficients, so an #knobc[$L_2$ penalty] assigns that fit a large cost.]
 
-#note[Caveat: parameter norm is not function smoothness (ReLU layers can rescale freely) — it is a useful preference, and validation decides if it helps.]
+== $lambda$ controls the strength of weight decay #V
 
-== One knob sweeps the family from wiggle to flat #V
-
-Same ten points, same ten features — only $lambda$ changes:
+The data and features stay fixed. The legend reads: chosen $lambda arrow.r$ resulting $norm(bold(w))_2$.
 
 #spine-fig(curves: (
   (truth-curve, truth-stroke),
@@ -465,17 +681,17 @@ Same ten points, same ten features — only $lambda$ changes:
   (curve-of(w-star), 2.3pt + GREEN),
 ))
 #align(center, text(size: 13pt)[
-  #sw(RED, [$lambda = 0$ · $norm(bold(w)) = #fnum(la.norm(w9), d: 0)$]) #h(10pt)
-  #sw(GREEN, [$lambda = 10^(-3)$ · $norm(bold(w)) = #fnum(la.norm(w-star), d: 1)$]) #h(10pt)
-  #sw(MUTED, [$lambda = 1$ · $norm(bold(w)) = #fnum(la.norm(ridge-fit(1.0)), d: 1)$])
+  #sw(RED, [$lambda = 0 arrow.r norm(bold(w))_2 = #fnum(la.norm(w9), d: 0)$]) #h(10pt)
+  #sw(GREEN, [$lambda = 10^(-3) arrow.r norm(bold(w))_2 = #fnum(la.norm(w-star), d: 1)$]) #h(10pt)
+  #sw(MUTED, [$lambda = 1 arrow.r norm(bold(w))_2 = #fnum(la.norm(ridge-fit(1.0)), d: 1)$])
 ])
 
 #pause
-#punch[$lambda$ is an exchange rate between the two forces: $0$ returns the memorizer, too much buys back the rigid model.]
+#punch[Increasing $lambda$ trades data fit against coefficient size. At $lambda=0$ the model interpolates; too much shrinkage underfits.]
 
-== Checkpoint: which $lambda$ do we keep? #Q
+== Checkpoint: which metric should choose $lambda$? #Q
 
-The sweep on the spine (all values computed live):
+The sweep below is computed from the running example:
 
 #align(center, table(
   columns: 4, stroke: 0.5pt + MUTED, inset: (x: 12pt, y: 5pt),
@@ -489,13 +705,13 @@ The sweep on the spine (all values computed live):
 
 #mcq(
   [Which column is allowed to choose $lambda$?],
-  [train MSE — it is the objective we optimize],
+  [train MSE, because it is the objective we optimize],
   [validation MSE],
-  [$norm(bold(w))_2$ — smaller is safer],
+  [$norm(bold(w))_2$, because smaller seems safer],
   [none; average all three columns],
 )
 
-== Answer: validation chooses; this data loss votes $lambda = 0$ #A
+== Answer: choose $lambda$ on validation data #A
 
 #mcq-answer(
   [B],
@@ -504,9 +720,9 @@ The sweep on the spine (all values computed live):
 )
 
 #pause
-#punch[This selection loop — sweep the knob, read #valc[validation] — repeats for *every* regularizer today.]
+#punch[Use the same procedure for every regularizer: sweep the knob and select by #valc[validation].]
 
-== The U-curve is the pattern to look for — not a law #V
+== Sweep $lambda$ and choose the lowest validation loss #V
 
 #align(center, lines(
   x: lam-grid.map(l => calc.log(l)),
@@ -517,17 +733,111 @@ The sweep on the spine (all values computed live):
 ))
 
 #note[
-  Left of $lambda^star$: variance dominates (memorization). Right: bias dominates (back to rigid).
-  Other regularization knobs often show a related sweet spot, but real validation curves can be noisy, flat, or multi-modal — sweep and measure.
+  Too little weight decay leaves a high-variance fit; too much makes the model underfit.
+  Search $lambda$ on a log scale and keep the value with the lowest validation loss. Real curves may be noisy or flat.
 ]
 
-== Under SGD, the penalty becomes multiplicative shrinkage #D
+== Weight decay shrinks weights before the data update #V
 
-The penalty's gradient is just $lambda theta_t$, so the SGD step factors:
+// Ported from the paired OLS/ridge update geometry in
+// ~/git/ml-teaching/supervised/slides/ridge-regression.tex.
+#let wd-step-panel(decay: false) = {
+  let tx = 2.55
+  let ty = 2.35
+  // Give the data-gradient step a deliberately different direction from the
+  // radial shrink, so the head-to-tail construction is readable at a glance.
+  let dx = 1.00
+  let dy = -1.15
+  // Exaggerate the shrink geometrically so the intermediate and resultant
+  // vectors remain legible at lecture distance; the equation above is exact.
+  let sx = if decay { 0.56 * tx } else { tx }
+  let sy = if decay { 0.56 * ty } else { ty }
+  let fx = sx + dx
+  let fy = sy + dy
 
-$ theta_(t+1) = theta_t - eta (g_t + lambda theta_t) = underbrace((1 - eta lambda) theta_t, #knobc[shrink first]) - underbrace(eta g_t, #fitc[then fit]) $
+  align(center, lq.diagram(
+    width: 78mm, height: 46mm,
+    xlim: (-0.15, 3.85), ylim: (-0.15, 2.90), margin: 0%,
+    xlabel: [$theta_1$], ylabel: [$theta_2$],
+    grid: (stroke: 0.35pt + MUTED.transparentize(80%)),
+    xaxis: (ticks: none, subticks: none, mirror: false),
+    yaxis: (ticks: none, subticks: none, mirror: false),
 
-One concrete step with $theta_t = 5$, $g_t = 3$, $eta = 0.1$, $lambda = 0.2$:
+    // The parameter vector at the start of the update.
+    lq.quiver((0.0,), (0.0,), (x, y) => (tx, ty), pivot: start, scale: 1,
+      stroke: 2.0pt + INK.transparentize(25%)),
+
+    ..(if decay {
+      (
+        // Radial shrink, followed head-to-tail by the same data-gradient vector as at left.
+        lq.quiver((tx,), (ty,), (x, y) => (sx - tx, sy - ty), pivot: start, scale: 1,
+          stroke: 2.8pt + ACC),
+        lq.quiver((sx,), (sy,), (x, y) => (dx, dy), pivot: start, scale: 1,
+          stroke: 2.8pt + TEAL),
+        // The origin-to-final arrow is the resultant parameter vector.
+        lq.quiver((0.0,), (0.0,), (x, y) => (fx, fy), pivot: start, scale: 1,
+          stroke: 3.2pt + GREEN),
+        lq.scatter((tx,), (ty,), color: INK, size: 8pt, mark: "o", stroke: 1.1pt + white),
+        lq.scatter((sx,), (sy,), color: ACC, size: 6pt, mark: "o", stroke: 0.8pt + white),
+        lq.scatter((fx,), (fy,), color: GREEN, size: 6pt, mark: "o", stroke: 0.8pt + white),
+        lq.place(2.72, 2.55, text(size: 12pt, weight: 650)[$bold(theta)_t$]),
+        lq.place(2.25, 2.21, box(fill: white, inset: 2pt,
+          text(size: 11.5pt, weight: 650, fill: ACC)[$-eta lambda bold(theta)_t$])),
+        lq.place(1.84, 1.86, box(fill: white, inset: 2pt,
+          text(size: 11.5pt, weight: 650, fill: ACC)[$tilde(bold(theta))_t$])),
+        lq.place(2.08, 0.76, box(fill: white, inset: 2pt,
+          text(size: 11.5pt, weight: 650, fill: TEAL)[$-eta bold(g)_t$])),
+        lq.place(1.52, 0.35, box(fill: white, inset: 2pt,
+          text(size: 12pt, weight: 700, fill: GREEN)[$bold(theta)_(t+1)$])),
+      )
+    } else {
+      (
+        lq.quiver((tx,), (ty,), (x, y) => (dx, dy), pivot: start, scale: 1,
+          stroke: 2.8pt + TEAL),
+        // The origin-to-final arrow completes the vector sum.
+        lq.quiver((0.0,), (0.0,), (x, y) => (fx, fy), pivot: start, scale: 1,
+          stroke: 3.2pt + GREEN),
+        lq.scatter((tx,), (ty,), color: INK, size: 8pt, mark: "o", stroke: 1.1pt + white),
+        lq.scatter((fx,), (fy,), color: GREEN, size: 6pt, mark: "o", stroke: 0.8pt + white),
+        lq.place(2.72, 2.55, text(size: 12pt, weight: 650)[$bold(theta)_t$]),
+        lq.place(3.03, 1.72, box(fill: white, inset: 2pt,
+          text(size: 11.5pt, weight: 650, fill: TEAL)[$-eta bold(g)_t$])),
+        lq.place(1.92, 0.48, box(fill: white, inset: 2pt,
+          text(size: 12pt, weight: 700, fill: GREEN)[$bold(theta)_(t+1)$])),
+      )
+    }),
+
+    lq.scatter((0.0,), (0.0,), color: INK, size: 5pt, mark: "o", stroke: 0.8pt + white),
+    lq.place(0.10, 0.10, text(size: 11pt, fill: MUTED)[$bold(0)$]),
+  ))
+}
+
+#grid(
+  columns: (1fr, 1fr), gutter: 18pt,
+  align(center, stack(spacing: 3pt,
+    text(size: 17pt, weight: 700, fill: TEAL)[Plain SGD],
+    text(size: 15.5pt)[$bold(theta)_(t+1) = bold(theta)_t - eta bold(g)_t$],
+    wd-step-panel(),
+  )),
+  align(center, stack(spacing: 3pt,
+    text(size: 17pt, weight: 700, fill: ACC)[$L_2$-regularized SGD],
+    text(size: 14.5pt)[$tilde(bold(theta))_t = (1-eta lambda) bold(theta)_t, quad bold(theta)_(t+1) = tilde(bold(theta))_t - eta bold(g)_t$],
+    wd-step-panel(decay: true),
+  )),
+)
+
+#caption[#knobc[Orange retraces grey toward 0]. The same #fitc[teal step] then turns sharply. #keepc[Green is the result].]
+
+#pause
+#punch[The regularized update first shrinks $bold(theta)$ toward $bold(0)$, then applies the usual data-gradient move.]
+
+== Deriving the $L_2$-SGD update #D
+
+The penalty's gradient is $lambda bold(theta)_t$, so the vector update factors:
+
+$ bold(theta)_(t+1) = bold(theta)_t - eta (bold(g)_t + lambda bold(theta)_t) = underbrace((1 - eta lambda) bold(theta)_t, #knobc[shrink first]) - underbrace(eta bold(g)_t, #fitc[then fit]) $
+
+For one coordinate, let $theta_t = 5$, $g_t = 3$, $eta = 0.1$, and $lambda = 0.2$:
 
 #align(center, table(
   columns: 3, stroke: 0.5pt + MUTED, inset: (x: 13pt, y: 4.5pt),
@@ -539,106 +849,59 @@ One concrete step with $theta_t = 5$, $g_t = 3$, $eta = 0.1$, $lambda = 0.2$:
 ))
 
 #pause
-#punch[Each step, every weight quietly loses $2 percent$ of itself — hence *weight decay*.]
+#punch[Each coordinate is multiplied by $0.98$, then the data gradient contributes $-0.30$.]
 
-== Geometry: weakly constrained directions shrink first #V #OPT
+== $L_2$ regularization with PyTorch SGD
 
-Quadratic data loss (curvature $4$ along $theta_1$, $0.6$ along $theta_2$) plus the penalty's circles:
+#text(size: 17pt)[With `momentum=0`, `weight_decay=λ` is the coupled $L_2$ penalty from the previous slide:]
 
-#let wd-data(x, y) = 2.0 * calc.pow(x - 1.5, 2) + 0.3 * calc.pow(y - 1.35, 2)
-#let wd-pen(x, y) = x * x + y * y
-#let wd-path = range(41).map(k => {
-  let lam = calc.pow(10.0, -1.5 + k * 0.075)
-  (4.0 / (4.0 + lam) * 1.5, 0.6 / (0.6 + lam) * 1.35)
-})
-#align(center, contour(
-  (wd-data, wd-pen), xlim: (-0.5, 2.3), ylim: (-0.5, 2.0), samples: 52, levels: 6,
-  size: (118mm, 56mm), colors: (TEAL, ACC.transparentize(35%)),
-  paths: (wd-path,),
-  marks: ((1.5, 1.35, [$lambda = 0$], TEAL), (0.0, 0.0, [$lambda arrow.r oo$], ACC),
-          (4.0 / 4.3 * 1.5, 0.6 / 0.9 * 1.35, [$lambda = 0.3$], GREEN)),
-  x-label: [$theta_1$ (strongly curved: data insists)], y-label: [$theta_2$ (weakly curved)],
-))
+#align(center, text(size: 18pt)[$p arrow.l p - "lr" (p."grad" + "weight_decay" dot p)$])
 
-#note[
-  The path bends: the *weakly curved* coordinate collapses first ($theta_2$: $1.35 arrow.r 0.90$ already at $lambda = 0.3$), while the direction the data insists on survives longest. Decay suppresses what the data barely constrains.
-]
-
-== Checkpoint: send the same penalty through Adam #Q
-
-Recall Lecture 5. Two weights $theta = (1, 1)$, but Adam's scale memory differs: $hat(v) = (16, 0.16)$. Take a one-step snapshot with $eta = 0.01$, $lambda = 0.1$, and a frozen diagonal preconditioner $hat(v)$.
-
-Ignoring first-moment dynamics and $epsilon$ to isolate the effect: if $lambda theta$ rides through the adaptive update, its contribution is $-eta lambda theta slash sqrt(hat(v))$.
-
-#mcq(
-  [How do the two shrinkage contributions compare?],
-  [both shrink by $0.001$ — the penalty treats equals equally],
-  [the high-$hat(v)$ weight shrinks $10 times$ more],
-  [the low-$hat(v)$ weight shrinks $10 times$ more],
-  [neither shrinks; Adam cancels the penalty exactly],
+#grid(columns: (1fr, 1fr), gutter: 14pt,
+  hairline([Reproduce the $5.00 arrow.r 4.60$ step], [
+    #codebox(size: 11.8pt)[```python
+w = nn.Parameter(torch.tensor([5.0]))
+opt = torch.optim.SGD(
+    [w], lr=0.1, momentum=0.0,
+    weight_decay=0.2,
 )
 
-== Answer: the preconditioner distorts the intended preference #A
-
-#align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
-  hairline([$L_2$ inside Adam], [
-    $-0.01 (0.1) slash sqrt(16) = -0.00025$
-    #v(3pt)
-    $-0.01 (0.1) slash sqrt(0.16) = -0.0025$
-  ], color: MUTED),
-  hairline([Decoupled (AdamW)], [
-    $-eta lambda theta_1 = -0.001$
-    #v(3pt)
-    $-eta lambda theta_2 = -0.001$
+w.grad = torch.tensor([3.0])  # data gradient
+opt.step()
+w.item()                      # 4.60
+```]
   ], color: ACC),
-))
+  hairline([Use it in the training loop], [
+    #codebox(size: 11.8pt)[```python
+opt = torch.optim.SGD(
+    model.parameters(), lr=1e-2,
+    momentum=0.0, weight_decay=1e-4,
+)
 
-#mcq-answer([C], [the low-$hat(v)$ weight shrinks $10 times$ more],
-  [dividing by $sqrt(hat(v))$ rescales the penalty per-coordinate — you asked for proportional shrinkage and got something else.])
+for x, y in train_loader:
+    opt.zero_grad(set_to_none=True)
+    loss = criterion(model(x), y)  # data loss
+    loss.backward()
+    opt.step()                     # uses grad + λp
+```]
+  ], color: TEAL),
+)
 
-== AdamW: decay the weights, precondition only the data gradient #D
-
-$ theta_(t+1) = underbrace((1 - eta lambda) theta_t, #knobc[decay, undistorted]) - eta underbrace("AdamUpdate"_t (g), #fitc[adaptive data step]) $
-
-#align(center, table(
-  columns: (48mm, 1fr), stroke: 0.5pt + MUTED, inset: (x: 11pt, y: 6pt), align: (left, left),
-  [plain SGD], [$L_2$ penalty and weight decay are the *same algebra*],
-  [adaptive (Adam)], [they *differ*; decoupling restores the intended preference (AdamW)],
-))
-
-#pause
 #note[
-  Practice notes: `weight_decay` in `torch.optim.AdamW` is this decoupled $lambda$; biases and normalization
-  gains are commonly excluded from decay — a recipe choice to log, not a theorem.
-  #text(size: 14pt)[Loshchilov & Hutter (2019) · #link(PT + "generated/torch.optim.AdamW.html")[PyTorch AdamW API].]
+  #set text(size: 13.5pt)
+  Use either optimizer `weight_decay` or add $(lambda slash 2) norm(theta)_2^2$ to the loss. Do not use both.
+  With optimizer-side decay, `loss.item()` omits the penalty. Every parameter in that group decays.
+  #h(3pt)#link(PT + "generated/torch.optim.SGD.html")[PyTorch SGD API]
 ]
 
-== PyTorch: make the decay policy visible in parameter groups
-
-#codebox(size: 12.8pt)[```python
-decay, no_decay = [], []
-for name, p in model.named_parameters():
-    if not p.requires_grad:
-        continue
-    # Common recipe: do not decay bias or 1-D scale/shift parameters.
-    (no_decay if p.ndim == 1 or name.endswith(".bias") else decay).append(p)
-
-optimizer = torch.optim.AdamW([
-    {"params": decay,    "weight_decay": 1e-4},
-    {"params": no_decay, "weight_decay": 0.0},
-], lr=3e-4)
-```]
-
-#note([The exclusion is a *recipe*, not a theorem. Log the groups, learning-rate schedule, and $lambda_"wd"$ together; AdamW's effective shrink per step is $eta_t lambda_"wd"$.], color: ACC)
-
-== $L_1$ is the sparsity-seeking cousin #V
+== $L_1$ regularization and sparsity #V
 
 #align(center, table(
   columns: (36mm, 46mm, 56mm, 44mm), stroke: 0.45pt + MUTED,
   inset: (x: 9pt, y: 6pt), align: (left, left, left, left),
   table.header([penalty], [gradient force], [pressure], [role in DL]),
-  [$lambda norm(theta)_2^2 slash 2$], [$lambda theta$ — proportional], [shrink everything a little], [default],
-  [$lambda norm(theta)_1$], [$lambda "sign"(theta)$ — subgradient], [promote sparse solutions], [specialized],
+  [$lambda norm(theta)_2^2 slash 2$], [$lambda theta$ (proportional)], [shrink everything a little], [default],
+  [$lambda norm(theta)_1$], [$lambda "sign"(theta)$ (subgradient)], [promote sparse solutions], [specialized],
 ))
 
 #note[
@@ -646,18 +909,21 @@ optimizer = torch.optim.AdamW([
 ]
 
 #place(bottom + center, dy: -2pt, caption[
-  Interactive: drag $lambda$ yourself — #link(IA + "weight-decay/")[interactive-articles/weight-decay]
+  Interactive: adjust $lambda$ at #link(IA + "weight-decay/")[interactive-articles/weight-decay]
 ])
 
 // ═══════════════════════ PART III — EARLY STOPPING ═══════════════════════
-= Early stopping: training time is a capacity knob
+== Early stopping changes the training loop #V
 
-== Train the spine by gradient descent and watch both losses #V
+#reg-map(active: "training", named: true)
 
-#reg-strip("training")
+#v(10pt)
+#pause
+#punch[Keep the validation winner before later updates overfit the training set; patience decides when to stop.]
 
-#v(4pt)
-Same model, *no penalty* — just gradient descent from $bold(w) = 0$, both losses logged:
+== Watch training and validation loss together #V
+
+Same model, *no penalty*. Start gradient descent from $bold(w) = 0$ and log both losses:
 
 #align(center, lines(
   x: range(33).map(k => k / 4.0),
@@ -671,9 +937,9 @@ Same model, *no penalty* — just gradient descent from $bold(w) = 0$, both loss
 ))
 
 #pause
-#punch[#fitc[Train] falls forever. #valc[Validation] falls, turns at $t^star$, and climbs — the U-curve again, with *time* on the axis.]
+#punch[#fitc[Training loss] keeps falling. #valc[Validation loss] reaches its minimum at $t^star$ and then rises, giving a U-shaped curve against training time.]
 
-== The rule: keep the checkpoint validation preferred #D
+== Keep the checkpoint with lowest validation loss #D
 
 $ t^star = op("arg min", limits: #true)_t cal(L)_"val" (bold(w)_t) $
 
@@ -687,50 +953,78 @@ $ t^star = op("arg min", limits: #true)_t cal(L)_"val" (bold(w)_t) $
   )).flatten()
 ))
 
-== PyTorch: stop, save, and restore the validation winner #V
+== Patience decides when to stop #V
 
-#codebox(size: 11.6pt)[```python
+Example: `patience = 3`, `min_delta = 0`:
+
+#align(center, [
+  #set text(size: 14.5pt)
+  #table(
+    columns: (38mm, 31mm, 31mm, 31mm, 31mm),
+    stroke: 0.5pt + MUTED, inset: (x: 9pt, y: 7pt), align: center,
+    table.header([epoch], [20], [21], [22], [23]),
+    [#valc[validation loss]], [#keepc[0.570]], [0.575], [0.574], [#text(fill: RED)[0.580]],
+    [`wait`], [0], [1], [2], [#text(fill: RED, weight: "bold")[3]],
+    [action], [#keepc[save]], [continue], [continue], [#text(fill: RED, weight: "bold")[stop]],
+  )
+])
+
+#note[
+  `patience = P` allows $P$ consecutive validation checks without enough improvement.
+  `min_delta` sets the improvement required to reset `wait`. A positive value ignores tiny fluctuations.
+]
+
+#punch[Stop after epoch 23 and restore epoch 20. Patience controls *when training stops*; validation loss still decides which checkpoint to keep.]
+
+== PyTorch: save, wait, restore #V
+
+#codebox(size: 12.2pt)[```python
 from copy import deepcopy
-best = patience_ref = float("inf")
-wait, best_state = 0, None
+patience, min_delta = 5, 0.0
+best_val, bad_epochs, best_state = float("inf"), 0, None
 
 for epoch in range(max_epochs):
     train_one_epoch(model, train_loader, optimizer)
     val_loss = evaluate(model, val_loader)
 
-    if val_loss < best:                  # strict argmin checkpoint
-        best = val_loss
+    if val_loss < best_val - min_delta:
+        best_val, bad_epochs = val_loss, 0
         best_state = deepcopy(model.state_dict())
-
-    if val_loss < patience_ref - min_delta:
-        patience_ref, wait = val_loss, 0 # meaningful progress
     else:
-        wait += 1
-        if wait >= patience: break
+        bad_epochs += 1
+        if bad_epochs >= patience:
+            break
 
 model.load_state_dict(best_state)  # restore; do not keep the final epoch
 ```]
 
-#note[Checkpointing tracks the strict $arg min$; `min_delta` only controls patience. To resume training later, also save optimizer, scheduler, scaler, epoch, and RNG states.]
+#note[`patience = 5` allows five consecutive validation checks without sufficient improvement. `min_delta = 0` keeps the strict $arg min$. Use a positive value when tiny gains should not reset the clock.]
 
-== Why validation turns: directions arrive in order of strength #D
+== Why validation loss eventually rises #V
 
-For quadratic loss, gradient descent from $bold(w)_0 = 0$ has an exact per-direction solution. Along eigendirection $bold(v)_j$ of the data matrix (strength $sigma_j^2$):
+#v(8pt)
+#align(center, [
+  #set text(size: 15pt)
+  #table(
+    columns: (38mm, 92mm, 1fr),
+    stroke: 0.5pt + MUTED, inset: (x: 10pt, y: 10pt), align: (left, left, center),
+    table.header([training stage], [what the model is fitting], [what the losses do]),
+    [#text(fill: TEAL, weight: "bold")[earlier epochs]],
+      [patterns repeated across many examples, which are useful on new data],
+      [#fitc[train $arrow.b$] #h(8pt) #valc[validation $arrow.b$]],
+    [#text(fill: RED, weight: "bold")[later epochs]],
+      [training-specific quirks, rare cases, and noise],
+      [#fitc[train $arrow.b$] #h(8pt) #valc[validation $arrow.t$]],
+  )
+])
 
-$ bold(v)_j^top bold(w)_t = (1 - (1 - eta sigma_j^2)^t) dot bold(v)_j^top bold(w)_oo $
+#note[This ordering is common but not guaranteed. The validation curve shows whether more training still helps on unseen data.]
 
-#align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
-  hairline([Strong directions ($sigma_j^2$ large)], [factor $arrow.r 1$ within a few updates — the *shared, simple* structure], color: TEAL),
-  hairline([Weak directions ($sigma_j^2$ tiny)], [need $t approx 1 slash (eta sigma_j^2)$ updates — where the *noise* hides], color: RED),
-))
+#punch[When validation loss starts to rise, restore the checkpoint from its minimum.]
 
-#note[
-  Our spine's ten strengths, computed: $sigma^2 = #fnum(evals.at(0), d: 2), #fnum(evals.at(1), d: 2), #fnum(evals.at(2), d: 2), dots, 7 times 10^(-8)$ — a *ten-million-fold* spread. So there is a long window where signal has arrived and noise has not. Exact for linear least squares; "networks learn simple patterns first" is the empirical deep-learning analogue.
-]
+== Early stopping limits what the model can fit #V
 
-== Watch the stopping time act as a capacity knob #V
-
-Three checkpoints of the *same run* — no penalty anywhere:
+Three checkpoints from the *same run*, with no penalty:
 
 #spine-fig(curves: (
   (truth-curve, truth-stroke),
@@ -739,75 +1033,194 @@ Three checkpoints of the *same run* — no penalty anywhere:
   (curve-of(w-stop), 2.3pt + GREEN),
 ))
 #align(center, text(size: 13pt)[
-  #sw(MUTED, [$t = 100$ · still arriving]) #h(10pt)
+  #sw(MUTED, [$t = 100$ · still underfitting]) #h(10pt)
   #sw(GREEN, [$t^star = #str(t-star)$ · kept]) #h(10pt)
-  #sw(RED, [$t = 10^8$ · the noise arrived — slide 4's memorizer, reborn])
+  #sw(RED, [$t = 10^8$ · fits the noise])
 ])
 
 #pause
-#punch[Stop early $arrow.r$ the weak, noise-carrying directions simply never arrive.]
+#punch[At the chosen stopping time, the model has not yet fitted the weak directions that carry much of the noise.]
 
-== Optional: the clock and the penalty are the same filter #D #OPT
-
-Per direction, the two methods apply strikingly similar suppression factors:
-
-$ underbrace(1 - (1 - eta sigma^2)^t, "early stopping") quad "vs." quad underbrace(sigma^2 / (sigma^2 + lambda), "weight decay") $
-
-#align(center, lines(
-  fn: (
-    s => 1.0 - calc.pow(1.0 - eta-gd * calc.pow(10.0, s), t-star),
-    s => calc.pow(10.0, s) / (calc.pow(10.0, s) + 1.0 / (eta-gd * t-star)),
-  ),
-  domain: (-8, 0.2), samples: 90, markers: false, legend: "tl",
-  labels: ([stop at $t^star$], [decay $lambda = 1 slash (eta t^star)$]), colors: (GREEN, ACC),
-  x-label: [$log_10 sigma^2$ (direction strength)], y-label: [kept fraction], size: (134mm, 31mm),
-))
-
-#note[
-  On our spine the match is uncanny: validation independently chose $lambda^star = 10^(-3)$ and $t^star = #str(t-star)$ — and $1 slash (eta t^star) = #fnum(1.0 / (eta-gd * t-star), d: 4)$. Two knobs, one preference.
-]
-
-== Predict, then run the curves notebook #I
+== Exercise: predict the learning curves #I
 
 #interbox(link-to: NB + "01_overfitting_and_early_stopping.ipynb")[
-  A NumPy lab that makes the mechanism inspectable: a flexible model overfits a small dataset while you log both curves and restore the best checkpoint.
+  In this NumPy lab, a flexible model overfits a small dataset. Log both curves and restore the best checkpoint.
 ]
 
 Before executing each cell, write down:
 
-- which epoch range the validation minimum will fall in;
-- what *patience* value would have caught it;
-- what happens to the restored-checkpoint test error if you double the noise.
+- the epoch range containing the validation minimum;
+- a *patience* value that would catch it;
+- how doubling the noise changes test error at the restored checkpoint.
 
 // ═══════════════════ PART IV — AUGMENTATION AND MIXUP ═══════════════════
-= Augmentation: teach invariances through the data
+== Data augmentation changes the training examples #V
 
-== One cat, six views — which changes should the classifier ignore? #V
+#reg-map(active: "data", named: true)
 
-#align(center, image("figures/cifar10_augmentation_gallery.png", width: 92%))
-
+#v(10pt)
 #pause
-#punch[Augmentation is not decoration: each view is a claim that the answer stays #keepc[cat].]
+#punch[Show task-valid versions of each sample, so the model cannot rely on accidental details of one stored form; update targets when needed.]
 
-#caption[real CIFAR-10 training image · transforms regenerated locally · inspectability matters more than photorealism at $32 times 32$]
+== TorchVision: original image and random crop #V
 
-== The strongest practical regularizer edits the data distribution #D
+#let aug-code-panel(path, label, code, color: TEAL) = block(width: 100%, [
+  #align(center, text(size: 15pt, weight: 700, fill: color)[#label])
+  #v(2pt)
+  #align(center, image(path, width: 54mm))
+  #v(4pt)
+  #block(width: 100%, fill: rgb("#F4F2EC"), radius: 4pt, inset: 5pt,
+    align(center, text(size: 12pt)[#raw(code, lang: "python")]))
+])
 
-#reg-strip("data")
+#align(center, text(size: 11.5pt, fill: MUTED)[
+  `from torchvision.transforms import v2`
+])
+#v(2pt)
+#grid(
+  columns: (1fr, 1fr), gutter: 18mm,
+  aug-code-panel("figures/augmentation_original_v2_hd.png", [original pixels], "v2.Identity()"),
+  aug-code-panel("figures/augmentation_crop_v2_hd.png", [one crop draw], "v2.RandomResizedCrop(512, scale=(.45, .45))", color: ACC),
+)
 
-#v(4pt)
-Declare a distribution $cal(T)$ of transformations. For a label-preserving classification transform, $y prime = y$; for structured targets, transform the pair:
-
-$ (x prime, y prime) = T(x, y), quad min_theta thick EE_((x, y)) thick EE_(T tilde cal(T)) [ell (f_theta(x prime), y prime)] $
-
-#pause
 #note[
-  Every epoch samples a new training view: Monte Carlo over your declared invariances. The stored dataset is finite; the *training distribution* no longer is. In vision this is often the highest-leverage regularizer.
+  #set text(size: 13.5pt)
+  Cropping changes position and scale. The label remains valid only while the object stays visible.
 ]
 
-== A transform is a claim about the label #V
+== TorchVision: horizontal flip and colour jitter #V
 
-Pixel letters, class set ${a, b, c, d, e}$ — watch what each transform claims:
+#align(center, text(size: 11.5pt, fill: MUTED)[
+  `from torchvision.transforms import v2`
+])
+#v(2pt)
+#grid(
+  columns: (1fr, 1fr), gutter: 18mm,
+  aug-code-panel("figures/augmentation_flip_v2_hd.png", [one flip draw], "v2.RandomHorizontalFlip(p=.5)"),
+  aug-code-panel("figures/augmentation_colour_v2_hd.png", [one colour-jitter draw], "v2.ColorJitter(brightness=.4, saturation=.6, hue=.2)", color: ACC),
+)
+
+#note[
+  #set text(size: 13.5pt)
+  A flip assumes left and right do not matter. Colour jitter assumes that illumination and tint do not matter.
+]
+
+== TorchVision: blur and rotation #V
+
+#align(center, text(size: 11.5pt, fill: MUTED)[
+  `from torchvision.transforms import v2`
+])
+#v(2pt)
+#grid(
+  columns: (1fr, 1fr), gutter: 18mm,
+  aug-code-panel("figures/augmentation_blur_v2_hd.png", [fixed blur], "v2.GaussianBlur(21, sigma=4.)"),
+  aug-code-panel("figures/augmentation_rotate_v2_hd.png", [one rotation draw], "v2.RandomRotation(20, fill=(247, 245, 240))", color: ACC),
+)
+
+#note[
+  #set text(size: 13.5pt)
+  Start with mild transforms, tune them on validation data, and inspect a transformed batch.
+]
+
+#place(bottom + center, dy: -2pt, caption[
+  Each panel was rendered by the TorchVision v2 call shown above.
+])
+
+== One stored example becomes many valid training views #V
+
+#punch[Augmentation asks for the right answer across a #knobc[family of task-valid views].]
+
+#v(14pt)
+#grid(
+  columns: (1fr, 9mm, 1fr, 9mm, 1fr), gutter: 2mm,
+  align(center + horizon, stack(spacing: 6pt,
+    text(size: 14pt, weight: 750, fill: TEAL)[STORED EXAMPLE],
+    text(size: 23pt, fill: TEAL)[$(x_i, y_i)$],
+    text(size: 15pt, fill: MUTED)[one file and its target],
+  )),
+  align(center + horizon, text(size: 25pt, fill: MUTED)[→]),
+  align(center + horizon, stack(spacing: 6pt,
+    text(size: 14pt, weight: 750, fill: ACC)[FRESH VALID VIEW],
+    text(size: 23pt, fill: ACC)[$tau_i tilde cal(T)$],
+    text(size: 15pt, fill: MUTED)[crop, flip, jitter, ...],
+  )),
+  align(center + horizon, text(size: 25pt, fill: MUTED)[→]),
+  align(center + horizon, stack(spacing: 6pt,
+    text(size: 14pt, weight: 750, fill: TEAL)[TRAIN ON THIS VIEW],
+    text(size: 20pt)[$(x_i prime, y_i prime) = tau_i(x_i, y_i)$],
+    text(size: 15pt, fill: MUTED)[a new draw on the next load],
+  )),
+)
+
+#v(18pt)
+#note[The files do not multiply. The *stream of views* does: loading the same item again draws a new $tau_i$.]
+
+#place(bottom + center, dy: -2pt, caption[
+  For classification, usually $y_i prime = y_i$. For detection and segmentation, move boxes or masks with the image.
+])
+
+== A minibatch samples one fresh view per item #D
+
+#punch[Draw independently for each item, compute its transformed loss, then average.]
+
+#v(10pt)
+#grid(
+  columns: (0.92fr, 1.18fr), gutter: 24pt,
+  hairline([FOR EACH $i = 1, dots, B$], [
+    #align(center, stack(spacing: 11pt,
+      text(size: 20pt, fill: TEAL)[$(x_i, y_i) tilde cal(D)_"train"$],
+      text(size: 20pt, fill: ACC)[$tau_i tilde cal(T)$],
+      text(size: 18pt)[$(x_i prime, y_i prime) = tau_i(x_i, y_i)$],
+    ))
+  ], color: ACC),
+  hairline([AVERAGE THE $B$ LOSSES], [
+    #align(center, text(size: 20pt)[
+      #text(fill: TEAL)[$hat(cal(L))_B$]
+      $= 1/B sum_(i=1)^B ell(f_theta(x_i prime), y_i prime)$
+    ])
+    #v(10pt)
+    #text(size: 15pt, fill: MUTED)[Each term uses one randomly transformed view of one minibatch item.]
+  ], color: TEAL),
+)
+
+#v(14pt)
+#note[This random minibatch loss is the #knobc[Monte Carlo estimate] used by SGD. A new batch produces a new estimate.]
+
+== Repeated minibatches estimate the augmented objective #D
+
+#punch[Average over #fitc[training examples] and over #knobc[valid transformations].]
+
+#v(6pt)
+#align(center, text(size: 19pt)[
+  #text(fill: TEAL)[$EE[hat(cal(L))_B]$]
+  $=$ $cal(L)_"aug"(theta)$
+])
+#v(4pt)
+#align(center, text(size: 21pt)[
+  $cal(L)_"aug"(theta) =$
+  #text(fill: TEAL)[$EE_((x, y) tilde cal(D)_"train")$]
+  #text(fill: ACC)[$EE_(tau tilde cal(T))$]
+  $[ell(f_theta(x prime), y prime)]$
+])
+#align(center, text(size: 16pt, fill: ACC)[$(x prime, y prime) = tau(x, y)$])
+
+#v(6pt)
+#grid(columns: (1fr, 1fr), gutter: 22pt,
+  hairline([INNER AVERAGE], [
+    #text(size: 14pt)[For one example, average its loss over task-valid views $tau tilde cal(T)$.]
+  ], color: ACC),
+  hairline([OUTER AVERAGE], [
+    #text(size: 14pt)[Then average across examples from the training distribution.]
+  ], color: TEAL),
+)
+
+#place(bottom + center, dy: -2pt, caption[
+  We cannot enumerate every valid view. Repeated random minibatches approximate both averages.
+])
+
+== Check whether each transform preserves the label #V
+
+For pixel letters with classes ${a, b, c, d, e}$, check what each transform claims:
 
 #let GB = (
   (1, 0, 0, 0, 0, 0, 0),
@@ -824,27 +1237,27 @@ Pixel letters, class set ${a, b, c, d, e}$ — watch what each transform claims:
 #let glyph-fill = (v, i, j) => if v > 0.5 { INK } else { rgb("#F3F2EE") }
 #let glyph(g, cell: 4.6mm) = grid-map(g, cell: cell, fill: glyph-fill, fmt: none, stroke: 0.3pt + rgb("#DDDBD5"))
 #align(center, stack(dir: ltr, spacing: 12mm,
-  stack(spacing: 4pt, glyph(GB), text(size: 13pt)[original — label #keepc[“b”]]),
-  stack(spacing: 4pt, glyph(shift-right(GB)), text(size: 13pt)[shifted — still #keepc[“b”]]),
-  stack(spacing: 4pt, glyph(hflip(GB)), text(size: 13pt)[flipped — now reads #failc[“d”]]),
+  stack(spacing: 4pt, glyph(GB), text(size: 13pt)[original, label #keepc[“b”]]),
+  stack(spacing: 4pt, glyph(shift-right(GB)), text(size: 13pt)[shifted, still #keepc[“b”]]),
+  stack(spacing: 4pt, glyph(hflip(GB)), text(size: 13pt)[flipped, now reads #failc[“d”]]),
 ))
 
 #pause
-#punch[Horizontal flip is a *valid* invariance for flowers — and a *label change* for letters.]
+#punch[Horizontal flip preserves flower classes, but it can change a letter's class.]
 
-== Checkpoint: which transform is safe for the letter task? #Q
+== Checkpoint: valid transformations for letters #Q
 
 #mcq(
-  [Which policy states an invariance the letter labels actually possess?],
-  [horizontal flip — objects don't care about left and right],
-  [rotate by $180 degree$ — orientation is superficial],
+  [Which transformation preserves the label for every letter?],
+  [horizontal flip, because left/right orientation should not affect the class],
+  [rotate by $180 degree$, because orientation should not affect the class],
   [shift by one or two pixels, keeping the glyph in frame],
   [any transform that makes training loss go up],
 )
 
-#note([Commit, and name the counterexample for each rejected option.], color: BLUE)
+#note([Choose an answer, then give a counterexample for each rejected option.], color: BLUE)
 
-== Answer: only the shift preserves every letter's label #A
+== Answer: only the shift preserves every label #A
 
 #mcq-answer(
   [C],
@@ -857,56 +1270,417 @@ Pixel letters, class set ${a, b, c, d, e}$ — watch what each transform claims:
   #table(
     columns: (34mm, 54mm, 76mm), stroke: 0.45pt + MUTED,
     inset: (x: 8pt, y: 4pt), align: (left, left, left),
-    table.header([transform], [claims the task ignores…], [breaks when…]),
+    table.header([transform], [what the task must ignore], [when the label breaks]),
     [random crop], [position and scale (a little)], [the crop removes the object],
-    [horizontal flip], [left–right orientation], [text, digits, anatomy (the heart has a side)],
-    [colour jitter], [illumination and tint], [colour is the diagnosis],
+    [horizontal flip], [left-right orientation], [text, digits, anatomy (the heart has a side)],
+    [colour jitter], [illumination and tint], [the label depends on colour],
   )
 ])
-#caption[detection reminder: geometric transforms must move boxes and masks too — augment the *supervision*]
+#caption[For detection, geometric transforms must also move boxes and masks. Transform the *supervision* with the image.]
 
-== The label contract changes with the task #V
+== Specify what happens to the target #D
 
-#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 15pt,
-  hairline([Classification], [crop or flip the image; the class index usually stays fixed], color: TEAL),
-  hairline([Detection / segmentation], [move boxes, masks, and keypoints with the pixels], color: ACC),
-  hairline([Audio / text], [mask time–frequency bands or edit tokens only when meaning survives], color: BLUE),
+#align(center, text(size: 22pt)[
+  $ A_tau(x, y) = (g_tau(x), h_tau(y)) $
+])
+#caption[One sampled transform $tau$ determines both the input map and the supervision map.]
+
+#v(7pt)
+#align(center, grid(columns: (47mm, 1fr), gutter: 14pt, row-gutter: 11pt, align: (right, left),
+  [#text(size: 15pt, weight: 750, fill: TEAL)[KEEP TARGET]],
+  [#text(size: 16pt)[$h_tau(y) = y$. The target is invariant, as with an object class under a safe crop.]],
+  [#text(size: 15pt, weight: 750, fill: ACC)[UPDATE TARGET]],
+  [#text(size: 16pt)[$h_tau(y) != y$, but the update is known. Coordinates move, timestamps shift, or a signed value flips.]],
+  [#text(size: 15pt, weight: 750, fill: RED)[REJECT OR RELABEL]],
+  [#text(size: 16pt)[There is no trustworthy $h_tau$. The transform changes the meaning or removes information needed to determine the target.]],
 ))
 
 #pause
-#warning[Applying a geometric transform to $x$ but not to a spatial target $y$ creates *wrong labels*, not useful noise. Prefer transform APIs that accept the whole sample.]
+#punch[The *task* defines $h_tau$. An image library cannot infer what the target means.]
 
-== Input jitter imposes local smoothness through the data #V
+== The same flip requires different target updates #V
 
-Impose local smoothness: reuse each measured $y$ at 8 nearby inputs $x + epsilon$. This is a deliberate approximation — not an exact invariance of $sin(pi x)$:
+#let cyclist-path = "figures/sources/label_contract_cyclist_imagen.png"
+#let cyclist-panel(flip: false) = block(
+  width: 76mm, height: 50mm, clip: true,
+  stroke: 0.7pt + MUTED, radius: 2pt,
+  [
+    #place(top + left, if flip {
+      scale(x: -100%, origin: center, image(cyclist-path, width: 76mm, height: 50mm, fit: "cover"))
+    } else {
+      image(cyclist-path, width: 76mm, height: 50mm, fit: "cover")
+    })
+  ],
+)
 
-#align(center, {
-  set text(size: 13pt)
-  lq.diagram(
-    width: 146mm, height: 40mm, xlim: (-1.06, 1.06), ylim: (-2.7, 3.7), margin: 0%,
-    xlabel: [$x$], ylabel: [$y$],
-    grid: (stroke: 0.35pt + MUTED.transparentize(78%)),
-    xaxis: (ticks: (-1, 0, 1), subticks: none, mirror: false),
-    yaxis: (ticks: (-2, 0, 2), subticks: none, mirror: false),
-    lq.plot(XG, truth-curve, stroke: truth-stroke, mark: none),
-    lq.plot(XG, curve-of(w9), stroke: 1.6pt + RED.transparentize(45%), mark: none),
-    lq.plot(XG, curve-of(w-aug), stroke: 2.3pt + GREEN, mark: none),
-    lq.scatter(xa, ya, color: TEAL.transparentize(45%), size: 2.6pt),
-    lq.scatter(xs, ys, color: INK, size: 4.6pt),
+#align(center, grid(columns: (76mm, 76mm), gutter: 12mm,
+  stack(spacing: 3pt, cyclist-panel(), align(center, text(size: 13pt, fill: MUTED)[as stored, travelling #keepc[right]])),
+  stack(spacing: 3pt, cyclist-panel(flip: true), align(center, text(size: 13pt, fill: MUTED)[same pixels flipped, travelling #failc[left]])),
+))
+
+#v(5pt)
+#align(center, [
+  #set text(size: 14.5pt)
+  #table(
+    columns: (39mm, 51mm, 75mm), stroke: 0.45pt + MUTED,
+    inset: (x: 8pt, y: 4pt), align: (left, left, left),
+    table.header([task], [target before], [target after the same flip]),
+    [object class], [cyclist], [#keepc[cyclist], unchanged],
+    [travel direction], [right], [#failc[left], changed],
+    [detection box], [$[x_1,y_1,x_2,y_2]$], [$[W-x_2,y_1,W-x_1,y_2]$, moved],
   )
-})
-#align(center, text(size: 13pt)[
-  #sw(TEAL, [80 jittered copies]) #h(10pt) #sw(GREEN, [fit to them · val MSE #fnum(mse(w-aug, xv, yv), d: 3)]) #h(10pt) #sw(RED, [old interpolant · #fnum(mse(w9, xv, yv), d: 2)])
 ])
 
 #pause
-#note[
-  The fit becomes locally smoother, at the cost of some bias; validation judges the trade. Input noise is closely related to a smoothness penalty (Bishop, 1995).
-]
+#punch[The pixel operation is identical. The prediction task determines how the target changes.]
 
-== PyTorch: the CIFAR-10 train/eval transform split #V
+== Flip boxes and keypoints with the image #V
+
+#let runner-path = "figures/sources/label_contract_runner_imagen.png"
+#let pose-points = (
+  (27.7mm, 2.6mm), (35.4mm, 10.8mm), (28.8mm, 14.0mm),
+  (41.6mm, 32.0mm), (30.3mm, 34.6mm), (29.5mm, 45.2mm),
+  (36.0mm, 38.8mm), (35.4mm, 51.7mm),
+)
+#let runner-panel = block(
+  width: 72mm, height: 58mm, clip: true,
+  stroke: 0.7pt + MUTED, radius: 2pt,
+  [
+    #place(top + left, image(runner-path, width: 72mm, height: 58mm, fit: "cover"))
+    #place(top + left, dx: 26mm, dy: 1.5mm, rect(width: 18mm, height: 53mm, stroke: 1.7pt + GREEN, radius: 1pt))
+    #for p in pose-points {
+      place(top + left, dx: p.at(0) - 1.25mm, dy: p.at(1) - 1.25mm,
+        circle(radius: 1.25mm, fill: BLUE, stroke: 0.5pt + white))
+    }
+  ],
+)
+
+#align(center, grid(columns: (76mm, 1fr), gutter: 20pt,
+  [
+    #align(center, runner-panel)
+    #align(center, text(size: 12.5pt, fill: MUTED)[course-generated source with exact overlays added in the deck])
+  ],
+  [#align(left, [
+    #set text(size: 15pt)
+    *Boxes with half-open `XYXY` coordinates*
+    #v(3pt)
+    $ [x_1,y_1,x_2,y_2] arrow.r [W-x_2,y_1,W-x_1,y_2] $
+    #v(6pt)
+    Crop or rotate: transform the corners, clip to the canvas, then drop invalid boxes *and their matching labels*.
+    #v(10pt)
+    *Keypoints*
+    #v(3pt)
+    $ p_j prime prop H_tau p_(pi_tau(j)) $
+    #v(4pt)
+    $H_tau$ moves coordinates; $pi_tau$ swaps semantic left/right indices when a flip requires it. Update visibility when a point leaves the frame.
+  ])],
+))
+
+#pause
+#warning[A geometric transform applied only to the image produces incorrect supervision.]
+
+#let contract-panel(title, body, color: TEAL) = block(
+  width: 100%, radius: 3pt,
+  stroke: 0.85pt + color, inset: 9pt,
+  [
+    #text(size: 15.3pt, weight: 700, fill: color)[#title]
+    #v(5pt)
+    #body
+  ],
+)
+#let label-pill(body, color: GREEN) = box(
+  fill: color, radius: 9pt, inset: (x: 7pt, y: 2.5pt),
+  text(size: 10.8pt, weight: 700, fill: white)[#body],
+)
+
+== For sentiment, preserve meaning and polarity #V
+
+#punch[A paraphrase may keep the label. A negation changes it.]
+
+#v(10pt)
+#align(center, block(
+  width: 165mm, radius: 2pt, fill: luma(246), inset: 9pt,
+  [#align(center, [#text(size: 17pt, weight: 650)[“The movie was fantastic!”] #h(6pt) #label-pill[POSITIVE]])],
+))
+
+#v(8pt)
+#align(center, text(size: 19pt, fill: MUTED)[↙ #h(78mm) ↘])
+#v(2pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 18pt,
+  [#block(width: 100%, height: 48mm, radius: 2pt, stroke: 0.9pt + GREEN, inset: 9pt, [
+    #align(center, text(size: 16pt)[#keepc[KEEP LABEL] · paraphrase])
+    #v(10pt)
+    #align(center, text(size: 17pt, weight: 600)[“The film was wonderful!”])
+    #v(10pt)
+    #align(center, label-pill([POSITIVE]))
+  ])],
+  [#block(width: 100%, height: 48mm, radius: 2pt, stroke: 0.9pt + RED, inset: 9pt, [
+    #align(center, text(size: 16pt)[#failc[CHANGE LABEL] · negation])
+    #v(10pt)
+    #align(center, text(size: 17pt, weight: 600)[“The movie was not fantastic.”])
+    #v(10pt)
+    #align(center, label-pill([NEGATIVE], color: RED))
+  ])],
+))
+
+#v(12pt)
+#note[The transform is valid only if the target is still correct. Otherwise relabel it—or reject it.]
+
+#place(bottom + center, dy: -2pt, caption[Example adapted from STT-AI Week 5: text augmentation.])
+
+== For NER, edits can move the labelled spans #V
+
+#punch[Keep the entity text and type; recompute where each span begins and ends.]
+
+#v(8pt)
+#align(center, image("figures/sources/stt_ner_context_core.png", width: 172mm))
+
+#v(12pt)
+#align(center, text(size: 20pt, weight: 650)[
+  $cal(A) = {(s_i, e_i, c_i)} arrow.r cal(A) prime = {(s_i prime, e_i prime, c_i)}$
+])
+
+#v(10pt)
+#align(center, text(size: 16pt)[
+  #keepc[KEEP] entity strings and types $c_i$
+  #h(20mm)
+  #knobc[UPDATE] affected offsets $s_i, e_i$
+])
+
+#place(bottom + center, dy: -2pt, caption[Example adapted from STT-AI Week 5: NER-safe context editing.])
+
+#let event-box(name, times, color) = box(
+  fill: color.lighten(72%), stroke: 0.7pt + color, radius: 2pt,
+  inset: (x: 7pt, y: 4pt),
+  align(center, [#text(size: 13.5pt, weight: 650)[#name] #linebreak() #text(size: 12.5pt)[#times]]),
+)
+#let event-row(lead, door-times, bark-times, tail) = grid(
+  columns: (10mm, 1fr, 1fr, 10mm), gutter: 4pt, align: center,
+  [#text(size: 12.5pt, fill: MUTED)[#lead]],
+  [#event-box([door slam], door-times, ACC)],
+  [#event-box([dog bark], bark-times, BLUE)],
+  [#text(size: 12.5pt, fill: MUTED)[#tail]],
+)
+
+== For ASR, masking can keep the transcript fixed #V
+
+#punch[Hide some evidence, but keep the words intelligible.]
+
+#v(10pt)
+#align(center, image("figures/sources/stt_specaugment_core.png", width: 174mm))
+
+#v(14pt)
+#align(center, text(size: 19pt, weight: 650)[
+  #fitc[input changes:] $x prime = tau(x)$
+  #h(18mm)
+  #keepc[target stays:] $y prime = y$
+])
+
+#v(12pt)
+#note[Keep the transcript only while the masked speech is still understandable.]
+
+#place(bottom + center, dy: -2pt, caption[Example adapted from STT-AI Week 3: SpecAugment.])
+
+== A time shift must move every event interval #V
+
+#punch[Shift the audio by $Delta$ seconds; shift its timestamp labels by the same $Delta$.]
+
+#v(5pt)
+#align(center, text(size: 20pt, weight: 650)[
+  $[t_s, t_e] prime = [t_s + Delta, t_e + Delta]$
+])
+
+#v(6pt)
+#align(center, block(width: 170mm, stroke: 0.8pt + ACC, radius: 3pt, inset: 7pt, [
+  #text(size: 15pt, weight: 700)[BEFORE]
+  #v(3pt)
+  #event-row([0 s], [[2.3, 3.1] s], [[5.0, 8.2] s], [10 s])
+
+  #v(7pt)
+  #align(center, text(size: 17pt, weight: 700, fill: ACC)[$Delta = +2 " s"$ ↓])
+  #v(3pt)
+
+  #text(size: 15pt, weight: 700)[AFTER]
+  #v(3pt)
+  #event-row([0 s], [[4.3, 5.1] s], [[7.0, 10.2] s], [12 s])
+]))
+
+#place(bottom + center, dy: -2pt, caption[
+  After a crop, clip intervals to the new window—or drop events that leave it entirely.
+  #linebreak()
+  Example adapted from STT-AI Week 5: sound-event timestamps.
+])
+
+== Transform complete samples in one PyTorch call #V
+
+#align(center, grid(columns: (105mm, 1fr), gutter: 18pt,
+  [
+    #codebox(size: 11.4pt)[```python
+from torchvision import tv_tensors
+from torchvision.transforms import v2
+
+img = tv_tensors.Image(img)
+target = {
+    "boxes": tv_tensors.BoundingBoxes(
+        boxes, format="XYXY", canvas_size=img.shape[-2:]),
+    "masks": tv_tensors.Mask(masks),
+    "labels": labels,
+}
+
+train_aug = v2.Compose([
+    v2.RandomPhotometricDistort(p=.5),
+    v2.RandomIoUCrop(),
+    v2.RandomHorizontalFlip(p=.5),
+    v2.SanitizeBoundingBoxes(),
+])
+
+img2, target2 = train_aug(img, target)
+```]
+  ],
+  [#align(left, [
+    #set text(size: 15pt)
+    *One call keeps the sample synchronized*
+    - `TVTensor` types dispatch the right transform to each target.
+    - Geometry shares one sampled parameter set; photometric changes touch only the image.
+    - `SanitizeBoundingBoxes` removes invalid boxes and matching labels or masks after a crop.
+    #v(9pt)
+    *Before training*
+    1. Overlay 32 random samples.
+    2. Check box canvas, positive area, and matching instance counts.
+    3. Check mask size and allowed IDs.
+    4. Unit-test one known flip numerically.
+  ])],
+))
+
+#note([Keep validation and test deterministic. `KeyPoints` uses the same typed-dispatch idea but remains a beta TorchVision API. #link(PTV + "auto_examples/transforms/plot_transforms_e2e.html")[official v2 detection/segmentation example]], color: BLUE)
+
+// ── a data-space special case: small random input noise ──
+== Input noise is a local kind of data augmentation #V
+
+#reg-map(active: "data", named: true, focus-method: [input noise])
+
+#v(10pt)
+#punch[Add small random nudges around each input, making sharp local changes costly; #knobc[$sigma$] sets the neighbourhood size.]
+
+== One example becomes a neighbourhood #V
+
+#let jitter-demo = block(
+  width: 82mm, height: 50mm, radius: 2pt,
+  stroke: 0.7pt + MUTED, fill: rgb("#F7F5F0"),
+  [
+    #place(top + left, dx: 6mm, dy: 25mm, line(length: 70mm, stroke: 0.9pt + MUTED))
+    #for dx in (10mm, 18mm, 25mm, 31mm, 49mm, 55mm, 62mm, 70mm) {
+      place(top + left, dx: dx - 1.65mm, dy: 25mm - 1.65mm,
+        circle(radius: 1.65mm, fill: TEAL.transparentize(20%), stroke: 0.4pt + white))
+    }
+    #place(top + left, dx: 40mm - 2.4mm, dy: 25mm - 2.4mm,
+      circle(radius: 2.4mm, fill: INK, stroke: 0.6pt + white))
+    #place(top + center, dy: 5mm, text(size: 14pt, weight: 700)[$y_i$ is reused for every nearby input])
+    #place(top + left, dx: 37.2mm, dy: 31mm, text(size: 13pt, fill: INK)[$x_i$])
+    #place(bottom + center, dy: -5mm, text(size: 12.5pt, fill: TEAL)[fresh $x_i + epsilon_k$ each epoch])
+  ],
+)
+
+#align(center, grid(columns: (84mm, 1fr), gutter: 20pt,
+  [#align(center, jitter-demo)],
+  [#align(left, [
+    #set text(size: 16pt)
+    *Each time the example is loaded:*
+    #v(5pt)
+    #enum(
+      [draw fresh noise $epsilon tilde cal(N)(0, sigma^2 I)$;],
+      [make a nearby input $x'_i = x_i + epsilon$;],
+      [train on $(x'_i, y_i)$ with the *same* target.],
+      spacing: 7pt,
+    )
+    #v(5pt)
+    #note([The model must work around $x_i$, not only at the exact stored coordinate.], color: TEAL)
+  ])],
+))
+
+#pause
+#punch[#knobc[$sigma$] controls the radius: small enough to preserve the label, large enough to matter.]
+
+== Why it helps: nearby predictions should not jump #V
+
+#align(center, grid(columns: (126mm, 1fr), gutter: 18pt,
+  [
+    #set text(size: 12.5pt)
+    #lq.diagram(
+      width: 124mm, height: 58mm, xlim: (-1.06, 1.06), ylim: (-2.7, 3.7), margin: 0%,
+      xlabel: [$x$], ylabel: [$y$],
+      grid: (stroke: 0.35pt + MUTED.transparentize(78%)),
+      xaxis: (ticks: (-1, 0, 1), subticks: none, mirror: false),
+      yaxis: (ticks: (-2, 0, 2), subticks: none, mirror: false),
+      lq.plot(XG, truth-curve, stroke: truth-stroke, mark: none),
+      lq.plot(XG, curve-of(w9), stroke: 1.8pt + RED.transparentize(32%), mark: none),
+      lq.plot(XG, curve-of(w-aug), stroke: 2.4pt + GREEN, mark: none),
+      lq.scatter(xa, ya, color: TEAL.transparentize(38%), size: 3.4pt,
+        mark: "o", stroke: 0.45pt + white.transparentize(45%)),
+      lq.scatter(xs, ys, color: INK, size: 8pt,
+        mark: "o", stroke: 0.9pt + white),
+    )
+    #align(center, text(size: 12.5pt)[
+      #text(size: 16pt, fill: INK)[●] #text(fill: INK, weight: 650)[10 measurements] #h(6pt)
+      #text(size: 12pt, fill: TEAL.transparentize(38%))[●] 8 nearby copies each
+      #h(6pt) #sw(MUTED, [hidden truth])
+    ])
+  ],
+  [#pad(left: 3mm, [#align(left, [
+    #set text(size: 14.5pt)
+    #failc[Without input noise]
+    #v(2pt)
+    The red curve fits every stored point, but can swing sharply between them.
+    #v(8pt)
+    #keepc[With input noise]
+    #v(2pt)
+    The green curve is tested around every point, so fragile local wiggles become costly. Validation MSE falls from $#fnum(mse(w9, xv, yv), d: 2)$ to $#fnum(mse(w-aug, xv, yv), d: 3)$.
+    #v(8pt)
+    #knobc[Why this is regularization]
+    #v(2pt)
+    It prefers models whose predictions are stable near observed data, rather than models that only memorize the stored coordinates.
+  ])])],
+))
+
+== The noisy objective averages over nearby copies #D
+
+#align(center, text(size: 18pt, weight: 650)[
+  #fitc[Stored data] anchors the loss. #knobc[Noise draws] probe nearby inputs. #valc[Validation sets $sigma$].
+])
+
+#v(10pt)
+#align(center, block(
+  width: 178mm, fill: rgb("#F7F5F0"), radius: 4pt,
+  inset: (x: 12pt, y: 10pt),
+  [
+    #align(center, text(size: 22pt)[
+      $cal(L)_"noise"(theta) =$
+      #text(fill: TEAL)[$1/n sum_i$]
+      #text(fill: ACC)[$EE_(z tilde cal(N)(0,I))$]
+      $[ell(f_theta(
+        #text(fill: TEAL)[$x_i$] +
+        #text(fill: BLUE)[$sigma$]
+        #text(fill: ACC)[$z$]
+      ), #text(fill: TEAL)[$y_i$])]$
+    ])
+  ],
+))
+
+#v(10pt)
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 15pt,
+  hairline([#fitc[Examples]], [Average over #fitc[stored pairs] #fitc[$(x_i,y_i)$].], color: TEAL),
+  hairline([#knobc[Noise]], [Average over #knobc[fresh draws] of #knobc[$z$].], color: ACC),
+  hairline([#valc[Selection]], [Choose #valc[$sigma$] using #valc[validation loss].], color: BLUE),
+))
+
+#v(7pt)
+#pause
+#note([#text(size: 14pt)[For small #valc[$sigma$], a first-order Taylor expansion gives an approximate #knobc[local-sensitivity penalty] $norm(J_(f) thin (x))_F^2$. We add noise to the #fitc[data]. This encourages #knobc[local smoothness].]], color: BLUE)
+
+== CIFAR-10 augmentations in PyTorch #V
 
 #codebox(size: 12.3pt)[```python
+import torch
 from torchvision.transforms import v2
 
 train_tf = v2.Compose([
@@ -924,215 +1698,734 @@ eval_tf = v2.Compose([
 ])
 ```]
 
-#note([Train sees fresh random views; validation/test use a deterministic pipeline. Compute `mean, std` from the training split only. #link(PTV + "transforms.html")[torchvision v2 reference]], color: BLUE)
+#note([The gallery showed the geometry at high resolution. This is the $32 times 32$ CIFAR-10 recipe used in our controlled experiment. Training uses fresh random views, while validation and test remain deterministic. Compute `mean, std` from training only. #link(PTV + "transforms.html")[torchvision v2 reference]], color: BLUE)
 
-== Before training, audit an augmented batch #V
+== Inspect augmented samples before training #V
 
-#align(center, grid(columns: (72mm, 1fr), gutter: 18pt,
-  image("figures/cifar10_augmentation_gallery.png", width: 72mm),
+#align(center, grid(columns: (94mm, 1fr), gutter: 16pt,
   [
-    #set text(size: 16pt)
-    *For eight random views, ask:*
-    #v(5pt)
-    - Is the object still present?
-    - Would a domain expert keep the label?
-    - Are boxes or masks still aligned?
-    - Is the strength plausible at deployment?
-    - Is normalization applied *after* pixel transforms?
+    #image("figures/augmentation_batch_audit_hd.png", width: 94mm)
+    #align(center, text(size: 12.5pt, fill: MUTED)[high-resolution stand-in; run the same check on your training data])
+  ],
+  [
+    #align(left, [
+      #set text(size: 16pt)
+      *For eight random views, ask:*
+      #v(5pt)
+      - Is the object still present?
+      - Would a domain expert keep the label?
+      - Are boxes or masks still aligned?
+      - Is the strength plausible at deployment?
+      - Is normalization applied *after* pixel transforms?
+    ])
   ],
 ))
 
 #codebox(size: 12.5pt)[```python
+import torch, torchvision
+
 views = torch.stack([train_tf(raw_image) for _ in range(8)])
 grid = torchvision.utils.make_grid(denormalize(views), nrow=4)
 show(grid)                       # make this a pre-flight check
 ```]
 
-== Mixup: train on blends of examples and labels #D
+== RandAugment has two main settings #V
 
-Interpolate *both* the inputs and the one-hot targets, with $lambda tilde "Beta"(alpha, alpha)$:
+#align(center, text(size: 15.5pt)[
+  For each training image: *sample $N$ operations* $arrow.r$ *apply them in sequence* $arrow.r$ *use magnitude index $M$*
+])
 
-$ tilde(x) = lambda_"mix" x_i + (1 - lambda_"mix") x_j, quad tilde(y) = lambda_"mix" y_i + (1 - lambda_"mix") y_j $
+#let ra-panel(path, tag) = stack(spacing: 3pt,
+  image(path, width: 34mm, height: 34mm, fit: "cover"),
+  align(center, text(size: 11.5pt, fill: MUTED, tag)),
+)
+#v(2pt)
+#align(center, grid(columns: (34mm, 34mm, 34mm, 34mm), gutter: 4mm,
+  ra-panel("figures/randaugment_original_hd.png", [original]),
+  ra-panel("figures/randaugment_rotate_color_hd.png", [`Rotate` $arrow.r$ `Color`]),
+  ra-panel("figures/randaugment_solarize_translate_hd.png", [`Solarize` $arrow.r$ `TranslateX`]),
+  ra-panel("figures/randaugment_posterize_contrast_hd.png", [`Posterize` $arrow.r$ `Contrast`]),
+))
+#align(center, text(size: 11.5pt, fill: MUTED)[high-resolution examples from the operation pool; the sequences do not show one fixed value of $M$])
 
-#align(center, image("figures/cifar10_mixup_cutmix.png", width: 89%))
+#v(2pt)
+#align(center, [
+  #set text(size: 13.5pt)
+  #table(
+    columns: (34mm, 1fr), stroke: 0.4pt + MUTED,
+    inset: (x: 7pt, y: 3pt), align: (left, left),
+    [#fitc[$N$, `num_ops`]], [number of randomly chosen operations applied in sequence],
+    [#knobc[$M$, `magnitude`]], [a bin index mapped to an operation-specific scale, rather than degrees or percent],
+  )
+])
 
 #pause
-#punch[Between examples — exactly where data was silent — the model is now told to behave *linearly*.]
+#align(center, text(size: 16pt, weight: 650)[RandAugment avoids a separate search for a learned policy. Validation still chooses $N$, $M$, and a task-valid operation space.])
 
-== The mixed target is exactly the mixing weight #D
+== RandAugment in TorchVision #V
 
-For $lambda_"mix" = 0.70$ mixing a cat with a dog:
+#align(center, grid(columns: (111mm, 1fr), gutter: 18pt,
+  [#codebox(size: 11.7pt)[```python
+import torch
+from torchvision.transforms import (
+    InterpolationMode, v2,
+)
 
-$ tilde(y) = 0.70 thin y_"cat" + 0.30 thin y_"dog" $
+strong_train_tf = v2.Compose([
+    v2.ToImage(),  # keep uint8 here
+    v2.RandomCrop(32, padding=4,
+                  padding_mode="reflect"),
+    v2.RandomHorizontalFlip(p=0.5),
+    v2.RandAugment(
+        num_ops=2,
+        magnitude=9,          # bin 9 of 31
+        interpolation=InterpolationMode.BILINEAR,
+    ),
+    v2.ToDtype(torch.float32, scale=True),
+    v2.Normalize(mean, std),
+])
+```]],
+  [#align(left, [
+    #set text(size: 14.5pt)
+    *What the code does*
+    - Two operations are sampled and applied in sequence on each call.
+    - `magnitude=9` is a bin index, not “9 degrees.”
+    - Convert and normalize *after* RandAugment.
+    - Keep it out of validation and test.
+    #v(8pt)
+    #failc[*Limitation:*] TorchVision's `RandAugment` handles images and videos only. It does not update boxes, masks, or keypoints, so spatial targets need a task-aware policy.
+  ])],
+))
 
-The cross-entropy against a soft target splits by linearity:
+#note([Horizontal flip is separate because it is not in TorchVision's RandAugment operation pool. Inspect many draws, then validate $N$ and $M$. #link(PTV + "generated/torchvision.transforms.v2.RandAugment.html")[official API]], color: BLUE)
 
-$ ell(tilde(y), p) = -0.70 log p_"cat" - 0.30 log p_"dog" $
+== Mixup and CutMix change examples and targets #V
+
+#reg-map(active: "mixing", named: true, focus-method: [Mixup / CutMix])
+
+#v(10pt)
+#pause
+#align(center, grid(
+  columns: (1fr, 1fr), gutter: 18pt,
+  hairline([#fitc[INTUITION]], [
+    #text(size: 15.5pt)[Mix two inputs by a fraction; mix their targets by the same fraction.]
+  ], color: TEAL),
+  hairline([#knobc[WHY IT CAN HELP]], [
+    #text(size: 15.5pt)[Training between stored examples makes memorizing each one less useful and encourages smoother predictions.]
+  ], color: ACC),
+))
+
+== Mixup interpolates examples and labels #D
+
+$ lambda tilde "Beta"(alpha, alpha), quad tilde(x) = lambda x_i + (1-lambda)x_j, quad tilde(y) = lambda e_(y_i) + (1-lambda)e_(y_j) $
+
+#let mix-panel(path, tag, colour) = stack(spacing: 3pt,
+  block(stroke: 1pt + colour, radius: 2pt, clip: true,
+    image(path, width: 48mm, height: 48mm, fit: "cover")),
+  align(center, text(size: 12.5pt, fill: colour, tag)),
+)
+#v(2pt)
+#align(center, grid(columns: (48mm, 48mm, 48mm), gutter: 9mm,
+  mix-panel("figures/mixup_cat_hd.png", [endpoint $i$ · cat], TEAL),
+  mix-panel("figures/mixup_70_hd.png", [$lambda=0.70$ · soft target 70/30], BLUE),
+  mix-panel("figures/mixup_dog_hd.png", [endpoint $j$ · dog], ACC),
+))
+#caption[Course-generated teaching photographs with exact pixel arithmetic; the CIFAR-10 experiment uses different inputs.]
 
 #pause
-#note[
-  Two checkable consequences: the loss never reaches zero (even a perfect $p = tilde(y)$ scores $#fnum(-0.7 * calc.ln(0.7) - 0.3 * calc.ln(0.3), d: 3)$, the target entropy), and extreme confidence on either class is punished. MixUp regularizes targets *and* inputs.
-]
+#punch[The blended image need not look natural. Mixup specifies how the prediction should change between two stored examples.]
 
-== PyTorch: MixUp and CutMix happen after batching #V
+== For a 70/30 blend, predict 70/30 #D
 
-#codebox(size: 12.2pt)[```python
+#align(center, grid(columns: (110mm, 1fr), gutter: 20pt,
+  [#align(left, [
+    #set text(size: 16pt)
+    Mixup gives the blended image a *soft target*:
+    #v(5pt)
+    $ tilde(y) = 0.70 e_"cat" + 0.30 e_"dog" $
+    #v(8pt)
+    #grid(columns: (7fr, 3fr), gutter: 0pt,
+      block(fill: TEAL.lighten(72%), inset: 6pt)[*cat* 0.70],
+      block(fill: BLUE.lighten(72%), inset: 6pt)[*dog* 0.30],
+    )
+    #v(10pt)
+    Cross-entropy uses those same numbers as weights:
+    #v(4pt)
+    $ "CE"(tilde(y),p) = -0.70 log p_"cat" - 0.30 log p_"dog" $
+    #v(10pt)
+    #note([Best match: $p_"cat"=0.70$ and $p_"dog"=0.30$. The minimum is *positive* because neither class has target probability 1.], color: TEAL)
+  ])],
+  [#align(left, [
+    #set text(size: 15pt)
+    *How strongly do examples mix?*
+    #v(4pt)
+    $ lambda tilde "Beta"(alpha, alpha) $
+    #v(4pt)
+    - small $alpha$: $lambda$ is usually near 0 or 1;
+    - $alpha=1$: all blend ratios are equally likely;
+    - large $alpha$: blends stay near 50/50.
+    #v(10pt)
+    #note([$lambda$ weights both the pixels and the two target entries. It does not claim that the scene is literally “70% cat.”], color: ACC)
+    #v(12pt)
+    #text(size: 12.5pt, fill: MUTED)[Later in the course: the entropy and KL-divergence view of cross-entropy.]
+  ])],
+))
+
+== Birdsong + rain can be a real recording #V
+
+#align(center, [
+  #set text(size: 15pt)
+  A microphone records *sums of pressure waves*.
+  #v(3pt)
+  #image("figures/sources/mixup_audio_superposition_imagen.png", width: 160mm)
+  #v(2pt)
+  #grid(columns: (1fr, 1fr, 1fr), gutter: 8mm,
+    align(center, text(size: 13.5pt, weight: 700, fill: TEAL)[birdsong $x_i$]),
+    align(center, text(size: 13.5pt, weight: 700, fill: BLUE)[mixture $tilde(x)$]),
+    align(center, text(size: 13.5pt, weight: 700, fill: ACC)[rain $x_j$]),
+  )
+  #v(3pt)
+  $ tilde(x) = 0.70 x_i + 0.30 x_j quad comma quad tilde(y) = 0.70 e_"bird" + 0.30 e_"rain" $
+  #v(4pt)
+  #note([The input mixture is physically meaningful. The target is a soft clip-level training signal that still needs validation. For multi-label detection, use multi-hot targets.], color: GREEN)
+  #v(2pt)
+  #text(size: 11.5pt, fill: MUTED)[Imagen-generated schematic spectrograms; in code, mix the waveforms rather than these displayed pixels]
+])
+
+== A left turn + a right turn is not “go straight” #V
+
+#align(center, [
+  #image("figures/mixup_driving_exact_blend_wide.png", width: 160mm)
+  #v(2pt)
+  #grid(columns: (1fr, 1fr, 1fr), gutter: 8mm,
+    align(center, text(size: 14pt, weight: 750, fill: TEAL)[steer $-25 degree$]),
+    align(center, text(size: 14pt, weight: 750, fill: RED)[raw Mixup $arrow.r$ target $0 degree$]),
+    align(center, text(size: 14pt, weight: 750, fill: ACC)[steer $+25 degree$]),
+  )
+  #v(3pt)
+  $ tilde(x) = 0.5 x_"left" + 0.5 x_"right" quad comma quad tilde(y) = 0 degree $
+  #v(4pt)
+  #note([The blended image is a double exposure, but the averaged target says “drive straight.” Neither source supports that instruction, so the training example is invalid.], color: RED)
+])
+
+== Before using Mixup, ask three questions #D
+
+#align(left, grid(
+  columns: (14mm, 1fr), row-gutter: 14pt, column-gutter: 10pt,
+  text(size: 24pt, weight: 800, fill: TEAL)[1],
+  [
+    #text(size: 16.5pt, weight: 750)[Is mixing meaningful in this representation?]
+    #v(3pt)
+    #text(size: 15pt)[#keepc[Often sensible:] pixels, waveforms, and normalized continuous features. #failc[Usually not:] raw token IDs, categories, graphs, and molecules.]
+  ],
+
+  text(size: 24pt, weight: 800, fill: ACC)[2],
+  [
+    #text(size: 16.5pt, weight: 750)[Does the mixed target match the task?]
+    #v(3pt)
+    #text(size: 15pt)[#keepc[May mix directly:] global class targets. #failc[Needs its own rule:] boxes, masks, timestamps, and actions.]
+  ],
+
+  text(size: 24pt, weight: 800, fill: BLUE)[3],
+  [
+    #text(size: 16.5pt, weight: 750)[Does it help on untouched validation data?]
+    #v(3pt)
+    #text(size: 15pt)[#valc[Use untouched validation:] choose $alpha$ on the metric that matters and inspect mixed samples for domain failures.]
+  ],
+))
+
+#v(14pt)
+#note([If a check fails, mix later features, define the correct target rule, use a task-aware alternative, or skip mixing.], color: BLUE)
+#v(12pt)
+#punch[Use raw-input Mixup only when all three checks pass.]
+
+== CutMix: patch-based mixing #V
+
+#align(center, grid(columns: (108mm, 1fr), gutter: 20pt,
+  [#align(center, grid(columns: (49mm, 49mm), gutter: 8mm,
+    mix-panel("figures/mixup_cat_hd.png", [base image], TEAL),
+    mix-panel("figures/cutmix_25_hd.png", [25% patch from dog], GREEN),
+  ))],
+  [#align(left, [
+    #set text(size: 15.5pt)
+    Paste a rectangular region from image $j$ into image $i$.
+    #v(8pt)
+    $ r = "patch area" / "image area" $
+    #v(4pt)
+    $ tilde(y) = (1-r)e_(y_i) + r e_(y_j) $
+    #v(8pt)
+    Here $r=0.25$, so the target is $0.75$ cat + $0.25$ dog.
+    #v(8pt)
+    Pixels within each pasted region remain unblended. The same domain and spatial-target checks still apply.
+  ])],
+))
+
+#v(5pt)
+#punch[CutMix keeps pixels intact inside each patch while still training the prediction to reflect both source images.]
+
+#place(bottom + center, dy: -2pt, caption[
+  Blend images and labels in #link(IA + "augmentation-mixup/")[interactive-articles/augmentation-mixup].
+])
+
+== MixUp and CutMix in PyTorch #V
+
+#align(center, grid(columns: (112mm, 1fr), gutter: 18pt,
+  [#codebox(size: 11.5pt)[```python
+from torch.utils.data import DataLoader
 from torchvision.transforms import v2
 import torch.nn.functional as F
+
+train_loader = DataLoader(
+    train_set, batch_size=B, shuffle=True)
 
 batch_aug = v2.RandomChoice([
     v2.MixUp(num_classes=K, alpha=0.2),
     v2.CutMix(num_classes=K, alpha=1.0),
 ])
 
-model.train()
 for images, class_ids in train_loader:
-    images, soft_targets = batch_aug(images, class_ids)
+    images, soft_targets = batch_aug(
+        images, class_ids
+    )
     logits = model(images)
     loss = F.cross_entropy(logits, soft_targets)
     optimizer.zero_grad(set_to_none=True)
     loss.backward(); optimizer.step()
-```]
-
-#note([The transform pairs examples within a batch and returns probability targets; `cross_entropy` accepts them directly. Accuracy still uses the original class IDs on an unmodified evaluation set. #link(PTV + "auto_examples/transforms/plot_cutmix_mixup.html")[official example]], color: BLUE)
-
-== CutMix and RandAugment industrialize the idea #V
-
-#align(center, table(
-  columns: (52mm, 1fr), stroke: 0.45pt + MUTED, inset: (x: 10pt, y: 6.5pt), align: (left, left),
-  table.header([extension], [one-line mechanism]),
-  [CutMix], [paste a *patch* of image $j$ onto image $i$; mix labels by pasted-area fraction — keeps local evidence crisp],
-  [RandAugment], [sample a couple of transforms and one global magnitude from a small policy space — augmentation search without the search cost],
+```]],
+  [#align(left, [
+    #set text(size: 14.5pt)
+    *What changes in the training loop*
+    - transforms run *after* batching;
+    - labels change from class IDs `(B,)` to probabilities `(B, K)`;
+    - `cross_entropy` accepts those soft targets directly;
+    - the current implementation pairs adjacent samples, so shuffle the loader.
+    #v(9pt)
+    Evaluate accuracy on an unmodified deterministic split with the original class IDs.
+  ])],
 ))
 
-#note[
-  Both inherit augmentation's contract: the arithmetic is automatic, but the transformation space and its strength remain validation-selected claims about the task.
-]
-
-#place(bottom + center, dy: -2pt, caption[
-  Interactive: blend images and labels live — #link(IA + "augmentation-mixup/")[interactive-articles/augmentation-mixup]
-])
+#note([MixUp and CutMix run on batches rather than inside the per-image dataset pipeline. #link(PTV + "auto_examples/transforms/plot_cutmix_mixup.html")[official TorchVision example]], color: BLUE)
 
 // ═══════════════════════ PART V — DROPOUT ═══════════════════════
-= Dropout: train with randomly deleted features
+== Dropout changes hidden activations during training #V
 
-== A feature that only works in committee is fragile #V
-
-#reg-strip("model")
+#reg-map(active: "model", named: true)
 
 #v(10pt)
-#align(center, grid(columns: (1fr, 1fr), gutter: 24pt,
-  hairline([Co-adaptation], [with all units always present, a hidden feature can lean on its neighbours — a brittle committee that memorizes together], color: RED),
-  hairline([The intervention], [delete a random subset of features at *every* training step, so each must carry evidence on its own], color: ACC),
+#punch[Hide random hidden activations during training, so useful features cannot rely on one fixed partner; use the full network for evaluation.]
+
+== One favourite route is fragile #V
+
+#align(center, grid(columns: (72mm, 1fr), gutter: 12mm,
+  [#align(center, image("figures/dropout_route_brittle.png", width: 68mm))],
+  [#align(left, [
+    #set text(size: 16pt)
+    #text(size: 14pt, weight: 750, fill: RED)[THE ROUTINE LOOKS SUCCESSFUL]
+    #v(4pt)
+    Every trip follows the same familiar route, and the destination is reached.
+    #v(12pt)
+    #text(size: 14pt, weight: 750, fill: RED)[BUT THERE IS NO BACKUP]
+    #v(4pt)
+    Nothing forces the traveller to learn another way. Close one critical road and the whole journey fails.
+  ])],
 ))
 
-#pause
-#punch[If any teammate might vanish, every feature must be individually useful.]
+#v(8pt)
+#punch[A system that depends on one pathway can handle routine cases yet remain brittle.]
 
-== The mechanism is one random mask #D
+== Practise with a different closure every trip #V
 
-Sample a fresh Bernoulli mask each pass; keep units with probability $q$:
+#align(center, grid(columns: (72mm, 1fr), gutter: 12mm,
+  [#align(center, image("figures/dropout_route_practice.png", width: 68mm))],
+  [#align(left, [
+    #set text(size: 16pt)
+    #enum(
+      [Close a *fresh set of roads* on each practice trip.],
+      [Keep the *start, destination,* and *city map* unchanged.],
+      [Make the traveller find a route that still works.],
+      spacing: 10pt,
+    )
+    #v(9pt)
+    #note([A fixed closure would merely create a new favourite route. Changing the closures rewards genuine alternatives.], color: TEAL)
+  ])],
+))
 
-$ m_i tilde "Bernoulli"(q), quad tilde(bold(h)) = (bold(m) dot.o bold(h)) / q $
+#v(7pt)
+#punch[Random disruption changes the available route—not the task being solved.]
 
-#pause
-#let drop-panel(mask, tag) = {
-  set text(size: 11pt)
+== At evaluation, open every road #V
+
+#align(center, grid(columns: (72mm, 1fr), gutter: 12mm,
+  [#align(center, image("figures/dropout_route_evaluation.png", width: 68mm))],
+  [#align(left, [
+    #set text(size: 16pt)
+    #enum(
+      [Remove the practice barriers.],
+      [Make *all roads* available.],
+      [Use the several routes learned while practising with closures.],
+      spacing: 10pt,
+    )
+    #v(9pt)
+    #note([The traveller is not split into separate copies. One traveller learned from every disrupted trip.], color: GREEN)
+  ])],
+))
+
+#v(7pt)
+#punch[Training creates backup routes; evaluation uses the complete system.]
+
+== Translate the road story into dropout #V
+
+#align(center, [
+  #set text(size: 15.5pt)
+  #table(
+    columns: (67mm, 100mm),
+    stroke: 0.5pt + MUTED,
+    inset: (x: 10pt, y: 5pt),
+    align: (left, left),
+    table.header(
+      [#text(weight: 750, fill: TEAL)[ROAD STORY]],
+      [#text(weight: 750, fill: ACC)[NEURAL NETWORK]],
+    ),
+    [road or route], [feature pathway],
+    [temporary closure], [hidden activation set to zero for *this pass*],
+    [one trip], [one training forward pass],
+    [fresh closures], [a fresh dropout mask],
+    [same city map], [the same stored weights $bold(theta)$],
+    [every road open], [dropout disabled for evaluation],
+  )
+])
+
+#v(8pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 8mm,
+  [#note([*Changes for one pass:* which activations are available.], color: TEAL)],
+  [#note([*Does not change:* the stored network or its weights.], color: GREEN)],
+))
+
+#v(6pt)
+#punch[The same weights must succeed through many temporary subnetworks.]
+
+== Back to the network: one worked example #V
+
+#let worked-drop-net(mask, shown, tag) = {
   align(center, diagram(
-    spacing: (11mm, 3.6mm), node-stroke: 0.8pt + INK, node-fill: white,
+    spacing: (11.5mm, 8mm), node-stroke: 0.8pt + INK, node-fill: white,
     {
-      for i in range(3) { node((0, (i - 1) * 1.6), none, radius: 2.5mm, fill: INK, stroke: none) }
+      for i in range(3) {
+        let y = (i - 1) * 1.25
+        node((0, y), none, radius: 3.2mm, fill: INK, stroke: none)
+      }
       for (j, keep) in mask.enumerate() {
-        let y = (j - 2.5) * 1.05
+        let y = (j - 1.5) * 1.12
         if keep == 1 {
-          node((1, y), none, radius: 2.5mm, fill: TEAL, stroke: none)
-          for i in range(3) { edge((0, (i - 1) * 1.6), (1, y), stroke: 0.4pt + MUTED.lighten(25%)) }
-          for o in range(2) { edge((1, y), (2, (o - 0.5) * 1.6), stroke: 0.4pt + MUTED.lighten(25%)) }
+          for i in range(3) {
+            edge((0, (i - 1) * 1.25), (1, y), stroke: 0.55pt + MUTED.lighten(20%))
+          }
+          edge((1, y), (2, 0), stroke: 0.8pt + TEAL)
+          node((1, y), text(size: 11pt, weight: 700, fill: white, shown.at(j)),
+            radius: 4mm, fill: TEAL, stroke: none)
         } else {
-          node((1, y), none, radius: 2.5mm, fill: white, stroke: (paint: MUTED, thickness: 0.8pt, dash: "dashed"))
+          node((1, y), text(size: 15pt, weight: 800, fill: RED)[$times$],
+            radius: 4mm, fill: white, stroke: (paint: RED, thickness: 1pt, dash: "dashed"))
         }
       }
-      for o in range(2) { node((2, (o - 0.5) * 1.6), none, radius: 2.5mm, fill: ACC, stroke: none) }
-      node((1, 3.6), text(size: 10.5pt, fill: MUTED, tag), stroke: none)
+      node((2, 0), text(size: 11pt, weight: 700, fill: white)[$z$],
+        radius: 4mm, fill: ACC, stroke: none)
+      node((0, 2.55), text(size: 10.5pt, fill: MUTED)[input $bold(x)$], stroke: none)
+      node((1, 2.55), text(size: 10.5pt, fill: MUTED)[hidden $bold(h)$], stroke: none)
+      node((2, 2.55), text(size: 10.5pt, fill: MUTED)[next layer], stroke: none)
+      node((1, -2.65), text(size: 11pt, weight: 650, fill: INK, tag), stroke: none)
     }
   ))
 }
-#align(center, stack(dir: ltr, spacing: 13mm,
-  drop-panel((1, 1, 0, 0, 1, 0), [step 1 · mask 110010]),
-  drop-panel((0, 1, 0, 1, 0, 1), [step 2 · mask 010101]),
-  drop-panel((0, 1, 1, 0, 1, 1), [step 3 · mask 011011]),
+
+#align(center, grid(columns: (96mm, 1fr), gutter: 38pt,
+  [#worked-drop-net((1, 1, 1, 1), ([2], [4], [6], [8]), [all four hidden activations are on])],
+  [#align(left, [
+    #set text(size: 16pt)
+    For one input, suppose the hidden layer produces
+    #v(7pt)
+    #align(center, text(size: 23pt, weight: 700, fill: TEAL)[$bold(h) = (2, 4, 6, 8)$])
+    #v(9pt)
+    Apply dropout to this hidden layer before it feeds the next layer.
+    #v(9pt)
+    #note([Use the #keepc[same network and same $bold(h)$] on every following slide.], color: GREEN)
+  ])],
 ))
-#caption[three consecutive training steps, masks drawn at $q = 0.5$ — a *different subnetwork* trains each step, all sharing one weight set]
 
-== Divide by $q$ so the expected signal is unchanged #D
+#punch[Dropout closes activations for one forward pass; it does not delete weights from the stored network.]
 
-Why the $1 slash q$? Take the expectation over masks:
-
-$ EE[tilde(h)_i] = (EE[m_i] dot h_i) / q = (q dot h_i) / q = h_i quad checkmark $
-
-One concrete pass with $bold(h) = (2, 4, 6, 8)$, mask $(1, 0, 1, 0)$, $q = 0.5$:
-
-$ tilde(bold(h)) = (1 dot 2, thick 0 dot 4, thick 1 dot 6, thick 0 dot 8) / 0.5 = (4, thick 0, thick 12, thick 0) $
-
-#note[Corrected *in expectation* only — the injected variance $((1 - q) slash q) thin h_i^2$ remains: deliberate multiplicative noise.]
-
-== From the equation to a tensor operation #V
-
-#codebox(size: 13pt)[```python
-def inverted_dropout(h, p_drop=0.3, training=True):
-    if not training or p_drop == 0:
-        return h
-    if not 0 <= p_drop < 1:
-        raise ValueError("p_drop must be in [0, 1)")
-
-    q_keep = 1.0 - p_drop
-    keep = torch.rand_like(h) < q_keep
-    return h * keep / q_keep
-
-h = torch.tensor([2., 4., 6., 8.])
-draws = torch.stack([inverted_dropout(h) for _ in range(20_000)])
-draws.mean(0)                    # approximately tensor([2, 4, 6, 8])
-```]
-
-#note([The mask has no gradients and no learnable parameters. The same learned weights receive gradients through many sampled subnetworks.], color: TEAL)
-
-== Put dropout where representation redundancy exists #V
-
-#codebox(size: 13pt)[```python
-class Classifier(nn.Module):
-    def __init__(self, d, K):
-        super().__init__()
-        self.head = nn.Sequential(
-            nn.Linear(d, 256),
-            nn.ReLU(),
-            nn.Dropout(p=0.3),   # p_drop=.3; q_keep=.7
-            nn.Linear(256, K),
-        )
-
-    def forward(self, features):
-        return self.head(features)
-```]
+== Training pass: flip four coins #V
 
 #align(center, grid(columns: (1fr, 1fr), gutter: 18pt,
-  note([Start modestly: $p approx 0.1$–$0.3$ in modern blocks; larger values are common in wide dense heads.], color: ACC),
-  note([Do not drop the final logits. With functional `F.dropout`, pass `training=self.training` explicitly.], color: RED),
+  [#align(center, [
+    #text(size: 15pt, weight: 750, fill: TEAL)[BEFORE DROPOUT]
+    #v(5pt)
+    #worked-drop-net((1, 1, 1, 1), ([2], [4], [6], [8]), [$bold(h)=(2,4,6,8)$])
+  ])],
+  [#align(center, [
+    #text(size: 15pt, weight: 750, fill: RED)[THIS TRAINING PASS]
+    #v(5pt)
+    #worked-drop-net((1, 0, 1, 0), ([2], [0], [6], [0]), [$bold(m)=(1,0,1,0)$])
+  ])],
 ))
 
-== One network, $2^d$ overlapping committees #V
+#v(7pt)
+#align(center, text(size: 22pt)[
+  $ underbrace(bold(h), (2,4,6,8)) quad arrow.r^("mask " bold(m)) quad underbrace(bold(m) dot.o bold(h), (2,0,6,0)) $
+])
 
-#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 18pt,
-  hairline([Sampling view], [$d$ droppable units define up to $2^d$ subnetworks; each step trains one], color: ACC),
-  hairline([Sharing view], [all subnetworks reuse *one* parameter set — no extra memory], color: TEAL),
-  hairline([Test-time view], [running the full network $approx$ averaging the committee], color: BLUE),
+== First: masking lowers the average signal #V
+
+#let act-cell(value, live: true, color: TEAL) = block(
+  width: 25mm, height: 14mm, radius: 2pt,
+  fill: if live { color.lighten(72%) } else { MUTED.lighten(83%) },
+  stroke: 0.8pt + if live { color } else { MUTED },
+  align(center + horizon, text(size: 18pt, weight: 750,
+    fill: if live { INK } else { MUTED }, value)),
+)
+#let act-row(values, live, color: TEAL) = stack(dir: ltr, spacing: 4mm,
+  ..values.enumerate().map(((i, value)) => act-cell(value, live: live.at(i), color: color)))
+
+#punch[$q_"keep"=0.5$ means each activation survives only half of the training passes.]
+
+#align(center, grid(columns: (42mm, 1fr), row-gutter: 8pt,
+  [#text(size: 13.5pt, weight: 700, fill: MUTED)[FULL ACTIVATION]],
+  [#act-row(([2], [4], [6], [8]), (true, true, true, true))],
+  [#text(size: 13.5pt, weight: 700, fill: RED)[ONE RAW MASK]],
+  [#act-row(([2], [0], [6], [0]), (true, false, true, false), color: RED)],
 ))
 
-#note[
-  The averaging claim is exact for a single linear layer and an *approximation* for deep nonlinear networks — a useful intuition, not an identity (Srivastava et al., 2014).
-]
+#v(10pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 20pt,
+  hairline([#failc[ONE PASS]], [Some entries become zero: $(2,4,6,8) arrow.r (2,0,6,0)$.], color: RED),
+  hairline([#knobc[MANY PASSES]], [Every coordinate contributes only $50%$ of the time, so its average contribution is halved.], color: ACC),
+))
 
-== Checkpoint: what does `Dropout(p = 0.5)` do in `eval()` mode? #Q
+#v(8pt)
+#punch[Without a correction, the next layer receives a smaller signal during training than during evaluation.]
 
-PyTorch's `p` is the *drop* probability, so $q = 1 - p$.
+== Then: scale the survivors during training #V
+
+#punch[If half survive on average, multiply each survivor by $2 = 1/q_"keep"$. Dropped entries stay zero.]
+
+#align(center, grid(columns: (42mm, 1fr), row-gutter: 7pt,
+  [#text(size: 13.5pt, weight: 700, fill: RED)[MASK A · RAW]],
+  [#act-row(([2], [0], [6], [0]), (true, false, true, false), color: RED)],
+  [#text(size: 13.5pt, weight: 700, fill: GREEN)[MASK A · ×2]],
+  [#act-row(([4], [0], [12], [0]), (true, false, true, false), color: GREEN)],
+  [#text(size: 13.5pt, weight: 700, fill: RED)[MASK B · RAW]],
+  [#act-row(([0], [4], [0], [8]), (false, true, false, true), color: RED)],
+  [#text(size: 13.5pt, weight: 700, fill: GREEN)[MASK B · ×2]],
+  [#act-row(([0], [8], [0], [16]), (false, true, false, true), color: GREEN)],
+))
+
+#v(9pt)
+#align(center, note([The correction changes the #knobc[magnitudes] of surviving activations. It does not change which units the mask dropped. Next, zoom in on $h_3=6$.], color: ACC))
+
+== One activation has two possible training-time outputs #D
+
+#punch[Zoom in on #fitc[$h_3=6$], with #knobc[$q_"keep"=0.5$]. A fresh mask is drawn on every forward pass.]
+
+#v(8pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
+  hairline([#keepc[KEPT]], [
+    This happens with probability $0.5$.
+    #v(7pt)
+    #align(center, text(size: 23pt, weight: 750, fill: GREEN)[$6 / 0.5 = 12$])
+    #v(5pt)
+    #align(center, text(size: 15pt)[The next layer receives *12*.])
+  ], color: GREEN),
+  hairline([#failc[DROPPED]], [
+    This happens with probability $0.5$.
+    #v(7pt)
+    #align(center, text(size: 23pt, weight: 750, fill: RED)[$0$])
+    #v(5pt)
+    #align(center, text(size: 15pt)[The next layer receives *0*.])
+  ], color: RED),
+))
+
+#v(14pt)
+#punch[One pass sends either #keepc[$12$] or #failc[$0$]—not $6$. The $6$ reappears only after averaging over masks.]
+
+== Expected value is the long-run average over masks #D
+
+#punch[Repeat the pass many times: about half the masks send #keepc[$12$], and half send #failc[$0$].]
+
+#v(12pt)
+#align(center, block(
+  width: 176mm, fill: rgb("#F7F5F0"), radius: 4pt,
+  inset: (x: 12pt, y: 12pt),
+  [#align(center, text(size: 24pt)[
+    $EE[tilde(h)_3] =$
+    #text(fill: GREEN, weight: 750)[$0.5 dot 12$]
+    $+$
+    #text(fill: RED, weight: 750)[$0.5 dot 0$]
+    $=$
+    #text(fill: TEAL, weight: 800)[$6 = h_3$]
+  ])],
+))
+
+#v(12pt)
+#align(center, grid(columns: (1fr, 1fr, 1fr), gutter: 16pt,
+  hairline([#keepc[KEPT CONTRIBUTION]], [probability kept $times$ value when kept], color: GREEN),
+  hairline([#failc[DROPPED CONTRIBUTION]], [probability dropped $times$ value when dropped], color: RED),
+  hairline([#fitc[LONG-RUN AVERAGE]], [the value received on average], color: TEAL),
+))
+
+#v(10pt)
+#punch[“Expected” does not mean every pass returns $6$. The random training outputs are centred on $6$.]
+
+== The general rule has the same two branches #D
+
+#punch[Now replace $6$ and $0.5$ with any activation $h_i$ and keep probability $q_"keep"$.]
+
+#v(8pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
+  hairline([#keepc[KEPT BRANCH]], [
+    probability $q_"keep"$
+    #v(5pt)
+    value $h_i/q_"keep"$
+  ], color: GREEN),
+  hairline([#failc[DROPPED BRANCH]], [
+    probability $1-q_"keep"$
+    #v(5pt)
+    value $0$
+  ], color: RED),
+))
+
+#v(12pt)
+#align(center, block(
+  width: 176mm, fill: rgb("#F7F5F0"), radius: 4pt,
+  inset: (x: 12pt, y: 11pt),
+  [#align(center, text(size: 22pt)[
+    $EE[tilde(h)_i] =$
+    #text(fill: GREEN, weight: 750)[$q_"keep" (h_i / q_"keep")$]
+    $+$
+    #text(fill: RED, weight: 750)[$(1-q_"keep") dot 0$]
+  ])],
+))
+
+#v(14pt)
+#punch[Now simplify one coloured contribution at a time.]
+
+== The two contributions simplify separately #D
+
+#align(center, grid(columns: (1fr, 1fr), gutter: 20pt,
+  hairline([#keepc[KEPT CONTRIBUTION]], [
+    #align(center, text(size: 22pt, weight: 750, fill: GREEN)[$q_"keep" (h_i/q_"keep") = h_i$])
+    #v(7pt)
+    The keep probability cancels the factor $1/q_"keep"$.
+  ], color: GREEN),
+  hairline([#failc[DROPPED CONTRIBUTION]], [
+    #align(center, text(size: 22pt, weight: 750, fill: RED)[$(1-q_"keep") dot 0 = 0$])
+    #v(7pt)
+    Anything multiplied by the dropped value $0$ contributes $0$.
+  ], color: RED),
+))
+
+#v(14pt)
+#align(center, block(
+  width: 132mm, fill: rgb("#F7F5F0"), radius: 4pt,
+  inset: (x: 12pt, y: 12pt),
+  [#align(center, text(size: 25pt)[
+    $EE[tilde(h)_i] =$
+    #text(fill: GREEN, weight: 750)[$h_i$]
+    $+$
+    #text(fill: RED, weight: 750)[$0$]
+    $=$
+    #text(fill: TEAL, weight: 800)[$h_i$]
+  ])],
+))
+
+#v(14pt)
+#punch[Training is noisy, but its mean activation matches the value used at evaluation.]
+
+== Evaluation: the same network, all units on #V
+
+#align(center, grid(columns: (1fr, 1fr), gutter: 20pt,
+  hairline([#knobc[TRAINING]], [
+    draw a fresh $bold(m)$, then send
+    $tilde(bold(h)) = (bold(m) dot.o bold(h)) / q_"keep"$
+    to the next layer.
+    #v(8pt)
+    `model.train()`
+  ], color: ACC),
+  hairline([#keepc[EVALUATION]], [
+    use the full activation
+    $bold(h) = (2,4,6,8)$
+    once—no mask and no extra scaling.
+    #v(8pt)
+    `model.eval()`
+  ], color: GREEN),
+))
+
+#v(18pt)
+#punch[The $1/q_"keep"$ correction happens during training, so evaluation is simply the identity: $bold(h) mapsto bold(h)$.]
+
+== Why dropout regularizes: distribute the evidence #D
+
+#align(center, grid(columns: (1fr, 1fr), gutter: 20pt,
+  hairline([#failc[BRITTLE RELIANCE]], [
+    $bold(w) = (2,0,0,0)$
+    #v(5pt)
+    One feature carries everything. If it is masked, the unit loses all evidence.
+    #v(6pt)
+    $norm(bold(w))_2^2 = 4$
+  ], color: RED),
+  hairline([#keepc[DISTRIBUTED RELIANCE]], [
+    $bold(w) = (0.5,0.5,0.5,0.5)$
+    #v(5pt)
+    Several features can support the unit when a partner disappears.
+    #v(6pt)
+    $norm(bold(w))_2^2 = 1$
+  ], color: GREEN),
+))
+
+#v(10pt)
+#align(center, text(size: 19pt, weight: 700)[
+  Any input may vanish $arrow.r$ concentrating all influence in one pathway becomes risky.
+])
+
+#note([This is an #knobc[$L_2$-like] pressure, not the same objective as ordinary weight decay. The effective penalty depends on the data and activation scales; the equal weights above are an illustration, not a theorem.], color: BLUE)
+
+== What to do in PyTorch #V
+
+#align(center, grid(columns: (108mm, 1fr), gutter: 20pt,
+  [#codebox(size: 12.5pt)[```python
+model = nn.Sequential(
+    nn.Linear(d, 256),
+    nn.ReLU(),
+    nn.Dropout(p=0.2),   # drop 20%; keep q=0.8
+    nn.Linear(256, K),
+)
+
+model.train()   # fresh masks: ON
+# ... training loop ...
+
+model.eval()    # dropout: OFF
+# ... validation / test ...
+```]],
+  [#align(left, [
+    #set text(size: 15pt)
+    #knobc[PLACE IT]
+    #v(2pt)
+    After selected hidden activations—not on final logits.
+    #v(7pt)
+    #knobc[START MODESTLY]
+    #v(2pt)
+    Try $p_"drop" approx 0.1$–$0.3$ only when validation shows overfitting.
+    #v(7pt)
+    #valc[LET PYTORCH SCALE]
+    #v(2pt)
+    `nn.Dropout` performs inverted scaling automatically. Do not divide manually.
+  ])],
+))
+
+#punch[PyTorch's `p` means #failc[drop probability]. Some implementations instead use `keep_prob` $= q_"keep" = 1-p$.]
+
+== What does dropout return in evaluation mode? #Q
+
+PyTorch's argument `p` is $p_"drop"$, so $q_"keep" = 1 - p_"drop"$.
 
 #codebox(size: 15pt)[```python
 h = torch.tensor([2., 4., 6., 8.])
@@ -1143,24 +2436,24 @@ drop.eval();  drop(h)   # = ?
 
 #mcq(
   [What does the `eval()` line return?],
-  [$(2, 4, 6, 8)$ — the identity],
-  [$(1, 2, 3, 4)$ — scaled by $q$],
-  [$(4, 8, 12, 16)$ — scaled by $1 slash q$],
+  [$(2, 4, 6, 8)$, the identity],
+  [$(1, 2, 3, 4)$, scaled by $q_"keep"$],
+  [$(4, 8, 12, 16)$, scaled by $1 slash q_"keep"$],
   [a fresh random mask, like training],
 )
 
-== Answer: evaluation is the untouched full network #A
+== Answer: dropout is disabled during evaluation #A
 
 #mcq-answer(
   [A],
-  [the identity — dropout is disabled at test time],
-  [*inverted* dropout already paid the $1 slash q$ correction during training, so evaluation needs no rescaling and stays deterministic. Training and evaluation differ in exactly one controlled way.],
+  [the identity, because dropout is disabled at test time],
+  [*Inverted* dropout applies the $1 slash q_"keep"$ correction during training. Evaluation therefore needs no rescaling and is deterministic.],
 )
 
 #pause
-#warning[A model accidentally left in `train()` mode at evaluation gives noisy, degraded predictions — a classic silent bug. `model.eval()` before measuring anything.]
+#warning[A model left in `train()` mode during evaluation gives noisy, degraded predictions. Call `model.eval()` before computing validation or test metrics.]
 
-== Three controls that students often conflate #V
+== `train()`, `eval()`, and `inference_mode()` #V
 
 #align(center, [
   #set text(size: 13.5pt)
@@ -1175,209 +2468,162 @@ drop.eval();  drop(h)   # = ?
 ])
 
 #pause
-#punch[`eval()` changes module behaviour; `inference_mode()` changes gradient tracking. They solve different problems.]
+#punch[`eval()` changes module behaviour. `inference_mode()` changes gradient tracking.]
 
-== Where dropout earns its keep today #V
+== Dropout in modern architectures #V
 
 #align(center, table(
   columns: (62mm, 1fr), stroke: 0.45pt + MUTED, inset: (x: 10pt, y: 6pt), align: (left, left),
   table.header([setting], [current practice]),
-  [wide fully-connected heads], [classic sweet spot — where co-adaptation is worst],
+  [wide fully-connected heads], [a common location because co-adaptation is strongest there],
   [transformer blocks], [small rates inside attention / FFN and on residuals],
   [modern conv backbones], [often secondary to strong augmentation and weight decay; classifier-head dropout remains common],
   [whole residual branches], [the same idea at branch scale: *stochastic depth / DropPath*],
 ))
 
-#note([The knob is $p$: sweep it like $lambda$ and read #valc[validation]. Too little may not help; too much destroys useful signal.], color: BLUE)
-
-== Standard inference collapses the masks; MC Dropout keeps sampling #V
-
-#align(center, image("figures/mc_dropout_bridge.png", width: 64%))
-
-#align(center, table(
-  columns: (1fr, 1fr), stroke: none, inset: (x: 10pt, y: 3pt),
-  [#valc[Standard:] dropout off → one deterministic prediction],
-  [#knobc[MC:] dropout on → $T$ probabilities; report mean + spread],
-))
-
-#caption[schematic: masks agree near training support and can disagree away from it · spread is a useful signal, not a guarantee of correctness]
-
-== Safe MC Dropout: freeze BatchNorm, enable only dropout #V
-
-#codebox(size: 11.5pt)[```python
-DROPOUT = (nn.Dropout, nn.Dropout1d, nn.Dropout2d, nn.Dropout3d)
-
-def mc_predict(model, x, T=30):
-    model.eval()                       # BatchNorm uses stored statistics
-    for module in model.modules():
-        if isinstance(module, DROPOUT):
-            module.train()             # only dropout stays stochastic
-
-    with torch.inference_mode():
-        probs = torch.stack([
-            model(x).softmax(dim=-1) for _ in range(T)
-        ])
-
-    model.eval()                       # restore deterministic evaluation
-    return probs.mean(0), probs.std(0)
-```]
-
-#pause
-#warning[Do not call `model.train()` globally: BatchNorm would use the inference batch and update its buffers. Average *probabilities*, not logits. Functional dropout needs a separate explicit switch.]
-
-== What this lecture establishes — and what the next one must answer #V
-
-#align(center, grid(columns: (1fr, 1fr), gutter: 22pt,
-  hairline([Ready now], [why masks create different subnetworks; inverted scaling; train/eval modes; how to sample safely], color: GREEN),
-  hairline([Next lecture], [predictive entropy; mutual information / BALD; Bayesian interpretation; calibration; failure cases], color: BLUE),
-))
-
-$ x arrow.r {m^(1), dots, m^(T)} arrow.r {p^(1), dots, p^(T)} arrow.r (underbrace(1/T sum_t p^(t), "mean"), underbrace("spread"(p^(1:T)), "uncertainty signal")) $
-
-#pause
-#punch[The mask was a training regularizer. Keeping it stochastic at inference turns it into a *prediction distribution*.]
-
-#place(bottom + center, dy: -2pt, caption[
-  Follow-along: #link(NB + "02_dropout_from_scratch.ipynb")[dropout-from-scratch notebook] · #link(PT + "generated/torch.nn.Dropout.html")[PyTorch API] · #link(IA + "dropout-playground/")[playground]
-])
+#note([Tune $p_"drop"$ on #valc[validation], just as you tune $lambda$. A small value may have little effect, while a large value can destroy useful signal.], color: BLUE)
 
 // ═══════════════════ PART VI — LABEL SMOOTHING ═══════════════════
-= Label smoothing: soften the targets
+== Label smoothing changes the training targets #V
 
-== One-hot targets demand infinite confidence #D
-
-#reg-strip("targets")
-
-With target $y_b = 1$, cross-entropy wants $p_b = 1$ — which softmax only reaches as the correct logit races to $+oo$:
-
-#align(center, lines(
-  fn: (
-    m => calc.ln(1.0 + 4.0 * calc.exp(-m)),
-    m => 0.92 * calc.ln(1.0 + 4.0 * calc.exp(-m)) + 0.08 * calc.ln(calc.exp(m) + 4.0),
-  ),
-  domain: (0, 8), samples: 90, markers: false,
-  labels: ([one-hot], [smoothed $epsilon = 0.1$]), colors: (RED, ACC),
-  vlines: ((calc.ln(46.0), [$m^star = ln 46 approx 3.83$], ACC),),
-  x-label: [correct-class logit margin $m$], y-label: [cross-entropy], size: (140mm, 40mm),
-))
-
-#pause
-#punch[#failc[One-hot]: the gradient never rests. #knobc[Smoothed]: a finite margin is *optimal*.]
-
-== Move $epsilon$ of the target mass off the correct class #D
-
-$ tilde(y) = (1 - epsilon) thin y + epsilon / K bold(1) $
-
-For $K = 5$, $epsilon = 0.1$, correct class “b”:
-
-#align(center, stack(dir: ltr, spacing: 16mm,
-  stack(spacing: 5pt,
-    bars((0, 1, 0, 0, 0), labels: ([a], [b], [c], [d], [e]), bar: 7.5mm, span: 30mm,
-      color: (i, v) => if i == 1 { RED } else { MUTED.lighten(35%) }),
-    text(size: 12.5pt)[one-hot $y$]),
-  stack(spacing: 5pt,
-    bars((0.02, 0.92, 0.02, 0.02, 0.02), labels: ([a], [b], [c], [d], [e]), bar: 7.5mm, span: 30mm,
-      color: (i, v) => if i == 1 { ACC } else { ACC.lighten(45%) }),
-    text(size: 12.5pt)[smoothed $tilde(y)$]),
-))
-
-#note[
-  Convention check: PyTorch's `CrossEntropyLoss(label_smoothing=0.1)` mixes with the uniform distribution over *all* $K$ classes, giving $0.92 slash 0.02$ — not the $0.90 slash 0.025$ of "redistribute to others". Name the convention before comparing $epsilon$ values.
-  #text(size: 14pt)[#link(PT + "generated/torch.nn.CrossEntropyLoss.html")[PyTorch API reference]]
-]
-
-== PyTorch: one argument, but still a validation-selected knob #V
-
-#codebox(size: 13pt)[```python
-criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
-
-model.train()
-for images, class_ids in train_loader:
-    logits = model(images)
-    loss = criterion(logits, class_ids)
-    optimizer.zero_grad(set_to_none=True)
-    loss.backward(); optimizer.step()
-
-model.eval()
-with torch.inference_mode():
-    val_logits = model(val_images)
-    val_nll = F.cross_entropy(val_logits, val_class_ids)  # hard labels
-```]
-
-#align(center, grid(columns: (1fr, 1fr), gutter: 20pt,
-  note([Tune $epsilon$ on validation NLL or the metric you actually care about — not on training loss.], color: BLUE),
-  note([The smoothed training loss has a positive floor; do not compare its raw value with a one-hot run.], color: ACC),
-))
-
-== Where the softened optimum comes from #D
-
-Zero gradient forces $p = tilde(y)$, so at the optimum
-
-$ e^(m^star) / (e^(m^star) + 4) = 0.92 quad arrow.r.double quad m^star = ln 46 approx 3.83 $
-
-The mechanism, visible in the logit gradient $nabla_z ell = p - tilde(y)$ at $z = (0.6, 2.8, 1.1, -0.4, 0.3)$:
-
-#let zsm = (0.6, 2.8, 1.1, -0.4, 0.3)
-#let psm = {
-  let m = calc.max(..zsm)
-  let e = zsm.map(z => calc.exp(z - m))
-  e.map(v => v / e.sum())
-}
-#align(center, stack(dir: ltr, spacing: 15mm,
-  stack(spacing: 4pt,
-    bars(psm.enumerate().map(((i, p)) => calc.round(p - (if i == 1 { 1 } else { 0 }), digits: 3)),
-      labels: ([a], [b], [c], [d], [e]), bar: 7.2mm, span: 21mm,
-      color: (i, v) => if v < 0 { TEAL } else { RED.lighten(20%) }),
-    text(size: 12pt)[$p - y$ (one-hot)]),
-  stack(spacing: 4pt,
-    bars(psm.enumerate().map(((i, p)) => calc.round(p - (if i == 1 { 0.92 } else { 0.02 }), digits: 3)),
-      labels: ([a], [b], [c], [d], [e]), bar: 7.2mm, span: 21mm,
-      color: (i, v) => if v < 0 { TEAL } else { ACC }),
-    text(size: 12pt)[$p - tilde(y)$ (smoothed)]),
-))
-#caption[negative bar = logit pushed up · smoothing stops pushing once wrong classes reach $0.02$]
-
-== What smoothing buys — and what it costs #V
-
-#align(center, grid(columns: (1fr, 1fr), gutter: 24pt,
-  hairline([Can help], [tempers over-confident logits and can improve validation NLL, accuracy, or calibration — the effect is data- and recipe-dependent], color: GREEN),
-  hairline([Costs], [output probabilities are pulled toward uniformity — softer interpretability, and distillation teachers can lose class-similarity structure (Müller et al., 2019)], color: RED),
-))
-
-#note([
-  The knob is $epsilon$, the judge is #valc[validation] — and for probability quality, measure calibration explicitly rather than admiring confidence.
-  #text(size: 14pt, fill: MUTED)[Explore: #link(IA + "calibration/")[interactive-articles/calibration]]
-], color: BLUE)
-
-== Soft-target methods interact — do not stack them blindly #V
-
-#align(center, [
-  #set text(size: 15pt)
-  #table(
-    columns: (45mm, 62mm, 80mm), stroke: 0.45pt + MUTED,
-    inset: (x: 8pt, y: 5pt), align: (left, left, left),
-    table.header([method], [target source], [what becomes softer]),
-    [label smoothing], [uniform distribution], [confidence for every example],
-    [MixUp / CutMix], [a second training label], [confidence *and* behaviour between examples],
-    [both together], [mixed target, then uniform mix], [possibly too much target entropy],
-  )
-])
-
-#pause
-#warning[If MixUp or CutMix already produces soft targets, test label smoothing as a separate ablation. More regularization is not monotonically better.]
-
-// ═══════════════════ PART VII — ONE PREFERENCE, MANY KNOBS ═══════════════════
-= One preference, many knobs
-
-== Every method, one map #V
-
-#reg-map(active: "all")
+#reg-map(active: "targets", named: true)
 
 #v(10pt)
 #pause
-#punch[Different sites, one job: decide what the model does *where the data is silent* — then let #valc[validation] set the knob.]
+#punch[Replace one-hot targets with slightly softer targets, so extreme confidence is no longer rewarded; #valc[validation] chooses $epsilon$.]
 
-== The taxonomy, with each method's knob #V
+== Why one-hot cross-entropy keeps widening the gap #D
+
+#punch[Getting the class right is not the finish line: a one-hot target still rewards more certainty.]
+
+#v(5pt)
+#align(center, grid(columns: (74mm, 1fr), gutter: 20pt,
+  hairline([#failc[1 · ONE-HOT LOSS]], [
+    #set text(size: 14pt)
+    Suppose the correct class is “b”:
+    #v(3pt)
+    #align(center, text(size: 16pt)[#failc[$bold(y)=(0,1,0,0,0)$]])
+    #v(3pt)
+    #align(center, text(size: 18pt)[
+      $ell = -sum_k y_k log p_k = $ #fitc[$-log p_b$]
+    ])
+    #v(4pt)
+    Every wrong-class term disappears because its target weight is $0$.
+  ], color: RED),
+  hairline([#fitc[2 · LOGIT GRADIENT]], [
+    #set text(size: 14pt)
+    Cross-entropy changes the logits through
+    #v(3pt)
+    #align(center, text(size: 16pt)[$frac(partial ell, partial z_k) = p_k - y_k$])
+    #v(4pt)
+    #align(left, [
+      #fitc[$p_b-1<0$] $arrow.r$ gradient descent pushes $z_b$ *up*.
+      #v(2pt)
+      #failc[$p_j-0>0$] $arrow.r$ it pushes every wrong $z_j$ *down*.
+    ])
+  ], color: TEAL),
+))
+
+#v(9pt)
+#align(center, stack(spacing: 3pt,
+  text(size: 15pt, weight: 650)[
+    #text(fill: MUTED)[In a symmetric score picture:] #h(4pt)
+    #fitc[$z_b arrow.r +oo$] #text(fill: MUTED)[$quad$]
+    #failc[$z_j arrow.r -oo$]
+  ],
+  text(size: 18pt, weight: 750)[#knobc[What matters: every gap $z_b-z_j$ has no finite stopping point.]],
+))
+
+== Label smoothing says “confident enough” #D
+
+#punch[Ask for high confidence, not absolute certainty.]
+
+#v(4pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 20pt,
+  hairline([#failc[ONE-HOT]], [
+    #set text(size: 13.5pt)
+    #align(center, bars((0, 1, 0, 0, 0), labels: ([a], [b], [c], [d], [e]),
+      bar: 7mm, span: 16mm,
+      color: (i, v) => if i == 1 { RED } else { MUTED.lighten(35%) }))
+    #align(center, text(size: 11.5pt)[#failc[$y=(0,1,0,0,0)$]])
+    #v(4pt)
+    #align(center, text(size: 16pt)[$frac(partial ell, partial z_b) = p_b - 1$])
+    #v(2pt)
+    The push stops only as $p_b arrow.r 1$: no finite logit gap is enough.
+  ], color: RED),
+  hairline([#knobc[SMOOTHED]], [
+    #set text(size: 13.5pt)
+    #align(center, text(size: 12pt)[$tilde(y)=(1-epsilon)y + epsilon/K bold(1)$])
+    #v(2pt)
+    #align(center, bars((0.02, 0.92, 0.02, 0.02, 0.02), labels: ([a], [b], [c], [d], [e]),
+      bar: 7mm, span: 16mm,
+      color: (i, v) => if i == 1 { ACC } else { ACC.lighten(45%) }))
+    #align(center, text(size: 11.5pt)[#knobc[$tilde(y)=(.02,.92,.02,.02,.02)$]])
+    #v(4pt)
+    #align(center, text(size: 16pt)[$frac(partial ell, partial z_b) = p_b - 0.92$])
+    #v(2pt)
+    The push stops at $p_b=0.92$. This corresponds to the finite correct-vs-wrong logit gap
+    $z_b-z_j = ln(0.92/0.02) approx 3.83$.
+  ], color: ACC),
+))
+
+== Use label smoothing modestly—and validate it #V
+
+#align(center, grid(columns: (80mm, 1fr), gutter: 20pt,
+  [
+    #hairline([PYTORCH], [
+      #set text(size: 13pt)
+      #codebox(size: 11.5pt)[```python
+epsilon = 0.1
+criterion = nn.CrossEntropyLoss(
+    label_smoothing=epsilon
+)
+loss = criterion(logits, class_ids)
+```]
+      #v(3pt)
+      Train with smoothed targets; keep validation and test labels hard.
+      #v(4pt)
+      The smoothed training loss has a positive floor, so do not compare it directly with a one-hot run.
+    ], color: TEAL)
+  ],
+  [
+    #hairline([#keepc[CAN HELP]], [
+      #set text(size: 13pt)
+      #align(left, list(
+        [reduce pressure toward extreme logits;],
+        [improve validation accuracy, NLL, or calibration in some recipes.],
+        spacing: 3pt,
+      ))
+    ], color: GREEN)
+    #v(6pt)
+    #hairline([#failc[COSTS AND LIMITS]], [
+      #set text(size: 13pt)
+      #align(left, list(
+        [pulls every prediction toward uniformity;],
+        [does not know that “wolf” is closer to “husky” than “airplane”;],
+        [may over-soften targets on top of Mixup or CutMix.],
+        spacing: 3pt,
+      ))
+    ], color: RED)
+  ],
+))
+
+#v(7pt)
+#note([#text(size: 15pt)[This is a regularizing pressure, not a promise. Start small, tune $epsilon$ on untouched #valc[validation], and—if Mixup or CutMix is active—ablate smoothing separately.]], color: BLUE)
+
+// ═══════════════════ PART VII — ONE PREFERENCE, MANY KNOBS ═══════════════════
+= Regularization in practice
+
+== Regularization cheat sheet: five places to intervene #V
+
+#reg-map(active: "all", named: true)
+
+#v(10pt)
+#pause
+#punch[Diagnose first. Change one site at a time, then let #valc[validation] choose the strength.]
+#caption[Mixup and CutMix span both the data and target sites.]
+
+== A taxonomy of regularization methods #V
 
 #align(center, [
   #set text(size: 16pt)
@@ -1388,15 +2634,15 @@ The mechanism, visible in the logit gradient $nabla_z ell = p - tilde(y)$ at $z 
     [objective], [weight decay ($L_2$), $L_1$, spectral penalties], [$lambda$],
     [training loop], [early stopping, minibatch noise], [$t^star$, batch size],
     [model / features], [dropout, stochastic depth], [$p$],
-    [data], [crops · flips · jitter, Mixup, CutMix], [strength, $alpha$],
+    [data], [crops · flips · Gaussian input noise, Mixup, CutMix], [strength, $sigma$, $alpha$],
     [targets], [label smoothing], [$epsilon$],
     [architecture], [convolution, weight sharing, bottlenecks], [design choice],
   )
 ])
 
-#note([Architecture adds no explicit penalty term, but it is not “free”: it restricts the function family and is still a validation-selected design choice.], color: ACC)
+#note([Architecture adds no explicit penalty term, but it still restricts the function family. Treat it as a design choice selected by validation.], color: ACC)
 
-== Training regularizes even when you add nothing #V
+== Implicit regularization in training #V
 
 #align(center, [
   #set text(size: 16.5pt)
@@ -1404,21 +2650,21 @@ The mechanism, visible in the logit gradient $nabla_z ell = p - tilde(y)$ at $z 
     columns: (52mm, 1fr), stroke: 0.45pt + MUTED, inset: (x: 10pt, y: 5.5pt), align: (left, left),
     table.header([implicit source], [selection pressure it exerts]),
     [SGD minibatch noise], [a stochastic trajectory with optimizer- and batch-size-dependent implicit bias],
-    [initialization + early phase], [which basin training explores first (Lecture 6's init story)],
+    [initialization + early phase], [which basin training explores first (Lecture 6: initialization)],
     [architecture], [some functions are easy to express, others practically unreachable],
-    [BatchNorm's batch statistics], [per-batch jitter in activations — a *side effect*],
+    [BatchNorm's batch statistics], [per-batch jitter in activations as a *side effect*],
   )
 ])
 
 #note[
-  Keep BatchNorm filed under *optimization* (Lecture 6): its job is trainability; mild regularization is a bonus. This is also why changing optimizer or batch size silently moves your *effective* regularization.
+  Treat BatchNorm primarily as an *optimization* method (Lecture 6). It improves trainability, with mild regularization as a side effect. Changing the optimizer or batch size can also change the model's *effective* regularization.
 ]
 
-== A staged working recipe — add evidence, not ingredients #V
+== A practical regularization workflow #V
 
 #result[
   #set text(size: 19pt)
-  reproducible baseline #h(4pt) → #h(4pt) valid augmentation #h(4pt) → #h(4pt) weight decay #h(4pt) → #h(4pt) targeted extras
+  fixed baseline #h(4pt) → #h(4pt) valid augmentation #h(4pt) → #h(4pt) weight decay #h(4pt) → #h(4pt) one extra method
 ]
 
 #v(3pt)
@@ -1426,16 +2672,16 @@ The mechanism, visible in the logit gradient $nabla_z ell = p - tilde(y)$ at $z 
   #set text(size: 15pt)
   #table(
     columns: (15mm, 48mm, 1fr), stroke: 0.45pt + MUTED, inset: (x: 8pt, y: 4pt), align: (left, left, left),
-    [1], [establish], [log train/validation curves; restore the best checkpoint],
-    [2], [encode], [add domain-valid augmentation; inspect actual batches],
-    [3], [control], [sweep AdamW decay; compare at the same compute budget],
-    [4], [only if needed], [ablate dropout, MixUp/CutMix, or label smoothing one at a time],
+    [1], [baseline], [log train/validation curves; restore the best checkpoint],
+    [2], [augmentation], [add domain-valid transforms; inspect actual batches],
+    [3], [weight decay], [sweep $lambda$ on a log scale; compare at the same compute budget],
+    [4], [other methods], [if needed, ablate dropout, MixUp/CutMix, or label smoothing one at a time],
   )
 ])
 
-== Specialized regularizers answer specialized failures #V
+== Specialized regularization methods #V
 
-Methods reserved for specific problems:
+These methods address more specific problems:
 
 #align(center, [
   #set text(size: 15.5pt)
@@ -1444,13 +2690,13 @@ Methods reserved for specific problems:
     [stochastic depth / DropPath], [dropout at residual-branch scale; standard in deep ViTs],
     [spectral normalization], [constrain layer operator norms (GANs, sensitivity control)],
     [SAM], [optimize the worst loss in a parameter neighbourhood],
-    [adversarial training], [augment with worst-case perturbations — robustness, at a cost],
+    [adversarial training], [augment with worst-case perturbations to improve robustness, at a cost],
   )
 ])
 
-#note([One change at a time, or the comparison identifies nothing. Sealed test set, evaluated once, after every knob is frozen.], color: BLUE)
+#note([Change one factor at a time so the comparison remains interpretable. Evaluate the sealed test set once, after every knob is fixed.], color: BLUE)
 
-== What breaks: symptom → suspect → test #V
+== Diagnosing common failure modes #V
 
 #align(center, [
   #set text(size: 15.5pt)
@@ -1458,7 +2704,7 @@ Methods reserved for specific problems:
     columns: (56mm, 52mm, 84mm), stroke: 0.45pt + MUTED,
     inset: (x: 8pt, y: 5pt), align: (left, left, left),
     table.header([symptom], [first suspect], [controlled test]),
-    [train and val both high], [underfit / optimization], [fix fit first (L5–L6); regularizing makes it *worse*],
+    [train and val both high], [underfit / optimization], [fix fit first (L5 to L6); regularizing makes it *worse*],
     [train $arrow.b$, val turns $arrow.t$], [overfitting over time], [restore best checkpoint; then sweep one knob],
     [val *better* than train], [train-only noise: dropout, aug, penalty in train loss], [re-measure both in `eval()` mode, penalty excluded],
     [great val, poor deployment], [validation no longer represents reality], [audit the split and the data pipeline, not the knobs],
@@ -1467,21 +2713,21 @@ Methods reserved for specific problems:
 ])
 
 #pause
-#punch[Regularization treats a diagnosed disease. It is not a vitamin you add by default in arbitrary doses.]
+#punch[Use regularization after diagnosing the failure mode, and choose its strength by validation. Do not add it by default or choose an arbitrary strength.]
 
-== A controlled CIFAR-10 run: the baseline memorizes #V
+== Baseline overfitting on CIFAR-10 #V
 
-#align(center, image("figures/cifar_regularization_curves.png", width: 94%))
+#align(center, image("figures/cifar_regularization_curves.svg", width: 94%))
 
-#note([2,000 stratified training examples · one fixed initialization and minibatch order · same 666,538-parameter CNN and 35-epoch budget · dots mark the checkpoint selected by validation loss.], color: INK)
+#note([The run uses 2,000 stratified training examples, one fixed initialization and minibatch order, the same 666,538-parameter CNN, and a 35-epoch budget. Dots mark the checkpoint selected by validation loss.], color: INK)
 
-== Same model, one controlled change per run #V
+== Controlled CIFAR-10 ablations #V
 
-#align(center, image("figures/cifar_regularization_summary.png", width: 92%))
+#align(center, image("figures/cifar_regularization_summary.svg", width: 92%))
 
-#note([Crop + flip wins; dropout and smoothing help modestly; tested AdamW $lambda_"wd" = 0.01$ is neutral. Suite and rules predeclared; each checkpoint frozen by validation before its reporting-only test. One seed $eq.not$ benchmark.], color: BLUE)
+#note([Crop + flip performs best; dropout and smoothing help modestly; the tested weight-decay setting ($lambda_"wd" = 0.01$) is neutral. Choices were predeclared and checkpoints used validation; the one-seed test result is not a benchmark.], color: BLUE)
 
-== The spine, cured three independent ways #V
+== Three regularizers on the polynomial example #V
 
 #spine-fig(curves: (
   (truth-curve, truth-stroke),
@@ -1489,18 +2735,18 @@ Methods reserved for specific problems:
   (curve-of(w-star), 2.0pt + ACC),
   (curve-of(w-stop), 2.0pt + TEAL),
   (curve-of(w-aug), 2.0pt + GREEN),
-), height: 47mm)
+), height: 47mm, train-size: 6.5pt)
 #align(center, text(size: 13pt)[
   #sw(RED, [none · #fnum(mse(w9, xv, yv), d: 2)]) #h(9pt)
   #sw(ACC, [decay $lambda^star$ · #fnum(mse(w-star, xv, yv), d: 3)]) #h(9pt)
   #sw(TEAL, [stop $t^star$ · #fnum(mse(w-stop, xv, yv), d: 3)]) #h(9pt)
-  #sw(GREEN, [augment · #fnum(mse(w-aug, xv, yv), d: 3)]) — validation MSE
+  #sw(GREEN, [augment · #fnum(mse(w-aug, xv, yv), d: 3)]); validation MSE
 ])
 
 #pause
-#punch[Three different sites, three different knobs — the *same* preference, and nearly the same cured model.]
+#punch[Weight decay, early stopping, and input jitter act at different sites and use different knobs. Here they favour a less variable fit and produce nearly identical curves.]
 
-== Freeze every choice; only then open the sealed test set #V
+== Final model selection and test evaluation #V
 
 #align(center, [
   #set text(size: 14pt)
@@ -1515,45 +2761,91 @@ Methods reserved for specific problems:
   )
 ])
 
-#note([The test column is a report, never a steering wheel. If it changes a knob, it has silently become another validation set.], color: BLUE)
+#note([Use the test column only for final reporting. If it changes a knob, the test set has become another validation set.], color: BLUE)
 
 #provenance
 
-== Exit ticket: five questions before you regularize
+== Before you regularize
 
 #align(center, grid(columns: (1fr, 1fr), gutter: 14pt,
-  note([*1.* Which learning curves did you plot, and what do they diagnose?], color: BLUE),
-  note([*2.* Which single site are you intervening on, and with which knob?], color: ACC),
-  note([*3.* What did validation choose — and did train loss get a vote?], color: BLUE),
-  note([*4.* Is the test set still sealed, to be spent exactly once?], color: INK),
-  note([*5.* Which implicit regularizers moved when you changed optimizer or batch size?], color: TEAL),
-  note([*Reproduce:* seed, splits, schedule, and every knob — logged.], color: GREEN),
+  note([#align(left)[*1.* Which learning curves did you plot, and what do they diagnose?]], color: BLUE),
+  note([#align(left)[*2.* Which single site are you intervening on, and with which knob?]], color: ACC),
+  note([#align(left)[*3.* What did validation choose? Did training loss influence the choice?]], color: BLUE),
+  note([#align(left)[*4.* Has the test set remained untouched for one final evaluation?]], color: INK),
+  note([#align(left)[*5.* Which implicit regularizers moved when you changed optimizer or batch size?]], color: TEAL),
+  note([#align(left)[*Reproduce:* log the seed, splits, schedule, and every knob.]], color: GREEN),
 ))
 
 #pause
-#punch[If the answer to (1) is "none", the prescription precedes the diagnosis.]
+#punch[If you have not plotted learning curves, diagnose the problem before choosing a regularizer.]
 
 == Primary sources
 
 #[
 #set text(size: 15pt)
-- Zhang, Bengio, Hardt, Recht, Vinyals (2017), #link("https://arxiv.org/abs/1611.03530")[*Understanding deep learning requires rethinking generalization*] — networks can fit random labels.
-- Loshchilov & Hutter (2019), #link("https://arxiv.org/abs/1711.05101")[*Decoupled Weight Decay Regularization*] — AdamW.
+- Zhang, Bengio, Hardt, Recht, Vinyals (2017), #link("https://arxiv.org/abs/1611.03530")[*Understanding deep learning requires rethinking generalization*]. #h(2pt) Shows that networks can fit random labels.
 - Srivastava, Hinton, Krizhevsky, Sutskever, Salakhutdinov (2014), #link("https://jmlr.org/papers/v15/srivastava14a.html")[*Dropout*].
-- Gal & Ghahramani (2016), #link(MC)[*Dropout as a Bayesian Approximation*] — the MC Dropout bridge for the next lecture.
 - Zhang, Cissé, Dauphin, Lopez-Paz (2018), #link("https://arxiv.org/abs/1710.09412")[*mixup*] · Yun et al. (2019), #link("https://arxiv.org/abs/1905.04899")[*CutMix*] · Cubuk et al. (2020), #link("https://arxiv.org/abs/1909.13719")[*RandAugment*].
 - Szegedy et al. (2016), #link("https://arxiv.org/abs/1512.00567")[label smoothing] · Müller, Kornblith, Hinton (2019), #link("https://arxiv.org/abs/1906.02629")[*When Does Label Smoothing Help?*].
-- Bishop (1995), *Training with noise is equivalent to Tikhonov regularization*; Belkin et al. (2019), #link("https://arxiv.org/abs/1812.11118")[double descent] — the modern interpolation picture.
+- Bishop (1995), *Training with noise is equivalent to Tikhonov regularization*; Belkin et al. (2019), #link("https://arxiv.org/abs/1812.11118")[double descent]; the modern interpolation picture.
 ]
 
 #v(4pt)
-#note([Seeded-spine figures are recomputed at compile time; the opening schematic, CIFAR panels, and controlled PyTorch ablation have documented provenance and scripts. See `lecture7/figures/PROVENANCE.md`; the companion Typst lab independently checks the regression numbers.], color: INK)
+#note([The seeded polynomial figures are recomputed at compile time. The opening schematic, CIFAR panels, and controlled PyTorch ablation have documented provenance and scripts in `lecture7/figures/PROVENANCE.md`. The companion Typst lab independently checks the regression numbers.], color: INK)
 
 #focus-slide[
-  Regularization decides what the model does where the data is silent — you state the preference, validation sets the knob.
+  Regularization supplies a preference where the training data do not determine the model's behaviour. Validation chooses its strength.
   #v(12pt)
   #set text(size: 22pt)
-  Next: keep dropout stochastic at inference — turn 30 subnetworks into a predictive mean and an uncertainty signal.
-  #v(8pt)
-  #text(size: 17pt, fill: rgb("#B9C6C8"))[Next lecture · MC Dropout: uncertainty, calibration, and failure modes]
+  Diagnose with learning curves. Change one factor, then measure again on validation.
+]
+
+// ═══════════════════ OPTIONAL APPENDIX ═══════════════════
+= Optional: AdamW
+
+== Adam and AdamW treat decay differently #OPT
+
+Let $cal(A)_t thin (u)$ denote Adam's update computed from $u$ using the current moment state.
+
+#align(center, [
+  #set text(size: 14.5pt)
+  #table(
+    columns: (34mm, 100mm, 1fr), stroke: 0.5pt + MUTED,
+    inset: (x: 8pt, y: 6pt), align: (left, left, left),
+    table.header([optimizer], [parameter update], [what happens to decay]),
+    [plain SGD],
+      [#text(size: 13.5pt)[$bold(theta)_(t+1) = bold(theta)_t - eta bold(g)_t$]],
+      [none],
+    [SGD + $L_2$],
+      [#text(size: 13.5pt)[$bold(theta)_(t+1) = (1-eta lambda) bold(theta)_t - eta bold(g)_t$]],
+      [proportional shrink],
+    [Adam + $L_2$],
+      [#text(size: 13.5pt)[$bold(theta)_(t+1) = bold(theta)_t - eta cal(A)_t thin (bold(g)_t + lambda bold(theta)_t)$]],
+      [penalty enters Adam's moments],
+    [AdamW],
+      [#text(size: 13.5pt)[$bold(theta)_(t+1) = (1-eta lambda) bold(theta)_t - eta cal(A)_t thin (bold(g)_t)$]],
+      [shrink stays separate],
+  )
+])
+
+#note[
+  For plain SGD, $L_2$ and weight decay are equivalent. With Adam, coupled $L_2$ enters the moment estimates; AdamW keeps proportional shrinkage separate.
+  #h(3pt)#link("https://arxiv.org/abs/1711.05101")[Loshchilov & Hutter (2019)]
+]
+
+#pause
+#punch[With Adam, use AdamW when you want weight decay to remain a separate proportional shrinkage step.]
+
+== PyTorch: AdamW #OPT
+
+#v(12pt)
+#codebox(size: 13.5pt)[```python
+optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4, weight_decay=1e-4)
+```]
+
+#v(16pt)
+#note[
+  #set text(size: 14pt)
+  `weight_decay` is $lambda$. Each step applies $bold(theta) <- (1 - eta_t lambda) bold(theta)$ before Adam's data update.
+  Do not also add $(lambda slash 2) norm(theta)_2^2$ to the loss. This call decays every parameter; use parameter groups to exempt bias or normalization parameters.
 ]

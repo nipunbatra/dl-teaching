@@ -106,7 +106,7 @@ CONDITION_COLORS = {
 
 CONDITION_LABELS = {
     "baseline": "Baseline",
-    "weight_decay": "AdamW decay",
+    "weight_decay": "Weight decay",
     "augmentation": "Crop + flip",
     "dropout": "Dropout",
     "label_smoothing": "Label smoothing",

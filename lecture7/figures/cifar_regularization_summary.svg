@@ -269,7 +269,7 @@ L -3.5 0
       </g>
      </g>
      <g id="text_10">
-      <text style="font-size: 11.5px; font-family: 'IBM Plex Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: end; fill: #6e7f82" x="92.483281" y="85.393364" transform="rotate(-0 92.483281 85.393364)">AdamW decay</text>
+      <text style="font-size: 11.5px; font-family: 'IBM Plex Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: end; fill: #6e7f82" x="92.483281" y="85.393364" transform="rotate(-0 92.483281 85.393364)">Weight decay</text>
      </g>
     </g>
     <g id="ytick_3">
@@ -609,7 +609,7 @@ L 729.67539 23.964
       </g>
      </g>
      <g id="text_23">
-      <text style="font-size: 11.5px; font-family: 'IBM Plex Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: end; fill: #6e7f82" x="520.508797" y="91.402776" transform="rotate(-0 520.508797 91.402776)">AdamW decay</text>
+      <text style="font-size: 11.5px; font-family: 'IBM Plex Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: end; fill: #6e7f82" x="520.508797" y="91.402776" transform="rotate(-0 520.508797 91.402776)">Weight decay</text>
      </g>
     </g>
     <g id="ytick_8">

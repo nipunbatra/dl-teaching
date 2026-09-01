@@ -838,7 +838,7 @@ L 697.201781 170.039
 " style="fill: none; stroke: #2b6cb0; stroke-opacity: 0.94; stroke-width: 2.3; stroke-linecap: round"/>
     </g>
     <g id="text_38">
-     <text style="font-size: 9.3px; font-family: 'IBM Plex Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: start; fill: #23373b" x="704.641781" y="173.294" transform="rotate(-0 704.641781 173.294)">AdamW decay</text>
+     <text style="font-size: 9.3px; font-family: 'IBM Plex Sans', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: start; fill: #23373b" x="704.641781" y="173.294" transform="rotate(-0 704.641781 173.294)">Weight decay</text>
     </g>
     <g id="line2d_45">
      <path d="M 678.601781 183.989 
