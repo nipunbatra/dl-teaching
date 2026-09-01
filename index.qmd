@@ -9,17 +9,17 @@ This site contains the slides, notebooks, assignments, and interactive material 
 
 **Generalization & Regularization**
 
-- [Slides](slides-pdf/L7.pdf) · [Presentation mode](slides-pdf/L7-presentation.pdf)
-- [Two-page cheatsheet](slides-pdf/S10-cheatsheet.pdf)
-- [Learning curves, overfitting & early stopping (Colab)](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L07/01_overfitting_and_early_stopping.ipynb)
-- [Dropout and regularization mechanisms (Colab)](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L07/02_dropout_from_scratch.ipynb)
+- [▤ Slides](slides-pdf/L7.pdf) · [▶ Presentation mode](slides-pdf/L7-presentation.pdf)
+- [★ Two-page cheatsheet](slides-pdf/S10-cheatsheet.pdf)
+- [⌨ Learning curves, overfitting & early stopping](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L07/01_overfitting_and_early_stopping.ipynb)
+- [⌨ Dropout and regularization mechanisms](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L07/02_dropout_from_scratch.ipynb)
 
 ## Recently taught
 
-- **Valid Outputs & Learning-Rate Schedules** — constrained parameters, warmup, decay, and cosine schedules. [Valid outputs](slides-pdf/L5B.pdf) · [LR schedules](slides-pdf/L5C.pdf) · [Cheatsheet](slides-pdf/S09-cheatsheet.pdf)
-- **Vector, Matrix & Affine Autograd** — shape-safe reverse mode through dense layers and batches. [Calculus](slides-pdf/L3A.pdf) · [Autograd](slides-pdf/L3.pdf) · [Cheatsheet](slides-pdf/S08-cheatsheet.pdf) · [Colab](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/00_backprop_autograd_complete.ipynb)
-- **Backpropagation & Autograd from Scratch** — computation graphs, reverse mode, and a scalar engine. [Slides](slides-pdf/L3.pdf) · [Cheatsheet](slides-pdf/S06-cheatsheet.pdf) · [Colab](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/04_scalar_autograd_pytorch_to_scratch.ipynb)
-- **Optimization for Deep Learning** — gradient estimates through momentum, RMSProp, and Adam. [Slides](slides-pdf/L5.pdf) · [Optimization I cheatsheet](slides-pdf/S05-cheatsheet.pdf) · [Optimization II cheatsheet](slides-pdf/S07-cheatsheet.pdf)
+- **Valid Outputs & Learning-Rate Schedules** — constrained parameters, warmup, decay, and cosine schedules. [▤ Valid outputs](slides-pdf/L5B.pdf) · [▤ LR schedules](slides-pdf/L5C.pdf) · [★ Cheatsheet](slides-pdf/S09-cheatsheet.pdf)
+- **Vector, Matrix & Affine Autograd** — shape-safe reverse mode through dense layers and batches. [▤ Calculus](slides-pdf/L3A.pdf) · [▤ Autograd](slides-pdf/L3.pdf) · [★ Cheatsheet](slides-pdf/S08-cheatsheet.pdf) · [⌨ Colab](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/00_backprop_autograd_complete.ipynb)
+- **Backpropagation & Autograd from Scratch** — computation graphs, reverse mode, and a scalar engine. [▤ Slides](slides-pdf/L3.pdf) · [★ Cheatsheet](slides-pdf/S06-cheatsheet.pdf) · [⌨ Colab](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/04_scalar_autograd_pytorch_to_scratch.ipynb)
+- **Optimization for Deep Learning** — gradient estimates through momentum, RMSProp, and Adam. [▤ Slides](slides-pdf/L5.pdf) · [★ Optimization I](slides-pdf/S05-cheatsheet.pdf) · [★ Optimization II](slides-pdf/S07-cheatsheet.pdf)
 
 ## Course materials
 
