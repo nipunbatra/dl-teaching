@@ -1,39 +1,25 @@
 ---
 title: "ES 667 · Deep Learning"
-subtitle: "IIT Gandhinagar · August 2026 · Prof. Nipun Batra"
+subtitle: "IIT Gandhinagar · Semester I, 2026–27 · Prof. Nipun Batra"
 ---
 
-This site contains the lecture materials for ES 667. Course dates, grading, and announcements are on the [August 2026 course page](https://nipunbatra.github.io/dl-2026/).
+This site contains the slides, notebooks, assignments, and interactive material for ES 667. The dated class record, grading, and announcements are on the [2026 course site](https://nipunbatra.github.io/dl-2026/).
 
-## Current material
+## Current class
 
-**Learning Rate Decay · Lecture 5C**
+**Generalization & Regularization**
 
-- [Slides (PDF)](slides-pdf/L5C.pdf)
-- [Presentation mode](slides-pdf/L5C-presentation.pdf)
+- [Slides](slides-pdf/L7.pdf) · [Presentation mode](slides-pdf/L7-presentation.pdf)
+- [Two-page cheatsheet](slides-pdf/S10-cheatsheet.pdf)
+- [Learning curves, overfitting & early stopping (Colab)](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L07/01_overfitting_and_early_stopping.ipynb)
+- [Dropout and regularization mechanisms (Colab)](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L07/02_dropout_from_scratch.ipynb)
 
-Why begin and finish training with the same-sized step? This compact lecture builds the intuition from noisy SGD, compares useful decay rules, explains warmup, and shows where PyTorch schedulers belong in a complete training loop.
+## Recently taught
 
-**Constraints by Construction · Lecture 5B**
-
-- [Slides (PDF)](slides-pdf/L5B.pdf)
-- [Presentation mode](slides-pdf/L5B-presentation.pdf)
-
-How can a neural network produce parameters that are always valid? This mini-lecture builds positive scales, probabilities, simplex vectors, and positive-definite covariances from unconstrained outputs, with stable PyTorch implementations.
-
-**Computation Graphs, Backpropagation & Autograd**
-
-- [Slides (PDF)](slides-pdf/L3.pdf)
-- [Presentation mode](slides-pdf/L3-presentation.pdf)
-- [Scalar autograd engine (HTML)](notebooks/L03/04_scalar_autograd_pytorch_to_scratch.html)
-- [Scalar autograd engine (Colab)](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/04_scalar_autograd_pytorch_to_scratch.ipynb)
-- [Scalar autograd engine source (IPYNB)](https://raw.githubusercontent.com/nipunbatra/dl-teaching/master/notebooks/L03/04_scalar_autograd_pytorch_to_scratch.ipynb)
-- [Topological-order interactive](https://nipunbatra.github.io/interactive-articles/autograd-topological-order/)
-- [Complete lecture notebook (HTML)](notebooks/L03/00_backprop_autograd_complete.html)
-- [Complete lecture notebook (Colab)](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/00_backprop_autograd_complete.ipynb)
-- [Complete notebook source (IPYNB)](https://raw.githubusercontent.com/nipunbatra/dl-teaching/master/notebooks/L03/00_backprop_autograd_complete.ipynb)
-
-The focused scalar notebook uses literal PyTorch tensors and `.backward()`, then rebuilds the exact graph with one small `Value` record. Its first example explains dependency-first ordering before introducing the term topological order, sends the validated graph trace to a reusable hosted interactive, exposes all seven reverse-edge updates, and displays every stored field. An optional second example compares a fused sigmoid with the fully atomic graph `1 / (1 + exp(-z))`, showing that one saved local derivative equals the product of four atomic derivatives. The complete notebook continues through symbolic and finite-difference checks, branch accumulation, a dense-layer VJP, a three-example mean batch, equivalent microbatches, one optimizer step, and a tiny MLP.
+- **Valid Outputs & Learning-Rate Schedules** — constrained parameters, warmup, decay, and cosine schedules. [Valid outputs](slides-pdf/L5B.pdf) · [LR schedules](slides-pdf/L5C.pdf) · [Cheatsheet](slides-pdf/S09-cheatsheet.pdf)
+- **Vector, Matrix & Affine Autograd** — shape-safe reverse mode through dense layers and batches. [Calculus](slides-pdf/L3A.pdf) · [Autograd](slides-pdf/L3.pdf) · [Cheatsheet](slides-pdf/S08-cheatsheet.pdf) · [Colab](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/00_backprop_autograd_complete.ipynb)
+- **Backpropagation & Autograd from Scratch** — computation graphs, reverse mode, and a scalar engine. [Slides](slides-pdf/L3.pdf) · [Cheatsheet](slides-pdf/S06-cheatsheet.pdf) · [Colab](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/04_scalar_autograd_pytorch_to_scratch.ipynb)
+- **Optimization for Deep Learning** — gradient estimates through momentum, RMSProp, and Adam. [Slides](slides-pdf/L5.pdf) · [Optimization I cheatsheet](slides-pdf/S05-cheatsheet.pdf) · [Optimization II cheatsheet](slides-pdf/S07-cheatsheet.pdf)
 
 ## Course materials
 
