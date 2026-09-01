@@ -18,6 +18,7 @@ project:
 
 website:
   title: "ES 667: Deep Learning"
+  favicon: favicon.svg
   navbar:
     title: "ES 667"
     left:
