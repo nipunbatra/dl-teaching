@@ -73,7 +73,7 @@ Students should leave able to:
 7. write an explicit target contract (A_\tau(x,y)=(g_\tau(x),h_\tau(y))), including boxes, keypoints, categorical masks, timestamps, and signed regression targets;
 8. write and audit a train-only pipeline, including the two RandAugment knobs and its image/video-only TorchVision limitation;
 9. compute MixUp/CutMix soft targets, identify domains where raw-input interpolation needs adaptation, and use probability targets with cross-entropy;
-10. distinguish dropout's `p_drop` from `q_keep`, decode every term in inverted dropout, and explain `train()` versus `eval()`;
+10. distinguish dropout's `p_drop` from `q_keep`, derive its forward and backward gates, explain why dropped paths receive zero gradient for one pass, and distinguish `train()` from `eval()`;
 11. state PyTorch's all-K label-smoothing convention and explain how it limits pressure toward extreme logits;
 12. run a controlled ablation and use the test set only after every choice is frozen.
 
@@ -85,9 +85,9 @@ Students should leave able to:
 | 11–25 | Weight decay | exact convention → coefficient explosion → λ sweep → SGD shrinkage geometry → scalar derivation → PyTorch SGD → brief L₁ |
 | 25–35 | Early stopping | train/validation curves → `t*` → save/restore code → why validation rises → training time as capacity |
 | 35–58 | Augmentation | exact-vs-invalid invariances → target map (h_\tau) → boxes/keypoints/masks → input jitter → CIFAR v2 recipe → repeated-view audit → RandAugment (N,M) → MixUp/CutMix and domain test |
-| 58–75 | Dropout | road-closure story → one fixed network → worked hidden vector → fresh masks → divide by `q_keep` → mean-preserving calculation → evaluation identity → state modes and placement |
-| 75–82 | Label smoothing | one-hot widens logit gaps → “confident enough” target → finite preferred gap → PyTorch code and limits |
-| 82–90 | Synthesis | taxonomy → staged recipe → symptom table → measured CIFAR ablation → sealed synthetic test → exit ticket |
+| 58–80 | Dropout | road-closure story → fixed network → fresh masks → divide by `q_keep` → mean preservation → two-route forward/backward example → evaluation identity → state modes |
+| 80–85 | Label smoothing | one-hot widens logit gaps → “confident enough” target → finite preferred gap → PyTorch code and limits |
+| 85–90 | Synthesis | taxonomy → staged recipe → symptom table → measured CIFAR ablation → sealed synthetic test → exit ticket |
 
 For an 80-minute class, cut L₁, the specialized-regularizer table, and one of the two CIFAR evidence slides. Do not cut the split contract, restore-best code, augmentation validity check, dropout worked example, inverted-scaling explanation, or state-mode table. AdamW remains an optional appendix; predictive uncertainty and MC Dropout belong to the later uncertainty lecture.
 
@@ -98,6 +98,8 @@ For an 80-minute class, cut L₁, the specialized-regularizer table, and one of 
 - Switch explicitly to the high-resolution visual examples for augmentation practice. The gallery should prompt “would a domain expert keep this label?” Use the cyclist to make the central distinction: the same flip preserves an object class, changes travel direction, and moves a detection box. Before the CIFAR transform code, state that the deck is returning to the 32×32 recipe used in the measured ablation.
 - Treat RandAugment and Mixup as different ideas. RandAugment composes ordinary per-image operations with two policy knobs; Mixup imposes linear behaviour between examples and changes the target distribution.
 - Name the dropout group-project image as an analogy, then return immediately to exact masks and equations. Say explicitly that surviving features still collaborate; dropout reduces reliance on a fixed coalition rather than creating one-unit classifiers.
+- Treat the road-story slides as quick visual beats, then slow down for the four-slide forward/backward calculation.
+- During the dropout backprop example, freeze the sampled mask for the whole forward/backward pair. Separate the two zeros: the dropped route's outgoing weight sees zero input, while its incoming weight sees a zero local derivative. The random mask itself is not a learned quantity.
 - Keep dropout here as a training-time regularizer with deterministic evaluation. Do not detour into MC Dropout or uncertainty estimation.
 - At every method, name three things: **site**, **knob**, and **measurement**.
 - Treat question slides as commitment devices. Students answer before the adjacent answer slide.
@@ -168,10 +170,20 @@ State the domain test before code: the blended representation must be defined, t
 Let `p_drop = p` and `q_keep = 1 − p`:
 
 \[
-m_i\sim\operatorname{Bernoulli}(q),\qquad
-\tilde h_i=\frac{m_i}{q}h_i,\qquad
+m_i\sim\operatorname{Bernoulli}(q_{\rm keep}),\qquad
+\tilde h_i=\frac{m_i}{q_{\rm keep}}h_i,\qquad
 \mathbb E[\tilde h_i]=h_i.
 \]
+
+For the backward pass, reuse the same sampled mask:
+
+\[
+\frac{\partial\mathcal L}{\partial h_i}
+=\frac{m_i}{q_{\rm keep}}
+\frac{\partial\mathcal L}{\partial\tilde h_i}.
+\]
+
+The deck's complete scalar example uses `x=1`, incoming weights `u=(1,2)`, outgoing weights `v=(1,1)`, `q_keep=0.5`, mask `m=(1,0)`, target `y=1`, and half-squared loss `L=1/2(s-y)^2`. It gives `h=(1,2)`, `h_tilde=(2,0)`, `s=2`, and `L=0.5`. Backprop gives `dL/dv=(2,0)`, `dL/dh_tilde=(1,1)`, and `dL/dh=(2,0)`. Thus both weights on the kept route receive data-loss gradients; both weights on the dropped route receive zero gradient from this example. The shown parameter update is a one-example vanilla-SGD step with no momentum or weight decay; in a real minibatch, other examples may still contribute to the same weights. A fresh mask may reverse the roles on the next pass.
 
 PyTorch's `nn.Dropout(p=...)` uses the drop probability. In ordinary evaluation it is the identity because retained activations were already scaled during training.
 

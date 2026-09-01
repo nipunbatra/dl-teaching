@@ -2340,6 +2340,234 @@ for images, class_ids in train_loader:
 #v(14pt)
 #punch[Training is noisy, but its mean activation matches the value used at evaluation.]
 
+== Forward: one path survives, one is dropped #V
+
+#punch[Tiny linear network, no biases: train $bold(u)=(1,2)$ and $bold(v)=(1,1)$. For this pass, $q_"keep"=0.5$ and $bold(m)=(1,0)$ are constants in $tilde(h)_i=(m_i/q_"keep")h_i$.]
+
+#v(3pt)
+#align(center, diagram(
+  spacing: (15mm, 12mm), node-stroke: 0.8pt + INK, node-fill: white,
+  {
+    node((0, 0), box(text(size: 8.5pt, weight: 750, fill: white)[$x=1$]),
+      radius: 8mm, fill: INK, stroke: none)
+
+    node((2, -0.9), box(text(size: 8pt, weight: 750, fill: white)[$h_1=1$]),
+      radius: 10.5mm, fill: TEAL, stroke: none)
+    node((2, 0.9), box(text(size: 8pt, weight: 750, fill: white)[$h_2=2$]),
+      radius: 10.5mm, fill: TEAL, stroke: none)
+
+    node((5, -0.9), box(text(size: 7.5pt, weight: 750, fill: white)[$tilde(h)_1=2$]),
+      radius: 11mm, fill: GREEN, stroke: none)
+    node((5, 0.9), box(text(size: 7.5pt, weight: 750, fill: white)[$tilde(h)_2=0$]),
+      radius: 11mm, fill: RED, stroke: none)
+
+    node((7.3, 0), box(text(size: 8.5pt, weight: 750, fill: white)[$s=2$]),
+      radius: 9mm, fill: ACC, stroke: none)
+    node((9.3, 0), box(text(size: 7.5pt, weight: 750, fill: white)[$cal(L)=0.5$]),
+      radius: 11mm, fill: INK, stroke: none)
+    node((9.3, 1.45), box(text(size: 8.5pt, weight: 750)[$y=1$]),
+      radius: 8mm, fill: white, stroke: 0.8pt + INK)
+
+    edge((0, 0), (2, -0.9), "-|>", stroke: 1.1pt + TEAL)
+    edge((0, 0), (2, 0.9), "-|>", stroke: 1.1pt + TEAL)
+    node((0.95, -1.12), text(size: 10.5pt, weight: 700, fill: TEAL)[$u_1=1$], stroke: none)
+    node((0.95, 1.12), text(size: 10.5pt, weight: 700, fill: TEAL)[$u_2=2$], stroke: none)
+
+    edge((2, -0.9), (5, -0.9), "-|>", stroke: 1.5pt + GREEN,
+      label: text(size: 10pt, weight: 700, fill: GREEN)[$m_1/q_"keep"=1/0.5=2$])
+    edge((2, 0.9), (5, 0.9), "-|>", stroke: 1.5pt + RED,
+      label: text(size: 10pt, weight: 700, fill: RED)[$m_2/q_"keep"=0/0.5=0$])
+
+    edge((5, -0.9), (7.3, 0), "-|>", stroke: 1.1pt + GREEN)
+    edge((5, 0.9), (7.3, 0), "-|>", stroke: 1.1pt + RED)
+    node((6.05, -1.12), text(size: 10.5pt, weight: 700, fill: GREEN)[$v_1=1$], stroke: none)
+    node((6.05, 1.12), text(size: 10.5pt, weight: 700, fill: RED)[$v_2=1$], stroke: none)
+    edge((7.3, 0), (9.3, 0), "-|>", stroke: 1pt + INK)
+    node((8.28, -0.48), text(size: 9.5pt, fill: MUTED)[$1/2(s-y)^2$], stroke: none)
+    edge((9.3, 1.45), (9.3, 0), "-|>", stroke: 0.8pt + INK)
+  }
+))
+
+== Start backward at the loss #D
+
+#punch[First compute the gradient arriving at the output of the dropout layer.]
+
+#v(7pt)
+#align(center, block(
+  width: 150mm, fill: rgb("#F7F5F0"), radius: 4pt,
+  inset: (x: 12pt, y: 10pt),
+  [#align(center, text(size: 23pt)[
+    $g_s = (partial cal(L))/(partial s) = s-y = 2-1 = 1$
+  ])],
+))
+
+#v(10pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 28pt,
+  hairline([OUTGOING WEIGHTS], [
+    #align(center, text(size: 20pt)[$
+      (partial cal(L))/(partial bold(v))
+      = g_s tilde(bold(h))
+      = (2,0)
+    $])
+    #v(3pt)
+    #align(left, [
+      #keepc[$v_1$ gets gradient $2$.]
+      #linebreak()
+      #failc[$v_2$ gets gradient $0$] because its input was zero.
+    ])
+  ], color: ACC),
+  hairline([GRADIENT AT DROPOUT OUTPUT], [
+    #align(center, text(size: 20pt)[$
+      (partial cal(L))/(partial tilde(bold(h)))
+      = g_s bold(v)
+      = (1,1)
+    $])
+    #v(3pt)
+    #align(left, [Both output slots receive gradient *before* it crosses the dropout gate.])
+  ], color: TEAL),
+))
+
+#v(12pt)
+#punch[The dropped path becomes zero in the next chain-rule step—not before it.]
+
+== Backward: upstream × local = downstream #D
+
+#punch[Backward reuses the mask: $(partial tilde(h)_i)/(partial h_i)=m_i/q_"keep"$. Here $q_"keep"=0.5$, so the local factors are $2$ and $0$.]
+
+#let grad-node(pos, title, value, color: INK, fill: white, dashed: false, inset: 8pt) = {
+  let outline = if dashed {
+    (paint: color, thickness: 1.1pt, dash: "dashed")
+  } else {
+    1.1pt + color
+  }
+  node(
+    pos,
+    align(center, [
+      #text(size: 7.5pt, weight: 750, fill: color)[#title]
+      #v(1.5pt)
+      #text(size: 10.5pt, weight: 700, fill: INK)[#value]
+    ]),
+    shape: fletcher.shapes.rect,
+    corner-radius: 4pt,
+    inset: inset,
+    fill: fill,
+    stroke: outline,
+  )
+}
+#let grad-label(body, color: MUTED) = text(size: 8.5pt, weight: 650, fill: color, body)
+
+#v(1pt)
+#align(center, diagram(
+  spacing: (10mm, 9.5mm),
+  {
+    // Invisible nodes protect labels at the diagram boundary.
+    node((-0.85, 0), none, radius: 0.1pt, stroke: none)
+    node((7.15, 0), none, radius: 0.1pt, stroke: none)
+    node((3.3, -1.75), none, radius: 0.1pt, stroke: none)
+    node((3.3, 1.75), none, radius: 0.1pt, stroke: none)
+
+    // Backward arrows run right to left.
+    edge((6.35, 0), (5.0, 0), "-|>", stroke: 1.2pt + INK)
+    edge((5.0, 0), (3.7, -1.2), "-|>", stroke: 1.35pt + TEAL,
+      label: grad-label([$v_1=1; quad nabla v_1=2$], color: GREEN), label-side: right)
+    edge((5.0, 0), (3.7, 1.2), "-|>", stroke: 1.35pt + TEAL,
+      label: grad-label([$v_2=1; quad nabla v_2=0$], color: RED), label-side: left)
+    edge((3.7, -1.2), (2.35, -1.2), "-|>", stroke: 1.45pt + TEAL)
+    edge((3.7, 1.2), (2.35, 1.2), "-|>", stroke: 1.45pt + TEAL)
+    edge((2.35, -1.2), (1.0, -1.2), "-|>", stroke: 1.55pt + GREEN)
+    edge((2.35, 1.2), (1.0, 1.2), "-|>", stroke: (paint: RED, thickness: 1.2pt, dash: "dashed"))
+    edge((1.0, -1.2), (0, 0), "-|>", stroke: 1.35pt + GREEN,
+      label: grad-label([$u_1=1; quad nabla u_1=2$], color: GREEN), label-side: right)
+    edge((1.0, 1.2), (0, 0), "-|>", stroke: (paint: RED, thickness: 1.1pt, dash: "dashed"),
+      label: grad-label([$u_2=2; quad nabla u_2=0$], color: RED), label-side: left)
+
+    grad-node((6.35, 0), [START], [$cal(L)=0.5$], color: INK, fill: rgb("#F7F5F0"))
+    grad-node((5.0, 0), [LOSS GRADIENT], [$g_s=1$], color: INK, fill: INK.lighten(92%))
+    grad-node((3.7, -1.2), [UPSTREAM], [$g_(tilde(h)_1)=1$], color: TEAL, fill: TEAL.lighten(93%))
+    grad-node((3.7, 1.2), [UPSTREAM], [$g_(tilde(h)_2)=1$], color: TEAL, fill: TEAL.lighten(93%))
+    grad-node((2.35, -1.2), [LOCAL · $m_1=1$], [$times 2$], color: ACC, fill: ACC.lighten(93%))
+    grad-node((2.35, 1.2), [LOCAL · $m_2=0$], [$times 0$], color: RED, fill: RED.lighten(95%), dashed: true)
+    grad-node((1.0, -1.2), [DOWNSTREAM], [$g_(h_1)=2$], color: GREEN, fill: GREEN.lighten(92%))
+    grad-node((1.0, 1.2), [DOWNSTREAM], [$g_(h_2)=0$], color: RED, fill: RED.lighten(94%), dashed: true)
+    grad-node((0, 0), [EARLIER GRAPH], [$g_x=2$], color: TEAL, fill: TEAL.lighten(92%))
+  }
+))
+
+== Complete the end-to-end gradients #D
+
+#punch[Now follow that gradient to the weights before and after each hidden node.]
+
+#v(6pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 20pt,
+  hairline([INCOMING WEIGHTS], [
+    Since $bold(h)=bold(u)x$ and $x=1$,
+    #v(7pt)
+    #align(center, text(size: 20pt)[$
+      (partial cal(L))/(partial bold(u))
+      = (partial cal(L))/(partial bold(h)) x
+      = (2,0)
+    $])
+    #v(6pt)
+    #align(left, [
+      #keepc[$u_1$ gets gradient $2$.]
+      #linebreak()
+      #failc[$u_2$ gets gradient $0$ from this example.]
+    ])
+  ], color: TEAL),
+  hairline([OUTGOING WEIGHTS], [
+    The earlier step gave
+    #v(7pt)
+    #align(center, text(size: 20pt)[$
+      (partial cal(L))/(partial bold(v)) = (2,0)
+    $])
+    #v(6pt)
+    #align(left, [
+      #keepc[$v_1$ gets gradient $2$.]
+      #linebreak()
+      #failc[$v_2$ gets gradient $0$ from this example.]
+    ])
+  ], color: ACC),
+))
+
+== One vanilla-SGD step completes the example #D
+
+#punch[For this one-example step there is no optimizer state or decay, so zero gradient means no motion.]
+
+#v(8pt)
+#align(center, grid(columns: (1fr, 1fr), gutter: 20pt,
+  hairline([PARAMETER UPDATE · $eta=0.1$], [
+    #align(center, text(size: 15pt)[$theta arrow.r theta - eta nabla theta$])
+    #v(5pt)
+    #set text(size: 13.5pt)
+    #table(
+      columns: (1.1fr, 1fr, 1fr, 1fr),
+      stroke: 0.45pt + MUTED,
+      inset: (x: 5pt, y: 3pt),
+      align: (center, center, center, center),
+      table.header([*parameter*], [*before*], [*gradient*], [*after*]),
+      [$u_1$], [1], [2], [0.8],
+      [$u_2$], [2], [0], [2],
+      [$v_1$], [1], [2], [0.8],
+      [$v_2$], [1], [0], [1],
+    )
+    #v(5pt)
+    A fresh mask may reverse the roles next pass.
+  ], color: GREEN),
+  hairline([GRADIENT TO THE EARLIER GRAPH], [
+    #align(center, text(size: 21pt)[$
+      (partial cal(L))/(partial x)
+      = u_1 (partial cal(L))/(partial h_1)
+      + u_2 (partial cal(L))/(partial h_2)
+      = 1 dot 2 + 2 dot 0 = 2
+    $])
+    #v(8pt)
+    Gradient still reaches $x$ through the kept route.
+  ], color: TEAL),
+))
+
+#v(-4pt)
+#warning[#text(size: 13pt)[*Real training:* other batch examples, optimizer state, or weight decay can still move a parameter. Dropout gates only this example's data-loss gradient.]]
+
 == Evaluation: the same network, all units on #V
 
 #align(center, grid(columns: (1fr, 1fr), gutter: 20pt,

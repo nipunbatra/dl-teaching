@@ -213,7 +213,8 @@
       $]
       #align(center)[$
         E[tilde(h)_i]=h_i,
-        quad op("Var")(tilde(h)_i)=((1-q_"keep")/q_"keep")h_i^2
+        quad (partial cal(L))/(partial h_i)
+        = (m_i/q_"keep") (partial cal(L))/(partial tilde(h)_i)
       $]
       #v(2pt)
       #grid(
@@ -224,7 +225,7 @@
         [#label([EVAL], color: palette.green)], [all units on; no mask and no extra scaling],
       )
       #v(2pt)
-      #tiny-note[PyTorch's `p` is the drop probability and scaling is automatic. `model.eval()` changes dropout behaviour; `inference_mode()` changes autograd.]
+      #tiny-note[Backward reuses the forward mask: a kept path is scaled by $1/q_"keep"$; a dropped path gets zero gradient for that pass. PyTorch scales automatically. `eval()` changes module behaviour; `inference_mode()` disables autograd.]
     ]
   ],
   [
