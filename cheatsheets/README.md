@@ -6,10 +6,13 @@ operational checks over a compressed copy of every slide.
 
 ## Convention
 
-- Source: `cheatsheets/L<id>-<topic>.typ`
+- Public-sequence source: `cheatsheets/S<nn>-<topic>.typ`
 - Shared layout and palette: `common/cheatsheet.typ`
-- Published PDF: `slides-pdf/L<id>-cheatsheet.pdf`
+- Published PDF: `slides-pdf/S<nn>-cheatsheet.pdf`
 - Public link: add `Cheatsheet` to the matching lecture row in `slides.qmd`
+
+The `S` number is the student-facing lecture number. Legacy `L` files retain
+their stable deck-era names when needed for old links.
 
 Build every available cheatsheet from the repository root:
 

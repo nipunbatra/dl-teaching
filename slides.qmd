@@ -1,12 +1,45 @@
 ---
-title: "Lecture decks"
+title: "Lecture library"
 ---
 
-These **25 canonical PDFs** are the course sequence. Each `PDF` is a compact,
-one-slide-per-page Typst handout; `Present` retains the progressive classroom
-builds where available. `[Q]`, `[V]`, `[D]`, and `[I]` mark short checkpoints,
-visuals, derivations, and optional interactives. Start with L1 if you are new to
-the sequence, or use this page as the authoritative map of the course.
+Slides are the complete handouts; **Present** opens the classroom build, and
+each **Cheatsheet** is a two-page review guide.
+
+## Foundations
+
+| No. | Lecture | Resources |
+|---:|---|---|
+| 1 | **Where Deep Learning Losses Come From I** — distributions, likelihood, and loss | [Slides](slides-pdf/L1.pdf) · [Present](slides-pdf/L1-presentation.pdf) · [Cheatsheet](slides-pdf/S01-cheatsheet.pdf) |
+| 2 | **Where Deep Learning Losses Come From II** — MLE, regression, and classification | [Slides](slides-pdf/L1.pdf) · [Present](slides-pdf/L1-presentation.pdf) · [Cheatsheet](slides-pdf/S02-cheatsheet.pdf) |
+| 3 | **Likelihood to Loss in Practice** — MAP, regularization, and robust observation models | [Slides](slides-pdf/L1.pdf) · [Cheatsheet](slides-pdf/S03-cheatsheet.pdf) · [Likelihood notebook](notebooks/L01/00_likelihood_iid_worked_examples.html) · [Robust regression](notebooks/L01/03_robust_linear_regression.html) |
+| 4 | **From Linear Models to Neural Networks** — neurons, activations, multilayer networks, XOR, and approximation | [Slides](slides-pdf/L2.pdf) · [Present](slides-pdf/L2-presentation.pdf) · [Cheatsheet](slides-pdf/S04-cheatsheet.pdf) · [Linear GD](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L02/01_linear_regression_gd.ipynb) · [XOR](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L02/02_mlp_xor.ipynb) |
+
+## Gradients & optimization
+
+| No. | Lecture | Resources |
+|---:|---|---|
+| 5 | **Optimization I — Gradient Estimates & Step Sizes** — batches, stochastic gradients, and optimizer geometry | [Slides](slides-pdf/L5.pdf) · [Present](slides-pdf/L5-presentation.pdf) · [Cheatsheet](slides-pdf/S05-cheatsheet.pdf) · [Recording](https://www.youtube.com/watch?v=CIdlYRSvnWQ) |
+| 6 | **Backpropagation & Autograd from Scratch** — computation graphs, reverse mode, and a scalar engine | [Slides](slides-pdf/L3.pdf) · [Present](slides-pdf/L3-presentation.pdf) · [Cheatsheet](slides-pdf/S06-cheatsheet.pdf) · [Colab](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/04_scalar_autograd_pytorch_to_scratch.ipynb) · [Recording](https://www.youtube.com/watch?v=I0Omc95jFiA) |
+| 7 | **Optimization II — Momentum, RMSProp & Adam** — moving averages and adaptive coordinate scaling | [Slides](slides-pdf/L5.pdf) · [Present](slides-pdf/L5-presentation.pdf) · [Cheatsheet](slides-pdf/S07-cheatsheet.pdf) · [Momentum](https://www.youtube.com/watch?v=ZaQ-gIYSv_A) · [RMSProp & Adam](https://www.youtube.com/watch?v=dobX7TW_DuE) |
+| 8 | **Vector, Matrix & Affine Autograd** — gradients, Jacobians, dense layers, and batched VJPs | [Calculus](slides-pdf/L3A.pdf) · [Autograd](slides-pdf/L3.pdf) · [Cheatsheet](slides-pdf/S08-cheatsheet.pdf) · [Colab](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L03/00_backprop_autograd_complete.ipynb) |
+| 9 | **Valid Outputs by Design & Learning-Rate Schedules** — constrained parameters, warmup, decay, and cosine | [Valid outputs](slides-pdf/L5B.pdf) · [LR schedules](slides-pdf/L5C.pdf) · [Cheatsheet](slides-pdf/S09-cheatsheet.pdf) |
+
+## Generalization
+
+| No. | Lecture | Resources |
+|---:|---|---|
+| **10** | **Generalization & Regularization** — learning curves, weight decay, early stopping, dropout, augmentation, Mixup, and label smoothing | [Slides](slides-pdf/L7.pdf) · [Present](slides-pdf/L7-presentation.pdf) · [Cheatsheet](slides-pdf/S10-cheatsheet.pdf) · [Learning curves](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L07/01_overfitting_and_early_stopping.ipynb) · [Mechanisms](https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L07/02_dropout_from_scratch.ipynb) |
+
+<!-- Future deck catalog retained in source and intentionally hidden from the
+student-facing page until the corresponding lectures are taught.
+
+## Complete deck library
+
+These **25 canonical PDFs** cover the full planned course, including material
+not yet taught. Each `PDF` is a compact, one-slide-per-page Typst handout;
+`Present` retains the progressive classroom builds where available. `[Q]`,
+`[V]`, `[D]`, and `[I]` mark short checkpoints, visuals, derivations, and
+optional interactives.
 
 ```{=html}
 <div class="mod-head"><span class="mod-name">Module 1 · Foundations</span><span class="mod-ng">losses → models → calculus → backprop</span></div>
@@ -19,9 +52,9 @@ the sequence, or use this page as the authoritative map of the course.
 
 <div class="mod-head"><span class="mod-name">Module 2 · Optimization &amp; Training</span><span class="mod-ng">use the gradients well</span></div>
 <div class="lec-list">
-  <div class="lec"><span class="lec-num">5</span><span><span class="lec-title">Optimization for Deep Learning</span><span class="lec-sub">gradient estimates → momentum → AdaGrad / RMSProp → AdamW, with warmup + cosine</span></span><span class="lec-links"><a href="slides-pdf/L5.pdf">PDF</a><span class="sep">·</span><a href="slides-pdf/L5-presentation.pdf">Present</a><span class="sep">·</span><a href="https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L05/01_gd_quadratic.ipynb">GD Colab</a><span class="sep">·</span><a href="https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L05/06_optimizer_comparison_pytorch.ipynb">Optimizer Colab</a><span class="sep">·</span><a href="slides-pdf/L5B.pdf">Constraints PDF</a><span class="sep">·</span><a href="slides-pdf/L5B-presentation.pdf">Constraints Present</a><span class="sep">·</span><a href="slides-pdf/L5C.pdf">LR Decay PDF</a><span class="sep">·</span><a href="slides-pdf/L5C-presentation.pdf">LR Decay Present</a></span></div>
-  <div class="lec"><span class="lec-num">6</span><span><span class="lec-title">Making Deep Networks Trainable</span><span class="lec-sub">activation gates → matched initialization → normalization → residual paths</span></span><span class="lec-links"><a href="slides-pdf/L6.pdf">PDF</a><span class="sep">·</span><a href="slides-pdf/L6-presentation.pdf">Present</a><span class="sep">·</span><a href="https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L06/01_signal_gradient_autopsy.ipynb">Autopsy Colab</a><span class="sep">·</span><a href="https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L06/02_variance_propagation.ipynb">Variance Colab</a><span class="sep">·</span><a href="https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L06/03_xavier_vs_he.ipynb">Controls Colab</a></span></div>
-  <div class="lec"><span class="lec-num">7</span><span><span class="lec-title">Generalization &amp; Regularization</span><span class="lec-sub">one dataset overfit, then cured — weight decay → early stopping → dropout → augmentation / Mixup → smoothed targets</span></span><span class="lec-links"><a href="slides-pdf/L7.pdf">PDF</a><span class="sep">·</span><a href="slides-pdf/L7-presentation.pdf">Present</a><span class="sep">·</span><a href="slides-pdf/L7-cheatsheet.pdf">Cheatsheet</a><span class="sep">·</span><a href="https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L07/01_overfitting_and_early_stopping.ipynb">Curves Colab</a><span class="sep">·</span><a href="https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L07/02_dropout_from_scratch.ipynb">Mechanisms Colab</a></span></div>
+  <div class="lec"><span class="lec-num">5</span><span><span class="lec-title">Optimization for Deep Learning</span><span class="lec-sub">gradient estimates → momentum → AdaGrad / RMSProp → AdamW, with warmup + cosine</span></span><span class="lec-links"><a href="slides-pdf/L5.pdf">PDF</a><span class="sep">·</span><a href="slides-pdf/L5-presentation.pdf">Present</a><span class="sep">·</span><a href="https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L05/01_gd_quadratic.ipynb">GD Colab</a><span class="sep">·</span><a href="https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L05/06_optimizer_comparison_pytorch.ipynb">Optimizer Colab</a><span class="sep">·</span><a href="slides-pdf/L5B.pdf">Valid Outputs PDF</a><span class="sep">·</span><a href="slides-pdf/L5B-presentation.pdf">Valid Outputs Present</a><span class="sep">·</span><a href="slides-pdf/L5C.pdf">LR Schedules PDF</a><span class="sep">·</span><a href="slides-pdf/L5C-presentation.pdf">LR Schedules Present</a></span></div>
+  <div class="lec"><span class="lec-num">6</span><span><span class="lec-title">Making Deep Networks Trainable</span><span class="lec-sub">vanishing / exploding gradients → initialization → a 30-layer test → normalization → residual connections</span></span><span class="lec-links"><a href="slides-pdf/L6.pdf">PDF</a><span class="sep">·</span><a href="slides-pdf/L6-presentation.pdf">Present</a><span class="sep">·</span><a href="https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L06/01_activation_scale_through_depth.ipynb">Scale Colab</a><span class="sep">·</span><a href="https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L06/00_pytorch_hooks_for_layerwise_diagnostics.ipynb">Hooks Colab</a><span class="sep">·</span><a href="https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L06/deep_network_trainability_autopsy.ipynb">Experiment Colab</a></span></div>
+  <div class="lec"><span class="lec-num">7</span><span><span class="lec-title">Generalization &amp; Regularization</span><span class="lec-sub">one dataset overfit, then cured — weight decay → early stopping → dropout → augmentation / Mixup → smoothed targets</span></span><span class="lec-links"><a href="slides-pdf/L7.pdf">PDF</a><span class="sep">·</span><a href="slides-pdf/L7-presentation.pdf">Present</a><span class="sep">·</span><a href="https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L07/01_overfitting_and_early_stopping.ipynb">Curves Colab</a><span class="sep">·</span><a href="https://colab.research.google.com/github/nipunbatra/dl-teaching/blob/master/notebooks/L07/02_dropout_from_scratch.ipynb">Mechanisms Colab</a></span></div>
 </div>
 
 <div class="mod-head"><span class="mod-name">Module 3 · Computer Vision</span><span class="mod-ng">convolution → backbones → dense prediction</span></div>
@@ -70,3 +103,4 @@ the sequence, or use this page as the authoritative map of the course.
 ---
 
 All decks are authored in **Typst**. Earlier Marp and planning material is retained in the repository for provenance, but it is not part of the public course path.
+-->

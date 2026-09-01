@@ -7,7 +7,7 @@ cd "$repo_dir"
 mkdir -p slides-pdf
 
 found=0
-for source_file in cheatsheets/L*.typ; do
+for source_file in cheatsheets/L*.typ cheatsheets/S*.typ; do
   if [[ ! -f "$source_file" ]]; then
     continue
   fi

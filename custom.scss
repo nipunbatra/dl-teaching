@@ -172,6 +172,14 @@ h2 {
   vertical-align: middle;
 }
 
+.table tbody tr {
+  transition: background-color 0.18s ease;
+}
+
+.table tbody tr:hover {
+  background: #fbf7f3;
+}
+
 .table td:first-child {
   font-weight: 700;
   text-align: center;
@@ -264,7 +272,64 @@ pre {
   }
 
   .table {
-    font-size: 0.85em;
+    display: block;
+    font-size: 0.88em;
+  }
+
+  .table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+
+  .table tbody {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .table tbody tr {
+    display: grid;
+    grid-template-columns: 2.4rem minmax(0, 1fr);
+    padding: 0.8rem 0.85rem 0.9rem;
+    border: 1px solid rgba(26, 26, 46, 0.12);
+    border-radius: 0.55rem;
+  }
+
+  .table tbody td {
+    border: 0;
+    padding: 0;
+  }
+
+  .table tbody td:first-child {
+    grid-row: 1 / span 2;
+    grid-column: 1;
+    width: auto;
+    padding-right: 0.55rem;
+    text-align: center;
+    align-self: start;
+  }
+
+  .table tbody td:nth-child(2),
+  .table tbody td:nth-child(3) {
+    grid-column: 2;
+  }
+
+  .table tbody td:nth-child(3) {
+    margin-top: 0.48rem;
+    line-height: 1.65;
   }
 }
 
