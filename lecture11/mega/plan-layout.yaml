@@ -1,0 +1,10 @@
+mainfont: IBM Plex Sans
+codefont: IBM Plex Mono
+fontsize: 9.5pt
+papersize: a4
+page-numbering: "1"
+margin:
+  top: 15mm
+  bottom: 15mm
+  left: 15mm
+  right: 15mm
