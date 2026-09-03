@@ -17,6 +17,7 @@
 #include "mega/lecture1.typ"
 #include "mega/lecture2.typ"
 #include "mega/lecture3.typ"
+#include "mega/bank-appendix.typ"
 
 = References and lecture plan
 
@@ -48,6 +49,8 @@
 )
 
 #v(8pt)
+#align(center, text(size: 12pt)[#link("https://www.3blue1brown.com/lessons/attention/")[3Blue1Brown · Attention]: contextual updates, query/key matching, and value messages.])
+#v(5pt)
 #note([Technical diagrams were drawn in Typst/Fletcher. Illustrations were generated with OpenAI image generation; labels were added in Typst. Schematic token splits and attention maps are labeled as teaching examples.], color: INK)
 
 == The three lectures #I

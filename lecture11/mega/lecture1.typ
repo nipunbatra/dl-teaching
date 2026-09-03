@@ -108,7 +108,7 @@
   text(size: 12pt, fill: MUTED)[$arrow.r$],
   l1-held-stage([$E[dot]$], active == "embed", TEAL),
   text(size: 12pt, fill: MUTED)[$arrow.r$],
-  l1-held-stage([$[e_a;e_a;e_b]$], active == "join", INK),
+  l1-held-stage([$[e_"a",e_"a",e_"b"]$], active == "join", INK),
   text(size: 12pt, fill: MUTED)[$arrow.r$],
   l1-held-stage([MLP], active == "mlp", BLUE),
   text(size: 12pt, fill: MUTED)[$arrow.r$],
@@ -116,7 +116,7 @@
   text(size: 12pt, fill: MUTED)[$arrow.r$],
   l1-held-stage([softmax], active == "softmax", BLUE),
   text(size: 12pt, fill: MUTED)[$arrow.r$],
-  l1-held-stage([$"CE"(i)$], active == "loss", RED),
+  l1-held-stage([$"CE"("i")$], active == "loss", RED),
 ))
 
 #let l1-continuum-node(title, detail, color) = block(
@@ -172,7 +172,7 @@
   columns: (42mm, 15mm, 66mm),
   gutter: 10pt,
   align: horizon,
-  l1-card([TEXT INPUT], [$x$], color: TEAL, fill: PALE-TEAL),
+  l1-card([TEXT INPUT], [review text], color: TEAL, fill: PALE-TEAL),
   text(size: 24pt, fill: MUTED)[$arrow.r$],
   prob-bars((([positive], .61, BLUE), ([negative], .39, ACC)), hgt: 28mm),
 ))
@@ -199,7 +199,7 @@
 )
 #pause
 #v(9pt)
-#claim[$x arrow.r y$: a text input of any length, one class label]
+#claim[Text $arrow.r$ one class label, whatever the input length.]
 
 == Token-level prediction: named entities #V
 
@@ -408,21 +408,21 @@
 ), hgt: 31mm)
 #pause
 #v(8pt)
-#claim[$f_(theta)(a,a,b)=p_(theta)(c_"next" | a,a,b)$]
+#claim[$f_(theta)("a","a","b")=p_(theta)(c_"next" | "a","a","b")$]
 
 == Choose a context length #Q
 
 #align(center, text(size: 20pt)[How much history does the first model receive?])
 #v(8pt)
 #three(
-  l1-card([$k=1$], [one previous character], color: MUTED),
-  l1-card([$k=3$], [three previous characters], color: TEAL, fill: PALE-TEAL),
-  l1-card([$k="all"$], [a variable-length prefix], color: MUTED),
+  l1-card([$w=1$], [one previous character], color: MUTED),
+  l1-card([$w=3$], [three previous characters], color: TEAL, fill: PALE-TEAL),
+  l1-card([$w="all"$], [a variable-length prefix], color: MUTED),
 )
 #pause
 #v(12pt)
-#claim[Use $k=3$: $p_(theta)(x_t | x_(t-3:t-1))$.]
-#l1-note([This gives the MLP a fixed-size input. We will try longer contexts later.], color: BLUE)
+#claim[Use $w=3$: $p_(theta)(t_i | t_(i-3:i-1))$.]
+#l1-note([Here $t_i$ is the token ID at position $i$. Three earlier IDs give the MLP a fixed-size input.], color: BLUE)
 
 == Construct the training examples #V
 
@@ -482,7 +482,7 @@
 #v(7pt)
 #two(
   l1-card([CHARACTERS], [`a`, `b`, `i`: categorical symbols], color: TEAL, fill: PALE-TEAL),
-  l1-card([MLP INPUT], [$x in RR^d$: a vector of numbers], color: BLUE, fill: PALE-BLUE),
+  l1-card([MLP INPUT], [a row vector of numbers], color: BLUE, fill: PALE-BLUE),
 )
 #v(12pt)
 #align(center, text(size: 26pt, fill: MUTED)[$? arrow.r$])
@@ -499,15 +499,15 @@
     stroke: 0.55pt + MUTED,
     inset: (x: 6pt, y: 5pt),
     align: center,
-    table.header([*token*], [1], [2], [3], [9], [$dots$], [27]),
-    [`a`], [$1$], [$0$], [$0$], [$0$], [$dots$], [$0$],
-    [`b`], [$0$], [$1$], [$0$], [$0$], [$dots$], [$0$],
+    table.header([*token / ID*], [0], [1], [2], [9], [$dots$], [26]),
+    [`a`], [$0$], [$1$], [$0$], [$0$], [$dots$], [$0$],
+    [`b`], [$0$], [$0$], [$1$], [$0$], [$dots$], [$0$],
     [`i`], [$0$], [$0$], [$0$], [$1$], [$dots$], [$0$],
   )
 ])
 #pause
 #v(9pt)
-#claim[$o_a^T o_b=o_a^T o_i=o_b^T o_i=0$]
+#claim[$o_"a" o_"b"^T=o_"a" o_"i"^T=o_"b" o_"i"^T=0$]
 #pause
 #l1-note([Every pair of different characters has dot product zero. These vectors identify characters; they do not tell us which characters are similar.], color: MUTED)
 
@@ -533,9 +533,9 @@
     ])
   ],
   [
-    #l1-card([EMBEDDING TABLE], [$E in RR^(27 times 2)$], color: TEAL, fill: PALE-TEAL)
+    #l1-card([EMBEDDING TABLE], [$E in RR^(abs(cal(V)) times d)=RR^(27 times 2)$], color: TEAL, fill: PALE-TEAL)
     #v(8pt)
-    #l1-card([LOOKUP RULE], [$e_c=E["id"(c)]$], color: BLUE, fill: PALE-BLUE)
+    #l1-card([LOOKUP RULE], [$e_c=E["id"(c)]$ #linebreak() one $1 times d$ embedding row for character $c$], color: BLUE, fill: PALE-BLUE)
     #pause
     #v(8pt)
     #l1-card([LEARNABLE], [Backpropagation updates the rows to help predict the next token.], color: GREEN, fill: PALE-GREEN)
@@ -567,7 +567,7 @@
     #pause
     #set text(size: 16pt)
     #torch-code(
-      "import torch\nembed = torch.nn.Embedding(27, 2)\nids = torch.tensor([1, 1, 2])\nrows = embed(ids)\nassert rows.shape == (3, 2)",
+      "import torch\nembed = torch.nn.Embedding(27, 2)\nids = torch.tensor([1, 1, 2])\nrows = embed(ids)  # shape: [3, 2]",
       takeaway: [Each ID selects one trainable row.],
       color: TEAL,
     )
@@ -584,15 +584,16 @@
 #align(center, grid(
   columns: (1fr, 1fr),
   gutter: 12pt,
-  l1-card([INTEGER INPUT], [$X=(1,1,2)$ #linebreak() shape: $(3,)$], color: TEAL, fill: PALE-TEAL),
+  l1-card([INTEGER INPUT], [$"ids"=(t_1,t_2,t_3)=(1,1,2)$ #linebreak() shape: $(3,)$], color: TEAL, fill: PALE-TEAL),
   l1-card([EMBEDDINGS], [
-    $E[X]=mat(1.2,0.1; 1.2,0.1; 0.2,1.1)$ #linebreak()
+    $E["ids"]=mat(1.2,0.1; 1.2,0.1; 0.2,1.1)$ #linebreak()
     shape: $3 times 2$
   ], color: BLUE, fill: PALE-BLUE),
 ))
 #pause
 #v(8pt)
-#claim[One row per token, one column per learned feature.]
+#claim[At position $i$, $e_i=E[t_i]$: one embedding row per token.]
+#align(center, text(size: 14pt)[For `a a b`: $e_1=e_"a"$, $e_2=e_"a"$, $e_3=e_"b"$.])
 
 == Concatenate the embeddings #D
 
@@ -603,7 +604,7 @@
   #h(10pt)
   $arrow.r$
   #h(10pt)
-  $h_0=[1.2,0.1; 1.2,0.1; 0.2,1.1]$
+  $a_0=[1.2,0.1,1.2,0.1,0.2,1.1]$
 ])
 #pause
 #v(13pt)
@@ -616,7 +617,7 @@
 ))
 #pause
 #v(9pt)
-#claim[$h_0 in RR^(k d)=RR^6$]
+#claim[$a_0=[e_1,e_2,e_3] in RR^(1 times w d)=RR^(1 times 6)$]
 
 == Why concatenate? #Q
 
@@ -624,18 +625,18 @@
 #v(7pt)
 #two(
   l1-card([ORDER 1], [
-    `a b i` $arrow.r$ $[e_a; e_b; e_i]$
+    `a b i` $arrow.r$ $[e_"a", e_"b", e_"i"]$
   ], color: TEAL, fill: PALE-TEAL),
   l1-card([ORDER 2], [
-    `i b a` $arrow.r$ $[e_i; e_b; e_a]$
+    `i b a` $arrow.r$ $[e_"i", e_"b", e_"a"]$
   ], color: ACC, fill: PALE-ACC),
 )
 #pause
 #v(10pt)
-#claim[$[e_a;e_b;e_i] != [e_i;e_b;e_a]$]
+#claim[$[e_"a",e_"b",e_"i"] != [e_"i",e_"b",e_"a"]$]
 #pause
 #v(8pt)
-#l1-note([Adding gives the same result in both orders: $e_a+e_b+e_i=e_i+e_b+e_a$. Concatenation keeps each position in a separate part of the vector.], color: BLUE)
+#l1-note([Adding gives the same result in both orders: $e_"a"+e_"b"+e_"i"=e_"i"+e_"b"+e_"a"$. Concatenation keeps each position in a separate part of the vector.], color: BLUE)
 
 == Pass the vector through an MLP #D
 
@@ -644,7 +645,7 @@
     #scale(
       x: 82%, y: 82%, reflow: true,
       neural-net-sketch(
-        input-labels: ([$h_1$], [$h_2$], [$dots$], [$h_6$]),
+        input-labels: ([$(a_0)_1$], [$(a_0)_2$], [$dots$], [$(a_0)_6$]),
         output-labels: ([-], [a], [i], [$dots$], [z]),
         hidden: 5,
         highlight-output: 2,
@@ -654,13 +655,15 @@
   [
     #pause
     #l1-card([ONE HIDDEN LAYER], [
-      $h_1=sigma(W_1 h_0+b_1)$
-      #v(7pt)
-      $z=W_2h_1+b_2$
-      #v(7pt)
-      $W_1 in RR^(H times 6), quad W_2 in RR^(27 times H)$
-      #v(7pt)
-      $6$ input numbers; $27$ output scores
+      $a_1=sigma(a_0 W_1+b_1)$
+      #v(5pt)
+      $z=a_1 W_2+b_2$
+      #v(5pt)
+      $W_1 in RR^(w d times d_h)$
+      #linebreak()
+      $W_2 in RR^(d_h times abs(cal(V)))$
+      #v(5pt)
+      Row vectors multiply matrices on the right. Here $w d=6$, $abs(cal(V))=27$; $d_h$ is the hidden width.
     ], color: BLUE, fill: PALE-BLUE)
   ],
   ratio: (1.12fr, .88fr),
@@ -672,13 +675,13 @@
 #v(7pt)
 #l1-vocab-strip()
 #v(10pt)
-#align(center, text(size: 18pt)[$z=W_2 h_1+b_2 in RR^27$])
+#align(center, text(size: 18pt)[$z=a_1 W_2+b_2 in RR^(1 times 27)$])
 #pause
 #v(11pt)
 #three(
-  l1-card([LOGIT $z_-$], [score for boundary], color: BLUE),
-  l1-card([LOGIT $z_a$], [score for `a`], color: BLUE),
-  l1-card([LOGIT $z_i$], [score for `i`], color: ACC, fill: PALE-ACC),
+  l1-card([LOGIT $z_"-"$], [score for boundary], color: BLUE),
+  l1-card([LOGIT $z_"a"$], [score for `a`], color: BLUE),
+  l1-card([LOGIT $z_"i"$], [score for `i`], color: ACC, fill: PALE-ACC),
 )
 #pause
 #v(8pt)
@@ -691,8 +694,8 @@
 #two(
   [
     #l1-card([EXAMPLE LOGITS FOR `aab`], [
-      $z_i=5, quad z_a=1, quad z_d=0.5,$ #linebreak()
-      $z_-=-0.5,$ and every other logit $=-1$.
+      $z_"i"=5, quad z_"a"=1, quad z_"d"=0.5,$ #linebreak()
+      $z_"-"=-0.5,$ and every other logit $=-1$.
     ], color: BLUE, fill: PALE-BLUE)
     #v(8pt)
     #align(center, text(size: 18pt)[$p_j=frac(exp(z_j),sum_(r in cal(V)) exp(z_r))$])
@@ -716,15 +719,15 @@
 
 #l1-held("loss")
 #v(7pt)
-#align(center, text(size: 22pt)[For target `i`: $ell=-log p_(theta)(i | a,a,b)$])
+#align(center, text(size: 22pt)[For target `i`: $ell=-log p_(theta)("i" | "a","a","b")$])
 #v(12pt)
 #two(
   l1-card([CONFIDENT AND CORRECT], [
-    $p(i)=0.80$ #linebreak()
+    $p("i")=0.80$ #linebreak()
     $ell=-log(0.80) approx 0.223$
   ], color: GREEN, fill: PALE-GREEN),
   l1-card([CONFIDENT AND WRONG], [
-    $p(i)=0.01$ #linebreak()
+    $p("i")=0.01$ #linebreak()
     $ell=-log(0.01) approx 4.605$
   ], color: RED, fill: PALE-RED),
 )
@@ -736,7 +739,7 @@
 #l1-pair(([a], [a], [b]), [i])
 #v(9pt)
 #torch-code(
-  "import torch\nimport torch.nn.functional as F\n# logits has shape [1, 27]\ntarget = torch.tensor([9])      # token i\nloss = F.cross_entropy(logits, target)\nloss.backward()",
+  "import torch\ntarget = torch.tensor([9])  # token i; logits: [1, 27]\nloss = torch.nn.functional.cross_entropy(logits, target)\nloss.backward()",
   takeaway: [Pass the target ID to cross-entropy. Backpropagation computes gradients for the whole network.],
   color: RED,
 )
@@ -842,7 +845,7 @@
 
 == Our character language model #V
 
-#align(center, text(size: 28pt, weight: 650)[$p_(theta)(x_t | x_(t-3:t-1))$])
+#align(center, text(size: 28pt, weight: 650)[$p_(theta)(t_i | t_(i-3:i-1))$])
 #pause
 #v(12pt)
 #three(
@@ -974,11 +977,11 @@
   columns: (45mm, 20mm, 45mm, 20mm, 45mm),
   gutter: 3pt,
   align: horizon,
-  l1-continuum-node([CHARACTERS], [tiny $V$ · long $T$], TEAL),
+  l1-continuum-node([CHARACTERS], [tiny $abs(cal(V))$ #linebreak() long $T$], TEAL),
   text(size: 24pt, fill: MUTED)[$arrow.r$],
-  l1-continuum-node([SUBWORDS], [moderate $V$ · moderate $T$], PURPLE),
+  l1-continuum-node([SUBWORDS], [moderate $abs(cal(V))$ #linebreak() moderate $T$], PURPLE),
   text(size: 24pt, fill: MUTED)[$arrow.r$],
-  l1-continuum-node([WORDS], [huge $V$ · short $T$], ACC),
+  l1-continuum-node([WORDS], [huge $abs(cal(V))$ #linebreak() short $T$], ACC),
 ))
 #pause
 #v(14pt)
@@ -998,15 +1001,15 @@
     stroke: 0.55pt + MUTED,
     inset: (x: 6pt, y: 6pt),
     align: (left, center, center, center, left),
-    table.header([*unit*], [*$V$*], [*$T$*], [*unseen text*], [*in practice*]),
+    table.header([*unit*], [*$abs(cal(V))$*], [*$T$*], [*unseen text*], [*in practice*]),
     [character], [small], [long], [excellent], [meaning spans many steps],
-    [subword], [moderate], [moderate], [strong], [balances $V$ and $T$],
+    [subword], [moderate], [moderate], [strong], [balances $abs(cal(V))$ and $T$],
     [word], [huge], [short], [brittle], [easy to read],
   )
 ])
 #pause
 #v(9pt)
-#claim[Tokenization changes vocabulary size $V$ and sequence length $T$.]
+#claim[Tokenization changes vocabulary size $abs(cal(V))$ and sequence length $T$.]
 #pause
 #l1-note([We will use $T$ again in attention: its score matrix has shape $T times T$.], color: RED)
 
@@ -1034,7 +1037,7 @@
     #l1-card([TOKEN SEQUENCE], [`The | cat | sat | on | the | mat`], color: TEAL, fill: PALE-TEAL)
     #v(10pt)
     #pause
-    #l1-card([ID SEQUENCE], [$[17,42,91,8,5,73]$], color: BLUE, fill: PALE-BLUE)
+    #l1-card([ID SEQUENCE], [$"ids"=[17,42,91,8,5,73]$], color: BLUE, fill: PALE-BLUE)
     #v(10pt)
     #l1-note([An ID labels a row in the learned embedding table.], color: ACC)
   ],
@@ -1043,9 +1046,9 @@
 
 == Use token IDs in the model #D
 
-#align(center, text(size: 27pt, weight: 650)[$x_1,x_2,dots,x_T$])
+#align(center, text(size: 27pt, weight: 650)[$t_1,t_2,dots,t_T$])
 #v(9pt)
-#claim[$x_i in {1,2,dots,V}$]
+#claim[$t_i in {0,1,dots,abs(cal(V))-1}$]
 #pause
 #v(11pt)
 #three(
@@ -1114,7 +1117,7 @@
 #v(9pt)
 #claim[Keep the whole prefix this time. It grows by one token per row.]
 #v(5pt)
-#l1-note([Write $x_1=$ `<BOS>` and $x_T=$ `<EOS>`. At position $t$, predict $x_(t+1)$.], color: PURPLE)
+#l1-note([Here $t_1="id"("<BOS>")$ and $t_T="id"("<EOS>")$. At position $i$, predict $t_(i+1)$.], color: PURPLE)
 
 == Multiply the next-token probabilities #D
 
@@ -1141,7 +1144,7 @@
 == How should we represent the context? #D
 
 #align(center, text(size: 25pt, weight: 650)[
-  $cal(L)(theta)=-sum_(t=1)^(T-1) log p_(theta)(x_(t+1) | x_(<=t))$
+  $cal(L)(theta)=-sum_(i=1)^(T-1) log p_(theta)(t_(i+1) | t_(1:i))$
 ])
 #pause
 #v(12pt)
@@ -1161,7 +1164,7 @@
     #v(8pt)
     #l1-pair(([a], [a], [b]), [i])
     #v(8pt)
-    #align(center, dim-pill([$3 times d$ values $arrow.r$ concatenate], color: TEAL))
+    #align(center, dim-pill([$3 times d$ numbers $arrow.r$ concatenate], color: TEAL))
   ],
   [
     #l1-label([GROWING PREFIX], color: BLUE)
