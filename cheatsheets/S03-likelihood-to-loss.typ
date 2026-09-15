@@ -10,10 +10,10 @@
     ]
   ],
 )
-#set text(font: "IBM Plex Sans", size: 8pt, fill: palette.ink)
+#set text(font: "IBM Plex Sans", size: 10.8pt, fill: palette.ink)
 #set par(leading: 0.52em, justify: false)
 #set list(indent: 10pt, body-indent: 4pt, spacing: 2pt)
-#show math.equation: set text(font: "New Computer Modern Math", size: 8.4pt)
+#show math.equation: set text(font: "New Computer Modern Math")
 
 #sheet-title(
   [S.NO. 3 CHEATSHEET],
@@ -105,15 +105,16 @@
     #v(4pt)
     #section-title([6 · Library semantics to verify], accent: palette.blue)
     #card(accent: palette.blue, inset: 4.5pt)[
+      #show raw: set text(size: 8.3pt)
       #grid(
-        columns: (28mm, 1fr),
+        columns: (34mm, 1fr),
         row-gutter: 3pt,
         column-gutter: 4pt,
         [`BCEWithLogitsLoss`], [raw logits + float targets in $[0,1]$],
         [`CrossEntropyLoss`], [raw logits + integer class indices; no prior softmax],
         [`GaussianNLLLoss`], [mean + variance, not standard deviation],
         [`PoissonNLLLoss`], [check whether input is log-rate and whether constants are included],
-        [`Distribution.log_prob`], [inspect event and batch shapes before reducing],
+        [`Distribution.`#linebreak()`log_prob`], [inspect event and batch shapes before reducing],
       )
       #v(2pt)
       #tiny-note[Names describe formulas, not tensor conventions. Read the API contract and test a hand-computed example.]
@@ -127,6 +128,7 @@
 )
 
 #pagebreak()
+#set text(size: 11.2pt)
 
 #sheet-title(
   [S.NO. 3 CHEATSHEET],

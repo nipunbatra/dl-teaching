@@ -14,6 +14,14 @@ operational checks over a compressed copy of every slide.
 The `S` number is the student-facing lecture number. Legacy `L` files retain
 their stable deck-era names when needed for old links.
 
+The attention series uses `P01-next-token-prediction.typ` and
+`P02-self-attention.typ`, published as `P01-cheatsheet.pdf` and
+`P02-cheatsheet.pdf`. These part numbers do not change the course lecture numbering.
+
+Use readable body type (typically 10-12 pt), and balance each page individually.
+Keep the content within two A4 pages without shrinking it into the upper half.
+Preserve equations and worked examples; do not add filler merely to fill space.
+
 Build every available cheatsheet from the repository root:
 
 ```sh

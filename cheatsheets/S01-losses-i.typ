@@ -10,10 +10,10 @@
     ]
   ],
 )
-#set text(font: "IBM Plex Sans", size: 8pt, fill: palette.ink)
+#set text(font: "IBM Plex Sans", size: 12.2pt, fill: palette.ink)
 #set par(leading: 0.52em, justify: false)
 #set list(indent: 10pt, body-indent: 4pt, spacing: 2pt)
-#show math.equation: set text(font: "New Computer Modern Math", size: 8.4pt)
+#show math.equation: set text(font: "New Computer Modern Math")
 
 #sheet-title(
   [S.NO. 1 CHEATSHEET],
@@ -131,6 +131,7 @@
 )
 
 #pagebreak()
+#set text(size: 10.8pt)
 
 #sheet-title(
   [S.NO. 1 CHEATSHEET],

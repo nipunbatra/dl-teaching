@@ -10,10 +10,10 @@
     ]
   ],
 )
-#set text(font: "IBM Plex Sans", size: 8pt, fill: palette.ink)
+#set text(font: "IBM Plex Sans", size: 11.3pt, fill: palette.ink)
 #set par(leading: 0.52em, justify: false)
 #set list(indent: 10pt, body-indent: 4pt, spacing: 2pt)
-#show math.equation: set text(font: "New Computer Modern Math", size: 8.4pt)
+#show math.equation: set text(font: "New Computer Modern Math")
 
 #sheet-title(
   [PUBLIC LECTURE 5 CHEATSHEET],
@@ -116,6 +116,7 @@
 )
 
 #pagebreak()
+#set text(size: 11.1pt)
 
 #sheet-title(
   [PUBLIC LECTURE 5 CHEATSHEET],
@@ -187,7 +188,8 @@
     #v(4pt)
     #section-title([5 · Minimal PyTorch loop], accent: palette.blue)
     #card(accent: palette.blue, inset: 4pt)[
-      #raw("for xb, yb in loader:\n    opt.zero_grad(set_to_none=True)\n    pred = model(xb)\n    loss = loss_fn(pred, yb)   # usually batch mean\n    loss.backward()            # gradient estimate\n    opt.step()                 # one update", block: true, lang: "python")
+      #raw("for xb, yb in loader:\n    opt.zero_grad(set_to_none=True)\n    pred = model(xb)\n    loss = loss_fn(pred, yb)\n    loss.backward()\n    opt.step()", block: true, lang: "python")
+      #tiny-note[`backward()` computes the batch gradient; `step()` updates parameters.]
       #tiny-note[`optimizer.zero_grad()` is essential because PyTorch accumulates gradients. Record the loss reduction (`mean` versus `sum`).]
     ]
 
