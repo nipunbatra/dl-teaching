@@ -21,7 +21,7 @@ This site contains the slides, notebooks, assignments, and interactive material 
 
 ## Convolutional neural networks
 
-One interactive lecture, from local filters to a trained CNN. [Read the lecture](interactives/cnn/index.html) · [Present](interactives/cnn/index.html?present)
+The complete ML-based CNN lecture, expanded with interactive calculations and an end-to-end MNIST walkthrough. [Read the lecture](interactives/cnn/index.html) · [Present](interactives/cnn/index.html?present)
 
 ## Recently taught
 

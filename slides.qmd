@@ -45,9 +45,10 @@ classroom slides. Each cheat sheet fills two printable A4 pages.
 
 ## Convolutional neural networks
 
-One continuous interactive deck based on the ML and DL CNN lectures: local
-filters, channels, geometry, pooling, receptive fields, the LeNet exercise,
-shared gradients, and a tiny CNN that trains in the browser.
+One complete interactive deck built on the ML course CNN lecture and its
+tutorials: original filtering examples, a step-by-step LeNet exercise,
+real MNIST training and layer inspection, plus the DL course’s gradients,
+receptive fields, computational accounting, modern blocks, and transfer.
 
 [Read the lecture](interactives/cnn/index.html) ·
 [Present](interactives/cnn/index.html?present) ·

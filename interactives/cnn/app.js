@@ -42,15 +42,15 @@
       img.onerror=()=>caption.textContent='Photograph could not load. Check that the figures folder is present.';
       img.src='figures/head-roi-crop.png';$('#photo-k').onchange=render;
     },
-    convolution(el){let x=M.clone(M.base),r=0,c=0;
-      const out=mount(el,select('conv-example','Course example',[['dl','DL L8 · band image'],['ml','ML notebook · edge']])+select('conv-k','Shared kernel',[['horizontal','Horizontal contrast'],['vertical','Vertical contrast'],['identity','Identity']])+'<button id="conv-prev" aria-label="Previous output">← Patch</button><button id="conv-next">Next patch →</button><button id="conv-reset">Reset pixels</button>');
+    convolution(el){let x=M.clone(M.mlEdge),r=0,c=0;
+      const out=mount(el,select('conv-example','Course example',[['ml','ML notebook · edge'],['dl','DL L8 · band image']])+select('conv-k','Shared kernel',[['horizontal','Horizontal contrast'],['vertical','Vertical contrast'],['identity','Identity']])+'<button id="conv-prev" aria-label="Previous output">← Patch</button><button id="conv-next">Next patch →</button><button id="conv-reset">Reset pixels</button>');
       function render(){const k=M.kernels[$('#conv-k').value],y=M.conv(x,k);out.replaceChildren(mats(matrix(x,{title:'Input X · click to edit',gray:true,sampled:(i,j)=>i>=r&&i<r+3&&j>=c&&j<c+3,click:(i,j)=>{x[i][j]=1-x[i][j];render();$$('.matrix button',out)[i*x[0].length+j].focus();}}),'×',matrix(k,{title:'Shared kernel K',scale:1}),'→',matrix(y,{title:'Output Y · choose a cell',selected:(i,j)=>i===r&&j===c,click:(i,j)=>{r=i;c=j;render();}})));
         const terms=k.flatMap((row,i)=>row.map((v,j)=>`${x[r+i][c+j]}×(${v})`));out.append(equation(`Y[${r},${c}] = ${terms.join(' + ')} = ${f(y[r][c])}`));
         $('#conv-prev').disabled=r===0&&c===0;$('#conv-next').disabled=r===y.length-1&&c===y[0].length-1;
       }
       const reset=()=>{x=M.clone($('#conv-example').value==='ml'?M.mlEdge:M.base);r=c=0;render();};
       $('#conv-prev').onclick=()=>{const w=x[0].length-2,n=r*w+c-1;r=Math.floor(n/w);c=n%w;render();};$('#conv-next').onclick=()=>{const w=x[0].length-2,n=r*w+c+1;r=Math.floor(n/w);c=n%w;render();};$('#conv-reset').onclick=reset;
-      $('#conv-example').oninput=()=>{$('#conv-k').value=$('#conv-example').value==='ml'?'vertical':'horizontal';reset();};$('#conv-k').oninput=render;render();
+      $('#conv-example').oninput=()=>{$('#conv-k').value=$('#conv-example').value==='ml'?'vertical':'horizontal';reset();};$('#conv-k').oninput=render;$('#conv-k').value='vertical';render();
     },
     geometry(el){let r=0,c=0;
       const out=mount(el,select('geo-p','Zero padding p',[[0,'0'],[1,'1'],[2,'2']])+select('geo-s','Stride s',[[1,'1'],[2,'2']])+select('geo-d','Dilation d',[[1,'1'],[2,'2']]));
@@ -109,17 +109,29 @@
   }
   $$('[data-widget]').forEach(el=>widgets[el.dataset.widget]?.(el));
   // One set of live widgets in reading mode and a fixed 16:9 classroom stage.
-  const frames=$$('.frame');let current=0,present=false;
+  const frames=$$('.frame');let current=0,present=false,build=0;
   const controls=node('div');controls.id='present-controls';controls.innerHTML='<button id="previous" aria-label="Previous slide">←</button><span id="counter"></span><button id="next" aria-label="Next slide">→</button><button id="overview">Overview O</button><button id="notes">Notes S</button><button id="read">Read Esc</button>';document.body.append(controls);
-  const overview=document.createElement('dialog'),notes=document.createElement('dialog');overview.innerHTML='<h2>Lecture overview</h2><ol>'+frames.map((e,i)=>`<li><a href="#${e.id}" data-frame="${i}">${e.dataset.title}</a></li>`).join('')+'</ol><button>Close</button>';document.body.append(overview,notes);$('button',overview).onclick=()=>overview.close();$$('a',overview).forEach(a=>a.onclick=e=>{e.preventDefault();overview.close();show(+a.dataset.frame);if(!present)frames[current].scrollIntoView();});
+  const overview=document.createElement('dialog'),notes=document.createElement('dialog');
+  const chapters=[...new Set(frames.map(f=>f.dataset.chapter))];
+  overview.innerHTML='<h2>Lecture overview</h2>'+chapters.map(ch=>'<div class="overview-chapter"><h3>'+ch+'</h3><ol>'+frames.map((e,i)=>e.dataset.chapter===ch?`<li value="${i+1}"><a href="#${e.id}" data-frame="${i}">${e.dataset.title}</a></li>`:'').join('')+'</ol></div>').join('')+'<button>Close</button>';
+  document.body.append(overview,notes);$('button',overview).onclick=()=>overview.close();$$('a',overview).forEach(a=>a.onclick=e=>{e.preventDefault();overview.close();show(+a.dataset.frame);if(!present)frames[current].scrollIntoView();});
   function scale(){document.documentElement.style.setProperty('--scale',Math.min(innerWidth/1280,innerHeight/720));}
-  function show(i,hash=true){current=clamp(i,0,frames.length-1);frames.forEach((e,j)=>e.classList.toggle('live',j===current));$('#counter').textContent=`${current+1} / ${frames.length}`;$('#previous').disabled=current===0;$('#next').disabled=current===frames.length-1;if(hash)window.history.replaceState(null,'','#'+frames[current].id);}
-  function setPresent(v){present=v;document.body.classList.toggle('present',v);if(v){scale();show(current);}else frames[current].scrollIntoView({behavior:'instant'});const u=new URL(location.href);v?u.searchParams.set('present',''):u.searchParams.delete('present');window.history.replaceState(null,'',u);}
-  function openNotes(){const source=$('.notes',frames[current]);notes.innerHTML='<h2>Teaching notes</h2><p>'+source.textContent+'</p><button>Close</button>';$('button',notes).onclick=()=>notes.close();notes.showModal();}
-  $('#present').onclick=()=>setPresent(true);$('#previous').onclick=()=>show(current-1);$('#next').onclick=()=>show(current+1);$('#read').onclick=()=>setPresent(false);$('#overview').onclick=()=>overview.showModal();$('#contents').onclick=()=>overview.showModal();$('#notes').onclick=openNotes;
-  const fromHash=()=>{const i=frames.findIndex(e=>e.id===location.hash.slice(1));if(i>=0)show(i,false);};fromHash();addEventListener('hashchange',fromHash);addEventListener('resize',scale);
+  const maxBuild=()=>Math.max(0,...$$('[data-build]',frames[current]).map(e=>+e.dataset.build));
+  function paintBuild(hash=true){
+    $$('[data-build]',frames[current]).forEach(e=>{const pending=present&&+e.dataset.build>build;e.classList.toggle('is-pending',pending);e.inert=pending;if(pending)e.setAttribute('aria-hidden','true');else e.removeAttribute('aria-hidden');});
+    $('#counter').textContent=`${current+1} / ${frames.length}${maxBuild()?' · '+build+'/'+maxBuild():''}`;
+    $('#previous').disabled=current===0&&build===0;$('#next').disabled=current===frames.length-1&&build===maxBuild();
+    if(hash)window.history.replaceState(null,'','#'+frames[current].id+(build?'/'+build:''));
+  }
+  function show(i,hash=true,step=0){current=clamp(i,0,frames.length-1);build=Math.min(step,maxBuild());frames.forEach((e,j)=>e.classList.toggle('live',j===current));paintBuild(hash);}
+  function advance(){if(build<maxBuild()){build++;paintBuild();}else show(current+1);}
+  function retreat(){if(build>0){build--;paintBuild();}else{show(current-1);build=maxBuild();paintBuild();}}
+  function setPresent(v){present=v;document.body.classList.toggle('present',v);if(v){scale();show(current,true,build);}else{$$('[data-build]').forEach(e=>{e.classList.remove('is-pending');e.inert=false;e.removeAttribute('aria-hidden');});frames[current].scrollIntoView({behavior:'instant'});}const u=new URL(location.href);v?u.searchParams.set('present',''):u.searchParams.delete('present');window.history.replaceState(null,'',u);}
+  function openNotes(){const source=$('.notes',frames[current]);notes.innerHTML='<h2>Teaching notes</h2><p>'+(source?.textContent||'')+'</p><p class=small>Source: '+frames[current].dataset.source+'</p><button>Close</button>';$('button',notes).onclick=()=>notes.close();notes.showModal();}
+  $('#present').onclick=()=>setPresent(true);$('#previous').onclick=retreat;$('#next').onclick=advance;$('#read').onclick=()=>setPresent(false);$('#overview').onclick=()=>overview.showModal();$('#contents').onclick=()=>overview.showModal();$('#notes').onclick=openNotes;
+  const fromHash=()=>{const [id,step]=location.hash.slice(1).split('/');const i=frames.findIndex(e=>e.id===id);if(i>=0)show(i,false,+step||0);};fromHash();addEventListener('hashchange',fromHash);addEventListener('resize',scale);
   if('IntersectionObserver' in window){const io=new IntersectionObserver(entries=>{if(!present)for(const e of entries)if(e.isIntersecting)current=frames.indexOf(e.target);},{rootMargin:'-20% 0px -60% 0px'});frames.forEach(e=>io.observe(e));}
-  addEventListener('keydown',e=>{if(overview.open||notes.open)return;const form=/INPUT|SELECT|TEXTAREA/.test(e.target.tagName),key=e.key.toLowerCase();if(e.altKey||e.ctrlKey||e.metaKey)return;if(form){if(key==='escape'){e.target.blur();e.preventDefault();}else if(key==='n'&&present){show(current+1);e.preventDefault();}return;}if(key==='p'){setPresent(!present);e.preventDefault();}else if(key==='o'){overview.showModal();e.preventDefault();}else if(key==='s'&&present){openNotes();e.preventDefault();}else if(present&&(key==='arrowright'||key==='n'||key==='pagedown')){show(current+1);e.preventDefault();}else if(present&&(key==='arrowleft'||key==='pageup')){show(current-1);e.preventDefault();}else if(key==='escape'&&present)setPresent(false);});
+  addEventListener('keydown',e=>{if(overview.open||notes.open)return;const form=/INPUT|SELECT|TEXTAREA/.test(e.target.tagName),key=e.key.toLowerCase();if(e.altKey||e.ctrlKey||e.metaKey)return;if(e.target.tagName==='BUTTON'&&key===' ')return;if(form){if(key==='escape'){e.target.blur();e.preventDefault();}else if(key==='n'&&present){advance();e.preventDefault();}return;}if(key==='p'){setPresent(!present);e.preventDefault();}else if(key==='o'){overview.showModal();e.preventDefault();}else if(key==='s'&&present){openNotes();e.preventDefault();}else if(present&&(key==='arrowright'||key==='n'||key==='pagedown'||key===' ')){advance();e.preventDefault();}else if(present&&(key==='arrowleft'||key==='pageup')){retreat();e.preventDefault();}else if(key==='escape'&&present)setPresent(false);});
   if(new URLSearchParams(location.search).has('present'))setPresent(true);
-  window.CNNLesson={show,setPresent,get model(){return model;},get steps(){return steps;},frames};
+  window.CNNLesson={show,setPresent,advance,retreat,revealAll(){build=maxBuild();paintBuild();},get build(){return build;},get model(){return model;},get steps(){return steps;},frames};
 })();

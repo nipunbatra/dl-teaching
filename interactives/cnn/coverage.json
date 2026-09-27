@@ -1,0 +1,770 @@
+[
+  {
+    "id": "question",
+    "title": "Convolutional neural networks",
+    "chapter": "1 \u00b7 Images, data, and locality",
+    "source": "ML CNN slides 1\u201324"
+  },
+  {
+    "id": "route",
+    "title": "The route through this lecture",
+    "chapter": "1 \u00b7 Images, data, and locality",
+    "source": "ML CNN slides 1\u201324"
+  },
+  {
+    "id": "image-data",
+    "title": "A category has many appearances.",
+    "chapter": "1 \u00b7 Images, data, and locality",
+    "source": "ML CNN slides 1\u201324"
+  },
+  {
+    "id": "imagenet",
+    "title": "ImageNet made data part of the story.",
+    "chapter": "1 \u00b7 Images, data, and locality",
+    "source": "ML CNN slides 1\u201324"
+  },
+  {
+    "id": "imagenet-task",
+    "title": "What exactly is being predicted?",
+    "chapter": "1 \u00b7 Images, data, and locality",
+    "source": "ML CNN slides 1\u201324"
+  },
+  {
+    "id": "history",
+    "title": "LeNet \u2192 AlexNet \u2192 deeper networks",
+    "chapter": "1 \u00b7 Images, data, and locality",
+    "source": "ML CNN slides 1\u201324"
+  },
+  {
+    "id": "image-tensor",
+    "title": "An image is an array of numbers.",
+    "chapter": "1 \u00b7 Images, data, and locality",
+    "source": "ML CNN slides 1\u201324"
+  },
+  {
+    "id": "camera",
+    "title": "Could we connect every pixel to 100 hidden units?",
+    "chapter": "1 \u00b7 Images, data, and locality",
+    "source": "ML CNN slides 1\u201324"
+  },
+  {
+    "id": "flattening",
+    "title": "Flattening does not delete the pixels.",
+    "chapter": "1 \u00b7 Images, data, and locality",
+    "source": "ML CNN slides 1\u201324"
+  },
+  {
+    "id": "same-ear",
+    "title": "An ear is useful wherever it appears.",
+    "chapter": "1 \u00b7 Images, data, and locality",
+    "source": "ML CNN slides 1\u201324"
+  },
+  {
+    "id": "bias",
+    "title": "Two restrictions change the hypothesis class",
+    "chapter": "1 \u00b7 Images, data, and locality",
+    "source": "ML CNN slides 1\u201324"
+  },
+  {
+    "id": "hierarchy",
+    "title": "Local patterns can be composed.",
+    "chapter": "1 \u00b7 Images, data, and locality",
+    "source": "ML CNN slides 1\u201324"
+  },
+  {
+    "id": "ml-edge-input",
+    "title": "Begin with the ML course\u2019s 6\u00d76 image.",
+    "chapter": "2 \u00b7 Build a local detector",
+    "source": "ML slides 25\u201338; cnn-edge.ipynb; convolution-operation.ipynb"
+  },
+  {
+    "id": "edge-kernel",
+    "title": "Compare the left side with the right side.",
+    "chapter": "2 \u00b7 Build a local detector",
+    "source": "ML slides 25\u201338; cnn-edge.ipynb; convolution-operation.ipynb"
+  },
+  {
+    "id": "edge-first",
+    "title": "First patch: all three columns are bright.",
+    "chapter": "2 \u00b7 Build a local detector",
+    "source": "ML slides 25\u201338; cnn-edge.ipynb; convolution-operation.ipynb"
+  },
+  {
+    "id": "edge-second",
+    "title": "Move one column to the right.",
+    "chapter": "2 \u00b7 Build a local detector",
+    "source": "ML slides 25\u201338; cnn-edge.ipynb; convolution-operation.ipynb"
+  },
+  {
+    "id": "edge-output",
+    "title": "One local calculation makes a feature map.",
+    "chapter": "2 \u00b7 Build a local detector",
+    "source": "ML slides 25\u201338; cnn-edge.ipynb; convolution-operation.ipynb"
+  },
+  {
+    "id": "convolution",
+    "title": "One patch, one dot product",
+    "chapter": "2 \u00b7 Build a local detector",
+    "source": "ML slides 25\u201338; cnn-edge.ipynb; convolution-operation.ipynb"
+  },
+  {
+    "id": "edge-sign",
+    "title": "Reverse the contrast. Reverse the response.",
+    "chapter": "2 \u00b7 Build a local detector",
+    "source": "ML slides 25\u201338; cnn-edge.ipynb; convolution-operation.ipynb"
+  },
+  {
+    "id": "edge-code",
+    "title": "The exact same calculation in PyTorch.",
+    "chapter": "2 \u00b7 Build a local detector",
+    "source": "ML slides 25\u201338; cnn-edge.ipynb; convolution-operation.ipynb"
+  },
+  {
+    "id": "operator",
+    "title": "Write the operation precisely",
+    "chapter": "2 \u00b7 Build a local detector",
+    "source": "ML slides 25\u201338; cnn-edge.ipynb; convolution-operation.ipynb"
+  },
+  {
+    "id": "filter-family",
+    "title": "Change the question by changing the weights.",
+    "chapter": "2 \u00b7 Build a local detector",
+    "source": "ML slides 25\u201338; cnn-edge.ipynb; convolution-operation.ipynb"
+  },
+  {
+    "id": "tutorial-photos",
+    "title": "Return to the beach and the buildings.",
+    "chapter": "2 \u00b7 Build a local detector",
+    "source": "ML slides 25\u201338; cnn-edge.ipynb; convolution-operation.ipynb"
+  },
+  {
+    "id": "fixed-vs-learned",
+    "title": "Who chooses the filter?",
+    "chapter": "2 \u00b7 Build a local detector",
+    "source": "ML slides 25\u201338; cnn-edge.ipynb; convolution-operation.ipynb"
+  },
+  {
+    "id": "valid-size",
+    "title": "Count the legal starting positions.",
+    "chapter": "3 \u00b7 Padding and stride",
+    "source": "ML slides 30\u201345; convolution-operation-stride.ipynb; DL L8 geometry"
+  },
+  {
+    "id": "shrink",
+    "title": "What if we keep applying valid 5\u00d75 filters?",
+    "chapter": "3 \u00b7 Padding and stride",
+    "source": "ML slides 30\u201345; convolution-operation-stride.ipynb; DL L8 geometry"
+  },
+  {
+    "id": "border-use",
+    "title": "Does every input pixel participate equally?",
+    "chapter": "3 \u00b7 Padding and stride",
+    "source": "ML slides 30\u201345; convolution-operation-stride.ipynb; DL L8 geometry"
+  },
+  {
+    "id": "padding-idea",
+    "title": "Add a border before sliding.",
+    "chapter": "3 \u00b7 Padding and stride",
+    "source": "ML slides 30\u201345; convolution-operation-stride.ipynb; DL L8 geometry"
+  },
+  {
+    "id": "same-padding",
+    "title": "When does the output keep the same size?",
+    "chapter": "3 \u00b7 Padding and stride",
+    "source": "ML slides 30\u201345; convolution-operation-stride.ipynb; DL L8 geometry"
+  },
+  {
+    "id": "stride-starts",
+    "title": "Stride chooses which starts we visit.",
+    "chapter": "3 \u00b7 Padding and stride",
+    "source": "ML slides 30\u201345; convolution-operation-stride.ipynb; DL L8 geometry"
+  },
+  {
+    "id": "geometry",
+    "title": "Padding, stride, and dilation",
+    "chapter": "3 \u00b7 Padding and stride",
+    "source": "ML slides 30\u201345; convolution-operation-stride.ipynb; DL L8 geometry"
+  },
+  {
+    "id": "formula",
+    "title": "Derive the output size",
+    "chapter": "3 \u00b7 Padding and stride",
+    "source": "ML slides 30\u201345; convolution-operation-stride.ipynb; DL L8 geometry"
+  },
+  {
+    "id": "shape-practice",
+    "title": "Predict all three output shapes.",
+    "chapter": "3 \u00b7 Padding and stride",
+    "source": "ML slides 30\u201345; convolution-operation-stride.ipynb; DL L8 geometry"
+  },
+  {
+    "id": "dilation",
+    "title": "Dilation spaces the samples inside a kernel.",
+    "chapter": "3 \u00b7 Padding and stride",
+    "source": "ML slides 30\u201345; convolution-operation-stride.ipynb; DL L8 geometry"
+  },
+  {
+    "id": "pool-max",
+    "title": "Replace a local window by its maximum.",
+    "chapter": "4 \u00b7 Pooling, colour, and feature maps",
+    "source": "ML slides 46\u201355; RGB/CIFAR and beach tutorial; DL L8 channels"
+  },
+  {
+    "id": "pool-average",
+    "title": "Replace the same window by its average.",
+    "chapter": "4 \u00b7 Pooling, colour, and feature maps",
+    "source": "ML slides 46\u201355; RGB/CIFAR and beach tutorial; DL L8 channels"
+  },
+  {
+    "id": "pooling",
+    "title": "Nonlinearity and spatial reduction",
+    "chapter": "4 \u00b7 Pooling, colour, and feature maps",
+    "source": "ML slides 46\u201355; RGB/CIFAR and beach tutorial; DL L8 channels"
+  },
+  {
+    "id": "pool-location",
+    "title": "What information did max pooling remove?",
+    "chapter": "4 \u00b7 Pooling, colour, and feature maps",
+    "source": "ML slides 46\u201355; RGB/CIFAR and beach tutorial; DL L8 channels"
+  },
+  {
+    "id": "rgb-intro",
+    "title": "RGB is three aligned planes.",
+    "chapter": "4 \u00b7 Pooling, colour, and feature maps",
+    "source": "ML slides 46\u201355; RGB/CIFAR and beach tutorial; DL L8 channels"
+  },
+  {
+    "id": "rgb-filter",
+    "title": "A single filter spans all input channels.",
+    "chapter": "4 \u00b7 Pooling, colour, and feature maps",
+    "source": "ML slides 46\u201355; RGB/CIFAR and beach tutorial; DL L8 channels"
+  },
+  {
+    "id": "channels",
+    "title": "Sum over input channels",
+    "chapter": "4 \u00b7 Pooling, colour, and feature maps",
+    "source": "ML slides 46\u201355; RGB/CIFAR and beach tutorial; DL L8 channels"
+  },
+  {
+    "id": "many-filters",
+    "title": "One filter gives one output channel.",
+    "chapter": "4 \u00b7 Pooling, colour, and feature maps",
+    "source": "ML slides 46\u201355; RGB/CIFAR and beach tutorial; DL L8 channels"
+  },
+  {
+    "id": "bias-relu",
+    "title": "First add a bias. Then apply a nonlinearity.",
+    "chapter": "4 \u00b7 Pooling, colour, and feature maps",
+    "source": "ML slides 46\u201355; RGB/CIFAR and beach tutorial; DL L8 channels"
+  },
+  {
+    "id": "why-nonlinearity",
+    "title": "Why put nonlinearities between the layers?",
+    "chapter": "4 \u00b7 Pooling, colour, and feature maps",
+    "source": "ML slides 46\u201355; RGB/CIFAR and beach tutorial; DL L8 channels"
+  },
+  {
+    "id": "tensor",
+    "title": "Account for all four weight axes",
+    "chapter": "4 \u00b7 Pooling, colour, and feature maps",
+    "source": "ML slides 46\u201355; RGB/CIFAR and beach tutorial; DL L8 channels"
+  },
+  {
+    "id": "channel-quiz",
+    "title": "Count the bank, not the image.",
+    "chapter": "4 \u00b7 Pooling, colour, and feature maps",
+    "source": "ML slides 46\u201355; RGB/CIFAR and beach tutorial; DL L8 channels"
+  },
+  {
+    "id": "lenet-map",
+    "title": "Now assemble a complete network.",
+    "chapter": "5 \u00b7 Rebuild the LeNet exercise",
+    "source": "ML slides 56\u201374; cnn.ipynb cells 8\u20139"
+  },
+  {
+    "id": "lenet-input",
+    "title": "Q1 \u00b7 What is the input?",
+    "chapter": "5 \u00b7 Rebuild the LeNet exercise",
+    "source": "ML slides 56\u201374; cnn.ipynb cells 8\u20139"
+  },
+  {
+    "id": "lenet-c1",
+    "title": "Q2 \u00b7 How does 32 become 28?",
+    "chapter": "5 \u00b7 Rebuild the LeNet exercise",
+    "source": "ML slides 56\u201374; cnn.ipynb cells 8\u20139"
+  },
+  {
+    "id": "lenet-c1-params",
+    "title": "Q3 \u00b7 How many parameters are in Conv1?",
+    "chapter": "5 \u00b7 Rebuild the LeNet exercise",
+    "source": "ML slides 56\u201374; cnn.ipynb cells 8\u20139"
+  },
+  {
+    "id": "lenet-p1",
+    "title": "Q4 \u00b7 How does 28 become 14?",
+    "chapter": "5 \u00b7 Rebuild the LeNet exercise",
+    "source": "ML slides 56\u201374; cnn.ipynb cells 8\u20139"
+  },
+  {
+    "id": "lenet-c2",
+    "title": "Q5 \u00b7 How does 6\u00d714\u00d714 become 16\u00d710\u00d710?",
+    "chapter": "5 \u00b7 Rebuild the LeNet exercise",
+    "source": "ML slides 56\u201374; cnn.ipynb cells 8\u20139"
+  },
+  {
+    "id": "lenet-p2",
+    "title": "Q6 \u00b7 Pool the second set of feature maps.",
+    "chapter": "5 \u00b7 Rebuild the LeNet exercise",
+    "source": "ML slides 56\u201374; cnn.ipynb cells 8\u20139"
+  },
+  {
+    "id": "lenet-flatten",
+    "title": "Q7 \u00b7 How do the feature maps meet an MLP?",
+    "chapter": "5 \u00b7 Rebuild the LeNet exercise",
+    "source": "ML slides 56\u201374; cnn.ipynb cells 8\u20139"
+  },
+  {
+    "id": "lenet-head-cost",
+    "title": "Where are most of the parameters?",
+    "chapter": "5 \u00b7 Rebuild the LeNet exercise",
+    "source": "ML slides 56\u201374; cnn.ipynb cells 8\u20139"
+  },
+  {
+    "id": "lenet",
+    "title": "Revisit the LeNet exercise from ML",
+    "chapter": "5 \u00b7 Rebuild the LeNet exercise",
+    "source": "ML slides 56\u201374; cnn.ipynb cells 8\u20139"
+  },
+  {
+    "id": "lenet-28",
+    "title": "The notebook uses 28\u00d728 MNIST directly.",
+    "chapter": "5 \u00b7 Rebuild the LeNet exercise",
+    "source": "ML slides 56\u201374; cnn.ipynb cells 8\u20139"
+  },
+  {
+    "id": "lenet-code",
+    "title": "Define the trainable parts.",
+    "chapter": "5 \u00b7 Rebuild the LeNet exercise",
+    "source": "ML slides 56\u201374; cnn.ipynb cells 8\u20139"
+  },
+  {
+    "id": "lenet-forward-code",
+    "title": "Write the forward pass in the same order.",
+    "chapter": "5 \u00b7 Rebuild the LeNet exercise",
+    "source": "ML slides 56\u201374; cnn.ipynb cells 8\u20139"
+  },
+  {
+    "id": "mnist-data",
+    "title": "Make the training experiment explicit.",
+    "chapter": "6 \u00b7 Train and open up the MNIST network",
+    "source": "ML cnn.ipynb cells 3\u201325; reproduced experiment in evidence/mnist.json"
+  },
+  {
+    "id": "mnist-batch",
+    "title": "One minibatch has four axes.",
+    "chapter": "6 \u00b7 Train and open up the MNIST network",
+    "source": "ML cnn.ipynb cells 3\u201325; reproduced experiment in evidence/mnist.json"
+  },
+  {
+    "id": "mnist-loop",
+    "title": "The training loop is the one you already know.",
+    "chapter": "6 \u00b7 Train and open up the MNIST network",
+    "source": "ML cnn.ipynb cells 3\u201325; reproduced experiment in evidence/mnist.json"
+  },
+  {
+    "id": "mnist-curves",
+    "title": "Did training make progress on unseen validation images?",
+    "chapter": "6 \u00b7 Train and open up the MNIST network",
+    "source": "ML cnn.ipynb cells 3\u201325; reproduced experiment in evidence/mnist.json"
+  },
+  {
+    "id": "mnist-evaluation",
+    "title": "Read the test result in its experimental context.",
+    "chapter": "6 \u00b7 Train and open up the MNIST network",
+    "source": "ML cnn.ipynb cells 3\u201325; reproduced experiment in evidence/mnist.json"
+  },
+  {
+    "id": "mnist-prediction",
+    "title": "Choose a digit. Inspect its prediction.",
+    "chapter": "6 \u00b7 Train and open up the MNIST network",
+    "source": "ML cnn.ipynb cells 3\u201325; reproduced experiment in evidence/mnist.json"
+  },
+  {
+    "id": "mnist-filters",
+    "title": "What did the first six filters learn?",
+    "chapter": "6 \u00b7 Train and open up the MNIST network",
+    "source": "ML cnn.ipynb cells 3\u201325; reproduced experiment in evidence/mnist.json"
+  },
+  {
+    "id": "mnist-patch",
+    "title": "Open one calculation inside a learned filter.",
+    "chapter": "6 \u00b7 Train and open up the MNIST network",
+    "source": "ML cnn.ipynb cells 3\u201325; reproduced experiment in evidence/mnist.json"
+  },
+  {
+    "id": "mnist-conv1",
+    "title": "Conv1 produces six 24\u00d724 response maps.",
+    "chapter": "6 \u00b7 Train and open up the MNIST network",
+    "source": "ML cnn.ipynb cells 3\u201325; reproduced experiment in evidence/mnist.json"
+  },
+  {
+    "id": "mnist-relu1",
+    "title": "ReLU keeps the positive responses.",
+    "chapter": "6 \u00b7 Train and open up the MNIST network",
+    "source": "ML cnn.ipynb cells 3\u201325; reproduced experiment in evidence/mnist.json"
+  },
+  {
+    "id": "mnist-pool1",
+    "title": "Pool each channel independently.",
+    "chapter": "6 \u00b7 Train and open up the MNIST network",
+    "source": "ML cnn.ipynb cells 3\u201325; reproduced experiment in evidence/mnist.json"
+  },
+  {
+    "id": "mnist-conv2",
+    "title": "Conv2 combines information across the six channels.",
+    "chapter": "6 \u00b7 Train and open up the MNIST network",
+    "source": "ML cnn.ipynb cells 3\u201325; reproduced experiment in evidence/mnist.json"
+  },
+  {
+    "id": "mnist-relu2",
+    "title": "The second ReLU changes values, not axes.",
+    "chapter": "6 \u00b7 Train and open up the MNIST network",
+    "source": "ML cnn.ipynb cells 3\u201325; reproduced experiment in evidence/mnist.json"
+  },
+  {
+    "id": "mnist-pool2",
+    "title": "After the second pool: sixteen 4\u00d74 maps.",
+    "chapter": "6 \u00b7 Train and open up the MNIST network",
+    "source": "ML cnn.ipynb cells 3\u201325; reproduced experiment in evidence/mnist.json"
+  },
+  {
+    "id": "mnist-flat",
+    "title": "Flatten preserves those 256 numbers.",
+    "chapter": "6 \u00b7 Train and open up the MNIST network",
+    "source": "ML cnn.ipynb cells 3\u201325; reproduced experiment in evidence/mnist.json"
+  },
+  {
+    "id": "mnist-hidden",
+    "title": "The dense head learns combinations of features.",
+    "chapter": "6 \u00b7 Train and open up the MNIST network",
+    "source": "ML cnn.ipynb cells 3\u201325; reproduced experiment in evidence/mnist.json"
+  },
+  {
+    "id": "mnist-logits",
+    "title": "Ten scores, then one probability distribution.",
+    "chapter": "6 \u00b7 Train and open up the MNIST network",
+    "source": "ML cnn.ipynb cells 3\u201325; reproduced experiment in evidence/mnist.json"
+  },
+  {
+    "id": "mnist-original",
+    "title": "Compare with the original notebook\u2019s feature-map walkthrough.",
+    "chapter": "6 \u00b7 Train and open up the MNIST network",
+    "source": "ML cnn.ipynb cells 3\u201325; reproduced experiment in evidence/mnist.json"
+  },
+  {
+    "id": "gradient-forward",
+    "title": "Reuse the kernel twice.",
+    "chapter": "7 \u00b7 Follow the shared gradients",
+    "source": "DL L8 shared-gradient derivation; inspectable live training extension"
+  },
+  {
+    "id": "gradient-chain",
+    "title": "The loss sends one upstream derivative to each output.",
+    "chapter": "7 \u00b7 Follow the shared gradients",
+    "source": "DL L8 shared-gradient derivation; inspectable live training extension"
+  },
+  {
+    "id": "gradient-sum",
+    "title": "One shared weight has several paths to the loss.",
+    "chapter": "7 \u00b7 Follow the shared gradients",
+    "source": "DL L8 shared-gradient derivation; inspectable live training extension"
+  },
+  {
+    "id": "gradient",
+    "title": "Every use contributes to one gradient",
+    "chapter": "7 \u00b7 Follow the shared gradients",
+    "source": "DL L8 shared-gradient derivation; inspectable live training extension"
+  },
+  {
+    "id": "gradient-input",
+    "title": "The overlapping input also receives two contributions.",
+    "chapter": "7 \u00b7 Follow the shared gradients",
+    "source": "DL L8 shared-gradient derivation; inspectable live training extension"
+  },
+  {
+    "id": "gradient-update",
+    "title": "Use the gradient for one parameter update",
+    "chapter": "7 \u00b7 Follow the shared gradients",
+    "source": "DL L8 shared-gradient example; one SGD extension"
+  },
+  {
+    "id": "gradient-2d",
+    "title": "The two-dimensional rule is the same sum.",
+    "chapter": "7 \u00b7 Follow the shared gradients",
+    "source": "DL L8 shared-gradient derivation; inspectable live training extension"
+  },
+  {
+    "id": "tiny-purpose",
+    "title": "Make a whole training step small enough to inspect.",
+    "chapter": "7 \u00b7 Follow the shared gradients",
+    "source": "DL L8 shared-gradient derivation; inspectable live training extension"
+  },
+  {
+    "id": "train",
+    "title": "Train an actual tiny CNN",
+    "chapter": "7 \u00b7 Follow the shared gradients",
+    "source": "DL L8 shared-gradient derivation; inspectable live training extension"
+  },
+  {
+    "id": "trace",
+    "title": "Trace the trained forward pass",
+    "chapter": "7 \u00b7 Follow the shared gradients",
+    "source": "DL L8 shared-gradient derivation; inspectable live training extension"
+  },
+  {
+    "id": "classifier",
+    "title": "From features to probabilities",
+    "chapter": "7 \u00b7 Follow the shared gradients",
+    "source": "DL L8 shared-gradient derivation; inspectable live training extension"
+  },
+  {
+    "id": "code",
+    "title": "Map the experiment to PyTorch",
+    "chapter": "7 \u00b7 Follow the shared gradients",
+    "source": "DL L8 shared-gradient derivation; inspectable live training extension"
+  },
+  {
+    "id": "pixels",
+    "title": "Declare the teaching image",
+    "chapter": "8 \u00b7 Spatial reasoning and complete accounting",
+    "source": "DL L8: equivariance, receptive fields, classifier ledger"
+  },
+  {
+    "id": "photo",
+    "title": "A filter on a real photograph",
+    "chapter": "8 \u00b7 Spatial reasoning and complete accounting",
+    "source": "DL L8: equivariance, receptive fields, classifier ledger"
+  },
+  {
+    "id": "equivariance",
+    "title": "Move the input. What should happen to the feature map?",
+    "chapter": "8 \u00b7 Spatial reasoning and complete accounting",
+    "source": "DL L8: equivariance, receptive fields, classifier ledger"
+  },
+  {
+    "id": "shifts",
+    "title": "Test equivariance instead of asserting it",
+    "chapter": "8 \u00b7 Spatial reasoning and complete accounting",
+    "source": "DL L8: equivariance, receptive fields, classifier ledger"
+  },
+  {
+    "id": "invariance",
+    "title": "Pooling is not a guarantee of invariance",
+    "chapter": "8 \u00b7 Spatial reasoning and complete accounting",
+    "source": "DL L8: equivariance, receptive fields, classifier ledger"
+  },
+  {
+    "id": "receptive-derive",
+    "title": "Which input pixels can affect this output?",
+    "chapter": "8 \u00b7 Spatial reasoning and complete accounting",
+    "source": "DL L8: equivariance, receptive fields, classifier ledger"
+  },
+  {
+    "id": "receptive-trace",
+    "title": "Conv \u2192 pool \u2192 conv: follow the same recurrence.",
+    "chapter": "8 \u00b7 Spatial reasoning and complete accounting",
+    "source": "DL L8: equivariance, receptive fields, classifier ledger"
+  },
+  {
+    "id": "receptive",
+    "title": "Trace a feature back to the input",
+    "chapter": "8 \u00b7 Spatial reasoning and complete accounting",
+    "source": "DL L8: equivariance, receptive fields, classifier ledger"
+  },
+  {
+    "id": "stack",
+    "title": "Two small kernels are not one large kernel",
+    "chapter": "8 \u00b7 Spatial reasoning and complete accounting",
+    "source": "DL L8: equivariance, receptive fields, classifier ledger"
+  },
+  {
+    "id": "matrix",
+    "title": "Convolution is a structured linear map",
+    "chapter": "8 \u00b7 Spatial reasoning and complete accounting",
+    "source": "DL L8: equivariance, receptive fields, classifier ledger"
+  },
+  {
+    "id": "dl-classifier",
+    "title": "Build a second complete classifier.",
+    "chapter": "8 \u00b7 Spatial reasoning and complete accounting",
+    "source": "DL L8: equivariance, receptive fields, classifier ledger"
+  },
+  {
+    "id": "dl-ledger-one",
+    "title": "Conv1: capacity and work are different counts.",
+    "chapter": "8 \u00b7 Spatial reasoning and complete accounting",
+    "source": "DL L8: equivariance, receptive fields, classifier ledger"
+  },
+  {
+    "id": "dl-ledger-two",
+    "title": "Conv2: less space, more channels.",
+    "chapter": "8 \u00b7 Spatial reasoning and complete accounting",
+    "source": "DL L8: equivariance, receptive fields, classifier ledger"
+  },
+  {
+    "id": "dl-gap",
+    "title": "Global average pooling gives one value per channel.",
+    "chapter": "8 \u00b7 Spatial reasoning and complete accounting",
+    "source": "DL L8: equivariance, receptive fields, classifier ledger"
+  },
+  {
+    "id": "audit",
+    "title": "Audit a complete network",
+    "chapter": "8 \u00b7 Spatial reasoning and complete accounting",
+    "source": "DL L8: equivariance, receptive fields, classifier ledger"
+  },
+  {
+    "id": "cost",
+    "title": "Separate parameters from computation",
+    "chapter": "8 \u00b7 Spatial reasoning and complete accounting",
+    "source": "DL L8: equivariance, receptive fields, classifier ledger"
+  },
+  {
+    "id": "resolution",
+    "title": "Double both spatial dimensions.",
+    "chapter": "8 \u00b7 Spatial reasoning and complete accounting",
+    "source": "DL L8: equivariance, receptive fields, classifier ledger"
+  },
+  {
+    "id": "alexnet",
+    "title": "What changed when CNNs scaled up?",
+    "chapter": "9 \u00b7 From LeNet to modern CNN blocks",
+    "source": "ML slide 74 architecture bridge; DL L8B worked examples"
+  },
+  {
+    "id": "vgg",
+    "title": "VGG: repeat small filters.",
+    "chapter": "9 \u00b7 From LeNet to modern CNN blocks",
+    "source": "ML slide 74 architecture bridge; DL L8B worked examples"
+  },
+  {
+    "id": "pointwise",
+    "title": "A 1 \u00d7 1 convolution mixes channels",
+    "chapter": "9 \u00b7 From LeNet to modern CNN blocks",
+    "source": "ML slide 74 architecture bridge; DL L8B worked examples"
+  },
+  {
+    "id": "bottleneck-purpose",
+    "title": "Make the expensive spatial operation narrow.",
+    "chapter": "9 \u00b7 From LeNet to modern CNN blocks",
+    "source": "ML slide 74 architecture bridge; DL L8B worked examples"
+  },
+  {
+    "id": "bottleneck",
+    "title": "Did the bottleneck meet the target?",
+    "chapter": "9 \u00b7 From LeNet to modern CNN blocks",
+    "source": "ML slide 74 architecture bridge; DL L8B worked examples"
+  },
+  {
+    "id": "inception",
+    "title": "Try several spatial scales in parallel.",
+    "chapter": "9 \u00b7 From LeNet to modern CNN blocks",
+    "source": "ML slide 74 architecture bridge; DL L8B worked examples"
+  },
+  {
+    "id": "residual-intuition",
+    "title": "Ask the next block to learn a correction.",
+    "chapter": "9 \u00b7 From LeNet to modern CNN blocks",
+    "source": "ML slide 74 architecture bridge; DL L8B worked examples"
+  },
+  {
+    "id": "residual-scalar",
+    "title": "Try the shortcut with one number.",
+    "chapter": "9 \u00b7 From LeNet to modern CNN blocks",
+    "source": "ML slide 74 architecture bridge; DL L8B worked examples"
+  },
+  {
+    "id": "residual",
+    "title": "A residual branch learns a correction",
+    "chapter": "9 \u00b7 From LeNet to modern CNN blocks",
+    "source": "ML slide 74 architecture bridge; DL L8B worked examples"
+  },
+  {
+    "id": "separable",
+    "title": "Factor spatial filtering and channel mixing",
+    "chapter": "9 \u00b7 From LeNet to modern CNN blocks",
+    "source": "ML slide 74 architecture bridge; DL L8B worked examples"
+  },
+  {
+    "id": "modern-features",
+    "title": "Look inside the real pretrained backbone.",
+    "chapter": "9 \u00b7 From LeNet to modern CNN blocks",
+    "source": "ML slide 74 architecture bridge; DL L8B worked examples"
+  },
+  {
+    "id": "transfer",
+    "title": "Transfer a representation, keep the experiment honest",
+    "chapter": "10 \u00b7 Transfer, representations, and checks",
+    "source": "ML slides 75\u201376; DL L8B transfer experiment; ML tutorial links"
+  },
+  {
+    "id": "cached-features",
+    "title": "A frozen backbone can become a feature extractor.",
+    "chapter": "10 \u00b7 Transfer, representations, and checks",
+    "source": "ML slides 75\u201376; DL L8B transfer experiment; ML tutorial links"
+  },
+  {
+    "id": "transfer-preprocess",
+    "title": "The pretrained weights come with a preprocessing contract.",
+    "chapter": "10 \u00b7 Transfer, representations, and checks",
+    "source": "ML slides 75\u201376; DL L8B transfer experiment; ML tutorial links"
+  },
+  {
+    "id": "transfer-modes",
+    "title": "Freezing, evaluation mode, and no_grad do different jobs.",
+    "chapter": "10 \u00b7 Transfer, representations, and checks",
+    "source": "ML slides 75\u201376; DL L8B transfer experiment; ML tutorial links"
+  },
+  {
+    "id": "transfer-evidence",
+    "title": "Compare the actual pet transfer-learning recipes.",
+    "chapter": "10 \u00b7 Transfer, representations, and checks",
+    "source": "ML slides 75\u201376; DL L8B transfer experiment; ML tutorial links"
+  },
+  {
+    "id": "features-pca",
+    "title": "Can we see structure in the learned representation?",
+    "chapter": "10 \u00b7 Transfer, representations, and checks",
+    "source": "ML slides 75\u201376; DL L8B transfer experiment; ML tutorial links"
+  },
+  {
+    "id": "pca-limits",
+    "title": "A two-dimensional plot is not the full classifier.",
+    "chapter": "10 \u00b7 Transfer, representations, and checks",
+    "source": "ML slides 75\u201376; DL L8B transfer experiment; ML tutorial links"
+  },
+  {
+    "id": "debug",
+    "title": "Debug a CNN with targeted experiments",
+    "chapter": "10 \u00b7 Transfer, representations, and checks",
+    "source": "ML slides 75\u201376; DL L8B transfer experiment; ML tutorial links"
+  },
+  {
+    "id": "tutorials",
+    "title": "Keep the original tutorials within reach.",
+    "chapter": "10 \u00b7 Transfer, representations, and checks",
+    "source": "ML slides 75\u201376; DL L8B transfer experiment; ML tutorial links"
+  },
+  {
+    "id": "closing-calculation",
+    "title": "One last calculation: explain each axis.",
+    "chapter": "10 \u00b7 Transfer, representations, and checks",
+    "source": "ML slides 75\u201376; DL L8B transfer experiment; ML tutorial links"
+  },
+  {
+    "id": "retrieve",
+    "title": "Explain, predict, and verify",
+    "chapter": "10 \u00b7 Transfer, representations, and checks",
+    "source": "ML slides 75\u201376; DL L8B transfer experiment; ML tutorial links"
+  }
+]
