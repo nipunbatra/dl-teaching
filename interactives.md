@@ -45,6 +45,7 @@ live controls) + a `meta.json` (slug, title, tagline, summary, difficulty, tags,
 | 7 | | weight decay (λ sweep → norm & boundary) | `weight-decay` | LIVE |
 | 7 | | augmentation & mixup (2-D boundary) | `augmentation-mixup` | LIVE |
 | 8 | CNNs | convolution playground, padding/stride | `convolution-visualizer` | LIVE |
+| 8 | | [Convolutional neural networks](interactives/cnn/index.html): one unified lecture with reading/presentation modes, course examples, and actual browser training | `cnn/index.html` | LIVE |
 | 8 | | receptive field | `receptive-field-grower` | LIVE |
 | 8 | | pooling (max/avg on a grid) | `pooling-visualizer` | LIVE |
 | 8 | | padding & stride → output size | `padding-stride` | LIVE |

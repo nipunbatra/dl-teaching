@@ -19,6 +19,10 @@ This site contains the slides, notebooks, assignments, and interactive material 
 - **Part 1: From characters to next-token prediction.** [Interactive lecture](https://nipunbatra.github.io/attention/part1.html) · [Presentation](https://nipunbatra.github.io/attention/part1.html?present) · [Two-page A4 cheat sheet](slides-pdf/P01-cheatsheet.pdf)
 - **Part 2: Self-attention, from first principles.** [Interactive lecture](https://nipunbatra.github.io/attention/attention.html) · [Presentation](https://nipunbatra.github.io/attention/attention.html?present) · [Two-page A4 cheat sheet](slides-pdf/P02-cheatsheet.pdf)
 
+## Convolutional neural networks
+
+One interactive lecture, from local filters to a trained CNN. [Read the lecture](interactives/cnn/index.html) · [Present](interactives/cnn/index.html?present)
+
 ## Recently taught
 
 - **Valid Outputs & Learning-Rate Schedules** — constrained parameters, warmup, decay, and cosine schedules. [▤ Valid outputs](slides-pdf/L5B.pdf) · [▤ LR schedules](slides-pdf/L5C.pdf) · [★ Cheatsheet](slides-pdf/S09-cheatsheet.pdf)

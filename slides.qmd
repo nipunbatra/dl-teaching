@@ -43,6 +43,17 @@ classroom slides. Each cheat sheet fills two printable A4 pages.
 | 1 | **From characters to next-token prediction** - tokenization, learned embeddings, a hidden-layer MLP, training, and generation | [▤ Interactive lecture](https://nipunbatra.github.io/attention/part1.html) · [▶ Present](https://nipunbatra.github.io/attention/part1.html?present) · [★ A4 cheat sheet](slides-pdf/P01-cheatsheet.pdf) |
 | 2 | **Self-attention, from first principles** - queries, keys, values, scaling, causal masking, and residual updates | [▤ Interactive lecture](https://nipunbatra.github.io/attention/attention.html) · [▶ Present](https://nipunbatra.github.io/attention/attention.html?present) · [★ A4 cheat sheet](slides-pdf/P02-cheatsheet.pdf) |
 
+## Convolutional neural networks
+
+One continuous interactive deck based on the ML and DL CNN lectures: local
+filters, channels, geometry, pooling, receptive fields, the LeNet exercise,
+shared gradients, and a tiny CNN that trains in the browser.
+
+[Read the lecture](interactives/cnn/index.html) ·
+[Present](interactives/cnn/index.html?present) ·
+[Sources and teaching choices](interactives/cnn/sources.html) ·
+[PyTorch companion](interactives/cnn/tiny_cnn.py)
+
 <!-- Future deck catalog retained in source and intentionally hidden from the
 student-facing page until the corresponding lectures are taught.
 

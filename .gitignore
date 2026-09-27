@@ -53,3 +53,6 @@ scratch/
 TEACHING_GUIDES.md
 NOTES.md
 slides-legacy.html
+
+# Authored interactive CNN lecture (not a generated Quarto page)
+!/interactives/cnn/index.html
