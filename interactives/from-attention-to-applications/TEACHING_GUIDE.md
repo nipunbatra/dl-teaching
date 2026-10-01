@@ -167,3 +167,7 @@ Read each panel from the purple Hindi prefix to the teal English source lookup. 
 ## Opening and section transitions (revision 7.23)
 
 Slide 1 introduces the lecture and its three architecture families. Slide 2 recalls positional encoding, self-attention, multi-head message combination, residual updates and the MLP. Continue into the original task questions on slide 3. The five existing section dividers now show the section’s input/output relationship and a highlighted position in the lecture outline; the appendix keeps a separate optional-material divider. All prior teaching frames and repetitions are retained.
+
+## Recording the HTML slideshow
+
+In presentation mode, the toolbar hides after two seconds without input. Move the pointer, tap, or press any key to reveal it. Arrow keys or N still advance while controls are hidden. Leave the pointer away from the toolbar and close its menu before recording. Menus and keyboard-focused controls remain visible while in use.
