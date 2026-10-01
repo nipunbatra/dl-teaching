@@ -2,7 +2,7 @@
 
 Students know embeddings, positions, Q/K/V, attention, multi-head attention, high-level Transformer blocks and causal next-token generation. They do not need recurrent networks, historical translation systems, BERT pretraining or later vision material.
 
-The lecture is designed for 45–60 minutes. Its 93 main frames include several quick progressive builds. Do not spend a minute on every frame.
+The lecture is designed for 45–60 minutes. Its 89 main frames include several quick progressive builds. Do not spend a minute on every frame.
 
 | Minutes | Frames | Teaching purpose |
 |---|---|---|
@@ -10,9 +10,10 @@ The lecture is designed for 45–60 minutes. Its 93 main frames include several 
 | 5–11 | 9–19 | Recognize the causal decoder students already know; grow the prefix |
 | 11–25 | 20–40 | Whole-input attention, shared NER classifier, encoder name, pooling and CLS |
 | 25–38 | 41–56 | Fixed source context and three concrete ways to feed it to the decoder |
-| 38–55 | 57–88 | Retain source states; distinguish keys from values, explain changing queries, trace a Hindi token and compare matrices |
-| 55–60 | 89–93 | Model families, task choices and final questions |
-| Optional | 94–101 | Cross-attention shapes, continuous-prefix implementation, shifted training, two meanings of head, scores-to-vector calculation |
+| 38–52 | 57–79 | Retain source states; distinguish keys from values, explain changing queries and trace Hindi generation |
+| 52–55 | 80–84 | Compare full, causal and cross-attention patterns and their tasks |
+| 55–60 | 85–89 | Model families, task choices and final questions |
+| Optional | 90–97 | Cross-attention shapes, continuous-prefix implementation, shifted training, two meanings of head, scores-to-vector calculation |
 
 For a 45-minute delivery, abbreviate the decoder recap, discuss only one interactive attention lookup, and explain tensor shapes verbally while showing the comparison. Preserve the pooling-to-cross-attention sequence and the final three matrices. The architecture story remains complete without the appendix.
 
@@ -30,7 +31,7 @@ Frames 44–46 add source states, pooling and the causal target decoder in fixed
 
 On frame 47, say: “The decoder has access to c at every step. Now let us make that concrete.” The conditional distribution is `p(y_t | y_<t, c)`. Both stacks still use self-attention; this baseline lacks a separate source cross-attention operation.
 
-Frame 96 in the appendix enlarges the prefix implementation: compute `c = Pool(E)`, project it to decoder width with `u = c W_P`, and prepend u before शुरू and the target embeddings. Use consistent positions and train the construction end to end. This is a teaching construction, not the definition of an encoder-decoder. The source prefix vector stays fixed while the target hidden states change.
+Frame 92 in the appendix enlarges the prefix implementation: compute `c = Pool(E)`, project it to decoder width with `u = c W_P`, and prepend u before शुरू and the target embeddings. Use consistent positions and train the construction end to end. This is a teaching construction, not the definition of an encoder-decoder. The source prefix vector stays fixed while the target hidden states change.
 
 The three inserted architecture diagrams are:
 
@@ -88,7 +89,7 @@ The six displayed words are teaching positions, not an actual tokenizer’s outp
 
 All outputs and attention weights are authored examples. No model inference was performed. The seven interactive six-position weight vectors each sum to one and deliberately emphasize Raghav, Delhi and school in turn. Attention patterns in a real network need not be literal translations or complete explanations.
 
-The optional four-key calculation uses **already scaled scores** [0.2, 0.1, 0.3, 2.0]. Its softmax is [0.110379, 0.099875, 0.121988, 0.667757]. Frame 101 then mixes V = [[1,0], [0,1], [1,1], [2,1]] to obtain c = [1.567881, 0.889621], displayed as [1.57, 0.89]. Compute each coordinate aloud. The result is another vector. This four-key calculation is separate from the six-word diagram.
+The optional four-key calculation uses **already scaled scores** [0.2, 0.1, 0.3, 2.0]. Its softmax is [0.110379, 0.099875, 0.121988, 0.667757]. Frame 97 then mixes V = [[1,0], [0,1], [1,1], [2,1]] to obtain c = [1.567881, 0.889621], displayed as [1.57, 0.89]. Compute each coordinate aloud. The result is another vector. This four-key calculation is separate from the six-word diagram.
 
 ## Discussion prompts
 
@@ -144,15 +145,11 @@ Start with an intuitive source lookup: weights [0.72, 0.04, 0.03, 0.09, 0.04, 0.
 
 Frame 43 introduces [शुरू] as a special start ID with its own embedding-table row. It is not the ordinary Hindi word शुरू in the translation. [समाप्त] labels the stop token. The source-lookup sequence now walks through all six Hindi words and the end marker, with all seven steps available in both the PDF and interactive buttons. Only generated words are appended to the target prefix. For predicting स्कूल, the current last input is में at position 4. Source-weight rows are illustrative, sum to one, and should not be described as guaranteed word alignments.
 
-## Two attention updates, then prediction: frames 80–83
-
-Keep the supplied prefix [शुरू] राघव fixed. First update the राघव embedding e₂ using Hindi causal self-attention. Use that updated embedding to form the English cross-attention query. Retrieve c₂ from English values, project it into a new Δe₂ and add it to the retained target stream. Then apply the MLP and remaining decoder blocks. Only the final vocabulary head predicts दिल्ली. Causal self-attention does not make an intermediate token prediction. The two Δe₂ labels refer to local updates in distinct sublayers, with different learned projection parameters.
-
-## Word-labeled matrices and task probabilities: frames 85–88
+## Word-labeled matrices and task probabilities: frames 81–84
 
 Use the comparison first, then read one query row in each enlarged matrix. The encoder example obtains six vectors, pools them and classifies the topic with p(y | x). The decoder continuation reads Raghav goes to and predicts school; previous and current input words are permitted, future words are not. Cross-attention has Hindi rows [शुरू], राघव and six English columns; p(दिल्ली | English, supplied Hindi prefix) is produced by the final vocabulary head. Filled cells indicate permission, not learned weights or output probabilities.
 
-## Optional cross-attention shapes: frame 95
+## Optional cross-attention shapes: frame 91
 
 The tensor-shape derivation is now in the appendix, after the main lecture ends. Skip it for the conceptual walkthrough; use it when students want to check matrix multiplication dimensions. The three concrete attention examples still lead directly into the model-family recap.
 
@@ -166,8 +163,12 @@ Read each panel from the purple Hindi prefix to the teal English source lookup. 
 
 ## Opening and section transitions (revision 7.23)
 
-Slide 1 introduces the lecture and its three architecture families. Slide 2 recalls positional encoding, self-attention, multi-head message combination, residual updates and the MLP. Continue into the original task questions on slide 3. The five existing section dividers now show the section’s input/output relationship and a highlighted position in the lecture outline; the appendix keeps a separate optional-material divider. All prior teaching frames and repetitions are retained.
+Slide 1 introduces the lecture and its three architecture families. Slide 2 recalls positional encoding, self-attention, multi-head message combination, residual updates and the MLP. Continue into the original task questions on slide 3. The section dividers show the section’s input/output relationship and a highlighted position in the lecture outline; the appendix keeps a separate optional-material divider.
 
 ## Recording the HTML slideshow
 
 In presentation mode, the toolbar hides after two seconds without input. Move the pointer, tap, or press any key to reveal it. Arrow keys or N still advance while controls are hidden. Leave the pointer away from the toolbar and close its menu before recording. Menus and keyboard-focused controls remain visible while in use.
+
+## Attention comparison section (revision 7.25)
+
+The repeated four-step translation trace and encoder-decoder summary (former slides 80–84) have been removed. Slide 80 now introduces Part V, attention patterns and applications. The comparison and three word-labeled matrix examples follow on slides 81–84. Architecture comparisons form Part VI, beginning on slide 85. The main route has 89 frames; the complete PDF has 97 pages.

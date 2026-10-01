@@ -634,47 +634,15 @@ No. We can reuse its encoder states. The changing target query produces a potent
 
 Causal self-attention supplies target-prefix context. Cross-attention retrieves from the complete source. The feed-forward sublayer then transforms each target position.
 
-## 80. Step 1: update the target embedding with self-attention
+## 80. Part V · Attention patterns and applications
 
-[Open this frame](index.html?present#translation-trace-1)
+[Open this frame](index.html?present#part-patterns)
 
-**Does causal self-attention already predict the next token?**
+**Part V · Attention patterns and applications**
 
-No. It updates the embeddings of tokens already supplied. Here राघव is at target position 2 and can attend to [शुरू] and itself. Its attention message is projected and added through a residual, producing e₂ with Hindi-prefix context. The next token has not yet been predicted.
+Compare what each attention operation can read.
 
-## 81. Step 2: form a query for cross-attention
-
-[Open this frame](index.html?present#translation-trace-query)
-
-**Which version of e₂ makes the cross-attention query?**
-
-The e₂ that has already received the Hindi causal self-attention update. Project it with the cross-attention W_Q. Compare q₂ with keys from the English encoder, turn source scores into weights, and combine English values into c₂.
-
-## 82. Step 3: add the projected source message
-
-[Open this frame](index.html?present#translation-trace-update)
-
-**Does cross-attention replace the target embedding with the source message?**
-
-No. Retain e₂ after the Hindi update, project the English message c₂ into a new Δe₂ using W_O, and add this update through the second residual. The same target position now carries information from both the Hindi prefix and the English source.
-
-## 83. Step 4: predict the next token
-
-[Open this frame](index.html?present#translation-trace-2)
-
-**Where does next-token prediction actually happen?**
-
-After the decoder blocks. Each block performs target causal self-attention, source cross-attention and an MLP, with residual updates. The final embedding at राघव is read by the vocabulary head; softmax gives next-token probabilities. Choosing दिल्ली appends a new token, and the process repeats.
-
-## 84. Encoder-decoder: generation conditioned on a source
-
-[Open this frame](index.html?present#encoder-decoder-summary)
-
-**What can this decoder look back at?**
-
-Its causal self-attention reads the target prefix. Its cross-attention reads the retained source embeddings, using a target query and source keys and values. The last updated target embedding feeds the vocabulary head to predict the next Hindi token.
-
-## 85. Attention patterns and their applications
+## 81. Attention patterns and their applications
 
 [Open this frame](index.html?present#three-attention-patterns)
 
@@ -682,7 +650,7 @@ Its causal self-attention reads the target prefix. Its cross-attention reads the
 
 An encoder can read the complete English input to build representations for a sentence classifier. A causal decoder reads the supplied prefix to support next-token prediction. Cross-attention lets Hindi target positions consult the English source while translating. The following slides label every row and column with the actual words.
 
-## 86. Encoder attention for sentence classification
+## 82. Encoder attention for sentence classification
 
 [Open this frame](index.html?present#encoder-attention-task)
 
@@ -690,7 +658,7 @@ An encoder can read the complete English input to build representations for a se
 
 No. It returns six updated token embeddings. In this example we mean-pool them into one vector, then apply a topic classifier and softmax to obtain p(y | x), where x is the complete sentence and y is a topic label. EDUCATION is an illustrative label.
 
-## 87. Causal attention for next-token prediction
+## 83. Causal attention for next-token prediction
 
 [Open this frame](index.html?present#decoder-attention-task)
 
@@ -698,7 +666,7 @@ No. It returns six updated token embeddings. In this example we mean-pool them i
 
 Yes. The last supplied position to can read Raghav, goes and itself. It cannot read school because school has not been supplied. After the decoder blocks, the vocabulary head reads the final e₃ and models p(school | Raghav goes to). Causal attention alone updates embeddings rather than emitting a word.
 
-## 88. Cross-attention between Hindi and English
+## 84. Cross-attention between Hindi and English
 
 [Open this frame](index.html?present#cross-attention-task)
 
@@ -706,15 +674,15 @@ Yes. The last supplied position to can read Raghav, goes and itself. It cannot r
 
 The complete English source is already supplied, so each Hindi query may read all six source positions. Causality still applies within the Hindi stream. To predict दिल्ली, use the current embedding at राघव after Hindi self-attention, then query English keys and combine English values.
 
-## 89. Part V · Comparing model architectures
+## 85. Part VI · Comparing model architectures
 
 [Open this frame](index.html?present#part-families)
 
-**Part V · Comparing model architectures**
+**Part VI · Comparing model architectures**
 
 Compare the architectures used for the example tasks.
 
-## 90. Encoder, decoder-only and encoder-decoder models
+## 86. Encoder, decoder-only and encoder-decoder models
 
 [Open this frame](index.html?present#model-families)
 
@@ -722,7 +690,7 @@ Compare the architectures used for the example tasks.
 
 A source encoder and a pathway from its representations into the target decoder. Our final arrangement uses cross-attention for that source pathway.
 
-## 91. Choosing an architecture for a task
+## 87. Choosing an architecture for a task
 
 [Open this frame](index.html?present#match-task)
 
@@ -730,7 +698,7 @@ A source encoder and a pathway from its representations into the target decoder.
 
 Yes. It can generate labels or translations from a suitable prompt and training setup. These rows illustrate useful arrangements rather than exclusive capabilities.
 
-## 92. Choosing an architecture
+## 88. Choosing an architecture
 
 [Open this frame](index.html?present#decision-tree)
 
@@ -738,7 +706,7 @@ Yes. It can generate labels or translations from a suitable prompt and training 
 
 No. This branch asks whether the chosen design has a separate source pathway. A decoder-only model can instead consume source text within its prefix.
 
-## 93. Review: attention, representations and training
+## 89. Review: attention, representations and training
 
 [Open this frame](index.html?present#exit-question)
 
@@ -746,7 +714,7 @@ No. This branch asks whether the chosen design has a separate source pathway. A 
 
 NER uses whole-input attention, all token states and token labels. Classification uses a whole-input readout and one sentence label. Translation uses source encoding, causal target states, cross-attention and next-target-token supervision.
 
-## 94. Appendix: worked examples
+## 90. Appendix: worked examples
 
 [Open this frame](index.html?present#appendix)
 
@@ -754,7 +722,7 @@ NER uses whole-input attention, all token states and token labels. Classificatio
 
 Tensor shapes, training and a numerical attention example.
 
-## 95. Tensor shapes in cross-attention
+## 91. Tensor shapes in cross-attention
 
 [Open this frame](index.html?present#cross-attention-shapes)
 
@@ -762,7 +730,7 @@ Tensor shapes, training and a numerical attention example.
 
 No. For m target queries and n source positions, A has shape m × n. Each row sums to one. C = AV has shape m × dᵥ per head. With m = 4 and n = 6, the weight matrix is 4 × 6.
 
-## 96. Conditioning with a continuous source prefix
+## 92. Conditioning with a continuous source prefix
 
 [Open this frame](index.html?present#context-prefix)
 
@@ -770,7 +738,7 @@ No. For m target queries and n source positions, A has shape m × n. Each row su
 
 No. Here it labels an injected continuous input vector u = c W_P. Prepend it to the positioned target embeddings, start with [शुरू], and read the last target position to predict the next word.
 
-## 97. Next-token prediction during training
+## 93. Next-token prediction during training
 
 [Open this frame](index.html?present#training-shift)
 
@@ -778,7 +746,7 @@ No. Here it labels an injected continuous input vector u = c W_P. Prepend it to 
 
 Not at the prediction position: its input is the previous target token and its self-attention is causal. The source remains available through cross-attention.
 
-## 98. Training versus generation
+## 94. Training versus generation
 
 [Open this frame](index.html?present#training-generation)
 
@@ -786,7 +754,7 @@ Not at the prediction position: its input is the previous target token and its s
 
 The model’s selected prediction. In teacher-forced training we supply the observed previous target token instead.
 
-## 99. Attention head ≠ classification head
+## 95. Attention head ≠ classification head
 
 [Open this frame](index.html?present#attention-versus-head)
 
@@ -794,7 +762,7 @@ The model’s selected prediction. In teacher-forced training we supply the obse
 
 No. The number of attention heads and the number of classes are independent. They name different computations.
 
-## 100. A numerical cross-attention example
+## 96. A numerical cross-attention example
 
 [Open this frame](index.html?present#cross-numerical)
 
@@ -802,7 +770,7 @@ No. The number of attention heads and the number of classes are independent. The
 
 Delhi. Softmax of scaled scores [0.2, 0.1, 0.3, 2.0] is approximately [0.110, 0.100, 0.122, 0.668]. These weights mix the four source value vectors.
 
-## 101. Computing the weighted sum of values
+## 97. Computing the weighted sum of values
 
 [Open this frame](index.html?present#cross-numerical-values)
 
