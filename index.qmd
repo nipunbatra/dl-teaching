@@ -23,6 +23,11 @@ This site contains the slides, notebooks, assignments, and interactive material 
 
 The complete ML-based CNN lecture, expanded with interactive calculations and an end-to-end MNIST walkthrough. [Read the lecture](interactives/cnn/index.html) · [Present](interactives/cnn/index.html?present)
 
+## Object detection and beyond boxes
+
+- **Part I: Object Detection.** [HTML lecture](https://nipunbatra.github.io/attention/object-detection/) · [Present](https://nipunbatra.github.io/attention/object-detection/?present#title) · [PDF](https://nipunbatra.github.io/attention/object-detection/object-detection.pdf) · [Detector lab](https://nipunbatra.github.io/attention/object-detection/lab.html)
+- **Part II: Beyond Boxes.** Segmentation, pose, depth and promptable vision. [HTML lecture](https://nipunbatra.github.io/attention/beyond-boxes/) · [Present](https://nipunbatra.github.io/attention/beyond-boxes/?present#cover) · [PDF](https://nipunbatra.github.io/attention/beyond-boxes/beyond-boxes.pdf) · [Beyond Boxes lab](https://nipunbatra.github.io/attention/beyond-boxes/lab.html)
+
 ## Recently taught
 
 - **Valid Outputs & Learning-Rate Schedules** — constrained parameters, warmup, decay, and cosine schedules. [▤ Valid outputs](slides-pdf/L5B.pdf) · [▤ LR schedules](slides-pdf/L5C.pdf) · [★ Cheatsheet](slides-pdf/S09-cheatsheet.pdf)

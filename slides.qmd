@@ -46,6 +46,15 @@ classroom slides. Each cheat sheet fills two printable A4 pages.
 | CLIP | **CLIP: From Fixed Labels to Language-Defined Vision** — image–text applications, two encoders, contrastive loss and linear probing | [▤ HTML lecture](https://nipunbatra.github.io/attention/clip/) · [▶ Present](https://nipunbatra.github.io/attention/clip/?present#cover) · [▤ PDF · 164 pages](https://nipunbatra.github.io/attention/clip/clip.pdf) |
 | VLMs | **From CLIP to Vision-Language Models** — visual prefixes, cross-attention, compression, training and image-conditioned generation | [▤ HTML lecture](https://nipunbatra.github.io/attention/from-clip-to-vlm/) · [▶ Present](https://nipunbatra.github.io/attention/from-clip-to-vlm/?present#cover) · [▤ PDF · 155 pages](https://nipunbatra.github.io/attention/from-clip-to-vlm/from-clip-to-vlm.pdf) |
 
+## Object detection and beyond boxes
+
+Two connected lectures: first predict a set of objects, then choose richer outputs when boxes are not enough.
+
+| Part | Lecture | Resources |
+|:--|:--|:--|
+| I | **Object Detection: From One Label to a Set of Objects** — candidates, assignment, worked losses, NMS, evaluation and learned queries | [HTML lecture](https://nipunbatra.github.io/attention/object-detection/) · [Present](https://nipunbatra.github.io/attention/object-detection/?present#title) · [PDF · 133 pages](https://nipunbatra.github.io/attention/object-detection/object-detection.pdf) · [Detector lab](https://nipunbatra.github.io/attention/object-detection/lab.html) |
+| II | **Beyond Boxes: Dense, Structured, and Promptable Vision** — semantic and instance segmentation, pose, depth, promptable masks and grounding | [HTML lecture](https://nipunbatra.github.io/attention/beyond-boxes/) · [Present](https://nipunbatra.github.io/attention/beyond-boxes/?present#cover) · [PDF · 60 pages](https://nipunbatra.github.io/attention/beyond-boxes/beyond-boxes.pdf) · [Beyond Boxes lab](https://nipunbatra.github.io/attention/beyond-boxes/lab.html) |
+
 ## Convolutional neural networks
 
 One complete interactive deck built on the ML course CNN lecture and its
