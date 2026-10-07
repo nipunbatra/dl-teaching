@@ -1,0 +1,907 @@
+{
+  "browser": {
+    "passed": true,
+    "queries": {
+      "photos": [
+        {
+          "id": "Persian",
+          "score": 0.680435366437272
+        },
+        {
+          "id": "pug",
+          "score": 0.6663733983089948
+        },
+        {
+          "id": "chelsea",
+          "score": 0.6636814090821528
+        },
+        {
+          "id": "newfoundland",
+          "score": 0.6369116368600198
+        },
+        {
+          "id": "retriever-sketch",
+          "score": 0.6368602806770993
+        },
+        {
+          "id": "retriever-photo",
+          "score": 0.6253324230302019
+        },
+        {
+          "id": "coffee",
+          "score": 0.577949531593131
+        },
+        {
+          "id": "portrait",
+          "score": 0.5513301725517158
+        },
+        {
+          "id": "astronaut",
+          "score": 0.5487335441942954
+        },
+        {
+          "id": "fields",
+          "score": 0.5486969521795968
+        },
+        {
+          "id": "kiln",
+          "score": 0.5345901914471469
+        },
+        {
+          "id": "portrait-hat",
+          "score": 0.5224901922114935
+        },
+        {
+          "id": "red-mug",
+          "score": 0.5179374369329881
+        },
+        {
+          "id": "solar",
+          "score": 0.5155707535048186
+        },
+        {
+          "id": "rocket",
+          "score": 0.5143497059138133
+        },
+        {
+          "id": "warehouse",
+          "score": 0.5084434118917001
+        },
+        {
+          "id": "blue-mug",
+          "score": 0.5071607209394318
+        }
+      ],
+      "sounds": [
+        {
+          "id": "sound-dog",
+          "score": 0.7235365550628468
+        },
+        {
+          "id": "sound-rooster",
+          "score": 0.7067850090437886
+        },
+        {
+          "id": "sound-sneezing",
+          "score": 0.6899004585327247
+        },
+        {
+          "id": "sound-chainsaw",
+          "score": 0.6777524633944731
+        },
+        {
+          "id": "sound-crying_baby",
+          "score": 0.668099417108387
+        },
+        {
+          "id": "sound-crackling_fire",
+          "score": 0.6642748230665209
+        },
+        {
+          "id": "sound-clock_tick",
+          "score": 0.6632678223033546
+        },
+        {
+          "id": "sound-sea_waves",
+          "score": 0.6533799252476995
+        },
+        {
+          "id": "sound-rain",
+          "score": 0.6436889324859242
+        },
+        {
+          "id": "sound-helicopter",
+          "score": 0.6361335432374705
+        }
+      ],
+      "listen": [
+        {
+          "id": "pug",
+          "score": 0.6772078211078829
+        },
+        {
+          "id": "Persian",
+          "score": 0.6455510605376421
+        },
+        {
+          "id": "chelsea",
+          "score": 0.6399096596328161
+        },
+        {
+          "id": "retriever-photo",
+          "score": 0.6338092361349091
+        },
+        {
+          "id": "newfoundland",
+          "score": 0.6330784225426003
+        },
+        {
+          "id": "retriever-sketch",
+          "score": 0.6182431091810077
+        },
+        {
+          "id": "fields",
+          "score": 0.598615716787737
+        },
+        {
+          "id": "kiln",
+          "score": 0.5882513858010971
+        },
+        {
+          "id": "portrait",
+          "score": 0.582974542979573
+        },
+        {
+          "id": "warehouse",
+          "score": 0.5769724025410804
+        },
+        {
+          "id": "astronaut",
+          "score": 0.5715137210181879
+        },
+        {
+          "id": "rocket",
+          "score": 0.5666591078747414
+        },
+        {
+          "id": "coffee",
+          "score": 0.5660629009720379
+        },
+        {
+          "id": "portrait-hat",
+          "score": 0.5657152951664595
+        },
+        {
+          "id": "solar",
+          "score": 0.5636380229978268
+        },
+        {
+          "id": "red-mug",
+          "score": 0.5571846128134352
+        },
+        {
+          "id": "blue-mug",
+          "score": 0.553395106306265
+        }
+      ],
+      "captions": [
+        {
+          "id": "caption-chelsea",
+          "score": 0.7731466133412949
+        },
+        {
+          "id": "caption-Persian",
+          "score": 0.6944963596020601
+        },
+        {
+          "id": "caption-retriever-photo",
+          "score": 0.6437817239104157
+        },
+        {
+          "id": "caption-sound-dog",
+          "score": 0.6391962397378367
+        },
+        {
+          "id": "caption-sound-rooster",
+          "score": 0.6371510851506631
+        },
+        {
+          "id": "caption-sound-crackling_fire",
+          "score": 0.6350931760710345
+        },
+        {
+          "id": "caption-portrait",
+          "score": 0.6299416120347394
+        },
+        {
+          "id": "caption-coffee",
+          "score": 0.6297240346959906
+        },
+        {
+          "id": "caption-portrait-hat",
+          "score": 0.629224260558574
+        },
+        {
+          "id": "caption-pug",
+          "score": 0.6230294866114389
+        },
+        {
+          "id": "caption-sound-rain",
+          "score": 0.6225631470995189
+        },
+        {
+          "id": "caption-sound-clock_tick",
+          "score": 0.6222586079386143
+        },
+        {
+          "id": "caption-retriever-sketch",
+          "score": 0.6205361156593673
+        },
+        {
+          "id": "caption-newfoundland",
+          "score": 0.6162701722413463
+        },
+        {
+          "id": "caption-red-mug",
+          "score": 0.6129338440784237
+        },
+        {
+          "id": "caption-sound-crying_baby",
+          "score": 0.6125799368816104
+        },
+        {
+          "id": "caption-sound-sea_waves",
+          "score": 0.6105052214491274
+        },
+        {
+          "id": "caption-astronaut",
+          "score": 0.6075946147784116
+        },
+        {
+          "id": "caption-sound-sneezing",
+          "score": 0.5965059267576246
+        },
+        {
+          "id": "caption-blue-mug",
+          "score": 0.5935104703848211
+        },
+        {
+          "id": "caption-fields",
+          "score": 0.5932949865026349
+        },
+        {
+          "id": "caption-sound-helicopter",
+          "score": 0.5868223899657076
+        },
+        {
+          "id": "caption-sound-chainsaw",
+          "score": 0.5850384841616258
+        },
+        {
+          "id": "caption-solar",
+          "score": 0.5614572667074003
+        },
+        {
+          "id": "caption-kiln",
+          "score": 0.561333588123824
+        },
+        {
+          "id": "caption-warehouse",
+          "score": 0.5502457071126864
+        },
+        {
+          "id": "caption-rocket",
+          "score": 0.5404041771860653
+        }
+      ],
+      "neighbors": [
+        {
+          "id": "retriever-sketch",
+          "score": 0.8372093886483567
+        },
+        {
+          "id": "pug",
+          "score": 0.7432821248038015
+        },
+        {
+          "id": "newfoundland",
+          "score": 0.6959384656341703
+        },
+        {
+          "id": "chelsea",
+          "score": 0.6935915842617251
+        },
+        {
+          "id": "Persian",
+          "score": 0.6527985229346397
+        },
+        {
+          "id": "red-mug",
+          "score": 0.6307163500671797
+        },
+        {
+          "id": "coffee",
+          "score": 0.6199303009352035
+        },
+        {
+          "id": "warehouse",
+          "score": 0.6119044549755132
+        },
+        {
+          "id": "kiln",
+          "score": 0.6103090153519674
+        },
+        {
+          "id": "portrait-hat",
+          "score": 0.6091091863315081
+        },
+        {
+          "id": "solar",
+          "score": 0.6040033487760909
+        },
+        {
+          "id": "portrait",
+          "score": 0.6018563979440964
+        },
+        {
+          "id": "blue-mug",
+          "score": 0.5991297834651249
+        },
+        {
+          "id": "fields",
+          "score": 0.5967838900893028
+        },
+        {
+          "id": "rocket",
+          "score": 0.588262996148216
+        },
+        {
+          "id": "astronaut",
+          "score": 0.5683117429130002
+        }
+      ],
+      "languages": [
+        {
+          "id": "chelsea",
+          "score": 0.7033447710128939
+        },
+        {
+          "id": "Persian",
+          "score": 0.6771999393505083
+        },
+        {
+          "id": "pug",
+          "score": 0.6374239275500482
+        },
+        {
+          "id": "retriever-sketch",
+          "score": 0.6067775783145428
+        },
+        {
+          "id": "retriever-photo",
+          "score": 0.5998138890573685
+        },
+        {
+          "id": "coffee",
+          "score": 0.5751801066618123
+        },
+        {
+          "id": "newfoundland",
+          "score": 0.5730302297385136
+        },
+        {
+          "id": "astronaut",
+          "score": 0.5654990153306919
+        },
+        {
+          "id": "portrait",
+          "score": 0.5602530612071989
+        },
+        {
+          "id": "fields",
+          "score": 0.5543652671647985
+        },
+        {
+          "id": "kiln",
+          "score": 0.5522486130223443
+        },
+        {
+          "id": "rocket",
+          "score": 0.5453957862701755
+        },
+        {
+          "id": "blue-mug",
+          "score": 0.5444198320428381
+        },
+        {
+          "id": "red-mug",
+          "score": 0.5431445753658172
+        },
+        {
+          "id": "portrait-hat",
+          "score": 0.5400707371907831
+        },
+        {
+          "id": "solar",
+          "score": 0.5260516557597157
+        },
+        {
+          "id": "warehouse",
+          "score": 0.5117267039106154
+        }
+      ],
+      "mixed": [
+        {
+          "id": "caption-red-mug",
+          "score": 0.8113580156784869
+        },
+        {
+          "id": "caption-blue-mug",
+          "score": 0.772634887403115
+        },
+        {
+          "id": "blue-mug",
+          "score": 0.7543672771287121
+        },
+        {
+          "id": "caption-coffee",
+          "score": 0.736957750178744
+        },
+        {
+          "id": "coffee",
+          "score": 0.7119216648084308
+        },
+        {
+          "id": "video-2",
+          "score": 0.7117011157850569
+        },
+        {
+          "id": "video-3",
+          "score": 0.6959557250314178
+        },
+        {
+          "id": "video-0",
+          "score": 0.6935151055687456
+        },
+        {
+          "id": "sound-sea_waves",
+          "score": 0.6778139102606056
+        },
+        {
+          "id": "sound-crackling_fire",
+          "score": 0.6763870172432223
+        },
+        {
+          "id": "sound-clock_tick",
+          "score": 0.6736919507332931
+        },
+        {
+          "id": "caption-sound-rooster",
+          "score": 0.6726508578151668
+        },
+        {
+          "id": "sound-rain",
+          "score": 0.6618649153619756
+        },
+        {
+          "id": "caption-sound-crackling_fire",
+          "score": 0.6555070041100332
+        },
+        {
+          "id": "caption-sound-rain",
+          "score": 0.6519483007670881
+        },
+        {
+          "id": "sound-helicopter",
+          "score": 0.6421815356199846
+        },
+        {
+          "id": "sound-sneezing",
+          "score": 0.6416922920450012
+        },
+        {
+          "id": "sound-rooster",
+          "score": 0.6400276735999278
+        },
+        {
+          "id": "caption-chelsea",
+          "score": 0.6358574686467486
+        },
+        {
+          "id": "sound-dog",
+          "score": 0.6343667722277614
+        },
+        {
+          "id": "caption-pug",
+          "score": 0.6337960024196279
+        },
+        {
+          "id": "caption-sound-sea_waves",
+          "score": 0.6329846889901
+        },
+        {
+          "id": "caption-retriever-photo",
+          "score": 0.632546755987888
+        },
+        {
+          "id": "caption-portrait-hat",
+          "score": 0.629865828453236
+        },
+        {
+          "id": "caption-sound-dog",
+          "score": 0.6297527639198052
+        },
+        {
+          "id": "caption-portrait",
+          "score": 0.6294632051330408
+        },
+        {
+          "id": "caption-sound-clock_tick",
+          "score": 0.6236353603960076
+        },
+        {
+          "id": "caption-sound-sneezing",
+          "score": 0.6198426621024938
+        },
+        {
+          "id": "caption-Persian",
+          "score": 0.6185131873376334
+        },
+        {
+          "id": "caption-newfoundland",
+          "score": 0.6172626530883785
+        },
+        {
+          "id": "caption-sound-chainsaw",
+          "score": 0.6169139585585643
+        },
+        {
+          "id": "caption-kiln",
+          "score": 0.6133859707835386
+        },
+        {
+          "id": "caption-sound-crying_baby",
+          "score": 0.6118785413077406
+        },
+        {
+          "id": "caption-astronaut",
+          "score": 0.610720313252024
+        },
+        {
+          "id": "sound-chainsaw",
+          "score": 0.6103146301387092
+        },
+        {
+          "id": "code-frames",
+          "score": 0.6092567154900208
+        },
+        {
+          "id": "pug",
+          "score": 0.6068032563350669
+        },
+        {
+          "id": "kiln",
+          "score": 0.6039694341993498
+        },
+        {
+          "id": "caption-retriever-sketch",
+          "score": 0.6035050901779291
+        },
+        {
+          "id": "chelsea",
+          "score": 0.60330362327881
+        },
+        {
+          "id": "caption-rocket",
+          "score": 0.6029454336767659
+        },
+        {
+          "id": "video-1",
+          "score": 0.5993993278356953
+        },
+        {
+          "id": "sound-crying_baby",
+          "score": 0.59773420956376
+        },
+        {
+          "id": "code-search",
+          "score": 0.5967506832628154
+        },
+        {
+          "id": "retriever-photo",
+          "score": 0.5926017475549977
+        },
+        {
+          "id": "Persian",
+          "score": 0.5878772272889914
+        },
+        {
+          "id": "astronaut",
+          "score": 0.5849814310543203
+        },
+        {
+          "id": "caption-fields",
+          "score": 0.5848259509829514
+        },
+        {
+          "id": "caption-warehouse",
+          "score": 0.5825181728028869
+        },
+        {
+          "id": "portrait",
+          "score": 0.5817470405939164
+        },
+        {
+          "id": "code-contrastive",
+          "score": 0.5784343574923771
+        },
+        {
+          "id": "caption-sound-helicopter",
+          "score": 0.5778607909805162
+        },
+        {
+          "id": "fields",
+          "score": 0.5760919908965592
+        },
+        {
+          "id": "code-normalize",
+          "score": 0.572671874310152
+        },
+        {
+          "id": "retriever-sketch",
+          "score": 0.5703602727090782
+        },
+        {
+          "id": "doc-solar",
+          "score": 0.5664521200152784
+        },
+        {
+          "id": "doc-clip-loss",
+          "score": 0.561004778078825
+        },
+        {
+          "id": "caption-solar",
+          "score": 0.5599953168425574
+        },
+        {
+          "id": "warehouse",
+          "score": 0.5598059598253738
+        },
+        {
+          "id": "newfoundland",
+          "score": 0.5595745505202826
+        },
+        {
+          "id": "portrait-hat",
+          "score": 0.5592233261386695
+        },
+        {
+          "id": "doc-causal",
+          "score": 0.5572501519876641
+        },
+        {
+          "id": "solar",
+          "score": 0.5510384980090384
+        },
+        {
+          "id": "doc-mrl",
+          "score": 0.5390236049360688
+        },
+        {
+          "id": "rocket",
+          "score": 0.5389368332749969
+        },
+        {
+          "id": "doc-normalization",
+          "score": 0.5284709422673582
+        },
+        {
+          "id": "doc-retrieval",
+          "score": 0.5131873496182122
+        }
+      ],
+      "moments": [
+        {
+          "id": "video-3",
+          "score": 0.7026021612982003
+        },
+        {
+          "id": "video-2",
+          "score": 0.5434503728876783
+        },
+        {
+          "id": "video-1",
+          "score": 0.5159772311071755
+        }
+      ],
+      "classify": [
+        {
+          "id": "label-0",
+          "score": 0.6345353282597366
+        },
+        {
+          "id": "label-1",
+          "score": 0.5965174311160558
+        },
+        {
+          "id": "label-2",
+          "score": 0.5526338624075242
+        },
+        {
+          "id": "label-3",
+          "score": 0.5246269973283196
+        }
+      ],
+      "documents": [
+        {
+          "id": "doc-normalization",
+          "score": 0.8507629871459947
+        },
+        {
+          "id": "doc-mrl",
+          "score": 0.7384098721601599
+        },
+        {
+          "id": "doc-retrieval",
+          "score": 0.7245454057787711
+        },
+        {
+          "id": "doc-clip-loss",
+          "score": 0.6800131931446435
+        },
+        {
+          "id": "doc-causal",
+          "score": 0.6607505962230087
+        },
+        {
+          "id": "doc-solar",
+          "score": 0.5594322695633097
+        }
+      ],
+      "code": [
+        {
+          "id": "code-search",
+          "score": 0.8086308964385898
+        },
+        {
+          "id": "code-frames",
+          "score": 0.6844499285007739
+        },
+        {
+          "id": "code-contrastive",
+          "score": 0.6551047695138399
+        },
+        {
+          "id": "code-normalize",
+          "score": 0.6496369910816094
+        }
+      ],
+      "delta": [
+        {
+          "id": "caption-portrait-hat",
+          "score": 0.109980816902497
+        },
+        {
+          "id": "caption-fields",
+          "score": -0.00816712038027151
+        },
+        {
+          "id": "caption-coffee",
+          "score": -0.010814219364498685
+        },
+        {
+          "id": "caption-solar",
+          "score": -0.016878040195797465
+        },
+        {
+          "id": "caption-kiln",
+          "score": -0.01716815897235369
+        },
+        {
+          "id": "caption-portrait",
+          "score": -0.026846921502398535
+        },
+        {
+          "id": "caption-retriever-sketch",
+          "score": -0.034559804963604376
+        },
+        {
+          "id": "caption-astronaut",
+          "score": -0.03650072515043504
+        },
+        {
+          "id": "caption-retriever-photo",
+          "score": -0.03937018740304362
+        },
+        {
+          "id": "caption-sound-helicopter",
+          "score": -0.04608271295624795
+        },
+        {
+          "id": "caption-sound-rooster",
+          "score": -0.052834168301548884
+        },
+        {
+          "id": "caption-warehouse",
+          "score": -0.05340447370112371
+        },
+        {
+          "id": "caption-Persian",
+          "score": -0.05732622570704641
+        },
+        {
+          "id": "caption-pug",
+          "score": -0.06322295106629322
+        },
+        {
+          "id": "caption-chelsea",
+          "score": -0.06462827167214404
+        },
+        {
+          "id": "caption-sound-rain",
+          "score": -0.06553441068874874
+        },
+        {
+          "id": "caption-blue-mug",
+          "score": -0.06787895825288495
+        },
+        {
+          "id": "caption-red-mug",
+          "score": -0.07254110423944658
+        },
+        {
+          "id": "caption-sound-sea_waves",
+          "score": -0.07265321004420802
+        },
+        {
+          "id": "caption-sound-clock_tick",
+          "score": -0.0732380877186093
+        },
+        {
+          "id": "caption-sound-crackling_fire",
+          "score": -0.07625251539407968
+        },
+        {
+          "id": "caption-sound-chainsaw",
+          "score": -0.0803062529063782
+        },
+        {
+          "id": "caption-newfoundland",
+          "score": -0.0843827422092718
+        },
+        {
+          "id": "caption-rocket",
+          "score": -0.0852509467940362
+        },
+        {
+          "id": "caption-sound-crying_baby",
+          "score": -0.10173150272945387
+        },
+        {
+          "id": "caption-sound-sneezing",
+          "score": -0.10341675674493164
+        },
+        {
+          "id": "caption-sound-dog",
+          "score": -0.10678315641259445
+        }
+      ],
+      "clusters": []
+    },
+    "mobile": 390,
+    "errors": []
+  },
+  "edgeCases": {
+    "passed": true,
+    "cancelAndRetry": true,
+    "audioUpload": true,
+    "videoUpload": true,
+    "liveVideoFrames": 12,
+    "deltaReversal": true,
+    "noWebGPUFallback": true,
+    "audioPlaybackMetadata": true,
+    "errors": []
+  },
+  "indexCount": 68,
+  "note": "Measured Chrome WebGPU runs; no invented scores. This is a functional check, not an accuracy benchmark."
+}

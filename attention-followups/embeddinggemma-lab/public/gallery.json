@@ -1,0 +1,613 @@
+[
+  {
+    "id": "newfoundland",
+    "type": "image",
+    "title": "Newfoundland",
+    "src": "media/newfoundland_31.jpg",
+    "credit": "Oxford-IIIT Pet · CC BY-SA 4.0",
+    "source": "https://nipunbatra.github.io/attention/clip/lab/clip-mini-gallery/CREDITS.md",
+    "sha256": "617dc6f6dcd26c69303b54985eadd5c75bc07b8ba22cdb1ea511307096098d0a"
+  },
+  {
+    "id": "caption-newfoundland",
+    "type": "text",
+    "title": "Caption: Newfoundland",
+    "text": "a photo of a Newfoundland dog",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "Persian",
+    "type": "image",
+    "title": "Persian cat",
+    "src": "media/Persian_98.jpg",
+    "credit": "Oxford-IIIT Pet · CC BY-SA 4.0",
+    "source": "https://nipunbatra.github.io/attention/clip/lab/clip-mini-gallery/CREDITS.md",
+    "sha256": "6071d201543c999e063615d6c2cc674ea004adb11711d34d29d3df11c0012292"
+  },
+  {
+    "id": "caption-Persian",
+    "type": "text",
+    "title": "Caption: Persian cat",
+    "text": "a photo of a Persian cat",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "pug",
+    "type": "image",
+    "title": "Pug",
+    "src": "media/pug_57.jpg",
+    "credit": "Oxford-IIIT Pet · CC BY-SA 4.0",
+    "source": "https://nipunbatra.github.io/attention/clip/lab/clip-mini-gallery/CREDITS.md",
+    "sha256": "c3ffdc25566ae138be7d76121c7225fba6879568739338b240b60d97181d2609"
+  },
+  {
+    "id": "caption-pug",
+    "type": "text",
+    "title": "Caption: Pug",
+    "text": "a photo of a pug",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "coffee",
+    "type": "image",
+    "title": "Coffee",
+    "src": "media/coffee.jpg",
+    "credit": "Rachel Michetti · CC0",
+    "source": "https://nipunbatra.github.io/attention/clip/lab/clip-mini-gallery/CREDITS.md",
+    "sha256": "80e2b46bbd310f215a6381ceac2ef7a403c23874ec48b3637cd74177e31ed4ea"
+  },
+  {
+    "id": "caption-coffee",
+    "type": "text",
+    "title": "Caption: Coffee",
+    "text": "a cup of coffee on a saucer",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "rocket",
+    "type": "image",
+    "title": "Rocket launch",
+    "src": "media/rocket.jpg",
+    "credit": "SpaceX · CC0",
+    "source": "https://nipunbatra.github.io/attention/clip/lab/clip-mini-gallery/CREDITS.md",
+    "sha256": "2d3d62a61bf417fd93253df812c357b86fdfcd50d74b4280ae252455fe7064db"
+  },
+  {
+    "id": "caption-rocket",
+    "type": "text",
+    "title": "Caption: Rocket launch",
+    "text": "a rocket launching into the night sky",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "astronaut",
+    "type": "image",
+    "title": "Astronaut portrait",
+    "src": "media/astronaut.jpg",
+    "credit": "NASA · public domain",
+    "source": "https://nipunbatra.github.io/attention/clip/lab/clip-mini-gallery/CREDITS.md",
+    "sha256": "011901a3f9084e22497e2b27642b44a39e8965c4c2febc5ddf2c3ccf298c8787"
+  },
+  {
+    "id": "caption-astronaut",
+    "type": "text",
+    "title": "Caption: Astronaut portrait",
+    "text": "a portrait of an astronaut",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "chelsea",
+    "type": "image",
+    "title": "Chelsea the cat",
+    "src": "media/chelsea.jpg",
+    "credit": "Stefan van der Walt · CC0",
+    "source": "https://nipunbatra.github.io/attention/clip/lab/clip-mini-gallery/CREDITS.md",
+    "sha256": "e8605ae62ddd946bef56bba73435937edcab675f8ef20cdcee29fdbf2d94045f"
+  },
+  {
+    "id": "caption-chelsea",
+    "type": "text",
+    "title": "Caption: Chelsea the cat",
+    "text": "a close-up photo of a tabby cat",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "portrait",
+    "type": "image",
+    "title": "Portrait · generated",
+    "src": "media/portrait.png",
+    "credit": "AI-generated teaching image · OpenAI image tool · 29 Sep 2026",
+    "source": "https://nipunbatra.github.io/attention/clip/lab/clip-mini-gallery/CREDITS.md",
+    "sha256": "bc5eb910d1855097c89e20f523395f83dd8b9f23f82dcd46ffc87d84650e7397"
+  },
+  {
+    "id": "caption-portrait",
+    "type": "text",
+    "title": "Caption: Portrait · generated",
+    "text": "a portrait of a person without a hat",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "portrait-hat",
+    "type": "image",
+    "title": "Portrait with hat · generated",
+    "src": "media/portrait-hat.png",
+    "credit": "AI-generated teaching image · OpenAI image tool · 29 Sep 2026",
+    "source": "https://nipunbatra.github.io/attention/clip/lab/clip-mini-gallery/CREDITS.md",
+    "sha256": "130831b7f580d3c88846ca0dfacd49351ac4d2b75dff117e58964bffba45a660"
+  },
+  {
+    "id": "caption-portrait-hat",
+    "type": "text",
+    "title": "Caption: Portrait with hat · generated",
+    "text": "a portrait of a person wearing a hat",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "red-mug",
+    "type": "image",
+    "title": "Red mug · generated",
+    "src": "media/red-mug.png",
+    "credit": "AI-generated teaching image · OpenAI image tool · 29 Sep 2026",
+    "source": "https://nipunbatra.github.io/attention/clip/lab/clip-mini-gallery/CREDITS.md",
+    "sha256": "f82d07a29ef3451ee78ecb8ccc7006d106144796891de48f3e0fe11895257cee"
+  },
+  {
+    "id": "caption-red-mug",
+    "type": "text",
+    "title": "Caption: Red mug · generated",
+    "text": "a red mug",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "blue-mug",
+    "type": "image",
+    "title": "Blue mug · generated",
+    "src": "media/blue-mug.png",
+    "credit": "AI-generated teaching image · OpenAI image tool · 29 Sep 2026",
+    "source": "https://nipunbatra.github.io/attention/clip/lab/clip-mini-gallery/CREDITS.md",
+    "sha256": "1641d4d427764850e817a5c9a0be23bf91f7133b8304ec4631b81ee4d78bf598"
+  },
+  {
+    "id": "caption-blue-mug",
+    "type": "text",
+    "title": "Caption: Blue mug · generated",
+    "text": "a blue mug",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "kiln",
+    "type": "image",
+    "title": "Brick kiln · generated",
+    "src": "media/kiln.png",
+    "credit": "AI-generated teaching image · OpenAI image tool · 29 Sep 2026",
+    "source": "https://nipunbatra.github.io/attention/clip/lab/clip-mini-gallery/CREDITS.md",
+    "sha256": "0951c3d7688028b39805d86c5dd43d52005837ce6c1c8c939a30cd77d264f47e"
+  },
+  {
+    "id": "caption-kiln",
+    "type": "text",
+    "title": "Caption: Brick kiln · generated",
+    "text": "an aerial view of a brick kiln",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "solar",
+    "type": "image",
+    "title": "Solar farm · generated",
+    "src": "media/solar.png",
+    "credit": "AI-generated teaching image · OpenAI image tool · 29 Sep 2026",
+    "source": "https://nipunbatra.github.io/attention/clip/lab/clip-mini-gallery/CREDITS.md",
+    "sha256": "ba6a6cd420398b4ddf1400da6965185f4c007ff59a2dcded9930669787530f25"
+  },
+  {
+    "id": "caption-solar",
+    "type": "text",
+    "title": "Caption: Solar farm · generated",
+    "text": "an aerial view of a solar farm",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "fields",
+    "type": "image",
+    "title": "Agricultural fields · generated",
+    "src": "media/fields.png",
+    "credit": "AI-generated teaching image · OpenAI image tool · 29 Sep 2026",
+    "source": "https://nipunbatra.github.io/attention/clip/lab/clip-mini-gallery/CREDITS.md",
+    "sha256": "f13c7ceb4c2aa615f20ff8325e3a7bb7266b1e4cb96fbde22c716578da8c03a6"
+  },
+  {
+    "id": "caption-fields",
+    "type": "text",
+    "title": "Caption: Agricultural fields · generated",
+    "text": "an aerial view of agricultural fields",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "warehouse",
+    "type": "image",
+    "title": "Warehouses · generated",
+    "src": "media/warehouse.png",
+    "credit": "AI-generated teaching image · OpenAI image tool · 29 Sep 2026",
+    "source": "https://nipunbatra.github.io/attention/clip/lab/clip-mini-gallery/CREDITS.md",
+    "sha256": "7b8bc677b5b99261f0534676aaa767265961d7dd52e430a77a93908d155e215b"
+  },
+  {
+    "id": "caption-warehouse",
+    "type": "text",
+    "title": "Caption: Warehouses · generated",
+    "text": "an aerial view of warehouses",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "retriever-photo",
+    "type": "image",
+    "title": "Dog photograph style · generated",
+    "src": "media/retriever-photo.png",
+    "credit": "AI-generated teaching image · OpenAI image tool · 29 Sep 2026",
+    "source": "https://nipunbatra.github.io/attention/clip/lab/clip-mini-gallery/CREDITS.md",
+    "sha256": "51ca2b00f2432c70b5d2c11073beeebed22b273aaa152d860c2d1e413b97ea4f"
+  },
+  {
+    "id": "caption-retriever-photo",
+    "type": "text",
+    "title": "Caption: Dog photograph style · generated",
+    "text": "a photo of a golden retriever",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "retriever-sketch",
+    "type": "image",
+    "title": "Dog sketch · generated",
+    "src": "media/retriever-sketch.png",
+    "credit": "AI-generated teaching image · OpenAI image tool · 29 Sep 2026",
+    "source": "https://nipunbatra.github.io/attention/clip/lab/clip-mini-gallery/CREDITS.md",
+    "sha256": "90252f8c7333e1767a028a40da96abb1624a8bd219f43b9d5f101222a705337f"
+  },
+  {
+    "id": "caption-retriever-sketch",
+    "type": "text",
+    "title": "Caption: Dog sketch · generated",
+    "text": "a pencil sketch of a golden retriever",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "sound-dog",
+    "type": "audio",
+    "title": "Dog",
+    "src": "media/1-100032-A-0.wav",
+    "duration": 5,
+    "credit": "ESC-10 / Karol J. Piczak. - [1-100032-A.ogg]: clip derived from rose_bark.wav (http://www.freesound.org/people/nfrae/sounds/100032/) by nfrae [CC0]",
+    "source": "https://github.com/karolpiczak/ESC-50",
+    "group": "sound",
+    "sha256": "f40a849a2375c8c63312a73dd2dd6c74007301fcc21b4be2ece29a642831e3d8"
+  },
+  {
+    "id": "caption-sound-dog",
+    "type": "text",
+    "title": "Sound description: dog",
+    "text": "The sound of dog.",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "sound-rooster",
+    "type": "audio",
+    "title": "Rooster",
+    "src": "media/1-26806-A-1.wav",
+    "duration": 5,
+    "credit": "ESC-10 / Karol J. Piczak. - [1-26806-A.ogg]: clip derived from crows.aiff (http://www.freesound.org/people/jimblodget/sounds/26806/) by jimblodget [CC-BY]",
+    "source": "https://github.com/karolpiczak/ESC-50",
+    "group": "sound",
+    "sha256": "9021db2a8218814e1f90957a179589c7f3167fd1f235f58019890064e23ee5be"
+  },
+  {
+    "id": "caption-sound-rooster",
+    "type": "text",
+    "title": "Sound description: rooster",
+    "text": "The sound of rooster.",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "sound-rain",
+    "type": "audio",
+    "title": "Rain",
+    "src": "media/1-17367-A-10.wav",
+    "duration": 5,
+    "credit": "ESC-10 / Karol J. Piczak. - [1-17367-A.ogg]: clip derived from unlocki door to mod rain.wav (http://www.freesound.org/people/cognito%20perceptu/sounds/17367/) by cognito perceptu [CC0]",
+    "source": "https://github.com/karolpiczak/ESC-50",
+    "group": "sound",
+    "sha256": "d732acd2e0c7c40405968010f49f250740c86998fc416eff2ed5330fc8c89dea"
+  },
+  {
+    "id": "caption-sound-rain",
+    "type": "text",
+    "title": "Sound description: rain",
+    "text": "The sound of rain.",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "sound-sea_waves",
+    "type": "audio",
+    "title": "Sea waves",
+    "src": "media/1-28135-A-11.wav",
+    "duration": 5,
+    "credit": "ESC-10 / Karol J. Piczak. - [1-28135-A.ogg]: clip derived from Branding_kort.wav (http://www.freesound.org/people/HerbertBoland/sounds/28135/) by HerbertBoland [CC-BY]",
+    "source": "https://github.com/karolpiczak/ESC-50",
+    "group": "sound",
+    "sha256": "4d04b84d490c4d9ab28a52c4c96d1b14c2f8b132fc4be38166197ae814920742"
+  },
+  {
+    "id": "caption-sound-sea_waves",
+    "type": "text",
+    "title": "Sound description: sea waves",
+    "text": "The sound of sea waves.",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "sound-crackling_fire",
+    "type": "audio",
+    "title": "Crackling fire",
+    "src": "media/1-17150-A-12.wav",
+    "duration": 5,
+    "credit": "ESC-10 / Karol J. Piczak. - [1-17150-A.ogg]: clip derived from lg fire5.wav (http://www.freesound.org/people/lgarrett/sounds/17150/) by lgarrett [CC-BY]",
+    "source": "https://github.com/karolpiczak/ESC-50",
+    "group": "sound",
+    "sha256": "3d278bc2034dfb83881491a8eec97de6f1239f0a5b8a7c02be46b5aab0a51609"
+  },
+  {
+    "id": "caption-sound-crackling_fire",
+    "type": "text",
+    "title": "Sound description: crackling fire",
+    "text": "The sound of crackling fire.",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "sound-crying_baby",
+    "type": "audio",
+    "title": "Crying baby",
+    "src": "media/1-187207-A-20.wav",
+    "duration": 5,
+    "credit": "ESC-10 / Karol J. Piczak. - [1-187207-A.ogg]: clip derived from More baby noises... (http://www.freesound.org/people/k3pp/sounds/187207/) by k3pp [CC0]",
+    "source": "https://github.com/karolpiczak/ESC-50",
+    "group": "sound",
+    "sha256": "ddf5bf45f73bc73d1838bf0cb6af530584f324aef513112ee15c210e83ecbd6b"
+  },
+  {
+    "id": "caption-sound-crying_baby",
+    "type": "text",
+    "title": "Sound description: crying baby",
+    "text": "The sound of crying baby.",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "sound-sneezing",
+    "type": "audio",
+    "title": "Sneezing",
+    "src": "media/1-26143-A-21.wav",
+    "duration": 5,
+    "credit": "ESC-10 / Karol J. Piczak. - [1-26143-A.ogg]: clip derived from hatsjoe.wav (http://www.freesound.org/people/WIM/sounds/26143/) by WIM [CC-BY]",
+    "source": "https://github.com/karolpiczak/ESC-50",
+    "group": "sound",
+    "sha256": "8e32762c8c48e5414dbecc2979833748cb838ba476bac75d2a512262ef842eb0"
+  },
+  {
+    "id": "caption-sound-sneezing",
+    "type": "text",
+    "title": "Sound description: sneezing",
+    "text": "The sound of sneezing.",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "sound-clock_tick",
+    "type": "audio",
+    "title": "Clock tick",
+    "src": "media/1-21934-A-38.wav",
+    "duration": 5,
+    "credit": "ESC-10 / Karol J. Piczak. - [1-21934-A.ogg]: clip derived from 20060810.peters.clock.01.flac (http://www.freesound.org/people/dobroide/sounds/21934/) by dobroide [CC-BY]",
+    "source": "https://github.com/karolpiczak/ESC-50",
+    "group": "sound",
+    "sha256": "8d26e40e0e382b0d2d7f6dafcb132cfe703ee3f7f32780e878fdb5a1aaffcc28"
+  },
+  {
+    "id": "caption-sound-clock_tick",
+    "type": "text",
+    "title": "Sound description: clock tick",
+    "text": "The sound of clock tick.",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "sound-helicopter",
+    "type": "audio",
+    "title": "Helicopter",
+    "src": "media/1-172649-A-40.wav",
+    "duration": 5,
+    "credit": "ESC-10 / Karol J. Piczak. - [1-172649-A.ogg]: clip derived from Small Helicopter Takes Off (http://www.freesound.org/people/senorstudy/sounds/172649/) by senorstudy [CC0]",
+    "source": "https://github.com/karolpiczak/ESC-50",
+    "group": "sound",
+    "sha256": "23ad50d792907e1caa894e6e31bb623938ae0417606b830b433da11ca2ecb2f4"
+  },
+  {
+    "id": "caption-sound-helicopter",
+    "type": "text",
+    "title": "Sound description: helicopter",
+    "text": "The sound of helicopter.",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "sound-chainsaw",
+    "type": "audio",
+    "title": "Chainsaw",
+    "src": "media/1-116765-A-41.wav",
+    "duration": 5,
+    "credit": "ESC-10 / Karol J. Piczak. - [1-116765-A.ogg]: clip derived from chainsaw.wav (http://www.freesound.org/people/UncleSigmund/sounds/116765/) by UncleSigmund [CC0]",
+    "source": "https://github.com/karolpiczak/ESC-50",
+    "group": "sound",
+    "sha256": "1199ff6d4f5040bf20f06a441276bcd6448b1e1de4f098ce3e47d856ee97ce33"
+  },
+  {
+    "id": "caption-sound-chainsaw",
+    "type": "text",
+    "title": "Sound description: chainsaw",
+    "text": "The sound of chainsaw.",
+    "credit": "Course teaching caption",
+    "group": "caption"
+  },
+  {
+    "id": "doc-normalization",
+    "type": "text",
+    "title": "Why normalize?",
+    "text": "Divide an embedding by its L2 norm to make its length one. The dot product of two unit vectors equals their cosine similarity.",
+    "group": "document",
+    "credit": "Passage written for this course"
+  },
+  {
+    "id": "doc-clip-loss",
+    "type": "text",
+    "title": "The CLIP training loss",
+    "text": "CLIP compares each image with every caption in a batch. Row and column softmaxes form two distributions. The loss averages the negative log probabilities of the observed image-caption partners.",
+    "group": "document",
+    "credit": "Passage written for this course"
+  },
+  {
+    "id": "doc-retrieval",
+    "type": "text",
+    "title": "Retrieval and generation",
+    "text": "An embedding model finds relevant source passages. A separate generative model can use those passages to write an answer. A high retrieval score is not a guarantee that the passage answers the question.",
+    "group": "document",
+    "credit": "Passage written for this course"
+  },
+  {
+    "id": "doc-causal",
+    "type": "text",
+    "title": "The text readout in original CLIP",
+    "text": "Original CLIP uses causal self-attention in its text Transformer. The end-of-text token can attend to the whole preceding description. Its final state provides the text representation.",
+    "group": "document",
+    "credit": "Passage written for this course"
+  },
+  {
+    "id": "doc-mrl",
+    "type": "text",
+    "title": "Shorter vectors",
+    "text": "With Matryoshka embeddings, keep the first 512, 256, or 128 coordinates, then normalize again. Shorter vectors save index memory. Multimodal retrieval at 128 dimensions can lose quality.",
+    "group": "document",
+    "credit": "Passage written for this course"
+  },
+  {
+    "id": "doc-solar",
+    "type": "text",
+    "title": "Solar power",
+    "text": "Photovoltaic panels convert sunlight into electrical energy. Solar farms arrange many panels in rows. Power production varies with sunlight and cloud cover.",
+    "group": "document",
+    "credit": "Passage written for this course"
+  },
+  {
+    "id": "code-normalize",
+    "type": "text",
+    "title": "normalize.py",
+    "text": "def unit(x):\n    return x / np.linalg.norm(x)",
+    "group": "code",
+    "credit": "Code example written for this course"
+  },
+  {
+    "id": "code-search",
+    "type": "text",
+    "title": "search.py",
+    "text": "scores = gallery @ query\norder = np.argsort(-scores)\nreturn order[:5]",
+    "group": "code",
+    "credit": "Code example written for this course"
+  },
+  {
+    "id": "code-contrastive",
+    "type": "text",
+    "title": "contrastive.py",
+    "text": "logits = image_vectors @ text_vectors.T / temperature\ny = torch.arange(len(image_vectors))\nloss = (F.cross_entropy(logits, y) + F.cross_entropy(logits.T, y)) / 2",
+    "group": "code",
+    "credit": "Code example written for this course"
+  },
+  {
+    "id": "code-frames",
+    "type": "text",
+    "title": "frames.py",
+    "text": "for second in range(0, duration, 4):\n    clip = video.subclip(second, second + 4)\n    index.append((second, embed(clip)))",
+    "group": "code",
+    "credit": "Code example written for this course"
+  },
+  {
+    "id": "video-0",
+    "type": "video",
+    "title": "Three scenes: cat, coffee, rocket",
+    "src": "media/three-scenes.mp4",
+    "start": 0,
+    "end": 12,
+    "duration": 12,
+    "group": "video",
+    "credit": "Teaching slideshow. Cat: Stefan van der Walt; coffee: Rachel Michetti; rocket: SpaceX. All CC0.",
+    "source": "IMAGE-CREDITS.md",
+    "sha256": "99ffd3a4619c88ab2f43ce5bafa3d2564fcb574254727d77737e15abb762badc"
+  },
+  {
+    "id": "video-1",
+    "type": "video",
+    "title": "Moment 1 · 0–4 seconds",
+    "src": "media/three-scenes.mp4",
+    "start": 0,
+    "end": 4,
+    "duration": 4,
+    "group": "moment",
+    "credit": "Teaching slideshow. Cat: Stefan van der Walt; coffee: Rachel Michetti; rocket: SpaceX. All CC0.",
+    "source": "IMAGE-CREDITS.md",
+    "sha256": "99ffd3a4619c88ab2f43ce5bafa3d2564fcb574254727d77737e15abb762badc"
+  },
+  {
+    "id": "video-2",
+    "type": "video",
+    "title": "Moment 2 · 4–8 seconds",
+    "src": "media/three-scenes.mp4",
+    "start": 4,
+    "end": 8,
+    "duration": 4,
+    "group": "moment",
+    "credit": "Teaching slideshow. Cat: Stefan van der Walt; coffee: Rachel Michetti; rocket: SpaceX. All CC0.",
+    "source": "IMAGE-CREDITS.md",
+    "sha256": "99ffd3a4619c88ab2f43ce5bafa3d2564fcb574254727d77737e15abb762badc"
+  },
+  {
+    "id": "video-3",
+    "type": "video",
+    "title": "Moment 3 · 8–12 seconds",
+    "src": "media/three-scenes.mp4",
+    "start": 8,
+    "end": 12,
+    "duration": 4,
+    "group": "moment",
+    "credit": "Teaching slideshow. Cat: Stefan van der Walt; coffee: Rachel Michetti; rocket: SpaceX. All CC0.",
+    "source": "IMAGE-CREDITS.md",
+    "sha256": "99ffd3a4619c88ab2f43ce5bafa3d2564fcb574254727d77737e15abb762badc"
+  }
+]

@@ -1,0 +1,1 @@
+{"name":"embeddinggemma-student-lab","version":"1.0.0","private":true,"type":"module","scripts":{"dev":"vite --host 127.0.0.1 --port 5189","build":"vite build --base=./","test":"node scripts/math.test.mjs"},"dependencies":{"@huggingface/transformers":"4.3.1"},"devDependencies":{"vite":"7.3.1"}}

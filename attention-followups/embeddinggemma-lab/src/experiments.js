@@ -1,0 +1,220 @@
+export const experiments = [
+  {
+    id: "photos",
+    group: "Find",
+    name: "Words → pictures",
+    title: "Find a picture without naming the file",
+    description:
+      "Describe what you want to see. Which image would you expect to rank first?",
+    mode: "search",
+    type: "text",
+    query: "a pet resting at home",
+    filter: "image",
+    ideas: [
+      "a pet resting at home",
+      "something that produces electricity",
+      "a drink served hot",
+      "a person ready for space travel",
+    ],
+    lesson:
+      "Only pixels were embedded for the images. Their filenames and captions never entered the image encoder.",
+  },
+  {
+    id: "sounds",
+    group: "Find",
+    name: "Words → sounds",
+    title: "Can words find a sound?",
+    description:
+      "Play a recording, then try describing the sound in a different way.",
+    mode: "search",
+    type: "text",
+    query: "a dog barking",
+    filter: "audio",
+    ideas: [
+      "a dog barking",
+      "water washing onto a beach",
+      "a ticking clock",
+      "a machine cutting wood",
+    ],
+    lesson:
+      "The audio input is a waveform. There is no intermediate speech transcript in this lab.",
+  },
+  {
+    id: "listen",
+    group: "Find",
+    name: "Sound → pictures & words",
+    title: "Use a bark as the query",
+    description:
+      "Listen first. Can the recording retrieve a dog without any text query?",
+    mode: "search",
+    type: "audio",
+    sample: "sound-dog",
+    filter: "image",
+    lesson:
+      "Both queries and candidates live in the same 768-dimensional space. Start with image candidates, then try captions or everything. Raw cosine ranges can differ across modalities.",
+  },
+  {
+    id: "captions",
+    group: "Find",
+    name: "Picture → captions",
+    title: "Give the image a caption menu",
+    description:
+      "Choose an image. The model ranks the supplied captions; it does not write a new caption.",
+    mode: "search",
+    type: "image",
+    sample: "chelsea",
+    filter: "caption",
+    lesson:
+      "This is the CLIP application you already know, now using EmbeddingGemma 2. Compare the rankings, not individual coordinates across different models.",
+  },
+  {
+    id: "neighbors",
+    group: "Find",
+    name: "Picture → pictures",
+    title: "What makes two images similar?",
+    description:
+      "Will a dog photo find the same animal, the same colour, or a sketch?",
+    mode: "search",
+    type: "image",
+    sample: "retriever-photo",
+    filter: "image",
+    lesson:
+      "Similarity is learned. A neighbour can share subject, style or background; inspect what the model actually chose.",
+  },
+  {
+    id: "languages",
+    group: "Find",
+    name: "Search in another language",
+    title: "Does the query have to be in English?",
+    description:
+      "Keep the gallery fixed. Ask for a cat in Hindi, then try your own language.",
+    mode: "search",
+    type: "text",
+    query: "एक बिल्ली की तस्वीर",
+    filter: "image",
+    ideas: [
+      "एक बिल्ली की तस्वीर",
+      "કોફીનો કપ",
+      "un perro",
+      "une fusée dans le ciel",
+    ],
+    lesson:
+      "The text changes language; the image vectors stay fixed. Compare the top results with the equivalent English query.",
+  },
+  {
+    id: "mixed",
+    group: "Find",
+    name: "Picture + words",
+    title: "Two inputs, one embedding",
+    description:
+      "Combine an image with a short note, then compare it with an image-only search.",
+    mode: "mixed",
+    type: "image",
+    sample: "red-mug",
+    query: "a drink for breakfast",
+    filter: "all",
+    lesson:
+      "The image and your note are encoded together in one forward pass. This is different from averaging two independently computed embeddings.",
+  },
+  {
+    id: "moments",
+    group: "Find",
+    name: "Find a video moment",
+    title: "Which part of the video matches?",
+    description:
+      "Our 12-second teaching slideshow has three scenes. Search the four-second windows separately.",
+    mode: "search",
+    type: "text",
+    query: "a rocket launching",
+    filter: "moment",
+    ideas: [
+      "a rocket launching",
+      "a cat looking at the camera",
+      "a cup of coffee",
+    ],
+    lesson:
+      "Each window has its own video embedding, using one sampled frame per second. This silent slideshow demonstrates temporal indexing; it is not a benchmark of motion understanding.",
+  },
+  {
+    id: "classify",
+    group: "Use",
+    name: "Choose your own labels",
+    title: "Turn descriptions into a classifier",
+    description:
+      "Change the labels and run again. There is no new classifier training.",
+    mode: "classify",
+    type: "image",
+    sample: "newfoundland",
+    filter: "all",
+    labels: "a dog\na cat\na rocket\na cup of coffee",
+    lesson:
+      "The highest cosine wins among your supplied labels. These scores are not calibrated probabilities, and the correct answer may be missing from the menu.",
+  },
+  {
+    id: "documents",
+    group: "Use",
+    name: "Retrieve a course passage",
+    title: "Find the evidence before answering",
+    description:
+      "Ask a question about the lecture. Inspect which passage a RAG system would receive.",
+    mode: "search",
+    type: "text",
+    query: "Why do we normalize an embedding?",
+    filter: "document",
+    task: "question answering",
+    ideas: [
+      "Why do we normalize an embedding?",
+      "How do we compute the CLIP loss?",
+      "Can the end-of-text token see the whole sentence?",
+    ],
+    lesson:
+      "This is the retrieval step of RAG. The displayed passages are source text; no generative model is loaded to write an answer.",
+  },
+  {
+    id: "code",
+    group: "Use",
+    name: "Search code by its job",
+    title: "Describe the function you need",
+    description: "Search by meaning instead of matching a function name.",
+    mode: "search",
+    type: "text",
+    query: "find the five closest items to a query",
+    filter: "code",
+    task: "code retrieval",
+    ideas: [
+      "find the five closest items to a query",
+      "make a vector have length one",
+      "compute the symmetric contrastive loss",
+    ],
+    lesson:
+      "The query uses the code-retrieval task prefix. The code snippets are embedded as documents with filenames as titles.",
+  },
+  {
+    id: "delta",
+    group: "Inspect",
+    name: "What changed?",
+    title: "Return to the hat experiment",
+    description:
+      "Subtract the earlier image vector from the later one. Which descriptions align with that direction?",
+    mode: "delta",
+    type: "image",
+    sample: "portrait",
+    after: "portrait-hat",
+    filter: "caption",
+    lesson:
+      "Δ = normalize(after − before). This is an exploratory direction in embedding space, not proof of what caused the change. Swap the images: every dot-product sign reverses.",
+  },
+  {
+    id: "clusters",
+    group: "Inspect",
+    name: "Group the collection",
+    title: "Do different modalities group together?",
+    description:
+      "Group the stored embeddings without using their titles or class labels.",
+    mode: "clusters",
+    type: "text",
+    filter: "all",
+    lesson:
+      "K-means uses the full selected-dimensional vectors. The plot uses PCA to show two dimensions, so its distances are only an approximation. Group numbers have no predefined meaning.",
+  },
+];
