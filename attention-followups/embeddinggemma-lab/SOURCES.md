@@ -17,14 +17,14 @@ The application is original course code. It does not copy the demo's UI, minifie
 
 ## Audio
 
-40 five-second clips from the **ESC-10 subset** of ESC-50, four per class from distinct source recordings. ESC-10 is distributed under **CC BY 3.0** (not the broader ESC-50 non-commercial license). The full original license/individual Freesound attributions are retained at `public/ESC-50-LICENSE.txt`; each selected clip's attribution is also in the gallery manifest.
+100 five-second clips from the **ESC-10 subset** of ESC-50. The original four per class have distinct source recordings; the additional six per class are exploration-only and do not enter the training/test split. ESC-10 is distributed under **CC BY 3.0** (not the broader ESC-50 non-commercial license). The full original license/individual Freesound attributions are retained at `public/ESC-50-LICENSE.txt`; each selected clip's attribution is also in the gallery manifest.
 
 - Repository: https://github.com/karolpiczak/ESC-50
 - Metadata: https://github.com/karolpiczak/ESC-50/blob/master/meta/esc50.csv
 - License: https://github.com/karolpiczak/ESC-50/blob/master/LICENSE
 - K. J. Piczak, *ESC: Dataset for Environmental Sound Classification*, ACM Multimedia, 2015, https://doi.org/10.1145/2733373.2806390
 
-Raw waveform input is mixed to mono and resampled to 16 kHz in the browser. No speech transcription or sound labels are sent with the waveform to the model. The decorative waveform symbol in the UI is an icon, not a measured signal plot.
+Raw waveform input is mixed to mono and resampled to 16 kHz in the browser. No speech transcription or sound labels are sent with the waveform to the model. The sound tile in the hero uses a decorative icon; individual sample previews show measured waveform envelopes.
 
 ## Video
 
@@ -52,3 +52,12 @@ Official full-model fine-tuning references:
 - Unsloth documentation and image/text/audio notebooks: https://unsloth.ai/docs/models/embeddinggemma-2
 
 The PCA explorer centres the selected-dimensional, re-normalized vectors and finds two principal directions by power iteration. Variance shown is the sum of squared projected coordinates divided by the total centred sum of squares. Filters hide points without refitting the axes. The neighbour list uses cosine on the selected-dimensional vectors, never 2D distances.
+
+
+## Larger gallery and actual course sources (7 October 2026)
+
+40 further Commons images and 40 file-description/title captions are listed in `public/MORE-MEDIA-CREDITS.md`. Their original authors, exact file pages, license names/URLs and media SHA-256 hashes are retained per item. The images include photographs, artwork and scientific imagery; search-query wording used to discover a file is never used as its image model input. All media keep their original licenses, including share-alike terms where applicable.
+
+`public/course-manifest.json` enumerates 17 published decks. PDF handouts L1, L2, L3, L3A, L5, L5B, L5C and L7 come from `nipunbatra/dl-teaching`; the HTML lectures come from the published `attention` and `dl-teaching` checkouts. A total of 1,672 text passages retain slide anchors/PDF page numbers. The 269 code chunks come from 26 published notebooks. `public/course-corpus.json` records the source filename, source-file hash, extracted-text hash and exact links for every passage. Text is extracted, Unicode-normalized and split by slide/cell with line-bounded chunks; it is not a model-generated paraphrase. Code is displayed as an excerpt and may depend on earlier notebook cells.
+
+`public/course-embeddings.json` and `public/course-query-embeddings.json` were computed on WebGPU with the same pinned model and q4 precision as the media gallery. Full metadata includes exact processor text, timings and shapes. Course embeddings use only extracted text, not slide images. The PDF thumbnails show the original page for visual context. Source material and thumbnails remain course-authored; third-party figures retain their original attributions in the linked slides.

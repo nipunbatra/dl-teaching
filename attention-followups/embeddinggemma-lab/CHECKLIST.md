@@ -2,7 +2,7 @@
 
 - [x] Read the Google announcement and the linked video’s English captions.
 - [x] Run the real, pinned EmbeddingGemma 2 ONNX model on WebGPU.
-- [x] 154 attributed samples: images, audio, captions, passages, code and video/windows.
+- [x] 294 attributed samples: images, audio, captions, passages, code and video/windows.
 - [x] Image/caption retrieval, image neighbours, and sound/image/text search.
 - [x] Multilingual text search and native image-plus-text input.
 - [x] Video-window retrieval and live uploaded-video encoding.
@@ -23,7 +23,7 @@ The app supports inference and local vector operations. It does not fine-tune th
 
 ## Expanded exploration
 
-- [x] 29 images, 40 recordings, 69 text items, 5 clips and 11 indexed windows.
+- [x] 69 images, 100 recordings, 109 text items, 5 clips and 11 indexed windows.
 - [x] Real puppy, coffee, waves and geese videos with credited adaptations.
 - [x] Dropdowns for any item and a comparison item.
 - [x] All 768 coordinates available, with exact coordinate products and JSON export.
@@ -39,6 +39,21 @@ The app supports inference and local vector operations. It does not fine-tune th
 
 - [x] EmbeddingGemma 2 branding and direct application navigation restored.
 - [x] Guided chapters and recording mode removed; older lesson links open the playground.
-- [x] All fifteen applications and the 154-item collection retained.
+- [x] All fifteen applications and the original collection retained and expanded.
 - [x] Review fixes retained: separate live query cache, reduced-dimension delta, equal-axis PCA, clear cosine labels and per-modality neighbours.
 - [x] Real waveform previews and WebGPU warm-up retained.
+
+
+## Course retrieval and larger collection
+
+- [x] 40 additional Commons images and their source captions; exact attribution retained.
+- [x] 60 additional ESC-10 recordings, with actual waveform previews.
+- [x] All 294 gallery items encoded by the pinned WebGPU model.
+- [x] 1,672 slide passages from 17 published decks, with exact page/anchor links.
+- [x] 269 real code chunks from 26 course notebooks, with GitHub and Colab links.
+- [x] Cited source excerpts, PDF previews and neighbouring slides; no generated answers.
+- [x] Twelve instant example queries plus live questions on WebGPU.
+- [x] Optional full embeddings, exact model inputs, cosine scores and dimensionality control.
+- [x] Paste, embed and search a new local passage/code snippet; remove or reload to discard.
+- [x] Separate lazy-loaded course index; media applications retain direct navigation.
+- [x] Reproducible extraction/index-building scripts and retrieval checks.

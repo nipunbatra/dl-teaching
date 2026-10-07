@@ -20,10 +20,10 @@
   <h1>Build the teaching index</h1>
   <p>
     Encode new gallery items with the pinned WebGPU model. Existing vectors are
-    preserved. Progress is saved locally after each item.
+    preserved. Progress is saved in IndexedDB after each item. Add ?collection=course to build the slide and code index.
   </p>
   <button id="start">Encode missing samples</button
-  ><button id="download">Download index JSON</button>
+  ><button id="stop" disabled>Pause indexing</button><button id="download">Download index JSON</button>
   <p id="status" role="status">Reading collection…</p>
   <pre id="log"></pre>
   <script type="module" src="/src/index-builder.js"></script>

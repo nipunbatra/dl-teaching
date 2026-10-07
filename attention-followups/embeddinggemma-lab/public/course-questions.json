@@ -1,0 +1,98 @@
+[
+  {
+    "id": "course-question-1",
+    "type": "text",
+    "group": "document",
+    "title": "Why does dropout help with overfitting?",
+    "text": "Why does dropout help with overfitting?",
+    "task": "question answering"
+  },
+  {
+    "id": "course-question-2",
+    "type": "text",
+    "group": "document",
+    "title": "Why do we divide attention scores by the square root of the key dimension?",
+    "text": "Why do we divide attention scores by the square root of the key dimension?",
+    "task": "question answering"
+  },
+  {
+    "id": "course-question-3",
+    "type": "text",
+    "group": "document",
+    "title": "How do we compute the CLIP loss?",
+    "text": "How do we compute the CLIP loss?",
+    "task": "question answering"
+  },
+  {
+    "id": "course-question-4",
+    "type": "text",
+    "group": "document",
+    "title": "Why can the EOT token summarize a whole sentence with causal attention?",
+    "text": "Why can the EOT token summarize a whole sentence with causal attention?",
+    "task": "question answering"
+  },
+  {
+    "id": "course-question-5",
+    "type": "text",
+    "group": "document",
+    "title": "Why do we need a nonlinear activation function?",
+    "text": "Why do we need a nonlinear activation function?",
+    "task": "question answering"
+  },
+  {
+    "id": "course-question-6",
+    "type": "text",
+    "group": "document",
+    "title": "How does backpropagation use the chain rule?",
+    "text": "How does backpropagation use the chain rule?",
+    "task": "question answering"
+  },
+  {
+    "id": "course-question-7",
+    "type": "text",
+    "group": "code",
+    "title": "Compute gradients and update model weights",
+    "text": "Compute gradients and update model weights",
+    "task": "code retrieval"
+  },
+  {
+    "id": "course-question-8",
+    "type": "text",
+    "group": "code",
+    "title": "Compute the symmetric contrastive loss for images and text",
+    "text": "Compute the symmetric contrastive loss for images and text",
+    "task": "code retrieval"
+  },
+  {
+    "id": "course-question-9",
+    "type": "text",
+    "group": "code",
+    "title": "Make each feature vector have unit length",
+    "text": "Make each feature vector have unit length",
+    "task": "code retrieval"
+  },
+  {
+    "id": "course-question-10",
+    "type": "text",
+    "group": "code",
+    "title": "Compare dropout during training and evaluation",
+    "text": "Compare dropout during training and evaluation",
+    "task": "code retrieval"
+  },
+  {
+    "id": "course-question-11",
+    "type": "text",
+    "group": "code",
+    "title": "Compute a numerical gradient with finite differences",
+    "text": "Compute a numerical gradient with finite differences",
+    "task": "code retrieval"
+  },
+  {
+    "id": "course-question-12",
+    "type": "text",
+    "group": "code",
+    "title": "Turn image patches into token embeddings",
+    "text": "Turn image patches into token embeddings",
+    "task": "code retrieval"
+  }
+]

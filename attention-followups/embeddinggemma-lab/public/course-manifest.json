@@ -1,0 +1,129 @@
+{
+  "date": "2026-10-07",
+  "passages": 1672,
+  "code": 269,
+  "items": 1941,
+  "decks": [
+    {
+      "id": "L1",
+      "title": "Likelihood and loss",
+      "source": "https://nipunbatra.github.io/dl-teaching/slides-pdf/L1.pdf",
+      "passages": 103,
+      "pages": 110
+    },
+    {
+      "id": "L2",
+      "title": "Linear models and neural networks",
+      "source": "https://nipunbatra.github.io/dl-teaching/slides-pdf/L2.pdf",
+      "passages": 65,
+      "pages": 72
+    },
+    {
+      "id": "L3",
+      "title": "Backpropagation and autograd",
+      "source": "https://nipunbatra.github.io/dl-teaching/slides-pdf/L3.pdf",
+      "passages": 98,
+      "pages": 107
+    },
+    {
+      "id": "L3A",
+      "title": "Calculus for deep learning",
+      "source": "https://nipunbatra.github.io/dl-teaching/slides-pdf/L3A.pdf",
+      "passages": 54,
+      "pages": 62
+    },
+    {
+      "id": "L5",
+      "title": "Optimization",
+      "source": "https://nipunbatra.github.io/dl-teaching/slides-pdf/L5.pdf",
+      "passages": 104,
+      "pages": 113
+    },
+    {
+      "id": "L5B",
+      "title": "Valid outputs by design",
+      "source": "https://nipunbatra.github.io/dl-teaching/slides-pdf/L5B.pdf",
+      "passages": 36,
+      "pages": 36
+    },
+    {
+      "id": "L5C",
+      "title": "Learning-rate schedules",
+      "source": "https://nipunbatra.github.io/dl-teaching/slides-pdf/L5C.pdf",
+      "passages": 10,
+      "pages": 10
+    },
+    {
+      "id": "L7",
+      "title": "Generalization and regularization",
+      "source": "https://nipunbatra.github.io/dl-teaching/slides-pdf/L7.pdf",
+      "passages": 112,
+      "pages": 114
+    },
+    {
+      "id": "Tokens",
+      "title": "Characters and next-token prediction",
+      "source": "https://nipunbatra.github.io/attention/part1.html",
+      "passages": 35,
+      "slides": 16
+    },
+    {
+      "id": "Attention",
+      "title": "Self-attention",
+      "source": "https://nipunbatra.github.io/attention/attention.html",
+      "passages": 166,
+      "slides": 178
+    },
+    {
+      "id": "ViT",
+      "title": "Vision Transformers",
+      "source": "https://nipunbatra.github.io/attention/vision1.html",
+      "passages": 54,
+      "slides": 54
+    },
+    {
+      "id": "CLIP",
+      "title": "CLIP",
+      "source": "https://nipunbatra.github.io/attention/clip/",
+      "passages": 172,
+      "slides": 168
+    },
+    {
+      "id": "VLM",
+      "title": "Vision-language models",
+      "source": "https://nipunbatra.github.io/attention/from-clip-to-vlm/",
+      "passages": 257,
+      "slides": 174
+    },
+    {
+      "id": "Detection",
+      "title": "Object detection",
+      "source": "https://nipunbatra.github.io/attention/object-detection/",
+      "passages": 90,
+      "slides": 90
+    },
+    {
+      "id": "Dense",
+      "title": "Segmentation, pose and depth",
+      "source": "https://nipunbatra.github.io/attention/beyond-boxes/",
+      "passages": 60,
+      "slides": 60
+    },
+    {
+      "id": "Architectures",
+      "title": "Transformer architectures",
+      "source": "https://nipunbatra.github.io/dl-teaching/interactives/from-attention-to-applications/",
+      "passages": 128,
+      "slides": 97
+    },
+    {
+      "id": "CNN",
+      "title": "Convolutional neural networks",
+      "source": "https://nipunbatra.github.io/dl-teaching/interactives/cnn/",
+      "passages": 128,
+      "slides": 128
+    }
+  ],
+  "notebooks": 26,
+  "extraction": "Exact slide text and notebook cells; diagrams and equation layout remain in the linked originals."
+}

@@ -28,7 +28,7 @@ Audio previews show actual waveform envelopes, scaled to each recording's peak. 
 5. **Picture + words:** a native joint input, not an average of separate embeddings.
 6. **Find a video moment:** search excerpts of a puppy playing, a coffee machine, waves and geese, alongside the original three-scene slideshow.
 7. **Choose your own labels:** edit the class menu. Removing the correct label does not make another label true.
-8. **Retrieve a course passage** or **Search code by its job:** show retrieval before generation. The lab does not generate answers.
+8. **Ask the course** or **Search course code:** find cited excerpts in the actual slides and notebook cells. No answer-writing model is used.
 9. **What changed?** subtract the original portrait embedding from the hat portrait embedding, normalize, then compare against captions. Swap the pair and check the signs.
 10. **Group the collection:** inspect k-means groups and a 2D PCA projection. Modality can dominate a group.
 11. **Explore every embedding:** choose an image, text, recording or video in the dropdown. Compare any two, inspect all coordinates, and export vectors plus the PCA coordinates. Filter modalities, click points, zoom and pan. The map reports explained variance; neighbours always use high-dimensional cosine. Modality-specific score ranges can dominate the nearest-neighbour list.
@@ -46,8 +46,8 @@ Every result can be inspected: query and candidate vectors, exact processor inpu
 - Transformers.js: `4.3.1`
 - Device/precision: WebGPU / q4 for all components
 - Output: `[1, 768]`, L2-normalized
-- Stored index: `public/embeddings.json`, containing all 154 sample embeddings **actually computed with this configuration** in Chrome, plus tensor shapes, processor metadata and timings.
-- Sample inventory: 29 images (including four extracted video frames), 40 five-second sounds, 59 captions/phrases in five languages, 6 course passages, 4 code snippets, 5 full clips and 11 indexed video windows. There are four real 12-second videos and one teaching slideshow.
+- Stored index: `public/embeddings.json`, containing all 294 sample embeddings **actually computed with this configuration** in Chrome, plus tensor shapes, processor metadata and timings.
+- Sample inventory: 69 images (including four extracted video frames), 100 five-second sounds, 99 captions/phrases, 6 small authored passages, 4 toy code snippets, 5 full clips and 11 indexed video windows. There are four real 12-second videos and one teaching slideshow.
 
 New text queries, classification labels, joint inputs and uploads are computed on the student's device. Stored sample queries can use the saved vectors without downloading the model. The **Re-encode this sample on my device** option recomputes them. Scores are raw cosines; no label matching, fabricated scores or per-modality score offsets are used. Rankings across modalities may reflect different score distributions. q4 is a size/quality tradeoff; these examples are not a benchmark.
 
@@ -69,18 +69,18 @@ node scripts/browser-check.cjs
 node scripts/edge-check.cjs
 ```
 
-The browser scripts use an installed Chrome and Puppeteer from the parent course repository. They save evidence in `output/verification/`. The index-builder page runs missing samples through the real browser model and saves progress locally. Changed text is re-encoded when its processor text differs; after changing media bytes, remove its entry from public/embeddings.json and clear the index-builder local storage before rebuilding. The original `encode-gallery.cjs` is an alternative full-index rebuild. The legacy browser check covers the original 13 retrieval applications, tests truncation and coordinate inspection, recomputes image/audio inputs, uploads an image, and checks 390 px mobile layouts. `LAB_URL` can target a production build or the published URL. The scripts can be adapted to your Chrome/Puppeteer locations.
+The browser scripts use an installed Chrome and Puppeteer from the parent course repository. They save evidence in `output/verification/`. The index-builder page runs missing samples through the real browser model and saves progress locally. Changed text is re-encoded when its processor text differs; after changing media bytes, remove its entry from public/embeddings.json and remove its matching IndexedDB entry (database `embeddinggemma-index-builder`, store `vectors`) before rebuilding. The original `encode-gallery.cjs` is an alternative full-index rebuild. The legacy browser check covers the original 13 retrieval applications, tests truncation and coordinate inspection, recomputes image/audio inputs, uploads an image, and checks 390 px mobile layouts. `LAB_URL` can target a production build or the published URL. The scripts can be adapted to your Chrome/Puppeteer locations.
 
 ## Sources and limitations
 
-See `SOURCES.md`, `public/IMAGE-CREDITS.md`, and `public/ESC-50-LICENSE.txt`, and `public/EXPANDED-MEDIA-CREDITS.md`. Per-item credits also appear in the collection dialog.
+See `SOURCES.md`, `public/IMAGE-CREDITS.md`, `public/ESC-50-LICENSE.txt`, `public/EXPANDED-MEDIA-CREDITS.md`, and `public/MORE-MEDIA-CREDITS.md`. Per-item credits also appear in the collection dialog.
 
 Videos include four attributed real recordings and the original teaching slideshow. Excerpts and extracted frames from the same video are related examples, not independent evaluation data. The model can misrank examples, be affected by language, prompts, quantization and modality, or miss a relation described in text. A high cosine does not establish factual truth, and a delta is not a causal explanation. The training tab fits a small linear output layer to frozen embeddings. It does not update EmbeddingGemma weights. Official model fine-tuning notebooks are linked separately.
 
 
 ## Training and projection checks
 
-`npm test` checks all 154 normalized 768-dimensional vectors and media hashes, exact PCA variance on a known matrix, linear-head gradients against finite differences, train/test source separation, and six training runs (3/10 classes × 768/256/128 dimensions). It saves `output/verification/expanded-math.json`.
+`npm test` checks all 294 normalized 768-dimensional vectors and media hashes, exact PCA variance on a known matrix, linear-head gradients against finite differences, train/test source separation, and six training runs (3/10 classes × 768/256/128 dimensions). It saves `output/verification/expanded-math.json`.
 
 The audio teaching split uses four different original source recordings per category: three training, one held out. The default three-class head has nine training examples and three held-out examples. All ten classes have 30 training and 10 held-out. This is far too small for a reliable performance claim; repeatedly selecting settings on these examples biases the result. The split is about teaching the mechanism, not benchmarking.
 
@@ -89,3 +89,33 @@ Browser acceptance checks for the two added views: select each modality, compare
 ## Implementation notes from review
 
 Re-encoded media is held separately in `state.localVectors`; it does not replace the saved candidate index. PCA plots preserve the same units on both axes. The explorer can show top three neighbours per modality, grouped without score offsets.
+
+## Ask the course and search real code
+
+`#documents` retrieves **1,672 passages from 17 published lecture decks**. Each match contains extracted source text, the original PDF page or HTML anchor, a preview where available, neighbouring slide excerpts, and optional embedding details. `#code` searches **269 code chunks from 26 course notebooks**, linking to GitHub and Colab. Neither view invents an answer. The index does not read diagrams; open the original for equations and figures. Extracted PDF equations may lose their layout.
+
+The course corpus and its vectors load on demand, separately from the 294-item media collection. It uses exhaustive cosine search; there is no vector database service, reranker, keyword-score blend, inference server, or answer generator. Near-duplicate animation builds are skipped after ranking, preserving the scores. Five matches are shown. A close match need not answer the question; out-of-course questions still produce nearest neighbours.
+
+Twelve example queries have genuine saved query embeddings from the same pinned WebGPU model, so they work without the model download. New questions use `task: question answering | query: ...`; code queries use `task: code retrieval | query: ...`. Documents use `title: ... | text: ...`. “Try indexing your own passage” embeds a pasted note or code snippet once, adds it to this tab's in-memory collection and allows immediate search. Reloading removes these local additions. No full PDF upload/parser is included in the browser.
+
+Rebuild from **published** source checkouts, not draft slides:
+
+```sh
+# Build-only Python packages: beautifulsoup4==4.13.4, pypdf==5.4.0, requests==2.32.3
+# Poppler's pdftoppm must be available for source-slide thumbnails.
+python scripts/build_course_corpus.py --course-repo /path/to/dl-teaching --attention-repo /path/to/attention
+# Open /index-builder.html?collection=course; encode missing items; download.
+# Save as public/course-embeddings.json.
+# Open /index-builder.html?collection=questions; encode; download.
+# Save as public/course-query-embeddings.json.
+python scripts/expand_samples.py
+python scripts/prepare_waveforms.py
+# Open /index-builder.html; encode missing gallery items; download.
+# Save as public/embeddings.json.
+npm test
+npm run build
+```
+
+The builder checkpoints each embedding in IndexedDB and supports Pause/resume. It re-encodes changed document text. Source-file hashes and extracted-text hashes are recorded in `course-corpus.json`; `course-manifest.json` lists the indexed decks. Rebuild the index when course material changes. Delete affected thumbnail files before rerendering a changed PDF. The 60 added audio examples are marked `explore`; the 30/10 training/test split is unchanged.
+
+`course.test.mjs` verifies every vector and its exact input text, provenance fields, local PDF previews, and 12 retrieval spot checks. The checks are useful regressions, not an evaluation of general retrieval quality. Browser acceptance also covers a fresh query, local-note indexing/removal, source links, complete-vector inspection, filtering and a 390 px viewport.
