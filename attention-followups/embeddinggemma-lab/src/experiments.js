@@ -215,7 +215,7 @@ export const experiments = [
     name: "Train a small classifier",
     title: "Teach a new task using frozen embeddings",
     description:
-      "Take one gradient step at a time. Watch a small linear layer learn to recognise sounds from a handful of labelled examples.",
+      "Take one gradient step at a time. Train on sounds, pictures or text. Follow the 768 features into class neurons, then test on examples the head has never seen.",
     mode: "training",
     lesson: "The encoder stays fixed. Only the classifier weights learn.",
   },

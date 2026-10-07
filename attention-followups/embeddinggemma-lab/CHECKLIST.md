@@ -57,3 +57,14 @@ The app supports inference and local vector operations. It does not fine-tune th
 - [x] Paste, embed and search a new local passage/code snippet; remove or reload to discard.
 - [x] Separate lazy-loaded course index; media applications retain direct navigation.
 - [x] Reproducible extraction/index-building scripts and retrieval checks.
+
+## Classifier neurons and more input types
+
+- [x] Train on pictures and text as well as sounds; actual saved model embeddings in every task.
+- [x] Labelled train/test splits: 12/6 for pictures and 12/6 for text; existing sound splits retained.
+- [x] Input media → frozen encoder → 768 features → class neurons → softmax diagram.
+- [x] Select an example and highlight a class; live scores and probabilities update during training.
+- [x] Inspect weighted products, remaining-coordinate sum, bias, score and example cross-entropy.
+- [x] Inspect every feature; dimensions and parameter counts update at 768/256/128.
+- [x] Explicit zero-weight ties, reset and weight exports with task/modality metadata.
+- [x] Twelve training runs, source/content separation and diagram arithmetic verified.

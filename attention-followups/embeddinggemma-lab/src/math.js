@@ -125,6 +125,12 @@ export function makeHead(dimensions, classes) {
 export function headPredict(head, x) {
   return softmax(head.weights.map((w, c) => dot(w, x) + head.bias[c]));
 }
+export function neuronTrace(head, x, selected) {
+  const logits = head.weights.map((w, c) => dot(w, x) + head.bias[c]);
+  const products = head.weights[selected].map((w, k) => w * x[k]);
+  return { logits, probabilities: softmax(logits), products, remainder: products.slice(3).reduce((a, b) => a + b, 0) };
+}
+
 export function headMetrics(head, rows, labels) {
   const predictions = rows.map((x) => headPredict(head, x));
   return {
