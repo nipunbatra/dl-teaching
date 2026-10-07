@@ -75,6 +75,7 @@ const assert = require("node:assert/strict"),
         embeddingLab.state.results.every((r) => Number.isFinite(r.score)),
       ),
     );
+    await p.click("[data-inspect]");
     await p.$eval("#coordinates", (n) => {
       n.value = 120;
       n.dispatchEvent(new Event("input"));
@@ -86,6 +87,7 @@ const assert = require("node:assert/strict"),
     );
     await p.select("#dimension", "768");
     await p.evaluate(() => embeddingLab.activate("listen"));
+    await p.click(".input-options summary");
     await p.click("#recompute");
     await p.click("#run");
     await p.waitForFunction(() => !embeddingLab.state.busy, {
@@ -97,6 +99,7 @@ const assert = require("node:assert/strict"),
       ),
     );
     await p.evaluate(() => embeddingLab.activate("neighbors"));
+    await p.click(".input-options summary");
     await p.click("#recompute");
     await p.click("#run");
     await p.waitForFunction(() => !embeddingLab.state.busy, {

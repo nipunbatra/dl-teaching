@@ -11,7 +11,7 @@ npm test
 npm run build     # deploy dist/ under any path; assets use relative URLs
 ```
 
-Use current Chrome or Edge with WebGPU and hardware acceleration. HTTPS or localhost is required. The first model download is about 473 MB, plus runtime files; Transformers.js uses the browser cache. No API key or inference server is used. User inputs are processed locally. The page still needs network access to load its code, samples and model files initially; this is not an installable offline app.
+Use current Chrome or Edge with WebGPU and hardware acceleration. HTTPS or localhost is required. The pinned Transformers.js browser module loads from jsDelivr; model weights load from Hugging Face. The first model download is about 473 MB, plus runtime files; Transformers.js uses the browser cache. No API key or inference server is used. User inputs are processed locally. The page still needs network access to load its code, samples and model files initially; this is not an installable offline app.
 
 ## Classroom route (15–25 minutes)
 
@@ -26,6 +26,8 @@ Use current Chrome or Edge with WebGPU and hardware acceleration. HTTPS or local
 9. **What changed?** subtract the original portrait embedding from the hat portrait embedding, normalize, then compare against captions. Swap the pair and check the signs.
 10. **Group the collection:** inspect k-means groups and a 2D PCA projection. Modality can dominate a group.
 11. Shorten vectors to **512 / 256 / 128**, re-normalize, and look for rank changes. This shrinks the index, not the model download.
+
+The landing page offers picture, sound and text starting points. The workspace keeps the query beside its candidates; on mobile these stack. **Explain score** opens the calculation only when requested, and **Upload or re-encode an input** reveals the optional input controls.
 
 Every result can be inspected: query and candidate vectors, exact processor inputs, tensor shapes, unit norms, eight coordinate products at a time, the full dot-product sum, and JSON vector export. Upload an image, audio file or video to run a fresh example locally. Audio/video input is bounded to the first 20 seconds; video uses frames only at 1 fps.
 

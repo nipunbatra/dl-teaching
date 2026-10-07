@@ -37,6 +37,7 @@ const assert = require("node:assert/strict"),
     });
     assert(await p.evaluate(() => embeddingLab.state.query));
     await p.select("#query-type", "video");
+    await p.click(".input-options summary");
     await p.click("#recompute");
     await p.click("#run");
     await p.waitForFunction(() => !embeddingLab.state.busy, {

@@ -14,6 +14,7 @@
 - [x] JSON vector export; local image/audio/video uploads.
 - [x] Genuine measured saved index, clearly distinguished from live computation.
 - [x] Model progress, cancellation/retry, error handling and no-WebGPU sample fallback.
+- [x] Editorial redesign: visual entry points, side-by-side query/results, six initial matches, on-demand score explanation.
 - [x] Desktop and 390 px mobile checks; media playback metadata checked.
 - [x] Build instructions, primary-source links, image/audio credits and library licenses.
 

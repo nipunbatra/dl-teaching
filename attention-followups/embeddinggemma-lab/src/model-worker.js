@@ -6,7 +6,7 @@ import {
   RawVideoFrame,
   Tensor,
   env,
-} from "@huggingface/transformers";
+} from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.1";
 import { MODEL, REVISION, DTYPE } from "./config.js";
 env.allowLocalModels = false;
 env.backends.onnx.wasm.numThreads = 1;

@@ -1,5 +1,9 @@
 import { defineConfig } from 'vite';
 
-// Keep generated runtime code readable for this teaching lab. Extremely long
-// minified lines also confuse key scanners around upstream model class names.
-export default defineConfig({ build: { minify: false } });
+// Use the official versioned browser distribution. Keep application code local
+// and readable; do not vendor the unrelated model registry into this repository.
+const runtime = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.1';
+export default defineConfig({
+  build: { minify: false },
+  worker: { format: 'es', rollupOptions: { external: [runtime] } },
+});
