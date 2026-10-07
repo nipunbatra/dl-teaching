@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><title>Build the teaching index</title
+  ><style>
+    body {
+      font: 18px system-ui;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    button {
+      padding: 12px;
+      margin: 12px 12px 12px 0;
+    }
+    pre {
+      white-space: pre-wrap;
+      font-size: 14px;
+    }
+  </style>
+  <h1>Build the teaching index</h1>
+  <p>
+    Encode new gallery items with the pinned WebGPU model. Existing vectors are
+    preserved. Progress is saved locally after each item.
+  </p>
+  <button id="start">Encode missing samples</button
+  ><button id="download">Download index JSON</button>
+  <p id="status" role="status">Reading collection…</p>
+  <pre id="log"></pre>
+  <script type="module" src="/src/index-builder.js"></script>
+</html>

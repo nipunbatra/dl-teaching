@@ -1,0 +1,785 @@
+/* Shared-space explorer and the small supervised learning lab. */
+[hidden] {
+  display: none !important;
+}
+#advanced-area {
+  min-width: 0;
+}
+.explorer-intro,
+.training-intro {
+  display: flex;
+  align-items: start;
+  gap: 28px;
+  justify-content: space-between;
+  border-top: 1px solid var(--line, #dfddd5);
+  padding-top: 22px;
+  margin-bottom: 28px;
+}
+.explorer-intro p,
+.training-intro p {
+  max-width: 660px;
+  margin: 0;
+  line-height: 1.7;
+}
+.saved-tag {
+  display: block;
+  color: #51675e;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  max-width: 210px;
+  line-height: 1.7;
+  text-align: right;
+  flex-shrink: 0;
+}
+.space-toolbar,
+.training-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr 140px;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.space-toolbar label,
+.training-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  color: #625d56;
+}
+.space-toolbar select,
+.training-controls select {
+  width: 100%;
+  min-width: 0;
+  font: inherit;
+  font-size: 14px;
+  padding: 12px 32px 12px 12px;
+  border: 1px solid #d8d4ca;
+  border-radius: 5px;
+  background: #fff;
+  color: #282721;
+}
+.space-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  gap: 24px;
+}
+.space-plot {
+  min-width: 0;
+}
+.space-plot > header,
+.full-vector > header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 15px;
+}
+.space-plot h3,
+.space-detail h3,
+.full-vector h3,
+.training-grid h3,
+.test-predictions h3,
+.finetune-section h3 {
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 600;
+  margin: 8px 0 18px;
+  letter-spacing: -0.035em;
+}
+.zoom-tools {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.zoom-tools button {
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+.modality-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 8px 0 15px;
+}
+.modality-legend label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  text-transform: capitalize;
+  cursor: pointer;
+}
+.modality-legend input {
+  accent-color: var(--modality);
+  width: 13px;
+  height: 13px;
+}
+.modality-legend i,
+.space-neighbours i {
+  height: 8px;
+  width: 8px;
+  border-radius: 50%;
+  background: var(--modality);
+  flex-shrink: 0;
+}
+.modality-legend label span {
+  color: #8b847b;
+  font-size: 11px;
+}
+#space-chart {
+  border: 1px solid #dfdcd2;
+  border-radius: 8px;
+  background: #fffefb;
+  overflow: hidden;
+  touch-action: none;
+}
+#space-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  cursor: grab;
+}
+.space-point {
+  cursor: pointer;
+  outline: none;
+}
+.space-point:focus circle {
+  stroke: #121811;
+  stroke-width: 4px;
+}
+.space-point:hover circle {
+  stroke: #222;
+  stroke-width: 2px;
+}
+.axis-label {
+  font:
+    11px "IBM Plex Mono",
+    monospace;
+  fill: #7e796e;
+}
+.comparison-line {
+  vector-effect: non-scaling-stroke;
+}
+.pan-tools {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #7e796e;
+}
+.pan-tools button {
+  padding: 4px 8px;
+}
+.space-explanation {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #dfdcd2;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.space-explanation ol {
+  padding-left: 20px;
+}
+.space-detail {
+  border-left: 1px solid #dfdcd2;
+  padding-left: 22px;
+  min-width: 0;
+}
+.type-badge {
+  font:
+    11px "IBM Plex Mono",
+    monospace;
+  letter-spacing: 0.06em;
+}
+.space-detail h3 {
+  font-size: 18px;
+  margin: 10px 0 16px;
+}
+.selected-media {
+  min-height: 95px;
+  background: #f2efe7;
+  padding: 12px;
+  border-radius: 6px;
+}
+.selected-media img {
+  max-height: 160px;
+  width: 100%;
+  object-fit: contain;
+}
+.selected-media audio {
+  width: 100%;
+  height: 34px;
+  margin-top: 14px;
+}
+.selected-media video {
+  max-height: 165px;
+  width: 100%;
+}
+.audio-label {
+  font:
+    10px "IBM Plex Mono",
+    monospace;
+  color: #238178;
+  letter-spacing: 0.09em;
+}
+.selected-media blockquote {
+  font-size: 17px;
+  line-height: 1.5;
+  margin: 4px;
+  padding: 0;
+  border: 0;
+}
+.space-detail .fineprint {
+  max-height: 60px;
+  overflow: auto;
+  font-size: 10px;
+  margin: 9px 0 22px;
+}
+.space-detail h4 {
+  font-size: 14px;
+  margin: 12px 0 6px;
+}
+.space-detail .hint {
+  font-size: 11px;
+  line-height: 1.5;
+}
+.space-neighbours button {
+  display: flex;
+  width: 100%;
+  text-align: left;
+  gap: 9px;
+  align-items: center;
+  padding: 11px 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid #e3dfd5;
+  border-radius: 0;
+  color: #302e29;
+  font: 12px inherit;
+  cursor: pointer;
+}
+.space-neighbours button:hover {
+  background: #f0ece2;
+}
+.space-neighbours button span {
+  flex: 1;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.space-neighbours small {
+  display: block;
+  font-size: 10px;
+  color: #82786c;
+}
+.space-neighbours b {
+  font:
+    12px "IBM Plex Mono",
+    monospace;
+}
+.pair-score {
+  margin-top: 24px;
+  padding: 17px;
+  background: #edf1ec;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  text-align: center;
+  border-radius: 7px;
+}
+.pair-score span {
+  font-size: 11px;
+  line-height: 1.5;
+}
+.pair-score strong {
+  font:
+    27px "IBM Plex Mono",
+    monospace;
+}
+.pair-score small {
+  font-size: 10px;
+  color: #647165;
+}
+.full-vector {
+  border-top: 1px solid #d5d1c6;
+  margin-top: 36px;
+  padding-top: 24px;
+}
+.under-hood {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  font:
+    12px "IBM Plex Mono",
+    monospace;
+}
+.under-hood span:nth-child(odd) {
+  background: #f1eee6;
+  padding: 9px;
+  border-radius: 4px;
+}
+#space-vector-summary p {
+  font-size: 13px;
+  margin: 18px 0 28px;
+}
+.full-vector canvas {
+  display: block;
+  width: 100%;
+}
+.full-vector h4 {
+  font-size: 13px;
+  font-weight: 500;
+}
+.full-vector details {
+  margin: 20px 0;
+  border-top: 1px solid #e2ded5;
+  padding-top: 16px;
+}
+.full-vector summary {
+  font-size: 13px;
+  cursor: pointer;
+}
+.full-vector pre {
+  max-height: 400px;
+  overflow: auto;
+  font-size: 11px;
+  white-space: pre-wrap;
+}
+.full-coordinate-table {
+  max-height: 360px;
+  overflow: auto;
+  margin-top: 16px;
+  border: 1px solid #dfdcd2;
+  border-radius: 5px;
+}
+.full-coordinate-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font:
+    12px "IBM Plex Mono",
+    monospace;
+}
+.full-coordinate-table th {
+  position: sticky;
+  top: 0;
+  background: #f0eee7;
+  text-align: right;
+}
+.full-coordinate-table td,
+.full-coordinate-table th {
+  padding: 9px 12px;
+  border-bottom: 1px solid #ebe7df;
+  text-align: right;
+}
+.coordinate-search {
+  display: flex;
+  align-items: end;
+  gap: 14px;
+  margin: 14px 0;
+}
+.coordinate-search label {
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.coordinate-search input {
+  width: 120px;
+  border: 1px solid #d5cfc3;
+  padding: 8px;
+  font: inherit;
+}
+.training-architecture {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  padding: 22px 0 32px;
+  border-bottom: 1px solid #ded9ce;
+  margin-bottom: 25px;
+}
+.training-architecture > div {
+  flex: 1;
+  padding: 16px 10px;
+  border: 1px solid #ded9ce;
+  text-align: center;
+  border-radius: 5px;
+  min-width: 0;
+}
+.training-architecture b {
+  display: block;
+  font-size: 13px;
+}
+.training-architecture span {
+  display: block;
+  font-size: 10px;
+  color: #7c7569;
+  margin-top: 7px;
+}
+.training-architecture i {
+  font-style: normal;
+  color: #7c7569;
+}
+.training-architecture .frozen-block {
+  background: #eef1ec;
+  border-color: #cad4c8;
+}
+.training-architecture .learning-block {
+  background: #f6e9df;
+  border-color: #d6b8a1;
+}
+.training-controls {
+  grid-template-columns: 1.1fr 155px 1.5fr;
+  align-items: end;
+}
+.training-buttons {
+  display: flex;
+  gap: 6px;
+  justify-content: end;
+  flex-wrap: wrap;
+}
+.training-buttons button {
+  font-size: 12px;
+  padding: 11px;
+}
+.training-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: #f0eee6;
+  padding: 20px 24px;
+  gap: 20px;
+  border-radius: 6px;
+}
+.training-metrics span {
+  display: block;
+  font-size: 11px;
+  color: #756e60;
+}
+.training-metrics b {
+  display: block;
+  font:
+    27px "IBM Plex Mono",
+    monospace;
+  margin-top: 12px;
+}
+.training-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 32px;
+  margin: 30px 0;
+}
+.training-grid p,
+.training-grid details {
+  font-size: 13px;
+  line-height: 1.7;
+}
+.training-grid pre {
+  padding: 18px;
+  background: #f1eee6;
+  font-size: 12px;
+  line-height: 1.7;
+  overflow: auto;
+  border-radius: 6px;
+}
+#training-chart svg {
+  width: 100%;
+  display: block;
+}
+#training-chart text {
+  font:
+    10px "IBM Plex Mono",
+    monospace;
+  fill: #746d61;
+}
+.training-formula {
+  border-left: 2px solid #bc5538;
+  padding: 14px 18px;
+  background: #f6f1e9;
+}
+.training-formula b {
+  font-size: 15px;
+}
+.training-formula span {
+  display: block;
+  font-size: 11px;
+  color: #776e5d;
+  margin-top: 10px;
+}
+.training-grid details {
+  margin-bottom: 15px;
+}
+.test-predictions {
+  border-top: 1px solid #d8d2c5;
+  padding-top: 24px;
+}
+.section-heading p {
+  font-size: 13px;
+}
+.test-predictions .hint {
+  font-size: 12px;
+  line-height: 1.7;
+  max-width: 880px;
+}
+#test-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin: 20px 0;
+}
+#test-cards article {
+  border: 1px solid #ded8cb;
+  border-radius: 7px;
+  padding: 18px;
+  min-width: 0;
+}
+#test-cards audio {
+  width: 100%;
+  height: 34px;
+}
+#test-cards article > strong {
+  font-size: 13px;
+  display: block;
+  margin: 18px 0;
+}
+.class-bars > div {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  margin: 10px 0;
+  font-size: 11px;
+}
+.class-bars span {
+  width: 65px;
+}
+.class-bars i {
+  flex: 1;
+  height: 5px;
+  background: #e7e2d6;
+  overflow: hidden;
+}
+.class-bars b {
+  display: block;
+  height: 100%;
+  background: #bc5538;
+}
+.class-bars code {
+  font-size: 10px;
+}
+.test-predictions details {
+  font-size: 11px;
+  line-height: 1.6;
+  margin-top: 15px;
+}
+.training-split {
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 30px 0;
+}
+.training-split table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.training-split td,
+.training-split th {
+  padding: 12px;
+  border-bottom: 1px solid #ded8cb;
+  text-align: left;
+}
+.training-split audio {
+  width: 200px;
+  height: 32px;
+}
+.finetune-section {
+  border-top: 1px solid #d8d2c5;
+  padding-top: 28px;
+  margin-top: 35px;
+}
+.finetune-section p {
+  font-size: 14px;
+  line-height: 1.7;
+  max-width: 800px;
+}
+.fine-tuning-path {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin: 24px 0;
+}
+.fine-tuning-path span {
+  padding: 15px;
+  background: #eeece4;
+  border-radius: 5px;
+  min-width: 170px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.fine-tuning-path small {
+  color: #83755f;
+}
+.training-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 20px;
+  font-size: 13px;
+}
+@media (min-width: 1600px) {
+  .space-layout {
+    grid-template-columns: minmax(0, 1fr) 290px;
+  }
+  .space-plot h3 {
+    font-size: 25px;
+  }
+}
+@media (max-width: 1100px) {
+  .space-layout {
+    grid-template-columns: minmax(0, 1fr) 220px;
+    gap: 18px;
+  }
+  .space-detail {
+    padding-left: 16px;
+  }
+  .space-plot > header {
+    display: block;
+  }
+  .zoom-tools {
+    margin: 10px 0;
+  }
+  .training-controls {
+    grid-template-columns: 1fr 160px;
+  }
+  .training-buttons {
+    grid-column: 1/-1;
+    justify-content: start;
+  }
+  .training-grid {
+    gap: 20px;
+  }
+}
+@media (max-width: 720px) {
+  .explorer-intro,
+  .training-intro {
+    display: block;
+  }
+  .saved-tag {
+    max-width: none;
+    text-align: left;
+    margin-top: 12px;
+  }
+  .space-toolbar {
+    grid-template-columns: 1fr 100px;
+    gap: 12px;
+  }
+  .space-toolbar label:first-child {
+    grid-column: 1/-1;
+  }
+  .space-layout {
+    display: block;
+  }
+  .space-detail {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid #ded8cb;
+    padding-top: 24px;
+    margin-top: 24px;
+  }
+  .selected-media {
+    max-width: 350px;
+  }
+  .space-detail .fineprint {
+    max-height: 50px;
+  }
+  .space-neighbours button span {
+    font-size: 13px;
+  }
+  .full-vector > header {
+    display: block;
+  }
+  .full-vector > header button {
+    margin-bottom: 15px;
+  }
+  .full-vector .vector-pair {
+    grid-template-columns: 1fr;
+  }
+  .space-toolbar select {
+    font-size: 12px;
+  }
+  .full-coordinate-table td,
+  .full-coordinate-table th {
+    padding: 8px;
+    font-size: 10px;
+  }
+  .training-architecture {
+    display: grid;
+    grid-template-columns: 1fr 20px 1fr;
+    gap: 9px;
+  }
+  .training-architecture > i:nth-of-type(2) {
+    display: none;
+  }
+  .training-metrics {
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+  }
+  .training-metrics b {
+    font-size: 24px;
+  }
+  .training-grid {
+    grid-template-columns: 1fr;
+  }
+  .training-controls {
+    grid-template-columns: 1fr 125px;
+  }
+  .training-controls select {
+    font-size: 12px;
+  }
+  .training-controls button {
+    font-size: 11px;
+  }
+  #test-cards {
+    grid-template-columns: 1fr;
+  }
+  .fine-tuning-path {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .fine-tuning-path > b {
+    text-align: center;
+    transform: rotate(90deg);
+  }
+  .training-links {
+    flex-direction: column;
+  }
+  .space-plot h3 {
+    font-size: 21px;
+  }
+  .under-hood {
+    font-size: 10px;
+    gap: 7px;
+  }
+  .explorer-intro p,
+  .training-intro p {
+    font-size: 14px;
+  }
+  .full-vector .vector-pair {
+    display: grid;
+  }
+  .full-vector pre {
+    overflow-wrap: anywhere;
+  }
+  .training-split .table-scroll {
+    overflow-x: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #advanced-area * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}
+
+.pair-score img {
+  width: 100%;
+  height: 100px;
+  object-fit: contain;
+  border-radius: 4px;
+}

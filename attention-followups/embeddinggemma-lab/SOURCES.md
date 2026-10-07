@@ -17,7 +17,7 @@ The application is original course code. It does not copy the demo's UI, minifie
 
 ## Audio
 
-10 five-second clips from the **ESC-10 subset** of ESC-50, one per class. ESC-10 is distributed under **CC BY 3.0** (not the broader ESC-50 non-commercial license). The full original license/individual Freesound attributions are retained at `public/ESC-50-LICENSE.txt`; each selected clip's attribution is also in the gallery manifest.
+40 five-second clips from the **ESC-10 subset** of ESC-50, four per class from distinct source recordings. ESC-10 is distributed under **CC BY 3.0** (not the broader ESC-50 non-commercial license). The full original license/individual Freesound attributions are retained at `public/ESC-50-LICENSE.txt`; each selected clip's attribution is also in the gallery manifest.
 
 - Repository: https://github.com/karolpiczak/ESC-50
 - Metadata: https://github.com/karolpiczak/ESC-50/blob/master/meta/esc50.csv
@@ -37,3 +37,18 @@ Reproduce with FFmpeg using each original image as a looped 4-second input, `sca
 Text queries have the model's task prefix. Text collection items use `title: … | text: …`; captions use title `none`. The classification experiment embeds the input and supplied text labels with the classification prefix where applicable. Media inputs never include sample titles or labels. Image-plus-text passes `note <|image|>` plus pixels as one processor call.
 
 The model returns normalized 768-dimensional vectors. The size selector slices the same leading d coordinates from both query and candidates, then explicitly normalizes again. The dot product sums all selected dimensions. Difference queries are `unit(after − before)`; swapping before/after reverses signs. K-means runs in the selected full vector space; centered PCA is only a display projection. No thresholds turn similarity into a truth claim.
+
+
+## Expanded images, real videos and training
+
+Eight additional photographs and four real videos come from Wikimedia Commons. Each video is trimmed to 12 seconds, resized and converted to silent H.264; one still and two 4-second windows are also indexed. The original authors, file pages, licenses and modifications appear in `public/EXPANDED-MEDIA-CREDITS.md` and the manifest. CC BY-SA media derivatives remain under their original share-alike licenses. Original downloads are kept only in `work/media-sources/`; redistribution uses the processed files under `public/media/`.
+
+`expand_gallery.py` builds the added collection idempotently. It preserves the original 68 entries and adds 86 new items. Twenty English/Hindi/Gujarati/French/Spanish phrases are course-authored. New media embeddings use pixels/waveforms/frames alone, not the captions or file titles.
+
+The linear-head example performs actual full-batch gradient descent on fixed embeddings, with mean softmax cross-entropy, learning rate 2 and L2 weight gradient coefficient 0.001. It starts W and b at zero. Three of four independent audio sources per class train the head; the fourth is held out. The chart excludes the weight penalty and shows cross-entropy in both splits. The full encoder is never trained by this browser page.
+
+Official full-model fine-tuning references:
+- Google/Sentence Transformers: https://ai.google.dev/gemma/docs/embeddinggemma/fine-tuning-embeddinggemma-with-sentence-transformers
+- Unsloth documentation and image/text/audio notebooks: https://unsloth.ai/docs/models/embeddinggemma-2
+
+The PCA explorer centres the selected-dimensional, re-normalized vectors and finds two principal directions by power iteration. Variance shown is the sum of squared projected coordinates divided by the total centred sum of squares. Filters hide points without refitting the axes. The neighbour list uses cosine on the selected-dimensional vectors, never 2D distances.

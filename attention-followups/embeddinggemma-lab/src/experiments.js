@@ -122,18 +122,20 @@ export const experiments = [
     name: "Find a video moment",
     title: "Which part of the video matches?",
     description:
-      "Our 12-second teaching slideshow has three scenes. Search the four-second windows separately.",
+      "Search short excerpts from real videos of a puppy, coffee, waves and geese, alongside the original teaching slideshow.",
     mode: "search",
     type: "text",
     query: "a rocket launching",
     filter: "moment",
     ideas: [
+      "a puppy playing indoors",
+      "water moving in waves",
       "a rocket launching",
       "a cat looking at the camera",
       "a cup of coffee",
     ],
     lesson:
-      "Each window has its own video embedding, using one sampled frame per second. This silent slideshow demonstrates temporal indexing; it is not a benchmark of motion understanding.",
+      "Each window has its own video embedding, using one sampled frame per second without the soundtrack. The same clip can match several queries. Video frames and extracted stills are related examples, not independent evaluation data.",
   },
   {
     id: "classify",
@@ -216,5 +218,26 @@ export const experiments = [
     filter: "all",
     lesson:
       "K-means uses the full selected-dimensional vectors. The plot uses PCA to show two dimensions, so its distances are only an approximation. Group numbers have no predefined meaning.",
+  },
+  {
+    id: "explorer",
+    group: "Inspect",
+    name: "Explore every embedding",
+    title: "Where do pictures, words and sounds meet?",
+    description:
+      "Choose any item, open its complete vector, and compare it with another modality. Use the map to ask questions, then check the actual cosine.",
+    mode: "explorer",
+    lesson:
+      "PCA keeps two directions of variation. The neighbour list uses the full selected-dimensional vectors.",
+  },
+  {
+    id: "training",
+    group: "Learn",
+    name: "Train a small classifier",
+    title: "Teach a new task using frozen embeddings",
+    description:
+      "Take one gradient step at a time. Watch a small linear layer learn to recognise sounds from a handful of labelled examples.",
+    mode: "training",
+    lesson: "The encoder stays fixed. Only the classifier weights learn.",
   },
 ];

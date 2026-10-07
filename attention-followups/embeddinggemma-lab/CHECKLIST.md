@@ -2,7 +2,7 @@
 
 - [x] Read the Google announcement and the linked video’s English captions.
 - [x] Run the real, pinned EmbeddingGemma 2 ONNX model on WebGPU.
-- [x] 68 attributed samples: images, audio, captions, passages, code and video/windows.
+- [x] 154 attributed samples: images, audio, captions, passages, code and video/windows.
 - [x] Image/caption retrieval, image neighbours, and sound/image/text search.
 - [x] Multilingual text search and native image-plus-text input.
 - [x] Video-window retrieval and live uploaded-video encoding.
@@ -18,4 +18,19 @@
 - [x] Desktop and 390 px mobile checks; media playback metadata checked.
 - [x] Build instructions, primary-source links, image/audio credits and library licenses.
 
-The app supports inference and local vector operations. It does not fine-tune the model, generate answers, or claim that scores are calibrated confidence. The video demonstration is an attributed teaching slideshow.
+The app supports inference and local vector operations. It does not fine-tune the model, generate answers, or claim that scores are calibrated confidence. Video includes four real clips and the original teaching slideshow. A small linear head trains on frozen audio embeddings, with separate source recordings held out.
+
+
+## Expanded exploration
+
+- [x] 29 images, 40 recordings, 69 text items, 5 clips and 11 indexed windows.
+- [x] Real puppy, coffee, waves and geese videos with credited adaptations.
+- [x] Dropdowns for any item and a comparison item.
+- [x] All 768 coordinates available, with exact coordinate products and JSON export.
+- [x] Interactive PCA with modality colours, filters, point selection, zoom, pan and reset.
+- [x] Explained variance and actual high-dimensional nearest neighbours.
+- [x] Real classifier training: one step, 100 steps, reset, loss curves, held-out predictions.
+- [x] Three- and ten-class tasks; 768/256/128-dimensional features.
+- [x] No shared original audio source across training and held-out splits.
+- [x] Official text/image/audio fine-tuning notebooks linked; encoder/head distinction explicit.
+- [x] Finite-difference gradient checks, PCA reference check and all media hashes.

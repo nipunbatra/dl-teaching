@@ -90,3 +90,71 @@ export function pca(rows) {
   }
   return x.map((r) => axes.map((a) => dot(r, a)));
 }
+
+// A projection is a view of the vectors, never a replacement for cosine search.
+export function pcaProjection(rows) {
+  if (
+    !rows.length ||
+    rows.some((r) => r.length !== rows[0].length || !r.every(Number.isFinite))
+  )
+    throw Error("PCA needs a rectangular finite matrix.");
+  const mean = rows[0].map(
+    (_, j) => rows.reduce((s, r) => s + r[j], 0) / rows.length,
+  );
+  const centered = rows.map((r) => r.map((v, j) => v - mean[j]));
+  const total = centered.reduce((s, r) => s + dot(r, r), 0);
+  const points = pca(rows);
+  const variance = [0, 1].map((j) =>
+    total ? points.reduce((s, p) => s + p[j] ** 2, 0) / total : 0,
+  );
+  return { points, variance };
+}
+
+export function softmax(logits) {
+  const max = Math.max(...logits),
+    e = logits.map((x) => Math.exp(x - max)),
+    sum = e.reduce((s, x) => s + x, 0);
+  return e.map((x) => x / sum);
+}
+export function makeHead(dimensions, classes) {
+  return {
+    weights: Array.from({ length: classes }, () => Array(dimensions).fill(0)),
+    bias: Array(classes).fill(0),
+  };
+}
+export function headPredict(head, x) {
+  return softmax(head.weights.map((w, c) => dot(w, x) + head.bias[c]));
+}
+export function headMetrics(head, rows, labels) {
+  const predictions = rows.map((x) => headPredict(head, x));
+  return {
+    loss:
+      predictions.reduce(
+        (s, p, i) => s - Math.log(Math.max(p[labels[i]], 1e-30)),
+        0,
+      ) / rows.length,
+    accuracy:
+      predictions.reduce(
+        (s, p, i) => s + Number(p.indexOf(Math.max(...p)) === labels[i]),
+        0,
+      ) / rows.length,
+    predictions,
+  };
+}
+// Full-batch gradient descent on a softmax linear head. Encoder vectors stay fixed.
+export function trainHeadStep(head, rows, labels, rate = 2, decay = 0.001) {
+  const gw = head.weights.map((w) => w.map(() => 0)),
+    gb = head.bias.map(() => 0);
+  rows.forEach((x, i) => {
+    const p = headPredict(head, x);
+    p.forEach((v, c) => {
+      const error = (v - Number(c === labels[i])) / rows.length;
+      gb[c] += error;
+      x.forEach((a, j) => (gw[c][j] += error * a));
+    });
+  });
+  head.weights.forEach((w, c) =>
+    w.forEach((a, j) => (w[j] -= rate * (gw[c][j] + decay * a))),
+  );
+  head.bias.forEach((a, c) => (head.bias[c] -= rate * gb[c]));
+}

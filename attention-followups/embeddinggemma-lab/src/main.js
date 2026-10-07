@@ -1,4 +1,8 @@
 import "./style.css";
+import "./exploration.css";
+import { mountExplorer } from "./explorer.js";
+import { mountTraining } from "./training.js";
+let unmountAdvanced = () => {};
 import { Engine, prepare } from "./runtime.js";
 import { MODEL, REVISION } from "./config.js";
 import { unit, dot, rank, difference, kmeans, pca } from "./math.js";
@@ -85,14 +89,28 @@ function clearResults() {
   $("#map").hidden = true;
   $("#result-source").textContent = "";
   $("#results-title").textContent = "Make a prediction";
-  $("#result-meta").textContent = "A few candidates from the collection. Which will match?";
+  $("#result-meta").textContent =
+    "A few candidates from the collection. Which will match?";
   const filter = $("#filter")?.value || "all";
   let examples = filterItems(filter);
   if (filter === "image") {
-    const featured = ["chelsea", "coffee", "rocket", "retriever-photo", "solar", "astronaut"];
-    examples = [...featured.map(itemById).filter(Boolean), ...examples.filter(i => !featured.includes(i.id))];
+    const featured = [
+      "chelsea",
+      "coffee",
+      "rocket",
+      "retriever-photo",
+      "solar",
+      "astronaut",
+    ];
+    examples = [
+      ...featured.map(itemById).filter(Boolean),
+      ...examples.filter((i) => !featured.includes(i.id)),
+    ];
   }
-  $("#results").innerHTML = examples.slice(0, 6).map((item, i) => card(item, i, null)).join("");
+  $("#results").innerHTML = examples
+    .slice(0, 6)
+    .map((item, i) => card(item, i, null))
+    .join("");
   $("#result-step").textContent = "02 / PREDICT THE MATCH";
   $("#more").hidden = true;
 }
@@ -221,7 +239,15 @@ function updatePreview() {
   if (item) {
     $("#query-preview").innerHTML = thumb(item, true);
     const strip = $("#sample-strip");
-    if (strip) strip.innerHTML = state.gallery.filter(i => i.type === item.type).slice(0, 6).map(i => `<button type="button" class="sample-pick sample-${i.type}" data-sample="${esc(i.id)}" aria-label="Choose ${esc(i.title)}" aria-pressed="${i.id === item.id}">${thumb(i)}<span>${esc(i.title)}</span></button>`).join("");
+    if (strip)
+      strip.innerHTML = state.gallery
+        .filter((i) => i.type === item.type)
+        .slice(0, 6)
+        .map(
+          (i) =>
+            `<button type="button" class="sample-pick sample-${i.type}" data-sample="${esc(i.id)}" aria-label="Choose ${esc(i.title)}" aria-pressed="${i.id === item.id}">${thumb(i)}<span>${esc(i.title)}</span></button>`,
+        )
+        .join("");
   }
 }
 function selectedInput() {
@@ -266,11 +292,28 @@ function activate(id) {
       b.setAttribute("aria-current", String(b.dataset.experiment === e.id)),
     );
   $("#experiment-title").textContent = e.title;
-  $("#experiment-number").textContent = `EXPERIMENT ${String(experiments.indexOf(e) + 1).padStart(2, "0")} / ${experiments.length}`;
+  $("#experiment-number").textContent =
+    `EXPERIMENT ${String(experiments.indexOf(e) + 1).padStart(2, "0")} / ${experiments.length}`;
   $("#experiment-description").textContent = e.description;
   $("#lesson").textContent = e.lesson;
-  renderQuery();
-  clearResults();
+  unmountAdvanced();
+  const advanced = ["explorer", "training"].includes(e.mode);
+  $("#advanced-area").hidden = !advanced;
+  $(".workbench").hidden = advanced;
+  $("#inspect").hidden = true;
+  if (advanced) {
+    state.query = null;
+    state.selected = null;
+    unmountAdvanced =
+      e.mode === "explorer"
+        ? mountExplorer($("#advanced-area"), state)
+        : mountTraining($("#advanced-area"), state);
+  } else {
+    $("#advanced-area").innerHTML = "";
+    renderQuery();
+    clearResults();
+    unmountAdvanced = () => {};
+  }
   history.replaceState(null, "", "#" + e.id);
 }
 async function ensureModel() {
@@ -447,7 +490,8 @@ function inspect(id) {
   state.selected = id;
   $("#inspect").hidden = false;
   $("#inspect-title").textContent = item.title;
-  $("#inspect-pair").innerHTML = `${state.query ? `<div><span class="small-label">Your ${state.experiment.mode === "delta" ? "change direction" : "query"}</span><strong>${esc(state.experiment.mode === "delta" ? state.query.info.before + " → " + state.query.info.after : state.query.item.text || state.query.item.title)}</strong></div><span class="pair-arrow">→</span>` : ""}<div><span class="small-label">The candidate · ${esc(item.type)}</span><strong>${esc(item.title)}</strong></div>`;
+  $("#inspect-pair").innerHTML =
+    `${state.query ? `<div><span class="small-label">Your ${state.experiment.mode === "delta" ? "change direction" : "query"}</span><strong>${esc(state.experiment.mode === "delta" ? state.query.info.before + " → " + state.query.info.after : state.query.item.text || state.query.item.title)}</strong></div><span class="pair-arrow">→</span>` : ""}<div><span class="small-label">The candidate · ${esc(item.type)}</span><strong>${esc(item.title)}</strong></div>`;
   $("#candidate-text").textContent =
     item.type === "text" ? item.text : item.credit;
   const query = state.query ? unit(state.query.vector, state.dimension) : null,
@@ -609,11 +653,12 @@ function useAsQuery(id) {
 async function init() {
   $("#app").innerHTML =
     `<header class="site-header"><a class="brand" href="https://nipunbatra.github.io/"><span class="brand-mark">nb.</span> Nipun Batra <span class="brand-slash">/</span> <span class="brand-course">Learning labs</span></a><nav aria-label="Course links"><a href="https://nipunbatra.github.io/attention/clip/">CLIP lecture ↗</a><button class="quiet" id="open-about">How it works</button></nav></header>
-<main><section class="intro"><div class="intro-copy"><p class="eyebrow">BEYOND CLIP · EMBEDDINGGEMMA 2</p><h1>One space.<br><em>Many ways to search.</em></h1><p>A photo, a sentence, even a bark. Find out what happens when different kinds of input share the same representation.</p><a class="intro-link" href="#workspace">Start exploring <span>↓</span></a><div class="intro-facts"><span><b>13</b> experiments</span><span><b>68</b> samples</span><span><b>768</b> dimensions</span></div></div>
+<main><section class="intro"><div class="intro-copy"><p class="eyebrow">BEYOND CLIP · EMBEDDINGGEMMA 2</p><h1>One space.<br><em>Many ways to search.</em></h1><p>A photo, a sentence, even a bark. Find out what happens when different kinds of input share the same representation.</p><a class="intro-link" href="#workspace">Start exploring <span>↓</span></a><div class="intro-facts"><span><b>${experiments.length}</b> experiments</span><span><b id="sample-count">…</b> samples</span><span><b>768</b> dimensions</span></div></div>
 <div class="intro-media"><div class="media-caption"><span>A few ways in</span><span>Pick one to begin ↙</span></div><div class="media-tiles"><button class="hero-tile image-tile" data-experiment="captions"><img src="./media/chelsea.jpg" alt="An orange cat looking at the camera"><span><b>Start with a picture</b>Find its words <i>↗</i></span></button><button class="hero-tile sound-tile" data-experiment="listen"><span class="sound-drawing" aria-hidden="true"><svg viewBox="0 0 150 90"><path d="M9 39v12m11-21v30m11-39v48m11-32v16m11-52v88m11-69v50m11-38v26m11-44v62m11-46v30m11-40v50m11-32v14m11-25v36m11-27v18"/></svg><small>Dog bark · 5 seconds</small></span><span><b>Start with a sound</b>Find its picture <i>↗</i></span></button><button class="hero-tile text-tile" data-experiment="moments"><span class="text-drawing">“a rocket<br>launching”<small>Text → video</small></span><span><b>Start with a thought</b>Find a moment <i>↗</i></span></button></div><p class="media-footnote">Different inputs. The same encode → compare idea.</p></div></section><div class="runtime-bar"><span class="status-dot"></span><strong id="model-state">Collection ready · model loads on demand</strong><span>WebGPU · q4 · ~473 MB first download</span><button class="quiet" id="open-library">Explore the collection</button></div><div class="lab-layout"><nav class="experiment-nav" aria-label="Experiments"><div class="nav-intro"><span class="eyebrow">THE EXPERIMENTS</span><span>Choose a question to investigate</span></div>${[
       "Find",
       "Use",
       "Inspect",
+      "Learn",
     ]
       .map(
         (g) =>
@@ -627,7 +672,7 @@ async function init() {
       )
       .join(
         "",
-      )}</nav><section id="workspace"><label class="mobile-experiment">Experiment<select id="experiment">${experiments.map((e) => `<option value="${e.id}">${e.name}</option>`).join("")}</select></label><div class="experiment-head"><span class="eyebrow" id="experiment-number"></span><h2 id="experiment-title"></h2><p id="experiment-description"></p></div><div class="workbench"><div class="query-column"><div class="query-panel"><p class="step-label">01 / CHOOSE YOUR INPUT</p><div id="query-area"></div><div class="run-row"><button id="run" class="primary">Run this search</button><button id="stop" class="quiet" hidden>Stop & unload</button><span id="status" role="status" aria-live="polite">No API key. Your inputs stay in this browser.</span></div><progress id="progress" max="100" hidden></progress><p id="error" role="alert" hidden></p></div><p class="lesson"><b>What to notice</b><span id="lesson"></span></p></div><div class="results-column"><p class="step-label" id="result-step">02 / PREDICT THE MATCH</p><div class="results-heading"><div><h2 id="results-title">The matches</h2><p id="result-meta"></p></div><label>Vector size<select id="dimension"><option value="768">768 · full</option><option value="512">512</option><option value="256">256</option><option value="128">128</option></select></label></div><p id="dimension-note" class="hint">Keep the first d coordinates, then normalize again. Both sides use the same d.</p><div id="map" hidden></div><div id="results" class="results-grid"></div><button id="more" class="quiet" hidden>Show more results</button><p id="result-source" class="fineprint"></p><details id="context" hidden><summary>The context a generative model could receive</summary><pre id="context-text"></pre><p>This lab stops at retrieval. Check whether these sources actually answer the question.</p></details></div></div><section id="inspect" class="inspector" hidden><div class="inspector-head"><div><p class="eyebrow">03 / FOLLOW THE NUMBERS</p><h2 id="inspect-title"></h2></div><div class="inspector-actions"><button class="quiet" id="download-vector">Download vectors</button><button class="quiet" id="close-inspect" aria-label="Close vector inspector">Close ×</button></div></div><div id="inspect-pair" class="inspect-pair"></div><p id="candidate-text"></p><div class="vector-pair"><div><h3 id="query-vector-label"></h3><canvas id="query-canvas" aria-label="Query embedding coordinates"></canvas></div><div><h3 id="candidate-vector-label"></h3><canvas id="candidate-canvas" aria-label="Candidate embedding coordinates"></canvas></div></div><p class="hint" id="vector-note"></p><div id="dot-area"><label id="coordinate-range" for="coordinates"></label><input type="range" id="coordinates" min="0" max="760" step="8" value="0"><div class="table-scroll"><table><thead><tr><th>k</th><th>Query qₖ</th><th></th><th>Candidate vₖ</th><th>Product</th></tr></thead><tbody id="coordinate-table"></tbody></table></div><div id="dot-total" class="dot-total"></div></div><details><summary>Show model inputs, shapes and normalization</summary><pre id="shape-details"></pre></details></section></section></div><footer><p class="eyebrow">TAKE IT BACK TO THE LECTURE</p><strong>The same idea as CLIP, with more kinds of input.</strong><p>Encode → normalize → compare. The model returns embeddings; the application decides how to use them.</p><div><a href="https://blog.google/innovation-and-ai/technology/developers-tools/embeddinggemma-2/">Google announcement</a><a href="https://www.youtube.com/watch?v=anPsS6huQk0">Introduction video</a><a href="https://huggingface.co/onnx-community/embeddinggemma-2-ONNX">Model & implementation</a><button class="quiet" id="footer-library">Sample credits</button><a href="https://github.com/nipunbatra/dl-teaching/tree/master/attention-followups/embeddinggemma-lab">Source code</a></div></footer></main><dialog id="library"><div class="dialog-head"><div><p class="eyebrow">THE SHARED COLLECTION</p><h2 id="library-title">Samples you can inspect</h2></div><button class="quiet" data-close="library" aria-label="Close collection">Close ×</button></div><p>Images, recordings and video are embedded from their media, without their titles. Some images are generated teaching examples, identified in the credits.</p><label>Show<select id="library-filter"><option value="all">All samples</option><option value="image">Images</option><option value="audio">Sounds</option><option value="text">Text & code</option><option value="video">Video</option></select></label><div id="library-grid" class="library-grid"></div></dialog><dialog id="about"><div class="dialog-head"><h2>From CLIP to a multimodal index</h2><button class="quiet" data-close="about">Close ×</button></div><ol class="explanation"><li><strong>Represent each item.</strong> Media encoders feed a shared model. Mean pooling and a projection produce a 768-number embedding. This architecture is not CLIP’s two independent towers.</li><li><strong>Store the collection.</strong> The supplied vectors were computed from these exact samples using this pinned ONNX model, q4 precision and WebGPU. They let us inspect the collection without re-encoding it on every search.</li><li><strong>Encode a new query on your device.</strong> Model files download from Hugging Face. Typed text and uploaded media go to a local worker; there is no inference server or API key.</li><li><strong>Compare.</strong> Unit vectors give a cosine through a dot product. Scores are similarities, not probabilities. There is no learned threshold that guarantees a match.</li><li><strong>Shorten, carefully.</strong> The size control keeps leading coordinates and re-normalizes. It reduces index storage, not the size of the model download. The 128-dimensional option can hurt multimodal retrieval.</li></ol><p class="hint">Text search uses a task prefix; text candidates use a document prefix. Classification uses the classification prefix. Inspect the input details to see the exact text supplied.</p><p>Local uploads are kept only in this tab. Audio is limited to 20 seconds. Video uses up to 20 seconds of sampled frames without its soundtrack. Close or stop the model to release its worker.</p><p class="fineprint">${MODEL}<br>Revision ${REVISION}<br>Transformers.js 4.3.1 · q4 · Apache 2.0 model</p></dialog>`;
+      )}</nav><section id="workspace"><label class="mobile-experiment">Experiment<select id="experiment">${experiments.map((e) => `<option value="${e.id}">${e.name}</option>`).join("")}</select></label><div class="experiment-head"><span class="eyebrow" id="experiment-number"></span><h2 id="experiment-title"></h2><p id="experiment-description"></p></div><div id="advanced-area" hidden></div><div class="workbench"><div class="query-column"><div class="query-panel"><p class="step-label">01 / CHOOSE YOUR INPUT</p><div id="query-area"></div><div class="run-row"><button id="run" class="primary">Run this search</button><button id="stop" class="quiet" hidden>Stop & unload</button><span id="status" role="status" aria-live="polite">No API key. Your inputs stay in this browser.</span></div><progress id="progress" max="100" hidden></progress><p id="error" role="alert" hidden></p></div><p class="lesson"><b>What to notice</b><span id="lesson"></span></p></div><div class="results-column"><p class="step-label" id="result-step">02 / PREDICT THE MATCH</p><div class="results-heading"><div><h2 id="results-title">The matches</h2><p id="result-meta"></p></div><label>Vector size<select id="dimension"><option value="768">768 · full</option><option value="512">512</option><option value="256">256</option><option value="128">128</option></select></label></div><p id="dimension-note" class="hint">Keep the first d coordinates, then normalize again. Both sides use the same d.</p><div id="map" hidden></div><div id="results" class="results-grid"></div><button id="more" class="quiet" hidden>Show more results</button><p id="result-source" class="fineprint"></p><details id="context" hidden><summary>The context a generative model could receive</summary><pre id="context-text"></pre><p>This lab stops at retrieval. Check whether these sources actually answer the question.</p></details></div></div><section id="inspect" class="inspector" hidden><div class="inspector-head"><div><p class="eyebrow">03 / FOLLOW THE NUMBERS</p><h2 id="inspect-title"></h2></div><div class="inspector-actions"><button class="quiet" id="download-vector">Download vectors</button><button class="quiet" id="close-inspect" aria-label="Close vector inspector">Close ×</button></div></div><div id="inspect-pair" class="inspect-pair"></div><p id="candidate-text"></p><div class="vector-pair"><div><h3 id="query-vector-label"></h3><canvas id="query-canvas" aria-label="Query embedding coordinates"></canvas></div><div><h3 id="candidate-vector-label"></h3><canvas id="candidate-canvas" aria-label="Candidate embedding coordinates"></canvas></div></div><p class="hint" id="vector-note"></p><div id="dot-area"><label id="coordinate-range" for="coordinates"></label><input type="range" id="coordinates" min="0" max="760" step="8" value="0"><div class="table-scroll"><table><thead><tr><th>k</th><th>Query qₖ</th><th></th><th>Candidate vₖ</th><th>Product</th></tr></thead><tbody id="coordinate-table"></tbody></table></div><div id="dot-total" class="dot-total"></div></div><details><summary>Show model inputs, shapes and normalization</summary><pre id="shape-details"></pre></details></section></section></div><footer><p class="eyebrow">TAKE IT BACK TO THE LECTURE</p><strong>The same idea as CLIP, with more kinds of input.</strong><p>Encode → normalize → compare. The model returns embeddings; the application decides how to use them.</p><div><a href="https://blog.google/innovation-and-ai/technology/developers-tools/embeddinggemma-2/">Google announcement</a><a href="https://www.youtube.com/watch?v=anPsS6huQk0">Introduction video</a><a href="https://huggingface.co/onnx-community/embeddinggemma-2-ONNX">Model & implementation</a><button class="quiet" id="footer-library">Sample credits</button><a href="https://github.com/nipunbatra/dl-teaching/tree/master/attention-followups/embeddinggemma-lab">Source code</a></div></footer></main><dialog id="library"><div class="dialog-head"><div><p class="eyebrow">THE SHARED COLLECTION</p><h2 id="library-title">Samples you can inspect</h2></div><button class="quiet" data-close="library" aria-label="Close collection">Close ×</button></div><p>Images, recordings and video are embedded from their media, without their titles. Some images are generated teaching examples, identified in the credits.</p><label>Show<select id="library-filter"><option value="all">All samples</option><option value="image">Images</option><option value="audio">Sounds</option><option value="text">Text & code</option><option value="video">Video</option></select></label><div id="library-grid" class="library-grid"></div></dialog><dialog id="about"><div class="dialog-head"><h2>From CLIP to a multimodal index</h2><button class="quiet" data-close="about">Close ×</button></div><ol class="explanation"><li><strong>Represent each item.</strong> Media encoders feed a shared model. Mean pooling and a projection produce a 768-number embedding. This architecture is not CLIP’s two independent towers.</li><li><strong>Store the collection.</strong> The supplied vectors were computed from these exact samples using this pinned ONNX model, q4 precision and WebGPU. They let us inspect the collection without re-encoding it on every search.</li><li><strong>Encode a new query on your device.</strong> Model files download from Hugging Face. Typed text and uploaded media go to a local worker; there is no inference server or API key.</li><li><strong>Compare.</strong> Unit vectors give a cosine through a dot product. Scores are similarities, not probabilities. There is no learned threshold that guarantees a match.</li><li><strong>Shorten, carefully.</strong> The size control keeps leading coordinates and re-normalizes. It reduces index storage, not the size of the model download. The 128-dimensional option can hurt multimodal retrieval.</li></ol><p class="hint">Text search uses a task prefix; text candidates use a document prefix. Classification uses the classification prefix. Inspect the input details to see the exact text supplied.</p><p>Local uploads are kept only in this tab. Audio is limited to 20 seconds. Video uses up to 20 seconds of sampled frames without its soundtrack. Close or stop the model to release its worker.</p><p class="fineprint">${MODEL}<br>Revision ${REVISION}<br>Transformers.js 4.3.1 · q4 · Apache 2.0 model</p></dialog>`;
   try {
     const [gallery, embeddings] = await Promise.all([
       fetch("./gallery.json").then((r) => {
@@ -640,6 +685,7 @@ async function init() {
       }),
     ]);
     state.gallery = gallery;
+    $("#sample-count").textContent = gallery.length;
     state.vectors = embeddings.items;
     $("#library-title").textContent =
       `${gallery.length} samples, one shared space`;
@@ -667,7 +713,10 @@ async function init() {
     else if (state.query) showRanking();
     else if (state.selected) inspect(state.selected);
   };
-  $("#close-inspect").onclick = () => { $("#inspect").hidden = true; state.selected = null; };
+  $("#close-inspect").onclick = () => {
+    $("#inspect").hidden = true;
+    state.selected = null;
+  };
   $("#more").onclick = () => {
     state.limit += 12;
     renderResults();
@@ -701,7 +750,11 @@ async function init() {
       inspect(t.dataset.inspect);
       $("#inspect").scrollIntoView({ behavior: "smooth", block: "start" });
     }
-    if (t.dataset.query) useAsQuery(t.dataset.query);
+    if (t.dataset.query) {
+      if (["explorer", "training"].includes(state.experiment.mode))
+        activate("photos");
+      useAsQuery(t.dataset.query);
+    }
     if (t.dataset.close) $("#" + t.dataset.close).close();
   });
   document.addEventListener("keydown", (event) => {
