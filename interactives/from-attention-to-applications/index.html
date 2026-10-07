@@ -801,4 +801,82 @@ The exact softmax weights give cₜ = [1.567881402964, 0.889620530623]. The slid
   window.transformerLesson={metadata,go,present,checkFit,get index(){return index},get presenting(){return presenting},get core(){return core},route};
   present(new URLSearchParams(location.search).has('present')&&innerWidth>760);
 })();
-</script></body></html>
+</script><script>
+/* BEGIN presentation-svg-tooltips */
+// Native SVG titles become hover bubbles in recordings. Keep their accessible
+// names during presentation, and restore the original markup in reading mode.
+(() => {
+  if (typeof document === 'undefined' || window.presentationSvgTooltips) return;
+  window.presentationSvgTooltips = true;
+  const start = () => {
+    const titles = new Map(), attributes = new Map(), names = new Map();
+    const selector = 'svg title, svg[title], svg [title]';
+    let active = false;
+    const presenting = () => Boolean(document.fullscreenElement || document.webkitFullscreenElement ||
+      document.body.matches('.present, .presentation, [data-mode="slides"]') ||
+      document.documentElement.matches('.present, .presentation'));
+    function retainName(element, text) {
+      if (text.trim() && !element.hasAttribute('aria-label') && !element.hasAttribute('aria-labelledby')) {
+        names.set(element, text.trim());
+        element.setAttribute('aria-label', text.trim());
+      }
+    }
+    function suppress(root) {
+      const nodes = [...root.querySelectorAll(selector)];
+      if (root.matches?.(selector)) nodes.unshift(root);
+      for (const node of nodes) {
+        if (node.localName === 'title') {
+          const parent = node.parentElement;
+          retainName(parent, node.textContent);
+          // Keep the same ID for existing aria-labelledby references. A hidden
+          // text node supplies that name without the native <title> tooltip.
+          const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          for (const attribute of node.attributes) label.setAttribute(attribute.name, attribute.value);
+          label.removeAttribute('title');
+          label.style.setProperty('display', 'none', 'important');
+          label.textContent = node.textContent;
+          titles.set(label, node);
+          node.replaceWith(label);
+        } else {
+          const title = node.getAttribute('title');
+          retainName(node, title);
+          attributes.set(node, title);
+          node.removeAttribute('title');
+        }
+      }
+    }
+    function restore() {
+      for (const [label, title] of titles) label.replaceWith(title);
+      for (const [node, title] of attributes) node.setAttribute('title', title);
+      for (const [node, name] of names) {
+        if (node.getAttribute('aria-label') === name) node.removeAttribute('aria-label');
+      }
+      titles.clear(); attributes.clear(); names.clear();
+    }
+    function sync() {
+      const next = presenting();
+      if (next === active) return;
+      active = next;
+      if (active) suppress(document); else restore();
+    }
+    const modes = new MutationObserver(sync);
+    for (const node of [document.body, document.documentElement]) {
+      modes.observe(node, {attributes: true, attributeFilter: ['class', 'data-mode']});
+    }
+    // Interactive diagrams may be created or replaced after the slide opens.
+    new MutationObserver(records => {
+      if (!active) return;
+      for (const record of records) {
+        for (const node of record.addedNodes) if (node.nodeType === 1) suppress(node);
+      }
+    }).observe(document.body, {childList: true, subtree: true});
+    document.addEventListener('fullscreenchange', sync);
+    document.addEventListener('webkitfullscreenchange', sync);
+    sync();
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once: true});
+  else start();
+})();
+/* END presentation-svg-tooltips */
+</script>
+</body></html>
