@@ -2,3 +2,6 @@ node_modules/
 work/
 dist/
 output/
+
+# App entry point, overriding the course repository’s generated-index rule.
+!index.html
