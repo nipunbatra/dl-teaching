@@ -2,6 +2,8 @@
 
 Review requested by Nipun Batra on 7 October 2026.
 
+**Follow-up:** Nipun preferred the earlier capability-first playground. The guided chapters and recording mode described below were subsequently removed. The numerical and provenance fixes remain. This report records the original review.
+
 - Provider: OpenRouter, using the existing configured account.
 - Returned model: `anthropic/claude-opus-5.5`.
 - Requested reasoning: `high`.

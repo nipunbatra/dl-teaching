@@ -35,15 +35,10 @@ The app supports inference and local vector operations. It does not fine-tune th
 - [x] Official text/image/audio fine-tuning notebooks linked; encoder/head distinction explicit.
 - [x] Finite-difference gradient checks, PCA reference check and all media hashes.
 
-## Claude review and classroom redesign · 7 October 2026
+## Capability-first restoration
 
-- [x] Claude Opus 5.5, high effort: source and screenshot review; model identity recorded.
-- [x] Ten-chapter guided route with prediction → vector → score → interpretation reveals.
-- [x] Side-by-side colour and style comparisons, reversible hat direction, missing-caption intervention.
-- [x] Actual failures, multilingual comparison and 768/128 comparison.
-- [x] Recording layout, keyboard navigation, presenter notes and model warm-up.
-- [x] More visible image examples and direct paths to all existing applications.
-- [x] Actual waveform previews for all 40 recordings, labelled as time-domain audio.
-- [x] Saved-index provenance, re-encoding metadata, reduced-dimension delta and PCA geometry corrected.
-- [x] Per-modality neighbours and clearer score labels.
-- [x] Numerical tests and desktop/mobile browser verification.
+- [x] EmbeddingGemma 2 branding and direct application navigation restored.
+- [x] Guided chapters and recording mode removed; older lesson links open the playground.
+- [x] All fifteen applications and the 154-item collection retained.
+- [x] Review fixes retained: separate live query cache, reduced-dimension delta, equal-axis PCA, clear cosine labels and per-modality neighbours.
+- [x] Real waveform previews and WebGPU warm-up retained.

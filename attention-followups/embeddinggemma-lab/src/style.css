@@ -1164,3 +1164,11 @@ footer > div { margin-top: 22px; }
 .inspect-pair > div { flex: 1; min-width: 0; }
 .inspect-pair strong { display: block; font-size: 15px; font-weight: 500; line-height: 1.6; margin-top: 5px; overflow-wrap: anywhere; }
 .pair-arrow { color: var(--accent); font-size: 22px; }
+
+/* Keep the capability playground direct; calculations open on demand. */
+.intro-link { background: none; border: 0; border-bottom: 1px solid var(--ink); border-radius: 0; padding: 0 0 5px; }
+.intro-explore { display: block; margin-top: 16px; }
+.score-gap { font: 11px var(--mono); color: var(--muted); padding: 8px 0; }
+.audio-waveform { display: block; width: 100%; max-width: 380px; height: 90px; color: #39766f; padding: 8px 12px; }
+.selected-media .audio-waveform { height: 70px; }
+.audio-preview .audio-waveform path { stroke-width: 2; }

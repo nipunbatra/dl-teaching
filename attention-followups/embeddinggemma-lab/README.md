@@ -1,6 +1,6 @@
-# Beyond CLIP: a multimodal embedding lab
+# EmbeddingGemma 2: multimodal playground
 
-A browser lab for the students who have just worked through [CLIP](https://nipunbatra.github.io/attention/clip/). It uses **EmbeddingGemma 2**, not OpenAI CLIP, to put text, images, sound and video into one space.
+Explore **EmbeddingGemma 2** through search, classification, clustering and vector inspection. Text, images, sound and video share an embedding space; the applications show how to use it.
 
 ## Run and build
 
@@ -13,32 +13,17 @@ npm run build     # deploy dist/ under any path; assets use relative URLs
 
 Use current Chrome or Edge with WebGPU and hardware acceleration. HTTPS or localhost is required. The pinned Transformers.js browser module loads from jsDelivr; model weights load from Hugging Face. The first model download is about 473 MB, plus runtime files; Transformers.js uses the browser cache. No API key or inference server is used. User inputs are processed locally. The page still needs network access to load its code, samples and model files initially; this is not an installable offline app.
 
-## Guided classroom route (about 25 minutes)
+## Explore the capabilities
 
-The default page now opens a ten-chapter lesson. Select a candidate to record a prediction, then reveal **inputs → vectors → scores → interpretation**. Before/after comparisons keep the candidate on the same row so changes can be read directly. All guided scores are recalculated from real saved model outputs, so this route does not need the model download.
-
-Use `?present#lesson` or **Recording view** to hide the surrounding navigation. Right / Space advances and Left goes back when focus is outside a control. Esc exits recording view. Buttons, media players and selectors keep their normal keyboard behavior. The red/blue-mug composition fits 1920 × 1080; narrower screens stack the content. Details and longer explanations may require scrolling.
-
-1. An image finds a caption: inspect actual coordinates and dot products.
-2. A bark finds a photograph; switch to captions to expose a real misranking.
-3. A coffee-machine video finds a description; explain frame sampling and the missing soundtrack.
-4. Red mug versus blue mug, with both sets of scores visible.
-5. Dog photograph versus sketch: subject and style both matter.
-6. Portrait versus hat portrait: show the difference, its norm and the gain in text similarity; reverse the direction.
-7. Remove the right caption: remaining scores stay fixed, but a wrong answer now wins.
-8. Four languages describe the same cat. Saved caption formatting is stated explicitly.
-9. Compare 768 and 128 dimensions. This particular bark improves at 128d; that is not a general evaluation result.
-10. Connect the representation to eight applications, then move to the complete vector/PCA explorer or classifier training.
-
-For a live segment, **Load WebGPU for new inputs** loads and warms the model before recording. The status bar reports progress and the model can be stopped. See [the recording notes](RECORDING.md) and [Claude Opus 5.5 High review and changes](reviews/2026-10-07-claude-opus-5.5.md).
+Choose an application directly from the navigation. There is no chapter sequence or presentation mode. The page opens with text-to-image search; the picture and sound entry points use saved sample vectors immediately. **Load WebGPU for new inputs** warms the model for typed queries and uploads.
 
 Audio previews show actual waveform envelopes, scaled to each recording's peak. Regenerate them with `python3 scripts/prepare_waveforms.py` after changing the sound collection. These plots show amplitude over time, not embedding coordinates.
 
-## Free exploration (the original fifteen experiments)
+## Applications and controls
 
 1. **Words → pictures:** predict the winner, run, inspect its vector.
 2. **Words → sounds**, then **Sound → pictures & words:** play the bark. Try the same query against different candidate modalities.
-3. **Picture → captions** and **Picture → pictures:** connect back to the CLIP lab. Try the retriever photograph and sketch.
+3. **Picture → captions** and **Picture → pictures:** Try the retriever photograph and sketch.
 4. **Search in another language:** change Hindi to English. The image index stays fixed.
 5. **Picture + words:** a native joint input, not an average of separate embeddings.
 6. **Find a video moment:** search excerpts of a puppy playing, a coffee machine, waves and geese, alongside the original three-scene slideshow.
@@ -66,7 +51,7 @@ Every result can be inspected: query and candidate vectors, exact processor inpu
 
 New text queries, classification labels, joint inputs and uploads are computed on the student's device. Stored sample queries can use the saved vectors without downloading the model. The **Re-encode this sample on my device** option recomputes them. Scores are raw cosines; no label matching, fabricated scores or per-modality score offsets are used. Rankings across modalities may reflect different score distributions. q4 is a size/quality tradeoff; these examples are not a benchmark.
 
-`src/model-worker.js` owns inference and disposes tensors. `src/runtime.js` owns media decoding and the worker lifecycle. `src/math.js` contains normalization, cosine ranking, delta, k-means and PCA. `src/experiments.js` contains the guided questions. `src/main.js` is the retrieval UI. `src/explorer.js` implements the modality-coloured PCA map and complete vector table; `src/training.js` implements the supervised learning view. There are no server components.
+`src/model-worker.js` owns inference and disposes tensors. `src/runtime.js` owns media decoding and the worker lifecycle. `src/math.js` contains normalization, cosine ranking, delta, k-means and PCA. `src/experiments.js` defines the applications. `src/main.js` is the retrieval UI. `src/explorer.js` implements the modality-coloured PCA map and complete vector table; `src/training.js` implements the supervised learning view. There are no server components.
 
 ## Reproduce the index and checks
 
@@ -103,4 +88,4 @@ Browser acceptance checks for the two added views: select each modality, compare
 
 ## Implementation notes from review
 
-`src/lesson-data.js` declares the chapter inputs and pure score calculation. `src/lesson.js` handles progressive reveals and comparisons, with `src/lesson.css` for classroom and recording layouts. Re-encoded media is held separately in `state.localVectors`; it does not replace the saved candidate index. PCA plots preserve the same units on both axes. The explorer can show top three neighbours per modality, grouped without score offsets.
+Re-encoded media is held separately in `state.localVectors`; it does not replace the saved candidate index. PCA plots preserve the same units on both axes. The explorer can show top three neighbours per modality, grouped without score offsets.

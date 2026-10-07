@@ -1,5 +1,4 @@
 export const experiments = [
-  { id: "lesson", group: "Start", name: "Guided classroom lesson", title: "A shared space, one step at a time", description: "Ten short chapters. Predict first, reveal the calculation, then test what changes. All examples in this route work without downloading the model.", mode: "lesson", lesson: "Actual saved model outputs; similarities computed in your browser." },
   {
     id: "photos",
     group: "Find",
@@ -66,7 +65,7 @@ export const experiments = [
     sample: "chelsea",
     filter: "caption",
     lesson:
-      "This is the CLIP application you already know, now using EmbeddingGemma 2. Compare the rankings, not individual coordinates across different models.",
+      "EmbeddingGemma 2 compares the image with every supplied caption. Open a result to inspect both vectors and their cosine similarity.",
   },
   {
     id: "neighbors",
@@ -196,7 +195,7 @@ export const experiments = [
     id: "delta",
     group: "Inspect",
     name: "What changed?",
-    title: "Return to the hat experiment",
+    title: "Compare two images",
     description:
       "Subtract the earlier image vector from the later one. Which descriptions align with that direction?",
     mode: "delta",
