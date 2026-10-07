@@ -1,3 +1,4 @@
+import { waveform } from "./waveform.js";
 import { unit, dot, rank, pcaProjection } from "./math.js";
 import { MODEL, REVISION } from "./config.js";
 export const escapeHTML = (s) =>
@@ -19,7 +20,7 @@ export function preview(item) {
   if (item.type === "image")
     return `<img src="${esc(item.src)}" alt="${esc(item.title)}" loading="lazy">`;
   if (item.type === "audio")
-    return `<div class="audio-label">AUDIO · ${item.duration || 5} SECONDS</div><audio controls preload="none" src="${esc(item.src)}"></audio>`;
+    return `<div class="audio-label">AUDIO · ${item.duration || 5} SECONDS</div>${waveform(item.id)}<audio controls preload="none" src="${esc(item.src)}"></audio>`;
   if (item.type === "video")
     return `<video controls playsinline preload="metadata" src="${esc(item.src)}#t=${item.start || 0.05},${item.end || 20}" aria-label="${esc(item.title)}"></video>`;
   return `<blockquote>${esc(item.text)}</blockquote>`;
@@ -56,15 +57,16 @@ function drawVector(canvas, v, max) {
     );
   });
 }
-export function mountExplorer(root, state) {
+export function mountExplorer(root, state, initial = {}) {
   const items = state.gallery.filter((i) => state.vectors[i.id]);
-  let selected = "sound-dog",
-    compare = "newfoundland",
+  let selected = initial.selected || "sound-dog",
+    compare = initial.compare || "newfoundland",
     dims = 768,
     projection,
     visible = new Set(Object.keys(colours)),
     zoom = 1,
-    pan = [0, 0];
+    pan = [0, 0],
+    groupNeighbours = false;
   const opts = () =>
     Object.keys(colours)
       .map(
@@ -96,14 +98,16 @@ export function mountExplorer(root, state) {
   function calculate() {
     projection = pcaProjection(items.map((i) => vector(i.id)));
     zoom = 1;
-    pan = [0, 0];
+    pan = [0, 0],
+    groupNeighbours = false;
   }
   function chart() {
     const p = projection.points,
       maxX = Math.max(...p.map((x) => Math.abs(x[0])), 0.01),
       maxY = Math.max(...p.map((x) => Math.abs(x[1])), 0.01),
-      sx = (x) => 360 + (x / maxX) * 290,
-      sy = (y) => 220 - (y / maxY) * 170;
+      scale = Math.min(290 / maxX, 170 / maxY),
+      sx = (x) => 360 + x * scale,
+      sy = (y) => 220 - y * scale;
     const selectedIndex = items.findIndex((i) => i.id === selected),
       compareIndex = items.findIndex((i) => i.id === compare);
     const line =
@@ -147,15 +151,17 @@ export function mountExplorer(root, state) {
       b = item(compare),
       va = vector(selected),
       vb = b ? vector(compare) : null;
-    const neighbours = rank(
+    const ranked = rank(
       va,
       items.filter((i) => visible.has(i.type)),
       state.vectors,
       dims,
       [selected],
-    ).slice(0, 5);
+    );
+    const neighbours = groupNeighbours ? [...visible].flatMap(type => ranked.filter(r => r.item.type === type).slice(0,3)) : ranked.slice(0,5);
     $("#space-detail").innerHTML =
-      `<span class="type-badge" style="color:${colours[a.type]}">${a.type.toUpperCase()}</span><h3>${esc(a.title)}</h3><div class="selected-media">${preview(a)}</div><p class="fineprint">${esc(a.credit)}</p><h4>Closest in ${dims} dimensions</h4><p class="hint">Cosine similarity, using the visible modalities.</p><div class="space-neighbours">${neighbours.map((r) => `<button data-neighbour="${r.item.id}"><i style="background:${colours[r.item.type]}"></i><span>${esc(r.item.title)}<small>${r.item.type}</small></span><b>${r.score.toFixed(4)}</b></button>`).join("") || "<p>No visible neighbours. Turn on a modality.</p>"}</div>${b ? `<div class="pair-score">${b.type === "image" ? `<img src="${esc(b.src)}" alt="${esc(b.title)}">` : ""}<span>${esc(a.title)}<br>↕<br>${esc(b.title)}</span><strong>${dot(va, vb).toFixed(4)}</strong><small>cosine in ${dims} dimensions</small></div>` : ""}`;
+      `<span class="type-badge" style="color:${colours[a.type]}">${a.type.toUpperCase()}</span><h3>${esc(a.title)}</h3><div class="selected-media">${preview(a)}</div><p class="fineprint">${esc(a.credit)}</p><h4>Closest in ${dims} dimensions</h4><p class="hint">Cosine similarity, using the visible modalities. Grouping does not rescale any score.</p><label class="check"><input id="space-group-neighbours" type="checkbox" ${groupNeighbours?"checked":""}> Top 3 per modality</label><div class="space-neighbours">${neighbours.map((r) => `<button data-neighbour="${esc(r.item.id)}"><i style="background:${colours[r.item.type]}"></i><span>${esc(r.item.title)}<small>${r.item.type}</small></span><b>${r.score.toFixed(4)}</b></button>`).join("") || "<p>No visible neighbours. Turn on a modality.</p>"}</div>${b ? `<div class="pair-score">${b.type === "image" ? `<img src="${esc(b.src)}" alt="${esc(b.title)}">` : ""}<span>${esc(a.title)}<br>↕<br>${esc(b.title)}</span><strong>${dot(va, vb).toFixed(4)}</strong><small>cosine in ${dims} dimensions</small></div>` : ""}`;
+    $("#space-group-neighbours").onchange=e=>{groupNeighbours=e.target.checked;details();};
     $("#space-vector-title").textContent = `One item → ${dims} numbers`;
     $("#space-vector-summary").innerHTML =
       `<div class="under-hood"><span>${esc(a.type)} input</span><span>→</span><span>EmbeddingGemma 2</span><span>→</span><span>[1, 768]</span><span>→</span><span>${dims === 768 ? "L2-normalize" : `keep ${dims} + normalize`}</span></div><p>Length of the selected vector = <b>${Math.hypot(...va).toFixed(6)}</b>${vb ? ` · Σ aₖbₖ = <b>${dot(va, vb).toFixed(6)}</b> across all ${dims} coordinates.` : "."}</p>`;
@@ -231,7 +237,8 @@ export function mountExplorer(root, state) {
   };
   $("#zoom-reset").onclick = () => {
     zoom = 1;
-    pan = [0, 0];
+    pan = [0, 0],
+    groupNeighbours = false;
     chart();
   };
   root.onclick = (e) => {

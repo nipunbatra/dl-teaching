@@ -13,7 +13,28 @@ npm run build     # deploy dist/ under any path; assets use relative URLs
 
 Use current Chrome or Edge with WebGPU and hardware acceleration. HTTPS or localhost is required. The pinned Transformers.js browser module loads from jsDelivr; model weights load from Hugging Face. The first model download is about 473 MB, plus runtime files; Transformers.js uses the browser cache. No API key or inference server is used. User inputs are processed locally. The page still needs network access to load its code, samples and model files initially; this is not an installable offline app.
 
-## Classroom route (15–25 minutes)
+## Guided classroom route (about 25 minutes)
+
+The default page now opens a ten-chapter lesson. Select a candidate to record a prediction, then reveal **inputs → vectors → scores → interpretation**. Before/after comparisons keep the candidate on the same row so changes can be read directly. All guided scores are recalculated from real saved model outputs, so this route does not need the model download.
+
+Use `?present#lesson` or **Recording view** to hide the surrounding navigation. Right / Space advances and Left goes back when focus is outside a control. Esc exits recording view. Buttons, media players and selectors keep their normal keyboard behavior. The red/blue-mug composition fits 1920 × 1080; narrower screens stack the content. Details and longer explanations may require scrolling.
+
+1. An image finds a caption: inspect actual coordinates and dot products.
+2. A bark finds a photograph; switch to captions to expose a real misranking.
+3. A coffee-machine video finds a description; explain frame sampling and the missing soundtrack.
+4. Red mug versus blue mug, with both sets of scores visible.
+5. Dog photograph versus sketch: subject and style both matter.
+6. Portrait versus hat portrait: show the difference, its norm and the gain in text similarity; reverse the direction.
+7. Remove the right caption: remaining scores stay fixed, but a wrong answer now wins.
+8. Four languages describe the same cat. Saved caption formatting is stated explicitly.
+9. Compare 768 and 128 dimensions. This particular bark improves at 128d; that is not a general evaluation result.
+10. Connect the representation to eight applications, then move to the complete vector/PCA explorer or classifier training.
+
+For a live segment, **Load WebGPU for new inputs** loads and warms the model before recording. The status bar reports progress and the model can be stopped. See [the recording notes](RECORDING.md) and [Claude Opus 5.5 High review and changes](reviews/2026-10-07-claude-opus-5.5.md).
+
+Audio previews show actual waveform envelopes, scaled to each recording's peak. Regenerate them with `python3 scripts/prepare_waveforms.py` after changing the sound collection. These plots show amplitude over time, not embedding coordinates.
+
+## Free exploration (the original fifteen experiments)
 
 1. **Words → pictures:** predict the winner, run, inspect its vector.
 2. **Words → sounds**, then **Sound → pictures & words:** play the bark. Try the same query against different candidate modalities.
@@ -79,3 +100,7 @@ Videos include four attributed real recordings and the original teaching slidesh
 The audio teaching split uses four different original source recordings per category: three training, one held out. The default three-class head has nine training examples and three held-out examples. All ten classes have 30 training and 10 held-out. This is far too small for a reliable performance claim; repeatedly selecting settings on these examples biases the result. The split is about teaching the mechanism, not benchmarking.
 
 Browser acceptance checks for the two added views: select each modality, compare two items, open every coordinate, switch dimensions, filter/zoom/pan/reset PCA, step/train/reset the classifier, change 3 to 10 classes, inspect labels, and test the 390 px layout. Vector and weight exports include model revision and dimensions. Full-model fine-tuning requires a separate GPU runtime; see the official links in the training view.
+
+## Implementation notes from review
+
+`src/lesson-data.js` declares the chapter inputs and pure score calculation. `src/lesson.js` handles progressive reveals and comparisons, with `src/lesson.css` for classroom and recording layouts. Re-encoded media is held separately in `state.localVectors`; it does not replace the saved candidate index. PCA plots preserve the same units on both axes. The explorer can show top three neighbours per modality, grouped without score offsets.

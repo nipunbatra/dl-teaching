@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5189",
     "build": "vite build --base=./",
-    "test": "node scripts/math.test.mjs && node scripts/exploration.test.mjs"
+    "test": "node scripts/math.test.mjs && node scripts/exploration.test.mjs && node scripts/lesson.test.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "4.3.1"

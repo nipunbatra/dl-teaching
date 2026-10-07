@@ -1,11 +1,14 @@
+import { waveform } from "./waveform.js";
 import "./style.css";
 import "./exploration.css";
+import "./lesson.css";
+import { mountLesson } from "./lesson.js";
 import { mountExplorer } from "./explorer.js";
 import { mountTraining } from "./training.js";
 let unmountAdvanced = () => {};
 import { Engine, prepare } from "./runtime.js";
 import { MODEL, REVISION } from "./config.js";
-import { unit, dot, rank, difference, kmeans, pca } from "./math.js";
+import { unit, dot, rank, difference, kmeans, pcaProjection } from "./math.js";
 import { experiments } from "./experiments.js";
 const $ = (s) => document.querySelector(s),
   esc = (s) =>
@@ -27,6 +30,7 @@ const state = {
   ready: false,
   gallery: [],
   vectors: {},
+  localVectors: {},
   results: [],
   query: null,
   selected: null,
@@ -48,6 +52,7 @@ let engine = new Engine((progress) => {
 });
 function status(text, percent) {
   $("#status").textContent = text;
+  if (state.busy) $("#model-state").textContent = text;
   $("#progress").hidden = !state.busy;
   percent == null
     ? $("#progress").removeAttribute("value")
@@ -72,6 +77,8 @@ function busy(value) {
       }
     });
   $("#run").disabled = value;
+  $("#warm-model").disabled = value;
+  $("#runtime-stop").hidden = !value;
   $("#workspace").setAttribute("aria-busy", String(value));
   $("#stop").hidden = !value;
   $("#experiment").disabled = value;
@@ -126,7 +133,7 @@ function thumb(item, controls = false) {
   if (item.type === "image")
     return `<img src="${esc(item.src)}" alt="${esc(item.title)}" loading="lazy">`;
   if (item.type === "audio")
-    return `<div class="audio-preview"><svg viewBox="0 0 100 40" aria-hidden="true"><path d="M8 16v8m8-12v16m8-17v18m8-24v30m8-20v10m8-14v18m8-25v32m8-23v14m8-18v22m8-16v10m8-15v20"/></svg>${controls ? `<audio controls preload="metadata" src="${esc(item.src)}"></audio>` : "<span>5-second recording</span>"}</div>`;
+    return `<div class="audio-preview">${waveform(item.id)}${controls ? `<audio controls preload="metadata" src="${esc(item.src)}"></audio>` : "<span>5-second recording</span>"}</div>`;
   if (item.type === "video")
     return `<video ${controls ? "controls" : "muted"} playsinline preload="metadata" src="${esc(item.src)}#t=${item.start || 0.05},${item.end || 20}" aria-label="${esc(item.title)}"></video>`;
   return `<div class="text-preview ${item.group === "code" ? "code-preview" : ""}">${esc(item.text)}</div>`;
@@ -240,9 +247,7 @@ function updatePreview() {
     $("#query-preview").innerHTML = thumb(item, true);
     const strip = $("#sample-strip");
     if (strip)
-      strip.innerHTML = state.gallery
-        .filter((i) => i.type === item.type)
-        .slice(0, 6)
+      strip.innerHTML = [item, ...state.gallery.filter((i) => i.type === item.type && i.id !== item.id)].slice(0, 6)
         .map(
           (i) =>
             `<button type="button" class="sample-pick sample-${i.type}" data-sample="${esc(i.id)}" aria-label="Choose ${esc(i.title)}" aria-pressed="${i.id === item.id}">${thumb(i)}<span>${esc(i.title)}</span></button>`,
@@ -281,9 +286,9 @@ async function upload(event) {
   renderFields();
   clearResults();
 }
-function activate(id) {
+function activate(id, context = {}) {
   if (state.busy) return;
-  state.experiment = experiments.find((e) => e.id === id) || experiments[0];
+  state.experiment = { ...(experiments.find((e) => e.id === id) || experiments[0]), ...(context.sample ? {sample: context.sample} : {}), ...(context.after ? {after:context.after} : {}) };
   const e = state.experiment;
   $("#experiment").value = e.id;
   document
@@ -293,11 +298,14 @@ function activate(id) {
     );
   $("#experiment-title").textContent = e.title;
   $("#experiment-number").textContent =
-    `EXPERIMENT ${String(experiments.indexOf(e) + 1).padStart(2, "0")} / ${experiments.length}`;
+    `EXPERIMENT ${String(experiments.findIndex(x => x.id === e.id) + 1).padStart(2, "0")} / ${experiments.length}`;
   $("#experiment-description").textContent = e.description;
   $("#lesson").textContent = e.lesson;
   unmountAdvanced();
-  const advanced = ["explorer", "training"].includes(e.mode);
+  const advanced = ["explorer", "training", "lesson"].includes(e.mode);
+  $(".experiment-nav").classList.toggle("nav-compact", e.mode === "lesson");
+  $("#nav-toggle").setAttribute("aria-expanded", String(e.mode !== "lesson"));
+  $("#nav-toggle").textContent = e.mode === "lesson" ? "All experiments +" : "Collapse −";
   $("#advanced-area").hidden = !advanced;
   $(".workbench").hidden = advanced;
   $("#inspect").hidden = true;
@@ -305,8 +313,10 @@ function activate(id) {
     state.query = null;
     state.selected = null;
     unmountAdvanced =
-      e.mode === "explorer"
-        ? mountExplorer($("#advanced-area"), state)
+      e.mode === "lesson"
+        ? mountLesson($("#advanced-area"), state, (target, inputs) => { activate(target, inputs); $("#workspace").scrollIntoView({block:"start"}); })
+        : e.mode === "explorer"
+        ? mountExplorer($("#advanced-area"), state, {selected:context.sample, compare:context.compare})
         : mountTraining($("#advanced-area"), state);
   } else {
     $("#advanced-area").innerHTML = "";
@@ -344,8 +354,8 @@ async function embedItem(
     info,
     origin: "Computed in this browser · WebGPU",
   };
-  if (!mixed && item.type !== "text") state.vectors[item.id] = result;
-  return result;
+  if (!mixed && item.type !== "text") state.localVectors[item.id] = result;
+  return { ...result };
 }
 async function run() {
   if (state.busy) return;
@@ -362,6 +372,8 @@ async function run() {
     if (item.type === "text" && !item.text) throw Error("Enter a query first.");
     if (e.mode === "classify" && !$("#labels").value.trim())
       throw Error("Add at least one label.");
+    if (e.mode === "mixed" && !$("#query").value.trim())
+      throw Error("Add a short note so both the picture and words are encoded.");
     const forced = $("#recompute")?.checked,
       query = await embedItem(item, {
         task:
@@ -375,13 +387,18 @@ async function run() {
     if (e.mode === "delta") {
       const after = itemById($("#after").value);
       const other = await embedItem(after, { force: forced });
-      queryVector = difference(other.vector, query.vector);
+      query.deltaInputs = { before: query.vector, after: other.vector };
+      queryVector = difference(unit(other.vector, state.dimension), unit(query.vector, state.dimension));
       origin = other.origin;
       exclude.push(after.id);
       query.info = {
         formula: "unit(after − before)",
         before: item.title,
         after: after.title,
+        beforeInput: query.info,
+        afterInput: other.info,
+        beforeShapes: query.shapes,
+        afterShapes: other.shapes,
       };
     }
     let candidates = null;
@@ -418,6 +435,7 @@ async function run() {
       ...query,
       vector: queryVector,
       item,
+      mixedNote: e.mode === "mixed" ? $("#query").value.trim() : null,
       exclude,
       candidates,
       origin,
@@ -441,6 +459,7 @@ function showRanking() {
   if (!state.query) return;
   const q = state.query,
     filter = $("#filter")?.value || "all";
+  if (q.deltaInputs) q.vector = difference(unit(q.deltaInputs.after, state.dimension), unit(q.deltaInputs.before, state.dimension));
   state.results = rank(
     q.vector,
     q.candidates || filterItems(filter),
@@ -450,7 +469,7 @@ function showRanking() {
   );
   $("#map").hidden = true;
   $("#result-meta").textContent =
-    `${state.results.length} candidates · ${state.dimension} dimensions · raw cosine similarity${filter === "all" ? " · cross-modality score ranges may differ" : ""}`;
+    `${state.results.length} candidates · ${state.dimension} dimensions · raw cosine similarity${state.experiment.mode === "classify" ? " · labels use the classification query prefix" : ""}${filter === "all" ? " · cross-modality score ranges may differ" : ""}`;
   renderResults();
   $("#inspect").hidden = true;
   state.selected = null;
@@ -478,7 +497,7 @@ function renderResults() {
     : "";
 }
 function card(item, index, score) {
-  return `<article class="result-card ${score == null ? "preview-card" : ""}"><div class="card-media">${thumb(item, true)}</div><div class="card-body"><div class="card-top"><span class="small-label">${esc(item.group || item.type)}</span>${score == null ? "" : `<span class="score" title="Cosine similarity, not a probability">${score.toFixed(4)}</span>`}</div><h3>${score == null ? "" : `<span class="rank">${index + 1}</span> `}${esc(item.title)}</h3>${score == null ? "" : `<div class="score-track" aria-label="Cosine ${score.toFixed(4)}"><span style="width:${Math.max(0, ((score + 1) / 2) * 100)}%"></span></div>`}<div class="card-actions"><button data-inspect="${esc(item.id)}" class="quiet">${score == null ? "See vector" : "Explain score ↗"}</button><button data-query="${esc(item.id)}" class="quiet">Use as query</button></div></div></article>`;
+  return `<article class="result-card ${score == null ? "preview-card" : ""}"><div class="card-media">${thumb(item, true)}</div><div class="card-body"><div class="card-top"><span class="small-label">${esc(item.group || item.type)}</span>${score == null ? "" : `<span class="score" title="Cosine similarity, not a probability">${score.toFixed(4)}</span>`}</div><h3>${score == null ? "" : `<span class="rank">${index + 1}</span> `}${esc(item.title)}</h3>${score == null ? "" : `<div class="score-gap">${index === 0 ? "Highest in this candidate menu" : `${(state.results[0].score - score).toFixed(3)} below the highest score`}</div>`}<div class="card-actions"><button data-inspect="${esc(item.id)}" class="quiet">${score == null ? "See vector" : "Explain score ↗"}</button><button data-query="${esc(item.id)}" class="quiet">Use as query</button></div></div></article>`;
 }
 function findItem(id) {
   return state.query?.candidates?.find((i) => i.id === id) || itemById(id);
@@ -491,7 +510,7 @@ function inspect(id) {
   $("#inspect").hidden = false;
   $("#inspect-title").textContent = item.title;
   $("#inspect-pair").innerHTML =
-    `${state.query ? `<div><span class="small-label">Your ${state.experiment.mode === "delta" ? "change direction" : "query"}</span><strong>${esc(state.experiment.mode === "delta" ? state.query.info.before + " → " + state.query.info.after : state.query.item.text || state.query.item.title)}</strong></div><span class="pair-arrow">→</span>` : ""}<div><span class="small-label">The candidate · ${esc(item.type)}</span><strong>${esc(item.title)}</strong></div>`;
+    `${state.query ? `<div><span class="small-label">Your ${state.experiment.mode === "delta" ? "change direction" : "query"}</span><strong>${esc(state.experiment.mode === "delta" ? state.query.info.before + " → " + state.query.info.after : (state.query.item.text || state.query.item.title) + (state.query.mixedNote ? " + “" + state.query.mixedNote + "”" : ""))}</strong></div><span class="pair-arrow">→</span>` : ""}<div><span class="small-label">The candidate · ${esc(item.type)}</span><strong>${esc(item.title)}</strong></div>`;
   $("#candidate-text").textContent =
     item.type === "text" ? item.text : item.credit;
   const query = state.query ? unit(state.query.vector, state.dimension) : null,
@@ -577,7 +596,8 @@ function showGroups() {
     ),
     rows = items.map((i) => unit(state.vectors[i.id].vector, state.dimension)),
     labels = kmeans(rows, +$("#groups").value),
-    points = pca(rows);
+    projection = pcaProjection(rows),
+    points = projection.points;
   $("#inspect").hidden = true;
   $("#context").hidden = true;
   $("#map").hidden = false;
@@ -592,9 +612,10 @@ function showGroups() {
     minX = Math.min(...points.map((p) => p[0])),
     maxX = Math.max(...points.map((p) => p[0])),
     minY = Math.min(...points.map((p) => p[1])),
-    maxY = Math.max(...points.map((p) => p[1]));
+    maxY = Math.max(...points.map((p) => p[1])),
+    plotScale = Math.min((width - 60)/(maxX-minX || 1),(height-60)/(maxY-minY || 1));
   $("#map").innerHTML =
-    `<p class="hint">PCA projection · colour = group · click a point to inspect it</p><div class="map-legend">${Array.from({ length: +$("#groups").value }, (_, g) => `<span><i style="background:${["#376448", "#a56538", "#627999", "#874d60", "#888338", "#635e85"][g]}"></i>Group ${g + 1}</span>`).join("")}</div><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Two dimensional projection of the collection">${points.map((p, i) => `<g class="map-point" tabindex="0" role="button" aria-label="${esc(items[i].title)}, group ${labels[i] + 1}" data-inspect="${items[i].id}"><circle cx="${30 + ((p[0] - minX) / (maxX - minX || 1)) * (width - 60)}" cy="${30 + ((p[1] - minY) / (maxY - minY || 1)) * (height - 60)}" r="7" fill="${["#376448", "#a56538", "#627999", "#874d60", "#888338", "#635e85"][labels[i]]}"/><title>${esc(items[i].title)} · group ${labels[i] + 1}</title></g>`).join("")}</svg>`;
+    `<p class="hint">PCA projection · ${(100 * projection.variance.reduce((a,b)=>a+b,0)).toFixed(1)}% variance in 2D · equal scale on both axes · colour = group</p><div class="map-legend">${Array.from({ length: +$("#groups").value }, (_, g) => `<span><i style="background:${["#376448", "#a56538", "#627999", "#874d60", "#888338", "#635e85"][g]}"></i>Group ${g + 1}</span>`).join("")}</div><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Two dimensional projection of the collection">${points.map((p, i) => `<g class="map-point" tabindex="0" role="button" aria-label="${esc(items[i].title)}, group ${labels[i] + 1}" data-inspect="${esc(items[i].id)}"><circle cx="${width/2 + (p[0]-(minX+maxX)/2)*plotScale}" cy="${height/2 - (p[1]-(minY+maxY)/2)*plotScale}" r="7" fill="${["#376448", "#a56538", "#627999", "#874d60", "#888338", "#635e85"][labels[i]]}"/><title>${esc(items[i].title)} · group ${labels[i] + 1}</title></g>`).join("")}</svg>`;
   $("#results").innerHTML = Array.from(
     { length: +$("#groups").value },
     (_, g) =>
@@ -602,7 +623,7 @@ function showGroups() {
         .filter((_, i) => labels[i] === g)
         .map(
           (item) =>
-            `<button class="cluster-item" data-inspect="${item.id}"><span class="small-label">${item.type}</span>${esc(item.title)}</button>`,
+            `<button class="cluster-item" data-inspect="${esc(item.id)}"><span class="small-label">${item.type}</span>${esc(item.title)}</button>`,
         )
         .join("")}</div>`,
   ).join("");
@@ -624,7 +645,7 @@ function renderLibrary() {
   $("#library-grid").innerHTML = filterItems(filter)
     .map(
       (item) =>
-        `<article class="library-item"><div class="card-media">${thumb(item, true)}</div><h3>${esc(item.title)}</h3><span class="small-label">${esc(item.group || item.type)}</span><div class="card-actions"><button class="quiet" data-query="${item.id}">Use as query</button><button class="quiet" data-inspect="${item.id}">Inspect</button></div><details><summary>Source & credit</summary><p>${esc(item.credit)}</p>${item.source ? `<a href="${esc(item.source)}" target="_blank" rel="noreferrer">Source</a>` : ""}</details></article>`,
+        `<article class="library-item"><div class="card-media">${thumb(item, true)}</div><h3>${esc(item.title)}</h3><span class="small-label">${esc(item.group || item.type)}</span><div class="card-actions"><button class="quiet" data-query="${esc(item.id)}">Use as query</button><button class="quiet" data-inspect="${esc(item.id)}">Inspect</button></div><details><summary>Source & credit</summary><p>${esc(item.credit)}</p>${item.source ? `<a href="${esc(item.source)}" target="_blank" rel="noreferrer">Source</a>` : ""}</details></article>`,
     )
     .join("");
 }
@@ -653,8 +674,9 @@ function useAsQuery(id) {
 async function init() {
   $("#app").innerHTML =
     `<header class="site-header"><a class="brand" href="https://nipunbatra.github.io/"><span class="brand-mark">nb.</span> Nipun Batra <span class="brand-slash">/</span> <span class="brand-course">Learning labs</span></a><nav aria-label="Course links"><a href="https://nipunbatra.github.io/attention/clip/">CLIP lecture ↗</a><button class="quiet" id="open-about">How it works</button></nav></header>
-<main><section class="intro"><div class="intro-copy"><p class="eyebrow">BEYOND CLIP · EMBEDDINGGEMMA 2</p><h1>One space.<br><em>Many ways to search.</em></h1><p>A photo, a sentence, even a bark. Find out what happens when different kinds of input share the same representation.</p><a class="intro-link" href="#workspace">Start exploring <span>↓</span></a><div class="intro-facts"><span><b>${experiments.length}</b> experiments</span><span><b id="sample-count">…</b> samples</span><span><b>768</b> dimensions</span></div></div>
-<div class="intro-media"><div class="media-caption"><span>A few ways in</span><span>Pick one to begin ↙</span></div><div class="media-tiles"><button class="hero-tile image-tile" data-experiment="captions"><img src="./media/chelsea.jpg" alt="An orange cat looking at the camera"><span><b>Start with a picture</b>Find its words <i>↗</i></span></button><button class="hero-tile sound-tile" data-experiment="listen"><span class="sound-drawing" aria-hidden="true"><svg viewBox="0 0 150 90"><path d="M9 39v12m11-21v30m11-39v48m11-32v16m11-52v88m11-69v50m11-38v26m11-44v62m11-46v30m11-40v50m11-32v14m11-25v36m11-27v18"/></svg><small>Dog bark · 5 seconds</small></span><span><b>Start with a sound</b>Find its picture <i>↗</i></span></button><button class="hero-tile text-tile" data-experiment="moments"><span class="text-drawing">“a rocket<br>launching”<small>Text → video</small></span><span><b>Start with a thought</b>Find a moment <i>↗</i></span></button></div><p class="media-footnote">Different inputs. The same encode → compare idea.</p></div></section><div class="runtime-bar"><span class="status-dot"></span><strong id="model-state">Collection ready · model loads on demand</strong><span>WebGPU · q4 · ~473 MB first download</span><button class="quiet" id="open-library">Explore the collection</button></div><div class="lab-layout"><nav class="experiment-nav" aria-label="Experiments"><div class="nav-intro"><span class="eyebrow">THE EXPERIMENTS</span><span>Choose a question to investigate</span></div>${[
+<main><section class="intro"><div class="intro-copy"><p class="eyebrow">BEYOND CLIP · EMBEDDINGGEMMA 2</p><h1>A picture. A sound.<br><em>What connects them?</em></h1><p>Start with a prediction. Reveal the vectors. Then change one thing and see what moves. A visual follow-up to our CLIP lecture.</p><button class="intro-link primary" data-experiment="lesson">Start the guided lesson →</button><button class="quiet" data-experiment="explorer">Explore the embeddings ↗</button><div class="intro-facts"><span><b>${experiments.length}</b> experiments</span><span><b id="sample-count">…</b> samples</span><span><b>768</b> dimensions</span></div></div>
+<div class="intro-media"><div class="media-caption"><span>A few ways in</span><span>Pick one to begin ↙</span></div><div class="media-tiles"><button class="hero-tile image-tile" data-experiment="captions"><img src="./media/chelsea.jpg" alt="An orange cat looking at the camera"><span><b>Start with a picture</b>Find its words <i>↗</i></span></button><button class="hero-tile sound-tile" data-experiment="listen"><span class="sound-drawing" aria-hidden="true"><svg viewBox="0 0 150 90"><path d="M9 39v12m11-21v30m11-39v48m11-32v16m11-52v88m11-69v50m11-38v26m11-44v62m11-46v30m11-40v50m11-32v14m11-25v36m11-27v18"/></svg><small>Dog bark · 5 seconds</small></span><span><b>Start with a sound</b>Find its picture <i>↗</i></span></button><button class="hero-tile text-tile" data-experiment="moments"><span class="text-drawing">“a rocket<br>launching”<small>Text → video</small></span><span><b>Start with a thought</b>Find a moment <i>↗</i></span></button></div><p class="media-footnote">Different inputs. The same encode → compare idea.</p></div></section><div class="photo-ribbon" aria-label="A few samples from the collection"><button data-query="chelsea" title="Search with Cat"><img src="./media/chelsea.jpg" alt="Cat"><span>Cat</span></button><button data-query="photo-fire" title="Search with Fire"><img src="./media/commons-fire.jpg" alt="Fire"><span>Fire</span></button><button data-query="photo-beach" title="Search with Sea"><img src="./media/commons-beach.jpg" alt="Sea"><span>Sea</span></button><button data-query="photo-bicycle" title="Search with Bicycle"><img src="./media/commons-bicycle.jpg" alt="Bicycle"><span>Bicycle</span></button><button data-query="photo-pizza" title="Search with Pizza"><img src="./media/commons-pizza.jpg" alt="Pizza"><span>Pizza</span></button><button data-query="retriever-sketch" title="Search with Sketch"><img src="./media/retriever-sketch.png" alt="Sketch"><span>Sketch</span></button><button data-query="frame-puppy" title="Search with Puppy"><img src="./media/frame-puppy.jpg" alt="Puppy"><span>Puppy</span></button><button data-query="photo-guitar" title="Search with Guitar"><img src="./media/commons-guitar.jpg" alt="Guitar"><span>Guitar</span></button><button data-query="frame-coffee" title="Search with Coffee"><img src="./media/frame-coffee.jpg" alt="Coffee"><span>Coffee</span></button><button data-query="photo-rooster" title="Search with Rooster"><img src="./media/commons-rooster.jpg" alt="Rooster"><span>Rooster</span></button></div><div class="runtime-bar"><span class="status-dot"></span><strong id="model-state">Collection ready · model loads on demand</strong><span>WebGPU · q4 · ~473 MB first download</span><button class="quiet" id="warm-model">Load WebGPU for new inputs</button><button class="quiet" id="runtime-stop" hidden>Stop model</button><button class="quiet" id="open-library">Explore the collection</button></div><div class="lab-layout"><nav class="experiment-nav" aria-label="Experiments"><div class="nav-intro"><span class="eyebrow">THE EXPERIMENTS</span><span>Choose a question to investigate</span><button class="quiet" id="nav-toggle" aria-expanded="false">All experiments +</button></div>${[
+      "Start",
       "Find",
       "Use",
       "Inspect",
@@ -696,6 +718,16 @@ async function init() {
     error(e);
     return;
   }
+  $("#nav-toggle").onclick = () => { const compact=$(".experiment-nav").classList.toggle("nav-compact"); $("#nav-toggle").setAttribute("aria-expanded",String(!compact)); $("#nav-toggle").textContent=compact?"All experiments +":"Collapse −"; };
+  $("#warm-model").onclick = async () => {
+    if (state.busy) return;
+    busy(true);
+    $("#error").hidden=true;
+    try { await ensureModel(); const {input}=await prepare({type:"text",text:"a cat",id:"warmup"},"search result","query"); await engine.embed(input); status("WebGPU ready · model warmed for live inputs"); }
+    catch(e){error(e);status(e.message);}
+    finally{busy(false);}
+  };
+  $("#runtime-stop").onclick=()=>{engine.stop();state.ready=false;$("#model-state").textContent="Model unloaded";};
   $("#run").onclick = run;
   $("#stop").onclick = () => {
     engine.stop();

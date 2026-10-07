@@ -1,4 +1,5 @@
 export const experiments = [
+  { id: "lesson", group: "Start", name: "Guided classroom lesson", title: "A shared space, one step at a time", description: "Ten short chapters. Predict first, reveal the calculation, then test what changes. All examples in this route work without downloading the model.", mode: "lesson", lesson: "Actual saved model outputs; similarities computed in your browser." },
   {
     id: "photos",
     group: "Find",

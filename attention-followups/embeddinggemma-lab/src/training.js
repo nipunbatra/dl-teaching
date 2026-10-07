@@ -31,7 +31,7 @@ optimizer.step()</pre><p id="train-shape" class="hint"></p><details><summary>Lea
         ? ["dog", "sea_waves", "crackling_fire"]
         : [
             ...new Set(
-              state.gallery.filter((x) => x.label).map((x) => x.label),
+              state.gallery.filter((x) => x.type === "audio" && x.label).map((x) => x.label),
             ),
           ];
     const data = state.gallery.filter(
@@ -83,7 +83,7 @@ optimizer.step()</pre><p id="train-shape" class="hint"></p><details><summary>Lea
     $("#train-formula").innerHTML =
       `<b>L = −(1/N) Σ log p(correct class)</b><span>N = ${train.length} training recordings · ${classes.length} classes · uniform baseline = ${Math.log(classes.length).toFixed(4)}</span>`;
     $("#split-note").textContent =
-      `3 training recordings + 1 held-out recording per class, all from different original source recordings. Only ${test.length} held-out examples: an inspectable demonstration, not a reliable performance estimate. Repeatedly choosing settings against this tiny test set would bias the result.`;
+      `${train.length} training recordings + ${test.length} held-out recordings across ${classes.length} classes, all from different original source recordings. Only ${test.length} held-out examples: an inspectable demonstration, not a reliable performance estimate. Repeatedly choosing settings against this tiny test set would bias the result.`;
     $("#test-cards").innerHTML = test
       .map((item, i) => {
         const probs = m.test.predictions[i],
