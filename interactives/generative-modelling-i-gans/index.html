@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Generative Modelling I-B · GANs · ES 667</title>
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<link rel="stylesheet" href="deck/deck.css">
+</head>
+<body>
+<main id="deck">
+<!-- ===================================================================== OPENER -->
+
+<section class="slide sec-open cover" id="cover" data-section="Opening">
+  <p class="kicker">ES 667 · Deep Learning · Generative Modelling I-B</p>
+  <h2 style="font-size:56px;margin-top:20px">GANs: learn the judge, not the likelihood<span class="sub" style="font-size:28px">Two networks, one game, built up on a 1-D toy and on MNIST</span></h2>
+  <div class="body">
+    <div class="cover-row">
+      <img class="fig pix" src="figures/data/gan-samples.png" style="width:560px">
+      <div class="col">
+        <p class="small">48 digits drawn by the small GAN we train in this lecture. None of them is in MNIST.</p>
+        <p class="cap" style="text-align:left">The first 48 of 64 fixed random codes $z$, after 30 epochs. Not cherry-picked: the odd ones stay in.</p>
+      </div>
+    </div>
+  </div>
+  <p class="tiny" style="margin:0">Nipun Batra · IIT Gandhinagar</p>
+  <aside class="notes">
+    <p>Every image here was generated: a random vector of 100 numbers went in, a 28 × 28 image came out. By the end of the lecture students should be able to say exactly how the network that drew them was trained, without ever being shown a "correct" output.</p>
+  </aside>
+</section>
+
+<section class="slide sec-open" id="faces" data-section="Opening">
+  <p class="kicker">Start with a question</p>
+  <h2>Who are these people?</h2>
+  <div class="body center">
+    <img class="fig" src="assets/gallery/stylegan-faces.jpg" style="height:420px;border-radius:10px">
+  </div>
+  <p class="q" data-gone="2-">Look closely: skin, hair, glasses, lighting, background. Anything odd?</p>
+  <p class="q" data-b="2" data-gone="=1">No one. Each face is a random vector of 512 numbers pushed through a trained network.</p>
+  <p class="src">Karras, Laine &amp; Aila, <i>A Style-Based Generator Architecture for GANs</i> (StyleGAN), 2019 · published model outputs · CC BY-NC 4.0</p>
+  <aside class="notes">
+    <p>Let students look for 20 seconds. Common answers: "celebrities", "stock photos". Reveal: none of them exist.</p>
+    <p>Question to leave hanging: there is no "correct" image for a face that has never existed, so what could the loss even be? Today's answer: a second network that judges.</p>
+  </aside>
+</section>
+
+<section class="slide sec-open" id="vote" data-section="Opening">
+  <p class="kicker">Your turn to be the judge</p>
+  <h2>Real or generated?</h2>
+  <div class="body">
+    <div class="tiles vote" style="grid-template-columns:repeat(6,150px);gap:18px 26px;justify-content:center;margin-top:8px">
+      <div class="vt fake"><img src="figures/data/vote-01.png"><p class="tile-lab"><span>1</span><span class="vk" data-b="2">generated</span></p></div>
+      <div class="vt real"><img src="figures/data/vote-02.png"><p class="tile-lab"><span>2</span><span class="vk" data-b="2">real</span></p></div>
+      <div class="vt fake"><img src="figures/data/vote-03.png"><p class="tile-lab"><span>3</span><span class="vk" data-b="2">generated</span></p></div>
+      <div class="vt real"><img src="figures/data/vote-04.png"><p class="tile-lab"><span>4</span><span class="vk" data-b="2">real</span></p></div>
+      <div class="vt real"><img src="figures/data/vote-05.png"><p class="tile-lab"><span>5</span><span class="vk" data-b="2">real</span></p></div>
+      <div class="vt fake"><img src="figures/data/vote-06.png"><p class="tile-lab"><span>6</span><span class="vk" data-b="2">generated</span></p></div>
+      <div class="vt fake"><img src="figures/data/vote-07.png"><p class="tile-lab"><span>7</span><span class="vk" data-b="2">generated</span></p></div>
+      <div class="vt fake"><img src="figures/data/vote-08.png"><p class="tile-lab"><span>8</span><span class="vk" data-b="2">generated</span></p></div>
+      <div class="vt real"><img src="figures/data/vote-09.png"><p class="tile-lab"><span>9</span><span class="vk" data-b="2">real</span></p></div>
+      <div class="vt fake"><img src="figures/data/vote-10.png"><p class="tile-lab"><span>10</span><span class="vk" data-b="2">generated</span></p></div>
+      <div class="vt real"><img src="figures/data/vote-11.png"><p class="tile-lab"><span>11</span><span class="vk" data-b="2">real</span></p></div>
+      <div class="vt real"><img src="figures/data/vote-12.png"><p class="tile-lab"><span>12</span><span class="vk" data-b="2">real</span></p></div>
+    </div>
+  </div>
+  <p class="q" data-gone="2-">Six are MNIST test digits, six come from a network. Write down which six are fake.</p>
+  <p class="q" data-b="2" data-gone="=1">Generated: 1, 3, 6, 7, 8, 10 (teal frames). All six from the small GAN we train in this lecture.</p>
+  <aside class="notes">
+    <p>Give one minute and take a show of hands on two or three tiles, then click to reveal: generated = 1, 3, 6, 7, 8, 10; the rest are real MNIST test digits (grey levels, not binarised).</p>
+    <p>Worth pointing at: tile 3, with its broken stroke, is the easiest fake to spot; tile 6, a clean 8, is the hardest.</p>
+    <p>Keep the votes: in Part 4 we come back to these 12 tiles and show what our own trained discriminator said about each one.</p>
+  </aside>
+</section>
+
+<section class="slide sec-open" id="bridge" data-section="Opening">
+  <p class="kicker">Where the last lecture left us</p>
+  <h2>Same kind of generator, a different teacher</h2>
+  <div class="body">
+    <svg viewBox="0 0 1152 150" class="diagram" role="img" aria-label="bridge"><defs><marker id="bridge-ah-AA4E08" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#AA4E08"/></marker><marker id="bridge-ah-0F766E" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0F766E"/></marker></defs><rect x="250" y="22" width="64" height="64" rx="10" fill="#FCEFD9" stroke="#AA4E08" stroke-width="2.4"/><circle cx="267.28" cy="39.28" r="4.8" fill="#AA4E08"/><circle cx="296.72" cy="39.28" r="4.8" fill="#AA4E08"/><circle cx="282.0" cy="54.0" r="4.8" fill="#AA4E08"/><circle cx="267.28" cy="68.72" r="4.8" fill="#AA4E08"/><circle cx="296.72" cy="68.72" r="4.8" fill="#AA4E08"/><foreignObject x="-98.0" y="103.0" width="760" height="44.0" overflow="visible"><div class="fo" style="font-size:20px;color:#AA4E08;font-weight:400;text-align:center;height:32.0px;line-height:32.0px">$z \sim \N(0, I)$</div></foreignObject><path d="M322,54 L392,54" fill="none" stroke="#AA4E08" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#bridge-ah-AA4E08)"/><polygon points="398,14.0 638,-11.0 638,119.0 398,94.0" fill="#D9F2EF" stroke="#0F766E" stroke-width="2.4" stroke-linejoin="round"/><text x="518.0" y="52" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="23" font-weight="650" fill="#0F766E" text-anchor="middle">generator G</text><foreignObject x="368.0" y="55.5" width="300" height="39.6" overflow="visible"><div class="fo" style="font-size:18px;color:#6B7280;font-weight:500;text-align:center;height:28.8px;line-height:28.8px">weights $\theta$</div></foreignObject><path d="M644,54 L706,54" fill="none" stroke="#0F766E" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#bridge-ah-0F766E)"/><rect x="712" y="14" width="200" height="80" rx="12" fill="#D9F2EF" stroke="#0F766E" stroke-width="2.2"/><foreignObject x="662.0" y="24.5" width="300" height="48.4" overflow="visible"><div class="fo" style="font-size:22px;color:#0F766E;font-weight:650;text-align:center;height:35.2px;line-height:35.2px">an image $x$</div></foreignObject><text x="812.0" y="72.9" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="18" font-weight="500" fill="#6B7280" text-anchor="middle">one pass, 28 × 28</text></svg>
+    <div class="bridge2">
+      <div class="callout enc" data-b="2">
+        <h3 class="cenc">Last lecture · the VAE</h3>
+        <div>
+          <p class="small">Maximise a lower bound on the likelihood:</p>
+          <p class="small" style="text-align:center">$\log p_\theta(x) \;\ge\; \ELBO(x)$</p>
+          <p class="small">Needs an encoder $q_\phi(z \mid x)$ to say which $z$ made each $x$.</p>
+        </div>
+        <img src="assets/vae-lecture/vae16-samples.png">
+        <p class="cap">our VAE, last lecture</p>
+      </div>
+      <div class="callout disc" data-b="3">
+        <h3 class="cdisc">Today · the GAN</h3>
+        <div>
+          <p class="small">No $p_\theta(x)$, no bound, no encoder.</p>
+          <p class="small">A second network $D$ judges real vs fake, and $G$ is trained to fool it.</p>
+        </div>
+        <img src="figures/data/gan-samples.png">
+        <p class="cap">our GAN, today</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-gone="2-">Last lecture: how do we train $G$ when nobody tells us which image each $z$ should make?</p>
+  <p class="q" data-b="3" data-gone="=1">The VAE's strokes smear, the GAN's are crisp. What changed is the training signal.</p>
+  <aside class="notes">
+    <p>Recall in one breath: the VAE maximises the ELBO, a lower bound on log p(x), and needs an encoder during training. The GAN never writes down p(x) at all.</p>
+    <p>Honesty about the comparison: the VAE grid shows the decoder's pixel probabilities (as last lecture), the GAN grid shows G's grey-level output directly, and the two models differ in size and architecture. The blur-vs-sharp contrast is a well-known qualitative difference, not a controlled experiment.</p>
+  </aside>
+</section>
+
+<section class="slide sec-open" id="map" data-section="Opening">
+  <p class="kicker">The plan</p>
+  <h2>Today's route</h2>
+  <div class="body">
+    <ol class="route">
+      <li style="--c:var(--disc)"><b>Two players, one game</b><span>a generator, a judge, and the judge's loss</span></li>
+      <li style="--c:var(--dec)"><b>Training G through D</b><span>G's gradient comes from D's slope: freeze D, never detach</span></li>
+      <li style="--c:var(--loss)"><b>The minimax objective</b><span>the textbook formula, and why code uses $-\log D$</span></li>
+      <li style="--c:var(--x)"><b>A GAN on MNIST</b><span>the complete loop, samples during training, the vote revisited</span></li>
+      <li style="--c:var(--z)"><b>Failures and control</b><span>mode collapse, losses that mislead, conditional GANs</span></li>
+    </ol>
+  </div>
+  <p class="q take">One toy throughout: last lecture's two bumps at $\pm 2$. Then the same code on MNIST.</p>
+  <aside class="notes"><p>About 60–75 minutes. If short on time, skip the saturation derivation (show only the plot) and the conditional GAN slide.</p></aside>
+</section>
+
+<!-- ===================================================================== PART 1 · TWO PLAYERS -->
+
+<section class="slide sec-p1 opener break" id="p1-open" data-section="1 · Two players">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 1 of 5</p>
+      <h2>Two players, one game</h2>
+      <p class="why">No likelihood to maximise. Instead, a second network learns to tell <b>real</b> from <b>fake</b>, and its opinion becomes the generator's only training signal.</p>
+    </div>
+    <ol class="route-mini"><li class="now" style="--c:var(--disc)"><span class="dot">1</span>Two players, one game</li><li class="todo" style="--c:var(--dec)"><span class="dot">2</span>Training G through D</li><li class="todo" style="--c:var(--loss)"><span class="dot">3</span>The minimax objective</li><li class="todo" style="--c:var(--x)"><span class="dot">4</span>A GAN on MNIST</li><li class="todo" style="--c:var(--z)"><span class="dot">5</span>Failures and control</li></ol>
+  </div>
+</section>
+
+<section class="slide sec-p1" id="gan-idea" data-section="1 · Two players">
+  <p class="kicker">In the vote, you were the discriminator</p>
+  <h2>Two networks, one game</h2>
+  <div class="body center"><svg viewBox="0 0 1152 380" class="diagram" role="img" aria-label="gan"><defs><marker id="gan-ah-AA4E08" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#AA4E08"/></marker><marker id="gan-ah-0F766E" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0F766E"/></marker><marker id="gan-ah-245EDB" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#245EDB"/></marker><marker id="gan-ah-334155" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#334155"/></marker></defs><g data-b="1"><rect x="30" y="230" width="60" height="60" rx="10" fill="#FCEFD9" stroke="#AA4E08" stroke-width="2.4"/><circle cx="46.2" cy="246.2" r="4.5" fill="#AA4E08"/><circle cx="73.8" cy="246.2" r="4.5" fill="#AA4E08"/><circle cx="60.0" cy="260.0" r="4.5" fill="#AA4E08"/><circle cx="46.2" cy="273.8" r="4.5" fill="#AA4E08"/><circle cx="73.8" cy="273.8" r="4.5" fill="#AA4E08"/><foreignObject x="-320.0" y="292.0" width="760" height="52.8" overflow="visible"><div class="fo" style="font-size:24px;color:#AA4E08;font-weight:400;text-align:center;height:38.4px;line-height:38.4px">$z$</div></foreignObject><path d="M96,260 L130,260" fill="none" stroke="#AA4E08" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#gan-ah-AA4E08)"/><polygon points="134,220.0 314,170.0 314,350.0 134,300.0" fill="#D9F2EF" stroke="#0F766E" stroke-width="2.4" stroke-linejoin="round"/><text x="224.0" y="258" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="23" font-weight="650" fill="#0F766E" text-anchor="middle">generator G</text><foreignObject x="74.0" y="261.5" width="300" height="39.6" overflow="visible"><div class="fo" style="font-size:18px;color:#6B7280;font-weight:500;text-align:center;height:28.8px;line-height:28.8px">weights $\theta$</div></foreignObject><path d="M318,260 L350,260" fill="none" stroke="#0F766E" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#gan-ah-0F766E)"/><image x="356" y="190" width="140" height="140" href="figures/data/gan-fake-one.png" preserveAspectRatio="none" style="image-rendering:pixelated"/><rect x="356" y="190" width="140" height="140" rx="6" fill="none" stroke="#0F766E" stroke-width="2.5"/><text x="426" y="352" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="22" font-weight="650" fill="#0F766E" text-anchor="middle">fake</text></g><g data-b="2"><image x="356" y="10" width="140" height="140" href="figures/data/gan-real-one.png" preserveAspectRatio="none" style="image-rendering:pixelated"/><rect x="356" y="10" width="140" height="140" rx="6" fill="none" stroke="#245EDB" stroke-width="2.5"/><text x="426" y="172" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="22" font-weight="650" fill="#245EDB" text-anchor="middle">real</text><path d="M500,80 L560,80 L560,160 L600,160" fill="none" stroke="#245EDB" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#gan-ah-245EDB)"/><path d="M500,260 L560,260 L560,200 L600,200" fill="none" stroke="#0F766E" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#gan-ah-0F766E)"/><polygon points="604,75.0 804,140.0 804,220.0 604,285.0" fill="#E2E8F0" stroke="#334155" stroke-width="2.4" stroke-linejoin="round"/><text x="704.0" y="178" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="23" font-weight="650" fill="#334155" text-anchor="middle">discriminator D</text><foreignObject x="554.0" y="181.5" width="300" height="39.6" overflow="visible"><div class="fo" style="font-size:18px;color:#6B7280;font-weight:500;text-align:center;height:28.8px;line-height:28.8px">weights $\psi$</div></foreignObject><path d="M808,180 L850,180" fill="none" stroke="#334155" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#gan-ah-334155)"/><rect x="856" y="140" width="270" height="80" rx="12" fill="#E2E8F0" stroke="#334155" stroke-width="2.2"/><foreignObject x="841.0" y="150.5" width="300" height="48.4" overflow="visible"><div class="fo" style="font-size:22px;color:#334155;font-weight:650;text-align:center;height:35.2px;line-height:35.2px">$D(x) = P(\text{real})$</div></foreignObject><foreignObject x="841.0" y="176.4" width="300" height="39.6" overflow="visible"><div class="fo" style="font-size:18px;color:#6B7280;font-weight:500;text-align:center;height:28.8px;line-height:28.8px">one number in $(0, 1)$</div></foreignObject></g><g data-b="3"><text x="990" y="272" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="21" font-weight="650" fill="#334155" text-anchor="middle">D wants: real → 1, fake → 0</text><text x="990" y="302" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="21" font-weight="650" fill="#0F766E" text-anchor="middle">G wants: fake → 1</text></g></svg></div>
+  <p class="q" data-b="=2" data-gone="=1,3-">Q. What should each network want D to say about a fake?</p>
+  <p class="q" data-b="3" data-gone="1-2">No likelihood, no encoder. G's training signal comes entirely from D.</p>
+  <aside class="notes">
+    <p>Analogy if useful: G is a forger, D is an examiner. Each gets better because the other does. But keep the maths precise: D outputs one number, the probability that its input is real.</p>
+    <p>Images: our running 3 (real, MNIST test digit #90, grey levels) and a sample from the GAN we trained.</p>
+  </aside>
+</section>
+
+<section class="slide sec-p1" id="gan1d-start" data-section="1 · Two players">
+  <p class="kicker">Last lecture's two bumps, now as GAN data</p>
+  <h2>A GAN on the toy data, at step 0</h2>
+  <div class="body">
+    <div class="row" style="gap:28px">
+      <img class="fig" src="figures/data/gan1d-0.svg" style="width:660px">
+      <div class="col grow">
+        <p class="small"><span class="cx">■</span> blue: the real data, two equal bumps at $-2$ and $+2$</p>
+        <p class="small"><span class="cdec">■</span> teal: G's samples for 2,000 fixed $z$</p>
+        <p class="small"><span class="cdisc">■</span> slate: $D(x)$, the probability that $x$ is real</p>
+        <p class="small" data-b="2">G: 1 number in ($z \sim \N(0, 1)$), 1 number out. D: 1 number in, 1 logit out. Both small MLPs.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="2">Untrained, G squeezes everything into one spike near 0, and D says about 0.5 everywhere.</p>
+  <aside class="notes"><p>Same data as last lecture: half the points from a bump at −2, half from a bump at +2, each with spread 0.5. G must learn to turn one bump of noise into two bumps of data. Recorded run, seed 4; 64 hidden units per layer in both networks.</p></aside>
+</section>
+
+<section class="slide sec-p1" id="gan-dloss" data-section="1 · Two players">
+  <p class="kicker">Step 1 of each iteration: train the judge</p>
+  <h2>The discriminator is an ordinary binary classifier</h2>
+  <div class="body">
+    <div class="mathblock" style="font-size:27px">$$\mathcal L_D = -\log D(\cx{x_{\text{real}}}) \;-\; \log\big(1 - D(\cdec{x_{\text{fake}}})\big), \qquad \cdec{x_{\text{fake}}} = G(z)$$</div>
+    <div class="row" style="gap:26px;margin-top:6px">
+      <img class="fig" src="figures/data/gan1d-dloss.svg" style="width:520px">
+      <table class="work" style="font-size:21px">
+        <tr><th>input</th><th>label</th><th>D says</th><th>loss</th></tr>
+        <tr data-b="2"><td><span class="cx">real</span>, $x = 2.0$</td><td>1</td><td>0.71</td><td>$-\log 0.71 = 0.342$</td></tr>
+        <tr data-b="3"><td><span class="cdec">fake</span>, $x = 0.0$</td><td>0</td><td>0.38</td><td>$-\log(1-0.38) = 0.478$</td></tr>
+        <tr class="total" data-b="4"><td>$\mathcal L_D$</td><td></td><td></td><td>0.82</td></tr>
+      </table>
+    </div>
+  </div>
+  <p class="q" data-b="4">Real → 1, fake → 0: plain binary cross-entropy. The only new thing is that the "fake" examples keep changing.</p>
+  <aside class="notes">
+    <p>Numbers read off our recorded 1-D run at step 25: D's curve at x = 2.0 (the centre of bump B) and at the fake that landed closest to 0, in the empty gap between the bumps. The losses use the rounded D values on the slide.</p>
+    <p>Ask: which term is larger, and why? D is fairly sure the real point is real (0.71), less sure the fake is fake (0.38 is not far from 0.5). Training D lowers both.</p>
+    <p>In code, D returns a raw logit and we use <code>binary_cross_entropy_with_logits</code>; D(x) = sigmoid(logit) for display. Over a batch, average each term.</p>
+  </aside>
+</section>
+
+<section class="slide sec-p1" id="gan-dstep" data-section="1 · Two players">
+  <p class="kicker">Update D, hold G fixed</p>
+  <h2>D step: cut the wire to G with detach()</h2>
+  <div class="body center"><svg viewBox="0 0 1152 380" class="diagram" role="img" aria-label="gan-dstep"><defs><marker id="gan-dstep-ah-AA4E08" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#AA4E08"/></marker><marker id="gan-dstep-ah-0F766E" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0F766E"/></marker><marker id="gan-dstep-ah-245EDB" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#245EDB"/></marker><marker id="gan-dstep-ah-334155" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#334155"/></marker><marker id="gan-dstep-ah-BE123C" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#BE123C"/></marker></defs><rect x="30" y="230" width="60" height="60" rx="10" fill="#FCEFD9" stroke="#AA4E08" stroke-width="2.4"/><circle cx="46.2" cy="246.2" r="4.5" fill="#AA4E08"/><circle cx="73.8" cy="246.2" r="4.5" fill="#AA4E08"/><circle cx="60.0" cy="260.0" r="4.5" fill="#AA4E08"/><circle cx="46.2" cy="273.8" r="4.5" fill="#AA4E08"/><circle cx="73.8" cy="273.8" r="4.5" fill="#AA4E08"/><foreignObject x="-320.0" y="292.0" width="760" height="52.8" overflow="visible"><div class="fo" style="font-size:24px;color:#AA4E08;font-weight:400;text-align:center;height:38.4px;line-height:38.4px">$z$</div></foreignObject><path d="M96,260 L130,260" fill="none" stroke="#AA4E08" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#gan-dstep-ah-AA4E08)"/><polygon points="134,220.0 314,170.0 314,350.0 134,300.0" fill="#D9F2EF" stroke="#0F766E" stroke-width="2.4" stroke-linejoin="round" opacity=".45"/><text x="224.0" y="258" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="23" font-weight="650" fill="#0F766E" text-anchor="middle">generator G</text><foreignObject x="74.0" y="261.5" width="300" height="39.6" overflow="visible"><div class="fo" style="font-size:18px;color:#6B7280;font-weight:500;text-align:center;height:28.8px;line-height:28.8px">weights $\theta$</div></foreignObject><g transform="translate(224,196) scale(1.0)"><path d="M-9,-4 v-7 a9,9 0 0 1 18,0 v7" fill="none" stroke="#0F766E" stroke-width="3"/><rect x="-13" y="-4" width="26" height="20" rx="4" fill="#0F766E"/><circle cx="0" cy="5" r="3" fill="#fff"/></g><path d="M318,260 L350,260" fill="none" stroke="#0F766E" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#gan-dstep-ah-0F766E)"/><image x="356" y="190" width="140" height="140" href="figures/data/gan-fake-one.png" preserveAspectRatio="none" style="image-rendering:pixelated"/><rect x="356" y="190" width="140" height="140" rx="6" fill="none" stroke="#0F766E" stroke-width="2.5"/><text x="426" y="352" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="22" font-weight="650" fill="#0F766E" text-anchor="middle">fake</text><image x="356" y="10" width="140" height="140" href="figures/data/gan-real-one.png" preserveAspectRatio="none" style="image-rendering:pixelated"/><rect x="356" y="10" width="140" height="140" rx="6" fill="none" stroke="#245EDB" stroke-width="2.5"/><text x="426" y="172" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="22" font-weight="650" fill="#245EDB" text-anchor="middle">real</text><path d="M500,80 L560,80 L560,160 L600,160" fill="none" stroke="#245EDB" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#gan-dstep-ah-245EDB)"/><path d="M500,260 L560,260 L560,200 L600,200" fill="none" stroke="#0F766E" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#gan-dstep-ah-0F766E)"/><polygon points="604,75.0 804,140.0 804,220.0 604,285.0" fill="#E2E8F0" stroke="#334155" stroke-width="2.4" stroke-linejoin="round"/><text x="704.0" y="178" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="23" font-weight="650" fill="#334155" text-anchor="middle">discriminator D</text><foreignObject x="554.0" y="181.5" width="300" height="39.6" overflow="visible"><div class="fo" style="font-size:18px;color:#6B7280;font-weight:500;text-align:center;height:28.8px;line-height:28.8px">weights $\psi$</div></foreignObject><path d="M808,180 L850,180" fill="none" stroke="#334155" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#gan-dstep-ah-334155)"/><rect x="856" y="118" width="290" height="124" rx="12" fill="#FDE2E7" stroke="#BE123C" stroke-width="2.2"/><foreignObject x="621.0" y="127.2" width="760" height="50.6" overflow="visible"><div class="fo" style="font-size:23px;color:#BE123C;font-weight:600;text-align:center;height:36.8px;line-height:36.8px">$-\log D(x_{\text{real}})$</div></foreignObject><foreignObject x="621.0" y="163.2" width="760" height="50.6" overflow="visible"><div class="fo" style="font-size:23px;color:#BE123C;font-weight:600;text-align:center;height:36.8px;line-height:36.8px">$-\log\big(1 - D(x_{\text{fake}})\big)$</div></foreignObject><text x="1001" y="226" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="18" font-weight="500" fill="#6B7280" text-anchor="middle">targets: real 1, fake 0</text><g data-b="2"><path d="M856,200 L806,200" fill="none" stroke="#BE123C" stroke-width="3" stroke-linejoin="round" marker-end="url(#gan-dstep-ah-BE123C)"/><path d="M700,232 C680,270 640,280 600,276" fill="none" stroke="#BE123C" stroke-width="3" marker-end="url(#gan-dstep-ah-BE123C)"/><path d="M700,128 C680,90 640,84 600,90" fill="none" stroke="#BE123C" stroke-width="3" marker-end="url(#gan-dstep-ah-BE123C)"/><line x1="530" y1="230" x2="530" y2="300" stroke="#BE123C" stroke-width="3" stroke-dasharray="6 4"/><g transform="translate(530,312)" fill="none" stroke="#BE123C" stroke-width="2.6"><circle cx="-7" cy="10" r="5"/><circle cx="7" cy="10" r="5"/><path d="M-4,6 L8,-12 M4,6 L-8,-12"/></g><text x="530" y="362" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="21" font-weight="650" fill="#BE123C" text-anchor="middle">fake.detach()</text><text x="224" y="362" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="21" font-weight="650" fill="#0F766E" text-anchor="middle">G gets no gradient</text></g></svg></div>
+  <pre class="code" style="width:860px;margin:0 auto;font-size:18px"><span class="line">fake = G(torch.randn(B, zdim))</span>
+<span class="line" data-hl="2">loss_D = bce(D(real), ones) + bce(D(<b>fake.detach()</b>), zeros)</span>
+<span class="line">opt_D.zero_grad(); loss_D.backward(); opt_D.step()</span></pre>
+  <p class="q" data-gone="2-" style="margin-top:14px">Q. loss_D also depends on G's weights, through the fake. Should backward() reach them?</p>
+  <p class="q" data-b="2" data-gone="=1" style="margin-top:14px">No: this step trains D only. detach() keeps the numbers in fake but forgets how G made them.</p>
+  <aside class="notes"><p>detach() keeps the numbers in fake but forgets how they were computed, so backward() stops there. Without it, backward() would also compute gradients for G's weights from D's loss, and they point the wrong way for G (towards fakes that are easier to catch). Our G step zeroes G's gradients before using them, so here it would only be wasted work; in code that forgets zero_grad() it is a real bug.</p></aside>
+</section>
+
+<section class="slide sec-p1" id="gan1d-donly" data-section="1 · Two players">
+  <p class="kicker">An experiment: freeze G, run only the D step</p>
+  <h2>D learns to say "fake" exactly where the fakes are</h2>
+  <div class="body">
+    <div class="film-cols four">
+      <img class="fig" src="figures/data/film-donly-0.svg">
+      <img class="fig" src="figures/data/film-donly-5.svg" data-b="2">
+      <img class="fig" src="figures/data/film-donly-25.svg" data-b="3">
+      <img class="fig" src="figures/data/film-donly-200.svg" data-b="4">
+    </div>
+  </div>
+  <p class="q" data-b="=1" data-gone="2-">Q. G's fakes sit in one spike near 0 and never move. What should D's curve turn into?</p>
+  <p class="q" data-b="4" data-gone="1-3">After 200 D steps: $D = 0.01$ at the fakes, $1.00$ on the bumps, and also $1.00$ at $x = 4$, where there is no data at all.</p>
+  <aside class="notes">
+    <p>A separate run made for this slide: the same networks and seed as the main toy run, G kept at its initial weights, only the D step of gan_step for 200 steps (<code>train_toy_one_player</code> in train_models.py).</p>
+    <p>The point of the last panel: D only knows the fakes it has seen. Everything that is not "near 0" looks real to it, including empty space. Ask: what will G do with a judge like this? (Next part.)</p>
+  </aside>
+</section>
+
+
+<!-- ===================================================================== PART 2 · TRAINING G THROUGH D -->
+
+<section class="slide sec-p2 opener break" id="p2-open" data-section="2 · Training G">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 2 of 5</p>
+      <h2>Training G through D</h2>
+      <p class="why">G never sees a real image and has no target output. Its only teacher is D: move each fake towards where D says <b>"more real"</b>, and change G's weights so that it does.</p>
+    </div>
+    <ol class="route-mini"><li class="done" style="--c:var(--disc)"><span class="dot">✓</span>Two players, one game</li><li class="now" style="--c:var(--dec)"><span class="dot">2</span>Training G through D</li><li class="todo" style="--c:var(--loss)"><span class="dot">3</span>The minimax objective</li><li class="todo" style="--c:var(--x)"><span class="dot">4</span>A GAN on MNIST</li><li class="todo" style="--c:var(--z)"><span class="dot">5</span>Failures and control</li></ol>
+  </div>
+</section>
+
+<section class="slide sec-p2" id="gan-gstep-1d" data-section="2 · Training G">
+  <p class="kicker">Step 2 of each iteration: what would fool D?</p>
+  <h2>G step: push every fake uphill on $D(x)$</h2>
+  <div class="body">
+    <div class="row" style="gap:28px">
+      <img class="fig" src="figures/data/gan1d-arrows.svg" style="width:640px">
+      <div class="col grow">
+        <div class="mathblock left" style="font-size:26px">$$\mathcal L_G = -\log D(\cdec{G(z)})$$</div>
+        <p class="small">The same BCE, but now the fakes are labelled 1: "make $D$ call these real".</p>
+        <p class="small" data-b="2">Our fake at $x = 0.0$: $D = 0.38$, so $\mathcal L_G = -\log 0.38 = 0.97$. Raising $D$ there lowers it.</p>
+        <p class="small" data-b="3">Red arrows: which way $D(x)$ increases at each fake, from D's real slope at step 25.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="4">G cannot move the fakes directly. It changes its weights $\theta$ so that its outputs move along the arrows.</p>
+  <aside class="notes"><p>At step 25 D has learned that large x looks real (D rises towards bump B), so most fakes are pushed right. Arrows are scaled by the slope dD/dx of the recorded D at that step, computed on a grid; the fakes are a subsample of the 2,000 fixed-z samples.</p></aside>
+</section>
+
+<section class="slide sec-p2" id="gan-chain" data-section="2 · Training G">
+  <p class="kicker">Where G's gradient comes from</p>
+  <h2>The chain rule runs through D</h2>
+  <div class="body">
+    <div class="mathblock" style="font-size:30px">$$\frac{\partial \mathcal L_G}{\partial \theta} = \underbrace{\frac{\partial \mathcal L_G}{\partial D}}_{=\,-1/D} \cdot \underbrace{\frac{\partial D}{\partial x}}_{\text{slope of } D \text{ at the fake}} \cdot \underbrace{\frac{\partial x}{\partial \theta}}_{\text{how } \theta \text{ moves the fake}}, \qquad x = G_\theta(z)$$</div>
+    <div class="row" style="justify-content:center;gap:22px;margin-top:22px">
+      <div class="callout loss" style="width:350px" data-b="2">$-1/D$ is always negative: raising $D$ always lowers $\mathcal L_G$. Our fake: $-1/0.38 = −2.63$.</div>
+      <div class="callout disc" style="width:350px" data-b="3">$\partial D/\partial x$: which way is "more real" at this fake. For ours it is $0.08$: more real to the right. Uses D's weights, does not change them.</div>
+      <div class="callout dec" style="width:350px" data-b="4">$\partial x/\partial\theta$: ordinary backprop through $G$, spreading the push over G's weights.</div>
+    </div>
+  </div>
+  <p class="q" data-b="5">First two factors for our fake: $−2.63 \times 0.08 = −0.21$. Negative, so a gradient step moves it right, towards bump B.</p>
+  <aside class="notes">
+    <p>This is why the G step must not detach the fake: the middle factor needs the path through D. It is also why D's weights can stay frozen: we need the slope of D with respect to its input, not an update to D.</p>
+    <p>For one sample. Over a batch, G's gradient is the average of these per-fake terms. The slope is read from the recorded D at step 25 (finite differences on a grid), rounded as shown.</p>
+  </aside>
+</section>
+
+<section class="slide sec-p2" id="gan-gstep" data-section="2 · Training G">
+  <p class="kicker">Update G, hold D fixed</p>
+  <h2>G step: lock D's weights, keep the wire</h2>
+  <div class="body center"><svg viewBox="0 0 1152 400" class="diagram" role="img" aria-label="gan-gstep"><defs><marker id="gan-gstep-ah-AA4E08" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#AA4E08"/></marker><marker id="gan-gstep-ah-0F766E" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0F766E"/></marker><marker id="gan-gstep-ah-334155" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#334155"/></marker><marker id="gan-gstep-ah-BE123C" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#BE123C"/></marker></defs><rect x="30" y="230" width="60" height="60" rx="10" fill="#FCEFD9" stroke="#AA4E08" stroke-width="2.4"/><circle cx="46.2" cy="246.2" r="4.5" fill="#AA4E08"/><circle cx="73.8" cy="246.2" r="4.5" fill="#AA4E08"/><circle cx="60.0" cy="260.0" r="4.5" fill="#AA4E08"/><circle cx="46.2" cy="273.8" r="4.5" fill="#AA4E08"/><circle cx="73.8" cy="273.8" r="4.5" fill="#AA4E08"/><foreignObject x="-320.0" y="292.0" width="760" height="52.8" overflow="visible"><div class="fo" style="font-size:24px;color:#AA4E08;font-weight:400;text-align:center;height:38.4px;line-height:38.4px">$z$</div></foreignObject><path d="M96,260 L130,260" fill="none" stroke="#AA4E08" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#gan-gstep-ah-AA4E08)"/><polygon points="134,220.0 314,170.0 314,350.0 134,300.0" fill="#D9F2EF" stroke="#0F766E" stroke-width="2.4" stroke-linejoin="round"/><text x="224.0" y="258" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="23" font-weight="650" fill="#0F766E" text-anchor="middle">generator G</text><foreignObject x="74.0" y="261.5" width="300" height="39.6" overflow="visible"><div class="fo" style="font-size:18px;color:#6B7280;font-weight:500;text-align:center;height:28.8px;line-height:28.8px">weights $\theta$</div></foreignObject><path d="M318,260 L350,260" fill="none" stroke="#0F766E" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#gan-gstep-ah-0F766E)"/><image x="356" y="190" width="140" height="140" href="figures/data/gan-fake-one.png" preserveAspectRatio="none" style="image-rendering:pixelated"/><rect x="356" y="190" width="140" height="140" rx="6" fill="none" stroke="#0F766E" stroke-width="2.5"/><text x="426" y="352" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="22" font-weight="650" fill="#0F766E" text-anchor="middle">fake</text><path d="M500,260 L560,260 L560,200 L600,200" fill="none" stroke="#0F766E" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#gan-gstep-ah-0F766E)"/><polygon points="604,75.0 804,140.0 804,220.0 604,285.0" fill="#E2E8F0" stroke="#334155" stroke-width="2.4" stroke-linejoin="round" opacity=".45"/><text x="704.0" y="178" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="23" font-weight="650" fill="#334155" text-anchor="middle">discriminator D</text><foreignObject x="554.0" y="181.5" width="300" height="39.6" overflow="visible"><div class="fo" style="font-size:18px;color:#6B7280;font-weight:500;text-align:center;height:28.8px;line-height:28.8px">weights $\psi$</div></foreignObject><path d="M808,180 L850,180" fill="none" stroke="#334155" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#gan-gstep-ah-334155)"/><g transform="translate(704,120) scale(1.0)"><path d="M-9,-4 v-7 a9,9 0 0 1 18,0 v7" fill="none" stroke="#334155" stroke-width="3"/><rect x="-13" y="-4" width="26" height="20" rx="4" fill="#334155"/><circle cx="0" cy="5" r="3" fill="#fff"/></g><foreignObject x="604.0" y="67.0" width="200" height="44.0" overflow="visible"><div class="fo" style="font-size:20px;color:#334155;font-weight:650;text-align:center;height:32.0px;line-height:32.0px">$\psi$ frozen</div></foreignObject><rect x="856" y="140" width="270" height="80" rx="12" fill="#FDE2E7" stroke="#BE123C" stroke-width="2.2"/><foreignObject x="611.0" y="155.8" width="760" height="46.2" overflow="visible"><div class="fo" style="font-size:21px;color:#BE123C;font-weight:600;text-align:center;height:33.6px;line-height:33.6px">$-\log D(x_{\text{fake}})$</div></foreignObject><text x="991" y="208" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="18" font-weight="500" fill="#6B7280" text-anchor="middle">target: fake → 1</text><g data-b="2"><path d="M856,196 L808,196" fill="none" stroke="#BE123C" stroke-width="3" stroke-linejoin="round" marker-end="url(#gan-gstep-ah-BE123C)"/><path d="M806,206 C740,250 660,250 604,214" fill="none" stroke="#BE123C" stroke-width="3" stroke-dasharray="7 5" marker-end="url(#gan-gstep-ah-BE123C)"/><foreignObject x="555.0" y="283.5" width="300" height="39.6" overflow="visible"><div class="fo" style="font-size:18px;color:#BE123C;font-weight:650;text-align:center;height:28.8px;line-height:28.8px">through D, not into $\psi$</div></foreignObject><path d="M560,286 L500,286" fill="none" stroke="#BE123C" stroke-width="3" stroke-linejoin="round" marker-end="url(#gan-gstep-ah-BE123C)"/><path d="M356,300 C330,320 300,316 290,300" fill="none" stroke="#BE123C" stroke-width="3" marker-end="url(#gan-gstep-ah-BE123C)"/><foreignObject x="24.0" y="365.8" width="400" height="46.2" overflow="visible"><div class="fo" style="font-size:21px;color:#BE123C;font-weight:650;text-align:center;height:33.6px;line-height:33.6px">G's weights $\theta$ get the gradient</div></foreignObject></g></svg></div>
+  <pre class="code" style="width:860px;margin:0 auto;font-size:18px"><span class="line" data-hl="2">D.requires_grad_(False)                 <span class="c"># lock D's weights, keep the path</span></span>
+<span class="line">loss_G = bce(D(G(torch.randn(B, zdim))), ones)   <span class="c"># fresh fakes, no detach</span></span>
+<span class="line">opt_G.zero_grad(); loss_G.backward(); opt_G.step(); D.requires_grad_(True)</span></pre>
+  <aside class="notes"><p>Gradient must flow through D to reach G, so no detach and no torch.no_grad() here. requires_grad_(False) only stops D's own weights from collecting gradients; D is still differentiated with respect to its input. Strictly, opt_G.step() only touches G's weights, and the next D step starts with opt_D.zero_grad(), so in this exact code the lock mainly saves computing gradients for D's weights. It matters in code that accumulates gradients across steps, and it states the intent.</p></aside>
+</section>
+
+<section class="slide sec-p2" id="freeze-detach" data-section="2 · Training G">
+  <p class="kicker">The most common GAN bug</p>
+  <h2>Freezing is not detaching</h2>
+  <div class="body center"><svg viewBox="0 0 1152 330" class="diagram" role="img" aria-label="freeze-detach"><defs><marker id="freeze-detach-ah-0F766E" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0F766E"/></marker><marker id="freeze-detach-ah-334155" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#334155"/></marker><marker id="freeze-detach-ah-BE123C" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#BE123C"/></marker></defs><g data-b="1"><text x="20" y="42" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="21" font-weight="650" fill="#14171F" text-anchor="start">detach(): cut the wire</text><rect x="20" y="64" width="150" height="60" rx="12" fill="#D9F2EF" stroke="#0F766E" stroke-width="2.2"/><foreignObject x="-55.0" y="74.2" width="300" height="48.4" overflow="visible"><div class="fo" style="font-size:22px;color:#0F766E;font-weight:650;text-align:center;height:35.2px;line-height:35.2px">$G(z)$</div></foreignObject><path d="M172,94 L330,94" fill="none" stroke="#0F766E" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#freeze-detach-ah-0F766E)"/><rect x="334" y="64" width="170" height="60" rx="12" fill="#E2E8F0" stroke="#334155" stroke-width="2.2"/><foreignObject x="269.0" y="72.4" width="300" height="52.8" overflow="visible"><div class="fo" style="font-size:24px;color:#334155;font-weight:650;text-align:center;height:38.4px;line-height:38.4px">$D$</div></foreignObject><path d="M506,94 L600,94" fill="none" stroke="#334155" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#freeze-detach-ah-334155)"/><rect x="604" y="64" width="130" height="60" rx="12" fill="#FDE2E7" stroke="#BE123C" stroke-width="2.2"/><text x="669.0" y="101.7" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="22" font-weight="650" fill="#BE123C" text-anchor="middle">loss</text><g transform="translate(256,100)" fill="none" stroke="#BE123C" stroke-width="2.6"><circle cx="-7" cy="10" r="5"/><circle cx="7" cy="10" r="5"/><path d="M-4,6 L8,-12 M4,6 L-8,-12"/></g></g><g data-b="2"><path d="M604,114 L508,114" fill="none" stroke="#BE123C" stroke-width="2.6" stroke-linejoin="round" marker-end="url(#freeze-detach-ah-BE123C)"/><text x="556" y="142" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="18" font-weight="600" fill="#BE123C" text-anchor="middle">gradient</text><path d="M332,114 L296,114" fill="none" stroke="#BE123C" stroke-width="2.6" stroke-linejoin="round" marker-end="url(#freeze-detach-ah-BE123C)"/><text x="770" y="94" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="23" font-weight="650" fill="#BE123C" text-anchor="start">the gradient stops at the cut:</text><text x="770" y="120" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="23" font-weight="650" fill="#BE123C" text-anchor="start">G learns nothing</text></g><g data-b="3"><text x="20" y="198" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="21" font-weight="650" fill="#14171F" text-anchor="start">requires_grad_(False): lock D's weights, keep the wire</text><rect x="20" y="220" width="150" height="60" rx="12" fill="#D9F2EF" stroke="#0F766E" stroke-width="2.2"/><foreignObject x="-55.0" y="230.2" width="300" height="48.4" overflow="visible"><div class="fo" style="font-size:22px;color:#0F766E;font-weight:650;text-align:center;height:35.2px;line-height:35.2px">$G(z)$</div></foreignObject><path d="M172,250 L330,250" fill="none" stroke="#0F766E" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#freeze-detach-ah-0F766E)"/><rect x="334" y="220" width="170" height="60" rx="12" fill="#E2E8F0" stroke="#334155" stroke-width="2.2"/><foreignObject x="269.0" y="228.4" width="300" height="52.8" overflow="visible"><div class="fo" style="font-size:24px;color:#334155;font-weight:650;text-align:center;height:38.4px;line-height:38.4px">$D$</div></foreignObject><path d="M506,250 L600,250" fill="none" stroke="#334155" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#freeze-detach-ah-334155)"/><rect x="604" y="220" width="130" height="60" rx="12" fill="#FDE2E7" stroke="#BE123C" stroke-width="2.2"/><text x="669.0" y="257.7" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="22" font-weight="650" fill="#BE123C" text-anchor="middle">loss</text><g transform="translate(474,244) scale(0.7)"><path d="M-9,-4 v-7 a9,9 0 0 1 18,0 v7" fill="none" stroke="#334155" stroke-width="3"/><rect x="-13" y="-4" width="26" height="20" rx="4" fill="#334155"/><circle cx="0" cy="5" r="3" fill="#fff"/></g></g><g data-b="4"><path d="M604,270 L508,270" fill="none" stroke="#BE123C" stroke-width="2.6" stroke-linejoin="round" marker-end="url(#freeze-detach-ah-BE123C)"/><text x="556" y="298" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="18" font-weight="600" fill="#BE123C" text-anchor="middle">gradient</text><path d="M332,270 L174,270" fill="none" stroke="#BE123C" stroke-width="2.6" stroke-linejoin="round" marker-end="url(#freeze-detach-ah-BE123C)"/><text x="770" y="250" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="23" font-weight="650" fill="#BE123C" text-anchor="start">D's weights stay put;</text><text x="770" y="276" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="23" font-weight="650" fill="#BE123C" text-anchor="start">G still learns</text></g></svg></div>
+  <p class="q" data-gone="2-">Q. The wire from G to D is cut. Does G get any gradient from this loss?</p>
+  <p class="q" data-b="=3" data-gone="1-2,4-">Q. Now D's weights are locked but the wire is intact. Does G learn?</p>
+  <p class="q" data-b="4" data-gone="1-3">Detach the fake in the G step and loss_G still prints a number, but G never learns. A silent failure.</p>
+  <aside class="notes"><p>Quiz: which single change to the G-step code makes the generator receive no gradient? Answer: <code>D(G(z).detach())</code>, or wrapping the G step in <code>torch.no_grad()</code>. Both still print a loss.</p></aside>
+</section>
+
+<section class="slide sec-p2" id="gan1d-gonly" data-section="2 · Training G">
+  <p class="kicker">The opposite experiment: freeze D, run only the G step</p>
+  <h2>Against a judge that stops learning, G overshoots</h2>
+  <div class="body">
+    <div class="film-cols four">
+      <img class="fig" src="figures/data/film-gonly-0.svg">
+      <img class="fig" src="figures/data/film-gonly-25.svg" data-b="2">
+      <img class="fig" src="figures/data/film-gonly-100.svg" data-b="3">
+      <img class="fig" src="figures/data/film-gonly-300.svg" data-b="4">
+    </div>
+    <p class="cap" data-b="4">Wider axis than before ($-10$ to $10$); fakes beyond it are piled at the edges.</p>
+  </div>
+  <p class="q" data-b="=1" data-gone="2-">Q. D (bottom) is the D from the Part 1 experiment, now frozen. Where will the fakes go?</p>
+  <p class="q" data-b="4" data-gone="1-3">After 300 G steps, 78% of the fakes are beyond $\pm 3$: G goes wherever D says "real", data or not. So D must keep learning, and the two steps alternate.</p>
+  <aside class="notes">
+    <p>Same separate run as the Part 1 experiment, second phase: D frozen where that experiment left it, only the G step for 300 steps. Only 17% of the fakes end within 1 of a bump centre.</p>
+    <p>This is the G step from the last three slides, working exactly as designed: every fake moves uphill on D. The failure is that D no longer updates, so nothing tells G that the tails are empty. In the real loop, the next D step would mark those tails as fake.</p>
+  </aside>
+</section>
+
+<section class="slide sec-p2" id="gan1d-train" data-section="2 · Training G">
+  <p class="kicker">Now alternate the two steps, 3,000 times</p>
+  <h2>Watch the game on the toy data</h2>
+  <div class="body">
+    <div class="film-cols">
+      <img class="fig" src="figures/data/film-game-25.svg">
+      <img class="fig" src="figures/data/film-game-100.svg" data-b="2">
+      <img class="fig" src="figures/data/film-game-250.svg" data-b="3">
+      <img class="fig" src="figures/data/film-game-1000.svg" data-b="4">
+      <img class="fig" src="figures/data/film-game-3000.svg" data-b="5">
+    </div>
+  </div>
+  <p class="q" data-b="5">By step 3,000 the fakes cover both bumps, and $D(x)$ is near 0.5 wherever the data is: it can no longer tell.</p>
+  <aside class="notes">
+    <p>Before each click ask: given the D curve now, where will the fakes move next? Recorded run (seed 4). Final fractions of fakes within 1 of each bump centre: 0.52 and 0.46.</p>
+    <p>The game is not always this smooth. In 5 of our 8 runs, more than 90% of the fakes sat on a single bump at step 25; every one of the 8 runs still covered both bumps by step 3,000.</p>
+  </aside>
+</section>
+
+<!-- ===================================================================== PART 3 · THE MINIMAX OBJECTIVE -->
+
+<section class="slide sec-p3 opener break" id="p3-open" data-section="3 · The objective">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 3 of 5</p>
+      <h2>The minimax objective</h2>
+      <p class="why">Textbooks write the whole game as one formula. Reading it slowly shows that our code trains G with a <b>slightly different loss</b>, and why that is a deliberate fix.</p>
+    </div>
+    <ol class="route-mini"><li class="done" style="--c:var(--disc)"><span class="dot">✓</span>Two players, one game</li><li class="done" style="--c:var(--dec)"><span class="dot">✓</span>Training G through D</li><li class="now" style="--c:var(--loss)"><span class="dot">3</span>The minimax objective</li><li class="todo" style="--c:var(--x)"><span class="dot">4</span>A GAN on MNIST</li><li class="todo" style="--c:var(--z)"><span class="dot">5</span>Failures and control</li></ol>
+  </div>
+</section>
+
+<section class="slide sec-p3" id="minimax" data-section="3 · The objective">
+  <p class="kicker">The textbook formula</p>
+  <h2>A two-player minimax game</h2>
+  <div class="body">
+    <div class="mathblock" style="margin-top:6px;font-size:30px">$$\min_{\cdec G}\;\max_{\cdisc D}\;\; \E_{x\sim \pd}\big[\log D(x)\big] \;+\; \E_{z\sim p(z)}\big[\log\big(1 - D(G(z))\big)\big]$$</div>
+    <div class="row" style="justify-content:center;gap:24px;margin-top:24px">
+      <div class="callout disc" style="width:520px" data-b="2"><b>D maximises:</b> high $D$ on real data, low $D$ on fakes. This is exactly our $-\mathcal L_D$, averaged.</div>
+      <div class="callout dec" style="width:520px" data-b="3"><b>G minimises:</b> only the second term involves $G$. It wants $D(G(z))$ high.</div>
+    </div>
+    <p class="small" data-b="4" style="text-align:center;margin-top:22px">With a perfect $D$, G's best move is $\pg = \pd$ (Goodfellow et al. 2014; derivation in the appendix). Real training, with finite networks and steps, has no such guarantee.</p>
+  </div>
+  <p class="q" data-b="5">Careful: here G minimises $\log(1 - D(G(z)))$, but our code minimised $-\log D(G(z))$. Same goal. Why switch?</p>
+  <aside class="notes"><p>Point at the two terms in turn and map them to the code: the first is bce(D(real), ones) with the sign flipped, the second bce(D(fake), zeros). Do not claim that GAN training provably converges in practice: the guarantee is for an ideal D and a G that can be any distribution.</p></aside>
+</section>
+
+<section class="slide sec-p3" id="saturation-derive" data-section="3 · The objective">
+  <p class="kicker">Two generator losses, two slopes</p>
+  <h2>Differentiate both with respect to D's logit $a$</h2>
+  <div class="body">
+    <div class="mathblock" style="font-size:25px">$$D = \mathrm{sigmoid}(a), \qquad \frac{dD}{da} = D\,(1-D) \qquad \text{(the logistic-regression derivative)}$$</div>
+    <div class="row top" style="justify-content:center;gap:30px;margin-top:6px">
+      <div class="col" style="width:540px" data-b="2">
+        <p class="small" style="text-align:center"><b>minimax:</b> minimise $\log(1-D)$</p>
+        <div class="mathblock" style="font-size:23px">$$\frac{d}{da}\log(1-D) = \frac{1}{1-D}\cdot\Big(-\frac{dD}{da}\Big)$$</div>
+        <div class="mathblock" style="font-size:23px">$$= \frac{-D(1-D)}{1-D} = \hl{-D}$$</div>
+        <div class="mathblock" style="font-size:23px" data-b="5">$$D = 0.01:\quad -0.01$$</div>
+      </div>
+      <div class="col" style="width:540px" data-b="3">
+        <p class="small" style="text-align:center"><b>non-saturating:</b> minimise $-\log D$</p>
+        <div class="mathblock" style="font-size:23px">$$\frac{d}{da}\big(-\log D\big) = -\frac{1}{D}\cdot\frac{dD}{da}$$</div>
+        <div class="mathblock" style="font-size:23px">$$= \frac{-D(1-D)}{D} = \hl{D - 1}$$</div>
+        <div class="mathblock" style="font-size:23px" data-b="5">$$D = 0.01:\quad -0.99$$</div>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="=4" data-gone="1-3,5-">Q. Early in training, which value of $D(G(z))$ is typical: near 0, near 0.5, or near 1?</p>
+  <p class="q" data-b="5" data-gone="1-4">Near 0: D easily rejects early fakes. There the minimax slope vanishes; the non-saturating one does not.</p>
+  <aside class="notes"><p>Both losses push D(G(z)) up and share the same ideal solution. They are not equal as functions; they differ in how hard they push when the generator is bad, which is exactly when it needs a push. The derivative is taken with respect to the logit a because that is what the gradient passes through on its way back into G.</p></aside>
+</section>
+
+<section class="slide sec-p3" id="saturation" data-section="3 · The objective">
+  <p class="kicker">Why the code uses a different generator loss</p>
+  <h2>Early on, the minimax loss gives G almost no signal</h2>
+  <div class="body center"><img class="fig" src="figures/data/saturation.svg" style="width:990px"></div>
+  <p class="q">When D easily spots a fake ($D = 0.01$): slope $-0.01$ for $\log(1-D)$, slope $-0.99$ for $-\log D$. Same goal, a 99× stronger push.</p>
+  <aside class="notes"><p>Left: the two generator losses as functions of D's logit a for a fake. Right: their slopes, d log(1 − sigmoid a)/da = −D and d[−log sigmoid a]/da = D − 1. Far left (a very negative, D near 0) is where a bad generator lives: the dashed slope is flat there, the teal one is about −1. Goodfellow et al. (2014) already recommended the −log D version for this reason.</p></aside>
+</section>
+
+<!-- ===================================================================== PART 4 · MNIST -->
+
+<section class="slide sec-p4 opener break" id="p4-open" data-section="4 · MNIST">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 4 of 5</p>
+      <h2>A GAN on MNIST</h2>
+      <p class="why">The same two steps, unchanged. Only G and D grow: small convolutional networks on 28 × 28 grey-level digits. Then back to the <b>vote</b>.</p>
+    </div>
+    <ol class="route-mini"><li class="done" style="--c:var(--disc)"><span class="dot">✓</span>Two players, one game</li><li class="done" style="--c:var(--dec)"><span class="dot">✓</span>Training G through D</li><li class="done" style="--c:var(--loss)"><span class="dot">✓</span>The minimax objective</li><li class="now" style="--c:var(--x)"><span class="dot">4</span>A GAN on MNIST</li><li class="todo" style="--c:var(--z)"><span class="dot">5</span>Failures and control</li></ol>
+  </div>
+</section>
+
+<section class="slide sec-p4" id="mnist-nets" data-section="4 · MNIST">
+  <p class="kicker">Only G and D grow</p>
+  <h2>The MNIST generator and discriminator</h2>
+  <div class="body center"><svg viewBox="0 0 1152 420" class="diagram" role="img" aria-label="mnist-nets"><defs><marker id="mnist-nets-ah-6B7280" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6B7280"/></marker></defs><g data-b="1"><text x="20" y="40" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="21" font-weight="700" fill="#0F766E" text-anchor="start">generator G</text><text x="20" y="64" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="18" font-weight="500" fill="#6B7280" text-anchor="start">1.9 million weights</text><rect x="210" y="60" width="22" height="100" rx="4" fill="#FCEFD9" stroke="#AA4E08" stroke-width="1.8"/><foreignObject x="-159.0" y="86.5" width="760" height="48.4" overflow="visible"><div class="fo" style="font-size:22px;color:#AA4E08;font-weight:400;text-align:center;height:35.2px;line-height:35.2px">$z$</div></foreignObject><text x="221" y="186" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="20" font-weight="600" fill="#4A5160" text-anchor="middle">100</text><path d="M244,110 L314,110" fill="none" stroke="#6B7280" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#mnist-nets-ah-6B7280)"/><text x="279.0" y="98" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="18" font-weight="600" fill="#4A5160" text-anchor="middle">linear</text><rect x="340" y="78.4" width="82.0" height="39.2" rx="4" fill="#D9F2EF" stroke="#0F766E" stroke-width="1.6"/><rect x="334" y="84.4" width="82.0" height="39.2" rx="4" fill="#D9F2EF" stroke="#0F766E" stroke-width="1.6"/><rect x="328" y="90.4" width="82.0" height="39.2" rx="4" fill="#D9F2EF" stroke="#0F766E" stroke-width="1.6"/><text x="375.0" y="155.6" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="20" font-weight="600" fill="#4A5160" text-anchor="middle">256 × 7 × 7</text><path d="M422.0,110 L492.0,110" fill="none" stroke="#6B7280" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#mnist-nets-ah-6B7280)"/><text x="457.0" y="98" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="18" font-weight="600" fill="#4A5160" text-anchor="middle">up ×2</text><rect x="518.0" y="65.8" width="73.0" height="64.4" rx="4" fill="#D9F2EF" stroke="#0F766E" stroke-width="1.6"/><rect x="512.0" y="71.8" width="73.0" height="64.4" rx="4" fill="#D9F2EF" stroke="#0F766E" stroke-width="1.6"/><rect x="506.0" y="77.8" width="73.0" height="64.4" rx="4" fill="#D9F2EF" stroke="#0F766E" stroke-width="1.6"/><text x="548.5" y="168.2" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="20" font-weight="600" fill="#4A5160" text-anchor="middle">128 × 14 × 14</text><path d="M591.0,110 L661.0,110" fill="none" stroke="#6B7280" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#mnist-nets-ah-6B7280)"/><text x="626.0" y="98" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="18" font-weight="600" fill="#4A5160" text-anchor="middle">up ×2</text><rect x="687.0" y="40.6" width="64.0" height="114.8" rx="4" fill="#D9F2EF" stroke="#0F766E" stroke-width="1.6"/><rect x="681.0" y="46.6" width="64.0" height="114.8" rx="4" fill="#D9F2EF" stroke="#0F766E" stroke-width="1.6"/><rect x="675.0" y="52.6" width="64.0" height="114.8" rx="4" fill="#D9F2EF" stroke="#0F766E" stroke-width="1.6"/><text x="713.0" y="193.4" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="20" font-weight="600" fill="#4A5160" text-anchor="middle">64 × 28 × 28</text><path d="M751.0,110 L855.0,110" fill="none" stroke="#6B7280" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#mnist-nets-ah-6B7280)"/><text x="803.0" y="98" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="18" font-weight="600" fill="#4A5160" text-anchor="middle">conv, tanh</text><image x="869.0" y="60" width="100" height="100" href="figures/data/gan-fake-one.png" preserveAspectRatio="none" style="image-rendering:pixelated"/><rect x="869.0" y="60" width="100" height="100" rx="6" fill="none" stroke="#0F766E" stroke-width="2.5"/><text x="919.0" y="186" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="20" font-weight="600" fill="#4A5160" text-anchor="middle">1 × 28 × 28</text></g><g data-b="2"><text x="20" y="250" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="21" font-weight="700" fill="#334155" text-anchor="start">discriminator D</text><text x="20" y="274" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="18" font-weight="500" fill="#6B7280" text-anchor="start">139 thousand weights</text><image x="210" y="270" width="100" height="100" href="figures/data/gan-real-one.png" preserveAspectRatio="none" style="image-rendering:pixelated"/><rect x="210" y="270" width="100" height="100" rx="6" fill="none" stroke="#245EDB" stroke-width="2.5"/><text x="260" y="396" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="20" font-weight="600" fill="#4A5160" text-anchor="middle">1 × 28 × 28</text><path d="M322,320 L392,320" fill="none" stroke="#6B7280" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#mnist-nets-ah-6B7280)"/><text x="357.0" y="308" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="18" font-weight="600" fill="#4A5160" text-anchor="middle">conv /2</text><rect x="418" y="275.8" width="64.0" height="64.4" rx="4" fill="#E2E8F0" stroke="#334155" stroke-width="1.6"/><rect x="412" y="281.8" width="64.0" height="64.4" rx="4" fill="#E2E8F0" stroke="#334155" stroke-width="1.6"/><rect x="406" y="287.8" width="64.0" height="64.4" rx="4" fill="#E2E8F0" stroke="#334155" stroke-width="1.6"/><text x="444.0" y="378.2" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="20" font-weight="600" fill="#4A5160" text-anchor="middle">64 × 14 × 14</text><path d="M482.0,320 L552.0,320" fill="none" stroke="#6B7280" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#mnist-nets-ah-6B7280)"/><text x="517.0" y="308" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="18" font-weight="600" fill="#4A5160" text-anchor="middle">conv /2</text><rect x="578.0" y="288.4" width="73.0" height="39.2" rx="4" fill="#E2E8F0" stroke="#334155" stroke-width="1.6"/><rect x="572.0" y="294.4" width="73.0" height="39.2" rx="4" fill="#E2E8F0" stroke="#334155" stroke-width="1.6"/><rect x="566.0" y="300.4" width="73.0" height="39.2" rx="4" fill="#E2E8F0" stroke="#334155" stroke-width="1.6"/><text x="608.5" y="365.6" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="20" font-weight="600" fill="#4A5160" text-anchor="middle">128 × 7 × 7</text><path d="M651.0,320 L721.0,320" fill="none" stroke="#6B7280" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#mnist-nets-ah-6B7280)"/><text x="686.0" y="308" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="18" font-weight="600" fill="#4A5160" text-anchor="middle">linear</text><rect x="735.0" y="286" width="210" height="68" rx="12" fill="#E2E8F0" stroke="#334155" stroke-width="2.2"/><text x="840.0" y="318.0" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="21" font-weight="650" fill="#334155" text-anchor="middle">1 logit</text><foreignObject x="690.0" y="315.4" width="300" height="39.6" overflow="visible"><div class="fo" style="font-size:18px;color:#6B7280;font-weight:500;text-align:center;height:28.8px;line-height:28.8px">$D(x) = \mathrm{sigmoid}(\text{logit})$</div></foreignObject></g></svg></div>
+  <p class="q" data-b="2">G turns 100 numbers into 784 pixels; D turns 784 pixels into one logit. Each is a small CNN you already know how to build.</p>
+  <aside class="notes"><p>G: linear layer to 256 × 7 × 7, batch norm and ReLU, two 4 × 4 transposed convolutions with stride 2 (7 → 14 → 28), then a 3 × 3 convolution and tanh, so pixels are in [−1, 1]. D: two 4 × 4 convolutions with stride 2, leaky ReLU (0.2) and dropout (0.3), then a linear layer to one logit. Weight counts exclude batch-norm running statistics. Real digits are scaled to [−1, 1] before D sees them.</p></aside>
+</section>
+
+<section class="slide sec-p4" id="gan-code" data-section="4 · MNIST">
+  <p class="kicker">The complete update</p>
+  <h2>One GAN iteration in code</h2>
+  <div class="body">
+    <pre class="code" style="width:1040px;margin:0 auto;font-size:18px"><span class="line" data-hl="=1"><span class="c"># ---- D step: real → 1, fake → 0, G receives nothing</span></span>
+<span class="line" data-hl="=1">fake = G(torch.randn(B, zdim))</span>
+<span class="line" data-hl="=1">loss_D = bce_logits(D(real), ones) + bce_logits(D(fake.detach()), zeros)</span>
+<span class="line" data-hl="=1">opt_D.zero_grad(); loss_D.backward(); opt_D.step()</span>
+<span class="line"></span>
+<span class="line" data-hl="=2"><span class="c"># ---- G step: fresh fakes, D's weights locked, gradient flows through D</span></span>
+<span class="line" data-hl="=2">D.requires_grad_(False)</span>
+<span class="line" data-hl="=2">loss_G = bce_logits(D(G(torch.randn(B, zdim))), ones)</span>
+<span class="line" data-hl="=2">opt_G.zero_grad(); loss_G.backward(); opt_G.step()</span>
+<span class="line" data-hl="=2">D.requires_grad_(True)</span></pre>
+  </div>
+  <p class="q">Exactly this function trained the 1-D GAN and the MNIST GAN. Only G and D differ.</p>
+  <aside class="notes">
+    <p>From <code>gan_step</code> in <code>scripts/train_models.py</code>. A fresh forward pass after D's update, so no retain_graph is needed.</p>
+    <p>For MNIST: G maps 100 numbers through a linear layer and two transposed convolutions to a 28 × 28 image in [−1, 1] (1.9 million weights); D is two strided convolutions and a linear layer to one logit (139 thousand weights). Adam, learning rate 2e-4, β₁ = 0.5, batch 128, 30 epochs.</p>
+  </aside>
+</section>
+
+<section class="slide sec-p4" id="gan-film" data-section="4 · MNIST">
+  <p class="kicker">On MNIST: the same 8 codes, through training</p>
+  <h2>Watch the samples, not the loss</h2>
+  <div class="body">
+    <div class="row" style="gap:20px;justify-content:center">
+      <div class="filmlabs"><span>step 0</span><span>step 50</span><span>step 150</span><span>step 300</span><span>epoch 1</span><span>epoch 3</span><span>epoch 10</span><span>epoch 30</span></div>
+      <img class="fig pix" src="figures/data/gan-film.png" style="height:500px">
+    </div>
+  </div>
+  <aside class="notes"><p>Grey-level MNIST, small convolutional G and D, 30 epochs (469 steps per epoch, so epoch 1 ends at step 469). Each column is one fixed z, so you can watch a single sample sharpen into a digit: grey static, then blobs, then strokes. Ask: at which row would you first call these digits?</p></aside>
+</section>
+
+<section class="slide sec-p4" id="vote-reveal" data-section="4 · MNIST">
+  <p class="kicker">Back to the vote</p>
+  <h2>Which were real, and what did our discriminator think?</h2>
+  <div class="body">
+    <div class="tiles vote" style="grid-template-columns:repeat(6,140px);gap:16px 30px;justify-content:center">
+      <div class="vt fake"><img src="figures/data/vote-01.png"><p class="tile-lab"><span>1</span><span class="vk" data-b="2">fake · D 0.54</span></p></div>
+      <div class="vt real"><img src="figures/data/vote-02.png"><p class="tile-lab"><span>2</span><span class="vk" data-b="2">real · D 0.45</span></p></div>
+      <div class="vt fake"><img src="figures/data/vote-03.png"><p class="tile-lab"><span>3</span><span class="vk" data-b="2">fake · D 0.55</span></p></div>
+      <div class="vt real"><img src="figures/data/vote-04.png"><p class="tile-lab"><span>4</span><span class="vk" data-b="2">real · D 0.47</span></p></div>
+      <div class="vt real"><img src="figures/data/vote-05.png"><p class="tile-lab"><span>5</span><span class="vk" data-b="2">real · D 0.50</span></p></div>
+      <div class="vt fake"><img src="figures/data/vote-06.png"><p class="tile-lab"><span>6</span><span class="vk" data-b="2">fake · D 0.50</span></p></div>
+      <div class="vt fake"><img src="figures/data/vote-07.png"><p class="tile-lab"><span>7</span><span class="vk" data-b="2">fake · D 0.39</span></p></div>
+      <div class="vt fake"><img src="figures/data/vote-08.png"><p class="tile-lab"><span>8</span><span class="vk" data-b="2">fake · D 0.42</span></p></div>
+      <div class="vt real"><img src="figures/data/vote-09.png"><p class="tile-lab"><span>9</span><span class="vk" data-b="2">real · D 0.55</span></p></div>
+      <div class="vt fake"><img src="figures/data/vote-10.png"><p class="tile-lab"><span>10</span><span class="vk" data-b="2">fake · D 0.46</span></p></div>
+      <div class="vt real"><img src="figures/data/vote-11.png"><p class="tile-lab"><span>11</span><span class="vk" data-b="2">real · D 0.48</span></p></div>
+      <div class="vt real"><img src="figures/data/vote-12.png"><p class="tile-lab"><span>12</span><span class="vk" data-b="2">real · D 0.43</span></p></div>
+    </div>
+  </div>
+  <p class="q" data-gone="2-">Q. Our trained D outputs $P(\text{real})$ for each tile. What numbers do you expect?</p>
+  <p class="q" data-b="2" data-gone="=1">Every tile gets between 0.39 and 0.55. At the end of training, D can barely tell either.</p>
+  <aside class="notes"><p>Blue frame: real MNIST test digit. Teal frame: GAN sample. The number is D(x) from our final discriminator. Over the last epoch D averaged 0.51 on real batches and 0.48 on fakes. A D stuck near 0.5 is what the game aims for, but it does not prove the generator is good: Part 5.</p></aside>
+</section>
+
+<!-- ===================================================================== PART 5 · FAILURES AND CONTROL -->
+
+<section class="slide sec-p5 opener break" id="p5-open" data-section="5 · Failures and control">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 5 of 5</p>
+      <h2>Failures and control</h2>
+      <p class="why">Every sample can look real while the model misses whole kinds of data, and the loss curves will not warn you. Then: how to <b>ask</b> a GAN for a particular digit.</p>
+    </div>
+    <ol class="route-mini"><li class="done" style="--c:var(--disc)"><span class="dot">✓</span>Two players, one game</li><li class="done" style="--c:var(--dec)"><span class="dot">✓</span>Training G through D</li><li class="done" style="--c:var(--loss)"><span class="dot">✓</span>The minimax objective</li><li class="done" style="--c:var(--x)"><span class="dot">✓</span>A GAN on MNIST</li><li class="now" style="--c:var(--z)"><span class="dot">5</span>Failures and control</li></ol>
+  </div>
+</section>
+
+<section class="slide sec-p5" id="collapse" data-section="5 · Failures and control">
+  <p class="kicker">The classic failure</p>
+  <h2>Mode collapse: perfect samples of only one kind</h2>
+  <div class="body">
+    <div class="row" style="gap:28px">
+      <img class="fig" src="figures/data/gan1d-collapse.svg" style="width:640px">
+      <div class="col grow">
+        <p class="small">Same data, same training loop, but G has only 4 hidden units per layer.</p>
+        <p class="small" data-b="2">After 3,000 steps: 95% of samples sit on bump A, 0% on bump B.</p>
+        <p class="small" data-b="3">Every sample looks real. Bump B is never generated. Picking your favourite samples would never reveal it.</p>
+        <p class="small" data-b="4">D knows: $D(+2) = 1.00$. But around bump A its curve is flat ($D \approx 0.30$, slope at most $0.04$), so no fake feels a push towards B.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="4">Like last lecture's reverse-KL fit: commit to one mode and ignore the rest.</p>
+  <aside class="notes">
+    <p>Recorded run with a deliberately small generator (seed 0); the main runs used 64 hidden units. Build 4 is the Part 2 picture again: each fake only feels the slope of D where it sits. The flat stretch is measured over the central 90% of the fakes.</p>
+    <p>Real GANs collapse for subtler reasons, but the symptom is the same: high quality, low diversity.</p>
+  </aside>
+</section>
+
+<section class="slide sec-p5" id="losses" data-section="5 · Failures and control">
+  <p class="kicker">So how do you know it worked?</p>
+  <h2>The loss curves cannot tell these two runs apart</h2>
+  <div class="body center"><img class="fig" src="figures/data/gan1d-losses.svg" style="width:1080px"></div>
+  <p class="q">Both curves go flat. Only the samples show that one run lost half the data. Always look at samples, from fixed $z$, across training.</p>
+  <aside class="notes"><p>Smoothed over 50 steps. Unlike the VAE's ELBO, a GAN's losses do not measure sample quality: each player's loss depends on the other player. In practice people track sample grids and metrics such as FID.</p></aside>
+</section>
+
+<section class="slide sec-p5" id="cgan" data-section="5 · Failures and control">
+  <p class="kicker">Asking for a particular digit</p>
+  <h2>Conditioning: tell both players what you want</h2>
+  <div class="body center"><svg viewBox="0 0 1152 330" class="diagram" role="img" aria-label="cgan"><defs><marker id="cgan-ah-AA4E08" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#AA4E08"/></marker><marker id="cgan-ah-9AA1AD" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9AA1AD"/></marker><marker id="cgan-ah-0F766E" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0F766E"/></marker><marker id="cgan-ah-334155" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#334155"/></marker></defs><g data-b="1"><rect x="20" y="200" width="56" height="56" rx="10" fill="#FCEFD9" stroke="#AA4E08" stroke-width="2.4"/><circle cx="35.120000000000005" cy="215.12" r="4.2" fill="#AA4E08"/><circle cx="60.879999999999995" cy="215.12" r="4.2" fill="#AA4E08"/><circle cx="48.0" cy="228.0" r="4.2" fill="#AA4E08"/><circle cx="35.120000000000005" cy="240.88" r="4.2" fill="#AA4E08"/><circle cx="60.879999999999995" cy="240.88" r="4.2" fill="#AA4E08"/><foreignObject x="-332.0" y="260.5" width="760" height="48.4" overflow="visible"><div class="fo" style="font-size:22px;color:#AA4E08;font-weight:400;text-align:center;height:35.2px;line-height:35.2px">$z$</div></foreignObject><rect x="10" y="60" width="100" height="70" rx="12" fill="#F3F4F6" stroke="#9AA1AD" stroke-width="2.2"/><foreignObject x="-90.0" y="66.8" width="300" height="46.2" overflow="visible"><div class="fo" style="font-size:21px;color:#9AA1AD;font-weight:650;text-align:center;height:33.6px;line-height:33.6px">$c = 7$</div></foreignObject><text x="60.0" y="112.95" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="18" font-weight="500" fill="#6B7280" text-anchor="middle">a label</text><path d="M80,228 L160,228" fill="none" stroke="#AA4E08" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#cgan-ah-AA4E08)"/><path d="M110,95 L130,95 L130,196 L160,196" fill="none" stroke="#9AA1AD" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#cgan-ah-9AA1AD)"/><polygon points="164,172.0 344,127.0 344,297.0 164,252.0" fill="#D9F2EF" stroke="#0F766E" stroke-width="2.4" stroke-linejoin="round"/><text x="254.0" y="220" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="23" font-weight="650" fill="#0F766E" text-anchor="middle">generator</text><foreignObject x="-126.0" y="241.2" width="760" height="50.6" overflow="visible"><div class="fo" style="font-size:23px;color:#0F766E;font-weight:400;text-align:center;height:36.8px;line-height:36.8px">$G(z, c)$</div></foreignObject><path d="M348,212 L384,212" fill="none" stroke="#0F766E" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#cgan-ah-0F766E)"/><image x="390" y="142" width="140" height="140" href="figures/data/gan-seven.png" preserveAspectRatio="none" style="image-rendering:pixelated"/><rect x="390" y="142" width="140" height="140" rx="6" fill="none" stroke="#0F766E" stroke-width="2.5"/></g><g data-b="2"><path d="M534,212 L600,212" fill="none" stroke="#0F766E" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#cgan-ah-0F766E)"/><path d="M110,80 L580,80 L580,172 L600,172" fill="none" stroke="#9AA1AD" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="6 4" marker-end="url(#cgan-ah-9AA1AD)"/><polygon points="604,92.0 804,152.0 804,232.0 604,292.0" fill="#E2E8F0" stroke="#334155" stroke-width="2.4" stroke-linejoin="round"/><text x="704.0" y="200" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="23" font-weight="650" fill="#334155" text-anchor="middle">discriminator</text><foreignObject x="324.0" y="211.2" width="760" height="50.6" overflow="visible"><div class="fo" style="font-size:23px;color:#334155;font-weight:400;text-align:center;height:36.8px;line-height:36.8px">$D(x, c)$</div></foreignObject><path d="M808,192 L850,192" fill="none" stroke="#334155" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#cgan-ah-334155)"/><rect x="856" y="150" width="280" height="84" rx="12" fill="#E2E8F0" stroke="#334155" stroke-width="2.2"/><text x="996.0" y="190.0" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="21" font-weight="650" fill="#334155" text-anchor="middle">real AND a 7?</text><foreignObject x="846.0" y="187.4" width="300" height="39.6" overflow="visible"><div class="fo" style="font-size:18px;color:#6B7280;font-weight:500;text-align:center;height:28.8px;line-height:28.8px">judges the pair $(x, c)$</div></foreignObject></g></svg></div>
+  <p class="q" data-gone="2-">Q. Give the label to G only. What stops G from ignoring it?</p>
+  <p class="q" data-b="2" data-gone="=1">Nothing, unless D sees $c$ too: then a perfect 3 labelled "7" is caught as fake.</p>
+  <p class="src">pix2pix (Isola et al. 2017) uses a whole sketch as the condition $c$, with an extra L1 term to the target photo.</p>
+  <aside class="notes"><p>The 7 shown is a sample from our unconditional GAN that happens to be a 7; we did not train a conditional model. pix2pix precision: its generator takes the sketch (no separate z: the authors found z was ignored and inject randomness only through dropout), and its loss adds an L1 term to the conditional GAN loss.</p></aside>
+</section>
+
+<!-- ===================================================================== WRAP-UP + APPENDIX -->
+
+<section class="slide sec-end opener break" id="wrap" data-section="Wrap-up">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Wrap-up</p>
+      <h2 style="font-size:44px">One GAN iteration, in four sentences</h2>
+      <ol class="takeaways">
+        <li><b>D step:</b> binary cross-entropy, real → 1, fake → 0, with the fake detached so G gets nothing.</li>
+        <li data-b="2"><b>G step:</b> fresh fakes labelled 1; D's weights locked, but the gradient flows through D's input into G.</li>
+        <li data-b="3"><b>Loss:</b> minimise $-\log D(G(z))$, not $\log(1 - D(G(z)))$: same goal, no vanishing slope early on.</li>
+        <li data-b="4"><b>Judge by samples</b> from fixed $z$, not by the losses, and look for missing modes.</li>
+      </ol>
+    </div>
+    <ol class="route-mini"><li class="done" style="--c:var(--disc)"><span class="dot">✓</span>Two players, one game</li><li class="done" style="--c:var(--dec)"><span class="dot">✓</span>Training G through D</li><li class="done" style="--c:var(--loss)"><span class="dot">✓</span>The minimax objective</li><li class="done" style="--c:var(--x)"><span class="dot">✓</span>A GAN on MNIST</li><li class="done" style="--c:var(--z)"><span class="dot">✓</span>Failures and control</li></ol>
+  </div>
+  <aside class="notes"><p>Ask a student to say each sentence before you click it. Next lecture takes a fourth route to generation: learn to remove noise a little at a time (diffusion).</p></aside>
+</section>
+
+<section class="slide sec-end" id="exit" data-section="Wrap-up">
+  <p class="kicker">Before you leave</p>
+  <h2>Three exit questions</h2>
+  <div class="body">
+    <ol class="exitq">
+      <li>In the G step, why do we lock D with <code>requires_grad_(False)</code> instead of detaching the fake?
+        <span class="ans" data-b="2">G's gradient is $-\frac{1}{D}\cdot\frac{\partial D}{\partial x}\cdot\frac{\partial x}{\partial\theta}$: it must pass through D's input. Detaching cuts that path and G learns nothing; locking only stops D's weights from changing.</span></li>
+      <li>Why does the code train G on $-\log D(G(z))$ rather than minimising $\log(1 - D(G(z)))$?
+        <span class="ans" data-b="2">Early on $D(G(z)) \approx 0$. With respect to D's logit the minimax slope is $-D \approx 0$; the non-saturating slope is $D - 1 \approx -1$. Same fixed point, a push that does not vanish.</span></li>
+      <li>Two toy GANs both end with flat, similar losses. How would you find out that one of them has collapsed?
+        <span class="ans" data-b="2">Look at its samples from fixed $z$ next to the data: 95% on bump A and 0% on bump B. Each sample looks real; the missing bump only shows in the distribution.</span></li>
+    </ol>
+  </div>
+  <aside class="notes"><p>Give two minutes in pairs, then reveal.</p></aside>
+</section>
+
+<section class="slide sec-end opener" id="appendix" data-section="Appendix">
+  <p class="kicker">Appendix</p>
+  <h2>Derivations for reference</h2>
+  <p>The optimal discriminator, and why a perfect D turns the game into minimising the Jensen–Shannon divergence.</p>
+</section>
+
+<section class="slide sec-end" id="app-dstar" data-section="Appendix">
+  <p class="kicker">Appendix A · for a fixed G</p>
+  <h2>The optimal discriminator</h2>
+  <div class="body">
+    <div class="ladder" style="grid-template-columns:auto 1fr;row-gap:10px;font-size:25px">
+      <span class="why" style="padding:0"><b>the objective</b></span>
+      <span>$V(D) = \displaystyle\int \Big[\pd(x)\log D(x) + \pg(x)\log\big(1-D(x)\big)\Big]\,dx$</span>
+      <span class="why" style="padding:0" data-b="2"><b>one $x$ at a time</b></span>
+      <span data-b="2">$f(y) = a\log y + b\log(1-y), \quad y = D(x),\; a = \pd(x),\; b = \pg(x)$</span>
+      <span class="why" style="padding:0" data-b="3"><b>set the slope to 0</b></span>
+      <span data-b="3">$f'(y) = \dfrac{a}{y} - \dfrac{b}{1-y} = 0 \;\;\Rightarrow\;\; a(1-y) = b\,y \;\;\Rightarrow\;\; y = \dfrac{a}{a+b}$</span>
+      <span class="why" style="padding:0" data-b="4"><b>so</b></span>
+      <span data-b="4">$D^*(x) = \dfrac{\pd(x)}{\pd(x) + \pg(x)}$</span>
+    </div>
+    <p class="small" data-b="5" style="margin-top:18px">Where G puts no mass, $D^* = 1$; where $\pg = \pd$, $D^* = \tfrac12$. Our collapsed toy run never generates bump B, and its learned D there is $1.00$.</p>
+  </div>
+  <aside class="notes"><p>f is concave in y (both terms are), so the stationary point is the maximum. The integral is maximised by maximising the integrand separately at every x, because D(x) can be chosen freely at each x (an idealised, infinitely flexible D).</p></aside>
+</section>
+
+<section class="slide sec-end" id="app-js" data-section="Appendix">
+  <p class="kicker">Appendix B · plug $D^*$ back in</p>
+  <h2>With a perfect D, G minimises the Jensen–Shannon divergence</h2>
+  <div class="body">
+    <div class="ladder" style="grid-template-columns:auto 1fr;row-gap:10px;font-size:24px">
+      <span class="why" style="padding:0"><b>substitute</b></span>
+      <span>$V(D^*, G) = \E_{\pd}\Big[\log\dfrac{\pd}{\pd + \pg}\Big] + \E_{\pg}\Big[\log\dfrac{\pg}{\pd + \pg}\Big]$</span>
+      <span class="why" style="padding:0" data-b="2"><b>the average $m$</b></span>
+      <span data-b="2">$m = \tfrac12(\pd + \pg), \qquad \dfrac{\pd}{\pd + \pg} = \dfrac12\cdot\dfrac{\pd}{m}$</span>
+      <span class="why" style="padding:0" data-b="3"><b>split the logs</b></span>
+      <span data-b="3">$= -\log 2 + \E_{\pd}\Big[\log\dfrac{\pd}{m}\Big] \;-\; \log 2 + \E_{\pg}\Big[\log\dfrac{\pg}{m}\Big]$</span>
+      <span class="why" style="padding:0" data-b="4"><b>two KLs</b></span>
+      <span data-b="4">$= -\log 4 + \KL(\pd \,\|\, m) + \KL(\pg \,\|\, m) = -\log 4 + 2\,\JS(\pd \,\|\, \pg)$</span>
+    </div>
+    <p class="small" data-b="5" style="margin-top:18px">$\JS \ge 0$, and $\JS = 0$ only when $\pg = \pd$: the best G reaches $V = -\log 4 \approx −1.386$, with $D^* = \tfrac12$ everywhere. Idealised: real D and G are finite networks trained for finitely many steps.</p>
+  </div>
+  <p class="src">Goodfellow et al., <i>Generative Adversarial Nets</i>, NeurIPS 2014, Theorem 1.</p>
+  <aside class="notes"><p>The KL here is last lecture's KL. Sanity check with our MNIST run: in the last epoch the average L_D was 1.36, close to log 4 ≈ 1.386, the value when D says ½ to everything. That is consistent with a D that can barely tell, not a proof that p_G = p_data.</p></aside>
+</section>
+
+<section class="slide sec-end" id="reading" data-section="Appendix">
+  <p class="kicker">Further reading</p>
+  <h2>Where to go next</h2>
+  <div class="body">
+    <ul class="small" style="font-size:22px;line-height:1.6">
+      <li>Goodfellow et al., <i>Generative Adversarial Nets</i>, arXiv 1406.2661: the game, $D^*$ and the non-saturating loss</li>
+      <li>Radford, Metz &amp; Chintala, <i>DCGAN</i>, arXiv 1511.06434: the convolutional recipe our small MNIST G and D loosely follow</li>
+      <li>Lilian Weng, <i>From GAN to WGAN</i> (lilianweng.github.io): why GAN training is hard, and what WGAN changes</li>
+      <li>Isola et al., <i>pix2pix</i>, arXiv 1611.07004 · Karras et al., <i>StyleGAN</i>, arXiv 1812.04948</li>
+      <li>This lecture's code: <span class="mono">scripts/train_models.py</span> (both GANs, <span class="mono">gan_step</span>) and <span class="mono">scripts/make_figures.py</span> (every number on the slides)</li>
+    </ul>
+  </div>
+</section>
+
+</main>
+<script>window.MATH_MACROS = {"\\cx": "\\textcolor{##245EDB}{#1}", "\\cenc": "\\textcolor{##8B2CDE}{#1}", "\\cdec": "\\textcolor{##0F766E}{#1}", "\\cz": "\\textcolor{##AA4E08}{#1}", "\\closs": "\\textcolor{##BE123C}{#1}", "\\cdisc": "\\textcolor{##334155}{#1}", "\\N": "\\mathcal{N}", "\\KL": "\\mathrm{KL}", "\\E": "\\mathbb{E}", "\\ELBO": "\\mathrm{ELBO}", "\\JS": "\\mathrm{JS}", "\\pd": "p_{\\text{data}}", "\\pg": "p_G", "\\eps": "\\varepsilon", "\\hl": "\\colorbox{##FFF1B8}{$\\displaystyle #1$}"};</script>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="vendor/katex/contrib/auto-render.min.js"></script>
+<script src="deck/deck.js"></script>
+</body>
+</html>
