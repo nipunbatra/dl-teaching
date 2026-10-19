@@ -1,0 +1,93 @@
+<!-- ===================================================================== WRAP-UP + APPENDIX -->
+
+<section class="slide sec-end opener break" id="wrap" data-section="Wrap-up">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Wrap-up</p>
+      <h2 style="font-size:44px">One GAN iteration, in four sentences</h2>
+      <ol class="takeaways">
+        <li><b>D step:</b> binary cross-entropy, real → 1, fake → 0, with the fake detached so G gets nothing.</li>
+        <li data-b="2"><b>G step:</b> fresh fakes labelled 1; D's weights locked, but the gradient flows through D's input into G.</li>
+        <li data-b="3"><b>Loss:</b> minimise $-\log D(G(z))$, not $\log(1 - D(G(z)))$: same goal, no vanishing slope early on.</li>
+        <li data-b="4"><b>Judge by samples</b> from fixed $z$, not by the losses, and look for missing modes.</li>
+      </ol>
+    </div>
+    <!--route:6-->
+  </div>
+  <aside class="notes"><p>Ask a student to say each sentence before you click it. Next lecture takes a fourth route to generation: learn to remove noise a little at a time (diffusion).</p></aside>
+</section>
+
+<section class="slide sec-end" id="exit" data-section="Wrap-up">
+  <p class="kicker">Before you leave</p>
+  <h2>Three exit questions</h2>
+  <div class="body">
+    <ol class="exitq">
+      <li>In the G step, why do we lock D with <code>requires_grad_(False)</code> instead of detaching the fake?
+        <span class="ans" data-b="2">G's gradient is $-\frac{1}{D}\cdot\frac{\partial D}{\partial x}\cdot\frac{\partial x}{\partial\theta}$: it must pass through D's input. Detaching cuts that path and G learns nothing; locking only stops D's weights from changing.</span></li>
+      <li>Why does the code train G on $-\log D(G(z))$ rather than minimising $\log(1 - D(G(z)))$?
+        <span class="ans" data-b="2">Early on $D(G(z)) \approx 0$. With respect to D's logit the minimax slope is $-D \approx 0$; the non-saturating slope is $D - 1 \approx -1$. Same fixed point, a push that does not vanish.</span></li>
+      <li>Two toy GANs both end with flat, similar losses. How would you find out that one of them has collapsed?
+        <span class="ans" data-b="2">Look at its samples from fixed $z$ next to the data: {{toygan_bad_left_pct}}% on bump A and {{toygan_bad_right_pct}}% on bump B. Each sample looks real; the missing bump only shows in the distribution.</span></li>
+    </ol>
+  </div>
+  <aside class="notes"><p>Give two minutes in pairs, then reveal.</p></aside>
+</section>
+
+<section class="slide sec-end opener" id="appendix" data-section="Appendix">
+  <p class="kicker">Appendix</p>
+  <h2>Derivations for reference</h2>
+  <p>The optimal discriminator, and why a perfect D turns the game into minimising the Jensen–Shannon divergence.</p>
+</section>
+
+<section class="slide sec-end" id="app-dstar" data-section="Appendix">
+  <p class="kicker">Appendix A · for a fixed G</p>
+  <h2>The optimal discriminator</h2>
+  <div class="body">
+    <div class="ladder" style="grid-template-columns:auto 1fr;row-gap:10px;font-size:25px">
+      <span class="why" style="padding:0"><b>the objective</b></span>
+      <span>$V(D) = \displaystyle\int \Big[\pd(x)\log D(x) + \pg(x)\log\big(1-D(x)\big)\Big]\,dx$</span>
+      <span class="why" style="padding:0" data-b="2"><b>one $x$ at a time</b></span>
+      <span data-b="2">$f(y) = a\log y + b\log(1-y), \quad y = D(x),\; a = \pd(x),\; b = \pg(x)$</span>
+      <span class="why" style="padding:0" data-b="3"><b>set the slope to 0</b></span>
+      <span data-b="3">$f'(y) = \dfrac{a}{y} - \dfrac{b}{1-y} = 0 \;\;\Rightarrow\;\; a(1-y) = b\,y \;\;\Rightarrow\;\; y = \dfrac{a}{a+b}$</span>
+      <span class="why" style="padding:0" data-b="4"><b>so</b></span>
+      <span data-b="4">$D^*(x) = \dfrac{\pd(x)}{\pd(x) + \pg(x)}$</span>
+    </div>
+    <p class="small" data-b="5" style="margin-top:18px">Where G puts no mass, $D^* = 1$; where $\pg = \pd$, $D^* = \tfrac12$. Our collapsed toy run never generates bump B, and its learned D there is ${{collapse_DB}}$.</p>
+  </div>
+  <aside class="notes"><p>f is concave in y (both terms are), so the stationary point is the maximum. The integral is maximised by maximising the integrand separately at every x, because D(x) can be chosen freely at each x (an idealised, infinitely flexible D).</p></aside>
+</section>
+
+<section class="slide sec-end" id="app-js" data-section="Appendix">
+  <p class="kicker">Appendix B · plug $D^*$ back in</p>
+  <h2>With a perfect D, G minimises the Jensen–Shannon divergence</h2>
+  <div class="body">
+    <div class="ladder" style="grid-template-columns:auto 1fr;row-gap:10px;font-size:24px">
+      <span class="why" style="padding:0"><b>substitute</b></span>
+      <span>$V(D^*, G) = \E_{\pd}\Big[\log\dfrac{\pd}{\pd + \pg}\Big] + \E_{\pg}\Big[\log\dfrac{\pg}{\pd + \pg}\Big]$</span>
+      <span class="why" style="padding:0" data-b="2"><b>the average $m$</b></span>
+      <span data-b="2">$m = \tfrac12(\pd + \pg), \qquad \dfrac{\pd}{\pd + \pg} = \dfrac12\cdot\dfrac{\pd}{m}$</span>
+      <span class="why" style="padding:0" data-b="3"><b>split the logs</b></span>
+      <span data-b="3">$= -\log 2 + \E_{\pd}\Big[\log\dfrac{\pd}{m}\Big] \;-\; \log 2 + \E_{\pg}\Big[\log\dfrac{\pg}{m}\Big]$</span>
+      <span class="why" style="padding:0" data-b="4"><b>two KLs</b></span>
+      <span data-b="4">$= -\log 4 + \KL(\pd \,\|\, m) + \KL(\pg \,\|\, m) = -\log 4 + 2\,\JS(\pd \,\|\, \pg)$</span>
+    </div>
+    <p class="small" data-b="5" style="margin-top:18px">$\JS \ge 0$, and $\JS = 0$ only when $\pg = \pd$: the best G reaches $V = -\log 4 \approx {{minus_log4}}$, with $D^* = \tfrac12$ everywhere. Idealised: real D and G are finite networks trained for finitely many steps.</p>
+  </div>
+  <p class="src">Goodfellow et al., <i>Generative Adversarial Nets</i>, NeurIPS 2014, Theorem 1.</p>
+  <aside class="notes"><p>The KL here is last lecture's KL. Sanity check with our MNIST run: in the last epoch the average L_D was {{gan_final_lossD}}, close to log 4 ≈ 1.386, the value when D says ½ to everything. That is consistent with a D that can barely tell, not a proof that p_G = p_data.</p></aside>
+</section>
+
+<section class="slide sec-end" id="reading" data-section="Appendix">
+  <p class="kicker">Further reading</p>
+  <h2>Where to go next</h2>
+  <div class="body">
+    <ul class="small" style="font-size:22px;line-height:1.6">
+      <li>Goodfellow et al., <i>Generative Adversarial Nets</i>, arXiv 1406.2661: the game, $D^*$ and the non-saturating loss</li>
+      <li>Radford, Metz &amp; Chintala, <i>DCGAN</i>, arXiv 1511.06434: the convolutional recipe our small MNIST G and D loosely follow</li>
+      <li>Lilian Weng, <i>From GAN to WGAN</i> (lilianweng.github.io): why GAN training is hard, and what WGAN changes</li>
+      <li>Isola et al., <i>pix2pix</i>, arXiv 1611.07004 · Karras et al., <i>StyleGAN</i>, arXiv 1812.04948</li>
+      <li>This lecture's code: <span class="mono">scripts/train_models.py</span> (both GANs, <span class="mono">gan_step</span>) and <span class="mono">scripts/make_figures.py</span> (every number on the slides)</li>
+    </ul>
+  </div>
+</section>

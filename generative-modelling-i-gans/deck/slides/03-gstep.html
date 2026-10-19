@@ -1,0 +1,107 @@
+<!-- ===================================================================== PART 2 · TRAINING G THROUGH D -->
+
+<section class="slide sec-p2 opener break" id="p2-open" data-section="2 · Training G">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 2 of 5</p>
+      <h2>Training G through D</h2>
+      <p class="why">G never sees a real image and has no target output. Its only teacher is D: move each fake towards where D says <b>"more real"</b>, and change G's weights so that it does.</p>
+    </div>
+    <!--route:2-->
+  </div>
+</section>
+
+<section class="slide sec-p2" id="gan-gstep-1d" data-section="2 · Training G">
+  <p class="kicker">Step 2 of each iteration: what would fool D?</p>
+  <h2>G step: push every fake uphill on $D(x)$</h2>
+  <div class="body">
+    <div class="row" style="gap:28px">
+      <img class="fig" src="figures/data/gan1d-arrows.svg" style="width:640px">
+      <div class="col grow">
+        <div class="mathblock left" style="font-size:26px">$$\mathcal L_G = -\log D(\cdec{G(z)})$$</div>
+        <p class="small">The same BCE, but now the fakes are labelled 1: "make $D$ call these real".</p>
+        <p class="small" data-b="2">Our fake at $x = {{dloss.x_fake}}$: $D = {{dloss.D_fake}}$, so $\mathcal L_G = -\log {{dloss.D_fake}} = {{dloss.lg_fake}}$. Raising $D$ there lowers it.</p>
+        <p class="small" data-b="3">Red arrows: which way $D(x)$ increases at each fake, from D's real slope at step {{dloss.step}}.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="4">G cannot move the fakes directly. It changes its weights $\theta$ so that its outputs move along the arrows.</p>
+  <aside class="notes"><p>At step {{dloss.step}} D has learned that large x looks real (D rises towards bump B), so most fakes are pushed right. Arrows are scaled by the slope dD/dx of the recorded D at that step, computed on a grid; the fakes are a subsample of the 2,000 fixed-z samples.</p></aside>
+</section>
+
+<section class="slide sec-p2" id="gan-chain" data-section="2 · Training G">
+  <p class="kicker">Where G's gradient comes from</p>
+  <h2>The chain rule runs through D</h2>
+  <div class="body">
+    <div class="mathblock" style="font-size:30px">$$\frac{\partial \mathcal L_G}{\partial \theta} = \underbrace{\frac{\partial \mathcal L_G}{\partial D}}_{=\,-1/D} \cdot \underbrace{\frac{\partial D}{\partial x}}_{\text{slope of } D \text{ at the fake}} \cdot \underbrace{\frac{\partial x}{\partial \theta}}_{\text{how } \theta \text{ moves the fake}}, \qquad x = G_\theta(z)$$</div>
+    <div class="row" style="justify-content:center;gap:22px;margin-top:22px">
+      <div class="callout loss" style="width:350px" data-b="2">$-1/D$ is always negative: raising $D$ always lowers $\mathcal L_G$. Our fake: $-1/{{dloss.D_fake}} = {{dloss.inv_D}}$.</div>
+      <div class="callout disc" style="width:350px" data-b="3">$\partial D/\partial x$: which way is "more real" at this fake. For ours it is ${{dloss.slope}}$: more real to the right. Uses D's weights, does not change them.</div>
+      <div class="callout dec" style="width:350px" data-b="4">$\partial x/\partial\theta$: ordinary backprop through $G$, spreading the push over G's weights.</div>
+    </div>
+  </div>
+  <p class="q" data-b="5">First two factors for our fake: ${{dloss.inv_D}} \times {{dloss.slope}} = {{dloss.dLdx}}$. Negative, so a gradient step moves it right, towards bump B.</p>
+  <aside class="notes">
+    <p>This is why the G step must not detach the fake: the middle factor needs the path through D. It is also why D's weights can stay frozen: we need the slope of D with respect to its input, not an update to D.</p>
+    <p>For one sample. Over a batch, G's gradient is the average of these per-fake terms. The slope is read from the recorded D at step {{dloss.step}} (finite differences on a grid), rounded as shown.</p>
+  </aside>
+</section>
+
+<section class="slide sec-p2" id="gan-gstep" data-section="2 · Training G">
+  <p class="kicker">Update G, hold D fixed</p>
+  <h2>G step: lock D's weights, keep the wire</h2>
+  <div class="body center"><!--svg:gan-gstep--></div>
+  <pre class="code" style="width:860px;margin:0 auto;font-size:18px"><span class="line" data-hl="2">D.requires_grad_(False)                 <span class="c"># lock D's weights, keep the path</span></span>
+<span class="line">loss_G = bce(D(G(torch.randn(B, zdim))), ones)   <span class="c"># fresh fakes, no detach</span></span>
+<span class="line">opt_G.zero_grad(); loss_G.backward(); opt_G.step(); D.requires_grad_(True)</span></pre>
+  <aside class="notes"><p>Gradient must flow through D to reach G, so no detach and no torch.no_grad() here. requires_grad_(False) only stops D's own weights from collecting gradients; D is still differentiated with respect to its input. Strictly, opt_G.step() only touches G's weights, and the next D step starts with opt_D.zero_grad(), so in this exact code the lock mainly saves computing gradients for D's weights. It matters in code that accumulates gradients across steps, and it states the intent.</p></aside>
+</section>
+
+<section class="slide sec-p2" id="freeze-detach" data-section="2 · Training G">
+  <p class="kicker">The most common GAN bug</p>
+  <h2>Freezing is not detaching</h2>
+  <div class="body center"><!--svg:freeze-detach--></div>
+  <p class="q" data-gone="2-">Q. The wire from G to D is cut. Does G get any gradient from this loss?</p>
+  <p class="q" data-b="=3" data-gone="1-2,4-">Q. Now D's weights are locked but the wire is intact. Does G learn?</p>
+  <p class="q" data-b="4" data-gone="1-3">Detach the fake in the G step and loss_G still prints a number, but G never learns. A silent failure.</p>
+  <aside class="notes"><p>Quiz: which single change to the G-step code makes the generator receive no gradient? Answer: <code>D(G(z).detach())</code>, or wrapping the G step in <code>torch.no_grad()</code>. Both still print a loss.</p></aside>
+</section>
+
+<section class="slide sec-p2" id="gan1d-gonly" data-section="2 · Training G">
+  <p class="kicker">The opposite experiment: freeze D, run only the G step</p>
+  <h2>Against a judge that stops learning, G overshoots</h2>
+  <div class="body">
+    <div class="film-cols four">
+      <img class="fig" src="figures/data/film-gonly-0.svg">
+      <img class="fig" src="figures/data/film-gonly-25.svg" data-b="2">
+      <img class="fig" src="figures/data/film-gonly-100.svg" data-b="3">
+      <img class="fig" src="figures/data/film-gonly-300.svg" data-b="4">
+    </div>
+    <p class="cap" data-b="4">Wider axis than before ($-10$ to $10$); fakes beyond it are piled at the edges.</p>
+  </div>
+  <p class="q" data-b="=1" data-gone="2-">Q. D (bottom) is the D from the Part 1 experiment, now frozen. Where will the fakes go?</p>
+  <p class="q" data-b="4" data-gone="1-3">After {{oneplayer.g_steps}} G steps, {{oneplayer_beyond3_pct}}% of the fakes are beyond $\pm 3$: G goes wherever D says "real", data or not. So D must keep learning, and the two steps alternate.</p>
+  <aside class="notes">
+    <p>Same separate run as the Part 1 experiment, second phase: D frozen where that experiment left it, only the G step for {{oneplayer.g_steps}} steps. Only {{oneplayer_near_bumps_pct}}% of the fakes end within 1 of a bump centre.</p>
+    <p>This is the G step from the last three slides, working exactly as designed: every fake moves uphill on D. The failure is that D no longer updates, so nothing tells G that the tails are empty. In the real loop, the next D step would mark those tails as fake.</p>
+  </aside>
+</section>
+
+<section class="slide sec-p2" id="gan1d-train" data-section="2 · Training G">
+  <p class="kicker">Now alternate the two steps, {{toygan_steps}} times</p>
+  <h2>Watch the game on the toy data</h2>
+  <div class="body">
+    <div class="film-cols">
+      <img class="fig" src="figures/data/film-game-25.svg">
+      <img class="fig" src="figures/data/film-game-100.svg" data-b="2">
+      <img class="fig" src="figures/data/film-game-250.svg" data-b="3">
+      <img class="fig" src="figures/data/film-game-1000.svg" data-b="4">
+      <img class="fig" src="figures/data/film-game-3000.svg" data-b="5">
+    </div>
+  </div>
+  <p class="q" data-b="5">By step {{toygan_steps}} the fakes cover both bumps, and $D(x)$ is near 0.5 wherever the data is: it can no longer tell.</p>
+  <aside class="notes">
+    <p>Before each click ask: given the D curve now, where will the fakes move next? Recorded run (seed {{toygan.good_seed}}). Final fractions of fakes within 1 of each bump centre: {{toygan.good.left}} and {{toygan.good.right}}.</p>
+    <p>The game is not always this smooth. In {{toygan.step25_one_bump_runs}} of our {{toygan.runs}} runs, more than 90% of the fakes sat on a single bump at step 25; every one of the {{toygan.runs}} runs still covered both bumps by step {{toygan_steps}}.</p>
+  </aside>
+</section>

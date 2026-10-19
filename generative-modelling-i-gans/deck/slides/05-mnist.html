@@ -1,0 +1,67 @@
+<!-- ===================================================================== PART 4 · MNIST -->
+
+<section class="slide sec-p4 opener break" id="p4-open" data-section="4 · MNIST">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 4 of 5</p>
+      <h2>A GAN on MNIST</h2>
+      <p class="why">The same two steps, unchanged. Only G and D grow: small convolutional networks on 28 × 28 grey-level digits. Then back to the <b>vote</b>.</p>
+    </div>
+    <!--route:4-->
+  </div>
+</section>
+
+<section class="slide sec-p4" id="mnist-nets" data-section="4 · MNIST">
+  <p class="kicker">Only G and D grow</p>
+  <h2>The MNIST generator and discriminator</h2>
+  <div class="body center"><!--svg:mnist-nets--></div>
+  <p class="q" data-b="2">G turns {{gan.zdim}} numbers into 784 pixels; D turns 784 pixels into one logit. Each is a small CNN you already know how to build.</p>
+  <aside class="notes"><p>G: linear layer to 256 × 7 × 7, batch norm and ReLU, two 4 × 4 transposed convolutions with stride 2 (7 → 14 → 28), then a 3 × 3 convolution and tanh, so pixels are in [−1, 1]. D: two 4 × 4 convolutions with stride 2, leaky ReLU (0.2) and dropout (0.3), then a linear layer to one logit. Weight counts exclude batch-norm running statistics. Real digits are scaled to [−1, 1] before D sees them.</p></aside>
+</section>
+
+<section class="slide sec-p4" id="gan-code" data-section="4 · MNIST">
+  <p class="kicker">The complete update</p>
+  <h2>One GAN iteration in code</h2>
+  <div class="body">
+    <pre class="code" style="width:1040px;margin:0 auto;font-size:18px"><span class="line" data-hl="=1"><span class="c"># ---- D step: real → 1, fake → 0, G receives nothing</span></span>
+<span class="line" data-hl="=1">fake = G(torch.randn(B, zdim))</span>
+<span class="line" data-hl="=1">loss_D = bce_logits(D(real), ones) + bce_logits(D(fake.detach()), zeros)</span>
+<span class="line" data-hl="=1">opt_D.zero_grad(); loss_D.backward(); opt_D.step()</span>
+<span class="line"></span>
+<span class="line" data-hl="=2"><span class="c"># ---- G step: fresh fakes, D's weights locked, gradient flows through D</span></span>
+<span class="line" data-hl="=2">D.requires_grad_(False)</span>
+<span class="line" data-hl="=2">loss_G = bce_logits(D(G(torch.randn(B, zdim))), ones)</span>
+<span class="line" data-hl="=2">opt_G.zero_grad(); loss_G.backward(); opt_G.step()</span>
+<span class="line" data-hl="=2">D.requires_grad_(True)</span></pre>
+  </div>
+  <p class="q">Exactly this function trained the 1-D GAN and the MNIST GAN. Only G and D differ.</p>
+  <aside class="notes">
+    <p>From <code>gan_step</code> in <code>scripts/train_models.py</code>. A fresh forward pass after D's update, so no retain_graph is needed.</p>
+    <p>For MNIST: G maps {{gan.zdim}} numbers through a linear layer and two transposed convolutions to a 28 × 28 image in [−1, 1] ({{gan_params_G}} weights); D is two strided convolutions and a linear layer to one logit ({{gan_params_D}} weights). Adam, learning rate 2e-4, β₁ = 0.5, batch 128, {{gan.epochs}} epochs.</p>
+  </aside>
+</section>
+
+<section class="slide sec-p4" id="gan-film" data-section="4 · MNIST">
+  <p class="kicker">On MNIST: the same 8 codes, through training</p>
+  <h2>Watch the samples, not the loss</h2>
+  <div class="body">
+    <div class="row" style="gap:20px;justify-content:center">
+      <div class="filmlabs"><span>step 0</span><span>step 50</span><span>step 150</span><span>step 300</span><span>epoch 1</span><span>epoch 3</span><span>epoch 10</span><span>epoch 30</span></div>
+      <img class="fig pix" src="figures/data/gan-film.png" style="height:500px">
+    </div>
+  </div>
+  <aside class="notes"><p>Grey-level MNIST, small convolutional G and D, {{gan.epochs}} epochs (469 steps per epoch, so epoch 1 ends at step 469). Each column is one fixed z, so you can watch a single sample sharpen into a digit: grey static, then blobs, then strokes. Ask: at which row would you first call these digits?</p></aside>
+</section>
+
+<section class="slide sec-p4" id="vote-reveal" data-section="4 · MNIST">
+  <p class="kicker">Back to the vote</p>
+  <h2>Which were real, and what did our discriminator think?</h2>
+  <div class="body">
+    <div class="tiles vote" style="grid-template-columns:repeat(6,140px);gap:16px 30px;justify-content:center">
+      {{vote_tiles}}
+    </div>
+  </div>
+  <p class="q" data-gone="2-">Q. Our trained D outputs $P(\text{real})$ for each tile. What numbers do you expect?</p>
+  <p class="q" data-b="2" data-gone="=1">Every tile gets between {{vote_dmin}} and {{vote_dmax}}. At the end of training, D can barely tell either.</p>
+  <aside class="notes"><p>Blue frame: real MNIST test digit. Teal frame: GAN sample. The number is D(x) from our final discriminator. Over the last epoch D averaged {{gan_final_dreal}} on real batches and {{gan_final_dfake}} on fakes. A D stuck near 0.5 is what the game aims for, but it does not prove the generator is good: Part 5.</p></aside>
+</section>

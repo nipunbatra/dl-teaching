@@ -1,0 +1,60 @@
+<!-- ===================================================================== PART 3 · THE MINIMAX OBJECTIVE -->
+
+<section class="slide sec-p3 opener break" id="p3-open" data-section="3 · The objective">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 3 of 5</p>
+      <h2>The minimax objective</h2>
+      <p class="why">Textbooks write the whole game as one formula. Reading it slowly shows that our code trains G with a <b>slightly different loss</b>, and why that is a deliberate fix.</p>
+    </div>
+    <!--route:3-->
+  </div>
+</section>
+
+<section class="slide sec-p3" id="minimax" data-section="3 · The objective">
+  <p class="kicker">The textbook formula</p>
+  <h2>A two-player minimax game</h2>
+  <div class="body">
+    <div class="mathblock" style="margin-top:6px;font-size:30px">$$\min_{\cdec G}\;\max_{\cdisc D}\;\; \E_{x\sim \pd}\big[\log D(x)\big] \;+\; \E_{z\sim p(z)}\big[\log\big(1 - D(G(z))\big)\big]$$</div>
+    <div class="row" style="justify-content:center;gap:24px;margin-top:24px">
+      <div class="callout disc" style="width:520px" data-b="2"><b>D maximises:</b> high $D$ on real data, low $D$ on fakes. This is exactly our $-\mathcal L_D$, averaged.</div>
+      <div class="callout dec" style="width:520px" data-b="3"><b>G minimises:</b> only the second term involves $G$. It wants $D(G(z))$ high.</div>
+    </div>
+    <p class="small" data-b="4" style="text-align:center;margin-top:22px">With a perfect $D$, G's best move is $\pg = \pd$ (Goodfellow et al. 2014; derivation in the appendix). Real training, with finite networks and steps, has no such guarantee.</p>
+  </div>
+  <p class="q" data-b="5">Careful: here G minimises $\log(1 - D(G(z)))$, but our code minimised $-\log D(G(z))$. Same goal. Why switch?</p>
+  <aside class="notes"><p>Point at the two terms in turn and map them to the code: the first is bce(D(real), ones) with the sign flipped, the second bce(D(fake), zeros). Do not claim that GAN training provably converges in practice: the guarantee is for an ideal D and a G that can be any distribution.</p></aside>
+</section>
+
+<section class="slide sec-p3" id="saturation-derive" data-section="3 · The objective">
+  <p class="kicker">Two generator losses, two slopes</p>
+  <h2>Differentiate both with respect to D's logit $a$</h2>
+  <div class="body">
+    <div class="mathblock" style="font-size:25px">$$D = \mathrm{sigmoid}(a), \qquad \frac{dD}{da} = D\,(1-D) \qquad \text{(the logistic-regression derivative)}$$</div>
+    <div class="row top" style="justify-content:center;gap:30px;margin-top:6px">
+      <div class="col" style="width:540px" data-b="2">
+        <p class="small" style="text-align:center"><b>minimax:</b> minimise $\log(1-D)$</p>
+        <div class="mathblock" style="font-size:23px">$$\frac{d}{da}\log(1-D) = \frac{1}{1-D}\cdot\Big(-\frac{dD}{da}\Big)$$</div>
+        <div class="mathblock" style="font-size:23px">$$= \frac{-D(1-D)}{1-D} = \hl{-D}$$</div>
+        <div class="mathblock" style="font-size:23px" data-b="5">$$D = 0.01:\quad -0.01$$</div>
+      </div>
+      <div class="col" style="width:540px" data-b="3">
+        <p class="small" style="text-align:center"><b>non-saturating:</b> minimise $-\log D$</p>
+        <div class="mathblock" style="font-size:23px">$$\frac{d}{da}\big(-\log D\big) = -\frac{1}{D}\cdot\frac{dD}{da}$$</div>
+        <div class="mathblock" style="font-size:23px">$$= \frac{-D(1-D)}{D} = \hl{D - 1}$$</div>
+        <div class="mathblock" style="font-size:23px" data-b="5">$$D = 0.01:\quad -0.99$$</div>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="=4" data-gone="1-3,5-">Q. Early in training, which value of $D(G(z))$ is typical: near 0, near 0.5, or near 1?</p>
+  <p class="q" data-b="5" data-gone="1-4">Near 0: D easily rejects early fakes. There the minimax slope vanishes; the non-saturating one does not.</p>
+  <aside class="notes"><p>Both losses push D(G(z)) up and share the same ideal solution. They are not equal as functions; they differ in how hard they push when the generator is bad, which is exactly when it needs a push. The derivative is taken with respect to the logit a because that is what the gradient passes through on its way back into G.</p></aside>
+</section>
+
+<section class="slide sec-p3" id="saturation" data-section="3 · The objective">
+  <p class="kicker">Why the code uses a different generator loss</p>
+  <h2>Early on, the minimax loss gives G almost no signal</h2>
+  <div class="body center"><img class="fig" src="figures/data/saturation.svg" style="width:990px"></div>
+  <p class="q">When D easily spots a fake ($D = 0.01$): slope $-0.01$ for $\log(1-D)$, slope $-0.99$ for $-\log D$. Same goal, a {{sat_ratio}}× stronger push.</p>
+  <aside class="notes"><p>Left: the two generator losses as functions of D's logit a for a fake. Right: their slopes, d log(1 − sigmoid a)/da = −D and d[−log sigmoid a]/da = D − 1. Far left (a very negative, D near 0) is where a bad generator lives: the dashed slope is flat there, the teal one is about −1. Goodfellow et al. (2014) already recommended the −log D version for this reason.</p></aside>
+</section>

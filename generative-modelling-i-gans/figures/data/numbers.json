@@ -1,0 +1,166 @@
+{
+ "toygan": {
+  "good_seed": 4,
+  "bad_seed": 0,
+  "steps": 3000,
+  "runs": 8,
+  "good": {
+   "left": 0.52,
+   "right": 0.46
+  },
+  "bad": {
+   "left": 0.95,
+   "right": 0.0
+  },
+  "all": [
+   {
+    "seed": 0,
+    "left": 0.52,
+    "right": 0.46
+   },
+   {
+    "seed": 1,
+    "left": 0.44,
+    "right": 0.51
+   },
+   {
+    "seed": 2,
+    "left": 0.4,
+    "right": 0.52
+   },
+   {
+    "seed": 3,
+    "left": 0.5,
+    "right": 0.46
+   },
+   {
+    "seed": 4,
+    "left": 0.52,
+    "right": 0.46
+   },
+   {
+    "seed": 5,
+    "left": 0.36,
+    "right": 0.51
+   },
+   {
+    "seed": 6,
+    "left": 0.51,
+    "right": 0.41
+   },
+   {
+    "seed": 7,
+    "left": 0.51,
+    "right": 0.45
+   }
+  ],
+  "step25_one_bump_runs": 5
+ },
+ "collapse": {
+  "D_A": 0.3,
+  "D_mid": 0.25,
+  "D_B": 1.0,
+  "slope_A": 0.04
+ },
+ "dloss": {
+  "step": 25,
+  "x_real": 2.0,
+  "x_fake": 0.0,
+  "D_real": 0.71,
+  "D_fake": 0.38,
+  "l_real": 0.342,
+  "l_fake": 0.478,
+  "total": 0.82,
+  "lg_fake": 0.97,
+  "inv_D": -2.63,
+  "slope": 0.08,
+  "dLdx": -0.21
+ },
+ "oneplayer": {
+  "d_steps": 200,
+  "g_steps": 300,
+  "D0": 0.01,
+  "D2": 1.0,
+  "D4": 1.0,
+  "Dm4": 1.0,
+  "beyond3": 0.78,
+  "beyond10": 0.17,
+  "near_bumps": 0.17
+ },
+ "vote": [
+  {
+   "n": 1,
+   "kind": "generated",
+   "d_real": 0.54
+  },
+  {
+   "n": 2,
+   "kind": "real",
+   "d_real": 0.45
+  },
+  {
+   "n": 3,
+   "kind": "generated",
+   "d_real": 0.55
+  },
+  {
+   "n": 4,
+   "kind": "real",
+   "d_real": 0.47
+  },
+  {
+   "n": 5,
+   "kind": "real",
+   "d_real": 0.5
+  },
+  {
+   "n": 6,
+   "kind": "generated",
+   "d_real": 0.5
+  },
+  {
+   "n": 7,
+   "kind": "generated",
+   "d_real": 0.39
+  },
+  {
+   "n": 8,
+   "kind": "generated",
+   "d_real": 0.42
+  },
+  {
+   "n": 9,
+   "kind": "real",
+   "d_real": 0.55
+  },
+  {
+   "n": 10,
+   "kind": "generated",
+   "d_real": 0.46
+  },
+  {
+   "n": 11,
+   "kind": "real",
+   "d_real": 0.48
+  },
+  {
+   "n": 12,
+   "kind": "real",
+   "d_real": 0.43
+  }
+ ],
+ "digit3_index": 90,
+ "gan_final": {
+  "epoch": 30,
+  "loss_D": 1.3620336037963183,
+  "loss_G": 0.7420355836465669,
+  "D_real": 0.5129551447784977,
+  "D_fake": 0.48306885526886884
+ },
+ "gan": {
+  "epochs": 30,
+  "zdim": 100,
+  "params_G": 1948545,
+  "params_D": 138561
+ }
+}

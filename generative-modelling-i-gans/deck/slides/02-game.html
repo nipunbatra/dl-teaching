@@ -1,0 +1,97 @@
+<!-- ===================================================================== PART 1 · TWO PLAYERS -->
+
+<section class="slide sec-p1 opener break" id="p1-open" data-section="1 · Two players">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 1 of 5</p>
+      <h2>Two players, one game</h2>
+      <p class="why">No likelihood to maximise. Instead, a second network learns to tell <b>real</b> from <b>fake</b>, and its opinion becomes the generator's only training signal.</p>
+    </div>
+    <!--route:1-->
+  </div>
+</section>
+
+<section class="slide sec-p1" id="gan-idea" data-section="1 · Two players">
+  <p class="kicker">In the vote, you were the discriminator</p>
+  <h2>Two networks, one game</h2>
+  <div class="body center"><!--svg:gan--></div>
+  <p class="q" data-b="=2" data-gone="=1,3-">Q. What should each network want D to say about a fake?</p>
+  <p class="q" data-b="3" data-gone="1-2">No likelihood, no encoder. G's training signal comes entirely from D.</p>
+  <aside class="notes">
+    <p>Analogy if useful: G is a forger, D is an examiner. Each gets better because the other does. But keep the maths precise: D outputs one number, the probability that its input is real.</p>
+    <p>Images: our running 3 (real, MNIST test digit #{{digit3_index}}, grey levels) and a sample from the GAN we trained.</p>
+  </aside>
+</section>
+
+<section class="slide sec-p1" id="gan1d-start" data-section="1 · Two players">
+  <p class="kicker">Last lecture's two bumps, now as GAN data</p>
+  <h2>A GAN on the toy data, at step 0</h2>
+  <div class="body">
+    <div class="row" style="gap:28px">
+      <img class="fig" src="figures/data/gan1d-0.svg" style="width:660px">
+      <div class="col grow">
+        <p class="small"><span class="cx">■</span> blue: the real data, two equal bumps at $-2$ and $+2$</p>
+        <p class="small"><span class="cdec">■</span> teal: G's samples for 2,000 fixed $z$</p>
+        <p class="small"><span class="cdisc">■</span> slate: $D(x)$, the probability that $x$ is real</p>
+        <p class="small" data-b="2">G: 1 number in ($z \sim \N(0, 1)$), 1 number out. D: 1 number in, 1 logit out. Both small MLPs.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="2">Untrained, G squeezes everything into one spike near 0, and D says about 0.5 everywhere.</p>
+  <aside class="notes"><p>Same data as last lecture: half the points from a bump at −2, half from a bump at +2, each with spread 0.5. G must learn to turn one bump of noise into two bumps of data. Recorded run, seed {{toygan.good_seed}}; 64 hidden units per layer in both networks.</p></aside>
+</section>
+
+<section class="slide sec-p1" id="gan-dloss" data-section="1 · Two players">
+  <p class="kicker">Step 1 of each iteration: train the judge</p>
+  <h2>The discriminator is an ordinary binary classifier</h2>
+  <div class="body">
+    <div class="mathblock" style="font-size:27px">$$\mathcal L_D = -\log D(\cx{x_{\text{real}}}) \;-\; \log\big(1 - D(\cdec{x_{\text{fake}}})\big), \qquad \cdec{x_{\text{fake}}} = G(z)$$</div>
+    <div class="row" style="gap:26px;margin-top:6px">
+      <img class="fig" src="figures/data/gan1d-dloss.svg" style="width:520px">
+      <table class="work" style="font-size:21px">
+        <tr><th>input</th><th>label</th><th>D says</th><th>loss</th></tr>
+        <tr data-b="2"><td><span class="cx">real</span>, $x = {{dloss.x_real}}$</td><td>1</td><td>{{dloss.D_real}}</td><td>$-\log {{dloss.D_real}} = {{dloss.l_real}}$</td></tr>
+        <tr data-b="3"><td><span class="cdec">fake</span>, $x = {{dloss.x_fake}}$</td><td>0</td><td>{{dloss.D_fake}}</td><td>$-\log(1-{{dloss.D_fake}}) = {{dloss.l_fake}}$</td></tr>
+        <tr class="total" data-b="4"><td>$\mathcal L_D$</td><td></td><td></td><td>{{dloss.total}}</td></tr>
+      </table>
+    </div>
+  </div>
+  <p class="q" data-b="4">Real → 1, fake → 0: plain binary cross-entropy. The only new thing is that the "fake" examples keep changing.</p>
+  <aside class="notes">
+    <p>Numbers read off our recorded 1-D run at step {{dloss.step}}: D's curve at x = {{dloss.x_real}} (the centre of bump B) and at the fake that landed closest to 0, in the empty gap between the bumps. The losses use the rounded D values on the slide.</p>
+    <p>Ask: which term is larger, and why? D is fairly sure the real point is real (0.71), less sure the fake is fake (0.38 is not far from 0.5). Training D lowers both.</p>
+    <p>In code, D returns a raw logit and we use <code>binary_cross_entropy_with_logits</code>; D(x) = sigmoid(logit) for display. Over a batch, average each term.</p>
+  </aside>
+</section>
+
+<section class="slide sec-p1" id="gan-dstep" data-section="1 · Two players">
+  <p class="kicker">Update D, hold G fixed</p>
+  <h2>D step: cut the wire to G with detach()</h2>
+  <div class="body center"><!--svg:gan-dstep--></div>
+  <pre class="code" style="width:860px;margin:0 auto;font-size:18px"><span class="line">fake = G(torch.randn(B, zdim))</span>
+<span class="line" data-hl="2">loss_D = bce(D(real), ones) + bce(D(<b>fake.detach()</b>), zeros)</span>
+<span class="line">opt_D.zero_grad(); loss_D.backward(); opt_D.step()</span></pre>
+  <p class="q" data-gone="2-" style="margin-top:14px">Q. loss_D also depends on G's weights, through the fake. Should backward() reach them?</p>
+  <p class="q" data-b="2" data-gone="=1" style="margin-top:14px">No: this step trains D only. detach() keeps the numbers in fake but forgets how G made them.</p>
+  <aside class="notes"><p>detach() keeps the numbers in fake but forgets how they were computed, so backward() stops there. Without it, backward() would also compute gradients for G's weights from D's loss, and they point the wrong way for G (towards fakes that are easier to catch). Our G step zeroes G's gradients before using them, so here it would only be wasted work; in code that forgets zero_grad() it is a real bug.</p></aside>
+</section>
+
+<section class="slide sec-p1" id="gan1d-donly" data-section="1 · Two players">
+  <p class="kicker">An experiment: freeze G, run only the D step</p>
+  <h2>D learns to say "fake" exactly where the fakes are</h2>
+  <div class="body">
+    <div class="film-cols four">
+      <img class="fig" src="figures/data/film-donly-0.svg">
+      <img class="fig" src="figures/data/film-donly-5.svg" data-b="2">
+      <img class="fig" src="figures/data/film-donly-25.svg" data-b="3">
+      <img class="fig" src="figures/data/film-donly-200.svg" data-b="4">
+    </div>
+  </div>
+  <p class="q" data-b="=1" data-gone="2-">Q. G's fakes sit in one spike near 0 and never move. What should D's curve turn into?</p>
+  <p class="q" data-b="4" data-gone="1-3">After {{oneplayer.d_steps}} D steps: $D = {{oneplayer_D0}}$ at the fakes, ${{oneplayer_D2}}$ on the bumps, and also ${{oneplayer_D4}}$ at $x = 4$, where there is no data at all.</p>
+  <aside class="notes">
+    <p>A separate run made for this slide: the same networks and seed as the main toy run, G kept at its initial weights, only the D step of gan_step for {{oneplayer.d_steps}} steps (<code>train_toy_one_player</code> in train_models.py).</p>
+    <p>The point of the last panel: D only knows the fakes it has seen. Everything that is not "near 0" looks real to it, including empty space. Ask: what will G do with a judge like this? (Next part.)</p>
+  </aside>
+</section>
+

@@ -1,0 +1,51 @@
+<!-- ===================================================================== PART 5 · FAILURES AND CONTROL -->
+
+<section class="slide sec-p5 opener break" id="p5-open" data-section="5 · Failures and control">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 5 of 5</p>
+      <h2>Failures and control</h2>
+      <p class="why">Every sample can look real while the model misses whole kinds of data, and the loss curves will not warn you. Then: how to <b>ask</b> a GAN for a particular digit.</p>
+    </div>
+    <!--route:5-->
+  </div>
+</section>
+
+<section class="slide sec-p5" id="collapse" data-section="5 · Failures and control">
+  <p class="kicker">The classic failure</p>
+  <h2>Mode collapse: perfect samples of only one kind</h2>
+  <div class="body">
+    <div class="row" style="gap:28px">
+      <img class="fig" src="figures/data/gan1d-collapse.svg" style="width:640px">
+      <div class="col grow">
+        <p class="small">Same data, same training loop, but G has only 4 hidden units per layer.</p>
+        <p class="small" data-b="2">After {{toygan_steps}} steps: {{toygan_bad_left_pct}}% of samples sit on bump A, {{toygan_bad_right_pct}}% on bump B.</p>
+        <p class="small" data-b="3">Every sample looks real. Bump B is never generated. Picking your favourite samples would never reveal it.</p>
+        <p class="small" data-b="4">D knows: $D(+2) = {{collapse_DB}}$. But around bump A its curve is flat ($D \approx {{collapse_DA}}$, slope at most ${{collapse_slope}}$), so no fake feels a push towards B.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="4">Like last lecture's reverse-KL fit: commit to one mode and ignore the rest.</p>
+  <aside class="notes">
+    <p>Recorded run with a deliberately small generator (seed {{toygan.bad_seed}}); the main runs used 64 hidden units. Build 4 is the Part 2 picture again: each fake only feels the slope of D where it sits. The flat stretch is measured over the central 90% of the fakes.</p>
+    <p>Real GANs collapse for subtler reasons, but the symptom is the same: high quality, low diversity.</p>
+  </aside>
+</section>
+
+<section class="slide sec-p5" id="losses" data-section="5 · Failures and control">
+  <p class="kicker">So how do you know it worked?</p>
+  <h2>The loss curves cannot tell these two runs apart</h2>
+  <div class="body center"><img class="fig" src="figures/data/gan1d-losses.svg" style="width:1080px"></div>
+  <p class="q">Both curves go flat. Only the samples show that one run lost half the data. Always look at samples, from fixed $z$, across training.</p>
+  <aside class="notes"><p>Smoothed over 50 steps. Unlike the VAE's ELBO, a GAN's losses do not measure sample quality: each player's loss depends on the other player. In practice people track sample grids and metrics such as FID.</p></aside>
+</section>
+
+<section class="slide sec-p5" id="cgan" data-section="5 · Failures and control">
+  <p class="kicker">Asking for a particular digit</p>
+  <h2>Conditioning: tell both players what you want</h2>
+  <div class="body center"><!--svg:cgan--></div>
+  <p class="q" data-gone="2-">Q. Give the label to G only. What stops G from ignoring it?</p>
+  <p class="q" data-b="2" data-gone="=1">Nothing, unless D sees $c$ too: then a perfect 3 labelled "7" is caught as fake.</p>
+  <p class="src">pix2pix (Isola et al. 2017) uses a whole sketch as the condition $c$, with an extra L1 term to the target photo.</p>
+  <aside class="notes"><p>The 7 shown is a sample from our unconditional GAN that happens to be a 7; we did not train a conditional model. pix2pix precision: its generator takes the sketch (no separate z: the authors found z was ignored and inject randomness only through dropout), and its loss adds an L1 term to the conditional GAN loss.</p></aside>
+</section>
