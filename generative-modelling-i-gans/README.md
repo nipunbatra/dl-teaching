@@ -10,6 +10,22 @@ and every figure and number on the slides comes from models trained by the scrip
 | `exports/gans.pdf` | one page per slide, final click |
 | `exports/gans-builds.pdf` | every click |
 
+## Published
+
+Live at <https://nipunbatra.github.io/dl-teaching/interactives/generative-modelling-i-gans/>
+([reading view](https://nipunbatra.github.io/dl-teaching/interactives/generative-modelling-i-gans/?reading) ·
+[PDF](https://nipunbatra.github.io/dl-teaching/interactives/generative-modelling-i-gans/generative-modelling-i-gans.pdf) ·
+[every click](https://nipunbatra.github.io/dl-teaching/interactives/generative-modelling-i-gans/generative-modelling-i-gans-builds.pdf)),
+next to Generative Modelling II under `interactives/` on `master`. To republish after a rebuild, from a clean
+checkout of `master`:
+
+```sh
+python3 generative-modelling-i-gans/scripts/publish_pages.py <master-checkout>/interactives/generative-modelling-i-gans
+git -C <master-checkout> add -f interactives/generative-modelling-i-gans   # index.html is ignored repo-wide
+```
+
+The published copy has no right-click review script (Pages has no notes server).
+
 ## Open it
 
 ```sh
