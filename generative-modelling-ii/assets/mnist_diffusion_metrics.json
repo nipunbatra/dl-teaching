@@ -1,0 +1,205 @@
+{
+  "status": "MEASURED MODEL OUTPUT",
+  "dataset": "MNIST",
+  "dataset_md5": {
+    "train-images-idx3-ubyte.gz": "f68b3c2dcbeaaa9fbdd348bbdeb94873",
+    "train-labels-idx1-ubyte.gz": "d53e105ee54ea40749a09fcbcd1e9432",
+    "t10k-images-idx3-ubyte.gz": "9fb629c4189551a2d022fa330f9573f3",
+    "t10k-labels-idx1-ubyte.gz": "ec29112dd5afa0611ce80d1b7f02629c"
+  },
+  "train_examples": 60000,
+  "preprocessing": "continuous grayscale scaled to [-1,1]",
+  "seed": 667,
+  "steps": 4000,
+  "batch_size": 128,
+  "T": 100,
+  "schedule": "cosine s=0.008; beta clipped [0.0001,0.999]",
+  "alpha_bar_T": 2.428520815556112e-07,
+  "optimizer": "Adam",
+  "learning_rate": 0.0002,
+  "condition_dropout": 0.15,
+  "ema_decay": 0.995,
+  "architecture": "1\u219224\u219248\u219272\u219248\u219224\u21921, residual U-Net; time and class embeddings",
+  "parameters": 255721,
+  "device": "cpu",
+  "torch": "2.14.0",
+  "training_run_seconds": 1650.7414469718933,
+  "history": [
+    {
+      "step": 100,
+      "noise_mse": 0.30846906796097756
+    },
+    {
+      "step": 200,
+      "noise_mse": 0.10856176145374775
+    },
+    {
+      "step": 300,
+      "noise_mse": 0.08178167924284935
+    },
+    {
+      "step": 400,
+      "noise_mse": 0.07172601994127036
+    },
+    {
+      "step": 500,
+      "noise_mse": 0.06610857009887695
+    },
+    {
+      "step": 600,
+      "noise_mse": 0.062431886233389376
+    },
+    {
+      "step": 700,
+      "noise_mse": 0.06051275514066219
+    },
+    {
+      "step": 800,
+      "noise_mse": 0.0582098026573658
+    },
+    {
+      "step": 900,
+      "noise_mse": 0.05643642701208591
+    },
+    {
+      "step": 1000,
+      "noise_mse": 0.05508094076067209
+    },
+    {
+      "step": 1100,
+      "noise_mse": 0.05377616599202156
+    },
+    {
+      "step": 1200,
+      "noise_mse": 0.05322923414409161
+    },
+    {
+      "step": 1300,
+      "noise_mse": 0.05209502175450325
+    },
+    {
+      "step": 1400,
+      "noise_mse": 0.051930529475212095
+    },
+    {
+      "step": 1500,
+      "noise_mse": 0.05069988165050745
+    },
+    {
+      "step": 1600,
+      "noise_mse": 0.05022148385643959
+    },
+    {
+      "step": 1700,
+      "noise_mse": 0.04927271634340286
+    },
+    {
+      "step": 1800,
+      "noise_mse": 0.0485504948720336
+    },
+    {
+      "step": 1900,
+      "noise_mse": 0.04850308492779732
+    },
+    {
+      "step": 2000,
+      "noise_mse": 0.048461561016738416
+    },
+    {
+      "step": 2100,
+      "noise_mse": 0.04722420994192362
+    },
+    {
+      "step": 2200,
+      "noise_mse": 0.04724949788302183
+    },
+    {
+      "step": 2300,
+      "noise_mse": 0.04761609483510256
+    },
+    {
+      "step": 2400,
+      "noise_mse": 0.04666518468409777
+    },
+    {
+      "step": 2500,
+      "noise_mse": 0.04638668246567249
+    },
+    {
+      "step": 2600,
+      "noise_mse": 0.04629821829497814
+    },
+    {
+      "step": 2700,
+      "noise_mse": 0.04617216590791941
+    },
+    {
+      "step": 2800,
+      "noise_mse": 0.045312563441693786
+    },
+    {
+      "step": 2900,
+      "noise_mse": 0.0464620341360569
+    },
+    {
+      "step": 3000,
+      "noise_mse": 0.04489829380065203
+    },
+    {
+      "step": 3100,
+      "noise_mse": 0.045265570245683194
+    },
+    {
+      "step": 3200,
+      "noise_mse": 0.04491807546466589
+    },
+    {
+      "step": 3300,
+      "noise_mse": 0.04453052829951048
+    },
+    {
+      "step": 3400,
+      "noise_mse": 0.04470679227262735
+    },
+    {
+      "step": 3500,
+      "noise_mse": 0.04452067118138075
+    },
+    {
+      "step": 3600,
+      "noise_mse": 0.04461802393198013
+    },
+    {
+      "step": 3700,
+      "noise_mse": 0.044179835319519044
+    },
+    {
+      "step": 3800,
+      "noise_mse": 0.04415990389883518
+    },
+    {
+      "step": 3900,
+      "noise_mse": 0.04370741102844477
+    },
+    {
+      "step": 4000,
+      "noise_mse": 0.04393744219094515
+    }
+  ],
+  "checkpoint_sha256": "21f14f524fecd59926fd3cf222e23c8f75d409b1629cf1bde9fc7c98f9316c68",
+  "test_examples": 2048,
+  "test_noise_mse": 0.04018862568773329,
+  "zero_predictor_noise_mse": 0.9983098022639751,
+  "generated_samples": 64,
+  "sample_seed": 1001,
+  "cfg_seed": 1002,
+  "cfg_scales": [
+    0,
+    1,
+    3,
+    7,
+    10
+  ],
+  "display": "values clipped to [-1,1] for plots; estimated x0 clipped in sampler",
+  "sample_quality": "Teaching model; inspect all 64 fixed-seed samples, including malformed digits. MSE is not an image quality metric."
+}

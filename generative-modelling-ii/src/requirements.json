@@ -1,0 +1,422 @@
+[
+  {
+    "id": "s01",
+    "number": 1,
+    "title": "\u201cCan we create a new example?\u201d",
+    "planned_builds": 1,
+    "specification": "Use a large, sourced generated-image mosaic rather than a text agenda. Show three short task labels: \u201cGenerate,\u201d \u201cComplete,\u201d \u201cControl.\u201d Ask students to look for what each system was given as input. Title and subtitle should take little space. Speaker notes introduce the learning question, not a history of diffusion. Source: one or more official DDPM/LDM project galleries."
+  },
+  {
+    "id": "s02",
+    "number": 2,
+    "title": "One description, several valid images",
+    "planned_builds": 2,
+    "specification": "Build 1: a real prompt and one verified generated sample. Build 2: reveal three additional samples for the same prompt, with distinct seeds if known. Ask: \u201cIf all satisfy the prompt, which one was the correct target?\u201d This establishes conditional distributions and diversity before equations. If the source provides no seeds, say \u201cdifferent samples,\u201d not fabricated seed numbers."
+  },
+  {
+    "id": "s03",
+    "number": 3,
+    "title": "Change the condition, keep the experiment interpretable",
+    "planned_builds": 2,
+    "specification": "Use a documented GLIGEN example with text and an explicit box arrangement, or a qualitative prompt-variation example from the LDM project. First reveal the changed condition, then the documented image output. Label exactly what the source supplies: a different spatial arrangement, a different prompt, or a controlled generation experiment. Claim a fixed seed or otherwise fixed generation settings only when the original source documents them or a genuine controlled run produces the assets. Ask whether the condition uniquely determines pixel values. Do not promise perfect compositional adherence. Include one visible failure if the chosen source supplies a suitable example."
+  },
+  {
+    "id": "s04",
+    "number": 4,
+    "title": "Fill a missing region",
+    "planned_builds": 2,
+    "specification": "First show a real image with a clearly drawn binary mask and separate \u201cobserved\u201d and \u201cunknown\u201d labels. Then reveal two or more plausible completions of the same mask. Clearly identify each completion as sampled. Use RePaint or an explicitly documented conditional inpainting model. Save this exact example for Scene 54, where the observed pixels re-enter the mathematical story."
+  },
+  {
+    "id": "s05",
+    "number": 5,
+    "title": "Turn rough strokes into a plausible image",
+    "planned_builds": 2,
+    "specification": "First show rough color strokes or an edited input from SDEdit, then reveal its documented generated result. Explain the application-level idea: add an appropriate amount of noise to an input and use a learned generative denoising process to obtain a plausible image influenced by that input. Keep the source input and result labels visible; do not describe SDEdit as preserving every input pixel or as requiring a newly trained model for each stroke drawing. Use the official assets https://sde-image-editing.github.io/images/stroke_based_generation.jpg and https://sde-image-editing.github.io/images/stroke_edit.jpg, with attribution to https://sde-image-editing.github.io/. Ask what changes as the balance between preserving the input and producing a plausible image changes."
+  },
+  {
+    "id": "s06",
+    "number": 6,
+    "title": "Can a low-resolution image have many high-resolution explanations?",
+    "planned_builds": 2,
+    "specification": "Use an SR3 or latent-diffusion super-resolution example. Show low-resolution input enlarged with nearest-neighbor pixels and a bicubic baseline, then a generated high-resolution sample. Include a reference high-resolution image only if it is genuinely paired. Ask: \u201cDoes realistic detail establish that those details existed in the input?\u201d This is a modelling question about conditional uncertainty, especially relevant to scientific imagery."
+  },
+  {
+    "id": "s07",
+    "number": 7,
+    "title": "Draw the structure, generate the appearance",
+    "planned_builds": 2,
+    "specification": "Show a real edge map, depth map, or segmentation map from ControlNet or the LDM project. Reveal corresponding generated outputs. Connect this to students\u2019 detection/segmentation lecture: here a spatial representation can become a condition. Keep the input modality explicitly labelled. Do not imply this exact control mechanism is present in every diffusion model."
+  },
+  {
+    "id": "s08",
+    "number": 8,
+    "title": "Put a particular subject in a new context",
+    "planned_builds": 2,
+    "specification": "Use the official DreamBooth teaser at https://dreambooth.github.io/DreamBooth_files/teaser_static.jpg, attributed to https://dreambooth.github.io/. First show the few reference images of a subject used for model adaptation; then reveal that subject in documented new contexts. Distinguish the stages visually: reference images adapt the pretrained model during training; a new prompt is supplied to the adapted model at inference. Do not imply the reference images are simply passed to an unchanged text-to-image model at every denoising step. Keep this as a gallery preview of subject personalization rather than another architecture derivation. Ask which properties should remain recognizable when the context changes. Video generation and outpainting can appear in an optional application-gallery drawer with separately verified sources."
+  },
+  {
+    "id": "s09",
+    "number": 9,
+    "title": "A connection to our lab\u2019s questions",
+    "planned_builds": 2,
+    "specification": "First reveal a sourced DiffusionSat example with its actual conditioning information, such as metadata or low-resolution satellite imagery. Second reveal a small, original schematic of a partially observed signal or image and several possible reconstructions. Caption the latter \u201cPossible research task,\u201d not an accomplished lab result. Ask what uncertainty, held-out validation, and measurement consistency would matter. Use a real satellite figure where a demonstrated task is claimed."
+  },
+  {
+    "id": "s10",
+    "number": 10,
+    "title": "What must a generator learn?",
+    "planned_builds": 2,
+    "specification": "Turn the previous gallery into a compact task map: unconditional sampling, text conditioning, spatial conditioning, and partial observations. Reveal the shared target \\(p_\\theta(x\\mid c)\\), with \\(c\\) absent for unconditional generation. State the three questions the next sections answer: how to create training examples; what to predict; how to turn predictions into a new sample. This is the first abstract overview, after the applications."
+  },
+  {
+    "id": "s11",
+    "number": 11,
+    "title": "Connect to Lecture I",
+    "planned_builds": 2,
+    "specification": "Re-use the prior lecture\u2019s actual VAE and GAN diagrams if available. First highlight a latent draw followed by generation. Then add a chain of many small stochastic transformations. Say that diffusion gives a different way to parameterize a generative distribution; avoid unsupported universal claims about superior coverage, stability, or quality. The new question is how to learn the transformations."
+  },
+  {
+    "id": "s12",
+    "number": 12,
+    "title": "A digit gradually loses information",
+    "planned_builds": 2,
+    "specification": "Show the selected MNIST digit and a forward trajectory at several noise levels. Reveal the images left to right with a visible time index. Use genuine computed Gaussian corruption, not an opacity crossfade. Label this as a forward Markov trajectory if generated recursively; the direct marginal-slider demonstration later must be distinguished from this trajectory."
+  },
+  {
+    "id": "s13",
+    "number": 13,
+    "title": "Removing noise is not a unique inverse",
+    "planned_builds": 3,
+    "specification": "Reveal two possible clean digits; then noisy versions whose plausible regions overlap; then a distribution over possible clean explanations for a chosen noisy observation. The visual should show ambiguity rather than claim two independently generated floating-point arrays are literally identical. Ask: \u201cCan the noisy observation always tell us which original produced it?\u201d Explain that the learned predictor exploits the distribution of training examples."
+  },
+  {
+    "id": "s14",
+    "number": 14,
+    "title": "Watch a distribution, not just a picture",
+    "planned_builds": 2,
+    "specification": "Display the eight-cluster point cloud, then animate its noisy marginals approaching a near-standard Gaussian under the actual schedule. Keep axes and scale fixed. Distinguish a distribution of data points from uncertainty about a single datapoint. This scene introduces the analytic toy without presenting a neural training claim."
+  },
+  {
+    "id": "s15",
+    "number": 15,
+    "title": "What is \\(x_0\\)?",
+    "planned_builds": 2,
+    "specification": "Show the digit, a small enlarged pixel block, and its numeric array. Label the tensor \\([B,1,28,28]\\) and explain the chosen normalization to \\([-1,1]\\). Show a single scalar \\(x_0=1\\) that will be tracked later. Note that noisy tensors may leave the clean image range; clamp only the displayed image, not the forward-process mathematics or training tensor."
+  },
+  {
+    "id": "s16",
+    "number": 16,
+    "title": "One small corruption step",
+    "planned_builds": 3,
+    "specification": "Build exactly in this order: shrink the existing signal; draw independent Gaussian noise; add the scaled noise. Finish with\n\n\\[\nx_t=\\sqrt{1-\\beta_t}\\,x_{t-1}+\\sqrt{\\beta_t}\\,\\eta_t,\n\\qquad \\eta_t\\sim\\mathcal N(0,I).\n\\]\n\nExplain that \\(\\beta_t\\) is a variance contribution, hence the square root multiplying noise. Use different notation for this per-step \\(\\eta_t\\) and the aggregate \\(\\epsilon\\) in the direct marginal formula. Ask students to identify which quantities are random and which schedule values are chosen."
+  },
+  {
+    "id": "s17",
+    "number": 17,
+    "title": "Alpha and alpha-bar mean different things",
+    "planned_builds": 3,
+    "specification": "Reveal \\(\\alpha_t=1-\\beta_t\\), then a three-step product diagram, then \\(\\bar\\alpha_t=\\prod_{s=1}^{t}\\alpha_s\\). Use \u201cone-step retention\u201d and \u201ccumulative retention\u201d labels. Set \\(\\bar\\alpha_0=1\\). Color \\(\\alpha_t\\) and \\(\\bar\\alpha_t\\) differently without relying on color alone. Include a small numeric strip with \\(\\alpha_1=\\alpha_2=0.8\\), \\(\\bar\\alpha_1=0.8\\), and \\(\\bar\\alpha_2=0.64\\)."
+  },
+  {
+    "id": "s18",
+    "number": 18,
+    "title": "Jump directly to a training noise level",
+    "planned_builds": 4,
+    "specification": "Expand \\(x_2\\) by substitution; separate its two independent Gaussian-noise terms; add their variances; reveal the general marginal. Derive rather than suddenly announce:\n\n\\[\nq(x_t\\mid x_0)=\\mathcal N\\!\\left(\\sqrt{\\bar\\alpha_t}x_0,(1-\\bar\\alpha_t)I\\right),\n\\qquad\nx_t=\\sqrt{\\bar\\alpha_t}x_0+\\sqrt{1-\\bar\\alpha_t}\\epsilon.\n\\]\n\nThe combined \\(\\epsilon\\) is standard Gaussian. Equality here is distributional; it does not say that reusing one random array at every time reproduces the joint Markov trajectory."
+  },
+  {
+    "id": "s19",
+    "number": 19,
+    "title": "One forward calculation, fully worked",
+    "planned_builds": 4,
+    "specification": "Use the consistent scalar fixture from Section 4 below. Reveal \\(x_0=1\\), \\(\\bar\\alpha_2=0.64\\), and \\(\\epsilon=-0.5\\); take the two square roots; multiply; then add to get \\(x_2=0.5\\). Keep a small digit image beside the scalar but label the calculation \u201cone coordinate.\u201d Mark the deliberately large two-step schedule as an arithmetic illustration, not the image-training schedule or a noise-only endpoint."
+  },
+  {
+    "id": "s20",
+    "number": 20,
+    "title": "Interact with the corruption",
+    "planned_builds": 3,
+    "specification": "Show a timestep slider, a fixed-noise/resample-noise control, and signal/noise coefficients. In fixed-noise mode, label the images \u201cdirect marginal samples coupled with a shared \\(\\epsilon\\).\u201d Give a second button for a genuine recursive forward trajectory. Plot \\(\\bar\\alpha_t\\) and \\(\\mathrm{SNR}_t=\\bar\\alpha_t/(1-\\bar\\alpha_t)\\). At \\(t=0\\), display SNR as infinity or omit the singular point correctly. Explain that the endpoint must have very little remaining signal for a standard Gaussian start to be a good approximation."
+  },
+  {
+    "id": "s21",
+    "number": 21,
+    "title": "Which target should the network predict?",
+    "planned_builds": 2,
+    "specification": "Show the noisy image entering a shared box and ask students what could come out: clean image, noise, or reverse-step mean. Then select noise prediction for this lecture. Write \\(\\hat\\epsilon=\\epsilon_\\theta(x_t,t)\\), with input/output both \\([B,1,28,28]\\). State that this is a parameterization choice; later models can use other targets. The output head is unconstrained real-valued, not a sigmoid probability map."
+  },
+  {
+    "id": "s22",
+    "number": 22,
+    "title": "Assemble one training example",
+    "planned_builds": 3,
+    "specification": "Reveal three independent random choices: \\(x_0\\) from the dataset, \\(t\\) from \\(\\{1,\\ldots,T\\}\\), and \\(\\epsilon\\sim\\mathcal N(0,I)\\). Compute \\(x_t\\). Then route only \\((x_t,t)\\) to the predictor and keep \\(\\epsilon\\) on the target branch. Clearly mark that \\(x_0\\) and the sampled noise are available to the training procedure but are not additional inputs to this unconditional denoiser."
+  },
+  {
+    "id": "s23",
+    "number": 23,
+    "title": "Compute a real loss value",
+    "planned_builds": 2,
+    "specification": "Use the same scalar target \\(-0.5\\), give the predictor output \\(-0.4\\), and obtain \\((-0.5+0.4)^2=0.01\\). Follow it with a tiny \\(2\\times2\\) target/prediction pair and compute the mean over its four entries. Indicate whether an equation uses a sum or a mean and keep code consistent. Do not add arbitrary \u201caccuracy\u201d percentages for denoising."
+  },
+  {
+    "id": "s24",
+    "number": 24,
+    "title": "Can the network know the exact sampled noise?",
+    "planned_builds": 2,
+    "specification": "Return to Scene 13\u2019s ambiguous noisy input. Explain that the sampled target is known to us, while squared-error training learns an estimate of \\(\\mathbb E[\\epsilon\\mid x_t,t]\\) in the ideal population setting. It does not receive a hidden copy of the random seed. Show two target arrows averaging into a prediction to make the conditional-mean idea visible. This prevents the misleading claim that a denoiser perfectly inverts every corruption."
+  },
+  {
+    "id": "s25",
+    "number": 25,
+    "title": "One denoiser, many noise levels",
+    "planned_builds": 3,
+    "specification": "Show the same network used at three noise levels. Reveal the timestep as an explicit second input, then a timestep embedding injected into a block. Link sinusoidal timestep embeddings to the positional-encoding idea students have seen, while explaining that diffusion time describes corruption level rather than sequence position. Label weights as shared. Do not draw \\(T\\) separately learned networks."
+  },
+  {
+    "id": "s26",
+    "number": 26,
+    "title": "A batch can contain different timesteps",
+    "planned_builds": 3,
+    "specification": "Use \\(B=3\\): three clean digits, \\(t=[7,350,920]\\) for \\(T=1000\\), and independently sampled noise. Reveal the gathered coefficients with shape \\([3]\\), their broadcast shape \\([3,1,1,1]\\), and the input/target tensors \\([3,1,28,28]\\). Show that the whole batch still uses one network call. If code changes \\(T\\), update the visual timestep examples accordingly."
+  },
+  {
+    "id": "s27",
+    "number": 27,
+    "title": "Translate the picture into PyTorch",
+    "planned_builds": 4,
+    "specification": "Use the exact one-based schedule convention in Section 5. Reveal timestep sampling, broadcasting, noisy-input construction, and the loss in four synchronized blocks. Keep the active code line and the corresponding diagram element highlighted together. Put boilerplate in the companion file; the main scene should show about 10\u201314 readable lines over its builds. The executable companion must include imports and tested schedule construction."
+  },
+  {
+    "id": "s28",
+    "number": 28,
+    "title": "Where do the gradients go?",
+    "planned_builds": 2,
+    "specification": "Highlight the MSE-to-denoiser gradient path. Freeze the schedule and the sampled training tuple in the picture. State that a standard training iteration samples one noise level per image; it does not need to backpropagate through all \\(T\\) sampling steps. Show the optimizer updating \\(\\theta\\) once. Do not animate the inference loop as if training unrolled it by default."
+  },
+  {
+    "id": "s29",
+    "number": 29,
+    "title": "Why this training needs no human noise labels",
+    "planned_builds": 2,
+    "specification": "Return to the data pipeline: the original images provide the learning material, and the corruption procedure gives a target. Ask whether the availability of noise labels removes the need for a representative dataset. Answer through a toy biased dataset comparison: the learned conditional expectations depend on the distribution seen in training. Keep the point about dataset support connected to earlier generative modelling, without a new ethics tangent."
+  },
+  {
+    "id": "s30",
+    "number": 30,
+    "title": "The ELBO from Lecture I appears again",
+    "planned_builds": 4,
+    "specification": "First recall the earlier \u201clog evidence = lower bound + posterior KL gap\u201d diagram. Replace the single latent \\(z\\) by \\(x_{1:T}\\). Reveal the fixed forward chain \\(q(x_{1:T}\\mid x_0)\\), the learned reverse joint \\(p_\\theta(x_{0:T})\\), and the KL-sum decomposition in Section 4. Show the terminal prior-matching term, local reverse-matching terms, and data reconstruction term separately. Distinguish the tractable \\(q(x_{t-1}\\mid x_t,x_0)\\), which knows the training image, from the harder \\(q(x_{t-1}\\mid x_t)\\). Put the complete derivation in the appendix and notes; make the conceptual decomposition explicit in class."
+  },
+  {
+    "id": "s31",
+    "number": 31,
+    "title": "Why did this become noise MSE?",
+    "planned_builds": 3,
+    "specification": "Show that with fixed covariance, matching Gaussian means gives a squared-error term. Substitute the noise-based reverse mean. Reveal the exact timestep weight for \\(t>1\\), then the commonly used simplified unweighted objective. Explicitly say that the simplified MSE changes the weighting of the variational terms; it is not literally the entire exact negative ELBO with all constants, endpoint terms, and weights retained. This sentence must appear in notes and in a short visible annotation."
+  },
+  {
+    "id": "s32",
+    "number": 32,
+    "title": "Sampling starts without a clean image",
+    "planned_builds": 2,
+    "specification": "Remove the dataset image and target branch. Start with a fresh \\(x_T\\sim\\mathcal N(0,I)\\). Show the current timestep and denoiser only, then reserve space for a sampled \\(x_{T-1}\\). State that model parameters stay fixed during generation. Keep all stochastic sources visible: initial noise and, for ancestral DDPM, intermediate noise draws."
+  },
+  {
+    "id": "s33",
+    "number": 33,
+    "title": "A predicted clean image is useful",
+    "planned_builds": 3,
+    "specification": "Rearrange the forward equation one operation at a time:\n\n\\[\n\\hat x_0(x_t,t)=\\frac{x_t-\\sqrt{1-\\bar\\alpha_t}\\,\\epsilon_\\theta(x_t,t)}{\\sqrt{\\bar\\alpha_t}}.\n\\]\n\nUse the scalar fixture to obtain \\(\\hat x_0=0.925\\). Label this \u201cestimated clean image,\u201d with its own border style. It is an estimate because the network\u2019s noise prediction is an estimate. At high noise levels this estimate can be unstable; image-display clipping should not be mistaken for proof of a correct intermediate reconstruction."
+  },
+  {
+    "id": "s34",
+    "number": 34,
+    "title": "The estimate is not the next chain state",
+    "planned_builds": 3,
+    "specification": "Show \\(x_t\\), \\(\\hat x_0\\), and \\(x_{t-1}\\) in three distinct panels. The model\u2019s next state should still have the noise level associated with \\(t-1\\); setting it equal to the estimated clean image skips that definition. Ask which image feeds the next denoiser call. Give the answer only on the final reveal. Avoid presenting \u201csubtract all predicted noise\u201d as the DDPM update."
+  },
+  {
+    "id": "s35",
+    "number": 35,
+    "title": "Parameterize one reverse distribution",
+    "planned_builds": 4,
+    "specification": "Build \\(p_\\theta(x_{t-1}\\mid x_t)=\\mathcal N(\\mu_\\theta(x_t,t),\\sigma_t^2I)\\) before revealing the mean formula. First compute the predicted noise, then multiply by \\(\\beta_t/\\sqrt{1-\\bar\\alpha_t}\\), then subtract, then divide by \\(\\sqrt{\\alpha_t}\\). Color one-step \\(\\alpha_t\\) and cumulative \\(\\bar\\alpha_t\\) consistently. Speaker notes give the tractable-posterior derivation and make clear that the generic true reverse distribution need not be exactly Gaussian for large steps."
+  },
+  {
+    "id": "s36",
+    "number": 36,
+    "title": "Why add noise during denoising?",
+    "planned_builds": 3,
+    "specification": "Reveal uncertainty in the possible \\(x_{t-1}\\) values at a fixed noisy observation. Specify this lecture\u2019s variance choice \\(\\sigma_t^2=\\tilde\\beta_t\\), then show\n\n\\[\n\\tilde\\beta_t=\\beta_t\\frac{1-\\bar\\alpha_{t-1}}{1-\\bar\\alpha_t}.\n\\]\n\nExplain that \\(\\beta_t\\) is another historical fixed choice and learned variances are possible, without swapping them silently. Mark \\(t=1\\) as the last reverse update with no newly added sampling noise. \u201cDenoising\u201d describes the overall transition toward data; every individual coordinate need not improve monotonically on every random step."
+  },
+  {
+    "id": "s37",
+    "number": 37,
+    "title": "One reverse step with actual numbers",
+    "planned_builds": 4,
+    "specification": "Use precisely the fixture in Section 4: \\(x_2=0.5\\), \\(\\hat\\epsilon=-0.4\\), \\(\\alpha_2=0.8\\), \\(\\beta_2=0.2\\), \\(\\bar\\alpha_1=0.8\\), \\(\\bar\\alpha_2=0.64\\). Compute the reverse mean \\(0.708088\\), variance \\(1/9\\), standard deviation \\(1/3\\), then use \\(z=0.3\\) to sample \\(x_1=0.808088\\). Keep \\(\\hat x_0=0.925\\) visible to prevent conflation. Round only for display; verify the full-precision calculation in code."
+  },
+  {
+    "id": "s38",
+    "number": 38,
+    "title": "The complete sampling loop",
+    "planned_builds": 2,
+    "specification": "Reveal the exact loop from Section 5 in descending \\(t\\). Synchronize the highlighted code line with a reverse-chain visualization. At the final step, visibly skip the extra random-noise addition. The denoiser, schedule, and variance convention must match training and the previous equations. Explain that reducing the number of steps requires a corresponding sampler/schedule adaptation; dropping arbitrary terms from this recurrence is not automatically valid acceleration."
+  },
+  {
+    "id": "s39",
+    "number": 39,
+    "title": "What are we watching in a generation video?",
+    "planned_builds": 2,
+    "specification": "Place two aligned strips: actual sampler states \\(x_t\\) and clean-image estimates \\(\\hat x_0(x_t,t)\\). Source them from the same genuine run if a model is executed. If using the analytic toy, make its identity prominent. The timeline controls both rows. Do not manufacture a \u201cmodel trajectory\u201d by fading a final image into noise. Explain that many public visualizations show estimated clean images rather than the raw sampler state."
+  },
+  {
+    "id": "s40",
+    "number": 40,
+    "title": "Predict one number at every spatial location",
+    "planned_builds": 2,
+    "specification": "Connect the denoiser\u2019s output to the dense prediction shapes students have seen in segmentation. Use the digit tensor \\([B,1,28,28]\\) and predicted-noise tensor of the same shape. The target is continuous noise per coordinate, not a class per pixel. Introduce a convolutional encoder/decoder as one suitable backbone. Avoid saying U-Net is an obligatory definition of diffusion."
+  },
+  {
+    "id": "s41",
+    "number": 41,
+    "title": "Walk through a small U-Net with shapes",
+    "planned_builds": 3,
+    "specification": "Use the explicit architecture contract in Section 6: \\(28\\to14\\to7\\to14\\to28\\), channels \\(32,64,128,64,32\\). Reveal the down path, then bottleneck, then up path and skip connections. Label concatenated channel counts. Show one skip connection at a time so arrows do not cross the text. Keep its prediction head linear. This is a pedagogical small network, not the exact published DDPM architecture."
+  },
+  {
+    "id": "s42",
+    "number": 42,
+    "title": "Inject the timestep throughout the denoiser",
+    "planned_builds": 2,
+    "specification": "Open one residual block and show its time embedding projected to the block\u2019s channel count and broadcast over height and width. Explain why a scalar timestep must become useful learned features. Then highlight repeated injection points in the full U-Net. Time conditioning should remain visible during inference too."
+  },
+  {
+    "id": "s43",
+    "number": 43,
+    "title": "ViT returns as a diffusion backbone",
+    "planned_builds": 2,
+    "specification": "Show a noisy spatial latent divided into patches, then a transformer, then a prediction for every patch. Use full self-attention over noisy spatial tokens in the illustrative model. No class-token pooling is needed to generate a dense output. Mention the original DiT as a class-conditional latent diffusion transformer, with timestep/class conditioning; do not mislabel its original architecture as universally using the text cross-attention design of Scene 48."
+  },
+  {
+    "id": "s44",
+    "number": 44,
+    "title": "Why diffuse in a compressed image representation?",
+    "planned_builds": 4,
+    "specification": "Recall the image autoencoder from Lecture I. Show a familiar, explicitly labelled SD-v1-style example: image \\([B,3,512,512]\\) to latent \\([B,4,64,64]\\). Count spatial positions \\(512^2/64^2=64\\), then scalar entries \\((3\\cdot512^2)/(4\\cdot64^2)=48\\). These are different ratios. Label them as representation-size comparisons, not guaranteed memory, speed, or quality improvements. Mention that other autoencoders and systems use other dimensions. The image latent is spatial, unlike the tiny vector used in the teaching VAE."
+  },
+  {
+    "id": "s45",
+    "number": 45,
+    "title": "Two training stages, with explicit frozen modules",
+    "planned_builds": 3,
+    "specification": "First train an image autoencoder to produce useful reconstructions; then use its encoded latents to train diffusion. During the diffusion stage, show the encoder and decoder frozen in this standard example, and identify which text components are frozen if text is introduced. The diffusion target is noise in latent coordinates. Explain that the autoencoder\u2019s latent normalization/scaling must follow the actual checkpoint; a compressed representation is not automatically exactly standard normal because it came from a VAE."
+  },
+  {
+    "id": "s46",
+    "number": 46,
+    "title": "Generate in latent space, decode once",
+    "planned_builds": 3,
+    "specification": "Start with latent Gaussian noise \\([B,4,64,64]\\), execute the denoising loop, then decode the final latent to \\([B,3,512,512]\\). The image encoder is absent during ordinary text-to-image generation. Label the final latent as \\(z_0\\) to distinguish it from pixel-space \\(x_0\\), and explain this notation switch. Do not feed a hidden reference image into a purported text-to-image sampling example. Note that image-to-image tasks can use an encoder because their input includes an image."
+  },
+  {
+    "id": "s47",
+    "number": 47,
+    "title": "What information comes from the prompt?",
+    "planned_builds": 3,
+    "specification": "Reveal a prompt, its tokenizer output, and token embeddings from a text encoder. Use verified tokens from an actual tokenizer if showing a real model; otherwise label the rows as pedagogical word features. Trace \\([B,L,d_{\\text}]\\) features into a denoiser. Explain that the prompt representation is usually reused across denoising steps in this example. CLIP-like text encoding is one possible component; the CLIP contrastive training loss is not the diffusion noise-prediction loss."
+  },
+  {
+    "id": "s48",
+    "number": 48,
+    "title": "Image queries ask about text keys",
+    "planned_builds": 4,
+    "specification": "Explicitly compare with the cross-attention VLM variant students saw: there text queries attended to visual keys/values. In this selected latent-diffusion block, noisy image features provide queries and text features provide keys and values. Reveal projection shapes, similarity scores, row softmax, and the weighted sum separately:\n\n\\[\nH\\in\\mathbb R^{B\\times N\\times d_i},\\quad C\\in\\mathbb R^{B\\times L\\times d_c},\\quad\nQ=HW_Q,\\ K=CW_K,\\ V=CW_V,\n\\]\n\\[\nA=\\operatorname{softmax}_{\\text{text positions}}(QK^\\top/\\sqrt{d_k})\\in\\mathbb R^{B\\times N\\times L},\n\\qquad AV\\in\\mathbb R^{B\\times N\\times d_v}.\n\\]\n\nSpecify that these shapes omit the explicit head axis for one-head readability. The output has one row per image query. Do not swap Q/K/V merely to match a previously used diagram."
+  },
+  {
+    "id": "s49",
+    "number": 49,
+    "title": "One image query, a few words, actual attention numbers",
+    "planned_builds": 3,
+    "specification": "Use the hand-designed two-query, three-key example in Section 4. Show query/key vectors, compute dot products and scaling, then row softmax and one output vector. Label all chosen activations as a toy calculation. Do not present the resulting weights as extracted attention from a trained diffusion model. Ask which dimension softmax should normalize and why. Provide a toggle to highlight the second image query."
+  },
+  {
+    "id": "s50",
+    "number": 50,
+    "title": "The condition influences repeated denoising decisions",
+    "planned_builds": 2,
+    "specification": "Return to the complete latent denoiser and highlight cross-attention at selected spatial resolutions/blocks. Reuse the same text embedding and changing noisy image features across steps. Show why this differs from simply painting the prompt into pixels or concatenating a final class label. Avoid a false architectural universal: some transformer-based generators use joint attention or other conditioning schemes."
+  },
+  {
+    "id": "s51",
+    "number": 51,
+    "title": "Learn conditional and unconditional predictions with one model",
+    "planned_builds": 3,
+    "specification": "Show the normal conditional training tuple \\((z_t,t,c,\\epsilon)\\), then randomly replace \\(c\\) with a defined null/empty condition for a subset of examples. Use \\(p_{\\mathrm{drop}}=0.1\\) as a clearly labelled teaching choice, not a universal setting. The latent/image and noise target stay the same. Reveal that the same trained weights can then produce \\(\\epsilon_c\\) and \\(\\epsilon_u\\). Specify the actual model\u2019s null-condition implementation instead of silently assuming zero token embeddings."
+  },
+  {
+    "id": "s52",
+    "number": 52,
+    "title": "Classifier-free guidance is a precise combination",
+    "planned_builds": 3,
+    "specification": "Use the convention\n\n\\[\n\\epsilon_{\\mathrm{cfg}}=\\epsilon_u+s(\\epsilon_c-\\epsilon_u).\n\\]\n\nReveal the unconditional prediction, conditional-minus-unconditional difference, and scaled sum. State visibly: \\(s=0\\) gives unconditional prediction; \\(s=1\\) gives the ordinary conditional prediction; \\(s>1\\) extrapolates the conditional direction. Some papers use \\(w=s-1\\), so quote their convention if reproducing their formula. Explain that two logical evaluations can be batched together. Do not call this a separately trained classifier or claim the noise difference is a literal edit mask."
+  },
+  {
+    "id": "s53",
+    "number": 53,
+    "title": "Change guidance while holding the experiment fixed",
+    "planned_builds": 2,
+    "specification": "Use actual precomputed samples from one model with the same initial seed and documented sampler settings at several \\(s\\) values. Label the value under every image. Show observed tradeoffs in adherence, variety across seeds, or artifacts; do not claim image quality must increase monotonically. If no genuine model run or source-supported series is available, make the interactive manipulate a numerical vector example and label the image comparison as unavailable rather than fabricate it."
+  },
+  {
+    "id": "s54",
+    "number": 54,
+    "title": "Revisit completion and super-resolution",
+    "planned_builds": 2,
+    "specification": "Return to the opening examples and identify the actual condition supplied to each method. For a RePaint-inspired intuition, combine a sampled unknown region with an appropriately noised known region at the matching timestep; label this a simplified teaching illustration and mention that RePaint adds a resampling schedule. For SR3-style super-resolution, the low-resolution observation conditions a model trained for that task. These are specific ways to define conditional generation, not a guarantee that the unconditional code automatically solves every inverse problem."
+  },
+  {
+    "id": "s55",
+    "number": 55,
+    "title": "What do these results establish?",
+    "planned_builds": 3,
+    "specification": "Use an actual sample gallery, one documented failure, and the task condition. Ask separately about visual plausibility, diversity, adherence to condition, and preservation of observed information. For a locally trained digit model, record the checkpoint and show an uncurated seeded batch as well as selected examples. Do not assign FID or downstream gains unless computed with a documented protocol. Distinguish a teaching toy, a pretrained model demonstration, and a paper\u2019s reported output."
+  },
+  {
+    "id": "s56",
+    "number": 56,
+    "title": "Why not add Gaussian noise to token IDs?",
+    "planned_builds": 2,
+    "specification": "Show tokens and their arbitrary integer lookup IDs. Change the IDs by a vocabulary permutation while preserving the sentence, exposing why arithmetic proximity of IDs is meaningless. Then show a `[MASK]` corruption as a discrete alternative. State that other text diffusion formulations exist, including continuous representations; this section teaches one masked discrete approach, not a universal definition of language diffusion."
+  },
+  {
+    "id": "s57",
+    "number": 57,
+    "title": "Build a masked-text training example",
+    "planned_builds": 3,
+    "specification": "Use a complete sentence, a selected masking probability, and sampled masked positions. Reveal only the masked positions as prediction targets and show full/bidirectional context in the illustrative denoising model. Then show logits of shape \\([B,L,V]\\) and the masked-position cross-entropy. Label a simple unweighted objective as a pedagogical masked-denoising objective; if identifying it with LLaDA\u2019s diffusion objective, include its \\(1/t\\) weighting and exact conditioning convention as specified in Section 4. Never silently substitute standard fixed-rate BERT training for an entire diffusion model."
+  },
+  {
+    "id": "s58",
+    "number": 58,
+    "title": "Generate by iterative discrete reconstruction",
+    "planned_builds": 2,
+    "specification": "Start with a fixed prompt and masked response slots. Reveal candidate predictions at several positions; keep a selected subset and continue with a specified schedule. If using confidence-based remasking, explain what is remasked and why. The visible text sequence can be an illustrative sampler trace, but it must be labelled as such unless actually produced by a model. Keep observed prompt tokens fixed. Show that output length or a maximum response region must be specified/handled by the chosen system."
+  },
+  {
+    "id": "s59",
+    "number": 59,
+    "title": "Compare generation procedures, not slogans",
+    "planned_builds": 3,
+    "specification": "Place familiar autoregressive generation beside iterative masked denoising. Compare what one pass predicts, which context it can use, which tokens remain uncertain, and how many sequential passes occur. Full-sequence predictions allow a different schedule, but not an automatic wall-clock speedup; hardware, length, sampling steps, caching, and quality targets matter. Use a small known sentence for the reveal rather than abstract complexity claims with missing assumptions."
+  },
+  {
+    "id": "s60",
+    "number": 60,
+    "title": "Return to the opening applications",
+    "planned_builds": 4,
+    "specification": "Reveal the same text-to-image, inpainting, super-resolution, and masked-text examples. For each, ask students to identify the corrupted object, available condition, training target, and repeated inference operation. End with three prediction questions and short answers in notes: \u201cDoes training require sampling every reverse step?\u201d; \u201cWhy is \\(\\hat x_0\\) different from \\(x_{t-1}\\)?\u201d; \u201cWhat changes when the data are discrete tokens?\u201d End the main lecture here. Reference appendices should remain optional and clearly navigable."
+  }
+]

@@ -1,0 +1,226 @@
+<!-- ===================================================================== 0 · Opening -->
+
+<section class="slide sec-hook cover" id="cover" data-section="Opening">
+  <p class="kicker">ES 667 · Deep learning · Generative Modelling II</p>
+  <h2>From noise to images<span class="sub">Denoising diffusion, from one noisy pixel to text-to-image models</span></h2>
+  <div class="body">
+    <div class="strip" style="gap:10px;margin-top:10px">
+      <figure><img src="figures/data/traj-x-1000.png" width="150"><figcaption>t = 1000</figcaption></figure>
+      <figure><img src="figures/data/traj-x-600.png" width="150"><figcaption>600</figcaption></figure>
+      <figure><img src="figures/data/traj-x-400.png" width="150"><figcaption>400</figcaption></figure>
+      <figure><img src="figures/data/traj-x-200.png" width="150"><figcaption>200</figcaption></figure>
+      <figure><img src="figures/data/traj-x-50.png" width="150"><figcaption>50</figcaption></figure>
+      <figure><img src="figures/data/traj-x-0.png" width="150"><figcaption>0</figcaption></figure>
+    </div>
+    <p class="small muted" style="text-align:center;margin-top:18px">One sample from the small model we train in this lecture: {{uncond.params}} parameters, about {{uncond.minutes}} minutes on a laptop GPU.</p>
+  </div>
+  <span class="badge run">our model</span>
+  <aside class="notes">
+    <p data-say="1">Open on the result. Every frame is a real state of a real sampler: our MNIST model, trained for this lecture. By the end of the class you will be able to write the loop that made this strip.</p>
+    <p>Badges in the top-right corner say where each figure comes from: <b>published</b> (a paper's own figure), <b>our model</b> (trained here), <b>computed</b> (exact arithmetic, nothing learned), <b>illustrative</b> (hand-chosen numbers).</p>
+  </aside>
+</section>
+
+<section class="slide sec-hook" id="hook" data-section="Opening">
+  <p class="kicker">Start with a question</p>
+  <h2>This digit was pure noise 1,000 steps ago</h2>
+  <div class="body">
+    <div class="strip" style="gap:8px">
+      <figure><img src="figures/data/traj-x-1000.png" width="128"><figcaption>t = 1000</figcaption></figure>
+      <figure data-b="2"><img src="figures/data/traj-x-800.png" width="128"><figcaption>800</figcaption></figure>
+      <figure data-b="2"><img src="figures/data/traj-x-600.png" width="128"><figcaption>600</figcaption></figure>
+      <figure data-b="2"><img src="figures/data/traj-x-400.png" width="128"><figcaption>400</figcaption></figure>
+      <figure data-b="2"><img src="figures/data/traj-x-200.png" width="128"><figcaption>200</figcaption></figure>
+      <figure data-b="2"><img src="figures/data/traj-x-50.png" width="128"><figcaption>50</figcaption></figure>
+      <figure data-b="3"><img src="figures/data/traj-x-0.png" width="128"><figcaption>0</figcaption></figure>
+    </div>
+    <div class="row" style="justify-content:center;gap:40px;margin-top:30px">
+      <p class="small" style="max-width:520px"><b>What happened at each step:</b> one network looked at the current image and removed a <i>little</i> of what it thought was noise.</p>
+      <p class="small" data-b="3" style="max-width:520px"><b>What never happened:</b> nobody gave it a digit to copy. It started from random numbers.</p>
+    </div>
+  </div>
+  <p class="q" data-b="3">How can learning to remove noise let us create an image from nothing but noise?</p>
+  <span class="badge run">our model</span>
+  <aside class="notes">
+    <p data-say="1">Static. 784 random numbers drawn from a standard normal. Nothing in it says "digit".</p>
+    <p data-say="2">Watch it sharpen. Ask: at which frame can you first tell it is a digit? Most people say around 400 or 200.</p>
+    <p data-say="3">This is the question for today, and we will answer it with arithmetic on one pixel before we use any big model.</p>
+  </aside>
+</section>
+
+<section class="slide sec-hook" id="apps" data-section="Opening">
+  <p class="kicker">The same idea, conditioned on different things</p>
+  <h2>What would each model produce?</h2>
+  <div class="body">
+    <div class="appgrid" style="grid-template-columns:repeat(4,1fr);gap:18px 22px">
+      <div><p class="app-t">a sentence</p><div class="app-row">
+        <div class="qin" style="width:110px;height:110px;font-size:17px;line-height:1.25;color:#5B1D99;display:grid;place-items:center;text-align:center;border:2px solid var(--enc);border-radius:6px;background:var(--enc-t)">“A basket full of cherries”</div><span class="arrow">→</span>
+        <div class="app-out stack" style="width:110px;height:110px"><div class="qbox" data-b="1-1">?</div><img data-b="2" class="photo" src="figures/data/pub-cherries-1.png" style="height:110px;width:110px"></div></div></div>
+      <div><p class="app-t">a face with a region missing</p><div class="app-row">
+        <img class="photo" src="figures/data/pub-repaint-in.png" style="height:110px"><span class="arrow">→</span>
+        <div class="app-out stack" style="width:110px;height:110px"><div class="qbox" data-b="1-1">?</div><img data-b="2" class="photo" src="figures/data/pub-repaint-1.png" style="height:110px"></div></div></div>
+      <div><p class="app-t">a crude painting</p><div class="app-row">
+        <img class="photo" src="figures/data/pub-sdedit-in.png" style="height:110px"><span class="arrow">→</span>
+        <div class="app-out stack" style="width:110px;height:110px"><div class="qbox" data-b="1-1">?</div><img data-b="2" class="photo" src="figures/data/pub-sdedit-out1.png" style="height:110px"></div></div></div>
+      <div><p class="app-t">a blurry, low-resolution face</p><div class="app-row">
+        <img class="photo" src="figures/data/pub-sr3-face-1.png" style="height:110px"><span class="arrow">→</span>
+        <div class="app-out stack" style="width:110px;height:110px"><div class="qbox" data-b="1-1">?</div><img data-b="2" class="photo" src="figures/data/pub-sr3-face-3.png" style="height:110px"></div></div></div>
+      <div><p class="app-t">an edge map + “bird”</p><div class="app-row">
+        <img class="photo" src="figures/data/pub-control-1.png" style="height:110px"><span class="arrow">→</span>
+        <div class="app-out stack" style="width:110px;height:110px"><div class="qbox" data-b="1-1">?</div><img data-b="2" class="photo" src="figures/data/pub-control-2.png" style="height:110px"></div></div></div>
+      <div><p class="app-t">boxes: planet, sun</p><div class="app-row">
+        <img class="photo" src="figures/data/pub-gligen-layout.png" style="height:110px"><span class="arrow">→</span>
+        <div class="app-out stack" style="width:110px;height:110px"><div class="qbox" data-b="1-1">?</div><img data-b="2" class="photo" src="figures/data/pub-gligen-2.png" style="height:110px"></div></div></div>
+      <div><p class="app-t">4 photos of one dog + “at the Acropolis”</p><div class="app-row">
+        <img class="photo" src="figures/data/pub-dreambooth-in.png" style="height:110px"><span class="arrow">→</span>
+        <div class="app-out stack" style="width:110px;height:110px"><div class="qbox" data-b="1-1">?</div><img data-b="2" class="photo" src="figures/data/pub-dreambooth-acropolis.png" style="height:110px"></div></div></div>
+      <div><p class="app-t">a 10 m satellite image</p><div class="app-row">
+        <img class="photo" src="figures/data/pub-sat-rgb.png" style="height:110px"><span class="arrow">→</span>
+        <div class="app-out stack" style="width:110px;height:110px"><div class="qbox" data-b="1-1">?</div><img data-b="2" class="photo" src="figures/data/pub-sat-ours.png" style="height:110px"></div></div></div>
+    </div>
+  </div>
+  <p class="q" data-b="2">Eight different inputs, one recipe. By the end you will be able to say, for each, what the network was trained to predict.</p>
+  <span class="badge pub">published</span>
+  <p class="src">LDM (Rombach et al. 2022) · RePaint (Lugmayr et al. 2022) · SDEdit (Meng et al. 2022) · SR3 (Saharia et al. 2022) · ControlNet (Zhang et al. 2023) · GLIGEN (Li et al. 2023) · DreamBooth (Ruiz et al. 2023) · DiffusionSat (Khanna et al. 2024)</p>
+  <aside class="notes">
+    <p data-say="1">Give students 20 seconds: for each input, what should come out? Ask one or two to answer aloud. Point out that every input is different in kind: words, pixels, boxes, photos.</p>
+    <p data-say="2">Reveal. Each output is one published sample from the paper's own figure. Do not explain any method yet; we will return to this slide at the end.</p>
+  </aside>
+</section>
+
+<section class="slide sec-hook" id="cherries" data-section="Opening">
+  <p class="kicker">Text to image · the prompt we will follow later</p>
+  <h2>One prompt, several valid images</h2>
+  <div class="body">
+    <p class="lbl" style="font-size:28px;color:var(--enc);margin-bottom:18px !important">“A basket full of cherries”</p>
+    <div class="strip photo" style="gap:22px">
+      <figure><img src="figures/data/pub-cherries-1.png" width="220"><figcaption>sample 1</figcaption></figure>
+      <figure data-b="2"><img src="figures/data/pub-cherries-2.png" width="220"><figcaption>sample 2</figcaption></figure>
+      <figure data-b="2"><img src="figures/data/pub-cherries-3.png" width="220"><figcaption>sample 3</figcaption></figure>
+      <figure data-b="2"><img src="figures/data/pub-cherries-4.png" width="220"><figcaption>sample 4</figcaption></figure>
+    </div>
+    <p class="small muted" data-b="3" style="text-align:center;margin-top:16px">Look closely: two samples carry stock-photo watermarks. The model was trained on web images with captions, and it learned the watermarks too.</p>
+  </div>
+  <p class="q" data-b="2">Which one is correct? None and all: a prompt describes a <i>distribution</i> of images, and a generator samples from it.</p>
+  <span class="badge pub">published</span>
+  <p class="src">Latent Diffusion, Rombach et al. 2022, project-page Figure 17 (model trained on Conceptual Captions). Seeds are not reported.</p>
+  <aside class="notes">
+    <p data-say="1">Ask: if you had to write this as a supervised-learning problem, what would the target image be?</p>
+    <p data-say="2">There is no single target. Several images satisfy the prompt, and some (bowls, flowers) only loosely. This is p(image | text).</p>
+    <p data-say="3">A fun detail that is also a real lesson: generators reproduce whatever is in their training data, including watermarks.</p>
+  </aside>
+</section>
+
+<section class="slide sec-hook" id="inpaint-pub" data-section="Opening">
+  <p class="kicker">Completion · we will do this ourselves in Part 6</p>
+  <h2>Fill a missing region</h2>
+  <div class="body">
+    <div class="row" style="justify-content:center;gap:18px">
+      <figure class="col" style="align-items:center;margin:0"><img class="photo" src="figures/data/pub-repaint-in.png" width="190"><figcaption class="cap">input · lavender = missing</figcaption></figure>
+      <span class="arrow">→</span>
+      <div class="stack" style="width:900px;height:190px">
+        <div class="qbox" data-b="1-1" style="font-size:28px">five completions?</div>
+        <div class="row" data-b="2" style="gap:10px">
+          <img class="photo" src="figures/data/pub-repaint-1.png" width="170"><img class="photo" src="figures/data/pub-repaint-2.png" width="170"><img class="photo" src="figures/data/pub-repaint-3.png" width="170"><img class="photo" src="figures/data/pub-repaint-4.png" width="170"><img class="photo" src="figures/data/pub-repaint-5.png" width="170">
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="2">The visible pixels constrain the answer; they do not decide it. Smile or no smile is still the model's choice.</p>
+  <span class="badge pub">published</span>
+  <p class="src">RePaint, Lugmayr et al. 2022 (project figure): one input, five independent samples.</p>
+  <aside class="notes">
+    <p data-say="1">Ask: what must every completion share? The eyes, hair and background. What may differ? The mouth.</p>
+    <p data-say="2">These are five samples, not five steps. In Part 6 we run the same trick on our digit model with two extra lines of code.</p>
+  </aside>
+</section>
+
+<section class="slide sec-hook" id="superres-pub" data-section="Opening">
+  <p class="kicker">Super-resolution · keep this picture in mind for Part 2</p>
+  <h2>Is the sharp detail real?</h2>
+  <div class="body">
+    <div class="grid-rows photo" style="grid-template-columns:repeat(4, 172px);justify-content:center;gap:4px 16px">
+      <p class="lbl">bicubic</p><p class="lbl">regression</p><p class="lbl" data-b="2">SR3 sample</p><p class="lbl" data-b="3">real photo</p>
+      <img src="figures/data/pub-sr3-face-1.png"><img src="figures/data/pub-sr3-face-2.png"><img data-b="2" src="figures/data/pub-sr3-face-3.png"><img data-b="3" src="figures/data/pub-sr3-face-4.png">
+      <img src="figures/data/pub-sr3-eye-1.png"><img src="figures/data/pub-sr3-eye-2.png"><img data-b="2" src="figures/data/pub-sr3-eye-3.png"><img data-b="3" src="figures/data/pub-sr3-eye-4.png">
+    </div>
+    <p class="small muted" style="text-align:center;margin-top:10px">Bicubic = the low-resolution input, enlarged smoothly. Regression = one network trained with squared error.</p>
+  </div>
+  <p class="q" data-b="3">Regression blurs, a generator invents. Compare the wrinkles under the eye: plausible, and different from the real photo.</p>
+  <span class="badge pub">published</span>
+  <p class="src">SR3, Saharia et al. 2022 (project figure). The lower row enlarges the boxed eye region.</p>
+  <aside class="notes">
+    <p data-say="1">The low-resolution image cannot tell you where each wrinkle was. Regression, trained with squared error, outputs a smooth face. Ask why it is blurry; hold the answer until Part 2, where we will prove it.</p>
+    <p data-say="2">The diffusion sample is sharp. Ask: is it correct?</p>
+    <p data-say="3">Compare with the real photo. The sample's skin texture is plausible but not the same. Sharp is not the same as true.</p>
+  </aside>
+</section>
+
+<section class="slide sec-hook" id="lab" data-section="Opening">
+  <p class="kicker">A question for our lab</p>
+  <h2>Would you count brick kilns in a generated image?</h2>
+  <div class="body">
+    <div class="row" style="justify-content:center;gap:26px;align-items:flex-start">
+      <figure class="col" style="align-items:center;margin:0"><p class="lbl">Sentinel-2, 10 m per pixel</p><img class="photo" src="figures/data/pub-sat-rgb.png" width="300"><figcaption class="cap">the input</figcaption></figure>
+      <figure class="col" data-b="2" style="align-items:center;margin:0"><p class="lbl">DiffusionSat sample</p><img class="photo" src="figures/data/pub-sat-ours.png" width="300"><figcaption class="cap">conditioned on the input</figcaption></figure>
+      <figure class="col" data-b="3" style="align-items:center;margin:0"><p class="lbl">real high-resolution image</p><img class="photo" src="figures/data/pub-sat-hr.png" width="300"><figcaption class="cap">withheld reference</figcaption></figure>
+    </div>
+    <p class="small" data-b="3" style="text-align:center;margin-top:16px">Our lab maps brick kilns across South Asia from this kind of 10 m imagery. A kiln is only a few pixels wide.</p>
+  </div>
+  <p class="q" data-b="3">Plausible is not measured. Before using generated detail, we must check it against held-out observations.</p>
+  <span class="badge pub">published</span>
+  <p class="src">DiffusionSat, Khanna et al. 2024, super-resolution figure (left panel, row 5). Columns: Sentinel-2 RGB, DiffusionSat output, high-resolution reference.</p>
+  <aside class="notes">
+    <p data-say="1">This is what the sensor gives us. Ask: what is in this image? Hard to say.</p>
+    <p data-say="2">The model produces crisp buildings and roads. Would you put this in a map?</p>
+    <p data-say="3">The real image has a different layout. The generated version is a hypothesis consistent with the blurry input, not a measurement. Keep this in mind whenever diffusion is used in science.</p>
+  </aside>
+</section>
+
+<section class="slide sec-hook" id="lecture1" data-section="Opening">
+  <p class="kicker">Where Lecture I left us</p>
+  <h2>Two generators we already trained, and their problems</h2>
+  <div class="body">
+    <div class="row" style="justify-content:center;gap:40px;align-items:flex-start">
+      <div class="col" style="align-items:center">
+        <p class="lbl cenc">VAE samples (16-number code)</p>
+        <img src="figures/data/gm1/vae16-samples.png" width="400" style="border-radius:6px">
+        <p class="small" style="max-width:400px;margin-top:8px">One decoder pass from a random code. Smooth to train, but the digits come out <b>blurry</b>.</p>
+      </div>
+      <div class="col" style="align-items:center" data-b="2">
+        <p class="lbl cdisc" style="color:#147737">GAN samples</p>
+        <img src="figures/data/gm1/gan-samples.png" width="400" style="border-radius:6px">
+        <p class="small" style="max-width:400px;margin-top:8px">Sharper, but training is a <b>two-player game</b> that can collapse onto a few modes.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">Diffusion's bet: train with a plain regression loss, like the VAE, and generate in many small steps instead of one big jump.</p>
+  <span class="badge run">our model <small>Lecture I</small></span>
+  <aside class="notes">
+    <p data-say="1">These are the actual models from Lecture I, same MNIST. The VAE's squared-error/likelihood training is stable, but averaging makes samples blurry.</p>
+    <p data-say="2">The GAN is sharp, but you saw how fragile the adversarial game was, including a collapse run.</p>
+    <p data-say="3">Diffusion keeps the boring, stable loss and moves the difficulty into many small denoising steps.</p>
+  </aside>
+</section>
+
+<section class="slide sec-hook" id="plan" data-section="Opening">
+  <p class="kicker">The plan</p>
+  <h2>Four questions answer the core of the lecture</h2>
+  <div class="body">
+    <ol class="route" style="gap:26px;font-size:30px">
+      <li style="--c:#AA4E08"><div class="lt">What noisy input do we train on?</div><span class="rt">Part 1 · corrupt a digit</span></li>
+      <li style="--c:#0F766E" data-b="2"><div class="lt">What does the network learn to predict?</div><span class="rt">Part 2 · training</span></li>
+      <li style="--c:#245EDB" data-b="3"><div class="lt">How do predictions become a new image?</div><span class="rt">Part 3 · sampling</span></li>
+      <li style="--c:#BE123C" data-b="4"><div class="lt">Why is that the right loss?</div><span class="rt">Part 4 · Lecture I's ELBO</span></li>
+    </ol>
+    <p class="small muted" data-b="5" style="margin-top:26px">Then: inside the network (Part 5), steering it with a prompt (Part 6), and text instead of pixels (Part 7).</p>
+  </div>
+  <p class="q" data-b="5">One running example throughout: a single 7 from the MNIST test set, and one pixel of it.</p>
+  <aside class="notes">
+    <p data-say="1">Training input first. Notice the order: corruption before learning.</p>
+    <p data-say="2">The target.</p>
+    <p data-say="3">Sampling: the loop on the first slide.</p>
+    <p data-say="4">Only once we have both the training step and the sampler do we ask why the loss is justified, using the ELBO from Lecture I.</p>
+    <p data-say="5">Architecture and conditioning are then short, because they reuse what you already know: U-Nets, transformers, cross-attention and CLIP.</p>
+  </aside>
+</section>

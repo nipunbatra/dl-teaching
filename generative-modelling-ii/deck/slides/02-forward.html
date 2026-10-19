@@ -1,0 +1,317 @@
+<!-- ===================================================================== 1 · Forward process -->
+
+<section class="slide sec-fwd opener break" id="p1-open" data-section="Part 1 · Corrupt">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 1 of 7</p>
+      <h2>Destroy a digit, one small step at a time</h2>
+      <p class="why">Before any learning, we fix a recipe that turns an image into noise. <b>Goal of this part:</b> a formula for the noisy image at any step t, checked by hand on one pixel. No neural network yet.</p>
+    </div>
+    <!--route:1-->
+  </div>
+</section>
+
+<section class="slide sec-fwd" id="digit" data-section="Part 1 · Corrupt">
+  <p class="kicker">The running example</p>
+  <h2>Our 7, and one pixel of it</h2>
+  <div class="body">
+    <div class="row" style="gap:36px;justify-content:center">
+      <img class="fig" src="figures/data/digit7-marked.svg" style="height:340px">
+      <img class="fig" src="figures/data/pixel-zoom.svg" style="height:340px" data-b="2">
+      <div class="col" style="width:380px" data-b="3">
+        <p class="small">Pixels are stored as 0 … 255. We rescale them:</p>
+        <div class="mathblock left" style="font-size:26px">$x = \dfrac{v}{127.5} - 1$</div>
+        <p class="small"><b>0</b> (paper) → <b>−1</b>, &nbsp; <b>255</b> (ink) → <b>+1</b></p>
+        <p class="small" data-b="4"><span class="chip">our pixel</span> row {{pixel.row}}, column {{pixel.col}}: value {{pixel.raw}}, so $x_0 = +1$.</p>
+        <p class="small muted" data-b="4">One image is a tensor $[1, 28, 28]$; a batch is $[B, 1, 28, 28]$.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="4">We will follow this one pixel, with value +1, through every equation in Parts 1–3.</p>
+  <span class="badge pub">MNIST test image 0</span>
+  <aside class="notes">
+    <p data-say="1">A handwritten 7 from the MNIST test set, the first image in the file. The orange square is the pixel we will track.</p>
+    <p data-say="2">Zoom into the 7 × 7 neighbourhood: raw uint8 values. Our pixel is a solid 255.</p>
+    <p data-say="3">Rescale to [−1, 1], so paper is −1 and ink is +1. This centring matters: the noise we add has mean 0.</p>
+    <p data-say="4">Everything in the next 30 minutes is done to this one number, +1, and then to all 784 at once.</p>
+  </aside>
+</section>
+
+<section class="slide sec-fwd" id="one-step" data-section="Part 1 · Corrupt">
+  <p class="kicker">The forward step</p>
+  <h2>One step: shrink the image a little, then add fresh noise</h2>
+  <div class="body"><!--svg:one-step--></div>
+  <div class="mathblock" data-b="3" style="font-size:28px">$x_t = \sqrt{1-\beta_t}\;x_{t-1} + \sqrt{\beta_t}\;\eta_t, \qquad \eta_t \sim \mathcal N(0, I)$</div>
+  <p class="q" data-b="4">With β = 0.2, our pixel goes from 1 to 0.671. Each step keeps most of the image and mixes in a little noise.</p>
+  <span class="badge toy">computed <small>β = 0.2 so you can see it</small></span>
+  <aside class="notes">
+    <p data-say="1">Multiply every pixel by √(1 − β). With β = 0.2 that is 0.894: the 7 gets slightly paler.</p>
+    <p data-say="2">Draw a brand-new noise image η, the same shape as the digit, and scale it by √β = 0.447.</p>
+    <p data-say="3">Add them. β_t is the noise variance added at step t.</p>
+    <p data-say="4">Our pixel: 0.894 × 1 + 0.447 × (−0.5) = 0.671, taking η = −0.5 at our pixel. The real schedule uses β between 0.0001 and 0.02; we use 0.2, ten times the largest, so one step is visible.</p>
+  </aside>
+</section>
+
+<section class="slide sec-fwd" id="sqrt" data-section="Part 1 · Corrupt">
+  <p class="kicker">Why the square roots?</p>
+  <h2>Variances add, so scale by square roots</h2>
+  <div class="body">
+    <div class="col" style="gap:22px;width:1000px;margin:0 auto">
+      <div class="row" style="gap:20px">
+        <p class="small" style="width:250px;margin:0">a unit-variance signal</p>
+        <div class="stackbar" style="width:600px"><div style="flex:1;border-color:var(--x);background:var(--x-t)">signal 1.0</div></div>
+      </div>
+      <div class="row" style="gap:20px" data-b="2">
+        <p class="small" style="width:250px;margin:0">after one step, β = 0.2</p>
+        <div class="stackbar" style="width:600px"><div style="flex:.8;border-color:var(--x);background:var(--x-t)">$(\sqrt{0.8})^2 = 0.8$</div><div style="flex:.2;border-color:var(--z);background:var(--z-t)">0.2</div></div>
+        <p class="small" style="margin:0">total <b>1.0</b></p>
+      </div>
+      <div class="row" style="gap:20px" data-b="3">
+        <p class="small" style="width:250px;margin:0">without the roots: 0.8·x + 0.2·η</p>
+        <div class="stackbar" style="width:408px"><div style="flex:.64;border-color:var(--x);background:var(--x-t)">0.64</div><div style="flex:.04;min-width:30px;border-color:var(--z);background:var(--z-t)"></div></div>
+        <p class="small" style="margin:0">total <b class="closs">0.68</b>, and shrinking every step</p>
+      </div>
+    </div>
+    <div class="mathblock" data-b="2" style="font-size:25px;margin-top:22px">$\mathrm{Var}(x_t) = (1-\beta_t)\,\mathrm{Var}(x_{t-1}) + \beta_t = 1 \quad\text{if}\quad \mathrm{Var}(x_{t-1}) = 1$</div>
+  </div>
+  <p class="q" data-b="3">The square roots keep the total variance at 1, so after many steps we land exactly on a standard Gaussian, $\mathcal N(0, I)$.</p>
+  <span class="badge toy">computed</span>
+  <aside class="notes">
+    <p data-say="1">Ask the slide's question before clicking: why √(1 − β) and √β, not (1 − β) and β?</p>
+    <p data-say="2">Scaling a random variable by a multiplies its variance by a². Independent variances add. So 0.8 + 0.2 = 1.</p>
+    <p data-say="3">Without roots the variance decays towards 0, and the end point would depend on the step count. With them, the end point is always N(0, I): something we can sample from.</p>
+  </aside>
+</section>
+
+<section class="slide sec-fwd" id="fade" data-section="Part 1 · Corrupt">
+  <p class="kicker">Repeat on the real schedule</p>
+  <h2>A thousand small steps dissolve the 7</h2>
+  <div class="body">
+    <div class="strip" style="gap:14px">
+      <figure><img src="figures/data/fwd-0.png" width="160"><figcaption>t = 0<span class="k">signal 1.00</span></figcaption></figure>
+      <figure><img src="figures/data/fwd-100.png" width="160"><figcaption>t = 100<span class="k">signal {{sched.100.sab}}</span></figcaption></figure>
+      <figure><img src="figures/data/fwd-300.png" width="160"><figcaption>t = 300<span class="k">signal {{sched.300.sab}}</span></figcaption></figure>
+      <figure data-b="2"><img src="figures/data/fwd-500.png" width="160"><figcaption>t = 500<span class="k">signal {{sched.500.sab}}</span></figcaption></figure>
+      <figure data-b="2"><img src="figures/data/fwd-700.png" width="160"><figcaption>t = 700<span class="k">signal {{sched.700.sab}}</span></figcaption></figure>
+      <figure data-b="2"><img src="figures/data/fwd-1000.png" width="160"><figcaption>t = 1000<span class="k">signal {{sched.1000.sab}}</span></figcaption></figure>
+    </div>
+    <p class="small muted" style="text-align:center;margin-top:20px">One fresh noise image per step; β grows linearly from 0.0001 to 0.02 over T = 1000 steps. “Signal” is the number that multiplies the original 7 after t steps.</p>
+  </div>
+  <p class="q" data-b="2">After about t = 600 every panel looks the same: almost nothing of the 7 is left.</p>
+  <span class="badge toy">computed <small>no model</small></span>
+  <aside class="notes">
+    <p data-say="1">Ask: at t = 300, is it still a 7? Most students say yes. Which features go first? Thin strokes and the edges.</p>
+    <p data-say="2">By t = 500 only a ghost remains; from about 600 on, the panels are indistinguishable from pure noise. Keep this in mind: a lot of steps are spent near pure noise (the cosine schedule in the appendix fixes this).</p>
+  </aside>
+</section>
+
+<section class="slide sec-fwd" id="alphabar" data-section="Part 1 · Corrupt">
+  <p class="kicker">Keeping score</p>
+  <h2>How much signal is left after t steps: $\bar\alpha_t$</h2>
+  <div class="body">
+    <div class="row" style="gap:36px;align-items:center">
+      <div class="col" style="width:470px;gap:14px">
+        <div class="row" style="gap:12px"><span class="small" style="width:60px">t = 0</span><div class="stackbar" style="width:380px;height:56px"><div style="flex:1;border-color:var(--x);background:var(--x-t)">1</div></div></div>
+        <div class="row" style="gap:12px"><span class="small" style="width:60px">t = 1</span><div class="stackbar" style="width:380px;height:56px"><div style="flex:.8;border-color:var(--x);background:var(--x-t)">0.8</div><div style="flex:.2;min-width:70px;border-color:var(--z);background:var(--z-t)">0.2</div></div></div>
+        <div class="row" style="gap:12px" data-b="2"><span class="small" style="width:60px">t = 2</span><div class="stackbar" style="width:380px;height:56px"><div style="flex:.64;border-color:var(--x);background:var(--x-t)">0.64</div><div style="flex:.36;border-color:var(--z);background:var(--z-t)">0.36</div></div></div>
+        <div class="mathblock left" style="font-size:24px">$\alpha_t = 1-\beta_t \quad(\text{here } 0.8)$</div>
+        <div class="mathblock left" data-b="2" style="font-size:24px">$\bar\alpha_t = \alpha_1\alpha_2\cdots\alpha_t$</div>
+        <div class="mathblock left" data-b="2" style="font-size:24px">$\bar\alpha_2 = 0.8\times0.8 = 0.64$</div>
+      </div>
+      <div class="col grow" data-b="3">
+        <img class="fig" src="figures/data/schedule.svg" style="width:600px">
+        <p class="small muted" style="margin-top:4px">The real schedule: the dots are the panels on the previous slide.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">Blue is signal variance $\bar\alpha_t$, amber is noise variance $1-\bar\alpha_t$; they always add to 1. Signal falls below half at t = {{sched.t_half}}.</p>
+  <span class="badge toy">computed</span>
+  <aside class="notes">
+    <p data-say="1">Same variance bars as before, in the toy: one step leaves 0.8 signal variance.</p>
+    <p data-say="2">Two steps multiply: 0.8 × 0.8 = 0.64. ᾱ ("alpha bar") is the running product. Do not confuse α_t (one step) with ᾱ_t (all steps so far).</p>
+    <p data-say="3">On the real schedule, ᾱ_t falls smoothly from 1 to about 0.00004. The signal amplitude √ᾱ drops below 0.1 at t = {{sched.t_signal_below_0p1}}.</p>
+  </aside>
+</section>
+
+<section class="slide sec-fwd" id="jump" data-section="Part 1 · Corrupt">
+  <p class="kicker">A shortcut we will use in training</p>
+  <h2>Skip the loop: jump straight to step t</h2>
+  <div class="body">
+    <div class="row" style="gap:24px;align-items:center">
+      <div class="ladder" style="width:740px;font-size:27px;grid-template-columns:auto auto 1fr">
+        <span class="lhs">$x_1$</span><span>$=$</span><span>$\sqrt{\alpha_1}\,x_0 + \sqrt{\beta_1}\,\eta_1$</span>
+        <span class="lhs" data-b="2">$x_2$</span><span data-b="2">$=$</span><span data-b="2">$\sqrt{\alpha_2}\,x_1 + \sqrt{\beta_2}\,\eta_2$</span>
+        <span data-b="2"></span><span data-b="2">$=$</span><span data-b="2">$\cx{\sqrt{\alpha_1\alpha_2}\,x_0} + \cz{\sqrt{\alpha_2\beta_1}\,\eta_1 + \sqrt{\beta_2}\,\eta_2}$</span>
+        <span data-b="3"></span><span data-b="3"></span><span class="why" data-b="3">two independent noises; their variances add: $\alpha_2\beta_1 + \beta_2 = 0.16 + 0.20 = 0.36 = 1 - \bar\alpha_2$</span>
+        <span class="lhs" data-b="4">$x_2$</span><span data-b="4">$=$</span><span data-b="4">$\cx{0.8\,x_0} + \cz{0.6\,\epsilon}, \quad \epsilon\sim\mathcal N(0,1)$</span>
+      </div>
+      <div class="col" data-b="3" style="width:380px">
+        <img class="fig" src="figures/data/two-noise-hist.svg" style="width:380px">
+        <p class="small muted" style="margin-top:4px">The sum of the two scaled noises is one Gaussian with variance 0.36.</p>
+      </div>
+    </div>
+    <div class="mathblock" data-b="5" style="font-size:30px;margin-top:10px">$x_t = \sqrt{\bar\alpha_t}\,x_0 + \sqrt{1-\bar\alpha_t}\,\epsilon, \qquad \epsilon\sim\mathcal N(0, I)$</div>
+  </div>
+  <p class="q" data-b="5">Any step t in one line: no loop. This is the formula training uses.</p>
+  <span class="badge toy">computed</span>
+  <aside class="notes">
+    <p data-say="1">Start from one step.</p>
+    <p data-say="2">Substitute x₁ into x₂. The signal part is just a product of scales; the noise part has two separate draws.</p>
+    <p data-say="3">Sums of independent Gaussians are Gaussian with added variances: 0.8 × 0.2 + 0.2 = 0.36. The histogram on the right is 200,000 actual draws; the curve is N(0, 0.36).</p>
+    <p data-say="4">So x₂ is the clean pixel times 0.8 plus one standard Gaussian times 0.6. ε (epsilon) names this combined noise.</p>
+    <p data-say="5">The same argument works for any t: signal scale √ᾱ_t, noise scale √(1 − ᾱ_t). Appendix A1 does the general step.</p>
+  </aside>
+</section>
+
+<section class="slide sec-fwd" id="pixel-x2" data-section="Part 1 · Corrupt">
+  <p class="kicker">Our pixel at step 2</p>
+  <h2>Signal and noise can cancel</h2>
+  <div class="body">
+    <div class="arith">
+      <span class="box" style="color:var(--x)">0.8 × (+1)<small>signal: our ink pixel</small></span><span class="op">+</span>
+      <span class="box" style="color:var(--z)">0.6 × (−0.5)<small>noise: $\epsilon = -0.5$</small></span><span class="op">=</span>
+      <span class="box" style="color:var(--xt);font-weight:700">0.5<small>noisy pixel x₂</small></span>
+    </div>
+    <p class="small" data-b="2" style="text-align:center;margin-top:20px">Check against the loop: with η₁ = −0.5 and η₂ = {{toy.eta2}}, two single steps give $x_1 = {{toy.x1}}$ and then $x_2 = 0.5$. Same number.</p>
+    <div class="arith" data-b="3" style="margin-top:26px">
+      <span class="box" style="color:var(--enc)">0.8 × (−1)<small>signal: a paper pixel</small></span><span class="op">+</span>
+      <span class="box" style="color:var(--z)">0.6 × (+{{toy.eps_paper}})<small>a large noise draw</small></span><span class="op">=</span>
+      <span class="box" style="color:var(--xt);font-weight:700">0.5<small>the same x₂</small></span>
+    </div>
+  </div>
+  <p class="q" data-b="3">From 0.5 alone you cannot tell whether the pixel was ink or paper. Undoing noise needs more than this one number.</p>
+  <span class="badge toy">computed</span>
+  <aside class="notes">
+    <p data-say="1">The jump formula with ε = −0.5: the noise pulls our ink pixel down from 0.8 to 0.5.</p>
+    <p data-say="2">The loop and the jump agree. The two noise draws combine into the same ε = −0.5.</p>
+    <p data-say="3">A paper pixel with a big positive noise draw lands on exactly the same value. This is the central difficulty of denoising, and we will quantify it in Part 2.</p>
+  </aside>
+</section>
+
+<section class="slide sec-fwd" id="explorer" data-section="Part 1 · Corrupt">
+  <p class="kicker">Try it</p>
+  <h2>Slide t and watch our 7</h2>
+  <div class="body">
+    <div class="row interactive" data-widget="explorer-t" style="gap:40px;justify-content:center;align-items:center">
+      <canvas width="280" height="280" style="width:300px;height:300px;image-rendering:pixelated;border-radius:6px;border:2.5px solid var(--xt)"></canvas>
+      <div class="col" style="width:520px;gap:14px">
+        <div class="ctrl"><span>t</span><input type="range" min="0" max="1000" step="1" value="100"><span class="readout v-t">100</span></div>
+        <table class="work tight">
+          <tr><td>signal scale $\sqrt{\bar\alpha_t}$</td><td class="v-sab">–</td></tr>
+          <tr><td>noise scale $\sqrt{1-\bar\alpha_t}$</td><td class="v-snb">–</td></tr>
+          <tr><td>our pixel's noisy value</td><td class="v-pix">–</td></tr>
+          <tr><td>signal-to-noise $\bar\alpha_t/(1-\bar\alpha_t)$</td><td class="v-snr">–</td></tr>
+        </table>
+        <p class="small muted">Same noise image $\epsilon$ at every t (at our pixel, $\epsilon$ = {{eps_p}}).</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">The same formula covers every noise level: at t = 920 the image is 99.99% noise by variance.</p>
+  <span class="badge toy">computed</span>
+  <aside class="notes">
+    <p data-say="1">t = 100: the 7 is obvious, signal scale 0.95.</p>
+    <p data-say="2">t = 350: you can still see it, but signal scale is down to 0.53.</p>
+    <p data-say="3">t = 920: noise scale 0.9999. Drag the slider live if there is time; it uses the same ε image for every t, so only the mixing changes.</p>
+  </aside>
+</section>
+
+<section class="slide sec-fwd" id="fwd-code" data-section="Part 1 · Corrupt">
+  <p class="kicker">The forward process in code</p>
+  <h2>Everything in Part 1 fits in a few lines of PyTorch</h2>
+  <div class="body">
+    <div class="row" style="gap:28px;align-items:center">
+      <pre class="code" style="font-size:19px;width:780px"><span class="line" data-hl="=1">beta = torch.cat([torch.zeros(1),        <span class="c"># beta[0] = 0</span></span>
+<span class="line" data-hl="=1">                  torch.linspace(1e-4, 0.02, 1000)])</span>
+<span class="line" data-hl="=2">alpha = 1 - beta</span>
+<span class="line" data-hl="=2">alpha_bar = torch.cumprod(alpha, 0)      <span class="c"># [0] = 1</span></span>
+
+<span class="line" data-hl="=3">def corrupt(x0, t):       <span class="c"># x0 [B,1,28,28], t [B]</span></span>
+<span class="line" data-hl="=3">    eps = torch.randn_like(x0)</span>
+<span class="line" data-hl="=4">    ab = alpha_bar[t].reshape(-1, 1, 1, 1)</span>
+<span class="line" data-hl="=4">    return ab.sqrt() * x0 + (1 - ab).sqrt() * eps, eps</span></pre>
+      <div class="col" style="width:290px;gap:12px">
+        <div class="callout z" data-b="1">the schedule: how much noise each step adds</div>
+        <div class="callout x" data-b="2">running product $\bar\alpha_t$; index t matches the maths</div>
+        <div class="callout z" data-b="3">a fresh noise image the shape of the batch</div>
+        <div class="callout xt" data-b="4">the jump formula: no loop over steps</div>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="4">No learning anywhere in this code. It returns the noisy input and the noise; Part 2 uses both.</p>
+  <aside class="notes">
+    <p data-say="1">1000 β values, linearly spaced, with a 0 in front so that beta[t] is β_t for t = 1 … 1000. The toy slides used β = 0.2 instead.</p>
+    <p data-say="2">The cumulative product gives ᾱ, and the leading 0 makes alpha_bar[0] = 1: step 0 is the clean image. The same tables serve the sampler in Part 3.</p>
+    <p data-say="3">A standard Gaussian image per example.</p>
+    <p data-say="4">The jump formula with broadcasting. Returning eps already hints at Part 2: the noise will be the label.</p>
+  </aside>
+</section>
+
+<section class="slide sec-fwd" id="clusters" data-section="Part 1 · Corrupt">
+  <p class="kicker">The view from a whole dataset</p>
+  <h2>Noise turns any dataset into the same Gaussian</h2>
+  <div class="body center">
+    <img class="fig" src="figures/data/clusters.svg" style="width:1150px">
+  </div>
+  <p class="q">Eight tight clusters at t = 0 become one round blob, $\mathcal N(0, I)$, by t = 1000. Generation will start from that blob.</p>
+  <span class="badge toy">computed <small>800 points, 2-D</small></span>
+  <aside class="notes">
+    <p data-say="1">Each dot is a 2-D data point; think of each as a whole image squeezed into two numbers. The same jump formula is applied to every dot. At t = 100 the clusters smear into a ring; by t = 250 the ring fills in; by 1000 nothing distinguishes the original clusters. Reversing this, taking a dot from the blob back to a cluster, is what the network must learn.</p>
+  </aside>
+</section>
+
+<section class="slide sec-fwd" id="undo" data-section="Part 1 · Corrupt">
+  <p class="kicker">Can we undo it?</p>
+  <h2>A 7 has ink at our pixel; a 2 has paper</h2>
+  <div class="body">
+    <div class="row" style="gap:28px;align-items:center">
+      <div class="col" style="gap:12px;align-items:center;width:170px">
+        <img class="pix" src="figures/data/digit7.png" width="120" style="border:2.5px solid var(--x);border-radius:6px">
+        <span class="small cx" style="white-space:nowrap">7: pixel = +1</span>
+        <img class="pix" src="figures/data/digit2.png" width="120" style="border:2.5px solid var(--enc);border-radius:6px">
+        <span class="small cenc" style="white-space:nowrap">2: pixel = −1</span>
+      </div>
+      <img class="fig" src="figures/data/explain-t2.svg" style="width:500px">
+      <img class="fig" src="figures/data/explain-t500.svg" style="width:500px" data-b="2">
+    </div>
+  </div>
+  <p class="q" data-b="2">At step 2 an observed 0.5 says “ink” with probability 0.90; at step 500 only 0.58. Going backwards needs knowledge of digits, so it must be learned.</p>
+  <span class="badge toy">computed</span>
+  <aside class="notes">
+    <p data-say="1">Each curve is the distribution of our pixel's noisy value: N(0.8, 0.36) if it was ink, N(−0.8, 0.36) if paper (toy step 2). We observe 0.5. Bayes with equal prior: the ink curve is 9.2 times higher there, so P(ink | 0.5) = 0.90.</p>
+    <p data-say="2">At step 500 on the real schedule the curves almost coincide: 0.58 vs 0.42. One pixel alone is nearly useless. The surrounding pixels, and knowledge of what digits look like, are what a network brings.</p>
+  </aside>
+</section>
+
+<section class="slide sec-fwd" id="fixed-learned" data-section="Part 1 · Corrupt">
+  <p class="kicker">Answer to question 1, and the setup for question 2</p>
+  <h2>Forward is a fixed recipe; reverse is a model we must learn</h2>
+  <div class="body"><!--svg:chain--></div>
+  <div class="row" style="justify-content:center;gap:50px" data-b="2">
+    <div class="mathblock" style="font-size:23px">$q(x_t\mid x_{t-1}) = \mathcal N\big(\sqrt{1-\beta_t}\,x_{t-1},\ \beta_t I\big)$</div>
+    <div class="mathblock" style="font-size:23px">$p_\theta(x_{t-1}\mid x_t) = \mathcal N\big(\mu_\theta(x_t,t),\ \sigma_t^2 I\big)$</div>
+  </div>
+  <p class="q" data-b="2">Each reverse step only has to undo a small step, which is why a Gaussian with a learned mean is a good model of it.</p>
+  <aside class="notes">
+    <p data-say="1">Top arrows: the corruption we just built. Fixed β's, no parameters, nothing to learn. Real images at t = 0, 100, 300 and 1000.</p>
+    <p data-say="2">Bottom arrows: what we want, a network that takes x_t and t and proposes x_{t−1}. Because each forward step is tiny, the true reverse step is close to Gaussian; we only need to learn its mean. That is Part 2.</p>
+  </aside>
+</section>
+
+<section class="slide sec-fwd" id="p1-recap" data-section="Part 1 · Corrupt">
+  <p class="kicker">End of Part 1</p>
+  <h2>What we did, and what comes next</h2>
+  <div class="body">
+    <div class="recap">
+      <div>
+        <h3>What we did</h3>
+        <ol><li>One step: shrink by $\sqrt{1-\beta_t}$, add $\sqrt{\beta_t}$ fresh noise; the square roots keep the variance at 1.</li><li>$\bar\alpha_t$ is the signal left after t steps: 1 at the start, 0.00004 at t = 1000.</li><li>Jump to any step in one line: $x_t = \sqrt{\bar\alpha_t}\,x_0 + \sqrt{1-\bar\alpha_t}\,\epsilon$. Our pixel: 0.5.</li><li>One noisy value cannot tell ink from paper, so going back needs a learned model.</li></ol>
+      </div>
+      <div class="next" data-b="2">
+        <h3>Next: teach a network to go back</h3>
+        <p class="small">We can make as many noisy images as we like, and we know the noise in each.</p><p class="small">Part 2 asks a network to predict that noise. The noise we drew becomes the label.</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><p data-say="1">Recap in one breath; students should be able to say each line back.</p><p data-say="2">The bridge to the next part.</p></aside>
+</section>
+

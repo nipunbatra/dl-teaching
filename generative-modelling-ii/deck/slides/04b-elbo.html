@@ -1,0 +1,158 @@
+<!-- ===================================================================== 4 · Why this loss -->
+
+<section class="slide sec-elbo opener break" id="p4e-open" data-section="Part 4 · ELBO">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 4 of 7</p>
+      <h2>Why is noise MSE the right loss?</h2>
+      <p class="why">Part 2 chose “predict the noise” because it is easy to set up. Now that Part 3 has given us both reverse means, the true one and the model's, we can show it is what the <b>ELBO from Lecture I</b> asks for, up to a weighting.</p>
+    </div>
+    <!--route:4-->
+  </div>
+</section>
+
+<section class="slide sec-elbo" id="two-chains" data-section="Part 4 · ELBO">
+  <p class="kicker">Lecture I, side by side with today</p>
+  <h2>A VAE has one latent; diffusion has a chain of them</h2>
+  <div class="body"><!--svg:vae-vs-diff--></div>
+  <p class="q" data-b="3">If diffusion is a VAE with a fixed encoder, the VAE's training objective, the ELBO, should apply to it.</p>
+  <aside class="notes">
+    <p data-say="1">Recall Lecture I: an encoder maps our digit to a short code z, a decoder maps it back, and z is pulled towards N(0, I).</p>
+    <p data-say="2">Diffusion has the same shape, stretched: the noisy images are the latents, the noising chain plays the encoder and has nothing to learn, and the reverse network is a decoder applied T times. The end of the chain is N(0, I), the prior.</p>
+    <p data-say="3">That suggests the question for this part: what does the ELBO say when the encoder is fixed?</p>
+  </aside>
+</section>
+
+<section class="slide sec-elbo" id="elbo-bridge" data-section="Part 4 · ELBO">
+  <p class="kicker">Lecture I's ELBO, again</p>
+  <h2>Diffusion is a VAE with a fixed encoder</h2>
+  <div class="body">
+    <table class="cmp" style="font-size:22px;width:1080px;margin:0 auto">
+      <tr><th></th><th>Lecture I: VAE</th><th>Diffusion</th></tr>
+      <tr><td>latent</td><td>one code $z$, 2–16 numbers</td><td data-b="2">$x_1, \dots, x_T$: each the size of the image</td></tr>
+      <tr><td>encoder</td><td>$q_\phi(z\mid x)$, learned</td><td data-b="2">$q(x_{1:T}\mid x_0)$: <b>fixed</b> noising, nothing to learn</td></tr>
+      <tr><td>decoder</td><td>$p_\theta(x\mid z)$, one network pass</td><td data-b="3">$p_\theta(x_{t-1}\mid x_t)$, the same network used T times</td></tr>
+      <tr><td>prior</td><td>$p(z) = \mathcal N(0, I)$</td><td data-b="3">$p(x_T) = \mathcal N(0, I)$</td></tr>
+      <tr><td>bound</td><td>$\log p(x) \ge$ reconstruction $-$ KL</td><td data-b="4">$\log p_\theta(x_0) \ge \mathbb E_q\!\left[\log \dfrac{p_\theta(x_{0:T})}{q(x_{1:T}\mid x_0)}\right]$, the same Jensen step</td></tr>
+    </table>
+  </div>
+  <p class="q" data-b="4">Same ELBO derivation as Lecture I. The new part is how it splits up, one term per step.</p>
+  <aside class="notes">
+    <p data-say="1">Recall the VAE: encoder, decoder, prior, ELBO.</p>
+    <p data-say="2">Diffusion's latents are the noisy images. The "encoder" is our fixed noising recipe, so there is no encoder network and no reparameterisation needed for it.</p>
+    <p data-say="3">The decoder is the reverse step, and the same network is reused at every t. The prior is the end of the chain, N(0, I).</p>
+    <p data-say="4">The bound is derived exactly as in Lecture I (appendix A3 writes it out). We now take it apart.</p>
+  </aside>
+</section>
+
+
+<section class="slide sec-elbo" id="elbo-terms" data-section="Part 4 · ELBO">
+  <p class="kicker">Taking the bound apart</p>
+  <h2>The bound splits into one comparison per step</h2>
+  <div class="body"><!--svg:elbo-chain--></div>
+  <div class="mathblock" style="font-size:30px">$-\text{ELBO} = \cz{L_T} + \sum_{t=2}^{T}\cdec{L_{t-1}} + \cx{L_0}$</div>
+  <div class="mathblock" data-b="2" style="font-size:22px">$\cdec{L_{t-1}} = \mathbb E_{q}\, D_{KL}\big(\,q(x_{t-1}\mid x_t, x_0)\;\|\;p_\theta(x_{t-1}\mid x_t)\,\big)$</div>
+  <p class="q" data-b="3">$L_T$ has no parameters; $L_0$ is a small pixel-level term. Training is really about the middle terms.</p>
+  <aside class="notes">
+    <p data-say="1">L_T: does the end of the forward chain match N(0, I)? With ᾱ_T = 0.00004 it almost exactly does, and there is nothing to learn.</p>
+    <p data-say="2">The middle terms compare, at each step, the network's reverse step with the "true" reverse step q(x_{t−1} | x_t, x₀). That true step is a Gaussian we can write down because we know x₀ during training (appendix A2).</p>
+    <p data-say="3">L₀ turns the last continuous state into pixel values. DDPM treats it separately. Next: one middle term, with numbers.</p>
+  </aside>
+</section>
+
+
+<section class="slide sec-elbo" id="kl-step" data-section="Part 4 · ELBO">
+  <p class="kicker">One middle term, for our toy pixel at t = 2</p>
+  <h2>Equal variances: KL is the squared gap between the means</h2>
+  <div class="body">
+    <div class="row" style="gap:30px;align-items:center">
+      <img class="fig" src="figures/data/kl-gaussians.svg" style="width:600px">
+      <div class="col grow" style="gap:12px">
+        <div class="mathblock left" style="font-size:24px">$D_{KL} = \dfrac{(\tilde\mu - \mu_\theta)^2}{2\sigma^2}$</div>
+        <p class="small" data-b="2">true reverse mean $\tilde\mu = {{toy.mu_t}}$ (we know $x_0 = 1$)<br>model's mean $\mu_\theta = {{toy.mu}}$ (uses $\hat\epsilon = -0.4$)<br>both variances $\sigma^2 = {{toy.bt}}$</p>
+        <div class="mathblock left" data-b="3" style="font-size:24px">$D_{KL} = \dfrac{{{toy.gap4}}^2}{2 \times {{toy.bt}}} = {{toy.kl}}$</div>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">Training pushes the model's reverse mean onto the true one. Next: rewrite both means in terms of noise.</p>
+  <span class="badge toy">computed</span>
+  <aside class="notes">
+    <p data-say="1">For Gaussians with equal variances, KL reduces to the squared difference of means over 2σ². The variance is fixed (not learned), so only the mean matters.</p>
+    <p data-say="2">Both numbers come from Part 3: the true reverse step from x₂ = 0.5 (knowing x₀ = 1) has mean 0.745; the model, with ε̂ = −0.4, proposes 0.708.</p>
+    <p data-say="3">0.037² / 0.222 = 0.00625. Keep this number; it reappears on the next slide.</p>
+  </aside>
+</section>
+
+
+<section class="slide sec-elbo" id="kl-to-mse" data-section="Part 4 · ELBO">
+  <p class="kicker">The one substitution that explains the loss</p>
+  <h2>Write both means with noise: the KL becomes noise MSE</h2>
+  <div class="body">
+    <div class="ladder" style="width:1120px;margin:0 auto;font-size:22px;row-gap:2px;grid-template-columns:auto auto auto 1fr">
+      <span class="lhs">model:</span><span>$\mu_\theta$</span><span>$= \dfrac{1}{\sqrt{\alpha_t}}\Big(x_t - c_t\,\cdec{\hat\epsilon}\Big)$</span><span class="why">$c_t = \beta_t/\sqrt{1-\bar\alpha_t}$, from Part 3</span>
+      <span class="lhs" data-b="2">true:</span><span data-b="2">$\tilde\mu$</span><span data-b="2">$= \dfrac{1}{\sqrt{\alpha_t}}\Big(x_t - c_t\,\cz{\epsilon}\Big)$</span><span class="why" data-b="2">the same formula with the true noise (it is the posterior mean of Part 3)</span>
+      <span class="lhs" data-b="3">gap:</span><span data-b="3">$\tilde\mu - \mu_\theta$</span><span data-b="3">$= \dfrac{c_t}{\sqrt{\alpha_t}}\big(\cdec{\hat\epsilon} - \cz{\epsilon}\big)$</span><span class="why" data-b="3">$x_t$ cancels</span>
+      <span class="lhs" data-b="4">so:</span><span data-b="4">$D_{KL}$</span><span data-b="4">$= \underbrace{\dfrac{\beta_t^2}{2\sigma_t^2\,\alpha_t\,(1-\bar\alpha_t)}}_{w_t}\;\closs{(\hat\epsilon - \epsilon)^2}$</span><span class="why" data-b="4">a weighted squared error on the noise</span>
+    </div>
+    <div class="arith" data-b="5" style="margin-top:10px;font-size:23px">
+      <span class="box" style="color:var(--loss)">$w_2 = 0.625$<small>toy weight at t = 2</small></span><span class="op">×</span>
+      <span class="box" style="color:var(--loss)">$(-0.4 + 0.5)^2 = 0.01$<small>our pixel's noise error</small></span><span class="op">=</span>
+      <span class="box" style="color:var(--loss);font-weight:700">{{toy.kl}}<small>the KL from the last slide</small></span>
+    </div>
+  </div>
+  <p class="q" data-b="5">Each ELBO term is a weighted MSE between predicted and true noise, which is why we trained on noise.</p>
+  <span class="badge toy">computed</span>
+  <aside class="notes">
+    <p data-say="1">The model's mean, written with the predicted noise. Treat c_t as a known constant for now.</p>
+    <p data-say="2">The true reverse mean has exactly the same form with the true ε: plug the jump formula's x₀ into the posterior mean of Part 3.</p>
+    <p data-say="3">Subtract: x_t cancels and only the noise error remains.</p>
+    <p data-say="4">Square and divide by 2σ²: a time-dependent weight times the squared noise error.</p>
+    <p data-say="5">Check with our numbers: 0.625 × 0.01 = 0.00625, the same value we got from the Gaussians directly.</p>
+  </aside>
+</section>
+
+
+<section class="slide sec-elbo" id="weights" data-section="Part 4 · ELBO">
+  <p class="kicker">The qualification</p>
+  <h2>DDPM keeps the squared error and drops the weights</h2>
+  <div class="body">
+    <div class="row" style="gap:30px;align-items:center">
+      <img class="fig" src="figures/data/weights.svg" style="width:620px">
+      <div class="col grow" style="gap:10px">
+        <div class="mathblock left" style="font-size:23px">$L_{\text{simple}} = \mathbb E_{x_0, t, \epsilon}\,\|\epsilon - \epsilon_\theta(x_t, t)\|^2$</div>
+        <p class="small" data-b="2">The bound's weight falls about {{weights.ratio}}× from t = 2 to t = 500. Setting every weight to 1 gives <b>relatively more weight to noisy steps</b> than the bound does.</p>
+        <p class="small" data-b="3">It also drops $L_T$ (no parameters) and the discrete pixel term $L_0$.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">The training loss is not the ELBO; it is a re-weighted sum of its per-step terms, chosen because it gave better samples (Ho et al. 2020).</p>
+  <span class="badge toy">computed</span>
+  <aside class="notes">
+    <p data-say="1">Red: w_t on the real schedule (t ≥ 2; the formula is undefined at t = 1 because the posterior variance is 0 there). Teal: the weight 1 the simple loss uses.</p>
+    <p data-say="2">The bound cares most about the last few low-noise steps, which mostly polish imperceptible detail. The simple loss spends more effort on mid and high noise, where the content of the image is decided.</p>
+    <p data-say="3">So, honestly: L_simple is motivated by the ELBO but is not equal to it. If you need likelihoods (bits per dimension), you must use the weighted bound or a learned variance (Nichol & Dhariwal 2021).</p>
+  </aside>
+</section>
+
+<section class="slide sec-elbo" id="p4-recap" data-section="Part 4 · ELBO">
+  <p class="kicker">End of Part 4</p>
+  <h2>What we showed, and what comes next</h2>
+  <div class="body">
+    <div class="recap">
+      <div>
+        <h3>What we did</h3>
+        <ol>
+          <li>Diffusion is a VAE whose encoder is the fixed noising chain.</li>
+          <li>Its ELBO is one KL per reverse step.</li>
+          <li>Each KL is a weighted squared error on the noise: $0.625 \times 0.1^2$ for our pixel.</li>
+          <li>DDPM trains with weight 1 at every step instead.</li>
+        </ol>
+      </div>
+      <div class="next" data-b="2">
+        <h3>Next: the network itself</h3>
+        <p class="small">The whole method treats the network as a box that takes $x_t$ and $t$ and returns a noise image. Part 5 opens the box.</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><p data-say="1">Summarise the bridge to Lecture I in four lines.</p><p data-say="2">Transition to architecture.</p></aside>
+</section>

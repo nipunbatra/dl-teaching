@@ -1,0 +1,123 @@
+{
+  "mode": "train",
+  "steps": 2000,
+  "batch_size": 64,
+  "seed": 667,
+  "normalization": "uint8/127.5 - 1",
+  "T": 1000,
+  "alpha_bar_T": 4.035828169435263e-05,
+  "variance": "posterior",
+  "parameters": 814145,
+  "device": "mps",
+  "torch": "2.14.0",
+  "elapsed_seconds": 98.7769422531128,
+  "history": [
+    {
+      "step": 1,
+      "batch_noise_mse": 1.0783931016921997,
+      "gradient_norm": 9.20167064666748
+    },
+    {
+      "step": 100,
+      "batch_noise_mse": 0.07102521508932114,
+      "gradient_norm": 0.5858917832374573
+    },
+    {
+      "step": 200,
+      "batch_noise_mse": 0.08677498251199722,
+      "gradient_norm": 1.234492540359497
+    },
+    {
+      "step": 300,
+      "batch_noise_mse": 0.046785417944192886,
+      "gradient_norm": 0.2172520011663437
+    },
+    {
+      "step": 400,
+      "batch_noise_mse": 0.04728985205292702,
+      "gradient_norm": 0.7156083583831787
+    },
+    {
+      "step": 500,
+      "batch_noise_mse": 0.05021785944700241,
+      "gradient_norm": 0.6008334755897522
+    },
+    {
+      "step": 600,
+      "batch_noise_mse": 0.04278736561536789,
+      "gradient_norm": 0.5664913654327393
+    },
+    {
+      "step": 700,
+      "batch_noise_mse": 0.03550712764263153,
+      "gradient_norm": 0.569725751876831
+    },
+    {
+      "step": 800,
+      "batch_noise_mse": 0.02232920192182064,
+      "gradient_norm": 0.11134251952171326
+    },
+    {
+      "step": 900,
+      "batch_noise_mse": 0.029675032943487167,
+      "gradient_norm": 0.5650548338890076
+    },
+    {
+      "step": 1000,
+      "batch_noise_mse": 0.04067051783204079,
+      "gradient_norm": 0.7087825536727905
+    },
+    {
+      "step": 1100,
+      "batch_noise_mse": 0.034254346042871475,
+      "gradient_norm": 0.3330884873867035
+    },
+    {
+      "step": 1200,
+      "batch_noise_mse": 0.038828134536743164,
+      "gradient_norm": 0.30328741669654846
+    },
+    {
+      "step": 1300,
+      "batch_noise_mse": 0.03149262070655823,
+      "gradient_norm": 0.25920236110687256
+    },
+    {
+      "step": 1400,
+      "batch_noise_mse": 0.029613535851240158,
+      "gradient_norm": 0.29359596967697144
+    },
+    {
+      "step": 1500,
+      "batch_noise_mse": 0.033044710755348206,
+      "gradient_norm": 0.19944271445274353
+    },
+    {
+      "step": 1600,
+      "batch_noise_mse": 0.026979411020874977,
+      "gradient_norm": 0.20798638463020325
+    },
+    {
+      "step": 1700,
+      "batch_noise_mse": 0.024318387731909752,
+      "gradient_norm": 0.37391582131385803
+    },
+    {
+      "step": 1800,
+      "batch_noise_mse": 0.024787921458482742,
+      "gradient_norm": 0.13318757712841034
+    },
+    {
+      "step": 1900,
+      "batch_noise_mse": 0.03752342239022255,
+      "gradient_norm": 0.35428744554519653
+    },
+    {
+      "step": 2000,
+      "batch_noise_mse": 0.03619076684117317,
+      "gradient_norm": 0.3764505982398987
+    }
+  ],
+  "claim": "Small teaching model; no image-quality metric computed",
+  "checkpoint_sha256": "9dc135888ec05bceebc35fcf6b7c6b5ee1823f2cea7c0b2ec32906368b793585"
+}

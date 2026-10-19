@@ -1,0 +1,75 @@
+# Generative Modelling II storyboard
+
+60 core scenes / 158 core builds. 11 appendix scenes / 33 appendix builds.
+
+- s01: Can we create a new example? (1 builds) → Applications
+- s02: One description, several valid images (2 builds) → Applications
+- s03: Where should the objects go? (2 builds) → Applications
+- s04: Fill a missing region (2 builds) → Applications
+- s05: Turn rough strokes into a plausible image (2 builds) → Applications
+- s06: What detail is missing at low resolution? (2 builds) → Applications
+- s07: Draw the structure, generate the appearance (2 builds) → Applications
+- s08: Put a particular subject in a new context (2 builds) → Applications
+- s09: Could this help answer a lab question? (2 builds) → Applications
+- s10: What must a generator learn? (2 builds) → Applications
+- s11: From one-step generators to a denoising chain (2 builds) → Corruption
+- s12: A digit gradually loses information (2 builds) → Corruption
+- s13: Can we recover the original with certainty? (3 builds) → Corruption
+- s14: What happens to a whole distribution? (2 builds) → Corruption
+- s15: What is a clean image tensor? (2 builds) → Corruption
+- s16: One small corruption step (3 builds) → Corruption
+- s17: Alpha and alpha-bar mean different things (3 builds) → Corruption
+- s18: Jump directly to a training noise level (4 builds) → Corruption
+- s19: Work through one noisy coordinate (4 builds) → Corruption
+- s20: Try changing the noise level (3 builds) → Corruption
+- s21: Which target should the network predict? (2 builds) → Learning
+- s22: Assemble one training example (3 builds) → Learning
+- s23: Calculate the loss for four values (2 builds) → Learning
+- s24: Can the network know the exact sampled noise? (2 builds) → Learning
+- s25: One denoiser, many noise levels (3 builds) → Learning
+- s26: A batch can contain different timesteps (3 builds) → Learning
+- s27: Translate the picture into PyTorch (4 builds) → Learning
+- s28: Where do the gradients go? (2 builds) → Learning
+- s29: Where do the training labels come from? (2 builds) → Learning
+- s30: The ELBO from Lecture I appears again (4 builds) → Learning
+- s31: How does the bound lead to noise MSE? (3 builds) → Learning
+- s32: Sampling starts without a clean image (2 builds) → Generation
+- s33: A predicted clean image is useful (3 builds) → Generation
+- s34: Which state goes into the next call? (3 builds) → Generation
+- s35: Build one reverse transition (4 builds) → Generation
+- s36: Why add noise during denoising? (3 builds) → Generation
+- s37: Work through one reverse step (4 builds) → Generation
+- s38: The complete sampling loop (2 builds) → Generation
+- s39: What are we watching in a generation video? (2 builds) → Generation
+- s40: What should the denoiser output? (2 builds) → Architecture
+- s41: Follow the shapes through a small U-Net (3 builds) → Architecture
+- s42: Inject the timestep throughout the denoiser (2 builds) → Architecture
+- s43: Can a transformer predict the noise? (2 builds) → Architecture
+- s44: Why denoise a compressed representation? (4 builds) → Architecture
+- s45: Train the autoencoder, then the denoiser (3 builds) → Architecture
+- s46: Generate in latent space, decode once (3 builds) → Architecture
+- s47: What information comes from the prompt? (3 builds) → Conditioning
+- s48: How do image features attend to text? (4 builds) → Conditioning
+- s49: Work through one attention calculation (3 builds) → Conditioning
+- s50: Use the prompt at every denoising step (2 builds) → Conditioning
+- s51: Teach one model to work with or without a condition (3 builds) → Conditioning
+- s52: Combine predictions with classifier-free guidance (3 builds) → Conditioning
+- s53: What changes when we turn up guidance? (2 builds) → Conditioning
+- s54: Revisit completion and super-resolution (2 builds) → Conditioning
+- s55: What do these results establish? (3 builds) → Evidence and language
+- s56: Why not add Gaussian noise to token IDs? (2 builds) → Evidence and language
+- s57: Build a masked-text training example (3 builds) → Evidence and language
+- s58: Fill the response a few tokens at a time (2 builds) → Evidence and language
+- s59: How do the two text samplers differ? (3 builds) → Evidence and language
+- s60: Can we now explain the opening examples? (4 builds) → Evidence and language
+- a01: Independent Gaussians: means and variances (3 builds) → Appendix
+- a02: A lower bound on log evidence (3 builds) → Appendix
+- a03: Factor the fixed chain backwards (3 builds) → Appendix
+- a04: The tractable training posterior (3 builds) → Appendix
+- a05: Alternative prediction targets (3 builds) → Appendix
+- a06: A faster sampler needs a different transition (3 builds) → Appendix
+- a07: A score oracle for eight Gaussian clusters (3 builds) → Appendix
+- a08: Flow matching: learn a velocity field (3 builds) → Appendix
+- a09: Masked language: objective and sampling convention (3 builds) → Appendix
+- a10: Cross-attention with heads and spatial layout (3 builds) → Appendix
+- a11: What to report with a generated example (3 builds) → Appendix

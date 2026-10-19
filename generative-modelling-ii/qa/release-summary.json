@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-19",
+  "core_scenes": 60,
+  "core_builds": 158,
+  "appendix_scenes": 11,
+  "appendix_builds": 33,
+  "mathematical_checks": 23,
+  "notebook_code_cells": 10,
+  "browser_builds_captured": 191,
+  "browser_errors": 0,
+  "overflow_findings": 0,
+  "mobile_overflow": false,
+  "six_demo_reset_play_pause_leave_checks": "passed",
+  "full_compressed_routes_and_deep_links": "passed",
+  "image_panels": 80,
+  "distinct_displayed_image_files": 36,
+  "pdf": {
+    "generative-modelling-ii-reading.pdf": {
+      "pages": 71,
+      "external_links": 71,
+      "internal_links": 71,
+      "text_characters": 1775
+    },
+    "diffusion-two-page-recap.pdf": {
+      "pages": 2,
+      "external_links": 4,
+      "internal_links": 0,
+      "text_characters": 3954
+    },
+    "generative-modelling-ii-all-builds.pdf": {
+      "pages": 191,
+      "external_links": 191,
+      "internal_links": 191,
+      "text_characters": 4775
+    }
+  },
+  "new_training_steps": 2000,
+  "older_lecture": "preserved; 65 main plus 18 appendix physical slides; image decoding and JavaScript checked",
+  "sha256": {
+    "index.html": "6858ba3be7d9d7980c8d9f1d98ccf0c10b938019ffc4e98a11801d62c9397252",
+    "exports/generative-modelling-ii-reading.pdf": "a1b68a63e4c99ce9b8e50c3fc9a2ca4ec87c42ba316eb3a10fb1a74732dd5b27",
+    "exports/generative-modelling-ii-all-builds.pdf": "235a8f84f54e498922a3b01ad85ad83c55b0ed0504b95f78442e86e98b8a77cf",
+    "exports/diffusion-two-page-recap.pdf": "80269d3c584f45e98b268c81aa4e07fcbfaf6d440a281097f322be7e25f5d8cc",
+    "notebooks/ddpm-companion.executed.ipynb": "64fc1cc78f1e079583b4b37d4e1c4ab5e34bba0c698e0d126560666fa8f70e77",
+    "models/model.pt": "9dc135888ec05bceebc35fcf6b7c6b5ee1823f2cea7c0b2ec32906368b793585"
+  },
+  "limitations": [
+    "New MNIST model shows malformed and similar digits; no image-quality metric computed.",
+    "Natural-image examples are attributed published results, not local text-to-image inference.",
+    "Pacing is estimated, not classroom rehearsed.",
+    "Lecture PDFs are raster with working link annotations; selectable lecture content is in HTML and notes.",
+    "No deployment or publication performed."
+  ],
+  "revision": "Whole-deck Beyond Attention visual and presenter-cue revision",
+  "presenter_lines": 71,
+  "rebuilt_figure_scenes": 65,
+  "svg_label_layout_findings": 0,
+  "reviewed_scenes": 71,
+  "interactive_demo_scenes": 6,
+  "svg_states_checked": 173,
+  "all_original_build_explanations_retained": true,
+  "repeated_takeaway_sentences": 0,
+  "all_mode_checks": "passed"
+}

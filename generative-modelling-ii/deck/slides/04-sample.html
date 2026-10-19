@@ -1,0 +1,313 @@
+<!-- ===================================================================== 3 · Sampling -->
+
+<section class="slide sec-gen opener break" id="p3-open" data-section="Part 3 · Sample">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 3 of 7</p>
+      <h2>Sampling: run the chain backwards with the network</h2>
+      <p class="why">We have a trained noise predictor. <b>Goal of this part:</b> start from pure noise and use the network to take one small backward step at a time, until a digit appears. Same toy pixel, same numbers.</p>
+    </div>
+    <!--route:3-->
+  </div>
+</section>
+
+<section class="slide sec-gen" id="start-noise" data-section="Part 3 · Sample">
+  <p class="kicker">The first step of generation</p>
+  <h2>Start from noise; all we have is the network's guess</h2>
+  <div class="body">
+    <div class="row" style="gap:28px;justify-content:center;align-items:center">
+      <figure class="col" style="align-items:center;margin:0"><img class="pix" src="figures/data/traj-x-1000.png" width="220" style="border:2.5px solid var(--xt);border-radius:6px"><figcaption class="small">$x_{1000} \sim \mathcal N(0, I)$</figcaption></figure>
+      <span class="arrow" data-b="2">→</span>
+      <div class="col" data-b="2" style="align-items:center"><span class="node dec">network<small>t = 1000</small></span></div>
+      <span class="arrow" data-b="2">→</span>
+      <figure class="col" data-b="2" style="align-items:center;margin:0"><img class="pix" src="figures/data/traj-e-1000.png" width="220" style="border:2.5px solid var(--x);border-radius:6px"><figcaption class="small">its guess $\hat x_0$ of a clean image</figcaption></figure>
+    </div>
+  </div>
+  <p class="q" data-b="2">The first guess is a featureless average. The trick is to move only a little way towards it, then ask again.</p>
+  <span class="badge run">our model</span>
+  <aside class="notes">
+    <p data-say="1">784 standard normal numbers. No x₀, no ε. Ask: what can we do with a network that predicts noise?</p>
+    <p data-say="2">At t = 1000 it predicts that almost everything is noise, and its implied clean image is the average digit: the conditional mean of Part 2 with almost no evidence. Jumping straight there would give a blur, like the VAE.</p>
+  </aside>
+</section>
+
+<section class="slide sec-gen" id="x0hat" data-section="Part 3 · Sample">
+  <p class="kicker">Our toy pixel again: $x_2 = 0.5$, and suppose $\hat\epsilon = -0.4$</p>
+  <h2>Invert the jump formula to guess the clean value</h2>
+  <div class="body">
+    <div class="row" style="gap:36px;align-items:center">
+      <div class="col" style="width:560px;gap:14px">
+        <div class="mathblock left" style="font-size:24px">$x_t = \sqrt{\bar\alpha_t}\,x_0 + \sqrt{1-\bar\alpha_t}\,\epsilon$</div>
+        <div class="mathblock left" style="font-size:24px">$\Rightarrow\quad \hat x_0 = \dfrac{x_t - \sqrt{1-\bar\alpha_t}\,\hat\epsilon}{\sqrt{\bar\alpha_t}}$</div>
+        <div class="arith" data-b="2" style="justify-content:flex-start;font-size:26px">
+          <span class="box" style="color:var(--xt)">0.5 − 0.6 × (−0.4)<small>= 0.74</small></span><span class="op">÷ 0.8 =</span>
+          <span class="box" style="color:var(--x);font-weight:700">0.925<small>guess of x₀</small></span>
+        </div>
+        <p class="small" data-b="3">The true value was 1. A noise error of 0.1 became an error of <b>0.075</b> = (0.6 / 0.8) × 0.1.</p>
+      </div>
+      <div class="col grow" data-b="4"><img class="fig" src="figures/data/amplification.svg" style="width:520px"><p class="small muted">error in $\hat x_0$ per unit error in $\hat\epsilon$, real schedule</p></div>
+    </div>
+  </div>
+  <p class="q" data-b="4">At high noise a small error in $\hat\epsilon$ is magnified up to 72 times, which is why early guesses are poor and we take small steps.</p>
+  <span class="badge toy">computed</span>
+  <aside class="notes">
+    <p data-say="1">Solve the jump formula for x₀, using the predicted noise in place of the true one.</p>
+    <p data-say="2">Our toy pixel: 0.925.</p>
+    <p data-say="3">Compare with the truth, 1. With the true ε = −0.5 the formula would give back exactly 1, but at generation time we never have it.</p>
+    <p data-say="4">The magnification factor √(1−ᾱ)/√ᾱ is 0.75 in the toy and 72 at t = 920 on the real schedule. That is the quantitative reason not to trust x̂₀ early on.</p>
+  </aside>
+</section>
+
+
+<section class="slide sec-gen" id="true-step" data-section="Part 3 · Sample">
+  <p class="kicker">If we knew the clean pixel</p>
+  <h2>Knowing $x_0$, the step back from $x_2$ is a Gaussian we can write down</h2>
+  <div class="body">
+    <div class="mathblock" style="font-size:26px">$q(x_{t-1}\mid x_t, x_0) = \mathcal N\big(\tilde\mu_t,\ \tilde\beta_t\big)$</div>
+    <div class="mathblock" style="font-size:26px">$\tilde\mu_t = \cx{a_t}\,x_0 + \cxt{b_t}\,x_t$</div>
+    <p class="small" style="text-align:center">$a_t = \dfrac{\sqrt{\bar\alpha_{t-1}}\,\beta_t}{1-\bar\alpha_t}$, &nbsp; $b_t = \dfrac{\sqrt{\alpha_t}\,(1-\bar\alpha_{t-1})}{1-\bar\alpha_t}$, &nbsp; $\tilde\beta_t = \beta_t\,\dfrac{1-\bar\alpha_{t-1}}{1-\bar\alpha_t}$</p>
+    <div class="arith" data-b="2" style="margin-top:18px">
+      <span class="box" style="color:var(--x)">0.497 × 1<small>$a_2\,x_0$: the true clean pixel</small></span><span class="op">+</span>
+      <span class="box" style="color:var(--xt)">0.497 × 0.5<small>$b_2\,x_2$: the noisy pixel</small></span><span class="op">=</span>
+      <span class="box" style="color:var(--x);font-weight:700">{{toy.mu_t}}<small>$\tilde\mu_2$</small></span>
+    </div>
+    <p class="small" data-b="3" style="text-align:center;margin-top:16px">Variance $\tilde\beta_2 = 0.2 \times 0.2/0.36 = {{toy.bt}}$. A blend of where we are and where the clean image is, plus some spread.</p>
+  </div>
+  <p class="q" data-b="3">This is the “true” reverse step. It needs $x_0$, which we have during training but not when generating.</p>
+  <span class="badge toy">computed</span>
+  <aside class="notes">
+    <p data-say="1">Bayes' rule on the forward steps: q(x_{t−1} | x_t, x₀) ∝ q(x_t | x_{t−1}) q(x_{t−1} | x₀), both Gaussians we know. The product is a Gaussian (appendix A2 completes the square). Read the mean as a weighted blend of x₀ and x_t.</p>
+    <p data-say="2">Toy numbers, t = 2: both weights happen to be 0.894 × 0.2 / 0.36 = 0.497. Result 0.745.</p>
+    <p data-say="3">Ask: at generation time, which ingredient is missing? x₀. That is the whole problem, and the next slide's fix is the obvious one.</p>
+  </aside>
+</section>
+
+<section class="slide sec-gen" id="plug-guess" data-section="Part 3 · Sample">
+  <p class="kicker">We do not know $x_0$, so use the guess</p>
+  <h2>The model's reverse step: the same blend, with $\hat x_0$ in place of $x_0$</h2>
+  <div class="body">
+    <div class="arith">
+      <span class="box" style="color:var(--x)">0.497 × 0.925<small>$a_2\,\hat x_0$: the guess</small></span><span class="op">+</span>
+      <span class="box" style="color:var(--xt)">0.497 × 0.5<small>$b_2\,x_2$</small></span><span class="op">=</span>
+      <span class="box" style="color:var(--dec);font-weight:700">{{toy.mu}}<small>$\mu_\theta$, the model's mean</small></span>
+    </div>
+    <div class="mathblock" data-b="2" style="font-size:26px;margin-top:22px">$\mu_\theta(x_t, t) = \cx{a_t}\,\hat x_0 + \cxt{b_t}\,x_t$</div>
+    <div class="mathblock" data-b="2" style="font-size:26px">$p_\theta(x_{t-1}\mid x_t) = \mathcal N\big(\mu_\theta,\ \tilde\beta_t\big)$</div>
+    <p class="small" data-b="3" style="text-align:center;margin-top:10px">True mean {{toy.mu_t}}, model mean {{toy.mu}}: they differ by {{toy.gap}} only because $\hat\epsilon = -0.4$ instead of $-0.5$. Part 4 turns this gap into the loss.</p>
+  </div>
+  <p class="q" data-b="3">A better noise prediction gives a better clean guess, which gives a reverse step closer to the true one.</p>
+  <span class="badge toy">computed</span>
+  <aside class="notes">
+    <p data-say="1">Same formula, with the network's clean guess. 0.708.</p>
+    <p data-say="2">This defines the model's reverse distribution: Gaussian, learned mean, fixed variance.</p>
+    <p data-say="3">The gap 0.745 − 0.708 = 0.037 is the seed of Part 4.</p>
+  </aside>
+</section>
+
+<section class="slide sec-gen" id="mean-step" data-section="Part 3 · Sample">
+  <p class="kicker">One reverse step · part 1</p>
+  <h2>The same mean, written with the predicted noise</h2>
+  <div class="body">
+    <div class="mathblock" style="font-size:28px">$\mu_\theta(x_t, t) = \dfrac{1}{\sqrt{\alpha_t}}\left(x_t - \dfrac{\beta_t}{\sqrt{1-\bar\alpha_t}}\;\hat\epsilon\right)$</div>
+    <div class="arith" data-b="2" style="margin-top:26px">
+      <span class="box" style="color:var(--xt)">0.5<small>x₂</small></span><span class="op">−</span>
+      <span class="box" style="color:var(--dec)">(0.2 / 0.6) × (−0.4)<small>$c_2\hat\epsilon = -0.133$</small></span><span class="op">=</span>
+      <span class="box" style="color:var(--xt)">{{toy.num}}</span><span class="op">$\div\sqrt{0.8}$ =</span>
+      <span class="box" style="color:var(--dec);font-weight:700">{{toy.mu}}<small>$\mu_\theta$</small></span>
+    </div>
+    <p class="small" data-b="3" style="text-align:center;margin-top:24px">Substitute $\hat x_0 = (x_t - \sqrt{1-\bar\alpha_t}\,\hat\epsilon)/\sqrt{\bar\alpha_t}$ into the blend and simplify: the same {{toy.mu}}, computed directly from $\hat\epsilon$.</p>
+  </div>
+  <p class="q" data-b="3">Read it as: remove a fraction $\beta_t/\sqrt{1-\bar\alpha_t}$ of the predicted noise, then rescale by $1/\sqrt{\alpha_t}$. The code uses this form.</p>
+  <span class="badge toy">computed</span>
+  <aside class="notes">
+    <p data-say="1">Plugging the x̂₀ formula into the blend and simplifying gives this form. It is what the code uses: no explicit x̂₀ needed.</p>
+    <p data-say="2">Our pixel: subtract a third of ε̂, then divide by √0.8. Result 0.708, between the noisy 0.5 and the guess 0.925.</p>
+    <p data-say="3">Same number as the blend: two ways of writing one mean.</p>
+  </aside>
+</section>
+
+<section class="slide sec-gen" id="noise-step" data-section="Part 3 · Sample">
+  <p class="kicker">One reverse step · part 2</p>
+  <h2>Then add fresh noise, except at the very last step</h2>
+  <div class="body">
+    <div class="row" style="gap:30px;align-items:center;justify-content:center">
+      <div class="col" style="width:520px;gap:10px">
+        <div class="mathblock left" style="font-size:25px">$x_{t-1} = \mu_\theta + \sigma_t\,z, \qquad z\sim\mathcal N(0, I)$</div>
+        <div class="mathblock left" style="font-size:23px">$\sigma_t^2 = \tilde\beta_t = \beta_t\,\dfrac{1-\bar\alpha_{t-1}}{1-\bar\alpha_t}$</div>
+        <div class="mathblock left" style="font-size:23px">$\sigma_2^2 = 0.2 \times \dfrac{0.2}{0.36} = {{toy.bt}}$</div>
+        <p class="small" data-b="2">With $z = 0.3$: &nbsp; $x_1 = {{toy.mu}} + {{toy.sigma}} \times 0.3 = \mathbf{ {{toy.x1s}} }$</p>
+        <p class="small" data-b="3">At t = 1 we return the mean with no noise: the output is the network's final estimate.</p>
+      </div>
+      <div class="col interactive" data-widget="reverse-step" style="width:540px;gap:10px">
+        <div class="ctrl"><span style="width:70px">$\hat\epsilon$</span><input type="range" min="-1" max="0.6" step="0.01" value="-0.4"><span class="readout v-e">−0.400</span></div>
+        <div class="ctrl"><span style="width:70px">z</span><input type="range" min="-2" max="2" step="0.01" value="0.3"><span class="readout v-z">0.300</span></div>
+        <table class="work tight" style="font-size:21px">
+          <tr><td>mean $\mu_\theta$</td><td class="v-mu mono-num">–</td></tr>
+          <tr><td>fresh noise $\sigma z$</td><td class="v-sz mono-num">–</td></tr>
+          <tr><td>next state $x_1$</td><td class="v-x1 mono-num">–</td></tr>
+          <tr><td>clean guess $\hat x_0$</td><td class="v-x0h mono-num">–</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">The mean says where to go; the noise keeps each step a sample from a distribution rather than a single best guess.</p>
+  <span class="badge toy">computed</span>
+  <aside class="notes">
+    <p data-say="1">DDPM fixes the reverse variance; we use the posterior variance β̃ (another common choice is β_t itself). For t = 2 in the toy, 0.111, so σ = 1/3.</p>
+    <p data-say="2">One standard normal draw, 0.3, moves the state to 0.808. Drag the sliders: ε̂ moves the mean and the guess, z moves only the next state.</p>
+    <p data-say="3">No noise at the last step: there is no step after it to absorb it.</p>
+  </aside>
+</section>
+
+<section class="slide sec-gen" id="three-values" data-section="Part 3 · Sample">
+  <p class="kicker">Do not confuse these</p>
+  <h2>Four numbers on one line</h2>
+  <div class="body"><!--svg:reverse-line--></div>
+  <p class="q" data-b="4">The sampler keeps x₁ = 0.808 and feeds it back in. The guess x̂₀ = 0.925 is only for looking at.</p>
+  <span class="badge toy">computed</span>
+  <aside class="notes">
+    <p data-say="1">The noisy input, 0.5.</p>
+    <p data-say="2">The reverse step's distribution: centred on μ_θ = 0.708 with σ = 0.333.</p>
+    <p data-say="3">One draw from it, 0.808: this becomes the new state.</p>
+    <p data-say="4">The clean guess 0.925, near but not equal to the truth 1. Students often feed x̂₀ back into the loop by mistake. Ask: which of these numbers goes into the next network call?</p>
+  </aside>
+</section>
+
+<section class="slide sec-gen" id="why-noise" data-section="Part 3 · Sample">
+  <p class="kicker">Why add noise back at every step?</p>
+  <h2>Run our model with and without the fresh noise</h2>
+  <div class="body">
+    <div class="col" style="gap:16px;align-items:center">
+      <div class="row" style="gap:16px"><span class="small" style="width:250px;text-align:right"><b>normal sampler</b><br>mean + $\sigma_t z$</span><img class="pix" src="figures/data/with-noise.png" width="820" style="border-radius:4px"></div>
+      <div class="row" style="gap:16px" data-b="2"><span class="small" style="width:250px;text-align:right"><b>mean only</b><br>same starting noise, $\sigma_t = 0$</span><img class="pix" src="figures/data/mean-only.png" width="820" style="border-radius:4px"></div>
+    </div>
+    <p class="small" data-b="3" style="text-align:center;margin-top:16px">Average distance between the 8 images: {{noise_ablation.div_noise}} with noise, {{noise_ablation.div_mean}} without.</p>
+  </div>
+  <p class="q" data-b="3">Without fresh noise, all eight starting points end on the same thin “1”. Following only the mean leads every start to the same average answer.</p>
+  <span class="badge run">our model</span>
+  <aside class="notes">
+    <p data-say="1">Eight samples from eight starting noise images with the ordinary sampler.</p>
+    <p data-say="2">The same starting noise, but at every step we keep only the mean. All eight become the same thin 1: the average distance between them drops from {{noise_ablation.div_noise}} to {{noise_ablation.div_mean}}.</p>
+    <p data-say="3">The mean is a conditional average, so following means only gives an "average" image. Fresh noise is what makes each step a draw from the reverse distribution.</p>
+  </aside>
+</section>
+
+<section class="slide sec-gen" id="sample-code" data-section="Part 3 · Sample">
+  <p class="kicker">The complete sampler</p>
+  <h2>The loop from the first slide, in ten lines</h2>
+  <div class="body">
+    <div class="row" style="gap:28px;align-items:center">
+      <pre class="code" style="font-size:18px;width:840px"><span class="line" data-hl="=1">x = torch.randn(B, 1, 28, 28)               <span class="c"># x_T</span></span>
+<span class="line" data-hl="=2">for t in range(T, 0, -1):                   <span class="c"># 1000, 999, ..., 1</span></span>
+<span class="line" data-hl="=2">    tt = torch.full((B,), t)</span>
+<span class="line" data-hl="=2">    eps_hat = model(x, tt)</span>
+<span class="line" data-hl="=3">    c = beta[t] / (1 - alpha_bar[t]).sqrt()</span>
+<span class="line" data-hl="=3">    mean = (x - c * eps_hat) / alpha[t].sqrt()</span>
+<span class="line" data-hl="=4">    if t > 1:</span>
+<span class="line" data-hl="=4">        x = mean + post_var[t].sqrt() * torch.randn_like(x)</span>
+<span class="line" data-hl="=4">    else:</span>
+<span class="line" data-hl="=4">        x = mean                            <span class="c"># last step: no noise</span></span></pre>
+      <div class="col" style="width:260px;gap:12px">
+        <div class="callout xt" data-b="1">start from pure noise</div>
+        <div class="callout dec" data-b="2">one network call per step, same weights</div>
+        <div class="callout dec" data-b="3">the mean formula</div>
+        <div class="callout z" data-b="4">fresh noise with the shape of x</div>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="4">1000 network calls for one batch of images. Sampling is slow; training was one call per example.</p>
+  <aside class="notes">
+    <p data-say="1">beta, alpha = 1 − beta and alpha_bar are the Part 1 tables; post_var[t] = β_t(1 − ᾱ_{t−1})/(1 − ᾱ_t) is β̃_t.</p>
+    <p data-say="2">The loop runs from T down to 1. The step number is given to the network every time.</p>
+    <p data-say="3">The mean formula from two slides back, for every pixel at once.</p>
+    <p data-say="4">torch.randn_like(x) draws noise with x's shape. A common bug is torch.randn() with no shape, which adds the same single number to every pixel. Appendix A7 shows a faster sampler (DDIM) that uses 50 calls.</p>
+  </aside>
+</section>
+
+<section class="slide sec-gen" id="trajectory" data-section="Part 3 · Sample">
+  <p class="kicker">What we watch during generation</p>
+  <h2>The state, and the network's guess at every stage</h2>
+  <div class="body">
+    <div class="grid-rows" style="grid-template-columns:150px repeat(8,118px);justify-content:center;gap:8px 8px">
+      <span></span><p class="lbl">1000</p><p class="lbl">800</p><p class="lbl">600</p><p class="lbl">400</p><p class="lbl">200</p><p class="lbl">100</p><p class="lbl">50</p><p class="lbl">1</p>
+      <span class="rl cxt">state $x_t$</span>
+      <img src="figures/data/traj-x-1000.png"><img src="figures/data/traj-x-800.png"><img src="figures/data/traj-x-600.png"><img src="figures/data/traj-x-400.png"><img src="figures/data/traj-x-200.png"><img src="figures/data/traj-x-100.png"><img src="figures/data/traj-x-50.png"><img src="figures/data/traj-x-1.png">
+      <span class="rl cx" data-b="2">guess $\hat x_0$</span>
+      <img data-b="2" src="figures/data/traj-e-1000.png"><img data-b="2" src="figures/data/traj-e-800.png"><img data-b="2" src="figures/data/traj-e-600.png"><img data-b="2" src="figures/data/traj-e-400.png"><img data-b="2" src="figures/data/traj-e-200.png"><img data-b="2" src="figures/data/traj-e-100.png"><img data-b="2" src="figures/data/traj-e-50.png"><img data-b="2" src="figures/data/traj-e-1.png">
+    </div>
+  </div>
+  <p class="q" data-b="3">The guess commits to a digit long before the state looks clean: the overall shape is decided at high noise, details at low noise.</p>
+  <span class="badge run">our model</span>
+  <aside class="notes">
+    <p data-say="1">Top row: the actual chain, the same sample as on the title slide.</p>
+    <p data-say="2">Bottom row: x̂₀ at the same steps. At 1000, an average blob; by 600 to 400 the identity of the digit is set; the last hundred steps only sharpen edges.</p>
+    <p data-say="3">This is also why the simple loss's extra weight on noisy steps helps: those steps decide the content.</p>
+  </aside>
+</section>
+
+<section class="slide sec-gen" id="scrub" data-section="Part 3 · Sample">
+  <p class="kicker">Try it</p>
+  <h2>Scrub through a sample as it forms</h2>
+  <div class="body">
+    <div class="row interactive" data-widget="scrub" style="gap:36px;justify-content:center;align-items:center">
+      <figure class="col" style="align-items:center;margin:0"><canvas width="280" height="280" style="width:280px;height:280px;image-rendering:pixelated;border:2.5px solid var(--xt);border-radius:6px"></canvas><figcaption class="small">state $x_t$</figcaption></figure>
+      <figure class="col" style="align-items:center;margin:0"><canvas width="280" height="280" style="width:280px;height:280px;image-rendering:pixelated;border:2.5px solid var(--x);border-radius:6px"></canvas><figcaption class="small">the network's guess $\hat x_0$</figcaption></figure>
+      <div class="col" style="width:330px;gap:16px">
+        <div class="ctrl"><span>step</span><input type="range" min="0" max="50" step="1" value="0" style="width:200px"><span class="readout v-t">1000</span></div>
+        <div class="row" style="gap:8px">
+          <span class="small">seed</span>
+          <button class="seedbtn" data-seed="0">1</button><button class="seedbtn" data-seed="1">2</button><button class="seedbtn" data-seed="2">3</button>
+          <button class="seedbtn" data-seed="3">4</button><button class="seedbtn" data-seed="4">5</button><button class="seedbtn" data-seed="5">6</button>
+        </div>
+        <p class="small muted">Recorded from our model every 20 steps; nothing is computed in the browser.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">Drag slowly through t = 600 … 300: that is where each seed decides which digit it will be.</p>
+  <span class="badge run">our model</span>
+  <aside class="notes">
+    <p data-say="1">t = 1000: noise, and the guess is a grey blob.</p>
+    <p data-say="2">t = 400: the guess has committed to a digit; the state still looks noisy.</p>
+    <p data-say="3">t = 0: the finished sample. Click through the seeds; ask students to call the digit as early as they can.</p>
+  </aside>
+</section>
+
+<section class="slide sec-gen" id="samples" data-section="Part 3 · Sample">
+  <p class="kicker">Evidence, not a showcase</p>
+  <h2>32 samples from our model, in the order they came out</h2>
+  <div class="body">
+    <div class="row" style="gap:30px;justify-content:center;align-items:center">
+      <img class="pix" src="figures/data/samples-32.png" width="660" style="border-radius:6px">
+      <div class="col" data-b="2" style="width:400px;align-items:center;gap:8px">
+        <img class="pix" src="figures/data/nearest.png" width="400" style="border-radius:6px">
+        <p class="small" style="text-align:center">top: our first six samples · bottom: the closest of the 60,000 training images</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="2">The samples resemble training digits without copying them. Judge a generator by an unselected batch, and check for memorisation.</p>
+  <span class="badge run">our model <small>seed 667, unselected</small></span>
+  <aside class="notes">
+    <p data-say="1">Not cherry-picked: one call with batch size 32. Ask students to find the failures; there are some imperfect strokes.</p>
+    <p data-say="2">For each of the first six samples, the nearest training image by pixel distance. Similar style, different digits in detail: the model is generating, not retrieving. For real systems memorisation is a genuine concern (Carlini et al. 2023 extracted training images from Stable Diffusion).</p>
+    <p>No quality metric (FID) was computed for this teaching model; a fair FID needs tens of thousands of samples and a reference feature network.</p>
+  </aside>
+</section>
+
+<section class="slide sec-gen" id="p3-recap" data-section="Part 3 · Sample">
+  <p class="kicker">End of Part 3</p>
+  <h2>What we did, and what comes next</h2>
+  <div class="body">
+    <div class="recap">
+      <div>
+        <h3>What we did</h3>
+        <ol><li>Invert the jump formula to guess the clean image: $\hat x_0 = 0.925$ (true 1).</li><li>Knowing $x_0$, the backward step is a Gaussian with mean 0.745; with the guess instead, 0.708.</li><li>Add fresh noise $\sigma_t z$ at every step but the last: 0.708 → 0.808. Without it, every sample is the same “1”.</li><li>Repeat 1000 times from pure noise: the loop on the first slide.</li></ol>
+      </div>
+      <div class="next" data-b="2">
+        <h3>Next: was “predict the noise” the right loss?</h3>
+        <p class="small">Part 2 chose noise MSE because it was easy. The two means on this slide, 0.745 and 0.708, are exactly what the ELBO compares.</p><p class="small">Part 4 shows the ELBO becomes a weighted noise MSE.</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><p data-say="1">Recap in one breath; students should be able to say each line back.</p><p data-say="2">The bridge to the next part.</p></aside>
+</section>
+

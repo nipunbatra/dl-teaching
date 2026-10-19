@@ -1,0 +1,36 @@
+{
+  "oracle": {
+    "playChanges": true,
+    "pauseStops": true,
+    "leaveStops": true
+  },
+  "noise": {
+    "playChanges": true,
+    "pauseStops": true,
+    "leaveStops": true
+  },
+  "tuple": {
+    "playChanges": true,
+    "pauseStops": true,
+    "leaveStops": true
+  },
+  "reverse": {
+    "playChanges": true,
+    "pauseStops": true,
+    "leaveStops": true
+  },
+  "attention": {
+    "playChanges": true,
+    "pauseStops": true,
+    "leaveStops": true
+  },
+  "mask": {
+    "playChanges": true,
+    "pauseStops": true,
+    "leaveStops": true
+  },
+  "compressedRoute": true,
+  "overviewJump": true,
+  "reloadDeepLink": true,
+  "reducedMotionNoTimer": true
+}

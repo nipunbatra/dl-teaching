@@ -1,0 +1,15 @@
+{
+  "name": "generative-modelling-ii",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ES 667 interactive diffusion lecture",
+  "scripts": {
+    "build": "python3 src/build.py",
+    "qa:browser": "node scripts/verify_browser.cjs",
+    "qa:interactions": "node scripts/verify_interactions.cjs"
+  },
+  "devDependencies": {
+    "katex": "0.16.45",
+    "puppeteer": "24.40.0"
+  }
+}

@@ -1,0 +1,15 @@
+ae {'epoch': 1, 'mse': 0.16702}
+ae {'epoch': 2, 'mse': 0.01192}
+ae {'epoch': 3, 'mse': 0.00825}
+ae {'epoch': 4, 'mse': 0.00676}
+ae {'epoch': 5, 'mse': 0.00578}
+ae {'epoch': 6, 'mse': 0.00523}
+ae {'epoch': 7, 'mse': 0.00477}
+ae {'epoch': 8, 'mse': 0.00444}
+ae {'epoch': 9, 'mse': 0.00413}
+ae {'epoch': 10, 'mse': 0.00389}
+ae {'epoch': 11, 'mse': 0.0037}
+ae {'epoch': 12, 'mse': 0.00357}
+ae {'epoch': 13, 'mse': 0.00343}
+ae {'epoch': 14, 'mse': 0.0033}
+ae {'epoch': 15, 'mse': 0.00314}

@@ -1,0 +1,712 @@
+[
+  {
+    "id": "s01",
+    "title": "Can we create a new example?",
+    "treatment": "Separated faces, rooms and cats from the published montage; enlarged source regions.",
+    "builds": 1,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s02",
+    "title": "One description, several valid images",
+    "treatment": "One prompt above four aligned source samples; separate sample labels and source qualification.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s03",
+    "title": "Where should the objects go?",
+    "treatment": "Grounding layout feeds three focused outputs; native labels replace tiny source captions.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s04",
+    "title": "Fill a missing region",
+    "treatment": "Observed face at left; five independently sampled fillings aligned at right; trimmed neighbouring rows.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s05",
+    "title": "Turn rough strokes into a plausible image",
+    "treatment": "Large stroke input and two matching bedroom outputs, with a single direction arrow.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s06",
+    "title": "What detail is missing at low resolution?",
+    "treatment": "Four aligned methods, each with face and eye detail; native headers preserve the paired reference.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s07",
+    "title": "Draw the structure, generate the appearance",
+    "treatment": "Edge condition and generated bird separated by a labelled ControlNet connection.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s08",
+    "title": "Put a particular subject in a new context",
+    "treatment": "Subject adaptation is a separate stage from new-prompt generation; two enlarged contexts.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s09",
+    "title": "Could this help answer a lab question?",
+    "treatment": "Enlarged August/January source pair; proposed lab task visibly separate from published evidence.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s10",
+    "title": "What must a generator learn?",
+    "treatment": "Condition branch and sampler feedback enlarged; next-state grid explicitly schematic.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s11",
+    "title": "From one-step generators to a denoising chain",
+    "treatment": "A one-pass generator and iterative denoiser share a comparable layout with a feedback route.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s12",
+    "title": "A digit gradually loses information",
+    "treatment": "Six large states from the same recorded forward trajectory, with a shared time arrow.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s13",
+    "title": "Can we recover the original with certainty?",
+    "treatment": "Two clean digits feed overlapping illustrative densities; the observation sits in the overlap.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s14",
+    "title": "What happens to a whole distribution?",
+    "treatment": "Larger live distribution plot and readout; fixed axes and analytical-oracle qualification retained.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s15",
+    "title": "What is a clean image tensor?",
+    "treatment": "Real digit, selected tensor coordinate and exact normalisation endpoints.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s16",
+    "title": "One small corruption step",
+    "treatment": "Signal and independent noise branches meet at addition; only the current mathematical line remains.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s17",
+    "title": "Alpha and alpha-bar mean different things",
+    "treatment": "Cumulative-retention bars retain the numerical product; repeated explanatory sentence removed.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s18",
+    "title": "Jump directly to a training noise level",
+    "treatment": "Independent noise branches combine by variance addition; full derivation retained in Notes.",
+    "builds": 4,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s19",
+    "title": "Work through one noisy coordinate",
+    "treatment": "Worked scalar arithmetic enlarged; takeaway explains cancellation instead of repeating the result.",
+    "builds": 4,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s20",
+    "title": "Try changing the noise level",
+    "treatment": "Larger live image triplet; recursive mode now shows its implied aggregate noise correctly.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s21",
+    "title": "Which target should the network predict?",
+    "treatment": "Target branch bypasses the network; input, predictor and loss have distinct roles.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s22",
+    "title": "Assemble one training example",
+    "treatment": "All five recorded panels share a row; numerical comparison is a separate strip below.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s23",
+    "title": "Calculate the loss for four values",
+    "treatment": "Target, prediction and squared-error grids enlarged; takeaway interprets the scalar loss.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s24",
+    "title": "Can the network know the exact sampled noise?",
+    "treatment": "Conditional densities and their mean support the MSE-optimality equation.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s25",
+    "title": "One denoiser, many noise levels",
+    "treatment": "Different noise levels feed shared weights; the time-feature branch remains separate.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s26",
+    "title": "A batch can contain different timesteps",
+    "treatment": "Three actual noisy examples, per-example coefficient lookup and one batched model call.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s27",
+    "title": "Translate the picture into PyTorch",
+    "treatment": "Training code has preserved indentation, reveal phases and a visual execution margin.",
+    "builds": 4,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s28",
+    "title": "Where do the gradients go?",
+    "treatment": "Gradient route returns from loss to trainable weights; target construction stays separate.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s29",
+    "title": "Where do the training labels come from?",
+    "treatment": "Real clean MNIST examples support the distinction between automatic labels and data coverage.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s30",
+    "title": "The ELBO from Lecture I appears again",
+    "treatment": "Forward and reverse path arrows align with prior, local and endpoint contributions.",
+    "builds": 4,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s31",
+    "title": "How does the bound lead to noise MSE?",
+    "treatment": "Two illustrative Gaussians show the mean error; the active algebra follows the current build.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s32",
+    "title": "Sampling starts without a clean image",
+    "treatment": "Fixed-weight sampling loop enlarged; a schematic state avoids implying a false adjacent image pair.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s33",
+    "title": "A predicted clean image is useful",
+    "treatment": "Subtract-noise and undo-scaling stages use the same numerical fixture as the derivation.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s34",
+    "title": "Which state goes into the next call?",
+    "treatment": "Clean estimate and previous state take separate branches; feedback uses the sampled state.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s35",
+    "title": "Build one reverse transition",
+    "treatment": "Reverse mean is a branched arithmetic construction, preserving the one-step alpha denominator.",
+    "builds": 4,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s36",
+    "title": "Why add noise during denoising?",
+    "treatment": "Gaussian centre, sample displacement and chosen spread; final equation retains the no-noise endpoint.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s37",
+    "title": "Work through one reverse step",
+    "treatment": "Larger density plot separates the mean, clean estimate and sampled value; controls retain exact arithmetic.",
+    "builds": 4,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s38",
+    "title": "The complete sampling loop",
+    "treatment": "Sampling code has preserved indentation and an explicit state-feedback margin.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s39",
+    "title": "What are we watching in a generation video?",
+    "treatment": "Seven recorded times have large native labels; state and clean-estimate rows reveal separately.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s40",
+    "title": "What should the denoiser output?",
+    "treatment": "Same-call noisy input and predicted noise enlarged, with explicit dense output shape.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s41",
+    "title": "Follow the shapes through a small U-Net",
+    "treatment": "Resolution pyramid and skip channels enlarged; actual parameter count replaces repeated prose.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s42",
+    "title": "Inject the timestep throughout the denoiser",
+    "treatment": "Time-vector broadcast visibly enters spatial features; repeated sentence reduced to block labels.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s43",
+    "title": "Can a transformer predict the noise?",
+    "treatment": "Spatial grid becomes patch tokens and returns to a dense grid; shape labels retained.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s44",
+    "title": "Why denoise a compressed representation?",
+    "treatment": "Position and scalar compression ratios are separate; takeaway addresses measurement limits.",
+    "builds": 4,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s45",
+    "title": "Train the autoencoder, then the denoiser",
+    "treatment": "Autoencoder training and frozen-encoder denoiser training remain two visibly distinct paths.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s46",
+    "title": "Generate in latent space, decode once",
+    "treatment": "Latent-state loop and one final decoder call enlarged; image-input exception retained.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s47",
+    "title": "What information comes from the prompt?",
+    "treatment": "Prompt encoding and feature reuse are shown with one text branch and one state loop.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s48",
+    "title": "How do image features attend to text?",
+    "treatment": "Image queries, text keys/values, attention matrix and output rows keep distinct origins.",
+    "builds": 4,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s49",
+    "title": "Work through one attention calculation",
+    "treatment": "Keys, values and weights are aligned; guidance view is an actual vector plot with coincident endpoints handled.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s50",
+    "title": "Use the prompt at every denoising step",
+    "treatment": "One prompt fans out to three successive denoiser calls with changing image states.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s51",
+    "title": "Teach one model to work with or without a condition",
+    "treatment": "Condition and null-condition branches share weights, input and target; duplicate prose removed.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s52",
+    "title": "Combine predictions with classifier-free guidance",
+    "treatment": "Exact illustrative guidance vectors enlarged; endpoint labels and evidence qualification retained.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s53",
+    "title": "What changes when we turn up guidance?",
+    "treatment": "All eight samples at each guidance scale retained in aligned rows; source w labels replaced by course s.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s54",
+    "title": "Revisit completion and super-resolution",
+    "treatment": "RePaint and SR3 each show their own observation-to-output relation using opening examples.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s55",
+    "title": "What do these results establish?",
+    "treatment": "Entire unselected sample batch enlarged; training budget, seed and uncomputed metrics stated separately.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s56",
+    "title": "Why not add Gaussian noise to token IDs?",
+    "treatment": "Sentence and two vocabulary numberings align by column; masking is shown in a fourth row.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s57",
+    "title": "Build a masked-text training example",
+    "treatment": "Original tokens, corrupted tokens and scored positions align; scripted generation remains a separate mode.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s58",
+    "title": "Fill the response a few tokens at a time",
+    "treatment": "Fixed prompt and response slots remain distinct across the scripted trace; duplicate narration removed.",
+    "builds": 2,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s59",
+    "title": "How do the two text samplers differ?",
+    "treatment": "Two generation histories share one sentence; takeaway discusses latency rather than restating rows.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "s60",
+    "title": "Can we now explain the opening examples?",
+    "treatment": "Progressive comparison table organises state, condition, target and sampling rule across three spaces.",
+    "builds": 4,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "a01",
+    "title": "Independent Gaussians: means and variances",
+    "treatment": "Separate mean/variance scaling panels precede Gaussian addition; final equation stays visible.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "a02",
+    "title": "A lower bound on log evidence",
+    "treatment": "Evidence and ELBO levels are connected by an explicit nonnegative KL gap.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "a03",
+    "title": "Factor the fixed chain backwards",
+    "treatment": "Path factorisation aligns with the three bound terms; final state shows the full combined expression.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "a04",
+    "title": "The tractable training posterior",
+    "treatment": "Known clean and noisy states feed the tractable training posterior; Gaussian output is explicit.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "a05",
+    "title": "Alternative prediction targets",
+    "treatment": "Orthogonal axes illustrate the velocity convention and its inverse transformation.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "a06",
+    "title": "A faster sampler needs a different transition",
+    "treatment": "Adjacent DDPM steps and a separately defined DDIM jump are shown on two timelines.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "a07",
+    "title": "A score oracle for eight Gaussian clusters",
+    "treatment": "Eight centres, an observed point and responsibility-weighted contributions support the exact score.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "a08",
+    "title": "Flow matching: learn a velocity field",
+    "treatment": "A noise/data pair defines a straight path and velocity arrow; final state shows the sampling ODE.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "a09",
+    "title": "Masked language: objective and sampling convention",
+    "treatment": "Loss arrows leave only masked positions; the separate time weight is visible beside the objective.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "a10",
+    "title": "Cross-attention with heads and spatial layout",
+    "treatment": "Spatial flattening, attention heads and restoration have explicit shapes; overlapping head labels removed.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  },
+  {
+    "id": "a11",
+    "title": "What to report with a generated example",
+    "treatment": "Published, local and proposed evidence have distinct reporting rows, without duplicated takeaway prose.",
+    "builds": 3,
+    "visual_review": "completed",
+    "speaking_cue": true,
+    "takeaway": true,
+    "explanations_retained_in_notes": true
+  }
+]

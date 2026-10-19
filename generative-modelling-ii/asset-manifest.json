@@ -1,0 +1,3426 @@
+[
+  {
+    "id": "ddpm",
+    "local_path": "assets/ddpm.png",
+    "source_page": "https://hojonathanho.github.io/diffusion/",
+    "asset_url": "https://hojonathanho.github.io/diffusion/assets/img/denoising_diffusion_all.png",
+    "authors_or_owner": "Ho, Jain, Abbeel",
+    "paper_or_dataset": "DDPM published unconditional mosaic",
+    "figure_or_caption": "DDPM published unconditional mosaic",
+    "license_or_usage_note": "Author-published research figure, attributed for local classroom discussion. No blanket license for embedded photographs is asserted; review permissions before external redistribution.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Unmodified source; layout may display an explicitly documented crop.",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [
+      "s01"
+    ],
+    "sha256": "1d88822dffd1a92efaf37b6738a09d72d53b725a40ca99907817c9037b5eb254"
+  },
+  {
+    "id": "ldm",
+    "local_path": "assets/ldm.png",
+    "source_page": "https://ommer-lab.com/research/latent-diffusion-models/",
+    "asset_url": "https://ommer-lab.com/wp-content/uploads/2022/08/article-Figure17-1.png",
+    "authors_or_owner": "Rombach et al.",
+    "paper_or_dataset": "LDM Figure 17",
+    "figure_or_caption": "LDM Figure 17; prompt-conditioned samples; 100 DDIM steps eta=0; seeds unspecified",
+    "license_or_usage_note": "Author-published research figure, attributed for local classroom discussion. No blanket license for embedded photographs is asserted; review permissions before external redistribution.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Unmodified source; layout may display an explicitly documented crop.",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [],
+    "sha256": "a85fe3b17c108e94484dd88d95e4c02f411aa09872bbac7284ccaf38dccb30de"
+  },
+  {
+    "id": "gligen",
+    "local_path": "assets/gligen.png",
+    "source_page": "https://gligen.github.io/",
+    "asset_url": "https://gligen.github.io/images/groundtext2img.png",
+    "authors_or_owner": "Li et al.",
+    "paper_or_dataset": "GLIGEN grounding and generated outputs",
+    "figure_or_caption": "GLIGEN grounding and generated outputs",
+    "license_or_usage_note": "Author-published research figure, attributed for local classroom discussion. No blanket license for embedded photographs is asserted; review permissions before external redistribution.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Unmodified source; layout may display an explicitly documented crop.",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [
+      "s03"
+    ],
+    "sha256": "75a57ae5a6883e3b86e7ea42804860509e0ceda0bde3ec0a5c4429db30f163dc"
+  },
+  {
+    "id": "repaint",
+    "local_path": "assets/repaint.png",
+    "source_page": "https://github.com/andreas128/RePaint",
+    "asset_url": "https://user-images.githubusercontent.com/11280511/150803812-a4729ef8-6ad4-46aa-ae99-8c27fbb2ea2e.png",
+    "authors_or_owner": "Lugmayr et al.",
+    "paper_or_dataset": "RePaint",
+    "figure_or_caption": "RePaint; blue regions are missing; multiple sampled fillings",
+    "license_or_usage_note": "Author-published research figure, attributed for local classroom discussion. No blanket license for embedded photographs is asserted; review permissions before external redistribution.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Unmodified source; layout may display an explicitly documented crop.",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [],
+    "sha256": "491ea356a81e97fd60499aebe201da5e806c4dc792cb892a738f442faf8ebbe4"
+  },
+  {
+    "id": "sdedit",
+    "local_path": "assets/sdedit.jpg",
+    "source_page": "https://sde-image-editing.github.io/",
+    "asset_url": "https://sde-image-editing.github.io/images/stroke_based_generation.jpg",
+    "authors_or_owner": "Meng et al.",
+    "paper_or_dataset": "SDEdit stroke-based generation",
+    "figure_or_caption": "SDEdit stroke-based generation",
+    "license_or_usage_note": "Author-published research figure, attributed for local classroom discussion. No blanket license for embedded photographs is asserted; review permissions before external redistribution.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Unmodified source; layout may display an explicitly documented crop.",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [],
+    "sha256": "bbab14287428547f7daaf67c0a18515f59d588dab85457a69f41d6d38cd5ad5d"
+  },
+  {
+    "id": "sdedit-edit",
+    "local_path": "assets/sdedit-edit.jpg",
+    "source_page": "https://sde-image-editing.github.io/",
+    "asset_url": "https://sde-image-editing.github.io/images/stroke_edit.jpg",
+    "authors_or_owner": "Meng et al.",
+    "paper_or_dataset": "SDEdit stroke editing",
+    "figure_or_caption": "SDEdit stroke editing",
+    "license_or_usage_note": "Author-published research figure, attributed for local classroom discussion. No blanket license for embedded photographs is asserted; review permissions before external redistribution.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Unmodified source; layout may display an explicitly documented crop.",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [],
+    "sha256": "c36cf7960793947b7dc7f3922620461ea6048e0e08178a4a43fe70aab4fed686"
+  },
+  {
+    "id": "sr3",
+    "local_path": "assets/sr3.png",
+    "source_page": "https://iterative-refinement.github.io/",
+    "asset_url": "https://iterative-refinement.github.io/images/super_res_examples.png",
+    "authors_or_owner": "Saharia et al.",
+    "paper_or_dataset": "SR3 super-resolution comparison",
+    "figure_or_caption": "SR3 super-resolution comparison",
+    "license_or_usage_note": "Author-published research figure, attributed for local classroom discussion. No blanket license for embedded photographs is asserted; review permissions before external redistribution.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Unmodified source; layout may display an explicitly documented crop.",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [],
+    "sha256": "500be61f383b5165645ca43cd5755069335f73f2e979d85d1ef540ec6ceef687"
+  },
+  {
+    "id": "control",
+    "local_path": "assets/control.png",
+    "source_page": "https://github.com/lllyasviel/ControlNet",
+    "asset_url": "https://raw.githubusercontent.com/lllyasviel/ControlNet/main/github_page/p1.png",
+    "authors_or_owner": "Zhang et al.",
+    "paper_or_dataset": "ControlNet Canny edge condition and outputs",
+    "figure_or_caption": "ControlNet Canny edge condition and outputs",
+    "license_or_usage_note": "Author-published research figure, attributed for local classroom discussion. No blanket license for embedded photographs is asserted; review permissions before external redistribution.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Unmodified source; layout may display an explicitly documented crop.",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [],
+    "sha256": "f4fc0d4049b053bfea622232a65f83b361b2fc99869669e7c797dcf8a8929715"
+  },
+  {
+    "id": "dreambooth",
+    "local_path": "assets/dreambooth.jpg",
+    "source_page": "https://dreambooth.github.io/",
+    "asset_url": "https://dreambooth.github.io/DreamBooth_files/teaser_static.jpg",
+    "authors_or_owner": "Ruiz et al.",
+    "paper_or_dataset": "DreamBooth reference subjects and generated contexts",
+    "figure_or_caption": "DreamBooth reference subjects and generated contexts",
+    "license_or_usage_note": "Author-published research figure, attributed for local classroom discussion. No blanket license for embedded photographs is asserted; review permissions before external redistribution.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Unmodified source; layout may display an explicitly documented crop.",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [],
+    "sha256": "66dbab88a6cf4aec38202b6d4f99e51bf51178b96f59c9f42b042e2d014674cf"
+  },
+  {
+    "id": "sat",
+    "local_path": "assets/sat.png",
+    "source_page": "https://www.samarkhanna.com/DiffusionSat/",
+    "asset_url": "https://www.samarkhanna.com/DiffusionSat/static/images/diffusion_sat_samples.png",
+    "authors_or_owner": "Khanna et al.",
+    "paper_or_dataset": "DiffusionSat metadata-conditioned imagery",
+    "figure_or_caption": "DiffusionSat metadata-conditioned imagery",
+    "license_or_usage_note": "Author-published research figure, attributed for local classroom discussion. No blanket license for embedded photographs is asserted; review permissions before external redistribution.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Unmodified source; layout may display an explicitly documented crop.",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [
+      "s09"
+    ],
+    "sha256": "2cd7f397e45dbfc4905771ebfa950cb311791b193fa9a2013588dd362c298c8e"
+  },
+  {
+    "id": "sat-sr",
+    "local_path": "assets/sat-sr.png",
+    "source_page": "https://www.samarkhanna.com/DiffusionSat/",
+    "asset_url": "https://www.samarkhanna.com/DiffusionSat/static/images/diffusion_sat_superres.png",
+    "authors_or_owner": "Khanna et al.",
+    "paper_or_dataset": "DiffusionSat super-resolution",
+    "figure_or_caption": "DiffusionSat super-resolution",
+    "license_or_usage_note": "Author-published research figure, attributed for local classroom discussion. No blanket license for embedded photographs is asserted; review permissions before external redistribution.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Unmodified source; layout may display an explicitly documented crop.",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [],
+    "sha256": "e88f416f0df075da7eed5c018ae442d95b3a7347cd133960cd4772eed0adb033"
+  },
+  {
+    "id": "ldm-samples",
+    "local_path": "assets/ldm-samples.png",
+    "source_page": "https://ommer-lab.com/research/latent-diffusion-models/",
+    "asset_url": "https://ommer-lab.com/wp-content/uploads/2022/08/article-Figure17-1.png",
+    "authors_or_owner": "Rombach et al.",
+    "paper_or_dataset": "LDM Figure 17",
+    "figure_or_caption": "LDM Figure 17; prompt-conditioned samples; 100 DDIM steps eta=0; seeds unspecified",
+    "license_or_usage_note": "Author-published research figure, attributed for local classroom discussion. No blanket license for embedded photographs is asserted; review permissions before external redistribution.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Four first-column samples from Figure 17, cropped at x=0:125 and y=(103:226,228:347,350:474,477:602), enlarged and arranged horizontally. Original retained.",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [],
+    "sha256": "28e635e04ccbbda16c8247406c5470bd5cdf89b1d0e8b087c0dce9714db1602e"
+  },
+  {
+    "id": "repaint-row",
+    "local_path": "assets/repaint-row.png",
+    "source_page": "https://github.com/andreas128/RePaint",
+    "asset_url": "https://user-images.githubusercontent.com/11280511/150803812-a4729ef8-6ad4-46aa-ae99-8c27fbb2ea2e.png",
+    "authors_or_owner": "Lugmayr et al.",
+    "paper_or_dataset": "RePaint",
+    "figure_or_caption": "RePaint; blue regions are missing; multiple sampled fillings",
+    "license_or_usage_note": "Author-published research figure, attributed for local classroom discussion. No blanket license for embedded photographs is asserted; review permissions before external redistribution.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Crop normalised box (0, 0.0, 1, 0.254); original retained as repaint.png. Caption supplied adjacent to crop.",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [],
+    "sha256": "48b16398f33b51f2b094e0cb71d75e0124015a983b5469b0b6d51e08793e70eb"
+  },
+  {
+    "id": "repaint-input",
+    "local_path": "assets/repaint-input.png",
+    "source_page": "https://github.com/andreas128/RePaint",
+    "asset_url": "https://user-images.githubusercontent.com/11280511/150803812-a4729ef8-6ad4-46aa-ae99-8c27fbb2ea2e.png",
+    "authors_or_owner": "Lugmayr et al.",
+    "paper_or_dataset": "RePaint",
+    "figure_or_caption": "RePaint; blue regions are missing; multiple sampled fillings",
+    "license_or_usage_note": "Author-published research figure, attributed for local classroom discussion. No blanket license for embedded photographs is asserted; review permissions before external redistribution.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Crop normalised box (0, 0.0, 0.105, 0.254); original retained as repaint.png. Caption supplied adjacent to crop. CSS display-only inset trims remove a neighbouring row and an intermediate-state edge; the stored crop and original are unchanged.",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [
+      "s04",
+      "s54"
+    ],
+    "sha256": "2ffba1d73cd9060dc96ef77ff9c3e6fc25ca251ca652bcfc04c1131dd4044fdb"
+  },
+  {
+    "id": "repaint-outputs",
+    "local_path": "assets/repaint-outputs.png",
+    "source_page": "https://github.com/andreas128/RePaint",
+    "asset_url": "https://user-images.githubusercontent.com/11280511/150803812-a4729ef8-6ad4-46aa-ae99-8c27fbb2ea2e.png",
+    "authors_or_owner": "Lugmayr et al.",
+    "paper_or_dataset": "RePaint",
+    "figure_or_caption": "RePaint; blue regions are missing; multiple sampled fillings",
+    "license_or_usage_note": "Author-published research figure, attributed for local classroom discussion. No blanket license for embedded photographs is asserted; review permissions before external redistribution.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Crop normalised box (0.435, 0, 1, 0.254); original retained as repaint.png. Caption supplied adjacent to crop. CSS display-only inset trims remove a neighbouring row and an intermediate-state edge; the stored crop and original are unchanged.",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [
+      "s04",
+      "s54"
+    ],
+    "sha256": "cace9203a9914abc6471803e6a0e3ab4db12a8f249c51374b810b09edcf33837"
+  },
+  {
+    "id": "sdedit-input",
+    "local_path": "assets/sdedit-input.png",
+    "source_page": "https://sde-image-editing.github.io/",
+    "asset_url": "https://sde-image-editing.github.io/images/stroke_based_generation.jpg",
+    "authors_or_owner": "Meng et al.",
+    "paper_or_dataset": "SDEdit stroke-based generation",
+    "figure_or_caption": "SDEdit stroke-based generation",
+    "license_or_usage_note": "Author-published research figure, attributed for local classroom discussion. No blanket license for embedded photographs is asserted; review permissions before external redistribution.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "First bedroom input crop pixels (70,0,174,104), enlarged; original retained.",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [
+      "s05"
+    ],
+    "sha256": "a99c5d8523105a45de4bbbbc68a0631ed9dc6ae45f55daf30018e1aa203de231"
+  },
+  {
+    "id": "sdedit-output",
+    "local_path": "assets/sdedit-output.png",
+    "source_page": "https://sde-image-editing.github.io/",
+    "asset_url": "https://sde-image-editing.github.io/images/stroke_based_generation.jpg",
+    "authors_or_owner": "Meng et al.",
+    "paper_or_dataset": "SDEdit stroke-based generation",
+    "figure_or_caption": "SDEdit stroke-based generation",
+    "license_or_usage_note": "Author-published research figure, attributed for local classroom discussion. No blanket license for embedded photographs is asserted; review permissions before external redistribution.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Crop normalised box (0, 0.36, 1, 1); original retained as sdedit.jpg. Caption supplied adjacent to crop.",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [],
+    "sha256": "842c22f2c85f646210ef554cd6674181e2d2162b36035bcc6f247507a4991f9e"
+  },
+  {
+    "id": "control-pair",
+    "local_path": "assets/control-pair.png",
+    "source_page": "https://github.com/lllyasviel/ControlNet",
+    "asset_url": "https://raw.githubusercontent.com/lllyasviel/ControlNet/main/github_page/p1.png",
+    "authors_or_owner": "Zhang et al.",
+    "paper_or_dataset": "ControlNet Canny edge condition and outputs",
+    "figure_or_caption": "ControlNet Canny edge condition and outputs",
+    "license_or_usage_note": "Author-published research figure, attributed for local classroom discussion. No blanket license for embedded photographs is asserted; review permissions before external redistribution.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Crop normalised box (0.505, 0, 0.997, 0.335); original retained as control.png. Caption supplied adjacent to crop.",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [
+      "s07"
+    ],
+    "sha256": "3cf78d804fb826ec9b497473bdf5149a021381c0956b3647490f0d34a57f993a"
+  },
+  {
+    "id": "dreambooth-input",
+    "local_path": "assets/dreambooth-input.png",
+    "source_page": "https://dreambooth.github.io/",
+    "asset_url": "https://dreambooth.github.io/DreamBooth_files/teaser_static.jpg",
+    "authors_or_owner": "Ruiz et al.",
+    "paper_or_dataset": "DreamBooth reference subjects and generated contexts",
+    "figure_or_caption": "DreamBooth reference subjects and generated contexts",
+    "license_or_usage_note": "Author-published research figure, attributed for local classroom discussion. No blanket license for embedded photographs is asserted; review permissions before external redistribution.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Crop normalised box (0, 0, 0.265, 1); original retained as dreambooth.jpg. Caption supplied adjacent to crop.",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [
+      "s08"
+    ],
+    "sha256": "2ef478c7bae6aec7583508b2089a44fb372d8f9e7198b5c73f811eb4426ae4f1"
+  },
+  {
+    "id": "dreambooth-output",
+    "local_path": "assets/dreambooth-output.png",
+    "source_page": "https://dreambooth.github.io/",
+    "asset_url": "https://dreambooth.github.io/DreamBooth_files/teaser_static.jpg",
+    "authors_or_owner": "Ruiz et al.",
+    "paper_or_dataset": "DreamBooth reference subjects and generated contexts",
+    "figure_or_caption": "DreamBooth reference subjects and generated contexts",
+    "license_or_usage_note": "Author-published research figure, attributed for local classroom discussion. No blanket license for embedded photographs is asserted; review permissions before external redistribution.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Crop normalised box (0.27, 0, 1, 1); original retained as dreambooth.jpg. Caption supplied adjacent to crop.",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [
+      "s08"
+    ],
+    "sha256": "f573661daa8a4b11cd4a5a365a404f06d2a650e05a34e5c38db5dc9027b6d586"
+  },
+  {
+    "id": "sr3-top",
+    "local_path": "assets/sr3-top.png",
+    "source_page": "https://iterative-refinement.github.io/",
+    "asset_url": "https://iterative-refinement.github.io/images/super_res_examples.png",
+    "authors_or_owner": "Saharia et al.",
+    "paper_or_dataset": "SR3 super-resolution comparison",
+    "figure_or_caption": "SR3 super-resolution comparison",
+    "license_or_usage_note": "Author-published research figure, attributed for local classroom discussion. No blanket license for embedded photographs is asserted; review permissions before external redistribution.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Crop normalised box (0, 0, 1, 0.515); original retained as sr3.png. Caption supplied adjacent to crop.",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [
+      "s06",
+      "s54"
+    ],
+    "sha256": "4a79785776d6343de5f8b1ebd64719a2de28d5ad34a03bcd33e16e14a6d9aca6"
+  },
+  {
+    "id": "mnist-forward",
+    "local_path": "assets/forward-*.png",
+    "source_page": "https://yann.lecun.com/exdb/mnist/",
+    "authors_or_owner": "LeCun, Cortes, Burges; local computation",
+    "paper_or_dataset": "MNIST test example 0 (digit 7)",
+    "figure_or_caption": "Actual recursive forward trajectory; seed 667; linear T=1000",
+    "license_or_usage_note": "Dataset provenance retained; authored computation",
+    "retrieved_date": "2026-10-19",
+    "transformations": "uint8/127.5-1; fixed display scale clipped only for rendering",
+    "evidence_type": "deterministic simulation",
+    "used_in_scene_ids": [
+      "s12",
+      "s15",
+      "s20",
+      "s22",
+      "s26"
+    ],
+    "sha256": null
+  },
+  {
+    "id": "fresh-gaussian",
+    "local_path": "assets/fresh-gaussian.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "fresh gaussian",
+    "figure_or_caption": "fresh gaussian",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "deterministic simulation",
+    "used_in_scene_ids": [
+      "s10",
+      "s32"
+    ],
+    "settings": null,
+    "sha256": "035fdf3ff3ec17839a9a2596fc1392b393b13ca0752d19e02b05aa381328c963"
+  },
+  {
+    "id": "batch-350",
+    "local_path": "assets/batch-350.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "batch 350",
+    "figure_or_caption": "batch 350",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "deterministic simulation",
+    "used_in_scene_ids": [
+      "s26"
+    ],
+    "settings": null,
+    "sha256": "4ac48c2f44916edbdf0daf4def7cafa512b2bdbc6604dc370ff6224a6c4ee55e"
+  },
+  {
+    "id": "forward-0",
+    "local_path": "assets/forward-0.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "forward 0",
+    "figure_or_caption": "forward 0",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "deterministic simulation",
+    "used_in_scene_ids": [
+      "s12"
+    ],
+    "settings": null,
+    "sha256": "4867c839e812709d96535c9bbe704a18d8babbbb7e90121b6b4c250ed062c3e2"
+  },
+  {
+    "id": "mnist_denoising_grid",
+    "local_path": "assets/mnist_denoising_grid.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "MNIST / DDPM",
+    "figure_or_caption": "mnist_denoising_grid",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "local trained-model output",
+    "used_in_scene_ids": [],
+    "settings": {
+      "status": "MEASURED MODEL OUTPUT",
+      "dataset": "MNIST",
+      "dataset_md5": {
+        "train-images-idx3-ubyte.gz": "f68b3c2dcbeaaa9fbdd348bbdeb94873",
+        "train-labels-idx1-ubyte.gz": "d53e105ee54ea40749a09fcbcd1e9432",
+        "t10k-images-idx3-ubyte.gz": "9fb629c4189551a2d022fa330f9573f3",
+        "t10k-labels-idx1-ubyte.gz": "ec29112dd5afa0611ce80d1b7f02629c"
+      },
+      "train_examples": 60000,
+      "preprocessing": "continuous grayscale scaled to [-1,1]",
+      "seed": 667,
+      "steps": 4000,
+      "batch_size": 128,
+      "T": 100,
+      "schedule": "cosine s=0.008; beta clipped [0.0001,0.999]",
+      "alpha_bar_T": 2.428520815556112e-07,
+      "optimizer": "Adam",
+      "learning_rate": 0.0002,
+      "condition_dropout": 0.15,
+      "ema_decay": 0.995,
+      "architecture": "1\u219224\u219248\u219272\u219248\u219224\u21921, residual U-Net; time and class embeddings",
+      "parameters": 255721,
+      "device": "cpu",
+      "torch": "2.14.0",
+      "training_run_seconds": 1650.7414469718933,
+      "history": [
+        {
+          "step": 100,
+          "noise_mse": 0.30846906796097756
+        },
+        {
+          "step": 200,
+          "noise_mse": 0.10856176145374775
+        },
+        {
+          "step": 300,
+          "noise_mse": 0.08178167924284935
+        },
+        {
+          "step": 400,
+          "noise_mse": 0.07172601994127036
+        },
+        {
+          "step": 500,
+          "noise_mse": 0.06610857009887695
+        },
+        {
+          "step": 600,
+          "noise_mse": 0.062431886233389376
+        },
+        {
+          "step": 700,
+          "noise_mse": 0.06051275514066219
+        },
+        {
+          "step": 800,
+          "noise_mse": 0.0582098026573658
+        },
+        {
+          "step": 900,
+          "noise_mse": 0.05643642701208591
+        },
+        {
+          "step": 1000,
+          "noise_mse": 0.05508094076067209
+        },
+        {
+          "step": 1100,
+          "noise_mse": 0.05377616599202156
+        },
+        {
+          "step": 1200,
+          "noise_mse": 0.05322923414409161
+        },
+        {
+          "step": 1300,
+          "noise_mse": 0.05209502175450325
+        },
+        {
+          "step": 1400,
+          "noise_mse": 0.051930529475212095
+        },
+        {
+          "step": 1500,
+          "noise_mse": 0.05069988165050745
+        },
+        {
+          "step": 1600,
+          "noise_mse": 0.05022148385643959
+        },
+        {
+          "step": 1700,
+          "noise_mse": 0.04927271634340286
+        },
+        {
+          "step": 1800,
+          "noise_mse": 0.0485504948720336
+        },
+        {
+          "step": 1900,
+          "noise_mse": 0.04850308492779732
+        },
+        {
+          "step": 2000,
+          "noise_mse": 0.048461561016738416
+        },
+        {
+          "step": 2100,
+          "noise_mse": 0.04722420994192362
+        },
+        {
+          "step": 2200,
+          "noise_mse": 0.04724949788302183
+        },
+        {
+          "step": 2300,
+          "noise_mse": 0.04761609483510256
+        },
+        {
+          "step": 2400,
+          "noise_mse": 0.04666518468409777
+        },
+        {
+          "step": 2500,
+          "noise_mse": 0.04638668246567249
+        },
+        {
+          "step": 2600,
+          "noise_mse": 0.04629821829497814
+        },
+        {
+          "step": 2700,
+          "noise_mse": 0.04617216590791941
+        },
+        {
+          "step": 2800,
+          "noise_mse": 0.045312563441693786
+        },
+        {
+          "step": 2900,
+          "noise_mse": 0.0464620341360569
+        },
+        {
+          "step": 3000,
+          "noise_mse": 0.04489829380065203
+        },
+        {
+          "step": 3100,
+          "noise_mse": 0.045265570245683194
+        },
+        {
+          "step": 3200,
+          "noise_mse": 0.04491807546466589
+        },
+        {
+          "step": 3300,
+          "noise_mse": 0.04453052829951048
+        },
+        {
+          "step": 3400,
+          "noise_mse": 0.04470679227262735
+        },
+        {
+          "step": 3500,
+          "noise_mse": 0.04452067118138075
+        },
+        {
+          "step": 3600,
+          "noise_mse": 0.04461802393198013
+        },
+        {
+          "step": 3700,
+          "noise_mse": 0.044179835319519044
+        },
+        {
+          "step": 3800,
+          "noise_mse": 0.04415990389883518
+        },
+        {
+          "step": 3900,
+          "noise_mse": 0.04370741102844477
+        },
+        {
+          "step": 4000,
+          "noise_mse": 0.04393744219094515
+        }
+      ],
+      "checkpoint_sha256": "21f14f524fecd59926fd3cf222e23c8f75d409b1629cf1bde9fc7c98f9316c68",
+      "test_examples": 2048,
+      "test_noise_mse": 0.04018862568773329,
+      "zero_predictor_noise_mse": 0.9983098022639751,
+      "generated_samples": 64,
+      "sample_seed": 1001,
+      "cfg_seed": 1002,
+      "cfg_scales": [
+        0,
+        1,
+        3,
+        7,
+        10
+      ],
+      "display": "values clipped to [-1,1] for plots; estimated x0 clipped in sampler",
+      "sample_quality": "Teaching model; inspect all 64 fixed-seed samples, including malformed digits. MSE is not an image quality metric."
+    },
+    "sha256": "dc2bc7bb507afb4f6cd47557e9ac08199c6750b74cd429a065cb862232f328fc"
+  },
+  {
+    "id": "mnist_samples",
+    "local_path": "assets/mnist_samples.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "MNIST / DDPM",
+    "figure_or_caption": "mnist_samples",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "local trained-model output",
+    "used_in_scene_ids": [],
+    "settings": {
+      "status": "MEASURED MODEL OUTPUT",
+      "dataset": "MNIST",
+      "dataset_md5": {
+        "train-images-idx3-ubyte.gz": "f68b3c2dcbeaaa9fbdd348bbdeb94873",
+        "train-labels-idx1-ubyte.gz": "d53e105ee54ea40749a09fcbcd1e9432",
+        "t10k-images-idx3-ubyte.gz": "9fb629c4189551a2d022fa330f9573f3",
+        "t10k-labels-idx1-ubyte.gz": "ec29112dd5afa0611ce80d1b7f02629c"
+      },
+      "train_examples": 60000,
+      "preprocessing": "continuous grayscale scaled to [-1,1]",
+      "seed": 667,
+      "steps": 4000,
+      "batch_size": 128,
+      "T": 100,
+      "schedule": "cosine s=0.008; beta clipped [0.0001,0.999]",
+      "alpha_bar_T": 2.428520815556112e-07,
+      "optimizer": "Adam",
+      "learning_rate": 0.0002,
+      "condition_dropout": 0.15,
+      "ema_decay": 0.995,
+      "architecture": "1\u219224\u219248\u219272\u219248\u219224\u21921, residual U-Net; time and class embeddings",
+      "parameters": 255721,
+      "device": "cpu",
+      "torch": "2.14.0",
+      "training_run_seconds": 1650.7414469718933,
+      "history": [
+        {
+          "step": 100,
+          "noise_mse": 0.30846906796097756
+        },
+        {
+          "step": 200,
+          "noise_mse": 0.10856176145374775
+        },
+        {
+          "step": 300,
+          "noise_mse": 0.08178167924284935
+        },
+        {
+          "step": 400,
+          "noise_mse": 0.07172601994127036
+        },
+        {
+          "step": 500,
+          "noise_mse": 0.06610857009887695
+        },
+        {
+          "step": 600,
+          "noise_mse": 0.062431886233389376
+        },
+        {
+          "step": 700,
+          "noise_mse": 0.06051275514066219
+        },
+        {
+          "step": 800,
+          "noise_mse": 0.0582098026573658
+        },
+        {
+          "step": 900,
+          "noise_mse": 0.05643642701208591
+        },
+        {
+          "step": 1000,
+          "noise_mse": 0.05508094076067209
+        },
+        {
+          "step": 1100,
+          "noise_mse": 0.05377616599202156
+        },
+        {
+          "step": 1200,
+          "noise_mse": 0.05322923414409161
+        },
+        {
+          "step": 1300,
+          "noise_mse": 0.05209502175450325
+        },
+        {
+          "step": 1400,
+          "noise_mse": 0.051930529475212095
+        },
+        {
+          "step": 1500,
+          "noise_mse": 0.05069988165050745
+        },
+        {
+          "step": 1600,
+          "noise_mse": 0.05022148385643959
+        },
+        {
+          "step": 1700,
+          "noise_mse": 0.04927271634340286
+        },
+        {
+          "step": 1800,
+          "noise_mse": 0.0485504948720336
+        },
+        {
+          "step": 1900,
+          "noise_mse": 0.04850308492779732
+        },
+        {
+          "step": 2000,
+          "noise_mse": 0.048461561016738416
+        },
+        {
+          "step": 2100,
+          "noise_mse": 0.04722420994192362
+        },
+        {
+          "step": 2200,
+          "noise_mse": 0.04724949788302183
+        },
+        {
+          "step": 2300,
+          "noise_mse": 0.04761609483510256
+        },
+        {
+          "step": 2400,
+          "noise_mse": 0.04666518468409777
+        },
+        {
+          "step": 2500,
+          "noise_mse": 0.04638668246567249
+        },
+        {
+          "step": 2600,
+          "noise_mse": 0.04629821829497814
+        },
+        {
+          "step": 2700,
+          "noise_mse": 0.04617216590791941
+        },
+        {
+          "step": 2800,
+          "noise_mse": 0.045312563441693786
+        },
+        {
+          "step": 2900,
+          "noise_mse": 0.0464620341360569
+        },
+        {
+          "step": 3000,
+          "noise_mse": 0.04489829380065203
+        },
+        {
+          "step": 3100,
+          "noise_mse": 0.045265570245683194
+        },
+        {
+          "step": 3200,
+          "noise_mse": 0.04491807546466589
+        },
+        {
+          "step": 3300,
+          "noise_mse": 0.04453052829951048
+        },
+        {
+          "step": 3400,
+          "noise_mse": 0.04470679227262735
+        },
+        {
+          "step": 3500,
+          "noise_mse": 0.04452067118138075
+        },
+        {
+          "step": 3600,
+          "noise_mse": 0.04461802393198013
+        },
+        {
+          "step": 3700,
+          "noise_mse": 0.044179835319519044
+        },
+        {
+          "step": 3800,
+          "noise_mse": 0.04415990389883518
+        },
+        {
+          "step": 3900,
+          "noise_mse": 0.04370741102844477
+        },
+        {
+          "step": 4000,
+          "noise_mse": 0.04393744219094515
+        }
+      ],
+      "checkpoint_sha256": "21f14f524fecd59926fd3cf222e23c8f75d409b1629cf1bde9fc7c98f9316c68",
+      "test_examples": 2048,
+      "test_noise_mse": 0.04018862568773329,
+      "zero_predictor_noise_mse": 0.9983098022639751,
+      "generated_samples": 64,
+      "sample_seed": 1001,
+      "cfg_seed": 1002,
+      "cfg_scales": [
+        0,
+        1,
+        3,
+        7,
+        10
+      ],
+      "display": "values clipped to [-1,1] for plots; estimated x0 clipped in sampler",
+      "sample_quality": "Teaching model; inspect all 64 fixed-seed samples, including malformed digits. MSE is not an image quality metric."
+    },
+    "sha256": "364e95e343be67b708a9ce1c45f0de981fb7cc45ba20449be283c6291ce6eaea"
+  },
+  {
+    "id": "gan_game",
+    "local_path": "assets/gan_game.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "gan_game",
+    "figure_or_caption": "gan_game",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "illustrative teaching image",
+    "used_in_scene_ids": [],
+    "settings": null,
+    "sha256": "55fcba85a8bc3df7b2862341084a25bc3df70d4284b62a367a1776f13624c6e1"
+  },
+  {
+    "id": "mnist_cfg_comparison",
+    "local_path": "assets/mnist_cfg_comparison.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "MNIST / DDPM",
+    "figure_or_caption": "mnist_cfg_comparison",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "local trained-model output",
+    "used_in_scene_ids": [
+      "s53"
+    ],
+    "settings": {
+      "status": "MEASURED MODEL OUTPUT",
+      "dataset": "MNIST",
+      "dataset_md5": {
+        "train-images-idx3-ubyte.gz": "f68b3c2dcbeaaa9fbdd348bbdeb94873",
+        "train-labels-idx1-ubyte.gz": "d53e105ee54ea40749a09fcbcd1e9432",
+        "t10k-images-idx3-ubyte.gz": "9fb629c4189551a2d022fa330f9573f3",
+        "t10k-labels-idx1-ubyte.gz": "ec29112dd5afa0611ce80d1b7f02629c"
+      },
+      "train_examples": 60000,
+      "preprocessing": "continuous grayscale scaled to [-1,1]",
+      "seed": 667,
+      "steps": 4000,
+      "batch_size": 128,
+      "T": 100,
+      "schedule": "cosine s=0.008; beta clipped [0.0001,0.999]",
+      "alpha_bar_T": 2.428520815556112e-07,
+      "optimizer": "Adam",
+      "learning_rate": 0.0002,
+      "condition_dropout": 0.15,
+      "ema_decay": 0.995,
+      "architecture": "1\u219224\u219248\u219272\u219248\u219224\u21921, residual U-Net; time and class embeddings",
+      "parameters": 255721,
+      "device": "cpu",
+      "torch": "2.14.0",
+      "training_run_seconds": 1650.7414469718933,
+      "history": [
+        {
+          "step": 100,
+          "noise_mse": 0.30846906796097756
+        },
+        {
+          "step": 200,
+          "noise_mse": 0.10856176145374775
+        },
+        {
+          "step": 300,
+          "noise_mse": 0.08178167924284935
+        },
+        {
+          "step": 400,
+          "noise_mse": 0.07172601994127036
+        },
+        {
+          "step": 500,
+          "noise_mse": 0.06610857009887695
+        },
+        {
+          "step": 600,
+          "noise_mse": 0.062431886233389376
+        },
+        {
+          "step": 700,
+          "noise_mse": 0.06051275514066219
+        },
+        {
+          "step": 800,
+          "noise_mse": 0.0582098026573658
+        },
+        {
+          "step": 900,
+          "noise_mse": 0.05643642701208591
+        },
+        {
+          "step": 1000,
+          "noise_mse": 0.05508094076067209
+        },
+        {
+          "step": 1100,
+          "noise_mse": 0.05377616599202156
+        },
+        {
+          "step": 1200,
+          "noise_mse": 0.05322923414409161
+        },
+        {
+          "step": 1300,
+          "noise_mse": 0.05209502175450325
+        },
+        {
+          "step": 1400,
+          "noise_mse": 0.051930529475212095
+        },
+        {
+          "step": 1500,
+          "noise_mse": 0.05069988165050745
+        },
+        {
+          "step": 1600,
+          "noise_mse": 0.05022148385643959
+        },
+        {
+          "step": 1700,
+          "noise_mse": 0.04927271634340286
+        },
+        {
+          "step": 1800,
+          "noise_mse": 0.0485504948720336
+        },
+        {
+          "step": 1900,
+          "noise_mse": 0.04850308492779732
+        },
+        {
+          "step": 2000,
+          "noise_mse": 0.048461561016738416
+        },
+        {
+          "step": 2100,
+          "noise_mse": 0.04722420994192362
+        },
+        {
+          "step": 2200,
+          "noise_mse": 0.04724949788302183
+        },
+        {
+          "step": 2300,
+          "noise_mse": 0.04761609483510256
+        },
+        {
+          "step": 2400,
+          "noise_mse": 0.04666518468409777
+        },
+        {
+          "step": 2500,
+          "noise_mse": 0.04638668246567249
+        },
+        {
+          "step": 2600,
+          "noise_mse": 0.04629821829497814
+        },
+        {
+          "step": 2700,
+          "noise_mse": 0.04617216590791941
+        },
+        {
+          "step": 2800,
+          "noise_mse": 0.045312563441693786
+        },
+        {
+          "step": 2900,
+          "noise_mse": 0.0464620341360569
+        },
+        {
+          "step": 3000,
+          "noise_mse": 0.04489829380065203
+        },
+        {
+          "step": 3100,
+          "noise_mse": 0.045265570245683194
+        },
+        {
+          "step": 3200,
+          "noise_mse": 0.04491807546466589
+        },
+        {
+          "step": 3300,
+          "noise_mse": 0.04453052829951048
+        },
+        {
+          "step": 3400,
+          "noise_mse": 0.04470679227262735
+        },
+        {
+          "step": 3500,
+          "noise_mse": 0.04452067118138075
+        },
+        {
+          "step": 3600,
+          "noise_mse": 0.04461802393198013
+        },
+        {
+          "step": 3700,
+          "noise_mse": 0.044179835319519044
+        },
+        {
+          "step": 3800,
+          "noise_mse": 0.04415990389883518
+        },
+        {
+          "step": 3900,
+          "noise_mse": 0.04370741102844477
+        },
+        {
+          "step": 4000,
+          "noise_mse": 0.04393744219094515
+        }
+      ],
+      "checkpoint_sha256": "21f14f524fecd59926fd3cf222e23c8f75d409b1629cf1bde9fc7c98f9316c68",
+      "test_examples": 2048,
+      "test_noise_mse": 0.04018862568773329,
+      "zero_predictor_noise_mse": 0.9983098022639751,
+      "generated_samples": 64,
+      "sample_seed": 1001,
+      "cfg_seed": 1002,
+      "cfg_scales": [
+        0,
+        1,
+        3,
+        7,
+        10
+      ],
+      "display": "values clipped to [-1,1] for plots; estimated x0 clipped in sampler",
+      "sample_quality": "Teaching model; inspect all 64 fixed-seed samples, including malformed digits. MSE is not an image quality metric."
+    },
+    "sha256": "f010bb402794e0aeaa8155bd5b6f341aece9bae1136ea7b0af2c4cad17db7d41"
+  },
+  {
+    "id": "batch-7",
+    "local_path": "assets/batch-7.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "batch 7",
+    "figure_or_caption": "batch 7",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "deterministic simulation",
+    "used_in_scene_ids": [
+      "s26"
+    ],
+    "settings": null,
+    "sha256": "90954d7947543a732c7310407e69b2dc31870024e960e00b8f541e4ee3cfdfd9"
+  },
+  {
+    "id": "sdedit-output-2",
+    "local_path": "assets/sdedit-output-2.png",
+    "source_page": "https://sde-image-editing.github.io/",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "First bedroom stroke input or one of two documented outputs. Original retained; labels supplied alongside crop.",
+    "figure_or_caption": "First bedroom stroke input or one of two documented outputs. Original retained; labels supplied alongside crop.",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [
+      "s05"
+    ],
+    "settings": null,
+    "sha256": "375c6e040ddcb4a6c43fbb73b592fa2ca3334cb7a9940d1adb53fa51badfb35a"
+  },
+  {
+    "id": "forward-1000",
+    "local_path": "assets/forward-1000.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "forward 1000",
+    "figure_or_caption": "forward 1000",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "deterministic simulation",
+    "used_in_scene_ids": [
+      "s12"
+    ],
+    "settings": null,
+    "sha256": "1aa4b1dee5203d1b3d5ddd0a708404efae204ec72dead002c119746e0a3c79bd"
+  },
+  {
+    "id": "mnist_reverse_strip",
+    "local_path": "assets/mnist_reverse_strip.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "MNIST / DDPM",
+    "figure_or_caption": "mnist_reverse_strip",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "local trained-model output",
+    "used_in_scene_ids": [],
+    "settings": {
+      "status": "MEASURED MODEL OUTPUT",
+      "dataset": "MNIST",
+      "dataset_md5": {
+        "train-images-idx3-ubyte.gz": "f68b3c2dcbeaaa9fbdd348bbdeb94873",
+        "train-labels-idx1-ubyte.gz": "d53e105ee54ea40749a09fcbcd1e9432",
+        "t10k-images-idx3-ubyte.gz": "9fb629c4189551a2d022fa330f9573f3",
+        "t10k-labels-idx1-ubyte.gz": "ec29112dd5afa0611ce80d1b7f02629c"
+      },
+      "train_examples": 60000,
+      "preprocessing": "continuous grayscale scaled to [-1,1]",
+      "seed": 667,
+      "steps": 4000,
+      "batch_size": 128,
+      "T": 100,
+      "schedule": "cosine s=0.008; beta clipped [0.0001,0.999]",
+      "alpha_bar_T": 2.428520815556112e-07,
+      "optimizer": "Adam",
+      "learning_rate": 0.0002,
+      "condition_dropout": 0.15,
+      "ema_decay": 0.995,
+      "architecture": "1\u219224\u219248\u219272\u219248\u219224\u21921, residual U-Net; time and class embeddings",
+      "parameters": 255721,
+      "device": "cpu",
+      "torch": "2.14.0",
+      "training_run_seconds": 1650.7414469718933,
+      "history": [
+        {
+          "step": 100,
+          "noise_mse": 0.30846906796097756
+        },
+        {
+          "step": 200,
+          "noise_mse": 0.10856176145374775
+        },
+        {
+          "step": 300,
+          "noise_mse": 0.08178167924284935
+        },
+        {
+          "step": 400,
+          "noise_mse": 0.07172601994127036
+        },
+        {
+          "step": 500,
+          "noise_mse": 0.06610857009887695
+        },
+        {
+          "step": 600,
+          "noise_mse": 0.062431886233389376
+        },
+        {
+          "step": 700,
+          "noise_mse": 0.06051275514066219
+        },
+        {
+          "step": 800,
+          "noise_mse": 0.0582098026573658
+        },
+        {
+          "step": 900,
+          "noise_mse": 0.05643642701208591
+        },
+        {
+          "step": 1000,
+          "noise_mse": 0.05508094076067209
+        },
+        {
+          "step": 1100,
+          "noise_mse": 0.05377616599202156
+        },
+        {
+          "step": 1200,
+          "noise_mse": 0.05322923414409161
+        },
+        {
+          "step": 1300,
+          "noise_mse": 0.05209502175450325
+        },
+        {
+          "step": 1400,
+          "noise_mse": 0.051930529475212095
+        },
+        {
+          "step": 1500,
+          "noise_mse": 0.05069988165050745
+        },
+        {
+          "step": 1600,
+          "noise_mse": 0.05022148385643959
+        },
+        {
+          "step": 1700,
+          "noise_mse": 0.04927271634340286
+        },
+        {
+          "step": 1800,
+          "noise_mse": 0.0485504948720336
+        },
+        {
+          "step": 1900,
+          "noise_mse": 0.04850308492779732
+        },
+        {
+          "step": 2000,
+          "noise_mse": 0.048461561016738416
+        },
+        {
+          "step": 2100,
+          "noise_mse": 0.04722420994192362
+        },
+        {
+          "step": 2200,
+          "noise_mse": 0.04724949788302183
+        },
+        {
+          "step": 2300,
+          "noise_mse": 0.04761609483510256
+        },
+        {
+          "step": 2400,
+          "noise_mse": 0.04666518468409777
+        },
+        {
+          "step": 2500,
+          "noise_mse": 0.04638668246567249
+        },
+        {
+          "step": 2600,
+          "noise_mse": 0.04629821829497814
+        },
+        {
+          "step": 2700,
+          "noise_mse": 0.04617216590791941
+        },
+        {
+          "step": 2800,
+          "noise_mse": 0.045312563441693786
+        },
+        {
+          "step": 2900,
+          "noise_mse": 0.0464620341360569
+        },
+        {
+          "step": 3000,
+          "noise_mse": 0.04489829380065203
+        },
+        {
+          "step": 3100,
+          "noise_mse": 0.045265570245683194
+        },
+        {
+          "step": 3200,
+          "noise_mse": 0.04491807546466589
+        },
+        {
+          "step": 3300,
+          "noise_mse": 0.04453052829951048
+        },
+        {
+          "step": 3400,
+          "noise_mse": 0.04470679227262735
+        },
+        {
+          "step": 3500,
+          "noise_mse": 0.04452067118138075
+        },
+        {
+          "step": 3600,
+          "noise_mse": 0.04461802393198013
+        },
+        {
+          "step": 3700,
+          "noise_mse": 0.044179835319519044
+        },
+        {
+          "step": 3800,
+          "noise_mse": 0.04415990389883518
+        },
+        {
+          "step": 3900,
+          "noise_mse": 0.04370741102844477
+        },
+        {
+          "step": 4000,
+          "noise_mse": 0.04393744219094515
+        }
+      ],
+      "checkpoint_sha256": "21f14f524fecd59926fd3cf222e23c8f75d409b1629cf1bde9fc7c98f9316c68",
+      "test_examples": 2048,
+      "test_noise_mse": 0.04018862568773329,
+      "zero_predictor_noise_mse": 0.9983098022639751,
+      "generated_samples": 64,
+      "sample_seed": 1001,
+      "cfg_seed": 1002,
+      "cfg_scales": [
+        0,
+        1,
+        3,
+        7,
+        10
+      ],
+      "display": "values clipped to [-1,1] for plots; estimated x0 clipped in sampler",
+      "sample_quality": "Teaching model; inspect all 64 fixed-seed samples, including malformed digits. MSE is not an image quality metric."
+    },
+    "sha256": "33e9584a9c50ae38da5a3d2aa715f67e2f2fe22fda7095803e549e7615d4094e"
+  },
+  {
+    "id": "sdedit-output-1",
+    "local_path": "assets/sdedit-output-1.png",
+    "source_page": "https://sde-image-editing.github.io/",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "First bedroom stroke input or one of two documented outputs. Original retained; labels supplied alongside crop.",
+    "figure_or_caption": "First bedroom stroke input or one of two documented outputs. Original retained; labels supplied alongside crop.",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [
+      "s05"
+    ],
+    "settings": null,
+    "sha256": "1b2a0dff200f8fae2db326eea9b147a8a919b7cba0f76c184e2eadaab2793de3"
+  },
+  {
+    "id": "ldm-1",
+    "local_path": "assets/ldm-1.png",
+    "source_page": "https://ommer-lab.com/research/latent-diffusion-models/",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "Figure 17 first column: A basket full of cherries. Published samples; seeds unspecified. Cropped and enlarged, original retained.",
+    "figure_or_caption": "Figure 17 first column: A basket full of cherries. Published samples; seeds unspecified. Cropped and enlarged, original retained.",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [
+      "s02"
+    ],
+    "settings": null,
+    "sha256": "2cdf3a5053b72f7e08f42620a664e63836dedfa343c0f514aaa49b6138a5bbdc"
+  },
+  {
+    "id": "autoencoder_vs_vae",
+    "local_path": "assets/autoencoder_vs_vae.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "autoencoder_vs_vae",
+    "figure_or_caption": "autoencoder_vs_vae",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "illustrative teaching image",
+    "used_in_scene_ids": [],
+    "settings": null,
+    "sha256": "19a4ddb941d6ea010e8a83bde31a4010988c6c924257a99b1d0c040e1eaa6f26"
+  },
+  {
+    "id": "ldm-3",
+    "local_path": "assets/ldm-3.png",
+    "source_page": "https://ommer-lab.com/research/latent-diffusion-models/",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "Figure 17 first column: A basket full of cherries. Published samples; seeds unspecified. Cropped and enlarged, original retained.",
+    "figure_or_caption": "Figure 17 first column: A basket full of cherries. Published samples; seeds unspecified. Cropped and enlarged, original retained.",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [
+      "s02"
+    ],
+    "settings": null,
+    "sha256": "73b39e180cc1f2584fe03aeec4252799424f89f2dd84e02d55d327781cd6d5d8"
+  },
+  {
+    "id": "new-model-input",
+    "local_path": "assets/new-model-input.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "MNIST / DDPM",
+    "figure_or_caption": "new model input",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "local trained-model output",
+    "used_in_scene_ids": [
+      "s21",
+      "s28",
+      "s34",
+      "s40"
+    ],
+    "settings": {
+      "mode": "train",
+      "steps": 2000,
+      "batch_size": 64,
+      "seed": 667,
+      "normalization": "uint8/127.5 - 1",
+      "T": 1000,
+      "alpha_bar_T": 4.035828169435263e-05,
+      "variance": "posterior",
+      "parameters": 814145,
+      "device": "mps",
+      "torch": "2.14.0",
+      "elapsed_seconds": 98.7769422531128,
+      "history": [
+        {
+          "step": 1,
+          "batch_noise_mse": 1.0783931016921997,
+          "gradient_norm": 9.20167064666748
+        },
+        {
+          "step": 100,
+          "batch_noise_mse": 0.07102521508932114,
+          "gradient_norm": 0.5858917832374573
+        },
+        {
+          "step": 200,
+          "batch_noise_mse": 0.08677498251199722,
+          "gradient_norm": 1.234492540359497
+        },
+        {
+          "step": 300,
+          "batch_noise_mse": 0.046785417944192886,
+          "gradient_norm": 0.2172520011663437
+        },
+        {
+          "step": 400,
+          "batch_noise_mse": 0.04728985205292702,
+          "gradient_norm": 0.7156083583831787
+        },
+        {
+          "step": 500,
+          "batch_noise_mse": 0.05021785944700241,
+          "gradient_norm": 0.6008334755897522
+        },
+        {
+          "step": 600,
+          "batch_noise_mse": 0.04278736561536789,
+          "gradient_norm": 0.5664913654327393
+        },
+        {
+          "step": 700,
+          "batch_noise_mse": 0.03550712764263153,
+          "gradient_norm": 0.569725751876831
+        },
+        {
+          "step": 800,
+          "batch_noise_mse": 0.02232920192182064,
+          "gradient_norm": 0.11134251952171326
+        },
+        {
+          "step": 900,
+          "batch_noise_mse": 0.029675032943487167,
+          "gradient_norm": 0.5650548338890076
+        },
+        {
+          "step": 1000,
+          "batch_noise_mse": 0.04067051783204079,
+          "gradient_norm": 0.7087825536727905
+        },
+        {
+          "step": 1100,
+          "batch_noise_mse": 0.034254346042871475,
+          "gradient_norm": 0.3330884873867035
+        },
+        {
+          "step": 1200,
+          "batch_noise_mse": 0.038828134536743164,
+          "gradient_norm": 0.30328741669654846
+        },
+        {
+          "step": 1300,
+          "batch_noise_mse": 0.03149262070655823,
+          "gradient_norm": 0.25920236110687256
+        },
+        {
+          "step": 1400,
+          "batch_noise_mse": 0.029613535851240158,
+          "gradient_norm": 0.29359596967697144
+        },
+        {
+          "step": 1500,
+          "batch_noise_mse": 0.033044710755348206,
+          "gradient_norm": 0.19944271445274353
+        },
+        {
+          "step": 1600,
+          "batch_noise_mse": 0.026979411020874977,
+          "gradient_norm": 0.20798638463020325
+        },
+        {
+          "step": 1700,
+          "batch_noise_mse": 0.024318387731909752,
+          "gradient_norm": 0.37391582131385803
+        },
+        {
+          "step": 1800,
+          "batch_noise_mse": 0.024787921458482742,
+          "gradient_norm": 0.13318757712841034
+        },
+        {
+          "step": 1900,
+          "batch_noise_mse": 0.03752342239022255,
+          "gradient_norm": 0.35428744554519653
+        },
+        {
+          "step": 2000,
+          "batch_noise_mse": 0.03619076684117317,
+          "gradient_norm": 0.3764505982398987
+        }
+      ],
+      "claim": "Small teaching model; no image-quality metric computed",
+      "checkpoint_sha256": "9dc135888ec05bceebc35fcf6b7c6b5ee1823f2cea7c0b2ec32906368b793585",
+      "sample_seed": 667,
+      "sample_count": 8,
+      "sampler": "1000 ancestral DDPM steps; posterior variance; no estimate clipping",
+      "selected_digit": "MNIST test 0 (7)",
+      "tuple_seeds": [
+        667,
+        668
+      ],
+      "tuple_timesteps": [
+        7,
+        350,
+        920
+      ]
+    },
+    "sha256": "6a8ecfdb61958791ed99ca3152e66f4f1d6eaabac75c74ee4ad9ba9439d9c6b0"
+  },
+  {
+    "id": "new-model-prediction",
+    "local_path": "assets/new-model-prediction.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "MNIST / DDPM",
+    "figure_or_caption": "new model prediction",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "local trained-model output",
+    "used_in_scene_ids": [
+      "s40"
+    ],
+    "settings": {
+      "mode": "train",
+      "steps": 2000,
+      "batch_size": 64,
+      "seed": 667,
+      "normalization": "uint8/127.5 - 1",
+      "T": 1000,
+      "alpha_bar_T": 4.035828169435263e-05,
+      "variance": "posterior",
+      "parameters": 814145,
+      "device": "mps",
+      "torch": "2.14.0",
+      "elapsed_seconds": 98.7769422531128,
+      "history": [
+        {
+          "step": 1,
+          "batch_noise_mse": 1.0783931016921997,
+          "gradient_norm": 9.20167064666748
+        },
+        {
+          "step": 100,
+          "batch_noise_mse": 0.07102521508932114,
+          "gradient_norm": 0.5858917832374573
+        },
+        {
+          "step": 200,
+          "batch_noise_mse": 0.08677498251199722,
+          "gradient_norm": 1.234492540359497
+        },
+        {
+          "step": 300,
+          "batch_noise_mse": 0.046785417944192886,
+          "gradient_norm": 0.2172520011663437
+        },
+        {
+          "step": 400,
+          "batch_noise_mse": 0.04728985205292702,
+          "gradient_norm": 0.7156083583831787
+        },
+        {
+          "step": 500,
+          "batch_noise_mse": 0.05021785944700241,
+          "gradient_norm": 0.6008334755897522
+        },
+        {
+          "step": 600,
+          "batch_noise_mse": 0.04278736561536789,
+          "gradient_norm": 0.5664913654327393
+        },
+        {
+          "step": 700,
+          "batch_noise_mse": 0.03550712764263153,
+          "gradient_norm": 0.569725751876831
+        },
+        {
+          "step": 800,
+          "batch_noise_mse": 0.02232920192182064,
+          "gradient_norm": 0.11134251952171326
+        },
+        {
+          "step": 900,
+          "batch_noise_mse": 0.029675032943487167,
+          "gradient_norm": 0.5650548338890076
+        },
+        {
+          "step": 1000,
+          "batch_noise_mse": 0.04067051783204079,
+          "gradient_norm": 0.7087825536727905
+        },
+        {
+          "step": 1100,
+          "batch_noise_mse": 0.034254346042871475,
+          "gradient_norm": 0.3330884873867035
+        },
+        {
+          "step": 1200,
+          "batch_noise_mse": 0.038828134536743164,
+          "gradient_norm": 0.30328741669654846
+        },
+        {
+          "step": 1300,
+          "batch_noise_mse": 0.03149262070655823,
+          "gradient_norm": 0.25920236110687256
+        },
+        {
+          "step": 1400,
+          "batch_noise_mse": 0.029613535851240158,
+          "gradient_norm": 0.29359596967697144
+        },
+        {
+          "step": 1500,
+          "batch_noise_mse": 0.033044710755348206,
+          "gradient_norm": 0.19944271445274353
+        },
+        {
+          "step": 1600,
+          "batch_noise_mse": 0.026979411020874977,
+          "gradient_norm": 0.20798638463020325
+        },
+        {
+          "step": 1700,
+          "batch_noise_mse": 0.024318387731909752,
+          "gradient_norm": 0.37391582131385803
+        },
+        {
+          "step": 1800,
+          "batch_noise_mse": 0.024787921458482742,
+          "gradient_norm": 0.13318757712841034
+        },
+        {
+          "step": 1900,
+          "batch_noise_mse": 0.03752342239022255,
+          "gradient_norm": 0.35428744554519653
+        },
+        {
+          "step": 2000,
+          "batch_noise_mse": 0.03619076684117317,
+          "gradient_norm": 0.3764505982398987
+        }
+      ],
+      "claim": "Small teaching model; no image-quality metric computed",
+      "checkpoint_sha256": "9dc135888ec05bceebc35fcf6b7c6b5ee1823f2cea7c0b2ec32906368b793585",
+      "sample_seed": 667,
+      "sample_count": 8,
+      "sampler": "1000 ancestral DDPM steps; posterior variance; no estimate clipping",
+      "selected_digit": "MNIST test 0 (7)",
+      "tuple_seeds": [
+        667,
+        668
+      ],
+      "tuple_timesteps": [
+        7,
+        350,
+        920
+      ]
+    },
+    "sha256": "229ee1204dd99a20362e119c531f57b7fcaaf53fccc833bae55b614284568ecf"
+  },
+  {
+    "id": "digit",
+    "local_path": "assets/digit.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "digit",
+    "figure_or_caption": "digit",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "deterministic simulation",
+    "used_in_scene_ids": [
+      "s11",
+      "s13",
+      "s15",
+      "s21",
+      "s28"
+    ],
+    "settings": null,
+    "sha256": "4867c839e812709d96535c9bbe704a18d8babbbb7e90121b6b4c250ed062c3e2"
+  },
+  {
+    "id": "ldm-2",
+    "local_path": "assets/ldm-2.png",
+    "source_page": "https://ommer-lab.com/research/latent-diffusion-models/",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "Figure 17 first column: A basket full of cherries. Published samples; seeds unspecified. Cropped and enlarged, original retained.",
+    "figure_or_caption": "Figure 17 first column: A basket full of cherries. Published samples; seeds unspecified. Cropped and enlarged, original retained.",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [
+      "s02"
+    ],
+    "settings": null,
+    "sha256": "b1492b0f38631ebd780f34defd6bd7b62075f85af236ec29e4d9b995fadd4c35"
+  },
+  {
+    "id": "noise",
+    "local_path": "assets/noise.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "noise",
+    "figure_or_caption": "noise",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "deterministic simulation",
+    "used_in_scene_ids": [],
+    "settings": null,
+    "sha256": "a2d90c0f64f087775588c7c9f21d212b0228398a3cc1b88806e77f4884f140e8"
+  },
+  {
+    "id": "schedule",
+    "local_path": "assets/schedule.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "schedule",
+    "figure_or_caption": "schedule",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "deterministic simulation",
+    "used_in_scene_ids": [],
+    "settings": null,
+    "sha256": "f2ba90f327a803687cf36bfeec6db6cf9afca93c8be0480ab30f8e1c97cc60a0"
+  },
+  {
+    "id": "batch-920",
+    "local_path": "assets/batch-920.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "batch 920",
+    "figure_or_caption": "batch 920",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "deterministic simulation",
+    "used_in_scene_ids": [
+      "s26"
+    ],
+    "settings": null,
+    "sha256": "12ea24909131e2ae27442a8f6bf0ddfe9a6a5c25e7917a64d8dd8bff84723a5e"
+  },
+  {
+    "id": "ambiguity",
+    "local_path": "assets/ambiguity.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "ambiguity",
+    "figure_or_caption": "ambiguity",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "illustrative teaching image",
+    "used_in_scene_ids": [],
+    "settings": null,
+    "sha256": "1ad6684ebeba39109d71386a704fcaddb0a4b58dbc526aa3145678ec7f938847"
+  },
+  {
+    "id": "ldm-4",
+    "local_path": "assets/ldm-4.png",
+    "source_page": "https://ommer-lab.com/research/latent-diffusion-models/",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "Figure 17 first column: A basket full of cherries. Published samples; seeds unspecified. Cropped and enlarged, original retained.",
+    "figure_or_caption": "Figure 17 first column: A basket full of cherries. Published samples; seeds unspecified. Cropped and enlarged, original retained.",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "published model output",
+    "used_in_scene_ids": [
+      "s02"
+    ],
+    "settings": null,
+    "sha256": "6a5cd53e74da1d793303f0ae9796e2f84bbdec0014871e454baca5384d667894"
+  },
+  {
+    "id": "forward-300",
+    "local_path": "assets/forward-300.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "forward 300",
+    "figure_or_caption": "forward 300",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "deterministic simulation",
+    "used_in_scene_ids": [
+      "s12"
+    ],
+    "settings": null,
+    "sha256": "a783b0aac40898ee140929432e044a4ef0a29f15e00b243898179cd4d7e52bbf"
+  },
+  {
+    "id": "new-model-gallery",
+    "local_path": "assets/new-model-gallery.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "MNIST / DDPM",
+    "figure_or_caption": "new model gallery",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "local trained-model output",
+    "used_in_scene_ids": [
+      "s55"
+    ],
+    "settings": {
+      "mode": "train",
+      "steps": 2000,
+      "batch_size": 64,
+      "seed": 667,
+      "normalization": "uint8/127.5 - 1",
+      "T": 1000,
+      "alpha_bar_T": 4.035828169435263e-05,
+      "variance": "posterior",
+      "parameters": 814145,
+      "device": "mps",
+      "torch": "2.14.0",
+      "elapsed_seconds": 98.7769422531128,
+      "history": [
+        {
+          "step": 1,
+          "batch_noise_mse": 1.0783931016921997,
+          "gradient_norm": 9.20167064666748
+        },
+        {
+          "step": 100,
+          "batch_noise_mse": 0.07102521508932114,
+          "gradient_norm": 0.5858917832374573
+        },
+        {
+          "step": 200,
+          "batch_noise_mse": 0.08677498251199722,
+          "gradient_norm": 1.234492540359497
+        },
+        {
+          "step": 300,
+          "batch_noise_mse": 0.046785417944192886,
+          "gradient_norm": 0.2172520011663437
+        },
+        {
+          "step": 400,
+          "batch_noise_mse": 0.04728985205292702,
+          "gradient_norm": 0.7156083583831787
+        },
+        {
+          "step": 500,
+          "batch_noise_mse": 0.05021785944700241,
+          "gradient_norm": 0.6008334755897522
+        },
+        {
+          "step": 600,
+          "batch_noise_mse": 0.04278736561536789,
+          "gradient_norm": 0.5664913654327393
+        },
+        {
+          "step": 700,
+          "batch_noise_mse": 0.03550712764263153,
+          "gradient_norm": 0.569725751876831
+        },
+        {
+          "step": 800,
+          "batch_noise_mse": 0.02232920192182064,
+          "gradient_norm": 0.11134251952171326
+        },
+        {
+          "step": 900,
+          "batch_noise_mse": 0.029675032943487167,
+          "gradient_norm": 0.5650548338890076
+        },
+        {
+          "step": 1000,
+          "batch_noise_mse": 0.04067051783204079,
+          "gradient_norm": 0.7087825536727905
+        },
+        {
+          "step": 1100,
+          "batch_noise_mse": 0.034254346042871475,
+          "gradient_norm": 0.3330884873867035
+        },
+        {
+          "step": 1200,
+          "batch_noise_mse": 0.038828134536743164,
+          "gradient_norm": 0.30328741669654846
+        },
+        {
+          "step": 1300,
+          "batch_noise_mse": 0.03149262070655823,
+          "gradient_norm": 0.25920236110687256
+        },
+        {
+          "step": 1400,
+          "batch_noise_mse": 0.029613535851240158,
+          "gradient_norm": 0.29359596967697144
+        },
+        {
+          "step": 1500,
+          "batch_noise_mse": 0.033044710755348206,
+          "gradient_norm": 0.19944271445274353
+        },
+        {
+          "step": 1600,
+          "batch_noise_mse": 0.026979411020874977,
+          "gradient_norm": 0.20798638463020325
+        },
+        {
+          "step": 1700,
+          "batch_noise_mse": 0.024318387731909752,
+          "gradient_norm": 0.37391582131385803
+        },
+        {
+          "step": 1800,
+          "batch_noise_mse": 0.024787921458482742,
+          "gradient_norm": 0.13318757712841034
+        },
+        {
+          "step": 1900,
+          "batch_noise_mse": 0.03752342239022255,
+          "gradient_norm": 0.35428744554519653
+        },
+        {
+          "step": 2000,
+          "batch_noise_mse": 0.03619076684117317,
+          "gradient_norm": 0.3764505982398987
+        }
+      ],
+      "claim": "Small teaching model; no image-quality metric computed",
+      "checkpoint_sha256": "9dc135888ec05bceebc35fcf6b7c6b5ee1823f2cea7c0b2ec32906368b793585",
+      "sample_seed": 667,
+      "sample_count": 8,
+      "sampler": "1000 ancestral DDPM steps; posterior variance; no estimate clipping",
+      "selected_digit": "MNIST test 0 (7)",
+      "tuple_seeds": [
+        667,
+        668
+      ],
+      "tuple_timesteps": [
+        7,
+        350,
+        920
+      ]
+    },
+    "sha256": "acac7303438da590d4d196c82c9e0773bfd3e6fc513fbaa01bd30d498aa75eb0"
+  },
+  {
+    "id": "forward-100",
+    "local_path": "assets/forward-100.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "forward 100",
+    "figure_or_caption": "forward 100",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "deterministic simulation",
+    "used_in_scene_ids": [
+      "s12"
+    ],
+    "settings": null,
+    "sha256": "21e3b8c28017e61c1f12e4ec15a8cb038fb06422493cb06536f5e735c3c07a2d"
+  },
+  {
+    "id": "new-model-trace",
+    "local_path": "assets/new-model-trace.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "MNIST / DDPM",
+    "figure_or_caption": "new model trace",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "local trained-model output",
+    "used_in_scene_ids": [
+      "s39"
+    ],
+    "settings": {
+      "mode": "train",
+      "steps": 2000,
+      "batch_size": 64,
+      "seed": 667,
+      "normalization": "uint8/127.5 - 1",
+      "T": 1000,
+      "alpha_bar_T": 4.035828169435263e-05,
+      "variance": "posterior",
+      "parameters": 814145,
+      "device": "mps",
+      "torch": "2.14.0",
+      "elapsed_seconds": 98.7769422531128,
+      "history": [
+        {
+          "step": 1,
+          "batch_noise_mse": 1.0783931016921997,
+          "gradient_norm": 9.20167064666748
+        },
+        {
+          "step": 100,
+          "batch_noise_mse": 0.07102521508932114,
+          "gradient_norm": 0.5858917832374573
+        },
+        {
+          "step": 200,
+          "batch_noise_mse": 0.08677498251199722,
+          "gradient_norm": 1.234492540359497
+        },
+        {
+          "step": 300,
+          "batch_noise_mse": 0.046785417944192886,
+          "gradient_norm": 0.2172520011663437
+        },
+        {
+          "step": 400,
+          "batch_noise_mse": 0.04728985205292702,
+          "gradient_norm": 0.7156083583831787
+        },
+        {
+          "step": 500,
+          "batch_noise_mse": 0.05021785944700241,
+          "gradient_norm": 0.6008334755897522
+        },
+        {
+          "step": 600,
+          "batch_noise_mse": 0.04278736561536789,
+          "gradient_norm": 0.5664913654327393
+        },
+        {
+          "step": 700,
+          "batch_noise_mse": 0.03550712764263153,
+          "gradient_norm": 0.569725751876831
+        },
+        {
+          "step": 800,
+          "batch_noise_mse": 0.02232920192182064,
+          "gradient_norm": 0.11134251952171326
+        },
+        {
+          "step": 900,
+          "batch_noise_mse": 0.029675032943487167,
+          "gradient_norm": 0.5650548338890076
+        },
+        {
+          "step": 1000,
+          "batch_noise_mse": 0.04067051783204079,
+          "gradient_norm": 0.7087825536727905
+        },
+        {
+          "step": 1100,
+          "batch_noise_mse": 0.034254346042871475,
+          "gradient_norm": 0.3330884873867035
+        },
+        {
+          "step": 1200,
+          "batch_noise_mse": 0.038828134536743164,
+          "gradient_norm": 0.30328741669654846
+        },
+        {
+          "step": 1300,
+          "batch_noise_mse": 0.03149262070655823,
+          "gradient_norm": 0.25920236110687256
+        },
+        {
+          "step": 1400,
+          "batch_noise_mse": 0.029613535851240158,
+          "gradient_norm": 0.29359596967697144
+        },
+        {
+          "step": 1500,
+          "batch_noise_mse": 0.033044710755348206,
+          "gradient_norm": 0.19944271445274353
+        },
+        {
+          "step": 1600,
+          "batch_noise_mse": 0.026979411020874977,
+          "gradient_norm": 0.20798638463020325
+        },
+        {
+          "step": 1700,
+          "batch_noise_mse": 0.024318387731909752,
+          "gradient_norm": 0.37391582131385803
+        },
+        {
+          "step": 1800,
+          "batch_noise_mse": 0.024787921458482742,
+          "gradient_norm": 0.13318757712841034
+        },
+        {
+          "step": 1900,
+          "batch_noise_mse": 0.03752342239022255,
+          "gradient_norm": 0.35428744554519653
+        },
+        {
+          "step": 2000,
+          "batch_noise_mse": 0.03619076684117317,
+          "gradient_norm": 0.3764505982398987
+        }
+      ],
+      "claim": "Small teaching model; no image-quality metric computed",
+      "checkpoint_sha256": "9dc135888ec05bceebc35fcf6b7c6b5ee1823f2cea7c0b2ec32906368b793585",
+      "sample_seed": 667,
+      "sample_count": 8,
+      "sampler": "1000 ancestral DDPM steps; posterior variance; no estimate clipping",
+      "selected_digit": "MNIST test 0 (7)",
+      "tuple_seeds": [
+        667,
+        668
+      ],
+      "tuple_timesteps": [
+        7,
+        350,
+        920
+      ]
+    },
+    "sha256": "c5cbbe50d9cf5bf3e1d1ea3bcc6f534ba269addbb5371265c50a9fbbab0492ee"
+  },
+  {
+    "id": "forward-500",
+    "local_path": "assets/forward-500.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "forward 500",
+    "figure_or_caption": "forward 500",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "deterministic simulation",
+    "used_in_scene_ids": [
+      "s12"
+    ],
+    "settings": null,
+    "sha256": "03912589d1751e6303726e632a4159f80724952b8825627f57d3cc3ffecb8cfa"
+  },
+  {
+    "id": "forward-700",
+    "local_path": "assets/forward-700.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "forward 700",
+    "figure_or_caption": "forward 700",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Programmatic crop/plot; see scripts/export_evidence.py and scripts/refine_figures.py",
+    "evidence_type": "deterministic simulation",
+    "used_in_scene_ids": [
+      "s12"
+    ],
+    "settings": null,
+    "sha256": "ac8709473532585a557ada16ea2f7b90f5c3cff1e9bb35d86fcf2346a7b59c99"
+  },
+  {
+    "id": "teaching-s10",
+    "local_path": "figures/s10.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Sampling loop: random noise, shared denoiser, reverse transition, feedback of sampled state.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s10"
+    ],
+    "sha256": "5638129bfbe1f28c403616d32d67987b5e0fde2fffef7d4a40ad271ae7622e0f"
+  },
+  {
+    "id": "teaching-s16",
+    "local_path": "figures/s16.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "A branched addition: scale current signal, add independent Gaussian noise, obtain the next state.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s16"
+    ],
+    "sha256": "bc0b380503037cdf798587fce0eba42454dd0e91ef3e4ccd5f299425fcfc0abb"
+  },
+  {
+    "id": "teaching-s17",
+    "local_path": "figures/s17.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Two-step example: one-step alpha is 0.8; cumulative signal variance retention is 0.64.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s17"
+    ],
+    "sha256": "9570d3c4512928b5c51671f959967dd68efc9ddfb7e590ebe7efd54f91ecfe5c"
+  },
+  {
+    "id": "teaching-s19",
+    "local_path": "figures/s19.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Worked forward coordinate: 0.8 times one plus 0.6 times negative 0.5 equals 0.5.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s19"
+    ],
+    "sha256": "716d0f5320b3361fbb6663fc07b15d00a7461eac97cf9884ce57ae5769202714"
+  },
+  {
+    "id": "teaching-s21",
+    "local_path": "figures/s21.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Training branches: build the noisy input, predict its noise, and compare with the retained target. ",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s21"
+    ],
+    "sha256": "862a05c6c1311d581ba86b2cb475ce67c4ab4178a970541d22e2b3b48d66e348"
+  },
+  {
+    "id": "teaching-s23",
+    "local_path": "figures/s23.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Illustrative two by two target and prediction tensors; squared errors sum to 0.15 and average to 0.0375.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s23"
+    ],
+    "sha256": "2cb2b88c61c928b2c94f53b74dd30c06c92e2638a9423dad1a4256c624cee577"
+  },
+  {
+    "id": "teaching-s24",
+    "local_path": "figures/s24.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "An illustrative conditional distribution with uncertainty; MSE predicts the conditional mean.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s24"
+    ],
+    "sha256": "e05b4ba39462af0df11258078442f9248f27854f97019dca6b90b1a27b86b4fc"
+  },
+  {
+    "id": "teaching-s25",
+    "local_path": "figures/s25.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Different timesteps enter one shared denoiser; time features condition its residual blocks.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s25"
+    ],
+    "sha256": "36c49795f6eca77397c7af8f4e7dc336148518024ced6bc8b41f64b81ffc3c49"
+  },
+  {
+    "id": "teaching-s28",
+    "local_path": "figures/s28.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Training branches: build the noisy input, predict its noise, and compare with the retained target. Gradients update the denoiser.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s28"
+    ],
+    "sha256": "66bd63ed65b3d365d064a84279df94c171154f9ffdc1422af616261f4007a513"
+  },
+  {
+    "id": "teaching-s32",
+    "local_path": "figures/s32.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Sampling loop: random noise, shared denoiser, reverse transition, feedback of sampled state.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s32"
+    ],
+    "sha256": "43780f4b74dcae2dff6eae602e1f45282e10314d57e7e5c86e51ac0b05eeb313"
+  },
+  {
+    "id": "teaching-s34",
+    "local_path": "figures/s34.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "The noise prediction gives a clean estimate and a previous noisy state; only the previous state is fed back.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s34"
+    ],
+    "sha256": "57753ecc4ae1306865d6dddf45e3be78bd896ef3bec6c4d721ba8b19a73a1e05"
+  },
+  {
+    "id": "teaching-s36",
+    "local_path": "figures/s36.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Schematic Gaussian reverse transition: mean, spread and a fresh sample. This is not a confidence interval.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s36"
+    ],
+    "sha256": "cff9ccf4008741add4af0daac5278ecb551c3bf03d26e8fe79a3fd24b5a06199"
+  },
+  {
+    "id": "teaching-s40",
+    "local_path": "figures/s40.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Actual recorded noisy input and predicted noise at t350, each with the same spatial shape.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s40"
+    ],
+    "sha256": "6c16a0cafcc3382e880c9cb04fa8b314a6d2422e13a9944047a10dffc5fadfd6"
+  },
+  {
+    "id": "teaching-s41",
+    "local_path": "figures/s41.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "U-Net resolution and channel trace with skip concatenations and a linear one-channel output head.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s41"
+    ],
+    "sha256": "ad061627c2e4918209d2425a3dc52eee0be3486c268d736bea794353c06aa1de"
+  },
+  {
+    "id": "teaching-s42",
+    "local_path": "figures/s42.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Time embedding is projected to channels and broadcast across spatial positions before addition.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s42"
+    ],
+    "sha256": "5bd6df24b142ddaa7c29c376d448a4256fb55d5b4056a442fc593d1a10b83a20"
+  },
+  {
+    "id": "teaching-s43",
+    "local_path": "figures/s43.svg",
+    "source_page": "https://arxiv.org/abs/2212.09748",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Latent grid to patch tokens, transformer, then unpatchification to a dense latent output.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s43"
+    ],
+    "sha256": "b8c494ef9b6836eafc0be4469157d735d676bd27b926f80b3b267d1ea09d4251"
+  },
+  {
+    "id": "teaching-s44",
+    "local_path": "figures/s44.svg",
+    "source_page": "https://arxiv.org/abs/2112.10752",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Image compression: 64 times fewer spatial positions, 48 times fewer scalar entries for the stated shapes.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s44"
+    ],
+    "sha256": "54af0e159b97ea2de01d300dfcbc8a7ead97b2ad51072e904e060a6ebd6c4c18"
+  },
+  {
+    "id": "teaching-s45",
+    "local_path": "figures/s45.svg",
+    "source_page": "https://arxiv.org/abs/2112.10752",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Two training stages: train the autoencoder, then freeze it and train the latent denoiser.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s45"
+    ],
+    "sha256": "f94deeed6fc3d22ef7fe69b0e517fe55e19511ac3a9085d0045393e45a27a863"
+  },
+  {
+    "id": "teaching-s46",
+    "local_path": "figures/s46.svg",
+    "source_page": "https://arxiv.org/abs/2112.10752",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Sampling begins with a random latent, repeatedly denoises it, then decodes to pixels once.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s46"
+    ],
+    "sha256": "965faa3be1442d45037ff8e1672640c419e0aa0aa26d375a933b94a3543c1b2c"
+  },
+  {
+    "id": "teaching-s47",
+    "local_path": "figures/s47.svg",
+    "source_page": "https://arxiv.org/abs/2112.10752",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Encode the prompt once to a sequence of text features; reuse them during denoising.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s47"
+    ],
+    "sha256": "cc8f5792dbf3d18b3f5736d6c2ef396ed4651b7e69a4e75a820ec50901646989"
+  },
+  {
+    "id": "teaching-s48",
+    "local_path": "figures/s48.svg",
+    "source_page": "https://arxiv.org/abs/2112.10752",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Image queries and text keys produce attention over text positions; mixing text values preserves image query rows.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s48"
+    ],
+    "sha256": "5076cf559bd4416af2371cb3a5c0dd7b52bd1a601212bb9c3e4d648ddc2cb51a"
+  },
+  {
+    "id": "teaching-s50",
+    "local_path": "figures/s50.svg",
+    "source_page": "https://arxiv.org/abs/2112.10752",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "One text feature sequence branches into three denoising calls with changing image states.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s50"
+    ],
+    "sha256": "6694b5a77ccf969156e423273cf8d3bbb9e86da94dc343ac2e9f91bd2a86e169"
+  },
+  {
+    "id": "teaching-s51",
+    "local_path": "figures/s51.svg",
+    "source_page": "https://arxiv.org/abs/2207.12598",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Train the shared denoiser with the regular condition or a null condition; keep the noisy latent and target unchanged.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s51"
+    ],
+    "sha256": "32c0d0cca4d1f0da42af98441e21f1cada67d6d8f88e60f643137e651608db29"
+  },
+  {
+    "id": "teaching-s52",
+    "local_path": "figures/s52.svg",
+    "source_page": "https://arxiv.org/abs/2207.12598",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Classifier-free guidance vectors: unconditional at s zero, conditional at s one, extrapolated at s three.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s52"
+    ],
+    "sha256": "0848837933662c65bcda6f62a2c6d8be50b489552469145027379b3de5fdc584"
+  },
+  {
+    "id": "teaching-s58",
+    "local_path": "figures/s58.svg",
+    "source_page": "https://arxiv.org/abs/2502.09992",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Illustrative discrete generation fills three response slots one at a time while retaining the observed prompt.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s58"
+    ],
+    "sha256": "60fda11626609af8d1e7a0b9690f19289b8b8f53715edbfe584b1e4a3e125fde"
+  },
+  {
+    "id": "teaching-s59",
+    "local_path": "figures/s59.svg",
+    "source_page": "https://arxiv.org/abs/2502.09992",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Schematic comparison: autoregressive generation extends a prefix; masked prediction uses context around a gap.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s59"
+    ],
+    "sha256": "9548bc21930d8b8dac6f5feed6ec74b13dfaee3adcccacd1c76548c3f4f2f0a6"
+  },
+  {
+    "id": "clean-0",
+    "local_path": "assets/clean-0.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "clean 0",
+    "figure_or_caption": "MNIST test example 0 from the existing embedded clean tensors.",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "scripts/export_clean_panels.py: clean normalisation inverted for display, then nearest-neighbour enlargement. No generative model output.",
+    "evidence_type": "dataset example",
+    "used_in_scene_ids": [
+      "s29"
+    ],
+    "settings": null,
+    "sha256": "0753a8d174f9735176dd2085919863a6f691e6bb83b9bab4900c07e62725168a"
+  },
+  {
+    "id": "clean-1",
+    "local_path": "assets/clean-1.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "clean 1",
+    "figure_or_caption": "MNIST test example 1 from the existing embedded clean tensors.",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "scripts/export_clean_panels.py: clean normalisation inverted for display, then nearest-neighbour enlargement. No generative model output.",
+    "evidence_type": "dataset example",
+    "used_in_scene_ids": [
+      "s13",
+      "s29"
+    ],
+    "settings": null,
+    "sha256": "95c2468d7152349667226838ff2c5dcaae994d12d970a4bbada7d02d2772b0bb"
+  },
+  {
+    "id": "clean-3",
+    "local_path": "assets/clean-3.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "clean 3",
+    "figure_or_caption": "MNIST test example 3 from the existing embedded clean tensors.",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "scripts/export_clean_panels.py: clean normalisation inverted for display, then nearest-neighbour enlargement. No generative model output.",
+    "evidence_type": "dataset example",
+    "used_in_scene_ids": [
+      "s29"
+    ],
+    "settings": null,
+    "sha256": "a79c1d9e766e8085480c5cd24f418b14ac527599d4cec4769715d23b09b7a28d"
+  },
+  {
+    "id": "clean-2",
+    "local_path": "assets/clean-2.png",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course / credited original authors",
+    "paper_or_dataset": "clean 2",
+    "figure_or_caption": "MNIST test example 2 from the existing embedded clean tensors.",
+    "license_or_usage_note": "Authored course computation or attributed teaching derivative; see parent source record for photo reuse limits.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "scripts/export_clean_panels.py: clean normalisation inverted for display, then nearest-neighbour enlargement. No generative model output.",
+    "evidence_type": "dataset example",
+    "used_in_scene_ids": [
+      "s29"
+    ],
+    "settings": null,
+    "sha256": "1baeb719f41778e15b185596e20b13cd46bcfe6a82baaa83898c3419218318a7"
+  },
+  {
+    "id": "teaching-a01",
+    "local_path": "figures/a01.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Appendix 1: graphical support for the mathematical construction.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "a01"
+    ],
+    "sha256": "be99006c8c97ef5f71d5a75ce98c6fb51523d1dfd8a2fe7694901b9c0e479a91"
+  },
+  {
+    "id": "teaching-a02",
+    "local_path": "figures/a02.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Appendix 2: graphical support for the mathematical construction.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "a02"
+    ],
+    "sha256": "7076f90c6a3327d8f0ec6bb0b9390f3315c904c81e35c4d0c9d929cc02d69030"
+  },
+  {
+    "id": "teaching-a03",
+    "local_path": "figures/a03.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "One latent path with forward and learned reverse arrows, grouped into the three bound contributions.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "a03"
+    ],
+    "sha256": "c29ba331e0f9e99452b792959f66647317e545dac6a7dccd84bf821111dbd3ae"
+  },
+  {
+    "id": "teaching-a04",
+    "local_path": "figures/a04.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Appendix 4: graphical support for the mathematical construction.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "a04"
+    ],
+    "sha256": "407855a13a219e2f41c0a6e370d1abbca0748cc2cc1ad8fe1cdff45f00cdf23e"
+  },
+  {
+    "id": "teaching-a05",
+    "local_path": "figures/a05.svg",
+    "source_page": "https://arxiv.org/abs/2202.00512",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Appendix 5: graphical support for the mathematical construction.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "a05"
+    ],
+    "sha256": "20f7de7bdd8597a198bba1d3c5f4b3e412aab7f32b5325d9539f8071eec55110"
+  },
+  {
+    "id": "teaching-a06",
+    "local_path": "figures/a06.svg",
+    "source_page": "https://arxiv.org/abs/2010.02502",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Appendix 6: graphical support for the mathematical construction.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "a06"
+    ],
+    "sha256": "6c8db5087d7d78bd13ba463a3fddde1d8a9816955c0798440312f46468fc092a"
+  },
+  {
+    "id": "teaching-a07",
+    "local_path": "figures/a07.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Appendix 7: graphical support for the mathematical construction.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "a07"
+    ],
+    "sha256": "88be489d2abe33e2761e12146affbef4690142d73418f6faa1c8f32e7caf5dba"
+  },
+  {
+    "id": "teaching-a08",
+    "local_path": "figures/a08.svg",
+    "source_page": "https://arxiv.org/abs/2210.02747",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Appendix 8: graphical support for the mathematical construction.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "a08"
+    ],
+    "sha256": "672a6a0b66d0341407dd63f0ad046794b5c1337d669e224710721d3759cd645f"
+  },
+  {
+    "id": "teaching-a09",
+    "local_path": "figures/a09.svg",
+    "source_page": "https://arxiv.org/abs/2502.09992",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Appendix 9: graphical support for the mathematical construction.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "a09"
+    ],
+    "sha256": "ca4a780419d754e8f717ba254c0b58288706d434f52a5be487cb577095162636"
+  },
+  {
+    "id": "teaching-a10",
+    "local_path": "figures/a10.svg",
+    "source_page": "https://arxiv.org/abs/2112.10752",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Appendix 10: graphical support for the mathematical construction.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "a10"
+    ],
+    "sha256": "38ef4fc4f62c2649ccfd593837533b4529d470263d7a57cc35c07d08f9d621c4"
+  },
+  {
+    "id": "teaching-a11",
+    "local_path": "figures/a11.svg",
+    "source_page": "https://www.samarkhanna.com/DiffusionSat/",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Appendix 11: graphical support for the mathematical construction.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "a11"
+    ],
+    "sha256": "31aa96bd5a65408740d380ab7b4ecb029a92f9714361cd9a6acf8936ee8db26a"
+  },
+  {
+    "id": "teaching-s01",
+    "local_path": "figures/s01.svg",
+    "source_page": "https://hojonathanho.github.io/diffusion/",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Application 1: source evidence with explicit condition and generated outputs.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s01"
+    ],
+    "sha256": "a46018ed47b21dd48099ec20205ffb8f7883694ebf1247170a84f1d4a300b5db"
+  },
+  {
+    "id": "teaching-s02",
+    "local_path": "figures/s02.svg",
+    "source_page": "https://ommer-lab.com/research/latent-diffusion-models/",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Application 2: source evidence with explicit condition and generated outputs.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s02"
+    ],
+    "sha256": "acc72205dd45aee641260d3a0bcbb4849758b021f5f720fbe2f11292aa2baac4"
+  },
+  {
+    "id": "teaching-s03",
+    "local_path": "figures/s03.svg",
+    "source_page": "https://gligen.github.io/",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Application 3: source evidence with explicit condition and generated outputs.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s03"
+    ],
+    "sha256": "86cf053e482ee70baae66752761edc248c93bb474104a84f7a547cb4dc8e2229"
+  },
+  {
+    "id": "teaching-s04",
+    "local_path": "figures/s04.svg",
+    "source_page": "https://github.com/andreas128/RePaint",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Application 4: source evidence with explicit condition and generated outputs.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s04"
+    ],
+    "sha256": "0450de8840c3aa987c9740c8feb011c59832911af0658b66bede1211244faec1"
+  },
+  {
+    "id": "teaching-s05",
+    "local_path": "figures/s05.svg",
+    "source_page": "https://sde-image-editing.github.io/",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Application 5: source evidence with explicit condition and generated outputs.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s05"
+    ],
+    "sha256": "b21558a4e1ed969f74f01acf72108f30962b47780f7425d8db656f232bf74581"
+  },
+  {
+    "id": "teaching-s06",
+    "local_path": "figures/s06.svg",
+    "source_page": "https://iterative-refinement.github.io/",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Application 6: source evidence with explicit condition and generated outputs.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s06"
+    ],
+    "sha256": "d9b10bca6712c56dd93079c74e0a3996b4263c0b06fc75cc3800e64a337384ae"
+  },
+  {
+    "id": "teaching-s07",
+    "local_path": "figures/s07.svg",
+    "source_page": "https://github.com/lllyasviel/ControlNet",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Application 7: source evidence with explicit condition and generated outputs.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s07"
+    ],
+    "sha256": "8eadbc58348f1f83b98162a8cbf5e61ee89819635187f8fbe400de71bb72d3aa"
+  },
+  {
+    "id": "teaching-s08",
+    "local_path": "figures/s08.svg",
+    "source_page": "https://dreambooth.github.io/",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Application 8: source evidence with explicit condition and generated outputs.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s08"
+    ],
+    "sha256": "ebf5d9ef70210ca0f42ee2b6645e11c3fc7868c6e92b5c745c303056a1ca583d"
+  },
+  {
+    "id": "teaching-s09",
+    "local_path": "figures/s09.svg",
+    "source_page": "https://www.samarkhanna.com/DiffusionSat/",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Application 9: source evidence with explicit condition and generated outputs.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s09"
+    ],
+    "sha256": "cd0d5ce6b0472bbada70d5314eeae37bf8caf41c61433791c222e7dce30d6c7a"
+  },
+  {
+    "id": "teaching-s11",
+    "local_path": "figures/s11.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Compare a one-pass latent generator with repeated state updates by a shared diffusion denoiser.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s11"
+    ],
+    "sha256": "e84df93ca2167cd8cab4f1611f09bb97e08de7322126f6fe8551d07e552d2545"
+  },
+  {
+    "id": "teaching-s12",
+    "local_path": "figures/s12.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "The same digit under six stages of a recorded forward corruption chain.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s12"
+    ],
+    "sha256": "b2fd858e5b1f5d5da4507df2d92c1eb1e3d718083c6572b279fb44f66c5d8991"
+  },
+  {
+    "id": "teaching-s13",
+    "local_path": "figures/s13.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Two illustrative corruption densities overlap at a possible observed coordinate.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s13"
+    ],
+    "sha256": "95a3a94dc95a27617c6889a6f076e9d8bca1fa47d89796349726046f7e7ccf83"
+  },
+  {
+    "id": "teaching-s15",
+    "local_path": "figures/s15.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "A real digit, a schematic coordinate grid and the exact clean pixel normalisation.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s15"
+    ],
+    "sha256": "62efd0436b1462d6c37afb0e7b5a05fd2becf265a0c87631f3d8c6ce4ad6695e"
+  },
+  {
+    "id": "teaching-s18",
+    "local_path": "figures/s18.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Independent scaled noise terms combine by adding their variances.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s18"
+    ],
+    "sha256": "4f5bdf6c98da40f706602fd164ca582e376a06789b3893cdfa6fb41361e00d35"
+  },
+  {
+    "id": "teaching-s26",
+    "local_path": "figures/s26.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "A separate timestep and coefficient per example, reshaped for correct batched broadcasting.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s26"
+    ],
+    "sha256": "24fae0c6ecb3ae972f836a5c9f15f341668f0d0b2b13a8096a9822ee4ffbd901"
+  },
+  {
+    "id": "teaching-s27",
+    "local_path": "figures/s27.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Annotated training update code; the right margin tracks data and control flow.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s27"
+    ],
+    "sha256": "b4b763d2a73c0fe5ade88c0797d1a5d798e881f447df21e57ec51073f492956b"
+  },
+  {
+    "id": "teaching-s29",
+    "local_path": "figures/s29.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Automatically constructed targets do not replace a representative clean dataset.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s29"
+    ],
+    "sha256": "a8ac306a63503abcaa05f1aebe7527eac57e46241f56ad6abd371af271e928cd"
+  },
+  {
+    "id": "teaching-s30",
+    "local_path": "figures/s30.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "One latent path with forward and learned reverse arrows, grouped into the three bound contributions.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s30"
+    ],
+    "sha256": "c29ba331e0f9e99452b792959f66647317e545dac6a7dccd84bf821111dbd3ae"
+  },
+  {
+    "id": "teaching-s31",
+    "local_path": "figures/s31.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "With fixed covariance, Gaussian KL depends quadratically on the difference of means.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s31"
+    ],
+    "sha256": "4ae81ce79fb02c646e93e783fbd21c8d029f482992047e8b3fedcbc835fa584c"
+  },
+  {
+    "id": "teaching-s33",
+    "local_path": "figures/s33.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Worked inverse of the forward marginal: subtract estimated noise, then divide by the signal coefficient.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s33"
+    ],
+    "sha256": "508d906a43ab0eaa114a05868129ec92e206d631f05790acb9769333fdca62e5"
+  },
+  {
+    "id": "teaching-s35",
+    "local_path": "figures/s35.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "An internally consistent beta point two reverse-mean fixture; one-step alpha is used in the final division.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s35"
+    ],
+    "sha256": "27a50cda091bed326ce583be0d2b37be0f707b4e9606d1862077e8f9fa8a1093"
+  },
+  {
+    "id": "teaching-s38",
+    "local_path": "figures/s38.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Annotated sampling loop code; the right margin tracks data and control flow.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s38"
+    ],
+    "sha256": "4da9127bef3674a365ae0861f6f85204f5f1f763a748f2be1d69f1575dfe0709"
+  },
+  {
+    "id": "teaching-s39",
+    "local_path": "figures/s39.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Recorded chain states and clean estimates in separately revealed, aligned rows.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s39"
+    ],
+    "sha256": "23176ed9bcdd5a4f453c3c6379aaadd075d335033053522b73edc653500aeef1"
+  },
+  {
+    "id": "teaching-s53",
+    "local_path": "figures/s53.svg",
+    "source_page": "https://arxiv.org/abs/2207.12598",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "All eight outputs at each of four guidance scales, aligned by common random draws.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s53"
+    ],
+    "sha256": "67c01c3442acf7c3706ce8655c2a4ffa29bf6897f1ce8221a3367bc8ca6ec0d5"
+  },
+  {
+    "id": "teaching-s54",
+    "local_path": "figures/s54.svg",
+    "source_page": "https://github.com/andreas128/RePaint",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "Compare missing spatial regions with missing high-frequency detail, using the opening examples.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s54"
+    ],
+    "sha256": "9d9f236d994ec8152a3df6458649186b49c6db0426630b205453da020e60baea"
+  },
+  {
+    "id": "teaching-s55",
+    "local_path": "figures/s55.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "The complete unselected eight-sample batch from the new model, with its actual budget and evaluation status.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s55"
+    ],
+    "sha256": "791835a84c1e1fc75e25bd7bed7b2cf012626b4205783f7929cc81ff6911d291"
+  },
+  {
+    "id": "teaching-s56",
+    "local_path": "figures/s56.svg",
+    "source_page": "https://arxiv.org/abs/2502.09992",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "One sentence under two arbitrary vocabulary numberings, followed by discrete masking.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s56"
+    ],
+    "sha256": "06b8e894321a5515f5d877c4862c14980315bb11c7fe2dbea9a32960c0a7729e"
+  },
+  {
+    "id": "teaching-s60",
+    "local_path": "figures/s60.svg",
+    "source_page": "https://arxiv.org/abs/2006.11239",
+    "asset_url": null,
+    "authors_or_owner": "Nipun Batra course",
+    "paper_or_dataset": "Authored explanatory diagram",
+    "figure_or_caption": "A progressively completed comparison table across pixel, latent and token generation.",
+    "license_or_usage_note": "Original course diagram or composition; embedded published and recorded panels retain their source provenance and reuse conditions.",
+    "retrieved_date": "2026-10-19",
+    "transformations": "Generated by src/teaching_figures.py and src/full_deck_figures.py. Source images are displayed through explicit clipped viewports; originals are retained. Tensor cells and model internals are schematic; explicitly printed numerical fixtures match the worked examples.",
+    "evidence_type": "illustrative teaching diagram",
+    "used_in_scene_ids": [
+      "s60"
+    ],
+    "sha256": "e5ed498c8d8ba4eb9732e2cfd7c99a0260f47b0b1209ee6dc3be968181470718"
+  }
+]

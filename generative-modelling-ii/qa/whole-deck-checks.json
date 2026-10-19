@@ -1,0 +1,16 @@
+{
+  "errors": [],
+  "guidanceView": true,
+  "guidanceEndpoints": true,
+  "guidanceCue": true,
+  "secondQuery": true,
+  "maskCue": true,
+  "maskFinished": true,
+  "maskLossAlignment": true,
+  "recursiveMode": true,
+  "derivationsRetained": true,
+  "allScenesHaveNotes": true,
+  "figures": 65,
+  "demos": 6,
+  "repeatedTakeawaySentences": []
+}

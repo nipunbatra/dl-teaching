@@ -1,0 +1,72 @@
+/* Beyond Attention: semantic colour, large evidence, one visual argument per scene. */
+:root{--ink:#14171F;--muted:#4A5160;--blue:#245EDB;--purple:#793DB5;--teal:#0F766E;--amber:#9A5700;--red:#BE123C}
+h2{font-weight:700;font-size:40px;text-wrap:balance}
+.eyebrow{letter-spacing:.065em;font-weight:600;color:var(--muted)}
+.teaching-line{display:grid;grid-template-columns:112px 1fr;gap:18px;align-items:start;border-left:3px solid var(--blue);padding:10px 0 10px 17px;margin-top:20px;font-size:22px;line-height:1.35;flex:none;min-height:80px}
+.teaching-line .cue-label{font-size:15px;font-weight:650;color:var(--blue);padding-top:5px}
+.teaching-line p{margin:0;max-width:68ch;text-wrap:pretty}
+.teaching-line.is-takeaway{border-color:var(--teal)}
+.teaching-line.is-takeaway .cue-label{color:var(--teal)}
+.present .teaching-line{margin-top:13px}
+.present footer{margin-top:8px}
+.figure-led{display:flex;flex-direction:column;justify-content:center;gap:8px}
+.figure-led .visual{width:100%;flex:none}
+.teaching-figure>svg{display:block;width:100%;height:auto;max-height:430px}
+.present .teaching-figure>svg{height:400px;max-height:400px}
+.present .has-equation .teaching-figure>svg{height:285px;max-height:285px}
+.figure-led .steps{display:block}
+.figure-led .step{font-size:23px;padding:10px 0}
+.figure-led .step-no{display:none}
+.present .figure-led .steps{min-height:65px}
+.present .figure-led .step{display:none;border:0;padding:6px 0;min-height:54px}
+.present .figure-led .step:not(.past):not(.future){display:flex}
+.present .figure-led .math{font-size:24px}
+.present #a03 .math,.present #a07 .math,.present #a09 .math{font-size:21px}
+.present .code-figure svg text{font-variant-ligatures:none}
+.present .slide:has(.demo) .body{justify-content:center}
+.present .slide:has(.demo) .visual{flex:none}
+.demo-controls{margin-bottom:20px;padding-bottom:13px;border-bottom:1px solid var(--line)}
+.demo-actions{margin-left:auto}
+.present .slide:has(.demo) .demo-body{grid-template-columns:minmax(0,2.1fr) minmax(0,1fr);gap:30px}
+.present .slide:has(.demo) .demo canvas{width:100%;max-height:290px;object-fit:contain;object-position:left center}
+.readout{font:18px/1.5 'SF Mono',Menlo,monospace;border-left:2px solid var(--line);padding-left:20px}
+.evidence{font-size:16px;color:var(--muted);margin-top:12px}
+.present #s20 .readout{font-size:17px;line-height:1.4}
+.present #s20 .demo-controls{gap:8px;margin-bottom:12px}
+.present #s20 .demo-controls button{padding:6px 9px}
+.present #s22 .demo-body{grid-template-columns:1fr;gap:6px}
+.present #s22 .demo canvas{max-height:225px;width:100%;object-position:center}
+#s22 .readout{display:grid;grid-template-columns:repeat(4,1fr);gap:3px 18px;border:0;border-top:1px solid var(--line);padding:12px 0 0;font-size:16px;white-space:normal}
+#s22 .readout .readout-line{white-space:pre-wrap}
+#s57 .tokens{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:0;width:100%}
+#s57 .token{font-size:23px;text-align:center;padding:13px 6px;white-space:nowrap}
+#s57 .mask-label{grid-column:1/-1;font-size:15px;color:var(--muted);letter-spacing:.08em;margin-top:18px;text-transform:uppercase}
+#s57 .token.target{background:transparent;border-color:transparent;color:var(--teal);font-size:19px}
+#s57 .token.unscored{color:#A4AAB6}
+.explanation{border-top:1px solid var(--line);margin-top:20px;padding-top:16px}
+.explanation-step{margin:12px 0}.explanation-step>span{font-size:14px;color:var(--muted)}
+.explanation .math{font-size:21px}.explanation .diagram svg{max-height:160px}
+#dialog-body .notes{display:block;border:0;margin:0;padding:0}#dialog-body .notes>summary{display:none}
+@media(max-width:760px){
+ body:not(.present) .teaching-line{grid-template-columns:1fr;gap:5px;font-size:20px;min-height:0}
+ body:not(.present) .teaching-line .cue-label{padding:0}
+ body:not(.present) .teaching-figure{overflow-x:auto}
+ body:not(.present) .teaching-figure>svg{min-width:680px}
+ body:not(.present) .visual{min-width:0;max-width:100%}
+ body:not(.present) .demo-body{grid-template-columns:1fr}
+ body:not(.present) .readout{font-size:16px}
+ body:not(.present) #s22 .readout{grid-template-columns:1fr 1fr}
+ body:not(.present) #s57 .tokens{min-width:600px}
+ body:not(.present) #s57 .drawing{overflow-x:auto}
+ body:not(.present) .explanation{max-width:100%;overflow-x:auto}
+}
+/* Override earlier gallery-specific heights after converting them to figures. */
+.present .slide .figure-led .visual{height:auto;margin:0;max-height:none}
+.code-figure text{white-space:pre}
+.present #s22 .demo-controls{margin-bottom:10px;padding-bottom:8px}
+.present #s22 .demo canvas{max-height:205px}
+.present #s57 .mask-label{margin-top:9px}
+.present #s57 .token{padding:10px 6px}
+.present #a03 .has-equation .teaching-figure>svg{height:255px;max-height:255px}
+.present #s60 .body.figure-led .visual{height:auto}
+body:not(.present) .steps .repeated-equation{display:none}

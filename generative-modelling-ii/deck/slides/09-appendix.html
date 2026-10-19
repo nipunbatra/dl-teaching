@@ -1,0 +1,181 @@
+<!-- ===================================================================== Appendix -->
+
+<section class="slide sec-app" id="a1-gauss" data-section="Appendix">
+  <p class="kicker">A1 · the jump formula for every t</p>
+  <h2>Independent Gaussians add: the step from t − 1 to t</h2>
+  <div class="body">
+    <div class="ladder" style="width:1100px;margin:0 auto;font-size:25px;grid-template-columns:auto auto 1fr">
+      <span class="lhs">assume</span><span></span><span>$x_{t-1} = \sqrt{\bar\alpha_{t-1}}\,x_0 + \sqrt{1-\bar\alpha_{t-1}}\,\epsilon'$</span>
+      <span class="lhs" data-b="2">one step</span><span data-b="2">$x_t$</span><span data-b="2">$= \sqrt{\alpha_t}\,x_{t-1} + \sqrt{\beta_t}\,\eta_t = \sqrt{\alpha_t\bar\alpha_{t-1}}\,x_0 + \sqrt{\alpha_t(1-\bar\alpha_{t-1})}\,\epsilon' + \sqrt{\beta_t}\,\eta_t$</span>
+      <span class="lhs" data-b="3">variances</span><span data-b="3"></span><span data-b="3">$\alpha_t(1-\bar\alpha_{t-1}) + (1-\alpha_t) = 1 - \alpha_t\bar\alpha_{t-1} = 1-\bar\alpha_t$</span>
+      <span class="lhs" data-b="4">so</span><span data-b="4">$x_t$</span><span data-b="4">$= \sqrt{\bar\alpha_t}\,x_0 + \sqrt{1-\bar\alpha_t}\,\epsilon$, &nbsp; true for t = 1, hence for all t</span>
+    </div>
+    <p class="small muted" data-b="3" style="text-align:center;margin-top:20px">Toy check at t = 2: 0.8 × 0.2 + 0.2 = 0.36 = 1 − 0.64 (Part 1).</p>
+  </div>
+  <span class="badge toy">computed</span>
+  <aside class="notes"><p data-say="1">Induction on t.</p><p data-say="2">Expand one step.</p><p data-say="3">Independent zero-mean Gaussians: variances add.</p><p data-say="4">Same form one step later.</p></aside>
+</section>
+
+<section class="slide sec-app" id="a2-posterior" data-section="Appendix">
+  <p class="kicker">A2 · where Part 3's posterior comes from</p>
+  <h2>Knowing $x_0$ makes the reverse step a known Gaussian</h2>
+  <div class="body">
+    <div class="mathblock" style="font-size:25px">$q(x_{t-1}\mid x_t, x_0) = \mathcal N(\tilde\mu_t,\ \tilde\beta_t I), \qquad \tilde\beta_t = \beta_t\,\dfrac{1-\bar\alpha_{t-1}}{1-\bar\alpha_t}$</div>
+    <div class="mathblock" style="font-size:25px">$\tilde\mu_t = \dfrac{\sqrt{\bar\alpha_{t-1}}\,\beta_t}{1-\bar\alpha_t}\,x_0 + \dfrac{\sqrt{\alpha_t}\,(1-\bar\alpha_{t-1})}{1-\bar\alpha_t}\,x_t$</div>
+    <div class="arith" data-b="2" style="margin-top:20px;font-size:25px">
+      <span class="box" style="color:var(--x)">0.497 × 1<small>toy: true x₀</small></span><span class="op">+</span>
+      <span class="box" style="color:var(--xt)">0.497 × 0.5<small>x₂</small></span><span class="op">=</span>
+      <span class="box" style="color:var(--x);font-weight:700">{{toy.mu_t}}<small>$\tilde\mu$</small></span>
+    </div>
+    <div class="arith" data-b="3" style="margin-top:14px;font-size:25px">
+      <span class="box" style="color:var(--x)">0.497 × 0.925<small>the guess x̂₀ instead</small></span><span class="op">+</span>
+      <span class="box" style="color:var(--xt)">0.497 × 0.5</span><span class="op">=</span>
+      <span class="box" style="color:var(--dec);font-weight:700">{{toy.mu}}<small>$\mu_\theta$</small></span>
+    </div>
+  </div>
+  <p class="q" data-b="3">The model's reverse mean is the true posterior mean with $\hat x_0$ plugged in; rewriting $\hat x_0$ in terms of $\hat\epsilon$ gives the formula of Part 3.</p>
+  <span class="badge toy">computed</span>
+  <aside class="notes">
+    <p data-say="1">From Bayes: q(x_{t−1} | x_t, x₀) ∝ q(x_t | x_{t−1}) q(x_{t−1} | x₀), a product of two Gaussians in x_{t−1}; complete the square.</p>
+    <p data-say="2">Toy numbers: both coefficients are 0.894 × 0.2 / 0.36 = 0.497.</p>
+    <p data-say="3">Substitute the network's guess for x₀: 0.708, exactly the mean we computed from ε̂. Note this is not q(x_{t−1} | x_t), which would average over unknown x₀.</p>
+  </aside>
+</section>
+
+<section class="slide sec-app" id="a3-bound" data-section="Appendix">
+  <p class="kicker">A3 · from the ELBO to one term per step</p>
+  <h2>Bayes on each forward step makes the bound telescope</h2>
+  <div class="body">
+    <div class="ladder" style="width:1150px;margin:0 auto;font-size:22px;grid-template-columns:auto auto 1fr">
+      <span class="lhs">$-\log p_\theta(x_0)$</span><span>$\le$</span><span>$\mathbb E_q\Big[-\log p(x_T) - \textstyle\sum_{t\ge1}\log\dfrac{p_\theta(x_{t-1}\mid x_t)}{q(x_t\mid x_{t-1})}\Big]$</span>
+      <span data-b="2"></span><span data-b="2"></span><span class="why" data-b="2">Jensen, as in Lecture I, with $p_\theta(x_{0:T}) = p(x_T)\prod_t p_\theta(x_{t-1}\mid x_t)$ and $q(x_{1:T}\mid x_0)=\prod_t q(x_t\mid x_{t-1})$</span>
+      <span class="lhs" data-b="3">for $t\ge2$:</span><span data-b="3"></span><span data-b="3">$q(x_t\mid x_{t-1}) = \dfrac{q(x_{t-1}\mid x_t, x_0)\;q(x_t\mid x_0)}{q(x_{t-1}\mid x_0)}$ &nbsp; (Bayes, using the Markov property)</span>
+      <span class="lhs" data-b="4">so</span><span data-b="4">$=$</span><span data-b="4">$\underbrace{D_{KL}(q(x_T\mid x_0)\,\|\,p(x_T))}_{L_T} \;-\; \underbrace{\mathbb E_q\log p_\theta(x_0\mid x_1)}_{L_0}$</span>
+      <span data-b="4"></span><span data-b="4">$+$</span><span data-b="4">$\sum_{t=2}^T \underbrace{\mathbb E_q D_{KL}(q(x_{t-1}\mid x_t,x_0)\,\|\,p_\theta(x_{t-1}\mid x_t))}_{L_{t-1}}$</span>
+    </div>
+  </div>
+  <p class="q" data-b="4">The ratios $q(x_t\mid x_0)/q(x_{t-1}\mid x_0)$ cancel in a chain, leaving only $q(x_T\mid x_0)$: this is the decomposition used in Part 2.</p>
+  <aside class="notes"><p data-say="1">Start from the bound.</p><p data-say="2">Jensen and the two factorisations.</p><p data-say="3">Rewrite each forward step backwards, conditioned on x₀.</p><p data-say="4">The ratio terms telescope; group what remains into KLs (Ho et al. 2020, eq. 5; Luo 2022 has every line).</p></aside>
+</section>
+
+<section class="slide sec-app" id="a4-v" data-section="Appendix">
+  <p class="kicker">A4 · three targets, one rotation</p>
+  <h2>$x_t$ and $v$ are $x_0$ and $\epsilon$ rotated by an angle that grows with t</h2>
+  <div class="body">
+    <div class="row" style="gap:30px;align-items:center">
+      <div class="col" style="width:520px"><!--svg:rotation--></div>
+      <div class="col grow" style="gap:10px">
+        <div class="mathblock left" style="font-size:24px">$x_t = \cos\phi\,x_0 + \sin\phi\,\epsilon$</div>
+        <div class="mathblock left" data-b="2" style="font-size:24px">$v = \cos\phi\,\epsilon - \sin\phi\,x_0$</div>
+        <div class="mathblock left" data-b="2" style="font-size:24px">$x_0 = \cos\phi\,x_t - \sin\phi\,v, \quad \epsilon = \sin\phi\,x_t + \cos\phi\,v$</div>
+        <p class="small" data-b="2">Given $x_t$, predicting any one of $\epsilon$, $x_0$, $v$ determines the others; the sampler must use the matching conversion.</p>
+      </div>
+    </div>
+  </div>
+  <span class="badge toy">computed</span>
+  <aside class="notes"><p data-say="1">Since ᾱ + (1 − ᾱ) = 1, write √ᾱ = cos φ and √(1 − ᾱ) = sin φ: x_t is a rotation of (x₀, ε).</p><p data-say="2">v is the perpendicular direction; inverting the rotation recovers x₀ and ε (Salimans &amp; Ho 2022).</p></aside>
+</section>
+
+<section class="slide sec-app" id="a5-schedules" data-section="Appendix">
+  <p class="kicker">A5 · noise schedules</p>
+  <h2>The cosine schedule spends fewer steps on near-pure noise</h2>
+  <div class="body center"><img class="fig" src="figures/data/schedules.svg" style="width:780px"></div>
+  <p class="q">With the linear schedule, ᾱ is nearly 0 for the last ~40% of steps (Part 1's identical panels). The cosine schedule removes signal more evenly.</p>
+  <span class="badge toy">computed</span>
+  <p class="src">Cosine schedule: Nichol &amp; Dhariwal 2021, $\bar\alpha_t = f(t)/f(0)$, $f(t) = \cos^2\!\big(\tfrac{t/T + 0.008}{1.008}\cdot\tfrac{\pi}{2}\big)$.</p>
+  <aside class="notes"><p data-say="1">This is a schedule choice, independent of the sampler. Our model uses the linear schedule from DDPM.</p></aside>
+</section>
+
+<section class="slide sec-app" id="a6-ddim" data-section="Appendix">
+  <p class="kicker">A6 · a faster sampler with the same trained network</p>
+  <h2>DDIM: jump between chosen steps using the clean guess</h2>
+  <div class="body">
+    <div class="mathblock" style="font-size:26px">$x_s = \sqrt{\bar\alpha_s}\,\hat x_0 + \sqrt{1-\bar\alpha_s}\,\hat\epsilon, \qquad s &lt; t$</div>
+    <p class="small" style="text-align:center;margin:0">no fresh noise: re-noise the clean guess with the predicted noise</p>
+    <div class="col" data-b="2" style="gap:10px;align-items:center;margin-top:16px">
+      <div class="row" style="gap:14px"><span class="small" style="width:250px;text-align:right">DDPM, 1000 calls</span><img class="pix" src="figures/data/with-noise.png" width="760"></div>
+      <div class="row" style="gap:14px"><span class="small" style="width:250px;text-align:right">DDIM, 50 calls</span><img class="pix" src="figures/data/ddim-50.png" width="760"></div>
+    </div>
+  </div>
+  <p class="q" data-b="2">Same weights, same starting noise, 20× fewer calls. Deleting steps from DDPM's loop would not work: DDIM defines a different transition.</p>
+  <span class="badge run" data-b="2">our model</span>
+  <aside class="notes"><p data-say="1">Move to step s by re-noising the clean guess with the predicted noise. Deterministic given x_T (Song et al. 2021).</p><p data-say="2">Our model, both samplers, the same x_T. The samples are similar but not identical, because DDPM adds fresh noise along the way.</p></aside>
+</section>
+
+<section class="slide sec-app" id="a7-score" data-section="Appendix">
+  <p class="kicker">A7 · the score view, on the eight clusters</p>
+  <h2>Predicting noise is learning which way density increases</h2>
+  <div class="body">
+    <div class="row" style="gap:24px;align-items:center">
+      <img class="fig" src="figures/data/score-field.svg" style="height:470px">
+      <div class="col grow" style="gap:10px">
+        <div class="mathblock left" style="font-size:23px">$\nabla_x \log q_t(x) = -\dfrac{\mathbb E[\epsilon\mid x_t = x]}{\sqrt{1-\bar\alpha_t}}$</div>
+        <p class="small">For the cluster data this score is known exactly, so we can run the sampler with the <b>exact</b> $\epsilon$ instead of a network.</p>
+        <p class="small" data-b="2">Arrows: the score at t = {{score.t}}. Lines: 8 reverse trajectories (deterministic DDIM steps) from noise; dots: 400 final samples, which land on the clusters.</p>
+      </div>
+    </div>
+  </div>
+  <span class="badge toy">computed <small>exact score, no network</small></span>
+  <aside class="notes"><p data-say="1">The best noise prediction (Part 2's conditional mean) is the score, scaled (Tweedie's formula; Song &amp; Ermon 2019).</p><p data-say="2">The finite-step Gaussian reverse is still an approximation, but with 1000 small steps the samples reproduce the eight clusters.</p></aside>
+</section>
+
+<section class="slide sec-app" id="a8-flow" data-section="Appendix">
+  <p class="kicker">A8 · flow matching</p>
+  <h2>Learn a velocity along straight lines from noise to data</h2>
+  <div class="body">
+    <div class="row" style="gap:24px;align-items:center">
+      <img class="fig" src="figures/data/flow.svg" style="width:640px">
+      <div class="col grow" style="gap:10px">
+        <div class="mathblock left" style="font-size:23px">$x_\tau = (1-\tau)\,x_{\text{noise}} + \tau\,x_{\text{data}}$</div>
+        <div class="mathblock left" style="font-size:23px">$u = x_{\text{data}} - x_{\text{noise}}$</div>
+        <div class="mathblock left" data-b="2" style="font-size:23px">$\min_\theta\ \mathbb E\,\|v_\theta(x_\tau, \tau) - u\|^2$, &nbsp; then integrate $\dfrac{dx}{d\tau} = v_\theta$</div>
+        <p class="small" data-b="2">Where straight lines cross, the network can only learn their <b>average</b> direction, so the learned paths curve.</p>
+      </div>
+    </div>
+  </div>
+  <span class="badge toy">computed</span>
+  <aside class="notes"><p data-say="1">Pairs of noise and data points joined by straight lines; the regression target is the line's direction (Lipman et al. 2023; Liu et al. 2023). Stable Diffusion 3 uses this.</p><p data-say="2">Same lesson as Part 2: squared error returns a conditional average.</p></aside>
+</section>
+
+<section class="slide sec-app" id="a9-llada" data-section="Appendix">
+  <p class="kicker">A9 · the masked-diffusion objective and sampler</p>
+  <h2>LLaDA's loss and its low-confidence remasking</h2>
+  <div class="body">
+    <div class="mathblock" style="font-size:25px">$\mathcal L(\theta) = -\,\mathbb E_{t, x_0, x_t}\Big[\dfrac{1}{t}\sum_{i=1}^{L}\mathbf 1[x_t^i = \texttt{MASK}]\,\log p_\theta(x_0^i\mid x_t)\Big]$</div>
+    <p class="small" style="text-align:center;margin:0">$t\sim U(0, 1]$: each token masked independently with probability $t$</p>
+    <ol class="small" data-b="2" style="width:1000px;margin:18px auto 0">
+      <li>Choose a response length and a number of steps; mask every response slot.</li>
+      <li>Each step: predict all masked slots in one pass.</li>
+      <li>Keep the most confident predictions (the schedule says how many); re-mask the rest.</li>
+      <li>Prompt tokens are never masked during fine-tuning or generation.</li>
+    </ol>
+  </div>
+  <p class="src">Nie et al., Large Language Diffusion Models (LLaDA), 2025.</p>
+  <aside class="notes"><p data-say="1">The 1/t weight makes this an upper bound on the negative log-likelihood. Without it, it is an ordinary masked cross-entropy, a different objective.</p><p data-say="2">The sampler of Part 6.</p></aside>
+</section>
+
+<section class="slide sec-app" id="a10-heads" data-section="Appendix">
+  <p class="kicker">A10 · cross-attention with heads</p>
+  <h2>Each head attends separately; then concatenate and project</h2>
+  <div class="body"><!--svg:heads--></div>
+  <div class="mathblock" style="font-size:24px">$Q: [B, h, N, d_k], \quad K: [B, h, L, d_k], \quad V: [B, h, L, d_v]$</div>
+  <div class="mathblock" style="font-size:24px">$A = \mathrm{softmax}_L\big(QK^\top/\sqrt{d_k}\big): [B, h, N, L]$</div>
+  <p class="q">Softmax over the L text positions, for every image position in every head; then $W_O$ maps $h\,d_v$ back to the image feature width.</p>
+  <aside class="notes"><p data-say="1">Same as the Transformer lectures, with queries from the image and keys/values from the text.</p></aside>
+</section>
+
+<section class="slide sec-app" id="a11-report" data-section="Appendix">
+  <p class="kicker">A11 · reporting a generated example</p>
+  <h2>Say where every image came from</h2>
+  <div class="body">
+    <table class="cmp" style="font-size:21px;width:1100px;margin:0 auto">
+      <tr><th>badge</th><th>what it means</th><th>what to report</th></tr>
+      <tr><td><span class="badge pub inline">published</span></td><td>a figure from a paper or project page</td><td>source, figure, what the authors say was supplied (prompt, input)</td></tr>
+      <tr><td><span class="badge run inline">our model</span></td><td>produced by a model trained for this lecture</td><td>checkpoint, steps, seed, sampler, whether selected</td></tr>
+      <tr><td><span class="badge toy inline">computed</span></td><td>exact arithmetic or the fixed forward process</td><td>the formula and the inputs</td></tr>
+      <tr><td><span class="badge sketch inline">illustrative</span></td><td>hand-chosen numbers to show a mechanism</td><td>that it is not a measured result</td></tr>
+    </table>
+    <p class="small" style="width:1100px;margin:20px auto 0">Our models: pixel DDPM {{uncond.params}} parameters, {{uncond.steps}} steps, batch {{uncond.batch}}, seed 667, EMA 0.999, linear β ∈ [10⁻⁴, 0.02], T = 1000, posterior variance; class-conditional copy with label dropout 0.1; 4 × 7 × 7 autoencoder + latent DDPM. Scripts: <code>scripts/train_models.py</code>, <code>scripts/make_figures.py</code>.</p>
+  </div>
+  <aside class="notes"><p data-say="1">The badge legend used throughout the slides.</p></aside>
+</section>

@@ -1,0 +1,59 @@
+{
+  "checks": {
+    "schedule_length": true,
+    "sentinel": true,
+    "finite_schedule": true,
+    "monotone_retention": true,
+    "endpoint": true,
+    "posterior_endpoint": true,
+    "x2": true,
+    "loss": true,
+    "xhat": true,
+    "mean": true,
+    "variance": true,
+    "sample": true,
+    "attention_row_sums": true,
+    "attention_values": true,
+    "2x2_MSE": true,
+    "broadcast": true,
+    "model_shape": true,
+    "finite_loss_gradients": true,
+    "final_step_ignores_noise": true,
+    "two_mean_parameterisations": true,
+    "oracle_finite": true,
+    "oracle_seed_repeatability": true,
+    "oracle_seed_changes": true
+  },
+  "fixtures": {
+    "x2": 0.5,
+    "loss": 0.009999999999999995,
+    "xhat": 0.9249999999999999,
+    "mean": 0.7080881928749334,
+    "variance": 0.1111111111111111,
+    "sample": 0.8080881928749334
+  },
+  "attention": [
+    [
+      0.4011120926797859,
+      0.1977758146404282,
+      0.4011120926797859
+    ],
+    [
+      0.1977758146404282,
+      0.4011120926797859,
+      0.4011120926797859
+    ]
+  ],
+  "attention_output": [
+    [
+      0.8022241853595719,
+      0.7966637219606423
+    ],
+    [
+      0.5988879073202141,
+      1.2033362780393577
+    ]
+  ],
+  "parameter_count": 814145,
+  "execution": "CPU forward/backward and semantic arithmetic; recorded trained-model run separately documented"
+}

@@ -1,0 +1,1909 @@
+[
+  {
+    "id": "s01",
+    "number": 1,
+    "title": "Can we create a new example?",
+    "section": "Applications",
+    "builds": 1,
+    "learning_goal": "What was the system given?",
+    "visual_description": "Application 1: source evidence with explicit condition and generated outputs.",
+    "narration": "Give students ten seconds to inspect faces, rooms and animals. These are published samples, not photographs. Ask what inputs each task might require. Our question is how learning to remove noise can define a generator.",
+    "question": "What was the system given?",
+    "answer": "Unconditional generation needs a random starting state; conditional tasks also receive information such as text or observed pixels.",
+    "source": "https://hojonathanho.github.io/diffusion/",
+    "assets": [
+      "ddpm"
+    ],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Look at the variety here. What would a model need to learn to make another example?",
+    "takeaway": "A generator learns from examples so that it can produce new samples.",
+    "explanation_steps": [
+      "<p>What would we need to create another example?</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s02",
+    "number": 2,
+    "title": "One description, several valid images",
+    "section": "Applications",
+    "builds": 2,
+    "learning_goal": "Which sample is the correct target?",
+    "visual_description": "Application 2: source evidence with explicit condition and generated outputs.",
+    "narration": "Read the source prompt above the column, then reveal the diversity question. These are different published samples, not a documented fixed-seed experiment. Hold this prompt and sample identity fixed when returning to text conditioning.",
+    "question": "Which sample is the correct target?",
+    "answer": "There need not be one unique correct image; the target is a conditional distribution.",
+    "source": "https://ommer-lab.com/research/latent-diffusion-models/",
+    "assets": [
+      "ldm-samples"
+    ],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "We have one prompt. Before seeing the other samples, would you expect one correct image?",
+    "takeaway": "The prompt describes a distribution of possible images, so different samples can all fit.",
+    "explanation_steps": [
+      "<p>\u201cA basket full of cherries\u201d</p>",
+      "<p>Several different images can fit the same description.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s03",
+    "number": 3,
+    "title": "Where should the objects go?",
+    "section": "Applications",
+    "builds": 2,
+    "learning_goal": "Do boxes determine every pixel?",
+    "visual_description": "Application 3: source evidence with explicit condition and generated outputs.",
+    "narration": "Point to the boxes before discussing output images. The project supplies grounding layouts and captions. Do not claim matched seeds or perfect compositional adherence. Later we distinguish spatial conditions from text features.",
+    "question": "Do boxes determine every pixel?",
+    "answer": "No. They constrain location while appearance remains uncertain.",
+    "source": "https://gligen.github.io/",
+    "assets": [
+      "gligen"
+    ],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "The boxes tell us where objects belong. Which choices are still left to the model?",
+    "takeaway": "A layout constrains object positions while leaving room for different appearances.",
+    "explanation_steps": [
+      "<p>A condition can specify <strong>where</strong> objects should appear.</p>",
+      "<p>The layout still leaves choices about appearance.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s04",
+    "number": 4,
+    "title": "Fill a missing region",
+    "section": "Applications",
+    "builds": 2,
+    "learning_goal": "Must a plausible completion recover the original?",
+    "visual_description": "Application 4: source evidence with explicit condition and generated outputs.",
+    "narration": "Use the first row from the same RePaint comparison. The final five columns are distinct samples, not successive timesteps; the middle columns of the original are denoising states. Return to this exact face in Scene 54.",
+    "question": "Must a plausible completion recover the original?",
+    "answer": "No. It samples a possible explanation, not necessarily the image that was hidden.",
+    "source": "https://github.com/andreas128/RePaint",
+    "assets": [
+      "repaint-input",
+      "repaint-outputs"
+    ],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "We can see part of this face. What would count as a plausible way to fill the blue region?",
+    "takeaway": "The visible pixels constrain the answer, but several completions can still make sense.",
+    "explanation_steps": [
+      "<p>We observe part of the face; the blue region is missing.</p>",
+      "<p>Several plausible faces can match those visible pixels.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s05",
+    "number": 5,
+    "title": "Turn rough strokes into a plausible image",
+    "section": "Applications",
+    "builds": 2,
+    "learning_goal": "What changes with stronger initial noise?",
+    "visual_description": "Application 5: source evidence with explicit condition and generated outputs.",
+    "narration": "SDEdit corrupts an input and uses a learned denoising process. The model is not trained anew for every sketch, and preserving every supplied pixel is not its promise. Invite predictions before revealing the output rows.",
+    "question": "What changes with stronger initial noise?",
+    "answer": "The input can exert less influence; a plausible image need not preserve exact strokes.",
+    "source": "https://sde-image-editing.github.io/",
+    "assets": [
+      "sdedit-input",
+      "sdedit-output"
+    ],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "These strokes suggest colours and a layout. How closely should the result follow them?",
+    "takeaway": "More initial noise gives the model more freedom and can weaken the influence of the strokes.",
+    "explanation_steps": [
+      "<p>Start from rough colour strokes.</p>",
+      "<p>The starting noise level controls how strongly the strokes guide the result.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s06",
+    "number": 6,
+    "title": "What detail is missing at low resolution?",
+    "section": "Applications",
+    "builds": 2,
+    "learning_goal": "Does a realistic eyelash establish that it was observed?",
+    "visual_description": "Application 6: source evidence with explicit condition and generated outputs.",
+    "narration": "Keep the source labels. This asset supplies an actual paired reference. Bicubic is an interpolation baseline; regression and diffusion differ in how they represent missing detail. Avoid claiming that realism verifies what was measured.",
+    "question": "Does a realistic eyelash establish that it was observed?",
+    "answer": "No; evaluate against held-out references and the observation model.",
+    "source": "https://iterative-refinement.github.io/",
+    "assets": [
+      "sr3-top"
+    ],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Zooming in cannot tell us which fine details were really there. What can the model add?",
+    "takeaway": "Generated detail may look convincing without recovering the detail in the original scene.",
+    "explanation_steps": [
+      "<p>The low-resolution image leaves fine detail uncertain.</p>",
+      "<p>A realistic detail is one possible explanation of the observation.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s07",
+    "number": 7,
+    "title": "Draw the structure, generate the appearance",
+    "section": "Applications",
+    "builds": 2,
+    "learning_goal": "Which part is the condition?",
+    "visual_description": "Application 7: source evidence with explicit condition and generated outputs.",
+    "narration": "Identify the edge map explicitly. A control module gives one way to inject spatial conditions; it is not part of every diffusion model. The scene makes a connection to dense vision before introducing a new backbone.",
+    "question": "Which part is the condition?",
+    "answer": "The edge map; the colourful image is a generated output.",
+    "source": "https://github.com/lllyasviel/ControlNet",
+    "assets": [
+      "control-pair"
+    ],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "We used edge maps to describe images. Here we use one to guide the creation of an image.",
+    "takeaway": "Spatial features can serve as conditions that guide where image structure appears.",
+    "explanation_steps": [
+      "<p>An edge map records the structure of an image.</p>",
+      "<p>We can use that structure to guide a generated image.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s08",
+    "number": 8,
+    "title": "Put a particular subject in a new context",
+    "section": "Applications",
+    "builds": 2,
+    "learning_goal": "When do the reference images enter?",
+    "visual_description": "Application 8: source evidence with explicit condition and generated outputs.",
+    "narration": "The references are used during subject-specific adaptation. Do not draw them as an unchanged model input at each inference step. Ask which identity features remain recognisable when the context changes.",
+    "question": "When do the reference images enter?",
+    "answer": "During adaptation; prompts condition the adapted model during generation.",
+    "source": "https://dreambooth.github.io/",
+    "assets": [
+      "dreambooth-input",
+      "dreambooth-output"
+    ],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "The reference images teach the model about this subject before we ask for a new setting.",
+    "takeaway": "DreamBooth adapts a model to a subject; prompts then guide images made by that adapted model.",
+    "explanation_steps": [
+      "<p>Use reference images to adapt the model to this subject.</p>",
+      "<p>Then ask for the subject in a new setting.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s09",
+    "number": 9,
+    "title": "Could this help answer a lab question?",
+    "section": "Applications",
+    "builds": 2,
+    "learning_goal": "What would establish scientific usefulness?",
+    "visual_description": "Application 9: source evidence with explicit condition and generated outputs.",
+    "narration": "The left evidence is a published DiffusionSat result. The small diagram is a possible lab research task, not an accomplished lab result. Ask how measurement consistency, held-out tests and uncertainty would be assessed.",
+    "question": "What would establish scientific usefulness?",
+    "answer": "Validation against withheld measurements and an explicit observation model, beyond visual plausibility.",
+    "source": "https://www.samarkhanna.com/DiffusionSat/",
+    "assets": [
+      "sat"
+    ],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "For a scientific task, how would we check whether a plausible image agrees with the measurements?",
+    "takeaway": "Scientific usefulness needs validation against observations, beyond a convincing image.",
+    "explanation_steps": [
+      "<p>Coordinates, metadata and observations can condition a model.</p>",
+      "<div class=\"diagram\"><svg role=\"img\" aria-label=\"Observed then Missing then Candidates\" viewBox=\"0 0 1100 230\"><defs><marker id=\"tip\" markerWidth=\"8\" markerHeight=\"8\" refX=\"7\" refY=\"4\" orient=\"auto\"><path d=\"M0,0 L8,4 L0,8\" fill=\"#566171\"/></marker></defs><rect x=\"25.0\" y=\"55\" width=\"285\" height=\"120\" rx=\"8\" fill=\"#245EDB12\" stroke=\"#245EDB\" stroke-width=\"2\"/><text x=\"167.5\" y=\"105\" text-anchor=\"middle\" fill=\"#245EDB\" font-size=\"28\" font-family=\"Avenir Next, sans-serif\">Observed</text><text x=\"167.5\" y=\"145\" text-anchor=\"middle\" fill=\"#566171\" font-size=\"21\" font-family=\"Avenir Next,sans-serif\">partial signal</text><path d=\"M315.0,115 H397.5\" fill=\"none\" stroke=\"#566171\" stroke-width=\"2\" marker-end=\"url(#tip)\"/><rect x=\"407.5\" y=\"55\" width=\"285\" height=\"120\" rx=\"8\" fill=\"#9A570012\" stroke=\"#9A5700\" stroke-width=\"2\"/><text x=\"550.0\" y=\"105\" text-anchor=\"middle\" fill=\"#9A5700\" font-size=\"28\" font-family=\"Avenir Next, sans-serif\">Missing</text><text x=\"550.0\" y=\"145\" text-anchor=\"middle\" fill=\"#566171\" font-size=\"21\" font-family=\"Avenir Next,sans-serif\">uncertain region</text><path d=\"M697.5,115 H780.0\" fill=\"none\" stroke=\"#566171\" stroke-width=\"2\" marker-end=\"url(#tip)\"/><rect x=\"790.0\" y=\"55\" width=\"285\" height=\"120\" rx=\"8\" fill=\"#0F766E12\" stroke=\"#0F766E\" stroke-width=\"2\"/><text x=\"932.5\" y=\"105\" text-anchor=\"middle\" fill=\"#0F766E\" font-size=\"28\" font-family=\"Avenir Next, sans-serif\">Candidates</text><text x=\"932.5\" y=\"145\" text-anchor=\"middle\" fill=\"#566171\" font-size=\"21\" font-family=\"Avenir Next,sans-serif\">possible research task</text></svg></div>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s10",
+    "number": 10,
+    "title": "What must a generator learn?",
+    "section": "Applications",
+    "builds": 2,
+    "learning_goal": "What three questions remain?",
+    "visual_description": "Sampling loop: random noise, shared denoiser, reverse transition, feedback of sampled state.",
+    "narration": "After concrete applications, introduce the abstraction. c is omitted for unconditional generation. We will first implement one historical DDPM formulation; gallery methods need not share every detail.",
+    "question": "What three questions remain?",
+    "answer": "How to create training examples, what to predict, and how to use the prediction to sample.",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "All these examples involve sampling, sometimes with extra information that narrows the possibilities.",
+    "takeaway": "We need a training example, a prediction target and a rule that turns predictions into samples.",
+    "explanation_steps": [
+      "<div class=\"math\">p_\\theta(x\\mid c)</div>",
+      "<p>How do we build training examples, choose a target and generate a sample?</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s11",
+    "number": 11,
+    "title": "From one-step generators to a denoising chain",
+    "section": "Corruption",
+    "builds": 2,
+    "learning_goal": "Connect to Lecture I",
+    "visual_description": "Compare a one-pass latent generator with repeated state updates by a shared diffusion denoiser.",
+    "narration": "Reconnect to the actual course diagrams. A VAE has a prior and decoder, a GAN an induced distribution through a generator. Diffusion parameterises a different chain of transformations, not a universal improvement claim.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "A VAE or GAN maps a random latent to an image. How might we build that image through many steps?",
+    "takeaway": "Diffusion generates through a chain of denoising steps that share one learned model.",
+    "explanation_steps": [
+      "<p>In Lecture I, we drew a latent and passed it through a generator.</p>",
+      "<div class=\"diagram\"><svg role=\"img\" aria-label=\"Noise then Small steps then Data\" viewBox=\"0 0 1100 230\"><defs><marker id=\"tip\" markerWidth=\"8\" markerHeight=\"8\" refX=\"7\" refY=\"4\" orient=\"auto\"><path d=\"M0,0 L8,4 L0,8\" fill=\"#566171\"/></marker></defs><rect x=\"25.0\" y=\"55\" width=\"285\" height=\"120\" rx=\"8\" fill=\"#9A570012\" stroke=\"#9A5700\" stroke-width=\"2\"/><text x=\"167.5\" y=\"105\" text-anchor=\"middle\" fill=\"#9A5700\" font-size=\"28\" font-family=\"Avenir Next, sans-serif\">Noise</text><text x=\"167.5\" y=\"145\" text-anchor=\"middle\" fill=\"#566171\" font-size=\"21\" font-family=\"Avenir Next,sans-serif\">xT</text><path d=\"M315.0,115 H397.5\" fill=\"none\" stroke=\"#566171\" stroke-width=\"2\" marker-end=\"url(#tip)\"/><rect x=\"407.5\" y=\"55\" width=\"285\" height=\"120\" rx=\"8\" fill=\"#0F766E12\" stroke=\"#0F766E\" stroke-width=\"2\"/><text x=\"550.0\" y=\"105\" text-anchor=\"middle\" fill=\"#0F766E\" font-size=\"28\" font-family=\"Avenir Next, sans-serif\">Small steps</text><text x=\"550.0\" y=\"145\" text-anchor=\"middle\" fill=\"#566171\" font-size=\"21\" font-family=\"Avenir Next,sans-serif\">shared denoiser</text><path d=\"M697.5,115 H780.0\" fill=\"none\" stroke=\"#566171\" stroke-width=\"2\" marker-end=\"url(#tip)\"/><rect x=\"790.0\" y=\"55\" width=\"285\" height=\"120\" rx=\"8\" fill=\"#245EDB12\" stroke=\"#245EDB\" stroke-width=\"2\"/><text x=\"932.5\" y=\"105\" text-anchor=\"middle\" fill=\"#245EDB\" font-size=\"28\" font-family=\"Avenir Next, sans-serif\">Data</text><text x=\"932.5\" y=\"145\" text-anchor=\"middle\" fill=\"#566171\" font-size=\"21\" font-family=\"Avenir Next,sans-serif\">x0</text></svg></div>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s12",
+    "number": 12,
+    "title": "A digit gradually loses information",
+    "section": "Corruption",
+    "builds": 2,
+    "learning_goal": "A digit gradually loses information",
+    "visual_description": "The same digit under six stages of a recorded forward corruption chain.",
+    "narration": "The random seed is 667; every transition draws new independent noise. The display clips to a fixed intensity range, but the arrays do not. Distinguish this joint trajectory from the direct marginal slider later.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Follow the same digit across the row. Which features disappear first as we add noise?",
+    "takeaway": "Repeated corruption gradually makes the original digit harder to identify.",
+    "explanation_steps": [
+      "<p>Follow the same MNIST test digit, index 0, across time.</p>",
+      "<p>Each transition adds a fresh, independent noise draw.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s13",
+    "number": 13,
+    "title": "Can we recover the original with certainty?",
+    "section": "Corruption",
+    "builds": 3,
+    "learning_goal": "Can removing noise be a unique inverse?",
+    "visual_description": "Two illustrative corruption densities overlap at a possible observed coordinate.",
+    "narration": "This is a schematic of overlapping support, not a claim that two independently sampled arrays are identical. The learned predictor uses the training distribution to estimate missing information.",
+    "question": "Can removing noise be a unique inverse?",
+    "answer": "Generally no. Corruption loses information; inference uses a distribution over explanations.",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "If several clean images could have produced this observation, how could we pick the original with certainty?",
+    "takeaway": "Denoising uses learned patterns to handle the uncertainty left by corruption.",
+    "explanation_steps": [
+      "<p>Two different digits can have overlapping noisy distributions.</p>",
+      "<p>The noisy observation may fit more than one clean image.</p>",
+      "<div class=\"math\">p(x_0\\mid x_t)\\ \\text{can retain uncertainty}</div>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s14",
+    "number": 14,
+    "title": "What happens to a whole distribution?",
+    "section": "Corruption",
+    "builds": 2,
+    "learning_goal": "Watch a distribution, not just a picture",
+    "visual_description": "  ",
+    "narration": "Use fixed axes. These particles represent the distribution, not eight uncertainty estimates for one image. The reverse recurrence uses the exact mixture score but a finite-step Gaussian approximation. Show the label throughout.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "wide",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Each dot is a sample. Watch how the whole collection changes as the noise level rises.",
+    "takeaway": "Noise changes a distribution; this toy example lets us calculate its score analytically.",
+    "explanation_steps": [
+      "<p>Watch eight Gaussian clusters spread out as noise increases.</p>",
+      "<p>Here we can calculate the score exactly, without training a network.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s15",
+    "number": 15,
+    "title": "What is a clean image tensor?",
+    "section": "Corruption",
+    "builds": 2,
+    "learning_goal": "What is \\(x_0\\)?",
+    "visual_description": "A real digit, a schematic coordinate grid and the exact clean pixel normalisation.",
+    "narration": "Pixels are not probabilities here. Our clean training values lie in [-1,1], but noisy tensors may leave it. Clip only display pixels. The scalar fixture is arithmetic, not the value of every digit pixel.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Start with one pixel value, then imagine doing the same calculation at every position in the tensor.",
+    "takeaway": "Our clean pixels lie in [\u22121, 1], but adding Gaussian noise can take values outside that range.",
+    "explanation_steps": [
+      "<p>An image is a tensor of real-valued coordinates.</p>",
+      "<div class=\"math\">x_0=1\\quad\\text{for one illustrative coordinate}</div>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s16",
+    "number": 16,
+    "title": "One small corruption step",
+    "section": "Corruption",
+    "builds": 3,
+    "learning_goal": "What is chosen and what is random?",
+    "visual_description": "A branched addition: scale current signal, add independent Gaussian noise, obtain the next state.",
+    "narration": "Beta contributes variance; square root beta scales a standard Gaussian. Eta is independent per-step noise. We reserve epsilon for the aggregate noise in a marginal sample.",
+    "question": "What is chosen and what is random?",
+    "answer": "The schedule is chosen; eta is random. Given the previous state, the next state is sampled.",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led has-equation",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "We shrink the current signal slightly, then add a fresh Gaussian draw. Why are there square roots?",
+    "takeaway": "Beta specifies the added variance, so the noise amplitude is the square root of beta.",
+    "explanation_steps": [
+      "<div class=\"math\">\\sqrt{1-\\beta_t}\\,x_{t-1}</div>",
+      "<div class=\"math\">\\eta_t\\sim\\mathcal N(0,I)</div>",
+      "<div class=\"math\">x_t=\\sqrt{1-\\beta_t}x_{t-1}+\\sqrt{\\beta_t}\\eta_t</div>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s17",
+    "number": 17,
+    "title": "Alpha and alpha-bar mean different things",
+    "section": "Corruption",
+    "builds": 3,
+    "learning_goal": "Alpha and alpha-bar mean different things",
+    "visual_description": "Two-step example: one-step alpha is 0.8; cumulative signal variance retention is 0.64.",
+    "narration": "Keep the bar visible. One alpha describes one transition; their product describes cumulative signal variance retention. The two-step schedule is deliberately large for arithmetic.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led has-equation",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "One alpha describes one step. What happens to the signal after we multiply several such steps?",
+    "takeaway": "Alpha-bar is the product of the stepwise alphas and tracks cumulative signal variance retention.",
+    "explanation_steps": [
+      "<div class=\"math\">\\alpha_t=1-\\beta_t</div>",
+      "<div class=\"math\">\\bar\\alpha_2=\\alpha_1\\alpha_2=0.64</div>",
+      "<div class=\"math\">\\bar\\alpha_t=\\prod_{s=1}^{t}\\alpha_s,\\quad\\bar\\alpha_0=1</div>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s18",
+    "number": 18,
+    "title": "Jump directly to a training noise level",
+    "section": "Corruption",
+    "builds": 4,
+    "learning_goal": "Why do variances add?",
+    "visual_description": "Independent scaled noise terms combine by adding their variances.",
+    "narration": "Substitute the first step into the second. Independence allows the two variances to add. The last line samples the correct marginal; sharing epsilon across times does not reproduce the joint Markov chain.",
+    "question": "Why do variances add?",
+    "answer": "The Gaussian noise terms are independent, so covariance cross terms vanish.",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led has-equation",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Expand two steps first. The independent noise terms combine into one Gaussian with a known variance.",
+    "takeaway": "We can sample a noisy training input at any chosen time without simulating all earlier steps.",
+    "explanation_steps": [
+      "<div class=\"math\">x_2=\\sqrt{\\alpha_2\\alpha_1}x_0+\\sqrt{\\alpha_2\\beta_1}\\eta_1+\\sqrt{\\beta_2}\\eta_2</div>",
+      "<div class=\"math\">\\alpha_2\\beta_1+\\beta_2=\\alpha_2(1-\\alpha_1)+(1-\\alpha_2)=1-\\alpha_1\\alpha_2</div>",
+      "<div class=\"math\">q(x_t\\mid x_0)=\\mathcal N(\\sqrt{\\bar\\alpha_t}x_0,(1-\\bar\\alpha_t)I)</div>",
+      "<div class=\"math\">x_t=\\sqrt{\\bar\\alpha_t}x_0+\\sqrt{1-\\bar\\alpha_t}\\epsilon,\\quad\\epsilon\\sim\\mathcal N(0,I)</div>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s19",
+    "number": 19,
+    "title": "Work through one noisy coordinate",
+    "section": "Corruption",
+    "builds": 4,
+    "learning_goal": "One forward calculation, fully worked",
+    "visual_description": "Worked forward coordinate: 0.8 times one plus 0.6 times negative 0.5 equals 0.5.",
+    "narration": "The arithmetic schedule beta1=beta2=.2 leaves 64% signal variance retention, so its endpoint is not noise-only. Do not reuse it to justify a standard Gaussian sampling start.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Let us do the arithmetic for one coordinate: scale the clean value, scale the noise, then add.",
+    "takeaway": "The signal and noise contributions can cancel; a noisy value alone does not identify either contribution.",
+    "explanation_steps": [
+      "<div class=\"math\">x_0=1,\\quad\\bar\\alpha_2=.64,\\quad\\epsilon=-.5</div>",
+      "<div class=\"math\">\\sqrt{.64}=.8,\\quad\\sqrt{1-.64}=.6</div>",
+      "<div class=\"math\">.8(1)+.6(-.5)=.8-.3</div>",
+      "<div class=\"math\">x_2=.5</div>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s20",
+    "number": 20,
+    "title": "Try changing the noise level",
+    "section": "Corruption",
+    "builds": 3,
+    "learning_goal": "Interact with the corruption",
+    "visual_description": "  ",
+    "narration": "Move the timestep and select a coordinate. The slider computes real arrays and coefficients. Reset restores seed 667 and inputs; resample changes the random array explicitly. The linear training endpoint is approximately 4.04e-5.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "wide",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Hold the seed fixed and move time. Then switch modes to see what changes when each step draws fresh noise.",
+    "takeaway": "Direct sampling gives the correct distribution at each time; a recursive path also specifies how times relate.",
+    "explanation_steps": [
+      "<p>With fixed \u03b5, the slider shares one noise array across times.</p>",
+      "<p>In recursive mode, every step draws fresh noise.</p>",
+      "<p>SNR = \u03b1\u0304t / (1\u2212\u03b1\u0304t); at t=0 it is infinite.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s21",
+    "number": 21,
+    "title": "Which target should the network predict?",
+    "section": "Learning",
+    "builds": 2,
+    "learning_goal": "Which target do we teach?",
+    "visual_description": "Training branches: build the noisy input, predict its noise, and compare with the retained target. ",
+    "narration": "Select noise prediction as a parameterisation. All output entries are unconstrained real values. The architecture is a choice; the target is not a sigmoid probability map.",
+    "question": "Which target do we teach?",
+    "answer": "Aggregate Gaussian noise; alternative parameterisations remain possible.",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "We could predict several quantities. In this lecture, we choose the Gaussian noise used to make the input.",
+    "takeaway": "The denoiser takes a noisy image and its timestep, then predicts a real-valued noise tensor.",
+    "explanation_steps": [
+      "<p>Should we predict the clean image, the reverse mean or the added noise?</p>",
+      "<div class=\"math\">\\hat\\epsilon=\\epsilon_\\theta(x_t,t)</div>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s22",
+    "number": 22,
+    "title": "Assemble one training example",
+    "section": "Learning",
+    "builds": 3,
+    "learning_goal": "Assemble one training example",
+    "visual_description": "  ",
+    "narration": "Inspect the same coordinate across panels. The prediction panel replays actual predictions from the new compatible trained model for the selected digit, noise level and seed. The controls select cached tuples; they do not run or retrain a model in the browser. The noise target comes from exactly the displayed input construction.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "wide",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "We made the noisy input ourselves, so we can keep the exact noise array as its training label.",
+    "takeaway": "The model sees only the noisy image and time; the sampled noise stays on the target side.",
+    "explanation_steps": [
+      "<p>Draw a clean image, a timestep and a noise array.</p>",
+      "<p>Give the network only the noisy image and its time, (xt,t).</p>",
+      "<p>Compare the prediction with the noise \u03b5 we used.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s23",
+    "number": 23,
+    "title": "Calculate the loss for four values",
+    "section": "Learning",
+    "builds": 2,
+    "learning_goal": "Compute a real loss value",
+    "visual_description": "Illustrative two by two target and prediction tensors; squared errors sum to 0.15 and average to 0.0375.",
+    "narration": "Four values form a 2 by 2 image. Sum of squared errors is .15; its mean is .0375. The training script averages over examples and all coordinates. These small predictions are illustrative activations.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Compare each predicted value with its target, square the difference, and average over the four entries.",
+    "takeaway": "Averaging over tensor entries turns the prediction errors into one scalar training loss.",
+    "explanation_steps": [
+      "<div class=\"math\">(-.5-(-.4))^2=.01</div>",
+      "<div class=\"math\">\\operatorname{MSE}=\\frac{.01+.04+.01+.09}{4}=.0375</div>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s24",
+    "number": 24,
+    "title": "Can the network know the exact sampled noise?",
+    "section": "Learning",
+    "builds": 2,
+    "learning_goal": "Is the random seed an input?",
+    "visual_description": "An illustrative conditional distribution with uncertainty; MSE predicts the conditional mean.",
+    "narration": "The expectation is over clean examples and noise compatible with the observation. Under population squared error, the optimum is their conditional mean. This does not recover each hidden random draw exactly.",
+    "question": "Is the random seed an input?",
+    "answer": "No. A denoiser estimates using the observed noisy state and noise level.",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led has-equation",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "We know which noise we sampled. The model has less information: it sees only the noisy input and time.",
+    "takeaway": "Under squared error, the best population prediction is the conditional mean of the possible noise values.",
+    "explanation_steps": [
+      "<p>We know the target noise. The model sees only (xt,t).</p>",
+      "<div class=\"math\">\\epsilon_\\theta^*(x_t,t)=\\mathbb E[\\epsilon\\mid x_t,t]</div>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s25",
+    "number": 25,
+    "title": "One denoiser, many noise levels",
+    "section": "Learning",
+    "builds": 3,
+    "learning_goal": "One denoiser, many noise levels",
+    "visual_description": "Different timesteps enter one shared denoiser; time features condition its residual blocks.",
+    "narration": "Time features recall positional encoding but represent corruption level, not sequence position. They let the same filters change their interpretation of an input. There are not 1,000 independent networks.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "The same input pattern can mean different things at low and high noise. We give the model time to distinguish them.",
+    "takeaway": "A time embedding lets one set of weights handle many corruption levels.",
+    "explanation_steps": [
+      "<p>One set of weights handles every noise level.</p>",
+      "<div class=\"math\">(x_t,t)\\longrightarrow\\epsilon_\\theta(x_t,t)</div>",
+      "<p>Sin/cos time features \u2192 MLP \u2192 residual blocks.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s26",
+    "number": 26,
+    "title": "A batch can contain different timesteps",
+    "section": "Learning",
+    "builds": 3,
+    "learning_goal": "A batch can contain different timesteps",
+    "visual_description": "A separate timestep and coefficient per example, reshaped for correct batched broadcasting.",
+    "narration": "Each image may have a different timestep and independent Gaussian noise. Broadcasting must preserve each example coefficient. This displayed schedule is T=1000; the older experiment uses another T.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Each image in this batch has its own time. Check that its coefficient broadcasts only across that image.",
+    "takeaway": "The batch dimension binds each image to its own timestep and noise draw.",
+    "explanation_steps": [
+      "<div class=\"math\">t=[7,350,920]\\in\\mathbb Z^3</div>",
+      "<p>Gather three coefficients and reshape them to [3,1,1,1].</p>",
+      "<p>Input and target each have shape [3,1,28,28].</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s27",
+    "number": 27,
+    "title": "Translate the picture into PyTorch",
+    "section": "Learning",
+    "builds": 4,
+    "learning_goal": "Translate the picture into PyTorch",
+    "visual_description": "Annotated training update code; the right margin tracks data and control flow.",
+    "narration": "The sentinel alpha_bar[0]=1 makes indices agree with mathematical time. Walk the active conceptual code line through the tuple diagram. Boilerplate and a readable named-layer model are in the executable companion.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led code-figure",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Match each line of code to the training example we just built: time, noise, input, prediction and loss.",
+    "takeaway": "One training update needs one denoiser call on a batch of directly constructed noisy inputs.",
+    "explanation_steps": [
+      "<p>Sample a timestep and the target noise.</p>",
+      "<p>Gather each example\u2019s coefficient and reshape it for broadcasting.</p>",
+      "<p>Use the forward formula to construct the noisy input.</p>",
+      "<p>Predict the noise, compute MSE and update the weights.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s28",
+    "number": 28,
+    "title": "Where do the gradients go?",
+    "section": "Learning",
+    "builds": 2,
+    "learning_goal": "Where do the gradients go?",
+    "visual_description": "Training branches: build the noisy input, predict its noise, and compare with the retained target. Gradients update the denoiser.",
+    "narration": "The schedule and random draws are fixed within this gradient computation. We differentiate through the denoiser, not through an ancestral sampling chain. Sampling later keeps theta fixed.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "For this update, the sampled input and target are fixed. Which quantities can backpropagation change?",
+    "takeaway": "Training updates the denoiser weights; it does not run the full generation chain.",
+    "explanation_steps": [
+      "<p>Backpropagation updates the denoiser parameters \u03b8.</p>",
+      "<p>One training tuple needs a single denoiser call.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s29",
+    "number": 29,
+    "title": "Where do the training labels come from?",
+    "section": "Learning",
+    "builds": 2,
+    "learning_goal": "Why this training needs no human noise labels",
+    "visual_description": "Automatically constructed targets do not replace a representative clean dataset.",
+    "narration": "A dataset containing only sevens can teach a seven-shaped prior but does not establish coverage of all digits. Self-generated noise labels remove one annotation need, not the need for representative data.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Adding noise gives us labels for free. What would still be missing if the dataset contained only sevens?",
+    "takeaway": "We can create noise targets automatically, but the clean dataset still determines what the model can learn.",
+    "explanation_steps": [
+      "<p>We create the noise labels when we corrupt the images.</p>",
+      "<p>We still need clean examples that represent the data we want to generate.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s30",
+    "number": 30,
+    "title": "The ELBO from Lecture I appears again",
+    "section": "Learning",
+    "builds": 4,
+    "learning_goal": "The ELBO from Lecture I appears again",
+    "visual_description": "One latent path with forward and learned reverse arrows, grouped into the three bound contributions.",
+    "narration": "Replace the VAE latent z by a whole latent path. q(x(t-1)|xt,x0) is tractable because training knows x0; q(x(t-1)|xt) integrates it out. The full equality, expectations and endpoint likelihood are in Appendices A2 and A3. The minus sign on log likelihood matters.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led has-equation",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Recall the VAE bound. Here the latent variable is a whole noisy path rather than one latent vector.",
+    "takeaway": "The diffusion bound combines a prior term, local reverse-matching terms and an endpoint likelihood.",
+    "explanation_steps": [
+      "<div class=\"math\">\\log p_\\theta(x_0)\\geq\\operatorname{ELBO}(x_0)</div>",
+      "<div class=\"math\">q(x_{1:T}\\mid x_0)=\\prod_t q(x_t\\mid x_{t-1})</div>",
+      "<div class=\"math\">p_\\theta(x_{0:T})=p(x_T)\\prod_t p_\\theta(x_{t-1}\\mid x_t)</div>",
+      "<p>Negative bound = prior KL + local KL terms \u2212 expected log likelihood.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s31",
+    "number": 31,
+    "title": "How does the bound lead to noise MSE?",
+    "section": "Learning",
+    "builds": 3,
+    "learning_goal": "Why did this become noise MSE?",
+    "visual_description": "With fixed covariance, Gaussian KL depends quadratically on the difference of means.",
+    "narration": "C is independent of the learned mean for fixed covariances. Substituting the epsilon mean gives the shown weight. Never evaluate that t>1 weight at t=1 where posterior variance is zero. Endpoints and likelihood discretisation are also not retained by simplified MSE.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led has-equation",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "With fixed Gaussian variances, matching means becomes squared error. Substituting the noise prediction gives these weights.",
+    "takeaway": "Simple noise MSE changes the variational weighting and does not include every term of the negative ELBO.",
+    "explanation_steps": [
+      "<div class=\"math\">\\mathrm{KL}(\\mathcal N(\\tilde\\mu_t,\\tilde\\beta_t I)\\Vert\\mathcal N(\\mu_\\theta,\\sigma_t^2 I))=\\frac{\\|\\tilde\\mu_t-\\mu_\\theta\\|^2}{2\\sigma_t^2}+C</div>",
+      "<div class=\"math\">w_t=\\frac{\\beta_t^2}{2\\sigma_t^2\\alpha_t(1-\\bar\\alpha_t)},\\quad t&gt;1</div>",
+      "<div class=\"math\">\\mathcal L_{simple}=\\mathbb E_{x_0,t,\\epsilon}\\|\\epsilon-\\epsilon_\\theta(x_t,t)\\|^2</div><p>Simple MSE drops the time-dependent weights and the other bound terms.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s32",
+    "number": 32,
+    "title": "Sampling starts without a clean image",
+    "section": "Generation",
+    "builds": 2,
+    "learning_goal": "Sampling starts without a clean image",
+    "visual_description": "Sampling loop: random noise, shared denoiser, reverse transition, feedback of sampled state.",
+    "narration": "The displayed image illustrates a noisy state. Actual model sampling uses a new Gaussian draw with no clean reference. Intermediate random draws and the initial state are separate sources of stochasticity.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "During training we started with a clean image. At generation time, we have only a fresh Gaussian draw.",
+    "takeaway": "Generation keeps the learned weights fixed and repeatedly samples a less noisy state.",
+    "explanation_steps": [
+      "<div class=\"math\">x_T\\sim\\mathcal N(0,I)</div>",
+      "<p>Keep \u03b8 fixed and repeatedly sample a previous state.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s33",
+    "number": 33,
+    "title": "A predicted clean image is useful",
+    "section": "Generation",
+    "builds": 3,
+    "learning_goal": "A predicted clean image is useful",
+    "visual_description": "Worked inverse of the forward marginal: subtract estimated noise, then divide by the signal coefficient.",
+    "narration": "First subtract estimated aggregate noise, then undo signal scaling. At large t, division by a very small coefficient amplifies prediction error. This is an estimated clean image; clipping a display does not validate it.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led has-equation",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Undo the forward formula: subtract the estimated noise contribution, then divide out the signal scaling.",
+    "takeaway": "The predicted noise gives a clean-image estimate, though small signal coefficients can amplify its error.",
+    "explanation_steps": [
+      "<div class=\"math\">x_t-\\sqrt{1-\\bar\\alpha_t}\\hat\\epsilon</div>",
+      "<div class=\"math\">\\hat x_0=\\frac{x_t-\\sqrt{1-\\bar\\alpha_t}\\hat\\epsilon}{\\sqrt{\\bar\\alpha_t}}</div>",
+      "<div class=\"math\">\\hat x_0=\\frac{.5-.6(-.4)}{.8}=.925</div>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s34",
+    "number": 34,
+    "title": "Which state goes into the next call?",
+    "section": "Generation",
+    "builds": 3,
+    "learning_goal": "Which value enters the next call?",
+    "visual_description": "The noise prediction gives a clean estimate and a previous noisy state; only the previous state is fed back.",
+    "narration": "Keep the three quantities in separate labelled panels. Estimating clean data is useful for parameterising a mean, but cannot silently replace the next sampled chain state.",
+    "question": "Which value enters the next call?",
+    "answer": "The sampled x(t-1).",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "The clean estimate answers one question. The sampler needs a different quantity: the state at the previous time.",
+    "takeaway": "The next denoiser call receives the sampled previous state, with the noise level expected at that time.",
+    "explanation_steps": [
+      "<p>The clean estimate asks what the original image might have been.</p>",
+      "<p>The next state still needs the noise level associated with t\u22121.</p>",
+      "<p>Pass the sampled x(t\u22121) to the next denoiser call.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s35",
+    "number": 35,
+    "title": "Build one reverse transition",
+    "section": "Generation",
+    "builds": 4,
+    "learning_goal": "Parameterize one reverse distribution",
+    "visual_description": "An internally consistent beta point two reverse-mean fixture; one-step alpha is used in the final division.",
+    "narration": "This denominator is one-step alpha, not alpha-bar. The Gaussian parameterisation approximates the unknown reverse conditional; a coarse true reverse need not be Gaussian. Appendix A4 derives the tractable posterior and then substitutes the clean estimate.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led has-equation",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Use the noise prediction to set the centre of a Gaussian transition. Check which alpha appears in the denominator.",
+    "takeaway": "The reverse mean uses one-step alpha; alpha-bar appears in the correction for predicted noise.",
+    "explanation_steps": [
+      "<div class=\"math\">p_\\theta(x_{t-1}\\mid x_t)=\\mathcal N(\\mu_\\theta(x_t,t),\\sigma_t^2 I)</div>",
+      "<div class=\"math\">\\hat\\epsilon=\\epsilon_\\theta(x_t,t),\\quad c_t=\\frac{\\beta_t}{\\sqrt{1-\\bar\\alpha_t}}</div>",
+      "<div class=\"math\">x_t-c_t\\hat\\epsilon</div>",
+      "<div class=\"math\">\\mu_\\theta=\\frac{x_t-c_t\\hat\\epsilon}{\\sqrt{\\alpha_t}}</div>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s36",
+    "number": 36,
+    "title": "Why add noise during denoising?",
+    "section": "Generation",
+    "builds": 3,
+    "learning_goal": "Why add noise during denoising?",
+    "visual_description": "Schematic Gaussian reverse transition: mean, spread and a fresh sample. This is not a confidence interval.",
+    "narration": "Posterior variance is this lecture choice; beta and learned variance are other historical options. A denoising transition need not improve each coordinate monotonically. Standard deviation is square root variance.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led has-equation",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "The mean gives the centre of the next distribution. Fresh noise lets us sample from that distribution.",
+    "takeaway": "This sampler adds noise according to the chosen reverse variance, except at the final step.",
+    "explanation_steps": [
+      "<div class=\"math\">\\sigma_t^2=\\tilde\\beta_t=\\beta_t\\frac{1-\\bar\\alpha_{t-1}}{1-\\bar\\alpha_t}</div>",
+      "<div class=\"math\">x_{t-1}=\\mu_\\theta+\\mathbf 1[t&gt;1]\\sqrt{\\tilde\\beta_t}\\xi</div>",
+      "<p>At t=1, return the mean without adding fresh noise.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s37",
+    "number": 37,
+    "title": "Work through one reverse step",
+    "section": "Generation",
+    "builds": 4,
+    "learning_goal": "One reverse step with actual numbers",
+    "visual_description": "  ",
+    "narration": "Keep every schedule value derived from beta=.2. The editable predicted noise and fresh noise drive the actual arithmetic. The final-step mode ignores fresh noise explicitly. The drawing is a Gaussian density, not a confidence interval.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "wide",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Keep the mean, variance and sampled value separate. Move the fresh noise slider and watch which values change.",
+    "takeaway": "Fresh sampling noise changes the sampled state while leaving the transition mean unchanged.",
+    "explanation_steps": [
+      "<p>At reset: mean 0.708088; clean estimate 0.925.</p>",
+      "<p>Variance 1/9; standard deviation 1/3.</p>",
+      "<p>At reset, the fresh noise draw is z = 0.3.</p>",
+      "<p>At reset, the sampled previous state is 0.808088.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s38",
+    "number": 38,
+    "title": "The complete sampling loop",
+    "section": "Generation",
+    "builds": 2,
+    "learning_goal": "The complete sampling loop",
+    "visual_description": "Annotated sampling loop code; the right margin tracks data and control flow.",
+    "narration": "The companion implements this exact loop with eval-mode restoration. Arbitrarily skipping steps changes the recurrence and is not a valid fast sampler. DDIM and respacing require separately defined transitions.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led code-figure",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Walk backwards through time. Each call predicts noise, sets a transition mean and samples the next state.",
+    "takeaway": "The same trained denoiser is reused from T down to 1, with no extra noise in the last step.",
+    "explanation_steps": [
+      "<p>Reuse the trained denoiser as time decreases from T to 1.</p>",
+      "<p>Skip fresh noise at the last step and return the generated x0.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s39",
+    "number": 39,
+    "title": "What are we watching in a generation video?",
+    "section": "Generation",
+    "builds": 2,
+    "learning_goal": "What are we watching in a generation video?",
+    "visual_description": "Recorded chain states and clean estimates in separately revealed, aligned rows.",
+    "narration": "The new model and this recorded trajectory share architecture, normalisation, schedule and variance. No live training is needed. The estimates are unclipped in stored arrays and clipped only for the displayed greyscale. Read the training log for the actual budget.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Read the strips separately: the top shows states fed along the chain, and the bottom shows clean estimates.",
+    "takeaway": "A noisy chain state and its clean-image estimate come from the same call but serve different purposes.",
+    "explanation_steps": [
+      "<p>The top strip shows actual chain states xt.</p>",
+      "<p>The bottom strip shows their corresponding clean-image estimates.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s40",
+    "number": 40,
+    "title": "What should the denoiser output?",
+    "section": "Architecture",
+    "builds": 2,
+    "learning_goal": "Predict one number at every spatial location",
+    "visual_description": "Actual recorded noisy input and predicted noise at t350, each with the same spatial shape.",
+    "narration": "The shape resembles segmentation, but the target is real-valued noise, not a pixel class. A U-Net is an architecture choice, not the definition of diffusion.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "The output has the input image shape because every coordinate needs its own predicted noise value.",
+    "takeaway": "Noise prediction is a dense regression task; a U-Net is one way to implement it.",
+    "explanation_steps": [
+      "<p>Predict a real-valued noise component at every image position.</p>",
+      "<p>A convolutional encoder and decoder can produce this dense output.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s41",
+    "number": 41,
+    "title": "Follow the shapes through a small U-Net",
+    "section": "Architecture",
+    "builds": 3,
+    "learning_goal": "Walk through a small U-Net with shapes",
+    "visual_description": "U-Net resolution and channel trace with skip concatenations and a linear one-channel output head.",
+    "narration": "The implemented model uses stride-two convolutions down, nearest resize plus convolution up, additive time embeddings and a linear 1 by 1 head. Concatenated channels must be counted before each decoder block. Exact parameter count is recorded by code.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Track height, width and channels separately. At each skip connection, add the channels before the next block.",
+    "takeaway": "The U-Net combines coarse features with finer encoder features and returns one noise value per pixel.",
+    "explanation_steps": [
+      "<p>Down: 28\u00b2\u00d732 \u2192 14\u00b2\u00d764 \u2192 7\u00b2\u00d7128.</p>",
+      "<p>The middle residual block also receives the time embedding.</p>",
+      "<p>Up: skips concatenate channels; 128\u219264 and 64\u219232. 814,145 parameters.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s42",
+    "number": 42,
+    "title": "Inject the timestep throughout the denoiser",
+    "section": "Architecture",
+    "builds": 2,
+    "learning_goal": "Inject the timestep throughout the denoiser",
+    "visual_description": "Time embedding is projected to channels and broadcast across spatial positions before addition.",
+    "narration": "A time scalar becomes a useful feature vector through sinusoidal features and learned projections. Normalise after the first one-to-32-channel projection. Group counts divide output channels. The same time path remains active during generation.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Turn the timestep into a vector, project it to the channel count, then add it across the spatial grid.",
+    "takeaway": "Time features enter multiple blocks so the denoiser can adapt its processing to the noise level.",
+    "explanation_steps": [
+      "<p>Add the projected time vector at every spatial location.</p>",
+      "<p>Repeat this in the encoder, middle and decoder blocks.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s43",
+    "number": 43,
+    "title": "Can a transformer predict the noise?",
+    "section": "Architecture",
+    "builds": 2,
+    "learning_goal": "ViT returns as a diffusion backbone",
+    "visual_description": "Latent grid to patch tokens, transformer, then unpatchification to a dense latent output.",
+    "narration": "No CLS pooling produces a dense image. Original DiT is class-conditioned with time/class modulation; it is not universally a text cross-attention design. Its learned-variance head has extra channels, unlike this noise-only teaching head.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2212.09748",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Think of each patch as a token. What must each output token contain so we can rebuild the latent grid?",
+    "takeaway": "A diffusion transformer predicts patch entries that can be rearranged into a spatial output.",
+    "explanation_steps": [
+      "<p>A 4\u00d732\u00d732 latent splits into 256 patches of size 2\u00d72.</p>",
+      "<p>Each output token predicts the 16 entries needed to rebuild its patch.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s44",
+    "number": 44,
+    "title": "Why denoise a compressed representation?",
+    "section": "Architecture",
+    "builds": 4,
+    "learning_goal": "Why diffuse in a compressed image representation?",
+    "visual_description": "Image compression: 64 times fewer spatial positions, 48 times fewer scalar entries for the stated shapes.",
+    "narration": "Use distinct words for positions and scalars. This latent is a spatial tensor, unlike the tiny VAE vector used earlier. Other autoencoders use different shapes. A representation-size ratio alone is not a performance benchmark.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2112.10752",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Count spatial positions first, then count all scalar entries. The channels make those two ratios different.",
+    "takeaway": "A smaller representation makes latent denoising attractive, but its size ratio is not a runtime measurement.",
+    "explanation_steps": [
+      "<p>Consider these shapes from an SD-v1-style system.</p>",
+      "<div class=\"math\">512^2/64^2=64\\quad\\text{spatial positions}</div>",
+      "<div class=\"math\">\\frac{3\\cdot512^2}{4\\cdot64^2}=48\\quad\\text{scalar entries}</div>",
+      "<p>Runtime and memory gains need separate measurements.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s45",
+    "number": 45,
+    "title": "Train the autoencoder, then the denoiser",
+    "section": "Architecture",
+    "builds": 3,
+    "learning_goal": "Two training stages, with explicit frozen modules",
+    "visual_description": "Two training stages: train the autoencoder, then freeze it and train the latent denoiser.",
+    "narration": "Frozen modules still perform forward computation. A latent is not automatically standard normal because an autoencoder was trained with a variational objective. The text encoder may be frozen in the selected system; state that choice explicitly. DreamBooth is a further adaptation stage.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2112.10752",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "First train the autoencoder. Then freeze it and use its encoded images as data for the denoiser.",
+    "takeaway": "Latent diffusion learns in a representation supplied by an autoencoder, with checkpoint-specific scaling.",
+    "explanation_steps": [
+      "<p>First train an autoencoder to represent images.</p>",
+      "<p>Freeze the autoencoder, then train a denoiser on its latents.</p>",
+      "<p>Use the latent scaling expected by the checkpoint.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s46",
+    "number": 46,
+    "title": "Generate in latent space, decode once",
+    "section": "Architecture",
+    "builds": 3,
+    "learning_goal": "Generate in latent space, decode once",
+    "visual_description": "Sampling begins with a random latent, repeatedly denoises it, then decodes to pixels once.",
+    "narration": "Here z means a spatial latent, not the scalar sampling noise used earlier. Revisit SDEdit: an image input changes the initialisation. The decoder maps the final latent into pixels once in this standard pipeline.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2112.10752",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "For text-to-image, start with a random latent. Which autoencoder component is needed once denoising finishes?",
+    "takeaway": "The standard sampling path denoises in latent space, then decodes the final latent into pixels once.",
+    "explanation_steps": [
+      "<p>Text-to-image generation starts from a random latent.</p>",
+      "<p>This sampling path uses the decoder at the end.</p>",
+      "<p>Image-to-image generation can encode a supplied image first.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s47",
+    "number": 47,
+    "title": "What information comes from the prompt?",
+    "section": "Conditioning",
+    "builds": 3,
+    "learning_goal": "What information comes from the prompt?",
+    "visual_description": "Encode the prompt once to a sequence of text features; reuse them during denoising.",
+    "narration": "Do not invent actual token IDs for an unexecuted tokenizer. The words used in the next arithmetic demo are hand-designed features, not model tokens. A CLIP-like text encoder does not make the diffusion objective a contrastive loss.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2112.10752",
+    "assets": [
+      "ldm-samples"
+    ],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "The prompt becomes a sequence of text features. We can compute those features once and reuse them.",
+    "takeaway": "Text conditioning supplies a feature sequence to the denoiser throughout generation.",
+    "explanation_steps": [
+      "<p>Tokenise the prompt, then run the text encoder.</p>",
+      "<div class=\"math\">C\\in\\mathbb R^{B\\times L\\times d_c}</div>",
+      "<p>Reuse these text features at each denoising step.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s48",
+    "number": 48,
+    "title": "How do image features attend to text?",
+    "section": "Conditioning",
+    "builds": 4,
+    "learning_goal": "Image queries ask about text keys",
+    "visual_description": "Image queries and text keys produce attention over text positions; mixing text values preserves image query rows.",
+    "narration": "In the VLM cross-attention variant, text queried visual keys. In this selected latent-diffusion block, image features query text keys and values. One-head notation omits h; full shapes are in Appendix A10. Do not swap origins to copy a familiar picture.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2112.10752",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Follow the source of each tensor: image features form queries, while text features form keys and values.",
+    "takeaway": "Each image query weights text values, so the result keeps one row per image position.",
+    "explanation_steps": [
+      "<div class=\"math\">H:[B,N,d_i],\\ C:[B,L,d_c];\\quad Q=HW_Q,\\ K=CW_K,\\ V=CW_V</div>",
+      "<div class=\"math\">QK^\\top/\\sqrt{d_k}:[B,N,L]</div>",
+      "<div class=\"math\">A=\\operatorname{softmax}_{\\text{text positions}}(QK^\\top/\\sqrt{d_k})</div>",
+      "<div class=\"math\">AV:[B,N,d_v]\\quad\\text{one row per image query}</div>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s49",
+    "number": 49,
+    "title": "Work through one attention calculation",
+    "section": "Conditioning",
+    "builds": 3,
+    "learning_goal": "One image query, a few words, actual attention numbers",
+    "visual_description": "  ",
+    "narration": "These activations are illustrative, never extracted attention. The rows labelled golden, dog, grass help arithmetic but do not prove word-to-pixel control. Highlight the second query to show the same computation repeats.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2112.10752",
+    "assets": [],
+    "layout": "wide",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Choose one image query and do the arithmetic: compare with keys, scale, normalise, then mix the values.",
+    "takeaway": "Attention turns similarity scores into weights whose row sums to one, then uses them to combine values.",
+    "explanation_steps": [
+      "<p>Use illustrative features for two image positions and three words.</p>",
+      "<p>Take dot products, divide by \u221a2 and apply softmax to each row.</p>",
+      "<p>Mix the values to produce one output row per image query.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s50",
+    "number": 50,
+    "title": "Use the prompt at every denoising step",
+    "section": "Conditioning",
+    "builds": 2,
+    "learning_goal": "The condition influences repeated denoising decisions",
+    "visual_description": "One text feature sequence branches into three denoising calls with changing image states.",
+    "narration": "Return to the LDM samples and ControlNet edge example: token conditioning and a spatial control map are different interfaces. Some transformer generators use joint attention; this is one explicit design, not a universal architecture.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2112.10752",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "The prompt stays fixed while image features change. The denoiser can use the same text differently at each step.",
+    "takeaway": "Cross-attention brings text information into repeated denoising calls.",
+    "explanation_steps": [
+      "<p>The same prompt guides each denoising call.</p>",
+      "<p>Cross-attention mixes text information into image features.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s51",
+    "number": 51,
+    "title": "Teach one model to work with or without a condition",
+    "section": "Conditioning",
+    "builds": 3,
+    "learning_goal": "Learn conditional and unconditional predictions with one model",
+    "visual_description": "Train the shared denoiser with the regular condition or a null condition; keep the noisy latent and target unchanged.",
+    "narration": "p_drop=.1 is an illustrative choice. A null condition may be an encoded empty prompt or a learned null embedding, not automatically zero vectors. The older MNIST experiment uses null class index 10 and dropout .15; do not conflate it with this teaching choice.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2207.12598",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Sometimes hide the condition during training. Keep the noisy input and noise target exactly as they were.",
+    "takeaway": "Condition dropout trains the same model to make both conditional and unconditional predictions.",
+    "explanation_steps": [
+      "<p>Construct a noisy latent zt with time t, condition c and target \u03b5.</p>",
+      "<p>For some examples, replace c with the model\u2019s null condition.</p>",
+      "<p>Keep the same zt and noise target \u03b5.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s52",
+    "number": 52,
+    "title": "Combine predictions with classifier-free guidance",
+    "section": "Conditioning",
+    "builds": 3,
+    "learning_goal": "Classifier-free guidance is a precise combination",
+    "visual_description": "Classifier-free guidance vectors: unconditional at s zero, conditional at s one, extrapolated at s three.",
+    "narration": "Some sources use w=s-1. Our scale s multiplies conditional minus unconditional. This needs no separately trained classifier; the difference is not a literal pixel edit mask.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2207.12598",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Start at the unconditional prediction and move in the direction of the conditional prediction. What does s control?",
+    "takeaway": "A scale of 1 gives the conditional prediction; larger scales extrapolate beyond it.",
+    "explanation_steps": [
+      "<div class=\"math\">\\epsilon_{cfg}=\\epsilon_u+s(\\epsilon_c-\\epsilon_u)</div>",
+      "<p>s=0: unconditional. s=1: ordinary conditional.</p>",
+      "<p>s>1: extrapolation; two logical evaluations may be batched.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s53",
+    "number": 53,
+    "title": "What changes when we turn up guidance?",
+    "section": "Conditioning",
+    "builds": 2,
+    "learning_goal": "Change guidance while holding the experiment fixed",
+    "visual_description": "All eight outputs at each of four guidance scales, aligned by common random draws.",
+    "narration": "This retained experiment uses T=100 cosine schedule, 4,000 steps, EMA and null class 10. It is distinct from the new unconditional linear model. Its checkpoint hash and settings are in the asset manifest. All random draws are shared across guidance rows.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2207.12598",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Each row uses the same random draws. Look at what changes as we increase the guidance scale.",
+    "takeaway": "Guidance changes the samples, but a larger scale does not guarantee better quality.",
+    "explanation_steps": [
+      "<p>Request digit 7; shared seed 1002; s = 0,1,3,7.</p>",
+      "<p>Compare the digits, including failures. Higher guidance can still give poor samples.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s54",
+    "number": 54,
+    "title": "Revisit completion and super-resolution",
+    "section": "Conditioning",
+    "builds": 2,
+    "learning_goal": "Revisit completion and super-resolution",
+    "visual_description": "Compare missing spatial regions with missing high-frequency detail, using the opening examples.",
+    "narration": "This is RePaint-inspired intuition, not its complete resampling schedule. Known pixels must match the current noise level. Our unconditional teaching sampler does not automatically solve inverse problems. Return to the exact examples from Scenes 04 and 06.",
+    "question": "",
+    "answer": "",
+    "source": "https://github.com/andreas128/RePaint",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Return to these two inputs. Which pixels are observed directly, and which details must the model infer?",
+    "takeaway": "Completion and super-resolution need sampling procedures that respect their particular observations.",
+    "explanation_steps": [
+      "<p>For inpainting, keep the observed pixels consistent with the current noise level.</p>",
+      "<p>For super-resolution, condition a suitably trained model on the low-resolution image.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s55",
+    "number": 55,
+    "title": "What do these results establish?",
+    "section": "Evidence and language",
+    "builds": 3,
+    "learning_goal": "What do these results establish?",
+    "visual_description": "The complete unselected eight-sample batch from the new model, with its actual budget and evaluation status.",
+    "narration": "Show every sampled digit, including failures, and state the actual budget from the run log. The unconditional model has no requested class. Compare this limitation with text-conditioned published results and measurement-conditioned tasks. Do not report uncomputed FID.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Look at every digit, including the awkward ones. Which conclusions can this short training run support?",
+    "takeaway": "This run demonstrates the pipeline; its malformed and similar digits show that sample quality remains limited.",
+    "explanation_steps": [
+      "<p>Do the samples look like digits, and do they vary?</p>",
+      "<p>For conditional tasks, do samples match the prompt or observations?</p>",
+      "<p>After 2,000 steps, many digits are malformed or similar. Quality metrics were not computed.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s56",
+    "number": 56,
+    "title": "Why not add Gaussian noise to token IDs?",
+    "section": "Evidence and language",
+    "builds": 2,
+    "learning_goal": "Why not add Gaussian noise to token IDs?",
+    "visual_description": "One sentence under two arbitrary vocabulary numberings, followed by discrete masking.",
+    "narration": "A vocabulary permutation changes token IDs while preserving content. Gaussian arithmetic on these identifiers is therefore meaningless. Other text diffusion methods may use continuous embeddings; here we teach a discrete masked example.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2502.09992",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "We can renumber the vocabulary without changing the sentence. Would arithmetic on the IDs still mean the same thing?",
+    "takeaway": "Token IDs are arbitrary labels; masking is one way to define meaningful discrete corruption.",
+    "explanation_steps": [
+      "<p>Nearby token IDs need not have related meanings.</p>",
+      "<p>We can corrupt text by replacing selected tokens with [MASK].</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s57",
+    "number": 57,
+    "title": "Build a masked-text training example",
+    "section": "Evidence and language",
+    "builds": 3,
+    "learning_goal": "Build a masked-text training example",
+    "visual_description": "  ",
+    "narration": "The simple demo loss is pedagogical unweighted masked-position CE. LLaDA-style uniformly sampled time adds a 1/t weight, given in Appendix A9. A fixed-rate BERT demonstration alone is not an iterative generative model. Context prompt tokens are observed in conditional mode.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2502.09992",
+    "assets": [],
+    "layout": "wide",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Hide some tokens, predict vocabulary distributions, and score the predictions only where tokens were hidden.",
+    "takeaway": "Masked-text training learns missing-token predictions; the LLaDA-style objective also weights the loss by 1/t.",
+    "explanation_steps": [
+      "<p>Choose t>0 and mask each modelled position with probability t.</p>",
+      "<p>Use context on both sides to predict vocabulary logits [B,L,V].</p>",
+      "<p>Compute cross-entropy only at the masked positions.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s58",
+    "number": 58,
+    "title": "Fill the response a few tokens at a time",
+    "section": "Evidence and language",
+    "builds": 2,
+    "learning_goal": "Generate by iterative discrete reconstruction",
+    "visual_description": "Illustrative discrete generation fills three response slots one at a time while retaining the observed prompt.",
+    "narration": "This is labelled illustrative sampling trace, not model inference. The demo fixes three response slots and reveals one selected slot per step, without remasking. Real algorithms require a schedule, sampling rule and length convention.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2502.09992",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Keep the prompt visible and begin with three unknown response slots. This scripted trace fills one slot per step.",
+    "takeaway": "An iterative text sampler needs a rule for which positions to fill, when to fill them and how long to generate.",
+    "explanation_steps": [
+      "<p>Scripted trace: [MASK] [MASK] [MASK] \u2192 chased [MASK] [MASK].</p>",
+      "<p>Then chased the [MASK] \u2192 chased the ball.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s59",
+    "number": 59,
+    "title": "How do the two text samplers differ?",
+    "section": "Evidence and language",
+    "builds": 3,
+    "learning_goal": "Compare generation procedures, not slogans",
+    "visual_description": "Schematic comparison: autoregressive generation extends a prefix; masked prediction uses context around a gap.",
+    "narration": "Use The dog chased the ball for both procedures. Parallel predictions permit another generation schedule but do not prove a wall-clock speedup. Count sequential model calls under the stated policy before making complexity claims.",
+    "question": "",
+    "answer": "",
+    "source": "https://arxiv.org/abs/2502.09992",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Compare how the sentence grows in each procedure. Then count the sequential model calls before discussing speed.",
+    "takeaway": "Parallel token predictions allow a different generation schedule; latency depends on the full implementation.",
+    "explanation_steps": [
+      "<p>Autoregressive generation extends a causal prefix.</p>",
+      "<p>Masked denoising can use observed context on both sides.</p>",
+      "<p>Compare latency at a stated length and quality, with the same hardware and caching assumptions.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "s60",
+    "number": 60,
+    "title": "Can we now explain the opening examples?",
+    "section": "Evidence and language",
+    "builds": 4,
+    "learning_goal": "Explain one opening application in four parts.",
+    "visual_description": "A progressively completed comparison table across pixel, latent and token generation.",
+    "narration": "Return to the opening and ask students to answer before revealing discussion answers. Text: encode a prompt and condition repeated denoising; completion: observed region plus mask; SR: low-resolution condition; masked text: vocabulary targets under discrete corruption. The lecture closes on the training/sampling distinction.",
+    "question": "Explain one opening application in four parts.",
+    "answer": "Name the state space, condition, supervised target and sampling transition. Keep published systems separate from the teaching implementation.",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "full",
+      "compressed"
+    ],
+    "talk_through": "Choose one opening example and explain it using the state, the condition, the training target and the sampling rule.",
+    "takeaway": "Training learns a prediction from corrupted examples; generation repeatedly uses that prediction to draw a sample.",
+    "explanation_steps": [
+      "<p>What do we corrupt: pixels, latents or token states?</p>",
+      "<p>What information does the condition supply?</p>",
+      "<p>How do we construct a training target?</p>",
+      "<p>How do we use the prediction to generate a sample?</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "a01",
+    "number": 1,
+    "title": "Independent Gaussians: means and variances",
+    "section": "Appendix",
+    "builds": 3,
+    "learning_goal": "Independent Gaussians: means and variances",
+    "visual_description": "Appendix 1: graphical support for the mathematical construction.",
+    "narration": "Independence removes covariance cross terms. This is the algebra behind Scene 18. With alpha1=alpha2=.8, alpha2 beta1+beta2=.36, whose standard deviation is .6.",
+    "question": "Independent Gaussians: means and variances",
+    "answer": "Independence removes covariance cross terms. This is the algebra behind Scene 18. With alpha1=alpha2=.8, alpha2 beta1+beta2=.36, whose standard deviation is .6.",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led has-equation",
+    "routes": [
+      "appendix"
+    ],
+    "talk_through": "Scale the means normally, but square the coefficients when scaling variances. Independence removes the cross term.",
+    "takeaway": "Independent Gaussian terms combine into a Gaussian whose variance is the sum of the scaled variances.",
+    "explanation_steps": [
+      "<div class=\"math\">X\\sim\\mathcal N(m_x,v_x),\\ Y\\sim\\mathcal N(m_y,v_y),\\quad X\\perp Y</div>",
+      "<div class=\"math\">aX+bY\\sim\\mathcal N(am_x+bm_y,a^2v_x+b^2v_y)</div>",
+      "<p>Standard deviation scales by |a|; variance scales by a\u00b2.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "a02",
+    "number": 2,
+    "title": "A lower bound on log evidence",
+    "section": "Appendix",
+    "builds": 3,
+    "learning_goal": "A lower bound on log evidence",
+    "visual_description": "Appendix 2: graphical support for the mathematical construction.",
+    "narration": "Jensen applies because log is concave. The posterior KL gap is nonnegative. The exact expectation is a lower bound; a single Monte Carlo realisation need not be below the evidence. This connects to the VAE derivation.",
+    "question": "A lower bound on log evidence",
+    "answer": "Jensen applies because log is concave. The posterior KL gap is nonnegative. The exact expectation is a lower bound; a single Monte Carlo realisation need not be below the evidence. This connects to the VAE derivation.",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led has-equation",
+    "routes": [
+      "appendix"
+    ],
+    "talk_through": "Write the evidence as an expectation, then use the concavity of log to move it inside as a lower bound.",
+    "takeaway": "The gap between log evidence and the ELBO is a nonnegative posterior KL divergence.",
+    "explanation_steps": [
+      "<div class=\"math\">\\log p_\\theta(x_0)=\\log\\mathbb E_{q(x_{1:T}|x_0)}\\!\\left[\\frac{p_\\theta(x_{0:T})}{q(x_{1:T}|x_0)}\\right]</div>",
+      "<div class=\"math\">\\log p_\\theta(x_0)\\geq\\mathbb E_q[\\log p_\\theta(x_{0:T})-\\log q(x_{1:T}|x_0)]</div>",
+      "<div class=\"math\">\\log p_\\theta(x_0)=\\mathrm{ELBO}+D_{KL}(q(x_{1:T}|x_0)\\Vert p_\\theta(x_{1:T}|x_0))</div>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "a03",
+    "number": 3,
+    "title": "Factor the fixed chain backwards",
+    "section": "Appendix",
+    "builds": 3,
+    "learning_goal": "Factor the fixed chain backwards",
+    "visual_description": "One latent path with forward and learned reverse arrows, grouped into the three bound contributions.",
+    "narration": "Take the negative of the expected log ratio from A2 and use this reverse factorisation. The first term matches the terminal prior, each KL matches a local reverse, and the final likelihood reconstructs data. The endpoint likelihood for quantised pixels can integrate a continuous density over pixel bins; fixed zero posterior variance is not plugged into its log density.",
+    "question": "Factor the fixed chain backwards",
+    "answer": "Take the negative of the expected log ratio from A2 and use this reverse factorisation. The first term matches the terminal prior, each KL matches a local reverse, and the final likelihood reconstructs data. The endpoint likelihood for quantised pixels can integrate a continuous density over pixel bins; fixed zero posterior variance is not plugged into its log density.",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led has-equation",
+    "routes": [
+      "appendix"
+    ],
+    "talk_through": "Factor the same forward path in reverse order while keeping the clean image in every conditional.",
+    "takeaway": "This factorisation separates the negative bound into prior matching, reverse matching and reconstruction.",
+    "explanation_steps": [
+      "<div class=\"math\">q(x_{1:T}|x_0)=q(x_T|x_0)\\prod_{t=2}^{T}q(x_{t-1}|x_t,x_0)</div>",
+      "<div class=\"math\">\\mathcal L_{VLB}=D_{KL}(q(x_T|x_0)\\Vert p(x_T))-\\mathbb E_{q(x_1|x_0)}\\log p_\\theta(x_0|x_1)</div>",
+      "<div class=\"math\">\\qquad+\\sum_{t=2}^{T}\\mathbb E_{q(x_t|x_0)}D_{KL}(q(x_{t-1}|x_t,x_0)\\Vert p_\\theta(x_{t-1}|x_t))</div>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "a04",
+    "number": 4,
+    "title": "The tractable training posterior",
+    "section": "Appendix",
+    "builds": 3,
+    "learning_goal": "The tractable training posterior",
+    "visual_description": "Appendix 4: graphical support for the mathematical construction.",
+    "narration": "Multiply the forward transition Gaussian by the previous marginal and complete the square. Knowing x0 makes this Gaussian tractable. Integrating x0 under the data distribution generally yields a more complicated reverse conditional. Substituting xhat0 into this mean gives the epsilon-parameterised model mean.",
+    "question": "The tractable training posterior",
+    "answer": "Multiply the forward transition Gaussian by the previous marginal and complete the square. Knowing x0 makes this Gaussian tractable. Integrating x0 under the data distribution generally yields a more complicated reverse conditional. Substituting xhat0 into this mean gives the epsilon-parameterised model mean.",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led has-equation",
+    "routes": [
+      "appendix"
+    ],
+    "talk_through": "During training we know the clean endpoint. That extra information makes this local posterior Gaussian.",
+    "takeaway": "Conditioning on both the noisy state and clean image gives a tractable training posterior.",
+    "explanation_steps": [
+      "<div class=\"math\">q(x_{t-1}|x_t,x_0)=\\mathcal N(\\tilde\\mu_t,\\tilde\\beta_t I)</div>",
+      "<div class=\"math\">\\tilde\\mu_t=\\frac{\\sqrt{\\bar\\alpha_{t-1}}\\beta_t}{1-\\bar\\alpha_t}x_0+\\frac{\\sqrt{\\alpha_t}(1-\\bar\\alpha_{t-1})}{1-\\bar\\alpha_t}x_t</div>",
+      "<div class=\"math\">\\tilde\\beta_t=\\beta_t\\frac{1-\\bar\\alpha_{t-1}}{1-\\bar\\alpha_t}</div>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "a05",
+    "number": 5,
+    "title": "Alternative prediction targets",
+    "section": "Appendix",
+    "builds": 3,
+    "learning_goal": "Alternative prediction targets",
+    "visual_description": "Appendix 5: graphical support for the mathematical construction.",
+    "narration": "This is one explicit velocity convention. The two equations invert an orthogonal transformation of x0 and epsilon. Changing a prediction target also requires matching training, scheduler and checkpoint configuration. These equations do not imply all targets receive identical loss weights.",
+    "question": "Alternative prediction targets",
+    "answer": "This is one explicit velocity convention. The two equations invert an orthogonal transformation of x0 and epsilon. Changing a prediction target also requires matching training, scheduler and checkpoint configuration. These equations do not imply all targets receive identical loss weights.",
+    "source": "https://arxiv.org/abs/2202.00512",
+    "assets": [],
+    "layout": "figure-led has-equation",
+    "routes": [
+      "appendix"
+    ],
+    "talk_through": "Treat the noisy input and velocity target as a rotated pair of clean data and noise, then invert the rotation.",
+    "takeaway": "Prediction targets can be converted, but the loss, sampler and checkpoint must use matching conventions.",
+    "explanation_steps": [
+      "<div class=\"math\">v=\\sqrt{\\bar\\alpha_t}\\epsilon-\\sqrt{1-\\bar\\alpha_t}x_0</div>",
+      "<div class=\"math\">x_0=\\sqrt{\\bar\\alpha_t}x_t-\\sqrt{1-\\bar\\alpha_t}v</div>",
+      "<div class=\"math\">\\epsilon=\\sqrt{1-\\bar\\alpha_t}x_t+\\sqrt{\\bar\\alpha_t}v</div>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "a06",
+    "number": 6,
+    "title": "A faster sampler needs a different transition",
+    "section": "Appendix",
+    "builds": 3,
+    "learning_goal": "A faster sampler needs a different transition",
+    "visual_description": "Appendix 6: graphical support for the mathematical construction.",
+    "narration": "The deterministic DDIM expression is a separately defined sampler, not the original DDPM loop with arbitrary omissions. Improved DDPM uses a cosine schedule and learned-variance variants; beta clipping and exact endpoint conventions matter. The old course experiment uses a clipped cosine schedule; the new model uses the displayed 1000-step linear schedule.",
+    "question": "A faster sampler needs a different transition",
+    "answer": "The deterministic DDIM expression is a separately defined sampler, not the original DDPM loop with arbitrary omissions. Improved DDPM uses a cosine schedule and learned-variance variants; beta clipping and exact endpoint conventions matter. The old course experiment uses a clipped cosine schedule; the new model uses the displayed 1000-step linear schedule.",
+    "source": "https://arxiv.org/abs/2010.02502",
+    "assets": [],
+    "layout": "figure-led has-equation",
+    "routes": [
+      "appendix"
+    ],
+    "talk_through": "To take a larger step, we need a transition defined for the new pair of times. Simply deleting calls is insufficient.",
+    "takeaway": "DDIM defines a different transition that can connect selected timesteps.",
+    "explanation_steps": [
+      "<div class=\"math\">f(t)=\\cos^2\\!\\left(\\frac{t/T+s}{1+s}\\frac\\pi2\\right),\\quad\\bar\\alpha_t=f(t)/f(0)</div>",
+      "<div class=\"math\">x_s=\\sqrt{\\bar\\alpha_s}\\hat x_0+\\sqrt{1-\\bar\\alpha_s}\\hat\\epsilon\\quad(s&lt;t,\\ \\mathrm{DDIM}\\ \\eta=0)</div>",
+      "<p>Linear / cosine schedule, respacing, DDIM and learned variance are separate choices.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "a07",
+    "number": 7,
+    "title": "A score oracle for eight Gaussian clusters",
+    "section": "Appendix",
+    "builds": 3,
+    "learning_goal": "A score oracle for eight Gaussian clusters",
+    "visual_description": "Appendix 7: graphical support for the mathematical construction.",
+    "narration": "Centres lie on radius two and tau=.18. Use log-sum-exp stability. The exact score equals the conditional mean noise through this identity. The plotted Gaussian reverse steps remain a finite-step approximation; a true mixture reverse would sample component responsibilities and their conditional Gaussians. No network was trained for this oracle.",
+    "question": "A score oracle for eight Gaussian clusters",
+    "answer": "Centres lie on radius two and tau=.18. Use log-sum-exp stability. The exact score equals the conditional mean noise through this identity. The plotted Gaussian reverse steps remain a finite-step approximation; a true mixture reverse would sample component responsibilities and their conditional Gaussians. No network was trained for this oracle.",
+    "source": "https://arxiv.org/abs/2006.11239",
+    "assets": [],
+    "layout": "figure-led has-equation",
+    "routes": [
+      "appendix"
+    ],
+    "talk_through": "Weight each cluster by how well it explains the current point, then combine its contribution to the score.",
+    "takeaway": "The mixture score is exact here, while the displayed finite-step Gaussian reverse remains approximate.",
+    "explanation_steps": [
+      "<div class=\"math\">m_{k,t}=\\sqrt{\\bar\\alpha_t}\\mu_k,\\quad v_t=\\bar\\alpha_t\\tau^2+1-\\bar\\alpha_t</div>",
+      "<div class=\"math\">r_k=\\operatorname{softmax}_k\\!\\left(-\\frac{\\|x-m_{k,t}\\|^2}{2v_t}\\right)</div>",
+      "<div class=\"math\">\\nabla_x\\log q_t(x)=\\sum_k r_k\\frac{m_{k,t}-x}{v_t},\\quad\\epsilon^*=-\\sqrt{1-\\bar\\alpha_t}\\nabla_x\\log q_t(x)</div>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "a08",
+    "number": 8,
+    "title": "Flow matching: learn a velocity field",
+    "section": "Appendix",
+    "builds": 3,
+    "learning_goal": "Flow matching: learn a velocity field",
+    "visual_description": "Appendix 8: graphical support for the mathematical construction.",
+    "narration": "This illustrative flow-matching setup uses independent endpoint pairs and a straight interpolation. The learned population velocity is a conditional expectation. It need not equal an individual pair velocity at an ambiguous point. It is related to probability transport but is not the epsilon DDPM objective or ancestral sampler.",
+    "question": "Flow matching: learn a velocity field",
+    "answer": "This illustrative flow-matching setup uses independent endpoint pairs and a straight interpolation. The learned population velocity is a conditional expectation. It need not equal an individual pair velocity at an ambiguous point. It is related to probability transport but is not the epsilon DDPM objective or ancestral sampler.",
+    "source": "https://arxiv.org/abs/2210.02747",
+    "assets": [],
+    "layout": "figure-led has-equation",
+    "routes": [
+      "appendix"
+    ],
+    "talk_through": "Choose a noise point and a data point. Along their straight path, the training target is the vector between them.",
+    "takeaway": "Flow matching learns a velocity field; sampling integrates that field from noise towards data.",
+    "explanation_steps": [
+      "<div class=\"math\">x_\\tau=(1-\\tau)x_{noise}+\\tau x_{data},\\quad u=x_{data}-x_{noise}</div>",
+      "<div class=\"math\">\\min_\\theta\\ \\mathbb E\\|v_\\theta(x_\\tau,\\tau)-u\\|^2</div>",
+      "<p>Generate by integrating dx/d\u03c4 = v\u03b8(x,\u03c4). This is a specified straight conditional path.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "a09",
+    "number": 9,
+    "title": "Masked language: objective and sampling convention",
+    "section": "Appendix",
+    "builds": 3,
+    "learning_goal": "Masked language: objective and sampling convention",
+    "visual_description": "Appendix 9: graphical support for the mathematical construction.",
+    "narration": "Each modelled position is independently masked with probability t. The 1/t weight is required for this LLaDA-style objective. A simple unweighted masked-position cross-entropy is pedagogical but is not numerically the same objective. Other samplers use confidence-based remasking and different length handling.",
+    "question": "Masked language: objective and sampling convention",
+    "answer": "Each modelled position is independently masked with probability t. The 1/t weight is required for this LLaDA-style objective. A simple unweighted masked-position cross-entropy is pedagogical but is not numerically the same objective. Other samplers use confidence-based remasking and different length handling.",
+    "source": "https://arxiv.org/abs/2502.09992",
+    "assets": [],
+    "layout": "figure-led has-equation",
+    "routes": [
+      "appendix"
+    ],
+    "talk_through": "At time t, each response position is masked with probability t. The objective weights its masked-token loss by 1/t.",
+    "takeaway": "The time weighting is part of this objective, so unweighted masked cross-entropy is a different loss.",
+    "explanation_steps": [
+      "<div class=\"math\">\\mathcal L=-\\mathbb E_{t,x_0,x_t}\\left[\\frac1t\\sum_i\\mathbf1[x_t^i=MASK]\\log p_\\theta(x_0^i|x_t)\\right]</div>",
+      "<p>t is uniform on (0,1]; sum over modelled response positions. No sequence-length division here.</p>",
+      "<p>Our scripted sampler: three response slots, reveal one per step, observed prompt fixed, no remasking.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "a10",
+    "number": 10,
+    "title": "Cross-attention with heads and spatial layout",
+    "section": "Appendix",
+    "builds": 3,
+    "learning_goal": "Cross-attention with heads and spatial layout",
+    "visual_description": "Appendix 10: graphical support for the mathematical construction.",
+    "narration": "Merge heads, apply output projection, and restore the spatial layout. Softmax normalises L text positions for each image query in each head. Queries are image features; keys and values are text features in this selected block.",
+    "question": "Cross-attention with heads and spatial layout",
+    "answer": "Merge heads, apply output projection, and restore the spatial layout. Softmax normalises L text positions for each image query in each head. Queries are image features; keys and values are text features in this selected block.",
+    "source": "https://arxiv.org/abs/2112.10752",
+    "assets": [],
+    "layout": "figure-led has-equation",
+    "routes": [
+      "appendix"
+    ],
+    "talk_through": "Keep the head axis separate while multiplying. After mixing text values, merge heads and restore the image grid.",
+    "takeaway": "Cross-attention normalises over text positions for each image query in each head.",
+    "explanation_steps": [
+      "<div class=\"math\">[B,d_i,H,W]\\to[B,N,d_i],\\quad N=HW;\\ C:[B,L,d_c]</div>",
+      "<div class=\"math\">Q:[B,h,N,d_k],\\quad K:[B,h,L,d_k],\\quad V:[B,h,L,d_v]</div>",
+      "<div class=\"math\">A:[B,h,N,L],\\quad AV:[B,h,N,d_v]\\to[B,N,hd_v]</div>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  },
+  {
+    "id": "a11",
+    "number": 11,
+    "title": "What to report with a generated example",
+    "section": "Appendix",
+    "builds": 3,
+    "learning_goal": "What to report with a generated example",
+    "visual_description": "Appendix 11: graphical support for the mathematical construction.",
+    "narration": "The new run is a 2000-step unconditional MNIST teaching model. The old guidance comparison is a separate 4000-step class-conditional checkpoint. There is no local text-to-image, DiT, satellite or language-model training. No FID or downstream improvement is asserted. Author-published image reuse requires a separate permissions review before external redistribution.",
+    "question": "What to report with a generated example",
+    "answer": "The new run is a 2000-step unconditional MNIST teaching model. The old guidance comparison is a separate 4000-step class-conditional checkpoint. There is no local text-to-image, DiT, satellite or language-model training. No FID or downstream improvement is asserted. Author-published image reuse requires a separate permissions review before external redistribution.",
+    "source": "https://www.samarkhanna.com/DiffusionSat/",
+    "assets": [],
+    "layout": "figure-led",
+    "routes": [
+      "appendix"
+    ],
+    "talk_through": "For each image, say where it came from and what was actually supplied, trained or measured.",
+    "takeaway": "A reproducible example needs its condition, model, sampling settings and evidence of what was evaluated.",
+    "explanation_steps": [
+      "<p>Published result: cite its actual condition, figure and supplied settings.</p>",
+      "<p>Local result: dataset split, seed, checkpoint hash, target, schedule, sampler, budget.</p>",
+      "<p>Research proposal: label it a possible task until validated against measurements.</p>"
+    ],
+    "visual_revision": "Whole-deck scene review: source-aware figures, unique visible labels, retained presenter cue and takeaway."
+  }
+]

@@ -1,0 +1,250 @@
+<!-- ===================================================================== 2 · Training -->
+
+<section class="slide sec-learn opener break" id="p2-open" data-section="Part 2 · Train">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 2 of 7</p>
+      <h2>Training: a regression problem we build ourselves</h2>
+      <p class="why">Part 1 gave us a way to make noisy images. <b>Goal of this part:</b> turn that into (input, label) pairs and a loss, so that a network learns to <b>predict the noise</b>, and see what it can and cannot learn.</p>
+    </div>
+    <!--route:2-->
+  </div>
+</section>
+
+<section class="slide sec-learn" id="tuple" data-section="Part 2 · Train">
+  <p class="kicker">One training example, built from scratch</p>
+  <h2>Make an input and its label; ask the network for the noise</h2>
+  <div class="body"><!--svg:tuple--></div>
+  <p class="q" data-b="4">Everything except $\hat\epsilon$ was made by us. The noise we drew is the label: we get inputs and labels for free.</p>
+  <span class="badge run" data-b="4">our model <small>prediction</small></span>
+  <aside class="notes">
+    <p data-say="1">Start with a clean training image. Here, our 7.</p>
+    <p data-say="2">Draw a step t uniformly from 1 to 1000 (here 350) and a noise image ε from N(0, I).</p>
+    <p data-say="3">Use the jump formula: 0.534 × x₀ + 0.845 × ε. That is the network's input, together with t.</p>
+    <p data-say="4">The network outputs a full 28 × 28 image ε̂: its guess of the noise that was added. Our trained model gets most of it: mean squared error {{example.mse}}, against 1.0 for a network that outputs zeros. Compare the two amber images by eye.</p>
+  </aside>
+</section>
+
+<section class="slide sec-learn" id="targets" data-section="Part 2 · Train">
+  <p class="kicker">Which label? Three equivalent choices</p>
+  <h2>From one noisy input we could ask for $\epsilon$, for $x_0$, or for a mix</h2>
+  <div class="body">
+    <div class="strip" style="gap:26px;align-items:flex-start">
+      <figure><img src="figures/data/ex-xt.png" width="190" style="border:2.5px solid var(--xt)"><figcaption><b>input</b> $x_t$, t = 350</figcaption></figure>
+      <span class="arrow" style="margin-top:80px">→</span>
+      <figure data-b="1"><img src="figures/data/eps.png" width="190" style="border:2.5px solid var(--z)"><figcaption><b>predict the noise</b> $\epsilon$<span class="k">DDPM (Ho et al. 2020)</span></figcaption></figure>
+      <figure data-b="2"><img src="figures/data/digit7.png" width="190" style="border:2.5px solid var(--x)"><figcaption><b>predict the clean image</b> $x_0$</figcaption></figure>
+      <figure data-b="3"><img src="figures/data/ex-v.png" width="190" style="border:2.5px solid var(--enc)"><figcaption><b>predict</b> $v = \sqrt{\bar\alpha_t}\,\epsilon - \sqrt{1-\bar\alpha_t}\,x_0$<span class="k">used by many later models</span></figcaption></figure>
+    </div>
+    <div class="mathblock" data-b="2" style="font-size:24px;margin-top:20px">Since $x_t = \sqrt{\bar\alpha_t}\,x_0 + \sqrt{1-\bar\alpha_t}\,\epsilon$, knowing $x_t$ and any one of them gives the others.</div>
+  </div>
+  <p class="q" data-b="3">We follow DDPM and predict $\epsilon$: whatever t is, the target is always a standard Gaussian image, so the regression stays well scaled.</p>
+  <span class="badge toy">computed</span>
+  <aside class="notes">
+    <p data-say="1">The noise ε we drew. Amber is positive, blue negative, white zero.</p>
+    <p data-say="2">The clean image is an equally valid target, and the formula converts one into the other given x_t.</p>
+    <p data-say="3">v mixes the two; appendix A5 shows it as a rotation. Different parameterisations train differently, but the sampler must use the matching formula. For the rest of the lecture: ε.</p>
+  </aside>
+</section>
+
+<section class="slide sec-learn" id="four-pixels" data-section="Part 2 · Train">
+  <p class="kicker">The loss</p>
+  <h2>Squared error, pixel by pixel, then averaged</h2>
+  <div class="body">
+    <div class="row" style="gap:50px;justify-content:center">
+      <table class="work" style="font-size:24px">
+        <tr><th>pixel (row, col)</th><th>target $\epsilon$</th><th>prediction $\hat\epsilon$</th><th>$(\hat\epsilon-\epsilon)^2$</th></tr>
+        <tr data-hl="2"><td><span class="chip">ours</span> {{example.four.0.where}}</td><td>{{example.four.0.eps}}</td><td>{{example.four.0.ehat}}</td><td>{{example.four.0.sq}}</td></tr>
+        <tr><td>{{example.four.1.where}}</td><td>{{example.four.1.eps}}</td><td>{{example.four.1.ehat}}</td><td>{{example.four.1.sq}}</td></tr>
+        <tr><td>{{example.four.2.where}}</td><td>{{example.four.2.eps}}</td><td>{{example.four.2.ehat}}</td><td>{{example.four.2.sq}}</td></tr>
+        <tr><td>{{example.four.3.where}}</td><td>{{example.four.3.eps}}</td><td>{{example.four.3.ehat}}</td><td>{{example.four.3.sq}}</td></tr>
+        <tr class="total" data-b="2"><td colspan="3">mean over all 784 pixels</td><td>{{example.mse}}</td></tr>
+      </table>
+      <div class="col" style="width:330px;align-items:center" data-b="3">
+        <img class="pix" src="figures/data/ex-err.png" width="230" style="border:2.5px solid var(--loss);border-radius:6px">
+        <p class="small" style="text-align:center">squared error at every pixel: the largest errors sit on the stroke of the 7</p>
+      </div>
+    </div>
+    <pre class="code" data-b="2" style="margin:18px auto 0;width:560px;font-size:21px">loss = F.mse_loss(eps_hat, eps)</pre>
+  </div>
+  <p class="q" data-b="3">That is the whole objective: an ordinary regression on 784 numbers.</p>
+  <span class="badge run">our model</span>
+  <aside class="notes">
+    <p data-say="1">Real numbers from our trained network, for the example on the previous slide, at four pixels including ours. Ask: which prediction is worst?</p>
+    <p data-say="2">Average over all 784 pixels. In code it is one line.</p>
+    <p data-say="3">The error map shows where the network is unsure: along the stroke, where it must decide how much of the dark value is ink and how much is noise.</p>
+  </aside>
+</section>
+
+<section class="slide sec-learn" id="cannot-know" data-section="Part 2 · Train">
+  <p class="kicker">Back to our toy pixel, x₂ = 0.5</p>
+  <h2>Can the network recover the exact noise? No, so it averages</h2>
+  <div class="body">
+    <div class="row" style="gap:30px;align-items:center">
+      <img class="fig" src="figures/data/explain-t2.svg" style="width:520px">
+      <div class="col grow" style="gap:12px">
+        <table class="work" style="font-size:22px">
+          <tr><th>if the pixel was</th><th>then $\epsilon$ was</th><th>probability*</th></tr>
+          <tr><td class="cx">ink, x₀ = +1</td><td>−0.5</td><td>{{toy.p_ink}}</td></tr>
+          <tr><td class="cenc">paper, x₀ = −1</td><td>+{{toy.eps_paper}}</td><td>{{toy.p_paper}}</td></tr>
+        </table>
+        <div class="mathblock left" data-b="2" style="font-size:23px">$\hat\epsilon^\star = \mathbb E[\epsilon\mid x_2] = 0.90(-0.5) + 0.10(2.17) = \mathbf{-0.24}$</div>
+        <p class="small" data-b="2">Squared error is smallest for the <b>average</b> of everything that could have happened, not for the true −0.5.</p>
+        <p class="tiny" style="margin:0">* if ink and paper were equally likely before we looked</p>
+        <p class="small" data-b="3">$\mathbb E[x_0\mid x_2] = 0.90(+1) + 0.10(-1) = 0.80$: a grey pixel.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">This is why regression blurs (the SR3 slide): it returns an average. Diffusion uses that average to take one small step, not as the final image.</p>
+  <span class="badge toy">computed</span>
+  <aside class="notes">
+    <p data-say="1">The network sees x₂ = 0.5 (and the neighbours). Two worlds are consistent with it: ink with ε = −0.5, or paper with ε = +2.17. The ink world is 9.2 times more likely under the Gaussian noise, so 0.90 vs 0.10.</p>
+    <p data-say="2">Minimising expected squared error gives the conditional mean, −0.24. Even a perfect network does not output the true −0.5. Remember this for the sampler: ε̂ is a best guess, not the truth.</p>
+    <p data-say="3">In clean-image terms the best guess is 0.80: neither ink nor paper. Over a whole image these averages are what makes regression blurry. Neighbouring pixels sharpen the posterior: a pixel surrounded by ink is probably ink. That is the information the network adds.</p>
+  </aside>
+</section>
+
+<section class="slide sec-learn" id="guesses" data-section="Part 2 · Train">
+  <p class="kicker">The same effect, in our trained network</p>
+  <h2>What the network believes the clean 7 is, at each noise level</h2>
+  <div class="body">
+    <div class="grid-rows" style="grid-template-columns:170px repeat(5,150px);justify-content:center;gap:10px 14px">
+      <span></span><p class="lbl">t = 920</p><p class="lbl">t = 700</p><p class="lbl">t = 500</p><p class="lbl">t = 350</p><p class="lbl">t = 100</p>
+      <span class="rl cxt">input $x_t$</span>
+      <img src="figures/data/guess-in-920.png"><img src="figures/data/guess-in-700.png"><img src="figures/data/guess-in-500.png"><img src="figures/data/guess-in-350.png"><img src="figures/data/guess-in-100.png">
+      <span class="rl cx" data-b="2">guess $\hat x_0$</span>
+      <img data-b="2" src="figures/data/guess-920.png"><img data-b="2" src="figures/data/guess-700.png"><img data-b="2" src="figures/data/guess-500.png"><img data-b="2" src="figures/data/guess-350.png"><img data-b="2" src="figures/data/guess-100.png">
+    </div>
+    <p class="small muted" data-b="2" style="text-align:center;margin-top:12px">guess = the jump formula solved for $x_0$, with the predicted noise: $\hat x_0 = (x_t - \sqrt{1-\bar\alpha_t}\,\hat\epsilon)/\sqrt{\bar\alpha_t}$</p>
+  </div>
+  <p class="q" data-b="3">At t = 920 the guess is a blurry average of digits; by t = 350 it is our 7. The average sharpens as evidence accumulates.</p>
+  <span class="badge run">our model</span>
+  <aside class="notes">
+    <p data-say="1">The same 7 noised with the same ε at five noise levels. At 920 you see nothing.</p>
+    <p data-say="2">The network's best guess of the clean image at each level. At 920: a blob, the average of everything that might be under that noise. At 700: a fuzzy stroke. By 350: clearly our 7.</p>
+    <p data-say="3">This is the conditional mean of the previous slide, for 784 pixels at once.</p>
+  </aside>
+</section>
+
+<section class="slide sec-learn" id="one-net" data-section="Part 2 · Train">
+  <p class="kicker">One network, every noise level</p>
+  <h2>One network must handle nearly clean and nearly pure noise</h2>
+  <div class="body">
+    <div class="strip" style="gap:40px">
+      <figure><img src="figures/data/batch-7.png" width="200" style="border:2.5px solid var(--xt)"><figcaption>t = 7<span class="k">$\bar\alpha_t$ = {{sched.7.abd}}: remove a whisper</span></figcaption></figure>
+      <figure><img src="figures/data/batch-350.png" width="200" style="border:2.5px solid var(--xt)"><figcaption>t = 350<span class="k">$\bar\alpha_t$ = {{sched.350.abd}}: mostly noise</span></figcaption></figure>
+      <figure><img src="figures/data/batch-920.png" width="200" style="border:2.5px solid var(--xt)"><figcaption>t = 920<span class="k">$\bar\alpha_t$ = {{sched.920.abd}}: almost all noise</span></figcaption></figure>
+    </div>
+    <p class="small" data-b="2" style="text-align:center;margin-top:24px">How much noise to remove depends on the level, so <b>t is a second input</b>: the network computes $\hat\epsilon = \epsilon_\theta(x_t, t)$.</p>
+  </div>
+  <p class="q" data-b="2">One model for all 1000 levels, told which level it is at. Part 5 shows how t enters the network.</p>
+  <span class="badge toy">computed <small>inputs</small></span>
+  <aside class="notes">
+    <p data-say="1">Ask: should the network subtract the same amount of noise from all three? No: from the left one almost nothing, from the right one almost everything.</p>
+    <p data-say="2">Could the network infer t from the image? Roughly, but telling it is cheap and exact. Training one shared network, rather than 1000, is what makes this practical.</p>
+  </aside>
+</section>
+
+<section class="slide sec-learn" id="gather" data-section="Part 2 · Train">
+  <p class="kicker">Shapes, in a batch</p>
+  <h2>A batch mixes noise levels: one $\bar\alpha$ per image</h2>
+  <div class="body"><!--svg:gather--></div>
+  <pre class="code" data-b="3" style="margin:6px auto 0;width:820px;font-size:20px">ab = alpha_bar[t].reshape(B, 1, 1, 1)        <span class="c"># [B] -> [B, 1, 1, 1]</span>
+xt = ab.sqrt() * x0 + (1 - ab).sqrt() * eps   <span class="c"># [B, 1, 28, 28]</span></pre>
+  <p class="q" data-b="4">Random t per image means every batch trains the network at many noise levels at once.</p>
+  <span class="badge toy">computed</span>
+  <aside class="notes">
+    <p data-say="1">Three images in a batch, each with its own random step.</p>
+    <p data-say="2">Index the precomputed ᾱ table: one number per image. Note how wide the range is.</p>
+    <p data-say="3">Reshape to [B, 1, 1, 1] so PyTorch broadcasts the number over each image's channel, height and width.</p>
+    <p data-say="4">One multiply-add produces three differently noised images in one go.</p>
+  </aside>
+</section>
+
+<section class="slide sec-learn" id="train-code" data-section="Part 2 · Train">
+  <p class="kicker">The complete training step</p>
+  <h2>The whole training step in PyTorch</h2>
+  <div class="body">
+    <div class="row" style="gap:30px;align-items:center">
+      <pre class="code" style="font-size:18px;width:800px"><span class="line" data-hl="=1">beta = torch.cat([torch.zeros(1), torch.linspace(1e-4, 0.02, 1000)])</span>
+<span class="line" data-hl="=1">alpha_bar = torch.cumprod(1 - beta, 0)     <span class="c"># once, as in Part 1</span></span>
+
+<span class="line" data-hl="=2">t   = torch.randint(1, T + 1, (B,))        <span class="c"># a step per image</span></span>
+<span class="line" data-hl="=2">eps = torch.randn_like(x0)                 <span class="c"># the label</span></span>
+<span class="line" data-hl="=3">ab  = alpha_bar[t].reshape(B, 1, 1, 1)</span>
+<span class="line" data-hl="=3">xt  = ab.sqrt() * x0 + (1 - ab).sqrt() * eps</span>
+<span class="line" data-hl="=4">eps_hat = model(xt, t)</span>
+<span class="line" data-hl="=5">loss = F.mse_loss(eps_hat, eps)</span>
+<span class="line" data-hl="=5">opt.zero_grad(); loss.backward(); opt.step()</span></pre>
+      <div class="col" style="width:270px;gap:12px">
+        <div class="callout xt" data-b="1">the $\bar\alpha$ table; t runs from 1 to 1000</div>
+        <div class="callout z" data-b="2">draw t and $\epsilon$</div>
+        <div class="callout xt" data-b="3">build the noisy input</div>
+        <div class="callout dec" data-b="4">predict the noise</div>
+        <div class="callout loss" data-b="5">regress, update $\theta$</div>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="5">No reverse chain, no sampling loop: one random step per image, one forward pass, one MSE.</p>
+  <aside class="notes">
+    <p data-say="1">The tables have 1001 entries so that index t means step t; entry 0 is the clean image. Off-by-one errors here are the most common bug in student code.</p>
+    <p data-say="2">t and ε are both random. ε is kept: it is the label.</p>
+    <p data-say="3">The jump formula, with broadcasting.</p>
+    <p data-say="4">The model takes both x_t and t.</p>
+    <p data-say="5">An ordinary optimiser step. This is literally the training_step function in scripts/train_models.py that trained the model on these slides.</p>
+  </aside>
+</section>
+
+<section class="slide sec-learn" id="grads" data-section="Part 2 · Train">
+  <p class="kicker">The computation graph</p>
+  <h2>Gradients flow only into the network's weights</h2>
+  <div class="body"><!--svg:grads--></div>
+  <p class="q" data-b="3">$x_0$, t and $\epsilon$ are constants made before the forward pass; only $\theta$ gets a gradient.</p>
+  <aside class="notes">
+    <p data-say="1">Forward pass: data, a random draw and a random step make x_t with no parameters involved. Only the network has weights. ε also travels separately to the loss as the label.</p>
+    <p data-say="2">The loss compares ε̂ with ε: one number per batch.</p>
+    <p data-say="3">Backward: the gradient reaches θ through ε̂. Nothing upstream of the network has parameters, so nothing else is updated. Contrast with Lecture I's VAE, where gradients had to pass through a random draw (reparameterisation); here the draw is outside the graph.</p>
+  </aside>
+</section>
+
+<section class="slide sec-learn" id="training-run" data-section="Part 2 · Train">
+  <p class="kicker">Our training run</p>
+  <h2>Our training run, and where the network still struggles</h2>
+  <div class="body">
+    <div class="row" style="gap:40px;justify-content:center">
+      <div class="col" style="align-items:center"><img class="fig" src="figures/data/loss-curve.svg" style="width:500px"><p class="small muted">noise MSE during training (smoothed)</p></div>
+      <div class="col" style="align-items:center" data-b="2"><img class="fig" src="figures/data/mse-vs-t.svg" style="width:500px"><p class="small muted">noise MSE on 512 test digits, by step t</p></div>
+    </div>
+    <p class="small" style="text-align:center">{{uncond.params}} parameters · batch {{uncond.batch}} · {{uncond.steps}} steps (about {{uncond.epochs}} passes over MNIST) · about {{uncond.minutes}} minutes on an Apple-silicon GPU</p>
+  </div>
+  <p class="q" data-b="2">Predicting the noise is hardest at small t ({{mse_t.1}} at t = 1) and easy near pure noise ({{mse_t.1000}} at t = 1000), where the input is almost exactly $\epsilon$.</p>
+  <span class="badge run">our model</span>
+  <aside class="notes">
+    <p data-say="1">The loss drops fast and then slowly: the curve is on a log scale.</p>
+    <p data-say="2">Ask why small t is hard. At t = 1 the noise is tiny (scale 0.01) and nearly invisible against the digit, yet the network must report it at unit scale. At t = 1000 the input is almost exactly ε, so copying the input is nearly right. This unevenness is exactly what the ELBO weights on the next slides are about.</p>
+  </aside>
+</section>
+
+<section class="slide sec-learn" id="p2-recap" data-section="Part 2 · Train">
+  <p class="kicker">End of Part 2</p>
+  <h2>What we did, and what comes next</h2>
+  <div class="body">
+    <div class="recap">
+      <div>
+        <h3>What we did</h3>
+        <ol><li>A training example is (noisy image, step t) as input and the noise $\epsilon$ as the label.</li><li>The loss is plain squared error over 784 pixels; one random t per image, no loop.</li><li>Even a perfect network cannot recover $\epsilon$ exactly; it predicts the average of what is possible: −0.24 for our pixel.</li><li>Our network: 814,145 parameters, 30,000 steps, hardest at small t.</li></ol>
+      </div>
+      <div class="next" data-b="2">
+        <h3>Next: use the predictions to generate</h3>
+        <p class="small">At generation time there is no clean image and no true noise, only the network.</p><p class="small">Part 3 turns its noise prediction into one small backward step, and repeats.</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><p data-say="1">Recap in one breath; students should be able to say each line back.</p><p data-say="2">The bridge to the next part.</p></aside>
+</section>
+
+
+
+
+
+

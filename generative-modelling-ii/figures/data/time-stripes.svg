@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="493.557813pt" height="111.096pt" viewBox="0 0 493.557813 111.096" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ 
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 111.096 
+L 493.557813 111.096 
+L 493.557813 0 
+L 0 0 
+L 0 111.096 
+z
+" style="fill: none"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 77.757812 33.861176 
+L 490.677813 33.861176 
+L 490.677813 2.88 
+L 77.757812 2.88 
+L 77.757812 33.861176 
+z
+" style="fill: none"/>
+   </g>
+   <g clip-path="url(#p23c5522c14)">
+    <image xlink:href="data:image/png;base64,
+iVBORw0KGgoAAAANSUhEUgAAAj0AAAArCAYAAACTgTmuAAABuElEQVR4nO3WrW6TcRjG4X5uLRlJSbYGgUJsIyEcBQkhOFSDmZnDciYoDGpzmO0QFszE5FJBewItikACW9NyBn0qiuG+Ln3nSV7zf3/Nk7PPq0ZhdnFdTRovnh+Vm1ej1+Xmw8WXcjP9Pi83g/6DcnM4HJab4+HjcvN0/6DcPBk8Kjf7e3vlZtBb/10Pe7vljX53p9zstDvlpttul5tOu1VuWs3mBptt3ak3m9jWnWRvPn0sNy8Pn5Wb8eXXcnM7npSb0dv6fXp/+q7cnN+sfy+vpt/KG5P5rNzMfv4oN7/+3JWb34v7crNYLsvNclX+ShqrDTbwL9V/EgCA/4DoAQAiiB4AIILoAQAiiB4AIILoAQAiiB4AIILoAQAiiB4AIILoAQAiiB4AIILoAQAiiB4AIILoAQAiiB4AIILoAQAiiB4AIILoAQAiiB4AIILoAQAiiB4AIILoAQAiiB4AIILoAQAiiB4AIILoAQAiiB4AIILoAQAiiB4AIILoAQAiiB4AIILoAQAiiB4AIILoAQAiiB4AIILoAQAiiB4AIILoAQAiiB4AIILoAQAiiB4AIILoAQAaCf4CW1wvSMneFOQAAAAASUVORK5CYII=" id="image6f7db61491" transform="scale(1 -1) translate(0 -30.96)" x="77.76" y="-3.096" width="412.56" height="30.96"/>
+   </g>
+   <g id="matplotlib.axis_1"/>
+   <g id="matplotlib.axis_2">
+    <g id="text_1">
+     <!-- t = 7 -->
+     <g style="fill: #4a5160" transform="translate(27.34125 25.795588) scale(0.22 -0.22)">
+      <defs>
+       <path id="Avenir-Book-cc" d="M 2010 2611 
+L 1146 2611 
+L 1146 845 
+Q 1146 678 1178 572 
+Q 1210 467 1267 409 
+Q 1325 352 1405 329 
+Q 1485 307 1581 307 
+Q 1690 307 1805 339 
+Q 1920 371 2016 422 
+L 2035 32 
+Q 1798 -77 1466 -77 
+Q 1344 -77 1213 -45 
+Q 1082 -13 973 76 
+Q 864 166 793 320 
+Q 723 474 723 723 
+L 723 2611 
+L 90 2611 
+L 90 2995 
+L 723 2995 
+L 723 3840 
+L 1146 3840 
+L 1146 2995 
+L 2010 2995 
+L 2010 2611 
+z
+" transform="scale(0.015625)"/>
+       <path id="Avenir-Book-3" transform="scale(0.015625)"/>
+       <path id="Avenir-Book-72" d="M 3763 1651 
+L 3763 1267 
+L 499 1267 
+L 499 1651 
+L 3763 1651 
+z
+M 3763 2611 
+L 3763 2227 
+L 499 2227 
+L 499 2611 
+L 3763 2611 
+z
+" transform="scale(0.015625)"/>
+       <path id="Avenir-Book-c7" d="M 3034 4109 
+L 1210 0 
+L 691 0 
+L 2554 4109 
+L 346 4109 
+L 346 4531 
+L 3034 4531 
+L 3034 4109 
+z
+" transform="scale(0.015625)"/>
+      </defs>
+      <use xlink:href="#Avenir-Book-cc"/>
+      <use xlink:href="#Avenir-Book-3" transform="translate(33.203125 0)"/>
+      <use xlink:href="#Avenir-Book-72" transform="translate(61 0)"/>
+      <use xlink:href="#Avenir-Book-3" transform="translate(127.59375 0)"/>
+      <use xlink:href="#Avenir-Book-c7" transform="translate(155.390625 0)"/>
+     </g>
+    </g>
+   </g>
+  </g>
+  <g id="axes_2">
+   <g id="patch_3">
+    <path d="M 77.757812 71.038588 
+L 490.677813 71.038588 
+L 490.677813 40.057412 
+L 77.757812 40.057412 
+L 77.757812 71.038588 
+z
+" style="fill: none"/>
+   </g>
+   <g clip-path="url(#pd5d4771440)">
+    <image xlink:href="data:image/png;base64,
+iVBORw0KGgoAAAANSUhEUgAAAj0AAAArCAYAAACTgTmuAAACM0lEQVR4nO3W22vPcRzH8dnBDhkbYy4oWWn+ASklRKzccCeJC+XGhSulLFco5d6FwoWUq93YheJC7fanJqcrOYdW1jYjs/kP9trFLuT9eNx+X31uvt/Pt+eKXYeOLzQF204cSJOm8ZsP4mZgy+a4uTJ8Lm5u3xuJm2frm+NmeMfeuDk5ej9uBl99j5vOzo64mds5EDdDHf2LPr/2phHP2D3REjdT0zNxc/nq+bg5dfdW3DTev4ub7vb2uBno2xA3g/0b42brur642dTTGzf93avjprerK266O/K309m2Mm46WtviprU535uWluZlOafReL4sd/3G9Utxc3F0CeeMPYmbIzOr4mZtz5pFn9/58zmecWH/UNxM/JiOm8nZ2bj5OJn/X78ejsfNvjNH4+bph3zXt3+bi5uR0cdxc/jgnrg5e/pY3Ix9ehs3j16/jJsXX/J7/zo1tSzv9Ofc77iZm5+Pm/mFmAdNC0vY/EvynwkA4D8gegCAEkQPAFCC6AEAShA9AEAJogcAKEH0AAAliB4AoATRAwCUIHoAgBJEDwBQgugBAEoQPQBACaIHAChB9AAAJYgeAKAE0QMAlCB6AIASRA8AUILoAQBKED0AQAmiBwAoQfQAACWIHgCgBNEDAJQgegCAEkQPAFCC6AEAShA9AEAJogcAKEH0AAAliB4AoATRAwCUIHoAgBJEDwBQgugBAEoQPQBACaIHAChB9AAAJYgeAKAE0QMAlCB6AICmCv4CO4hbSCn1JkIAAAAASUVORK5CYII=" id="image3cf7455c34" transform="scale(1 -1) translate(0 -30.96)" x="77.76" y="-39.816" width="412.56" height="30.96"/>
+   </g>
+   <g id="matplotlib.axis_3"/>
+   <g id="matplotlib.axis_4">
+    <g id="text_2">
+     <!-- t = 350 -->
+     <g style="fill: #4a5160" transform="translate(2.88 62.973) scale(0.22 -0.22)">
+      <defs>
+       <path id="Avenir-Book-ce" d="M 1306 2586 
+L 1542 2586 
+Q 1741 2586 1923 2630 
+Q 2106 2675 2240 2774 
+Q 2374 2874 2454 3034 
+Q 2534 3194 2534 3418 
+Q 2534 3782 2313 3984 
+Q 2093 4186 1696 4186 
+Q 1408 4186 1190 4058 
+Q 973 3930 832 3686 
+L 429 3891 
+Q 634 4256 950 4432 
+Q 1267 4608 1683 4608 
+Q 1952 4608 2189 4531 
+Q 2426 4454 2605 4304 
+Q 2784 4154 2889 3933 
+Q 2995 3712 2995 3430 
+Q 2995 3245 2934 3078 
+Q 2874 2912 2768 2777 
+Q 2662 2643 2521 2544 
+Q 2381 2445 2227 2394 
+L 2246 2381 
+Q 2438 2342 2598 2236 
+Q 2758 2131 2873 1977 
+Q 2989 1824 3053 1632 
+Q 3117 1440 3117 1229 
+Q 3117 915 3001 672 
+Q 2886 429 2688 262 
+Q 2490 96 2227 9 
+Q 1965 -77 1670 -77 
+Q 1171 -77 800 140 
+Q 429 358 243 838 
+L 730 986 
+Q 845 659 1072 502 
+Q 1299 346 1709 346 
+Q 1901 346 2073 410 
+Q 2246 474 2377 592 
+Q 2509 710 2582 876 
+Q 2656 1043 2656 1242 
+Q 2656 1498 2560 1674 
+Q 2464 1850 2304 1958 
+Q 2144 2067 1936 2115 
+Q 1728 2163 1504 2163 
+L 1306 2163 
+L 1306 2586 
+z
+" transform="scale(0.015625)"/>
+       <path id="Avenir-Book-78" d="M 2976 4109 
+L 1120 4109 
+L 1094 2746 
+Q 1242 2803 1395 2828 
+Q 1549 2854 1702 2854 
+Q 2022 2854 2284 2745 
+Q 2547 2637 2736 2441 
+Q 2925 2246 3030 1980 
+Q 3136 1715 3136 1402 
+Q 3136 1075 3021 803 
+Q 2906 531 2701 336 
+Q 2496 141 2217 32 
+Q 1939 -77 1613 -77 
+Q 1184 -77 838 128 
+Q 493 333 307 730 
+L 762 928 
+Q 890 659 1120 502 
+Q 1350 346 1651 346 
+Q 1869 346 2054 426 
+Q 2240 506 2377 640 
+Q 2515 774 2595 960 
+Q 2675 1146 2675 1357 
+Q 2675 1594 2592 1792 
+Q 2509 1990 2361 2134 
+Q 2214 2278 2009 2355 
+Q 1805 2432 1562 2432 
+Q 1318 2432 1078 2365 
+Q 838 2298 621 2182 
+L 666 4531 
+L 2976 4531 
+L 2976 4109 
+z
+" transform="scale(0.015625)"/>
+       <path id="Avenir-Book-e4" d="M 1779 4186 
+Q 1408 4186 1193 3987 
+Q 979 3789 870 3494 
+Q 762 3200 733 2867 
+Q 704 2534 704 2266 
+Q 704 1997 733 1664 
+Q 762 1331 870 1036 
+Q 979 742 1193 544 
+Q 1408 346 1779 346 
+Q 2150 346 2364 544 
+Q 2579 742 2688 1036 
+Q 2797 1331 2825 1664 
+Q 2854 1997 2854 2266 
+Q 2854 2534 2825 2867 
+Q 2797 3200 2688 3494 
+Q 2579 3789 2364 3987 
+Q 2150 4186 1779 4186 
+z
+M 1779 4608 
+Q 2266 4608 2566 4384 
+Q 2867 4160 3033 3814 
+Q 3200 3469 3257 3056 
+Q 3315 2643 3315 2266 
+Q 3315 1888 3257 1475 
+Q 3200 1062 3033 716 
+Q 2867 371 2566 147 
+Q 2266 -77 1779 -77 
+Q 1293 -77 992 147 
+Q 691 371 524 716 
+Q 358 1062 300 1475 
+Q 243 1888 243 2266 
+Q 243 2643 300 3056 
+Q 358 3469 524 3814 
+Q 691 4160 992 4384 
+Q 1293 4608 1779 4608 
+z
+" transform="scale(0.015625)"/>
+      </defs>
+      <use xlink:href="#Avenir-Book-cc"/>
+      <use xlink:href="#Avenir-Book-3" transform="translate(33.203125 0)"/>
+      <use xlink:href="#Avenir-Book-72" transform="translate(61 0)"/>
+      <use xlink:href="#Avenir-Book-3" transform="translate(127.59375 0)"/>
+      <use xlink:href="#Avenir-Book-ce" transform="translate(155.390625 0)"/>
+      <use xlink:href="#Avenir-Book-78" transform="translate(210.984375 0)"/>
+      <use xlink:href="#Avenir-Book-e4" transform="translate(266.578125 0)"/>
+     </g>
+    </g>
+   </g>
+  </g>
+  <g id="axes_3">
+   <g id="patch_4">
+    <path d="M 77.757812 108.216 
+L 490.677813 108.216 
+L 490.677813 77.234824 
+L 77.757812 77.234824 
+L 77.757812 108.216 
+z
+" style="fill: none"/>
+   </g>
+   <g clip-path="url(#p08053baeac)">
+    <image xlink:href="data:image/png;base64,
+iVBORw0KGgoAAAANSUhEUgAAAj0AAAArCAYAAACTgTmuAAACQklEQVR4nO3Wz2sIYBzH8fnVsIbZwi5auTBs5Eo5OUiL2slJccNNcpKUhVrLwUFJkjSFA6FMKQ4OJFm7iPJzOWB+1crW5j/wOdhF39fr+rx76jk89Zk18GBouiEY7LuQkoYli5tjc/DYgdg8un4/No8XT8ama3QiNtfmfY3NofZ1sfnQvjA2p3bsis3gjbuxufTl1V/Pd6ztinecuHcnNquff47N8PqW2FzaujM2/Wcvxubqhf7YHBm6FZvbI8MNM6FjaWtsOle0x2ZV27LYrGxZGpvlzYti09rUFJvmxvmxaWpsjM38uXNjs2fv4dgcPZ2bJ+/exObkUP5b23/mf7xg8+rYzH729q/nvT3b4h1nzl2OzafuFbEZv/k0Nm2t+R939G6JzcPXL2NzpWd3bMbGfsRmY9ea2GwY6IvN+a09sTlyfCA2m7o7Y7N/X377r4VzYnN75EVshkc/xub9t7HYfB8fj834xO/YTE5NzUgzPR3nSjT7n28AAPgPGD0AQAlGDwBQgtEDAJRg9AAAJRg9AEAJRg8AUILRAwCUYPQAACUYPQBACUYPAFCC0QMAlGD0AAAlGD0AQAlGDwBQgtEDAJRg9AAAJRg9AEAJRg8AUILRAwCUYPQAACUYPQBACUYPAFCC0QMAlGD0AAAlGD0AQAlGDwBQgtEDAJRg9AAAJRg9AEAJRg8AUILRAwCUYPQAACUYPQBACUYPAFCC0QMAlGD0AAAlGD0AQAlGDwBQgtEDAJRg9AAAJRg9AEBDBX8AQ0dcSOYuSCgAAAAASUVORK5CYII=" id="imagea0d904af43" transform="scale(1 -1) translate(0 -30.96)" x="77.76" y="-77.256" width="412.56" height="30.96"/>
+   </g>
+   <g id="matplotlib.axis_5"/>
+   <g id="matplotlib.axis_6">
+    <g id="text_3">
+     <!-- t = 920 -->
+     <g style="fill: #4a5160" transform="translate(2.88 100.150412) scale(0.22 -0.22)">
+      <defs>
+       <path id="Avenir-Book-99" d="M 2790 3206 
+Q 2790 3424 2716 3603 
+Q 2643 3782 2508 3910 
+Q 2374 4038 2188 4112 
+Q 2003 4186 1779 4186 
+Q 1555 4186 1369 4112 
+Q 1184 4038 1049 3910 
+Q 915 3782 841 3603 
+Q 768 3424 768 3206 
+Q 768 2989 841 2809 
+Q 915 2630 1049 2499 
+Q 1184 2368 1369 2297 
+Q 1555 2227 1779 2227 
+Q 2003 2227 2188 2297 
+Q 2374 2368 2508 2499 
+Q 2643 2630 2716 2809 
+Q 2790 2989 2790 3206 
+z
+M 2330 1946 
+L 2317 1958 
+Q 2208 1882 2025 1843 
+Q 1843 1805 1690 1805 
+Q 1395 1805 1142 1910 
+Q 890 2016 704 2201 
+Q 518 2387 412 2643 
+Q 307 2899 307 3206 
+Q 307 3520 416 3776 
+Q 525 4032 723 4217 
+Q 922 4403 1190 4505 
+Q 1459 4608 1779 4608 
+Q 2099 4608 2368 4505 
+Q 2637 4403 2835 4217 
+Q 3034 4032 3142 3776 
+Q 3251 3520 3251 3206 
+Q 3251 2829 3139 2547 
+Q 3027 2266 2861 1990 
+L 1638 0 
+L 1094 0 
+L 2330 1946 
+z
+" transform="scale(0.015625)"/>
+       <path id="Avenir-Book-d3" d="M 3187 0 
+L 307 0 
+L 307 531 
+L 2112 2368 
+Q 2214 2470 2316 2585 
+Q 2419 2701 2502 2829 
+Q 2586 2957 2637 3097 
+Q 2688 3238 2688 3392 
+Q 2688 3578 2621 3725 
+Q 2554 3872 2432 3974 
+Q 2310 4077 2150 4131 
+Q 1990 4186 1811 4186 
+Q 1466 4186 1222 3994 
+Q 979 3802 909 3475 
+L 422 3526 
+Q 518 4032 886 4320 
+Q 1254 4608 1779 4608 
+Q 2054 4608 2300 4534 
+Q 2547 4461 2736 4313 
+Q 2925 4166 3037 3945 
+Q 3149 3725 3149 3430 
+Q 3149 3168 3069 2950 
+Q 2989 2733 2861 2541 
+Q 2733 2349 2569 2176 
+Q 2406 2003 2234 1837 
+L 806 422 
+L 3187 422 
+L 3187 0 
+z
+" transform="scale(0.015625)"/>
+      </defs>
+      <use xlink:href="#Avenir-Book-cc"/>
+      <use xlink:href="#Avenir-Book-3" transform="translate(33.203125 0)"/>
+      <use xlink:href="#Avenir-Book-72" transform="translate(61 0)"/>
+      <use xlink:href="#Avenir-Book-3" transform="translate(127.59375 0)"/>
+      <use xlink:href="#Avenir-Book-99" transform="translate(155.390625 0)"/>
+      <use xlink:href="#Avenir-Book-d3" transform="translate(210.984375 0)"/>
+      <use xlink:href="#Avenir-Book-e4" transform="translate(266.578125 0)"/>
+     </g>
+    </g>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p23c5522c14">
+   <rect x="77.757812" y="2.88" width="412.92" height="30.981176"/>
+  </clipPath>
+  <clipPath id="pd5d4771440">
+   <rect x="77.757812" y="40.057412" width="412.92" height="30.981176"/>
+  </clipPath>
+  <clipPath id="p08053baeac">
+   <rect x="77.757812" y="77.234824" width="412.92" height="30.981176"/>
+  </clipPath>
+ </defs>
+</svg>

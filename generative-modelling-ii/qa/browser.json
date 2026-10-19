@@ -1,0 +1,54 @@
+{
+  "errors": [],
+  "checks": {
+    "advanceScene": true,
+    "advanceBuild": true,
+    "previousBuild": true,
+    "deepLink": true,
+    "noiseUpdates": true,
+    "noiseReset": true,
+    "reverseFixture": true,
+    "finalNoNoise": true,
+    "demoReset": [
+      {
+        "demo": "oracle",
+        "pass": true
+      },
+      {
+        "demo": "noise",
+        "pass": true
+      },
+      {
+        "demo": "tuple",
+        "pass": true
+      },
+      {
+        "demo": "reverse",
+        "pass": true
+      },
+      {
+        "demo": "attention",
+        "pass": true
+      },
+      {
+        "demo": "mask",
+        "pass": true
+      }
+    ],
+    "uniqueIds": true,
+    "presenterLines": true,
+    "talkThroughVisible": true,
+    "takeawayVisible": true,
+    "cueWithinSlide": true,
+    "localImages": true,
+    "mathErrors": true,
+    "coreScenes": true,
+    "coreBuilds": true,
+    "keyboardInputRespected": true,
+    "keyboardAdvances": true,
+    "escapeReading": true,
+    "mobileOverflow": true
+  },
+  "buildsCaptured": 191,
+  "layout": []
+}

@@ -1,0 +1,70 @@
+<!-- ===================================================================== 7 · Close -->
+
+<section class="slide sec-end" id="revisit" data-section="Wrap-up">
+  <p class="kicker">Back to the opening slide</p>
+  <h2>Now we can say what each model is trained and run to do</h2>
+  <div class="body">
+    <table class="cmp revisit" style="font-size:17px;width:1150px;margin:0 auto">
+      <tr><th style="width:150px"></th><th>noisy object</th><th>condition c</th><th>what changes in our recipe</th></tr>
+      <tr data-b="1"><td><img class="photo" src="figures/data/pub-cherries-1.png" style="height:56px;vertical-align:middle"> text → image</td><td>image latent</td><td>77 text vectors</td><td>cross-attention to the prompt; classifier-free guidance</td></tr>
+      <tr data-b="2"><td><img class="photo" src="figures/data/pub-repaint-in.png" style="height:56px;vertical-align:middle"> fill a region</td><td>pixels</td><td>the known pixels</td><td>paste noised known pixels back at every step (no retraining)</td></tr>
+      <tr data-b="2"><td><img class="photo" src="figures/data/pub-sdedit-in.png" style="height:56px;vertical-align:middle"> painting → photo</td><td>pixels</td><td>the painting</td><td>start the reverse chain at $t_0$ from the noised painting</td></tr>
+      <tr data-b="3"><td><img class="photo" src="figures/data/pub-sr3-face-1.png" style="height:56px;vertical-align:middle"> super-resolution</td><td>high-res pixels</td><td>low-res image</td><td>extra input channels; trained on image pairs</td></tr>
+      <tr data-b="3"><td><img class="photo" src="figures/data/pub-control-1.png" style="height:56px;vertical-align:middle"> edges → image</td><td>image latent</td><td>edge map + prompt</td><td>a trainable copy of the encoder reads the edges (ControlNet)</td></tr>
+      <tr data-b="4"><td><img class="photo" src="figures/data/pub-dreambooth-in.png" style="height:56px;vertical-align:middle"> one particular dog</td><td>image latent</td><td>prompt with a rare word</td><td>fine-tune the denoiser on 3–5 photos first (DreamBooth)</td></tr>
+      <tr data-b="4"><td><span class="tok prompt" style="font-size:17px">The dog ? ?</span> text</td><td>tokens</td><td>the prompt</td><td>mask instead of Gaussian noise; cross-entropy instead of MSE</td></tr>
+    </table>
+  </div>
+  <p class="q" data-b="4">One idea throughout: corrupt, learn to undo one step, then repeat from noise, with the condition as an extra input.</p>
+  <aside class="notes">
+    <p data-say="1">Text-to-image: Parts 4 and 5.</p>
+    <p data-say="2">Two applications we ran ourselves on MNIST, with no new training.</p>
+    <p data-say="3">Two that need a model trained with the condition: concatenation for SR3, a copied encoder for ControlNet.</p>
+    <p data-say="4">Personalisation changes the weights before sampling. Text changes the corruption. GLIGEN (boxes) adds new attention layers that read box coordinates; DiffusionSat conditions on satellite metadata.</p>
+  </aside>
+</section>
+
+<section class="slide sec-end" id="answers" data-section="Wrap-up">
+  <p class="kicker">The four questions, answered</p>
+  <h2>The whole method on one slide</h2>
+  <div class="body">
+    <ol class="route" style="gap:26px">
+      <li style="--c:#AA4E08"><div class="lt">Training input: $x_t = \sqrt{\bar\alpha_t}\,x_0 + \sqrt{1-\bar\alpha_t}\,\epsilon$ for a random t</div><span class="rt">our pixel: 0.8·1 + 0.6·(−0.5) = 0.5</span></li>
+      <li style="--c:#0F766E" data-b="2"><div class="lt">Target: the noise $\epsilon$, with squared error</div><span class="rt">best possible guess: an average, −0.24</span></li>
+      <li style="--c:#245EDB" data-b="3"><div class="lt">Sampling: from $x_T \sim \mathcal N(0, I)$, repeat mean + $\sigma_t z$ down to t = 1</div><span class="rt">one step: 0.5 → 0.708 → 0.808</span></li>
+      <li style="--c:#BE123C" data-b="4"><div class="lt">Why: each ELBO term is a weighted noise MSE; DDPM drops the weights</div><span class="rt">our pixel: $0.625 \times 0.1^2 = 0.00625$</span></li>
+    </ol>
+  </div>
+  <p class="q" data-b="4">Removing noise creates an image because each small step is a sample from the learned reverse distribution, and the steps add up.</p>
+  <aside class="notes">
+    <p data-say="1">The forward process and the jump formula.</p>
+    <p data-say="2">The noise target, why MSE, and the qualification about weights.</p>
+    <p data-say="3">The sampler.</p>
+    <p data-say="4">The justification from Lecture I. Return to the opening question: the network never sees a digit at generation time; it only ever removes a little noise, and the fresh noise keeps every step a draw from a distribution.</p>
+  </aside>
+</section>
+
+<section class="slide sec-end" id="exit" data-section="Wrap-up">
+  <p class="kicker">Check yourself</p>
+  <h2>Three questions to answer before next class</h2>
+  <div class="body">
+    <ol class="exitq">
+      <li>Does training require running the reverse chain?
+        <span class="ans" data-b="2">No. One random t, one jump-formula input, one network call, one MSE per example.</span></li>
+      <li>Why is the guess $\hat x_0$ different from the next state $x_{t-1}$?
+        <span class="ans" data-b="2">$\hat x_0$ is a full jump to a clean estimate, unreliable at high noise; $x_{t-1}$ moves only a little towards it, adds fresh noise, and is the state fed back in.</span></li>
+      <li>What changes when the data are tokens?
+        <span class="ans" data-b="2">Corruption becomes masking and the loss becomes cross-entropy on masked positions; the sampler unmasks confident slots over several passes.</span></li>
+    </ol>
+  </div>
+  <aside class="notes">
+    <p data-say="1">Give two minutes; ask students to write answers.</p>
+    <p data-say="2">Reveal. The appendix collects the derivations we skipped, plus DDIM, schedules, score matching and flow matching.</p>
+  </aside>
+</section>
+
+<section class="slide sec-app opener" id="appendix-open" data-section="Appendix">
+  <p class="kicker">Appendix</p>
+  <h2>Derivations and extensions</h2>
+  <p>A1 adding Gaussians · A2 the training posterior · A3 the bound · A4 $\epsilon$, $x_0$ and $v$ · A5 schedules · A6 DDIM · A7 the score view · A8 flow matching · A9 masked-diffusion objective · A10 attention heads · A11 reporting a generated example</p>
+</section>

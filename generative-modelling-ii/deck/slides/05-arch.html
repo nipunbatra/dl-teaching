@@ -1,0 +1,131 @@
+<!-- ===================================================================== 4 · Architecture -->
+
+<section class="slide sec-arch opener break" id="p4-open" data-section="Part 5 · Network">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 5 of 7</p>
+      <h2>Inside the denoiser: networks you already know</h2>
+      <p class="why">So far the network was a box. <b>Goal of this part:</b> open it: a U-Net for pixels, a Transformer for patches, and why big models denoise a compressed image.</p>
+    </div>
+    <!--route:5-->
+  </div>
+</section>
+
+<section class="slide sec-arch" id="dense" data-section="Part 5 · Network">
+  <p class="kicker">What kind of prediction is this?</p>
+  <h2>Same shape in, same shape out: a dense prediction</h2>
+  <div class="body">
+    <div class="row" style="gap:20px;justify-content:center;align-items:center">
+      <figure class="col" style="align-items:center;margin:0"><img class="pix" src="figures/data/ex-xt.png" width="210" style="border:2.5px solid var(--xt);border-radius:6px"><figcaption class="small">$x_t$: [B, 1, 28, 28]</figcaption></figure>
+      <span class="arrow">→</span><span class="node dec">network<small>+ t</small></span><span class="arrow">→</span>
+      <figure class="col" style="align-items:center;margin:0"><img class="pix" src="figures/data/ex-ehat.png" width="210" style="border:2.5px solid var(--dec);border-radius:6px"><figcaption class="small">$\hat\epsilon$: [B, 1, 28, 28]</figcaption></figure>
+      <span class="arrow" data-b="2">⇒</span>
+      <figure class="col" data-b="2" style="align-items:center;margin:0"><img class="pix" src="figures/data/ex-x0hat.png" width="210" style="border:2.5px solid var(--x);border-radius:6px"><figcaption class="small">implied $\hat x_0$</figcaption></figure>
+    </div>
+    <p class="small" data-b="3" style="text-align:center;margin-top:22px">Like segmentation, there is one output per pixel. Unlike segmentation, each output is a real number (noise), not a class.</p>
+  </div>
+  <p class="q" data-b="3">So the architectures that work for dense prediction (encoder–decoders with skips) work here.</p>
+  <span class="badge run">our model</span>
+  <aside class="notes">
+    <p data-say="1">Input and output look alike, both noise-like. That is expected: the output is noise.</p>
+    <p data-say="2">Subtracting it shows what the network "saw": our 7.</p>
+    <p data-say="3">Recall the segmentation lecture: per-pixel class scores. Here it is per-pixel regression. Same need for local detail plus global context.</p>
+  </aside>
+</section>
+
+<section class="slide sec-arch" id="unet" data-section="Part 5 · Network">
+  <p class="kicker">The network that made every sample in this lecture</p>
+  <h2>A small U-Net: shrink to see context, grow back for detail</h2>
+  <div class="body"><!--svg:unet--></div>
+  <p class="q" data-b="5">{{unet_params}} parameters. The skips carry fine detail across; the middle sees the whole digit at 7 × 7.</p>
+  <span class="badge run" data-b="5">our model <small>feature maps</small></span>
+  <aside class="notes">
+    <p data-say="1">The down path: each level halves the resolution and doubles the channels (block height ~ resolution, width ~ channels).</p>
+    <p data-say="2">The middle: 128 channels at 7 × 7, where every unit sees most of the image.</p>
+    <p data-say="3">The up path mirrors it back to 28 × 28, then a 1 × 1 convolution gives one number per pixel.</p>
+    <p data-say="4">Skip connections concatenate the encoder's features into the decoder at the same resolution, so detail lost in the bottleneck is available again.</p>
+    <p data-say="5">Real channels from the trained network on our noisy 7: edges early, blobs in the middle, a 7-shaped map at the end. This is a teaching-sized network; real models such as Stable Diffusion v1's U-Net have about 860 million parameters and attention layers at low resolution.</p>
+  </aside>
+</section>
+
+<section class="slide sec-arch" id="time-inject" data-section="Part 5 · Network">
+  <p class="kicker">Telling the network which step it is at</p>
+  <h2>t becomes a vector, then a per-channel offset in every block</h2>
+  <div class="body">
+    <!--svg:time-inject-->
+    <div class="row" style="gap:24px;align-items:center;justify-content:flex-start;margin-top:-150px;margin-left:10px;width:760px" data-b="1">
+      <img class="fig" src="figures/data/time-stripes.svg" style="width:430px">
+      <p class="small" style="width:300px;margin:0">sin and cos of t at 32 frequencies, like a Transformer's position encoding</p>
+    </div>
+  </div>
+  <p class="q" data-b="3">Every block can change its behaviour with the noise level, at almost no cost in parameters.</p>
+  <aside class="notes">
+    <p data-say="1">The raw number t is turned into 64 features. Same idea as positional encoding: a single integer becomes a rich vector.</p>
+    <p data-say="2">A small shared MLP, then in each block a linear layer maps it to that block's channel count.</p>
+    <p data-say="3">The result is added to every pixel of the block's feature map. This is the line from our model's code.</p>
+  </aside>
+</section>
+
+
+<section class="slide sec-arch" id="latent-why" data-section="Part 5 · Network">
+  <p class="kicker">Why do large models denoise a compressed image?</p>
+  <h2>Run 1000 steps on fewer numbers</h2>
+  <div class="body">
+    <table class="work" style="margin:0 auto;font-size:24px">
+      <tr><th></th><th>image</th><th>latent</th><th>positions</th><th>numbers</th></tr>
+      <tr><td>Stable Diffusion v1</td><td>3 × 512 × 512</td><td>4 × 64 × 64</td><td data-b="2">64× fewer</td><td data-b="3">48× fewer</td></tr>
+      <tr data-b="4"><td>our MNIST autoencoder</td><td>1 × 28 × 28</td><td>4 × 7 × 7</td><td>16× fewer</td><td>4× fewer</td></tr>
+    </table>
+    <p class="small" data-b="3" style="text-align:center;margin-top:24px">786,432 numbers → 16,384. Positions shrink by 8 × 8 = 64; the latent keeps 4 channels instead of 3, so numbers shrink by 48.</p>
+  </div>
+  <p class="q" data-b="4">The latent is still spatial (a small image), so the same U-Net or DiT works on it. The autoencoder handles fine pixel detail once.</p>
+  <span class="badge pub">published <small>SD v1 shapes</small></span>
+  <aside class="notes">
+    <p data-say="1">Stable Diffusion is a latent diffusion model: an autoencoder compresses each image, and diffusion runs in that latent space.</p>
+    <p data-say="2">512² / 64² = 64.</p>
+    <p data-say="3">But 3 channels become 4, so the total count falls by 48. Two ratios that students often mix up. These are representation sizes, not measured speedups.</p>
+    <p data-say="4">Our own version: a small conv autoencoder for MNIST. Next slides show it working.</p>
+  </aside>
+</section>
+
+<section class="slide sec-arch" id="two-stage" data-section="Part 5 · Network">
+  <p class="kicker">Latent diffusion, trained in two stages</p>
+  <h2>First an autoencoder, then diffusion on its latents</h2>
+  <div class="body"><!--svg:two-stage--></div>
+  <p class="q" data-b="2">The diffusion target is noise in latent coordinates; nothing about the training step changes.</p>
+  <span class="badge run">our model</span>
+  <aside class="notes">
+    <p data-say="1">Stage 1: a convolutional autoencoder trained only to reconstruct (a VAE in Stable Diffusion; a plain autoencoder for us). Our 7's four latent channels are shown: a 7 × 7 picture each. The reconstruction is close to the input (MSE {{ae.mse}}).</p>
+    <p data-say="2">Stage 2: freeze it. Encode every training image, divide by the latents' standard deviation so they have unit scale (Stable Diffusion uses a constant 0.18215 for the same reason), and train the same DDPM step on those latents.</p>
+  </aside>
+</section>
+
+<section class="slide sec-arch" id="latent-gen" data-section="Part 5 · Network">
+  <p class="kicker">Generation in latent space</p>
+  <h2>Denoise latents for 1000 steps, decode once</h2>
+  <div class="body">
+    <!--svg:latent-gen-->
+    <div class="row" data-b="2" style="justify-content:center;margin-top:10px"><img class="pix" src="figures/data/latent-samples.png" width="760" style="border-radius:4px"></div>
+  </div>
+  <p class="q" data-b="2">No encoder at generation time: text-to-image starts from latent noise. Image-to-image tasks (SDEdit) can start from an encoded input instead.</p>
+  <span class="badge run">our model</span>
+  <aside class="notes">
+    <p data-say="1">z_T is 4 × 7 × 7 Gaussian noise. The latent denoiser runs the usual loop, then the decoder runs once to produce pixels. Notation: z_t in latent space, x_t in pixel space.</p>
+    <p data-say="2">Eight samples from our latent model. Quality is a little below the pixel model at this tiny scale; the gain is that each of the 1000 steps works on 196 numbers instead of 784. At 512 × 512 that gain is what makes the method affordable.</p>
+  </aside>
+</section>
+
+<section class="slide sec-arch" id="dit" data-section="Part 5 · Network">
+  <p class="kicker">ViT returns as a denoiser</p>
+  <h2>A Transformer can be the denoiser too: DiT</h2>
+  <div class="body"><!--svg:dit--></div>
+  <p class="q" data-b="4">Patches in, a prediction for every patch out: no class token, because the output is dense. t and the label set each block's scale and shift.</p>
+  <span class="badge pub">published <small>Peebles &amp; Xie 2023 shapes</small></span>
+  <p class="src">DiT: Peebles &amp; Xie, Scalable Diffusion Models with Transformers, 2023 (class-conditional, latent space, 256 × 256 images).</p>
+  <aside class="notes">
+    <p data-say="1">DiT works on a latent of 4 × 32 × 32, exactly the kind of compressed image we just built. Cut into 2 × 2 patches: 256 tokens of 16 numbers each, exactly like ViT's patch embedding.</p>
+    <p data-say="2">Full self-attention among all patches. Recall the earlier lecture: no causal mask, every patch sees every patch.</p>
+    <p data-say="3">Conditioning: the step and the class label produce a scale and a shift for each block's normalisation (adaLN-Zero). This is a different conditioning route from the text cross-attention we will see in Part 6.</p>
+    <p data-say="4">Unpatchify back to the latent's shape. The prediction is noise for every patch.</p>
+  </aside>
+</section>

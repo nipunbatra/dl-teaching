@@ -1,0 +1,10 @@
+node_modules/
+__pycache__/
+work/
+qa/builds/
+qa/pdf-renders/
+.DS_Store
+
+# the built deck is the lecture (the repository-root ignore rule targets Quarto output)
+!index.html
+review/

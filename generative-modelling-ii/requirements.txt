@@ -1,0 +1,7 @@
+torch>=2.2
+numpy>=1.26
+Pillow>=10
+matplotlib>=3.8
+nbformat>=5.9
+reportlab>=4
+pypdf>=5

@@ -1,0 +1,229 @@
+<!-- ===================================================================== 5 · Conditioning -->
+
+<section class="slide sec-cond opener break" id="p5-open" data-section="Part 6 · Condition">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 6 of 7</p>
+      <h2>Steering the denoiser with a prompt, a label or known pixels</h2>
+      <p class="why">Everything so far generates a random digit. <b>Goal of this part:</b> make it generate what we ask for. Add the condition c as another input, $\epsilon_\theta(x_t, t, c)$; the training step is unchanged.</p>
+    </div>
+    <!--route:6-->
+  </div>
+</section>
+
+<section class="slide sec-cond" id="prompt" data-section="Part 6 · Condition">
+  <p class="kicker">Back to “A basket full of cherries”</p>
+  <h2>What the network receives from a prompt</h2>
+  <div class="body"><!--svg:prompt--></div>
+  <p class="q" data-b="4">The prompt becomes 77 vectors, computed once and reused at every one of the denoising steps.</p>
+  <span class="badge toy">computed <small>real CLIP tokenizer</small></span>
+  <aside class="notes">
+    <p data-say="1">The CLIP tokenizer (the one Stable Diffusion v1 uses) splits our prompt into 5 word tokens plus start and end markers. Padded to a fixed length of 77.</p>
+    <p data-say="2">The real token IDs, from running the tokenizer. IDs are arbitrary labels: "basket" is 10338 only because of the vocabulary order; remember this in Part 7.</p>
+    <p data-say="3">A frozen text encoder turns them into 77 vectors. You trained this kind of encoder in the CLIP lecture; Stable Diffusion v1 uses CLIP ViT-L/14's text tower, 768 numbers per token. (The LDM paper's own text model, which produced the cherry images, used a BERT tokenizer and a transformer trained jointly.)</p>
+    <p data-say="4">The same C is used at every step; only the noisy image changes.</p>
+  </aside>
+</section>
+
+<section class="slide sec-cond" id="cross-attn" data-section="Part 6 · Condition">
+  <p class="kicker">Cross-attention, reversed from the VLM lecture</p>
+  <h2>Image positions ask questions; words supply the answers</h2>
+  <div class="body"><!--svg:cross-attn--></div>
+  <p class="q" data-b="4">In a VLM, text queried image features. Here image features query the text: each position pulls in the words relevant to it.</p>
+  <span class="badge sketch" data-b="3">illustrative weights</span>
+  <aside class="notes">
+    <p data-say="1">Inside the U-Net, the feature map at some resolution has N = H × W positions. Each position makes a query. The highlighted cell is one position.</p>
+    <p data-say="2">The 77 text vectors make keys and values (only the five word tokens are drawn).</p>
+    <p data-say="3">Scores between that position's query and every word's key, softmax over the words: one row of the N × L attention matrix. The weights here are illustrative, not extracted from a model.</p>
+    <p data-say="4">The output is a weighted sum of value vectors, added back to that position's features. Shapes: Q is [B, N, d], K and V are [B, L, d], A is [B, N, L], AV is [B, N, d]. Heads are in appendix A11.</p>
+  </aside>
+</section>
+
+<section class="slide sec-cond" id="attn-numbers" data-section="Part 6 · Condition">
+  <p class="kicker">One image query, three words, worked by hand</p>
+  <h2>Scores, softmax over the words, weighted sum of values</h2>
+  <div class="body">
+    <div class="row" style="gap:30px;align-items:flex-start;justify-content:center">
+      <table class="work tight" style="font-size:21px">
+        <tr><th>word</th><th>key k</th><th>value v</th></tr>
+        <tr><td class="cenc">golden</td><td>(1, 0)</td><td>(1, 0)</td></tr>
+        <tr><td class="cenc">dog</td><td>(0, 1)</td><td>(0, 2)</td></tr>
+        <tr><td class="cenc">grass</td><td>(1, 1)</td><td>(1, 1)</td></tr>
+      </table>
+      <div class="col" style="gap:10px;width:640px">
+        <p class="small" style="margin:0"><b>query 1</b> = (1, 0)</p>
+        <p class="small" data-b="2" style="margin:0">scores $q\cdot k/\sqrt2$: &nbsp; (0.707, 0, 0.707)</p>
+        <p class="small" data-b="3" style="margin:0">softmax: &nbsp; <b>(0.401, 0.198, 0.401)</b> &nbsp; sums to 1</p>
+        <p class="small" data-b="4" style="margin:0">output: &nbsp; 0.401·(1,0) + 0.198·(0,2) + 0.401·(1,1) = <b>(0.802, 0.797)</b></p>
+        <p class="small" data-b="5" style="margin:0;color:var(--ink-2)"><b>query 2</b> = (0, 1): softmax (0.198, 0.401, 0.401), output <b>(0.599, 1.203)</b></p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="5">Softmax runs over the words, separately for each image position: every position gets its own mixture of the prompt.</p>
+  <span class="badge sketch">illustrative <small>hand-chosen numbers</small></span>
+  <aside class="notes">
+    <p data-say="1">Hand-chosen 2-D features, so the arithmetic fits on a slide. Query 1 "looks for" the first feature.</p>
+    <p data-say="2">Dot products scaled by √d = √2.</p>
+    <p data-say="3">Softmax over the three words: golden and grass tie, dog gets less.</p>
+    <p data-say="4">Weighted sum of the value rows.</p>
+    <p data-say="5">A second image position with a different query gets a different mixture: more of "dog". Ask: why softmax over words and not over image positions? Each position must distribute one unit of attention over the prompt.</p>
+  </aside>
+</section>
+
+<section class="slide sec-cond" id="cfg-train" data-section="Part 6 · Condition">
+  <p class="kicker">Our class-conditional model</p>
+  <h2>Train one network with the label, and sometimes without it</h2>
+  <div class="body"><!--svg:cfg-train--></div>
+  <pre class="code" data-b="2" style="width:900px;margin:8px auto 0;font-size:20px">c = torch.where(torch.rand(B) &lt; 0.1, torch.full_like(c, 10), c)   <span class="c"># 10 means "no label"</span>
+eps_hat = model(xt, t, c)</pre>
+  <p class="q" data-b="2">The same weights now give two predictions for any noisy image: $\epsilon_c$ with the label and $\epsilon_u$ without.</p>
+  <span class="badge run">our model</span>
+  <aside class="notes">
+    <p data-say="1">Same U-Net, plus a learned embedding of the digit label added to the time embedding. Labels are a simpler condition than text, and enough to show guidance on MNIST.</p>
+    <p data-say="2">10% of the time the label is replaced by a special "none" index, with the same input and the same noise target. Our implementation of "no condition" is that extra embedding row; Stable Diffusion uses the empty prompt's encoding.</p>
+  </aside>
+</section>
+
+<section class="slide sec-cond" id="cfg-vectors" data-section="Part 6 · Condition">
+  <p class="kicker">Classifier-free guidance</p>
+  <h2>Guidance: step past the conditional prediction</h2>
+  <div class="body">
+    <div class="row" style="gap:28px;align-items:center">
+      <div class="col" style="width:540px"><!--svg:cfg-vectors--></div>
+      <div class="col grow" style="gap:12px">
+        <div class="mathblock left" style="font-size:27px">$\epsilon_{\text{cfg}} = \epsilon_u + s\,(\epsilon_c - \epsilon_u)$</div>
+        <p class="small">$s = 0$: ignore the label · $s = 1$: ordinary conditional · $s &gt; 1$: exaggerate the label's direction</p>
+        <div class="row" data-b="4" style="gap:10px;margin-top:6px">
+          <figure class="col" style="align-items:center;margin:0"><img class="pix" src="figures/data/cfg-x0-u.png" width="120" style="border:2px solid var(--xt);border-radius:4px"><figcaption class="tiny">guess, s = 0</figcaption></figure>
+          <figure class="col" style="align-items:center;margin:0"><img class="pix" src="figures/data/cfg-x0-c.png" width="120" style="border:2px solid var(--enc);border-radius:4px"><figcaption class="tiny">guess, s = 1</figcaption></figure>
+          <figure class="col" style="align-items:center;margin:0"><img class="pix" src="figures/data/cfg-x0-3.png" width="120" style="border:2px solid var(--dec);border-radius:4px"><figcaption class="tiny">guess, s = 3</figcaption></figure>
+        </div>
+        <p class="small muted" data-b="4">Our model, label 7, one noisy blank page at t = 600: the implied clean image for each prediction.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="4">Two network calls per step, combined by one line of arithmetic. No separate classifier is trained.</p>
+  <span class="badge run" data-b="4">our model <small>bottom row</small></span>
+  <aside class="notes">
+    <p data-say="1">The unconditional prediction, drawn as a 2-D vector (illustrative numbers, equal axis scales).</p>
+    <p data-say="2">The conditional prediction. Their difference is "what knowing the label changes".</p>
+    <p data-say="3">Guidance scale 3 goes three times as far along that difference.</p>
+    <p data-say="4">Real images from our model. Without the label the guess is a vague blob; with it, a faint 7; at s = 3, a bold 7. Guidance sharpens what the label implies.</p>
+  </aside>
+</section>
+
+<section class="slide sec-cond" id="cfg-grid" data-section="Part 6 · Condition">
+  <p class="kicker">Same 64 starting noises, label 7, four guidance scales</p>
+  <h2>Turning up guidance trades variety for fidelity</h2>
+  <div class="body">
+    <div class="grid-rows" style="grid-template-columns:70px 600px 300px;justify-content:center;gap:8px 18px">
+      <span class="rl">s = 0</span><img src="figures/data/cfg-0.png"><span class="small">{{cfg.0.frac7}}% look like 7 · spread {{cfg.0.div}}</span>
+      <span class="rl" data-b="2">s = 1</span><img data-b="2" src="figures/data/cfg-1.png"><span class="small" data-b="2">{{cfg.1.frac7}}% · spread {{cfg.1.div}}</span>
+      <span class="rl" data-b="3">s = 3</span><img data-b="3" src="figures/data/cfg-3.png"><span class="small" data-b="3">{{cfg.3.frac7}}% · spread {{cfg.3.div}}</span>
+      <span class="rl" data-b="4">s = 7</span><img data-b="4" src="figures/data/cfg-7.png"><span class="small" data-b="4">{{cfg.7.frac7}}% · spread {{cfg.7.div}}</span>
+    </div>
+    <p class="small muted" style="text-align:center;margin-top:12px">“Look like a 7”: a separate MNIST classifier's verdict on all 64 samples. Spread: average pixel distance between samples. 8 of 64 shown.</p>
+  </div>
+  <p class="q" data-b="4">At s = 1, {{cfg.1.frac7}}% already look like a 7. Larger s gives {{cfg.7.frac7}}%, with bolder and more alike strokes: spread {{cfg.1.div}} → {{cfg.7.div}}.</p>
+  <span class="badge run">our model</span>
+  <aside class="notes">
+    <p data-say="1">s = 0 ignores the label: any digit.</p>
+    <p data-say="2">s = 1, the plain conditional model. {{cfg.1.frac7}}% are already sevens: on MNIST a digit label is a strong, simple condition. Text prompts are followed much less reliably at s = 1, which is why guidance matters more for text-to-image.</p>
+    <p data-say="3">s = 3: nearly all sevens.</p>
+    <p data-say="4">s = 7: thick, similar sevens. Spread falls as s grows. Text-to-image systems typically use s around 5–10 for the same reason: prompts are followed more literally, at the cost of variety and sometimes saturated colours.</p>
+  </aside>
+</section>
+
+<section class="slide sec-cond" id="inpaint-ours" data-section="Part 6 · Condition">
+  <p class="kicker">Back to the opener: filling a missing region</p>
+  <h2>Inpainting with our model: paste the known pixels back in</h2>
+  <div class="body">
+    <!--svg:repaint-->
+    <div class="row" data-b="3" style="justify-content:center;gap:16px;margin-top:6px;align-items:center">
+      <span class="small" style="width:150px;text-align:right">six samples:</span>
+      <img class="pix" src="figures/data/inpaint-out.png" width="760" style="border-radius:4px">
+    </div>
+  </div>
+  <p class="q" data-b="3">No retraining: known pixels come from the forward process, unknown ones from the reverse step. Different seeds give different digits that agree with the top half.</p>
+  <span class="badge run">our model</span>
+  <aside class="notes">
+    <p data-say="1">We keep the top half of our 7 and hide the bottom.</p>
+    <p data-say="2">Each step: the model proposes x_{t−1} for the whole image; we overwrite the known region with the clean pixels noised to step t−1 using the exact forward formula. This is RePaint's core idea; RePaint also re-noises and repeats some steps ("resampling") to blend the two regions better, which we skip.</p>
+    <p data-say="3">Six seeds. Ask: are they all sevens? The top bar of a 7 is shared by several digits, so the model is free to choose. That is the conditional distribution from the opening slide.</p>
+  </aside>
+</section>
+
+<section class="slide sec-cond" id="sdedit-ours" data-section="Part 6 · Condition">
+  <p class="kicker">Back to the opener: a crude painting becomes a picture</p>
+  <h2>Start the reverse chain from a noised sketch</h2>
+  <div class="body">
+    <div class="row" style="gap:22px;justify-content:center;align-items:flex-start">
+      <figure class="col" style="align-items:center;margin:0"><img class="pix" src="figures/data/sdedit-input.png" width="130" style="border:2.5px solid var(--x);border-radius:4px"><figcaption class="small">blocky sketch</figcaption></figure>
+      <div class="col" style="align-items:center;gap:6px" data-b="1"><p class="lbl">start at t = 200</p><img class="pix" src="figures/data/sdedit-start-200.png" width="82"><img class="pix" src="figures/data/sdedit-200.png" width="82"></div>
+      <div class="col" style="align-items:center;gap:6px" data-b="2"><p class="lbl">t = 400</p><img class="pix" src="figures/data/sdedit-start-400.png" width="82"><img class="pix" src="figures/data/sdedit-400.png" width="82"></div>
+      <div class="col" style="align-items:center;gap:6px" data-b="2"><p class="lbl">t = 600</p><img class="pix" src="figures/data/sdedit-start-600.png" width="82"><img class="pix" src="figures/data/sdedit-600.png" width="82"></div>
+      <div class="col" style="align-items:center;gap:6px" data-b="2"><p class="lbl">t = 800</p><img class="pix" src="figures/data/sdedit-start-800.png" width="82"><img class="pix" src="figures/data/sdedit-800.png" width="82"></div>
+    </div>
+    <p class="small muted" style="text-align:center;margin:4px 0 0">top: the noised sketch $\sqrt{\bar\alpha_{t_0}}\,x_{\text{sketch}} + \sqrt{1-\bar\alpha_{t_0}}\,\epsilon$ · below: three outputs each</p>
+  </div>
+  <p class="q" data-b="2">Little noise keeps the sketch's blocks; a lot of noise gives a realistic digit that may drift from it. The starting t sets the trade-off.</p>
+  <span class="badge run">our model</span>
+  <aside class="notes">
+    <p data-say="1">The sketch: our 7 reduced to 7 × 7 blocks. Noise it to t₀ = 200 with the jump formula and run only the last 200 reverse steps. The blocks are smoothed but the shape stays.</p>
+    <p data-say="2">Larger t₀ gives the model more freedom: by 800, outputs are clean handwritten digits, not necessarily faithful to the sketch. This is SDEdit, and it supports the claim made on the opening slide.</p>
+  </aside>
+</section>
+
+<section class="slide sec-cond" id="cond-code" data-section="Part 6 · Condition">
+  <p class="kicker">The same sampler loop from Part 3, with conditions added</p>
+  <h2>Guidance and inpainting are a few changed lines</h2>
+  <div class="body">
+    <div class="row" style="gap:24px;align-items:center">
+      <pre class="code" style="font-size:18px;width:860px"><span class="line">x = torch.randn(B, 1, 28, 28)</span>
+<span class="line">for t in range(T, 0, -1):</span>
+<span class="line">    tt = torch.full((B,), t)</span>
+<span class="line" data-hl="1">    eps_u = model(x, tt, none)                 <span class="c"># label hidden</span></span>
+<span class="line" data-hl="1">    eps_c = model(x, tt, label)                <span class="c"># label 7</span></span>
+<span class="line" data-hl="1">    eps_hat = eps_u + s * (eps_c - eps_u)      <span class="c"># guidance</span></span>
+<span class="line">    c = beta[t] / (1 - alpha_bar[t]).sqrt()</span>
+<span class="line">    mean = (x - c * eps_hat) / alpha[t].sqrt()</span>
+<span class="line">    x = mean + post_var[t].sqrt() * torch.randn_like(x) if t &gt; 1 else mean</span>
+<span class="line" data-hl="2">    known_t, _ = corrupt(x_known, torch.full((B,), t - 1))</span>
+<span class="line" data-hl="2">    x = mask * known_t + (1 - mask) * x       <span class="c"># inpainting</span></span></pre>
+      <div class="col" style="width:240px;gap:12px">
+        <div class="callout enc" data-b="1">guidance: two calls, one line of arithmetic</div>
+        <div class="callout x" data-b="2">inpainting: overwrite the known pixels, noised to the next step</div>
+        <div class="callout plain" data-b="3">SDEdit: change only the first line, start from the noised sketch at $t_0$</div>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">The trained network never changes; only how we call it and what we do with its output.</p>
+  <aside class="notes">
+    <p data-say="1">Classifier-free guidance: run the network with and without the label (in practice as one batch of 2B) and combine.</p>
+    <p data-say="2">Inpainting with an unconditional model: after each step, replace the known region with the clean pixels noised to step t−1 (corrupt() from Part 1; at t = 1 that is the clean image itself).</p>
+    <p data-say="3">SDEdit replaces the first line: x = corrupt(sketch, t0) and the loop starts at t0. Super-resolution is the exception: the low-res image is an extra input the network was trained with.</p>
+  </aside>
+</section>
+
+<section class="slide sec-cond" id="superres-how" data-section="Part 6 · Condition">
+  <p class="kicker">Back to the opener: super-resolution</p>
+  <h2>Super-resolution: feed the low-res image in as extra channels</h2>
+  <div class="body">
+    <div class="row" style="gap:18px;justify-content:center;align-items:center">
+      <figure class="col" style="align-items:center;margin:0"><img class="photo" src="figures/data/pub-sr3-face-1.png" width="170" style="border-radius:4px"><figcaption class="small">low-res, enlarged</figcaption></figure>
+      <span class="arrow">+</span>
+      <figure class="col" style="align-items:center;margin:0"><div class="qbox" style="width:170px;height:174px;font-size:20px;color:var(--xt)">noisy $x_t$</div><figcaption class="small">high-res state</figcaption></figure>
+      <span class="arrow">→</span><span class="node dec">network<small>6 input channels</small></span><span class="arrow">→</span>
+      <figure class="col" style="align-items:center;margin:0"><div class="qbox" style="width:170px;height:174px;font-size:24px;color:var(--dec)">$\hat\epsilon$</div><figcaption class="small">noise in $x_t$</figcaption></figure>
+      <span class="arrow" data-b="2">⇒</span>
+      <figure class="col" data-b="2" style="align-items:center;margin:0"><img class="photo" src="figures/data/pub-sr3-face-3.png" width="170" style="border-radius:4px"><figcaption class="small">SR3 sample</figcaption></figure>
+    </div>
+  </div>
+  <p class="q" data-b="2">Unlike inpainting, this needs a model trained with the low-res input. And, as with our lab images, the added detail is a sample, not a measurement.</p>
+  <span class="badge pub" data-b="2">published</span>
+  <p class="src">SR3, Saharia et al. 2022. Diagram: the conditioning scheme described in the paper (concatenation of the upsampled input).</p>
+  <aside class="notes">
+    <p data-say="1">SR3 concatenates the upsampled low-resolution image to the noisy high-resolution state: 3 + 3 = 6 input channels. Trained on (low-res, high-res) pairs with the usual noise target.</p>
+    <p data-say="2">Contrast with our inpainting: there the unconditional model needed no retraining because the condition is "these pixels are known exactly". Here the condition is indirect, so the model must learn how it relates to the image.</p>
+  </aside>
+</section>
