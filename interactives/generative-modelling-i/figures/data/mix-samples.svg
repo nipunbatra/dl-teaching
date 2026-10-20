@@ -1,0 +1,959 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="563.76pt" height="207.393pt" viewBox="0 0 563.76 207.393" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ 
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 207.393 
+L 563.76 207.393 
+L 563.76 0 
+L 0 0 
+L 0 207.393 
+z
+" style="fill: none"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 2.88 180.288 
+L 560.88 180.288 
+L 560.88 2.88 
+L 2.88 2.88 
+L 2.88 180.288 
+z
+" style="fill: none"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 30.78 180.288 
+L 44.73 180.288 
+L 44.73 180.288 
+L 30.78 180.288 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 44.73 180.288 
+L 58.68 180.288 
+L 58.68 180.288 
+L 44.73 180.288 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 58.68 180.288 
+L 72.63 180.288 
+L 72.63 180.288 
+L 58.68 180.288 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 72.63 180.288 
+L 86.58 180.288 
+L 86.58 180.288 
+L 72.63 180.288 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_7">
+    <path d="M 86.58 180.288 
+L 100.53 180.288 
+L 100.53 172.608 
+L 86.58 172.608 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_8">
+    <path d="M 100.53 180.288 
+L 114.48 180.288 
+L 114.48 164.928 
+L 100.53 164.928 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_9">
+    <path d="M 114.48 180.288 
+L 128.43 180.288 
+L 128.43 111.168 
+L 114.48 111.168 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_10">
+    <path d="M 128.43 180.288 
+L 142.38 180.288 
+L 142.38 103.488 
+L 128.43 103.488 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_11">
+    <path d="M 142.38 180.288 
+L 156.33 180.288 
+L 156.33 11.328 
+L 142.38 11.328 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_12">
+    <path d="M 156.33 180.288 
+L 170.28 180.288 
+L 170.28 65.088 
+L 156.33 65.088 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_13">
+    <path d="M 170.28 180.288 
+L 184.23 180.288 
+L 184.23 26.688 
+L 170.28 26.688 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_14">
+    <path d="M 184.23 180.288 
+L 198.18 180.288 
+L 198.18 88.128 
+L 184.23 88.128 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_15">
+    <path d="M 198.18 180.288 
+L 212.13 180.288 
+L 212.13 88.128 
+L 198.18 88.128 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_16">
+    <path d="M 212.13 180.288 
+L 226.08 180.288 
+L 226.08 157.248 
+L 212.13 157.248 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_17">
+    <path d="M 226.08 180.288 
+L 240.03 180.288 
+L 240.03 157.248 
+L 226.08 157.248 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_18">
+    <path d="M 240.03 180.288 
+L 253.98 180.288 
+L 253.98 180.288 
+L 240.03 180.288 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_19">
+    <path d="M 253.98 180.288 
+L 267.93 180.288 
+L 267.93 180.288 
+L 253.98 180.288 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_20">
+    <path d="M 267.93 180.288 
+L 281.88 180.288 
+L 281.88 180.288 
+L 267.93 180.288 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_21">
+    <path d="M 281.88 180.288 
+L 295.83 180.288 
+L 295.83 180.288 
+L 281.88 180.288 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_22">
+    <path d="M 295.83 180.288 
+L 309.78 180.288 
+L 309.78 180.288 
+L 295.83 180.288 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_23">
+    <path d="M 309.78 180.288 
+L 323.73 180.288 
+L 323.73 172.608 
+L 309.78 172.608 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_24">
+    <path d="M 323.73 180.288 
+L 337.68 180.288 
+L 337.68 164.928 
+L 323.73 164.928 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_25">
+    <path d="M 337.68 180.288 
+L 351.63 180.288 
+L 351.63 149.568 
+L 337.68 149.568 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_26">
+    <path d="M 351.63 180.288 
+L 365.58 180.288 
+L 365.58 95.808 
+L 351.63 95.808 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_27">
+    <path d="M 365.58 180.288 
+L 379.53 180.288 
+L 379.53 57.408 
+L 365.58 57.408 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_28">
+    <path d="M 379.53 180.288 
+L 393.48 180.288 
+L 393.48 95.808 
+L 379.53 95.808 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_29">
+    <path d="M 393.48 180.288 
+L 407.43 180.288 
+L 407.43 26.688 
+L 393.48 26.688 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_30">
+    <path d="M 407.43 180.288 
+L 421.38 180.288 
+L 421.38 95.808 
+L 407.43 95.808 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_31">
+    <path d="M 421.38 180.288 
+L 435.33 180.288 
+L 435.33 126.528 
+L 421.38 126.528 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_32">
+    <path d="M 435.33 180.288 
+L 449.28 180.288 
+L 449.28 149.568 
+L 435.33 149.568 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_33">
+    <path d="M 449.28 180.288 
+L 463.23 180.288 
+L 463.23 157.248 
+L 449.28 157.248 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_34">
+    <path d="M 463.23 180.288 
+L 477.18 180.288 
+L 477.18 172.608 
+L 463.23 172.608 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_35">
+    <path d="M 477.18 180.288 
+L 491.13 180.288 
+L 491.13 180.288 
+L 477.18 180.288 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_36">
+    <path d="M 491.13 180.288 
+L 505.08 180.288 
+L 505.08 180.288 
+L 491.13 180.288 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_37">
+    <path d="M 505.08 180.288 
+L 519.03 180.288 
+L 519.03 180.288 
+L 505.08 180.288 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_38">
+    <path d="M 519.03 180.288 
+L 532.98 180.288 
+L 532.98 180.288 
+L 519.03 180.288 
+z
+" clip-path="url(#p687c25a6ad)" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="matplotlib.axis_1">
+    <g id="xtick_1">
+     <g id="line2d_1">
+      <defs>
+       <path id="m4c787c1b2e" d="M 0 0 
+L 0 3.5 
+" style="stroke: #6b7280; stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#m4c787c1b2e" x="58.68" y="180.288" style="fill: #6b7280; stroke: #6b7280; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_1">
+      <!-- −4 -->
+      <g style="fill: #6b7280" transform="translate(50.737812 200.288) scale(0.13 -0.13)">
+       <defs>
+        <path id="Avenir-Book-95" d="M 3763 1747 
+L 499 1747 
+L 499 2131 
+L 3763 2131 
+L 3763 1747 
+z
+" transform="scale(0.015625)"/>
+        <path id="Avenir-Book-7b" d="M 2202 4070 
+L 2189 4070 
+L 627 1498 
+L 2202 1498 
+L 2202 4070 
+z
+M 2662 1498 
+L 3315 1498 
+L 3315 1075 
+L 2662 1075 
+L 2662 0 
+L 2202 0 
+L 2202 1075 
+L 243 1075 
+L 243 1600 
+L 2074 4531 
+L 2662 4531 
+L 2662 1498 
+z
+" transform="scale(0.015625)"/>
+       </defs>
+       <use xlink:href="#Avenir-Book-95"/>
+       <use xlink:href="#Avenir-Book-7b" transform="translate(66.59375 0)"/>
+      </g>
+     </g>
+    </g>
+    <g id="xtick_2">
+     <g id="line2d_2">
+      <g>
+       <use xlink:href="#m4c787c1b2e" x="170.28" y="180.288" style="fill: #6b7280; stroke: #6b7280; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_2">
+      <!-- −2 -->
+      <g style="fill: #6b7280" transform="translate(162.337812 200.288) scale(0.13 -0.13)">
+       <defs>
+        <path id="Avenir-Book-d3" d="M 3187 0 
+L 307 0 
+L 307 531 
+L 2112 2368 
+Q 2214 2470 2316 2585 
+Q 2419 2701 2502 2829 
+Q 2586 2957 2637 3097 
+Q 2688 3238 2688 3392 
+Q 2688 3578 2621 3725 
+Q 2554 3872 2432 3974 
+Q 2310 4077 2150 4131 
+Q 1990 4186 1811 4186 
+Q 1466 4186 1222 3994 
+Q 979 3802 909 3475 
+L 422 3526 
+Q 518 4032 886 4320 
+Q 1254 4608 1779 4608 
+Q 2054 4608 2300 4534 
+Q 2547 4461 2736 4313 
+Q 2925 4166 3037 3945 
+Q 3149 3725 3149 3430 
+Q 3149 3168 3069 2950 
+Q 2989 2733 2861 2541 
+Q 2733 2349 2569 2176 
+Q 2406 2003 2234 1837 
+L 806 422 
+L 3187 422 
+L 3187 0 
+z
+" transform="scale(0.015625)"/>
+       </defs>
+       <use xlink:href="#Avenir-Book-95"/>
+       <use xlink:href="#Avenir-Book-d3" transform="translate(66.59375 0)"/>
+      </g>
+     </g>
+    </g>
+    <g id="xtick_3">
+     <g id="line2d_3">
+      <g>
+       <use xlink:href="#m4c787c1b2e" x="281.88" y="180.288" style="fill: #6b7280; stroke: #6b7280; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_3">
+      <!-- 0 -->
+      <g style="fill: #6b7280" transform="translate(278.266406 200.288) scale(0.13 -0.13)">
+       <defs>
+        <path id="Avenir-Book-e4" d="M 1779 4186 
+Q 1408 4186 1193 3987 
+Q 979 3789 870 3494 
+Q 762 3200 733 2867 
+Q 704 2534 704 2266 
+Q 704 1997 733 1664 
+Q 762 1331 870 1036 
+Q 979 742 1193 544 
+Q 1408 346 1779 346 
+Q 2150 346 2364 544 
+Q 2579 742 2688 1036 
+Q 2797 1331 2825 1664 
+Q 2854 1997 2854 2266 
+Q 2854 2534 2825 2867 
+Q 2797 3200 2688 3494 
+Q 2579 3789 2364 3987 
+Q 2150 4186 1779 4186 
+z
+M 1779 4608 
+Q 2266 4608 2566 4384 
+Q 2867 4160 3033 3814 
+Q 3200 3469 3257 3056 
+Q 3315 2643 3315 2266 
+Q 3315 1888 3257 1475 
+Q 3200 1062 3033 716 
+Q 2867 371 2566 147 
+Q 2266 -77 1779 -77 
+Q 1293 -77 992 147 
+Q 691 371 524 716 
+Q 358 1062 300 1475 
+Q 243 1888 243 2266 
+Q 243 2643 300 3056 
+Q 358 3469 524 3814 
+Q 691 4160 992 4384 
+Q 1293 4608 1779 4608 
+z
+" transform="scale(0.015625)"/>
+       </defs>
+       <use xlink:href="#Avenir-Book-e4"/>
+      </g>
+     </g>
+    </g>
+    <g id="xtick_4">
+     <g id="line2d_4">
+      <g>
+       <use xlink:href="#m4c787c1b2e" x="393.48" y="180.288" style="fill: #6b7280; stroke: #6b7280; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_4">
+      <!-- 2 -->
+      <g style="fill: #6b7280" transform="translate(389.866406 200.288) scale(0.13 -0.13)">
+       <use xlink:href="#Avenir-Book-d3"/>
+      </g>
+     </g>
+    </g>
+    <g id="xtick_5">
+     <g id="line2d_5">
+      <g>
+       <use xlink:href="#m4c787c1b2e" x="505.08" y="180.288" style="fill: #6b7280; stroke: #6b7280; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_5">
+      <!-- 4 -->
+      <g style="fill: #6b7280" transform="translate(501.466406 200.288) scale(0.13 -0.13)">
+       <use xlink:href="#Avenir-Book-7b"/>
+      </g>
+     </g>
+    </g>
+   </g>
+   <g id="matplotlib.axis_2"/>
+   <g id="patch_39">
+    <path d="M 30.78 180.288 
+L 30.78 180.288 
+L 44.73 180.288 
+L 44.73 180.288 
+L 58.68 180.288 
+L 58.68 180.288 
+L 72.63 180.288 
+L 72.63 172.608 
+L 86.58 172.608 
+L 86.58 168 
+L 100.53 168 
+L 100.53 152.64 
+L 114.48 152.64 
+L 114.48 134.208 
+L 128.43 134.208 
+L 128.43 81.984 
+L 142.38 81.984 
+L 142.38 49.728 
+L 156.33 49.728 
+L 156.33 17.472 
+L 170.28 17.472 
+L 170.28 23.616 
+L 184.23 23.616 
+L 184.23 63.552 
+L 198.18 63.552 
+L 198.18 100.416 
+L 212.13 100.416 
+L 212.13 160.32 
+L 226.08 160.32 
+L 226.08 169.536 
+L 240.03 169.536 
+L 240.03 174.144 
+L 253.98 174.144 
+L 253.98 177.216 
+L 267.93 177.216 
+L 267.93 180.288 
+L 281.88 180.288 
+L 281.88 180.288 
+L 295.83 180.288 
+L 295.83 178.752 
+L 309.78 178.752 
+L 309.78 172.608 
+L 323.73 172.608 
+L 323.73 166.464 
+L 337.68 166.464 
+L 337.68 155.712 
+L 351.63 155.712 
+L 351.63 124.992 
+L 365.58 124.992 
+L 365.58 74.304 
+L 379.53 74.304 
+L 379.53 62.016 
+L 393.48 62.016 
+L 393.48 58.944 
+L 407.43 58.944 
+L 407.43 91.2 
+L 421.38 91.2 
+L 421.38 114.24 
+L 435.33 114.24 
+L 435.33 149.568 
+L 449.28 149.568 
+L 449.28 163.392 
+L 463.23 163.392 
+L 463.23 175.68 
+L 477.18 175.68 
+L 477.18 180.288 
+L 491.13 180.288 
+L 491.13 178.752 
+L 505.08 178.752 
+L 505.08 180.288 
+L 519.03 180.288 
+L 519.03 180.288 
+L 532.98 180.288 
+L 532.98 180.288 
+" clip-path="url(#p687c25a6ad)" style="fill: none; stroke: #aa4e08; stroke-width: 2.4; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_40">
+    <path d="M 2.88 180.288 
+L 560.88 180.288 
+" style="fill: none; stroke: #9aa1ad; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="legend_1">
+    <g id="patch_41">
+     <path d="M 157.8925 29.48 
+L 185.8925 29.48 
+L 185.8925 19.68 
+L 157.8925 19.68 
+z
+" style="fill: #e4ecff; stroke: #ffffff; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_6">
+     <!-- the data -->
+     <g transform="translate(197.0925 29.48) scale(0.14 -0.14)">
+      <defs>
+       <path id="Avenir-Book-cc" d="M 2010 2611 
+L 1146 2611 
+L 1146 845 
+Q 1146 678 1178 572 
+Q 1210 467 1267 409 
+Q 1325 352 1405 329 
+Q 1485 307 1581 307 
+Q 1690 307 1805 339 
+Q 1920 371 2016 422 
+L 2035 32 
+Q 1798 -77 1466 -77 
+Q 1344 -77 1213 -45 
+Q 1082 -13 973 76 
+Q 864 166 793 320 
+Q 723 474 723 723 
+L 723 2611 
+L 90 2611 
+L 90 2995 
+L 723 2995 
+L 723 3840 
+L 1146 3840 
+L 1146 2995 
+L 2010 2995 
+L 2010 2611 
+z
+" transform="scale(0.015625)"/>
+       <path id="Avenir-Book-85" d="M 461 4838 
+L 883 4838 
+L 883 2515 
+L 896 2515 
+Q 966 2637 1075 2739 
+Q 1184 2842 1318 2915 
+Q 1453 2989 1603 3030 
+Q 1754 3072 1901 3072 
+Q 2477 3072 2752 2768 
+Q 3027 2464 3027 1901 
+L 3027 0 
+L 2605 0 
+L 2605 1658 
+Q 2605 2157 2432 2422 
+Q 2259 2688 1792 2688 
+Q 1760 2688 1613 2662 
+Q 1466 2637 1302 2521 
+Q 1139 2406 1011 2176 
+Q 883 1946 883 1536 
+L 883 0 
+L 461 0 
+L 461 4838 
+z
+" transform="scale(0.015625)"/>
+       <path id="Avenir-Book-69" d="M 2790 1728 
+Q 2790 2157 2534 2422 
+Q 2278 2688 1818 2688 
+Q 1613 2688 1421 2608 
+Q 1229 2528 1085 2393 
+Q 941 2259 854 2086 
+Q 768 1914 768 1728 
+L 2790 1728 
+z
+M 755 1382 
+Q 774 1158 864 960 
+Q 954 762 1101 618 
+Q 1248 474 1440 390 
+Q 1632 307 1856 307 
+Q 2195 307 2441 464 
+Q 2688 621 2816 826 
+L 3142 557 
+Q 2874 218 2550 70 
+Q 2227 -77 1856 -77 
+Q 1523 -77 1238 41 
+Q 954 160 749 371 
+Q 544 582 425 870 
+Q 307 1158 307 1498 
+Q 307 1837 422 2125 
+Q 538 2413 742 2624 
+Q 947 2835 1222 2953 
+Q 1498 3072 1818 3072 
+Q 2157 3072 2425 2950 
+Q 2694 2829 2876 2627 
+Q 3059 2426 3155 2154 
+Q 3251 1882 3251 1574 
+L 3251 1382 
+L 755 1382 
+z
+" transform="scale(0.015625)"/>
+       <path id="Avenir-Book-3" transform="scale(0.015625)"/>
+       <path id="Avenir-Book-60" d="M 717 1498 
+Q 717 1248 797 1030 
+Q 877 813 1024 653 
+Q 1171 493 1379 400 
+Q 1587 307 1850 307 
+Q 2106 307 2326 400 
+Q 2547 493 2707 653 
+Q 2867 813 2956 1030 
+Q 3046 1248 3046 1498 
+Q 3046 1747 2956 1964 
+Q 2867 2182 2707 2342 
+Q 2547 2502 2326 2595 
+Q 2106 2688 1850 2688 
+Q 1587 2688 1379 2595 
+Q 1171 2502 1024 2342 
+Q 877 2182 797 1964 
+Q 717 1747 717 1498 
+z
+M 3450 0 
+L 3027 0 
+L 3027 499 
+L 3014 499 
+Q 2912 346 2771 237 
+Q 2630 128 2476 57 
+Q 2323 -13 2160 -45 
+Q 1997 -77 1850 -77 
+Q 1498 -77 1206 41 
+Q 915 160 704 371 
+Q 493 582 374 870 
+Q 256 1158 256 1498 
+Q 256 1837 374 2125 
+Q 493 2413 704 2624 
+Q 915 2835 1206 2953 
+Q 1498 3072 1850 3072 
+Q 1997 3072 2160 3040 
+Q 2323 3008 2476 2937 
+Q 2630 2867 2771 2758 
+Q 2912 2650 3014 2496 
+L 3027 2496 
+L 3027 4838 
+L 3450 4838 
+L 3450 0 
+z
+" transform="scale(0.015625)"/>
+       <path id="Avenir-Book-3e" d="M 2163 1491 
+Q 2003 1491 1763 1475 
+Q 1523 1459 1302 1398 
+Q 1082 1338 925 1210 
+Q 768 1082 768 858 
+Q 768 710 829 604 
+Q 890 499 992 432 
+Q 1094 365 1219 336 
+Q 1344 307 1472 307 
+Q 1702 307 1872 384 
+Q 2042 461 2157 592 
+Q 2272 723 2326 899 
+Q 2381 1075 2381 1274 
+L 2381 1491 
+L 2163 1491 
+z
+M 2381 1837 
+L 2381 1914 
+Q 2381 2688 1613 2688 
+Q 1088 2688 698 2336 
+L 442 2637 
+Q 864 3072 1709 3072 
+Q 1926 3072 2128 3008 
+Q 2330 2944 2477 2813 
+Q 2624 2682 2713 2483 
+Q 2803 2285 2803 2010 
+L 2803 672 
+Q 2803 499 2819 310 
+Q 2835 122 2854 0 
+L 2445 0 
+Q 2426 109 2416 237 
+Q 2406 365 2406 486 
+L 2394 486 
+Q 2208 186 1955 54 
+Q 1702 -77 1338 -77 
+Q 1139 -77 953 -22 
+Q 768 32 624 144 
+Q 480 256 393 419 
+Q 307 582 307 800 
+Q 307 1165 496 1373 
+Q 685 1581 969 1683 
+Q 1254 1786 1577 1811 
+Q 1901 1837 2170 1837 
+L 2381 1837 
+z
+" transform="scale(0.015625)"/>
+      </defs>
+      <use xlink:href="#Avenir-Book-cc"/>
+      <use xlink:href="#Avenir-Book-85" transform="translate(33.203125 0)"/>
+      <use xlink:href="#Avenir-Book-69" transform="translate(88.796875 0)"/>
+      <use xlink:href="#Avenir-Book-3" transform="translate(144.390625 0)"/>
+      <use xlink:href="#Avenir-Book-60" transform="translate(172.1875 0)"/>
+      <use xlink:href="#Avenir-Book-3e" transform="translate(233.28125 0)"/>
+      <use xlink:href="#Avenir-Book-cc" transform="translate(285.1875 0)"/>
+      <use xlink:href="#Avenir-Book-3e" transform="translate(318.390625 0)"/>
+     </g>
+    </g>
+    <g id="patch_42">
+     <path d="M 276.934062 29.48 
+L 304.934062 29.48 
+L 304.934062 19.68 
+L 276.934062 19.68 
+L 276.934062 29.48 
+z
+" style="fill: none; stroke: #aa4e08; stroke-width: 2.4; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_7">
+     <!-- 1,000 samples -->
+     <g transform="translate(316.134062 29.48) scale(0.14 -0.14)">
+      <defs>
+       <path id="Avenir-Book-a3" d="M 2227 0 
+L 1766 0 
+L 1766 3955 
+L 954 3238 
+L 666 3584 
+L 1818 4531 
+L 2227 4531 
+L 2227 0 
+z
+" transform="scale(0.015625)"/>
+       <path id="Avenir-Book-5d" d="M 845 -896 
+L 416 -896 
+L 845 608 
+L 1363 608 
+L 845 -896 
+z
+" transform="scale(0.015625)"/>
+       <path id="Avenir-Book-c3" d="M 2048 2285 
+Q 1952 2470 1792 2579 
+Q 1632 2688 1402 2688 
+Q 1293 2688 1181 2662 
+Q 1069 2637 979 2582 
+Q 890 2528 835 2445 
+Q 781 2362 781 2240 
+Q 781 2029 928 1933 
+Q 1075 1837 1370 1766 
+L 1798 1664 
+Q 2112 1594 2320 1379 
+Q 2528 1165 2528 845 
+Q 2528 602 2429 426 
+Q 2330 250 2166 138 
+Q 2003 26 1792 -25 
+Q 1581 -77 1363 -77 
+Q 1018 -77 720 54 
+Q 422 186 211 506 
+L 576 755 
+Q 704 550 899 428 
+Q 1094 307 1363 307 
+Q 1491 307 1619 336 
+Q 1747 365 1846 425 
+Q 1946 486 2006 582 
+Q 2067 678 2067 806 
+Q 2067 1030 1900 1129 
+Q 1734 1229 1498 1286 
+L 1088 1382 
+Q 1011 1402 880 1446 
+Q 749 1491 624 1580 
+Q 499 1670 409 1814 
+Q 320 1958 320 2170 
+Q 320 2400 413 2573 
+Q 506 2746 662 2854 
+Q 819 2963 1017 3017 
+Q 1216 3072 1427 3072 
+Q 1741 3072 2009 2950 
+Q 2278 2829 2426 2534 
+L 2048 2285 
+z
+" transform="scale(0.015625)"/>
+       <path id="Avenir-Book-93" d="M 461 2330 
+Q 461 2496 451 2662 
+Q 442 2829 429 2995 
+L 883 2995 
+L 883 2541 
+L 896 2541 
+Q 1050 2803 1322 2937 
+Q 1594 3072 1862 3072 
+Q 1984 3072 2121 3046 
+Q 2259 3021 2387 2953 
+Q 2515 2886 2627 2764 
+Q 2739 2643 2816 2451 
+Q 2944 2739 3222 2905 
+Q 3501 3072 3802 3072 
+Q 4378 3072 4653 2768 
+Q 4928 2464 4928 1901 
+L 4928 0 
+L 4506 0 
+L 4506 1747 
+Q 4506 2202 4346 2445 
+Q 4186 2688 3750 2688 
+Q 3514 2688 3354 2595 
+Q 3194 2502 3094 2348 
+Q 2995 2195 2950 2000 
+Q 2906 1805 2906 1594 
+L 2906 0 
+L 2483 0 
+L 2483 1747 
+Q 2483 2202 2323 2445 
+Q 2163 2688 1728 2688 
+Q 1690 2688 1552 2662 
+Q 1414 2637 1267 2521 
+Q 1120 2406 1001 2176 
+Q 883 1946 883 1536 
+L 883 0 
+L 461 0 
+L 461 2330 
+z
+" transform="scale(0.015625)"/>
+       <path id="Avenir-Book-ab" d="M 3194 1498 
+Q 3194 1747 3114 1964 
+Q 3034 2182 2886 2342 
+Q 2739 2502 2531 2595 
+Q 2323 2688 2061 2688 
+Q 1798 2688 1580 2595 
+Q 1363 2502 1203 2342 
+Q 1043 2182 953 1964 
+Q 864 1747 864 1498 
+Q 864 1248 953 1030 
+Q 1043 813 1203 653 
+Q 1363 493 1580 400 
+Q 1798 307 2061 307 
+Q 2323 307 2531 400 
+Q 2739 493 2886 653 
+Q 3034 813 3114 1030 
+Q 3194 1248 3194 1498 
+z
+M 461 2995 
+L 883 2995 
+L 883 2496 
+L 896 2496 
+Q 998 2650 1139 2758 
+Q 1280 2867 1433 2937 
+Q 1587 3008 1750 3040 
+Q 1914 3072 2061 3072 
+Q 2413 3072 2704 2953 
+Q 2995 2835 3206 2624 
+Q 3418 2413 3536 2125 
+Q 3654 1837 3654 1498 
+Q 3654 1158 3536 870 
+Q 3418 582 3206 371 
+Q 2995 160 2704 41 
+Q 2413 -77 2061 -77 
+Q 1914 -77 1750 -45 
+Q 1587 -13 1433 57 
+Q 1280 128 1139 237 
+Q 998 346 896 499 
+L 883 499 
+L 883 -1843 
+L 461 -1843 
+L 461 2995 
+z
+" transform="scale(0.015625)"/>
+       <path id="Avenir-Book-8f" d="M 979 0 
+L 557 0 
+L 557 4838 
+L 979 4838 
+L 979 0 
+z
+" transform="scale(0.015625)"/>
+      </defs>
+      <use xlink:href="#Avenir-Book-a3"/>
+      <use xlink:href="#Avenir-Book-5d" transform="translate(55.59375 0)"/>
+      <use xlink:href="#Avenir-Book-e4" transform="translate(83.390625 0)"/>
+      <use xlink:href="#Avenir-Book-e4" transform="translate(138.984375 0)"/>
+      <use xlink:href="#Avenir-Book-e4" transform="translate(194.578125 0)"/>
+      <use xlink:href="#Avenir-Book-3" transform="translate(250.171875 0)"/>
+      <use xlink:href="#Avenir-Book-c3" transform="translate(277.96875 0)"/>
+      <use xlink:href="#Avenir-Book-3e" transform="translate(320.5625 0)"/>
+      <use xlink:href="#Avenir-Book-93" transform="translate(372.46875 0)"/>
+      <use xlink:href="#Avenir-Book-ab" transform="translate(457.671875 0)"/>
+      <use xlink:href="#Avenir-Book-8f" transform="translate(518.765625 0)"/>
+      <use xlink:href="#Avenir-Book-69" transform="translate(542.765625 0)"/>
+      <use xlink:href="#Avenir-Book-c3" transform="translate(598.359375 0)"/>
+     </g>
+    </g>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p687c25a6ad">
+   <rect x="2.88" y="2.88" width="558" height="177.408"/>
+  </clipPath>
+ </defs>
+</svg>
