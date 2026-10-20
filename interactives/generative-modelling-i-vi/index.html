@@ -1,0 +1,1504 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KL divergence and variational inference · ES 667</title>
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<link rel="stylesheet" href="deck/deck.css">
+</head>
+<body>
+<main id="deck">
+
+<!-- ===================================================================== VI LECTURE · OPENING -->
+
+<section class="slide sec-v5 cover" id="vi-cover" data-section="KL and VI">
+  <p class="kicker">ES 667 · Deep Learning · the maths before the VAE</p>
+  <h2 style="font-size:58px;margin-top:22px">KL divergence and variational inference<span class="sub" style="font-size:28px">A coin, two Gaussians and two mixtures, following the PML course</span></h2>
+  <div class="body">
+    <img class="fig" src="figures/data/vik-coin-vi.svg" style="width:900px;margin:0 auto">
+    <p class="cap">Left: a simple $\mathrm{Beta}$ guess (purple) is trained until it sits on the coin's posterior (blue). Right: the training loss settles at exactly $-\log p(D)$.<br>By the end of today, every part of that picture will mean something precise.</p>
+  </div>
+  <p class="tiny" style="margin:0">Nipun Batra · IIT Gandhinagar · companion notebook: <code>vi-lab/vi_lecture.ipynb</code></p>
+  <aside class="notes">
+    <p>This is the maths lecture the VAE lecture stands on. It follows the PML course's Lectures 23 and 24 (variational inference) frame by frame, with the same examples: the Beta(5, 3) coin, p = N(1, 4), and two mixtures of Gaussians.</p>
+    <p>The picture is a real run, from the companion notebook's section N7: a Beta(α, β) q starts at Beta(45, 45) and is trained for 3,000 steps by minimising the negative ELBO. It ends at Beta(22.6, 16.4); the true posterior is Beta(22, 16).</p>
+    <p>Students should open the notebook now. Every slide with a green ▶ chip has a matching notebook section; the cells are a few lines each.</p>
+  </aside>
+</section>
+
+
+<!-- ===================================================================== VI LECTURE · PART 1 · RECAP: BAYES AND THE EVIDENCE -->
+
+<section class="slide sec-v1 opener break" id="r-open" data-section="1 · Recap">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 1 of 9</p>
+      <h2>A reminder: Bayes' rule, and why its denominator is hard</h2>
+      <p class="why">Everything today is about one quantity we want, the <b>posterior</b>, and one we cannot compute, the <b>evidence</b>. Ten minutes on what they are, on examples you have seen, before we learn to get around the second.</p>
+    </div>
+    <ol class="route-mini"><li class="now" style="--c:var(--x)"><span class="dot">1</span>Recap: Bayes, and why the evidence is hard</li><li class="todo" style="--c:var(--z)"><span class="dot">2</span>KL divergence: how far is q from p?</li><li class="todo" style="--c:var(--dec)"><span class="dot">3</span>Fitting q by gradient descent</li><li class="todo" style="--c:var(--loss)"><span class="dot">4</span>No formula for KL? Monte Carlo</li><li class="todo" style="--c:var(--enc)"><span class="dot">5</span>Gradients through samples</li><li class="todo" style="--c:var(--z)"><span class="dot">6</span>The ELBO</li><li class="todo" style="--c:var(--dec)"><span class="dot">7</span>VI for the coin</li><li class="todo" style="--c:var(--x)"><span class="dot">8</span>Linear regression: correlated weights</li><li class="todo" style="--c:var(--enc)"><span class="dot">9</span>Neural networks and the VAE</li></ol>
+  </div>
+</section>
+
+<section class="slide sec-v1" id="r-steve" data-section="1 · Recap">
+  <p class="kicker">Bayes' rule, the way the PML course began</p>
+  <h2>Steve is meek and orderly. Librarian or farmer?</h2>
+  <div class="body">
+    <div class="row" style="gap:44px;justify-content:center">
+      <img class="fig" src="figures/data/vik-steve.svg" style="width:540px">
+      <table class="work" style="font-size:21px">
+        <tr><th></th><th>librarian</th><th>farmer</th></tr>
+        <tr><td><b class="cz">prior</b>: out of 210 people</td><td>10</td><td>200</td></tr>
+        <tr data-b="2"><td><b class="cdec">likelihood</b>: fits the description</td><td>40%</td><td>10%</td></tr>
+        <tr data-b="3"><td>people who fit</td><td>4</td><td>20</td></tr>
+        <tr data-b="4"><td><b class="cx">posterior</b>: share of those who fit</td><td>4/24 = 0.167</td><td>0.833</td></tr>
+      </table>
+    </div>
+  </div>
+  <p class="q" data-b="4">The description fits librarians four times better, yet Steve is five times likelier a farmer. The prior matters.</p>
+  <p class="src">▶ Notebook N1 · from PML Lecture 2 (Bayes for ML)</p>
+  <aside class="notes">
+    <p>PML Lecture 2 slides, pp. 6–18 (the Kahneman example). One librarian for every 20 farmers. Click through: prior, likelihood, the people who fit, the posterior.</p>
+    <p>Name the four words now, because the rest of the lecture uses them: prior P(job), likelihood P(description | job), evidence P(description) = 24/210 = 0.1143 (everyone who fits, over everyone), posterior P(job | description).</p>
+    <p>The evidence was easy here: add up over two jobs. Hold on to that; it is the step that breaks later.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v1" id="r-bayes" data-section="1 · Recap">
+  <p class="kicker">Bayes' rule for machine learning</p>
+  <h2>"Job" becomes the parameters $\theta$; "description" becomes the data $D$</h2>
+  <div class="body">
+    <div class="row" style="justify-content:center;gap:56px">
+      <div class="mathblock big" style="margin:0">$$\underbrace{p(\theta\mid D)}_{\text{posterior}} \;=\; \frac{\overbrace{p(D\mid\theta)}^{\text{likelihood}}\ \overbrace{p(\theta)}^{\text{prior}}}{\underbrace{p(D)}_{\text{evidence}}}$$</div>
+      <div class="mathblock" style="margin:0" data-b="2">$$p(D) = \int p(D\mid\theta)\,p(\theta)\,d\theta$$</div>
+    </div>
+    <div class="row" style="justify-content:center;gap:22px;margin-top:14px" data-b="3">
+      <div class="callout plain" style="width:350px"><b>$\theta$</b>: a coin's chance of heads; a regression line's two weights; a network's millions of weights.</div>
+      <div class="callout plain" style="width:350px"><b>$D$</b>: the tosses we saw; the $(x, y)$ points; the training set.</div>
+      <div class="callout x" style="width:350px">The posterior says which $\theta$'s explain $D$, and how sure we are.</div>
+    </div>
+  </div>
+  <p class="q" data-b="2">For Steve the evidence was a sum over two jobs. Here it is an integral over every possible $\theta$.</p>
+  <p class="src">PML Lecture 2, pp. 19–20 · PML Lecture 23, "Bayesian ML: Recap"</p>
+  <aside class="notes">
+    <p>PML Lecture 23 (VI part 1) opens with this frame, at 0:00. The evidence does not depend on θ: it is the number that makes the posterior integrate to one.</p>
+    <p>The posterior is a distribution, not a single answer. Predictions average over it, which is where uncertainty comes from.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v1" id="r-coin" data-section="1 · Recap">
+  <p class="kicker">The example we will come back to all lecture <span class="nbref">▶ N1</span></p>
+  <h2>A coin: prior $\mathrm{Beta}(5, 3)$, then 17 heads in 30 tosses</h2>
+  <div class="body">
+    <div class="row" style="gap:34px">
+      <div class="stack" style="width:640px;height:392px">
+        <img class="fig" src="figures/data/vik-coin-1.svg" style="width:640px" data-b="=1">
+        <img class="fig" src="figures/data/vik-coin-2.svg" style="width:640px" data-b="=2">
+        <img class="fig" src="figures/data/vik-coin-3.svg" style="width:640px" data-b="3">
+      </div>
+      <div class="col grow">
+        <p class="small"><b class="cz">Prior</b> $\mathrm{Beta}(5, 3)$: before any tosses we think heads is a bit likelier (mean 0.625).</p>
+        <p class="small" data-b="2"><b class="cdec">Likelihood</b> $\theta^{17}(1-\theta)^{13}$: the data alone peak at $17/30 = 0.567$.</p>
+        <p class="small" data-b="3"><b class="cx">Posterior</b> $\propto$ prior $\times$ likelihood:</p>
+        <div class="mathblock left" style="font-size:24px" data-b="3">$$\theta^{4}(1-\theta)^{2}\cdot\theta^{17}(1-\theta)^{13} = \theta^{21}(1-\theta)^{15}$$</div>
+        <p class="small" data-b="3">which is $\mathrm{Beta}(22, 16)$, mean 0.579.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">The posterior is a compromise between the prior and the data, and it is narrower than both.</p>
+  <aside class="notes">
+    <p>The PML VI notebook's worked example (cells 61–65), and the Beta-Bernoulli frames of the MAP and Laplace lectures. Beta(α, β) has density ∝ θ^(α−1)(1−θ)^(β−1), so Beta(5, 3) is θ⁴(1−θ)².</p>
+    <p>Notebook N1, first cell: the same three curves from coin.prior, coin.log_likelihood and coin.posterior.</p>
+    <p>Mean of Beta(α, β) is α/(α + β): 5/8 = 0.625 before, 22/38 = 0.579 after.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v1" id="r-coin-live" data-section="1 · Recap">
+  <p class="kicker">Try it</p>
+  <h2>Change the prior, change the data</h2>
+  <div class="body">
+    <div class="vw interactive" data-widget="betacoin">
+      <canvas width="640" height="400"></canvas>
+      <div class="vw-side">
+        <label class="sl">$\alpha$<input type="range" min="0.5" max="30" step="0.5" value="5"><b class="bc-a">5.0</b></label>
+        <label class="sl">$\beta$<input type="range" min="0.5" max="30" step="0.5" value="3"><b class="bc-b">3.0</b></label>
+        <label class="sl">H<input type="range" min="0" max="100" step="1" value="17"><b class="bc-h">17</b></label>
+        <label class="sl">T<input type="range" min="0" max="100" step="1" value="13"><b class="bc-t">13</b></label>
+        <p class="vw-big">posterior $\mathrm{Beta}($<span class="bc-pa">22.0</span>, <span class="bc-pb">16.0</span>$)$</p>
+        <p class="vw-read">posterior mean <b class="bc-mean">0.579</b> · data alone <b class="bc-mle">0.567</b></p>
+        <div class="lg"><span><i style="--c:var(--z)"></i>prior</span><span><i class="dash" style="--c:var(--dec)"></i>likelihood (rescaled)</span><span><i class="fill" style="--c:var(--x);--f:var(--x-t)"></i>posterior</span></div>
+      </div>
+    </div>
+  </div>
+  <p class="q">Posterior $=\mathrm{Beta}(\alpha + H,\ \beta + T)$. With more tosses the data win; with few, the prior does.</p>
+  <aside class="notes">
+    <p>Things to try. Set H = 100, T = 75: the prior hardly matters. Set H = 1, T = 0: the posterior is nearly the prior. Make the prior strong and wrong, Beta(30, 2): it takes many tails to pull it back.</p>
+    <p>This mirrors plot_beta_all in the PML MAP notebook. Print and PDF show the lecture's setting, Beta(5, 3) with 17 heads and 13 tails.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v1" id="r-coin-ev" data-section="1 · Recap">
+  <p class="kicker">The denominator, for the coin <span class="nbref">▶ N1</span></p>
+  <h2>The coin's evidence has a formula, but only because we were lucky</h2>
+  <div class="body">
+    <div class="mathblock">$$p(D) = \int_0^1 \underbrace{\theta^{17}(1-\theta)^{13}}_{\text{likelihood}}\ \underbrace{\frac{\theta^{4}(1-\theta)^{2}}{B(5, 3)}}_{\text{prior}}\,d\theta \;=\; \frac{B(22, 16)}{B(5, 3)}$$</div>
+    <div class="row" style="justify-content:center;gap:22px;margin-top:8px" data-b="2">
+      <div class="stat wide"><b>$\log p(D) = −21.397$</b><span>from the formula; a 1-D grid over $\theta$ agrees: −21.397</span></div>
+      <div class="callout plain" style="width:560px;font-size:20px">$B(a, b) = \int_0^1 \theta^{a-1}(1-\theta)^{b-1}d\theta$ is the Beta function. The product of prior and likelihood is again a Beta shape, so the integral is known. A prior with this property is called <b>conjugate</b>.</div>
+    </div>
+  </div>
+  <p class="q" data-b="2">Remember $-21.40$: at the end of the lecture, variational inference will recover it without the formula.</p>
+  <aside class="notes">
+    <p>p(D) is the probability of this particular sequence of 30 tosses, averaged over the prior, so it is tiny; we always work with its log.</p>
+    <p>Notebook N1: coin.log_evidence uses torch.lgamma; vu.evidence_grid integrates the joint on a fine grid with log-sum-exp. Both give −21.397.</p>
+    <p>PML: the Beta-Bernoulli "evidence" frames (MAP and Laplace lectures). The VI notebook's last section checks its answer against exactly this Beta(22, 16).</p>
+  </aside>
+</section>
+
+<section class="slide sec-v1" id="r-linreg" data-section="1 · Recap">
+  <p class="kicker">The denominator, for linear regression <span class="nbref">▶ N1</span></p>
+  <h2>Linear regression also has a formula for the evidence</h2>
+  <div class="body">
+    <div class="row" style="gap:30px">
+      <img class="fig" src="figures/data/vik-linreg-lines.svg" style="width:500px">
+      <div class="col grow">
+        <p class="small">100 points from $y = 1.5 + 0.5\,x + \text{noise}$ (noise sd 0.2). Prior on the two weights: $\theta \sim \N(0, I)$.</p>
+        <p class="small" data-b="2">The evidence averages the likelihood over every line the prior allows (60 of them drawn, in orange):</p>
+        <div class="mathblock left" style="font-size:24px" data-b="2">$$p(D) = \int \N\big(\mathbf y \mid X\theta,\ \sigma^2 I\big)\,\N(\theta \mid 0, I)\,d\theta$$</div>
+        <p class="small" data-b="3">Gaussian prior, Gaussian noise: the answer is again Gaussian,</p>
+        <div class="mathblock left" style="font-size:24px" data-b="3">$$p(D) = \N\big(\mathbf y \mid 0,\ XX^\top + \sigma^2 I\big), \quad \log p(D) = 12.35$$</div>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">Conjugate again. Now pretend we did not know the formula: could we estimate the integral by sampling the prior?</p>
+  <aside class="notes">
+    <p>From PML Sampling-1 ("marginal likelihood" frames) and the notebook mc-linreg-evidence.ipynb, cells 19–22. In general p(D) = N(y | X m₀, X S₀ Xᵀ + σ²I); here m₀ = 0 and S₀ = I.</p>
+    <p>The log evidence is positive because these are densities over y with a small noise scale (0.2), not probabilities.</p>
+    <p>Notice how few of the orange lines go anywhere near the data. That is the next slide.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v1" id="r-linreg-mc" data-section="1 · Recap">
+  <p class="kicker">Estimate the integral by sampling the prior? <span class="nbref">▶ N1</span></p>
+  <h2>Almost every prior draw explains the data terribly</h2>
+  <div class="body">
+    <div class="row" style="gap:30px">
+      <img class="fig" src="figures/data/vik-linreg-sorted.svg" style="width:520px">
+      <div class="col grow">
+        <div class="mathblock left" style="font-size:24px">$$p(D) \approx \frac1N\sum_{i=1}^{N} p(D\mid\theta_i), \qquad \theta_i \sim p(\theta)$$</div>
+        <table class="work" style="font-size:20px" data-b="2">
+          <tr><th>$\log p(D)$</th><th></th></tr>
+          <tr><td>closed form</td><td>12.35</td></tr>
+          <tr><td>15,000 prior draws, our run</td><td>12.22</td></tr>
+          <tr><td>15,000 prior draws, the PML run</td><td>11.20</td></tr>
+        </table>
+        <p class="small" data-b="3">The best 10 of the 15,000 draws carry 95% of the average. The typical draw has $\log p(D\mid\theta_i)$ of about −3,497, against 20.7 at the true $\theta$.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">Two weights, and sampling the prior already wastes almost every draw. With millions of weights it is hopeless.</p>
+  <aside class="notes">
+    <p>PML Sampling-1, "Log-sum-exp" and "Sampling converges slowly"; mc-linreg-evidence cells 14–18. The average of likelihoods is computed as logsumexp(log-likelihoods) − log N, because the likelihoods themselves underflow.</p>
+    <p>The worst draw here has a log-likelihood of −44,159. The estimate depends on the rare draws near the posterior, so it is noisy and biased low on the log scale: 11.20 in the PML run, 12.22 in ours, against 12.35.</p>
+    <p>The lesson for VI: draw θ from somewhere near the posterior, not from the prior. That "somewhere" will be q.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v1" id="r-nofor" data-section="1 · Recap">
+  <p class="kicker">When there is no formula at all</p>
+  <h2>Change the prior a little, and the integral has no closed form</h2>
+  <div class="body">
+    <div class="row" style="gap:30px">
+      <img class="fig" src="figures/data/vik-logit-integrand.svg" style="width:540px">
+      <div class="col grow">
+        <p class="small">The same coin, but put a Normal prior on its logit: $\theta = \mathrm{sigmoid}(w)$, $w \sim \N(0, 1)$.</p>
+        <div class="mathblock left" style="font-size:23px">$$p(D) = \int \N(w\mid 0, 1)\ \theta(w)^{17}\big(1-\theta(w)\big)^{13}\,dw$$</div>
+        <p class="small" data-b="2">Bernoulli likelihood, Normal prior: not conjugate, no formula. In 1-D a grid still works ($\log p(D) = −21.616$).</p>
+        <p class="small" data-b="3">A neural network has millions of weights: a grid with 100 points per weight needs $100^{\text{millions}}$ points. The evidence is <b>intractable</b>.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">So we cannot normalise the posterior. We can still evaluate prior $\times$ likelihood at any $\theta$ we like.</p>
+  <p class="src">PML Lecture 2, p. 77 ("Bernoulli + Normal: intractable") · PML Laplace notebook, "Normal prior for coin toss" · PML Lecture 23 at 3:06</p>
+  <aside class="notes">
+    <p>The shaded curve is the joint p(D, w) = p(D | w) p(w) as a function of w. Its area is p(D). We can compute its height anywhere, but not its area by formula.</p>
+    <p>Notebook N1 also estimates this one by 100,000 prior draws: −21.618, close to the grid, because in 1-D the prior is not far from the posterior.</p>
+    <p>The key sentence for the rest of the lecture: we can evaluate the unnormalised posterior p(D | θ) p(θ), but not its normaliser p(D).</p>
+  </aside>
+</section>
+
+<section class="slide sec-v1" id="r-three" data-section="1 · Recap">
+  <p class="kicker">Three ways around it, on one hard shape <span class="nbref">▶ N1</span></p>
+  <h2>Laplace, MCMC and VI on a two-bump posterior</h2>
+  <div class="body">
+    <img class="fig" src="figures/data/vik-three-ways.svg" style="width:900px;margin:0 auto">
+    <div class="row top" style="gap:22px;margin-top:6px">
+      <div class="callout plain" style="flex:1;font-size:18px"><b>Laplace</b>: a Gaussian at the highest peak, with its curvature: $\N(−2.00,\ 1.00^2)$. Ignores the second bump.</div>
+      <div class="callout plain" style="flex:1;font-size:18px" data-b="2"><b>MCMC</b>: a random walk whose visits follow the posterior. Mean −0.88 (true −0.80). Exact in the limit; slow.</div>
+      <div class="callout enc" style="flex:1;font-size:18px" data-b="3"><b>VI</b>, today: the closest Gaussian, found by optimisation: $\N(−0.78,\ 1.90^2)$. Fast; approximate.</div>
+    </div>
+  </div>
+  <p class="q" data-b="3">"Closest" needs a measure of distance between two distributions. That is the KL divergence, Part 2.</p>
+  <aside class="notes">
+    <p>The "posterior" here is the mixture 0.7 N(−2, 1²) + 0.3 N(2, 1²), the target of the PML Laplace notebook. The MCMC panel is random-walk Metropolis, 20,000 steps, acceptance 0.60 (the PML course's hamiltorch GIF shows the same idea on a 2-D mixture).</p>
+    <p>This is the one slide on Laplace and MCMC; students met both in PML Lectures 8 and 13–14. VI turns inference into optimisation, which is what lets it scale to neural networks and the VAE.</p>
+    <p>The VI fit is broad here because the two bumps overlap. Part 2 shows what happens when they do not.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v1" id="r-idea" data-section="1 · Recap">
+  <p class="kicker">The variational idea, and today's map</p>
+  <h2>Pick a simple family $q_\psi$, and find its member closest to the posterior</h2>
+  <div class="body">
+    <div class="mathblock" style="font-size:32px">$$\psi^\star = \arg\min_{\psi}\ \KL\big(\,q_\psi(\theta)\ \|\ p(\theta\mid D)\,\big)$$</div>
+    <div class="gmap" data-b="2">
+      <div style="--c:var(--z)"><b><i>G1</i>Which $q$ is closer?</b><span>the KL divergence, by formula · Part 2</span></div>
+      <div style="--c:var(--dec)"><b><i>G2</i>Find the closest $q$</b><span>gradient descent on its parameters · Part 3</span></div>
+      <div style="--c:var(--loss)"><b><i>G3</i>No formula for the KL?</b><span>Monte Carlo · Part 4</span></div>
+      <div style="--c:var(--enc)"><b><i>G4</i>Gradients through samples</b><span>the reparameterisation trick · Part 5</span></div>
+      <div style="--c:var(--loss)"><b><i>G5</i>How many samples?</b><span>the estimate's noise · Part 4</span></div>
+      <div style="--c:var(--x)"><b><i>G6</i>Diagonal or full covariance?</b><span>Parts 3 and 8</span></div>
+    </div>
+  </div>
+  <p class="q" data-b="3">Then the ELBO (Part 6) removes the one thing we cannot compute, and the coin (Part 7) puts it all together.</p>
+  <p class="src">PML Lecture 23 at 3:06–4:38 · goals G1–G6 from cell 0 of the PML notebook variational-inference.ipynb</p>
+  <aside class="notes">
+    <p>q is any family we can sample from and whose density we can evaluate: a Gaussian, a Beta. ψ are its parameters (a mean and a width). The goals are the PML notebook's own list, in its order; this lecture follows it.</p>
+    <p>Spot the problem now and let students raise it: the objective contains p(θ | D), the thing we cannot compute. Part 6 deals with it. Parts 2–5 first learn to minimise a KL to a target we can evaluate.</p>
+  </aside>
+</section>
+
+
+<!-- ===================================================================== VI LECTURE · PART 2 · KL DIVERGENCE (G1) -->
+
+<section class="slide sec-v2 opener break" id="k-open" data-section="2 · KL divergence">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 2 of 9 · goal G1</p>
+      <h2>KL divergence: how far is one distribution from another?</h2>
+      <p class="why">We will build it from a small problem, one step at a time, until the formula is the only sensible answer. Then we use it on Gaussians and on a mixture.</p>
+    </div>
+    <ol class="route-mini"><li class="done" style="--c:var(--x)"><span class="dot">✓</span>Recap: Bayes, and why the evidence is hard</li><li class="now" style="--c:var(--z)"><span class="dot">2</span>KL divergence: how far is q from p?</li><li class="todo" style="--c:var(--dec)"><span class="dot">3</span>Fitting q by gradient descent</li><li class="todo" style="--c:var(--loss)"><span class="dot">4</span>No formula for KL? Monte Carlo</li><li class="todo" style="--c:var(--enc)"><span class="dot">5</span>Gradients through samples</li><li class="todo" style="--c:var(--z)"><span class="dot">6</span>The ELBO</li><li class="todo" style="--c:var(--dec)"><span class="dot">7</span>VI for the coin</li><li class="todo" style="--c:var(--x)"><span class="dot">8</span>Linear regression: correlated weights</li><li class="todo" style="--c:var(--enc)"><span class="dot">9</span>Neural networks and the VAE</li></ol>
+  </div>
+</section>
+
+<section class="slide sec-v2" id="k-fruit" data-section="2 · KL divergence">
+  <p class="kicker">Start from a problem</p>
+  <h2>A class's favourite fruit, two years running</h2>
+  <div class="body">
+    <div class="row" style="gap:34px">
+      <img class="fig" src="figures/data/vik-fruit.svg" style="width:580px">
+      <div class="col grow">
+        <p class="small">Year 1 is our reference, $q$: 50% apple, 40% banana, 10% clementine. Year 2, $p$: 50%, 10%, 40%.</p>
+        <p class="small" data-b="2">We want <b>one number</b> for how much year 2 differs, <b>relative to year 1</b>.</p>
+        <p class="small" data-b="3">"Relative to" matters. Clementine rose from 10% to 40%: a big surprise if you expected year 1. Banana fell from 40% to 10%. The two changes need not count the same.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">So the number need not be symmetric. Where would you start?</p>
+  <aside class="notes">
+    <p>The construction follows ritvikmath, "The KL Divergence: Data Science Basics" (2:20–7:02), with our own numbers; Jia-Bin Huang's video makes the same point with two brothers (4:39).</p>
+    <p>Let students propose: differences p − q? They sum to zero. Squared differences? Symmetric, and they ignore that 10% → 40% is a fourfold change. Steer towards ratios.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v2" id="k-ratio" data-section="2 · KL divergence">
+  <p class="kicker">Step 1: compare by ratios. Step 2: take the log</p>
+  <h2>Ratios say "how many times more"; logs make up and down cancel</h2>
+  <div class="body">
+    <div class="row" style="gap:30px">
+      <table class="work" style="font-size:21px">
+        <tr><th></th><th>apple</th><th>banana</th><th>clementine</th></tr>
+        <tr><td>$p/q$</td><td>1</td><td>$\tfrac14$</td><td>4</td></tr>
+        <tr data-b="3"><td>$\log(p/q)$</td><td>0</td><td>$-1.386$</td><td>$1.386$</td></tr>
+      </table>
+      <img class="fig" src="figures/data/vik-logfn.svg" style="width:440px" data-b="2">
+    </div>
+    <p class="small" style="margin-top:10px">The plain average of the ratios is 1.75: pulled up by the 4, while the $\tfrac14$ barely registers.</p>
+    <p class="small" data-b="2">We want $f(1) = 0$ (no change), and $f(4) = -f(\tfrac14)$ (four times up undoes four times down). The function that does this is the <b>log</b>.</p>
+  </div>
+  <p class="q" data-b="3">After the log, a fourfold rise and a fourfold fall are $\pm1.386$: equal and opposite.</p>
+  <aside class="notes">
+    <p>ritvikmath 7:02–10:57. The log is the function with f(ab) = f(a) + f(b); in particular f(1) = 0 and f(1/r) = −f(r).</p>
+    <p>We use the natural log, so the unit is the nat. With log₂ the unit is the bit (two slides on).</p>
+  </aside>
+</section>
+
+<section class="slide sec-v2" id="k-weight" data-section="2 · KL divergence">
+  <p class="kicker">Step 3: weight by what is common <span class="nbref">▶ N2</span></p>
+  <h2>Average the log-ratio, weighting each fruit by how common it is in $p$</h2>
+  <div class="body">
+    <table class="work" style="font-size:22px;margin:0 auto">
+      <tr><th></th><th>apple</th><th>banana</th><th>clementine</th><th>sum</th></tr>
+      <tr><td>$p$</td><td>0.5</td><td>0.1</td><td>0.4</td><td></td></tr>
+      <tr><td>$\log(p/q)$</td><td>0</td><td>$-1.386$</td><td>$1.386$</td><td></td></tr>
+      <tr class="total" data-b="2"><td>$p\,\log(p/q)$</td><td>0</td><td>$−0.139$</td><td>$0.555$</td><td><b>0.416</b></td></tr>
+    </table>
+    <div class="mathblock" data-b="3">$$\KL(p\,\|\,q) = \sum_{x} p(x)\,\log\frac{p(x)}{q(x)} = 0.416\ \text{nats}$$</div>
+  </div>
+  <p class="q" data-b="3">That is the Kullback–Leibler divergence. It is an average of log-ratios, taken under its first argument.</p>
+  <aside class="notes">
+    <p>ritvikmath 11:44–14:52. Why weight by p: a large ratio on a fruit nobody eats should matter little. The banana's log-ratio is large but only 10% of year 2 eats bananas.</p>
+    <p>The row entries are 0.1 × (−1.386) and 0.4 × 1.386. Notebook N2 computes all of it in three lines.</p>
+    <p>Read KL(p‖q) as "the KL of p from q": q is the reference, p is what we compare to it.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v2" id="k-bits" data-section="2 · KL divergence">
+  <p class="kicker">The same number, in bits <span class="nbref">▶ N2</span></p>
+  <h2>KL is the extra message length you pay for using the wrong code</h2>
+  <div class="body">
+    <div class="row top" style="gap:30px">
+      <div class="col" style="width:470px">
+        <p class="small"><b>Surprise</b> of an outcome: $\log_2 \frac{1}{p(x)}$ bits. Snow in Kashmir: little surprise. Snow in Gandhinagar: a lot.</p>
+        <p class="small" data-b="2"><b>Entropy</b> $H(p) = \sum_x p(x)\log_2\frac1{p(x)}$: the average surprise, and the shortest possible average code length.</p>
+        <p class="small" data-b="4"><b>Cross-entropy</b> $H(p, q)$: the average length when the code was built for $q$. And $H(p, q) - H(p) = \KL(p\,\|\,q)$.</p>
+      </div>
+      <table class="work" style="font-size:20px" data-b="3">
+        <tr><th>weather $p$</th><th>sunny</th><th>cloudy</th><th>rainy</th><th>average bits</th></tr>
+        <tr><td>chance</td><td>50%</td><td>25%</td><td>25%</td><td></td></tr>
+        <tr><td>right code</td><td>0</td><td>10</td><td>11</td><td>1.50</td></tr>
+        <tr data-b="4"><td>code built for 25%, 50%, 25%</td><td>10</td><td>0</td><td>11</td><td>1.75</td></tr>
+        <tr class="total" data-b="4"><td>extra bits $= \KL(p\,\|\,q)$</td><td></td><td></td><td></td><td>0.25</td></tr>
+      </table>
+    </div>
+  </div>
+  <p class="q" data-b="4">Zero only if the code fits the weather. Never negative: no code beats the right one.</p>
+  <p class="src">Jia-Bin Huang, "Fantastic KL divergence and how to (actually) compute them", 0:46–4:39 · PML Information Theory lecture</p>
+  <aside class="notes">
+    <p>Right code: 0.5 × 1 + 0.25 × 2 + 0.25 × 2 = 1.5 bits. Wrong code (built for a forecast that expected cloud): 0.5 × 2 + 0.25 × 1 + 0.25 × 2 = 1.75 bits. The difference, 0.25 bits, is KL(p‖q) with log₂.</p>
+    <p>This also explains the name "cross-entropy loss" in classification: minimising H(p, q) over q is the same as minimising KL(p‖q), since H(p) does not depend on q.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v2" id="k-dens" data-section="2 · KL divergence">
+  <p class="kicker">For densities, and the two facts we need</p>
+  <h2>The sum becomes an integral; KL is never negative, and not symmetric</h2>
+  <div class="body">
+    <div class="mathblock">$$\KL(q\,\|\,p) = \int q(\theta)\,\log\frac{q(\theta)}{p(\theta)}\,d\theta = \E_{\theta\sim q}\big[\log q(\theta) - \log p(\theta)\big]$$</div>
+    <div class="row" style="gap:28px;margin-top:4px">
+      <img class="fig" src="figures/data/vik-tangent.svg" style="width:360px" data-b="2">
+      <div class="col grow">
+        <p class="small" data-b="2"><b>1. $\KL \ge 0$, and $= 0$ only when $q = p$.</b> The log lies below its tangent, $\log r \le r - 1$. With $r = p/q$:</p>
+        <div class="mathblock left" style="font-size:22px" data-b="2">$$-\KL(q\,\|\,p) = \E_q\Big[\log\tfrac{p}{q}\Big] \le \E_q\Big[\tfrac{p}{q} - 1\Big] = \int p - \int q = 0$$</div>
+        <p class="small" data-b="3"><b>2. $\KL(q\,\|\,p) \ne \KL(p\,\|\,q)$</b> in general. It is a divergence, not a distance.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">From here on we write it as an expectation under the first argument. That form is what we will compute.</p>
+  <p class="src">PML Lecture 23, "KL Divergence" frame, 5:27–6:16</p>
+  <aside class="notes">
+    <p>Equality in log r ≤ r − 1 holds only at r = 1, so KL = 0 only if p = q (almost everywhere).</p>
+    <p>The expectation form is the important one: E under q means "draw θ from q and average". Part 4 does exactly that when there is no formula.</p>
+    <p>Swap the letters from the fruit slide: there we averaged under p; here q comes first because in VI the first argument will be our approximation q.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v2" id="k-coin" data-section="2 · KL divergence">
+  <p class="kicker">A coin, both ways <span class="nbref">▶ N2</span></p>
+  <h2>How fast do tosses tell a 0.8 coin from a fair one?</h2>
+  <div class="body">
+    <div class="row" style="gap:30px">
+      <img class="fig" src="figures/data/vik-coin-kl.svg" style="width:480px">
+      <div class="col grow">
+        <div class="mathblock left" style="font-size:22px">$$\KL\big(\mathrm{Bern}(0.8)\,\|\,\mathrm{Bern}(0.5)\big) = 0.8\log\tfrac{0.8}{0.5} + 0.2\log\tfrac{0.2}{0.5} = 0.193$$</div>
+        <div class="mathblock left" style="font-size:22px" data-b="2">$$\KL\big(\mathrm{Bern}(0.5)\,\|\,\mathrm{Bern}(0.8)\big) = 0.223$$</div>
+        <p class="small" data-b="3">If the coin really is 0.8, each toss adds on average 0.193 nats of evidence for it. After $n$ tosses it is about $e^{n\,\KL}$ times likelier than the fair coin: 6.9× after 10, 325× after 30.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">Not symmetric, and not abstract: KL is the rate at which data separate two hypotheses.</p>
+  <aside class="notes">
+    <p>The expected log-likelihood ratio per toss, when the data come from the 0.8 coin, is exactly KL(0.8 coin‖fair). Summed over n tosses: n × KL. The plot is e^(n × 0.193) on a log axis.</p>
+    <p>Notebook N2 calls dist.kl_divergence on two Bernoulli objects; torch has the formula for this pair.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v2" id="k-g1" data-section="2 · KL divergence">
+  <p class="kicker">Goal G1, the PML notebook's first example <span class="nbref">▶ N2</span></p>
+  <h2>Which $q$ is closer to $p = \N(1, 4^2)$?</h2>
+  <div class="body">
+    <div class="row" style="gap:30px">
+      <img class="fig" src="figures/data/vik-g1.svg" style="width:560px">
+      <div class="col grow">
+        <p class="small">$q_1 = \N(0, 2^2)$: wrong centre, too narrow. $q_2 = \N(1, 3^2)$: right centre, a bit narrow. <b>Vote.</b></p>
+        <pre class="code" style="font-size:16px" data-b="2"><span class="line">p = dist.Normal(<span class="n">1.</span>, <span class="n">4.</span>)          <span class="c"># loc, scale (sd)</span></span>
+<span class="line">q1, q2 = dist.Normal(<span class="n">0.</span>, <span class="n">2.</span>), dist.Normal(<span class="n">1.</span>, <span class="n">3.</span>)</span>
+<span class="line">dist.kl_divergence(q1, p)     <span class="c"># 0.35</span></span>
+<span class="line">dist.kl_divergence(q2, p)     <span class="c"># 0.07</span></span></pre>
+        <p class="small" data-b="2">$\KL(q_1\,\|\,p) = 0.35$, $\KL(q_2\,\|\,p) = 0.07$: $q_2$ is five times closer.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="2">One number per candidate. Next: drag $q$ yourself and watch the number.</p>
+  <p class="src">PML notebook variational-inference.ipynb, cells 5–13 · PML Lecture 23 at 7:30–9:52</p>
+  <aside class="notes">
+    <p>torch's Normal takes the standard deviation (scale), not the variance; the PML notebook writes Normal(1, 4), which is N(1, 4²) in maths notation. Say this once, clearly.</p>
+    <p>Exact values: 0.3494 and 0.0689. The exercise in two slides derives the formula torch is using.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v2" id="k-g1-live" data-section="2 · KL divergence">
+  <p class="kicker">Try it</p>
+  <h2>KL between two Gaussians is an area, and the two directions differ</h2>
+  <div class="body">
+    <div class="vw w2 interactive" data-widget="klgauss" data-pmu="1" data-psd="4" data-xlo="-11" data-xhi="13">
+      <canvas width="600" height="400"></canvas>
+      <div class="vw-side">
+        <p class="vw-read">$p = \N(1, 4^2)$ fixed (blue). Move $q = \N(\mu, \sigma^2)$ (purple):</p>
+        <label class="sl">$\mu$<input type="range" min="-5" max="7" step="0.05" value="0"><b class="kg-mu">0.00</b></label>
+        <label class="sl">$\sigma$<input type="range" min="0.5" max="8" step="0.05" value="2"><b class="kg-sd">2.00</b></label>
+        <div class="vw-btns"><span class="lab">shade the integrand of</span><button data-dir="qp">$\KL(q\|p)$</button><button data-dir="pq">$\KL(p\|q)$</button></div>
+        <p class="vw-read">shaded area, numerically: <b class="kg-area">0.349</b></p>
+        <p class="vw-read">formula: $\KL(q\|p) = $ <b class="kg-qp">0.349</b></p>
+        <p class="vw-read">the other way: $\KL(p\|q) = $ <b class="kg-pq">0.932</b></p>
+      </div>
+    </div>
+  </div>
+  <p class="q">Start: $q_1 = \N(0, 2^2)$, 0.35 one way. A narrow $q$ is cheap for $\KL(q\|p)$ and expensive for $\KL(p\|q)$.</p>
+  <aside class="notes">
+    <p>Top: the two densities. Bottom: the integrand, pink where it is positive and grey where it is negative. Its area is the KL.</p>
+    <p>Try: set μ = 1 and σ = 3 (q₂, 0.07). Then σ = 4: everything vanishes. Then a very narrow q, σ = 0.6, at μ = 1: KL(q‖p) is about 1.5, KL(p‖q) is over 20, because p has mass where q has almost none.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v2" id="k-ex" data-section="2 · KL divergence">
+  <p class="kicker">Exercise, in your notebook <span class="exref">✎ 5 minutes</span></p>
+  <h2>Derive the KL between two Gaussians</h2>
+  <div class="body">
+    <div class="mathblock" style="margin:0">$$q = \N(\mu_q, \sigma_q^2),\qquad p = \N(\mu_p, \sigma_p^2)$$</div>
+    <div class="mathblock" style="margin:0 0 6px">$$\KL(q\,\|\,p) = \E_{\theta\sim q}\big[\log q(\theta) - \log p(\theta)\big] = \ ?$$</div>
+    <div class="callout plain" style="width:960px;margin:6px auto 0" data-b="2">1. Write $\log \N(\theta\mid\mu, \sigma^2) = -\tfrac12\log(2\pi\sigma^2) - \dfrac{(\theta-\mu)^2}{2\sigma^2}$ for both.</div>
+    <div class="callout plain" style="width:960px;margin:10px auto 0" data-b="3">2. The $\log 2\pi$ terms cancel. Take the expectation of what is left, term by term.</div>
+    <div class="callout plain" style="width:960px;margin:10px auto 0" data-b="4">3. You need two averages under $q$: $\E_q\big[(\theta-\mu_q)^2\big] = \sigma_q^2$ and $\E_q\big[(\theta-\mu_p)^2\big] = \sigma_q^2 + (\mu_q-\mu_p)^2$.</div>
+  </div>
+  <p class="q" data-b="4">Check your answer on G1: it must give 0.3494 for $q_1$ and 0.0689 for $q_2$.</p>
+  <p class="src">PML Lecture 23, "Exercise" frames 1–3, 15:19–22:59</p>
+  <aside class="notes">
+    <p>Give students five minutes before clicking the hints. The third hint is the key step: (θ − μ_p)² = (θ − μ_q + μ_q − μ_p)², and the cross term has mean zero under q.</p>
+    <p>Notebook N2 has a kl_normal function to fill in, with the G1 numbers to check against.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v2" id="k-ans" data-section="2 · KL divergence">
+  <p class="kicker">The answer, and the same lines inside torch <span class="nbref">▶ N2</span></p>
+  <h2>Three terms: a width ratio, a shift, and a constant</h2>
+  <div class="body">
+    <div class="mathblock">$$\KL(q\,\|\,p) = \frac12\left[\log\frac{\sigma_p^2}{\sigma_q^2} - 1 + \frac{\sigma_q^2 + (\mu_q-\mu_p)^2}{\sigma_p^2}\right]$$</div>
+    <div class="codewalk" style="grid-template-columns:1.25fr 1fr;margin-top:6px" data-b="2">
+      <pre class="code" style="font-size:16px"><span class="line"><span class="c"># torch/distributions/kl.py: here p is the FIRST argument (our q)</span></span>
+<span class="line">@register_kl(Normal, Normal)</span>
+<span class="line"><span class="k">def</span> <span class="f">_kl_normal_normal</span>(p, q):</span>
+<span class="line" data-hl="3">    var_ratio = (p.scale / q.scale).pow(<span class="n">2</span>)</span>
+<span class="line" data-hl="3">    t1 = ((p.loc - q.loc) / q.scale).pow(<span class="n">2</span>)</span>
+<span class="line" data-hl="3">    <span class="k">return</span> <span class="n">0.5</span> * (var_ratio + t1 - <span class="n">1</span> - var_ratio.log())</span></pre>
+      <div class="notes-col">
+        <p class="small" data-b="3">Same formula, rearranged: <code>var_ratio</code> is $\sigma_q^2/\sigma_p^2$ and <code>t1</code> is the squared shift in units of $\sigma_p$.</p>
+        <p class="small" data-b="4">With $p = \N(0, 1)$ it becomes $\tfrac12\big(\sigma^2 + \mu^2 - 1 - \log\sigma^2\big)$: the KL term of every VAE.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="4">When both distributions are Gaussian, the KL is a formula, and torch has it. What if they are not?</p>
+  <p class="src">PML Lecture 23, "Exercise" frame 4, 22:59–28:48</p>
+  <aside class="notes">
+    <p>Notebook N2 prints this function's source with inspect.getsource, so students can see it is not magic.</p>
+    <p>Sanity checks: equal Gaussians give ½[0 − 1 + 1] = 0. A wider p with the same centre: the log term grows slowly, the ratio term shrinks.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v2" id="k-fwdrev" data-section="2 · KL divergence">
+  <p class="kicker">Which direction? Back to the two-bump posterior <span class="nbref">▶ N2</span></p>
+  <h2>$\KL(p\|q)$ covers both bumps; $\KL(q\|p)$ picks one</h2>
+  <div class="body">
+    <div class="row" style="gap:24px">
+      <img class="fig" src="figures/data/vik-fwdrev.svg" style="width:720px">
+      <div class="col grow">
+        <p class="small"><b>Top</b>, bumps of width 1 (Part 1's mixture): they overlap, and every fit is broad.</p>
+        <p class="small" data-b="2"><b>Bottom</b>, bumps of width 0.5. $\KL(p\|q)$ averages under $p$: $q$ must cover <b>both</b> (0.724).</p>
+        <p class="small" data-b="3">$\KL(q\|p)$ averages under $q$: mass in the gap costs a lot, so $q$ sits on <b>one</b> bump. Start left: 0.357. Start right: 1.204, a local optimum.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">VI minimises $\KL(q\|p)$, because we can draw from $q$, not from the posterior. Expect $q$ to be too narrow.</p>
+  <p class="src">Jia-Bin Huang, 4:39–5:25 · mixture from the PML Laplace notebook</p>
+  <aside class="notes">
+    <p>Mixture: 0.7 N(−2, w²) + 0.3 N(2, w²) with w = 1 (top) and w = 0.5 (bottom). Each panel is a Gaussian q fitted by gradient descent (800 Adam steps) on the KL computed on a grid.</p>
+    <p>On one bump, KL(q‖p) ≈ −log(weight of that bump): −log 0.7 = 0.357 and −log 0.3 = 1.204. Forward KL is moment matching: mean −0.80, sd 1.90, exactly the mixture's mean and sd.</p>
+    <p>Names in the literature: forward KL is "mass-covering" (or mean-seeking); reverse KL is "mode-seeking".</p>
+  </aside>
+</section>
+
+<section class="slide sec-v2" id="k-fwdrev-live" data-section="2 · KL divergence">
+  <p class="kicker">Try it</p>
+  <h2>Press play: the same $q$, fitted with the KL each way</h2>
+  <div class="body">
+    <div class="vw stack-v interactive" data-widget="fwdrev" data-width="0.5">
+      <div class="fr-pair">
+        <figure><canvas width="540" height="270"></canvas><figcaption>$\KL(p\,\|\,q)$ = <b class="fr-fwd-kl">—</b> · mean <b class="fr-fwd-m">—</b>, sd <b class="fr-fwd-s">—</b></figcaption></figure>
+        <figure><canvas width="540" height="270"></canvas><figcaption>$\KL(q\,\|\,p)$ = <b class="fr-rev-kl">—</b> · mean <b class="fr-rev-m">—</b>, sd <b class="fr-rev-s">—</b></figcaption></figure>
+      </div>
+      <div class="vw-btns"><button data-a="play">play</button><button data-a="reset">reset</button><span class="lab" style="margin-left:14px">bumps</span><button data-width="1">width 1</button><button data-width="0.5">width 0.5</button><span class="lab" style="margin-left:14px">$\KL(q\|p)$ starts</span><button data-start="-0.5">left</button><button data-start="0.5">right</button><span class="lab" style="margin-left:14px">step <b class="fr-step">0</b></span></div>
+    </div>
+  </div>
+  <p class="q">Same start, same optimiser; only the direction of the KL differs. Then restart the right panel from the right.</p>
+  <aside class="notes">
+    <p>Both panels start from N(±0.5, 0.6²) and run Adam (learning rate 0.05) on the grid KL, as in notebook N2. Print and PDF show the state after 800 steps with bumps of width 0.5, reverse KL started on the left.</p>
+    <p>The widget computes the KL on the notebook's grid (−8 to 8) and reproduces its numbers: with width 1, every fit is broad (reverse: mean −0.78, sd 1.90); with width 0.5, the three numbers on the previous slide.</p>
+  </aside>
+</section>
+
+
+<!-- ===================================================================== VI LECTURE · PART 3 · FITTING q BY GRADIENT DESCENT (G2) -->
+
+<section class="slide sec-v3 opener break" id="o-open" data-section="3 · Fitting q">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 3 of 9 · goal G2</p>
+      <h2>Given $p$, find the closest $q$ by gradient descent</h2>
+      <p class="why">KL gives every candidate $q$ a score. Now treat the score as a loss, and let an optimiser move $q$'s parameters. The target stays simple for now, $p = \N(1, 4^2)$, so we can check every answer.</p>
+    </div>
+    <ol class="route-mini"><li class="done" style="--c:var(--x)"><span class="dot">✓</span>Recap: Bayes, and why the evidence is hard</li><li class="done" style="--c:var(--z)"><span class="dot">✓</span>KL divergence: how far is q from p?</li><li class="now" style="--c:var(--dec)"><span class="dot">3</span>Fitting q by gradient descent</li><li class="todo" style="--c:var(--loss)"><span class="dot">4</span>No formula for KL? Monte Carlo</li><li class="todo" style="--c:var(--enc)"><span class="dot">5</span>Gradients through samples</li><li class="todo" style="--c:var(--z)"><span class="dot">6</span>The ELBO</li><li class="todo" style="--c:var(--dec)"><span class="dot">7</span>VI for the coin</li><li class="todo" style="--c:var(--x)"><span class="dot">8</span>Linear regression: correlated weights</li><li class="todo" style="--c:var(--enc)"><span class="dot">9</span>Neural networks and the VAE</li></ol>
+  </div>
+</section>
+
+<section class="slide sec-v3" id="o-grid" data-section="3 · Fitting q">
+  <p class="kicker">First attempt: try a few candidates <span class="nbref">▶ N3</span></p>
+  <h2>Score a grid of $(\text{loc}, \text{scale})$ pairs against $p = \N(1, 4^2)$</h2>
+  <div class="body">
+    <table class="work" style="font-size:22px;margin:0 auto">
+      <tr><th>$\KL(q\,\|\,p)$</th><th>scale 1</th><th>scale 2</th><th>scale 4</th></tr>
+      <tr><td>loc 0</td><td>0.949</td><td>0.349</td><td>0.031</td></tr>
+      <tr><td>loc 1</td><td>0.918</td><td>0.318</td><td class="hlc"><b>0.000</b></td></tr>
+    </table>
+    <pre class="code" style="font-size:17px;width:820px;margin:18px auto 0" data-b="2"><span class="line"><span class="k">for</span> loc <span class="k">in</span> [<span class="n">0.</span>, <span class="n">1.</span>]:</span>
+<span class="line">    <span class="k">for</span> scale <span class="k">in</span> [<span class="n">1.</span>, <span class="n">2.</span>, <span class="n">4.</span>]:</span>
+<span class="line">        print(loc, scale, dist.kl_divergence(dist.Normal(loc, scale), p))</span></pre>
+  </div>
+  <p class="q" data-b="2">The grid found $p$ itself, only because we put it on the grid. With more parameters a grid is hopeless.</p>
+  <p class="src">PML notebook, cells 14–15 · PML Lecture 23 at 10:40–12:13</p>
+  <aside class="notes">
+    <p>Two parameters, six candidates. Shifting the centre by 1 costs little (compare the two rows); a width that is too small costs a lot (compare the columns).</p>
+    <p>Same objection as the grid for the evidence in Part 1: 100 values per parameter and d parameters means 100^d candidates. We need to follow the slope instead.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v3" id="o-gd" data-section="3 · Fitting q">
+  <p class="kicker">Then gradient descent <span class="nbref">▶ N3</span></p>
+  <h2>Make loc and scale parameters, and minimise the KL with Adam</h2>
+  <div class="body">
+    <div class="codewalk" style="grid-template-columns:1.45fr 1fr">
+      <pre class="code" style="font-size:15.5px"><span class="line" data-hl="=1"><span class="k">class</span> <span class="f">TrainableNormal</span>(nn.Module):</span>
+<span class="line" data-hl="=1">    <span class="k">def</span> <span class="f">__init__</span>(self, loc, scale):</span>
+<span class="line" data-hl="=1">        super().__init__()</span>
+<span class="line" data-hl="=1">        self.loc = nn.Parameter(torch.tensor(loc))</span>
+<span class="line" data-hl="=1">        self.raw_scale = nn.Parameter(inverse_softplus(scale))</span>
+<span class="line" data-hl="=1">    <span class="k">def</span> <span class="f">forward</span>(self):</span>
+<span class="line" data-hl="=1">        <span class="k">return</span> dist.Normal(self.loc, F.softplus(self.raw_scale))</span>
+<span class="line"></span>
+<span class="line" data-hl="=2">q = TrainableNormal(loc=<span class="n">4.0</span>, scale=<span class="n">0.5</span>)</span>
+<span class="line" data-hl="=2">opt = torch.optim.Adam(q.parameters(), lr=<span class="n">0.05</span>)</span>
+<span class="line" data-hl="=3"><span class="k">for</span> step <span class="k">in</span> range(<span class="n">400</span>):</span>
+<span class="line" data-hl="=3">    loss = dist.kl_divergence(q(), p)</span>
+<span class="line" data-hl="=3">    opt.zero_grad(); loss.backward(); opt.step()</span></pre>
+      <div class="notes-col">
+        <p class="small" data-b="=1"><b>A trainable $q$.</b> The scale must stay positive, so we learn a raw number and pass it through $\mathrm{softplus}(r) = \log(1 + e^{r}) > 0$.</p>
+        <p class="small" data-b="=2"><b>Start far away:</b> $q = \N(4, 0.5^2)$, the PML notebook's starting point.</p>
+        <p class="small" data-b="3"><b>The loop.</b> Every step: compute the KL, backpropagate to loc and raw_scale, take a step. Nothing here is specific to Gaussians except the formula inside <code>kl_divergence</code>.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">The loss is a KL; the parameters are a distribution's. Otherwise this is any training loop you have written.</p>
+  <p class="src">PML notebook, cells 16–17 · PML Lecture 23 at 12:13–14:33</p>
+  <aside class="notes">
+    <p>The PML notebook used ASTRA's train_fn for the loop. The companion notebook writes the loop out once (cell in N3) and afterwards calls vu.fit, a ten-line version of the same thing that also records the history for the animations.</p>
+    <p>Why not clamp the scale? A clamp has zero gradient at the boundary; softplus is smooth and lets the optimiser work in an unconstrained space. The Beta q in Part 7 does the same for α and β.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v3" id="o-live" data-section="3 · Fitting q">
+  <p class="kicker">Watch it <span class="nbref">▶ N3</span></p>
+  <h2>Press play: $q$ becomes $p$</h2>
+  <div class="body">
+    <div class="vw interactive" data-widget="chase" data-mode="exact" data-pmu="1" data-psd="4" data-xlo="-11" data-xhi="13" data-init="4,0.5" data-steps="400" data-lr="0.05">
+      <div class="col" style="gap:10px">
+        <canvas width="640" height="250"></canvas>
+        <canvas width="640" height="170"></canvas>
+      </div>
+      <div class="vw-side">
+        <div class="vw-btns"><button data-a="play">play</button><button data-a="reset">reset</button></div>
+        <p class="vw-read">step <b class="ch-step">0</b> of 400</p>
+        <p class="vw-big">$q = \N($<span class="ch-m">4.00</span>, <span class="ch-s">0.50</span>$^2)$</p>
+        <p class="vw-read">$\KL(q\,\|\,p) = $ <b class="ch-kl">1.869</b></p>
+        <div class="lg"><span><i class="fill" style="--c:var(--x);--f:var(--x-t)"></i>$p = \N(1, 4^2)$</span><span><i style="--c:var(--enc)"></i>$q$</span><span><i style="--c:var(--loss)"></i>KL, by step</span></div>
+      </div>
+    </div>
+  </div>
+  <p class="q">From $\N(4, 0.5^2)$ to $\N(1.00, 4.00^2)$: the KL falls from 1.87 to zero.</p>
+  <aside class="notes">
+    <p>The widget runs the same loop in the browser: the closed-form KL and its exact gradient, Adam with learning rate 0.05, softplus scale. The peak of the narrow starting q is clipped at the top of the plot.</p>
+    <p>What to point out: the centre moves first, the width grows more slowly. The KL is below 0.01 after 138 steps. Print and PDF show the end state.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v3" id="o-snap" data-section="3 · Fitting q">
+  <p class="kicker">What the optimiser did</p>
+  <h2>The centre moves first, then the width catches up</h2>
+  <div class="body">
+    <div class="row" style="gap:26px">
+      <img class="fig" src="figures/data/vik-g2-fit.svg" style="width:760px">
+      <table class="work" style="font-size:19px">
+        <tr><th>step</th><th>loc</th><th>scale</th><th>KL</th></tr>
+        <tr><td>0</td><td>4.00</td><td>0.50</td><td>1.869</td></tr>
+        <tr><td>10</td><td>3.50</td><td>0.73</td><td>1.418</td></tr>
+        <tr><td>30</td><td>2.58</td><td>1.32</td><td>0.740</td></tr>
+        <tr><td>100</td><td>1.06</td><td>3.15</td><td>0.049</td></tr>
+        <tr><td>399</td><td>1.00</td><td>4.00</td><td>0.000</td></tr>
+      </table>
+    </div>
+  </div>
+  <p class="q">Gradient descent found $p$ without being told where it was, only how far away each guess was.</p>
+  <p class="src">PML notebook, cells 18–21 (kl_qp.gif) · PML Lecture 24 at 4:46–5:32</p>
+  <aside class="notes">
+    <p>Same run as the widget, from the companion notebook (snapshots of vu.fit's history). The notebook's N3 cell also shows it as a play/step animation with a slider.</p>
+    <p>Of course this is circular: we used the formula for KL to p, so we knew p. Parts 4–6 remove that, one piece at a time.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v3" id="o-2d" data-section="3 · Fitting q">
+  <p class="kicker">The same in two dimensions · goal G6, first look <span class="nbref">▶ N3</span></p>
+  <h2>A correlated target: a diagonal $q$ cannot tilt, so it shrinks</h2>
+  <div class="body">
+    <div class="row" style="gap:26px">
+      <img class="fig" src="figures/data/vik-g2-2d.svg" style="width:660px">
+      <div class="col grow">
+        <p class="small">Target $p$: two dimensions, unit widths, correlation $\rho = 0.9$ (blue).</p>
+        <p class="small" data-b="2"><b>Diagonal</b> $q$ (one width per axis, no correlation): best width 0.436 $= \sqrt{1-\rho^2}$, KL 0.830.</p>
+        <p class="small" data-b="3"><b>Full covariance</b> $q$, $\Sigma = LL^\top$ with $L$ lower-triangular: matches $p$ exactly, KL 0.000.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">$\KL(q\|p)$ prefers a $q$ that is too narrow over one that spills outside $p$. Part 2's lesson, in 2-D.</p>
+  <p class="src">PML notebook, goal G6 (kl_qp_2.gif) · PML Lecture 23 at 1:00:19 · Bishop, PRML, Fig. 10.2</p>
+  <aside class="notes">
+    <p>The diagonal q must fit inside the tilted ellipse; its widths equal the target's conditional widths, √(1 − ρ²) = 0.436, not the marginal widths, 1. That is Bishop's Figure 10.2.</p>
+    <p>The full q stores the covariance through a lower-triangular L with positive diagonal (torch's scale_tril), so LLᵀ is always a valid covariance. This matters again for linear regression (Part 8) and for why neural networks use the diagonal (Part 9).</p>
+    <p>Notebook N3 animates the diagonal fit.</p>
+  </aside>
+</section>
+
+
+<!-- ===================================================================== VI LECTURE · PART 4 · NO FORMULA: MONTE CARLO (G3, G5) -->
+
+<section class="slide sec-v4 opener break" id="m-open" data-section="4 · Monte Carlo">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 4 of 9 · goals G3 and G5</p>
+      <h2>When there is no formula for the KL, estimate it by sampling</h2>
+      <p class="why">Real posteriors are not Gaussian, so the KL between our $q$ and the target has no formula. But a KL is an average under $q$, and we can draw from $q$ as often as we like.</p>
+    </div>
+    <ol class="route-mini"><li class="done" style="--c:var(--x)"><span class="dot">✓</span>Recap: Bayes, and why the evidence is hard</li><li class="done" style="--c:var(--z)"><span class="dot">✓</span>KL divergence: how far is q from p?</li><li class="done" style="--c:var(--dec)"><span class="dot">✓</span>Fitting q by gradient descent</li><li class="now" style="--c:var(--loss)"><span class="dot">4</span>No formula for KL? Monte Carlo</li><li class="todo" style="--c:var(--enc)"><span class="dot">5</span>Gradients through samples</li><li class="todo" style="--c:var(--z)"><span class="dot">6</span>The ELBO</li><li class="todo" style="--c:var(--dec)"><span class="dot">7</span>VI for the coin</li><li class="todo" style="--c:var(--x)"><span class="dot">8</span>Linear regression: correlated weights</li><li class="todo" style="--c:var(--enc)"><span class="dot">9</span>Neural networks and the VAE</li></ol>
+  </div>
+</section>
+
+<section class="slide sec-v4" id="m-mixb" data-section="4 · Monte Carlo">
+  <p class="kicker">A target from another family <span class="nbref">▶ N4</span></p>
+  <h2>Two bumps, and two Gaussian candidates. Which is closer?</h2>
+  <div class="body">
+    <div class="row" style="gap:30px">
+      <img class="fig" src="figures/data/vik-g3.svg" style="width:560px">
+      <div class="col grow">
+        <div class="mathblock left" style="font-size:23px">$$p = 0.5\,\N(-0.2,\ 0.4^2) + 0.5\,\N(1,\ 0.5^2)$$</div>
+        <p class="small">$q_1 = \N(3, 1^2)$: the right sort of width, in the wrong place.</p>
+        <p class="small">$q_2 = \N(3, 4.5^2)$: so wide that it covers $p$, and much else.</p>
+        <p class="small" data-b="2"><b>Vote</b>, using Part 2: which one does $\KL(q\,\|\,p)$ prefer?</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="2">Remember: $\KL(q\|p)$ averages under $q$, so it punishes $q$ for mass where $p$ has almost none.</p>
+  <p class="src">PML notebook, cells 23–28 (dkl-different.png) · PML Lecture 23 at 28:48–29:36</p>
+  <aside class="notes">
+    <p>The mixture is torch's MixtureSameFamily: a Categorical over two components and a Normal with two locs and two scales. In the companion notebook it is vu.mog([0.5, 0.5], [−0.2, 1.0], [0.4, 0.5]).</p>
+    <p>Most students vote for q₂ because it overlaps p. The answer, two slides on, is q₁ by a factor of five.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v4" id="m-noimpl" data-section="4 · Monte Carlo">
+  <p class="kicker">Ask torch <span class="nbref">▶ N4</span></p>
+  <h2>torch has no formula between a Gaussian and a mixture</h2>
+  <div class="body">
+    <pre class="code" style="font-size:18px;width:1050px;margin:0 auto"><span class="line">p_s = MixtureSameFamily(Categorical(torch.tensor([<span class="n">0.5</span>, <span class="n">0.5</span>])),</span>
+<span class="line">                        Normal(torch.tensor([-<span class="n">0.2</span>, <span class="n">1.0</span>]), torch.tensor([<span class="n">0.4</span>, <span class="n">0.5</span>])))</span>
+<span class="line">q_1 = dist.Normal(<span class="n">3.</span>, <span class="n">1.</span>)</span>
+<span class="line"></span>
+<span class="line" data-hl="2">dist.kl_divergence(q_1, p_s)</span>
+<span class="line" data-b="2"><span class="c"># NotImplementedError: No KL(p || q) is implemented for p type Normal</span></span>
+<span class="line" data-b="2"><span class="c">#                      and q type MixtureSameFamily</span></span></pre>
+    <div class="callout plain" style="width:1050px;margin:16px auto 0;font-size:21px" data-b="3">The KL of a Gaussian from a mixture of Gaussians is an integral of $\log$ of a sum. It has no closed form. Neither will the KL to a real posterior.</div>
+  </div>
+  <p class="q" data-b="3">We cannot integrate it. Can we average it?</p>
+  <p class="src">PML notebook, cell 29 · PML Lecture 23 at 29:36–30:24</p>
+  <aside class="notes">
+    <p>torch keeps a registry of KL formulas for pairs of families (@register_kl, as in Part 2's _kl_normal_normal). Normal–MixtureSameFamily is not in it, because there is nothing to register.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v4" id="m-mc" data-section="4 · Monte Carlo">
+  <p class="kicker">Monte Carlo, the general form</p>
+  <h2>Any average under $p$ can be estimated from draws of $p$</h2>
+  <div class="body">
+    <div class="row" style="gap:40px;justify-content:center">
+      <img class="fig" src="figures/data/vik-darts.svg" style="height:380px">
+      <div class="col" style="width:660px">
+        <div class="mathblock left" style="font-size:24px">$$\E_{x\sim p}\big[f(x)\big] = \int f(x)\,p(x)\,dx \;\approx\; \frac1N\sum_{i=1}^{N} f(x_i), \quad x_i\sim p$$</div>
+        <p class="small" data-b="2">Example: darts thrown uniformly at the unit square. A dart lands inside the quarter circle with probability $\pi/4$, so</p>
+        <div class="mathblock left" style="font-size:24px" data-b="2">$$\pi \approx 4\times\frac{\text{darts inside}}{\text{darts thrown}} = 4\times\frac{ 771 }{1000} = 3.084$$</div>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="2">An integral became an average of random draws. We need only to sample from $p$ and to evaluate $f$.</p>
+  <p class="src">PML Sampling-1, "General Form" and "Estimating Pi" · notebook mc_sampling_intro.ipynb</p>
+  <aside class="notes">
+    <p>Here f(x) is 1 if the dart is inside and 0 otherwise, and p is uniform on the square. The estimate is unbiased: averaged over many repetitions it is exactly π.</p>
+    <p>The question for the KL: what plays the role of p, and what of f?</p>
+  </aside>
+</section>
+
+<section class="slide sec-v4" id="m-klsamp" data-section="4 · Monte Carlo">
+  <p class="kicker">Goal G3: the KL by sampling <span class="nbref">▶ N4</span></p>
+  <h2>Draw from $q$, average $\log q - \log p$</h2>
+  <div class="body">
+    <div class="mathblock" style="font-size:27px">$$\KL(q\,\|\,p) = \E_{\theta\sim q}\big[\log q(\theta) - \log p(\theta)\big] \approx \frac1N\sum_{i=1}^{N}\big[\log q(\theta_i) - \log p(\theta_i)\big], \quad \theta_i\sim q$$</div>
+    <div class="codewalk" style="grid-template-columns:1.25fr 1fr;margin-top:4px">
+      <pre class="code" style="font-size:16px"><span class="line" data-hl="=2"><span class="k">def</span> <span class="f">kl_via_sampling</span>(q, p, n_samples=<span class="n">100_000</span>):</span>
+<span class="line" data-hl="=2">    sample_set = q.sample([n_samples])     <span class="c"># from the FIRST argument</span></span>
+<span class="line" data-hl="=2">    <span class="k">return</span> torch.mean(q.log_prob(sample_set) - p.log_prob(sample_set))</span></pre>
+      <table class="work" style="font-size:19px" data-b="3">
+        <tr><th></th><th>exact</th><th>sampling</th></tr>
+        <tr><td>$\KL(q_1\,\|\,q_2)$, two Gaussians</td><td>1.0288</td><td>1.0276</td></tr>
+        <tr data-b="4"><td>$\KL(q_1\,\|\,p)$, mixture</td><td>none</td><td><b>9.45</b></td></tr>
+        <tr data-b="4"><td>$\KL(q_2\,\|\,p)$, mixture</td><td>none</td><td>45.02</td></tr>
+      </table>
+    </div>
+  </div>
+  <p class="q" data-b="4">Check it where we know the answer, then use it where we do not: $q_1$ wins, by a factor of five.</p>
+  <p class="src">PML notebook, cells 30–35 · PML Lecture 23 at 30:24–34:39 · Lecture 24 at 6:18–8:40</p>
+  <aside class="notes">
+    <p>Three lines, no integral. All we need from q is .sample and .log_prob; all we need from p is .log_prob, which a mixture has. For a posterior, log p(θ | D) is the one thing we cannot evaluate; Part 6 deals with that.</p>
+    <p>The PML run gave 1.0273, 9.46 and 45.27; ours (seed 0) gives the numbers shown. They differ in the second decimal because they are random estimates.</p>
+    <p>Why q₂ loses: it puts much of its mass at θ = 6 to 10, where the mixture's density is essentially zero, so log q − log p is enormous there.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v4" id="m-g5" data-section="4 · Monte Carlo">
+  <p class="kicker">Goal G5: how many samples? <span class="nbref">▶ N4</span></p>
+  <h2>Unbiased, but the noise shrinks only like $1/\sqrt{N}$</h2>
+  <div class="body">
+    <div class="row" style="gap:30px">
+      <img class="fig" src="figures/data/vik-g5.svg" style="width:540px">
+      <div class="col grow">
+        <p class="small">Run <code>kl_via_sampling</code> 200 times for each $N$, on $\KL(q_1\,\|\,q_2)$ where the answer is 1.0288.</p>
+        <table class="work" style="font-size:20px" data-b="2">
+          <tr><th>$N$</th><th>10</th><th>100</th><th>1,000</th><th>10,000</th></tr>
+          <tr><td>spread</td><td>0.212</td><td>0.065</td><td>0.021</td><td>0.007</td></tr>
+        </table>
+        <p class="small" data-b="3">The average is right at every $N$ (unbiased). Each 100× more samples buys 10× less noise.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">For training we only need an unbiased estimate: a noisy loss gives a noisy, but correct on average, gradient.</p>
+  <p class="src">PML Sampling-1, "Unbiased Estimator?" · Jia-Bin Huang, 7:02–11:00</p>
+  <aside class="notes">
+    <p>The spread is the standard deviation over the 200 repetitions. 0.212 → 0.065 → 0.021 → 0.007: about √10 ≈ 3.2 times smaller for each tenfold N.</p>
+    <p>Jia-Bin Huang shows a lower-variance estimator of the same KL: average (r − 1) − log r with r = p(θ)/q(θ). It has the same mean, because E_q[r − 1] = 0, and every term is non-negative.</p>
+    <p>The catch for the next part: we now want to minimise this estimate by gradient descent. But the loss is computed from random draws. What is its gradient?</p>
+  </aside>
+</section>
+
+
+<!-- ===================================================================== VI LECTURE · PART 5 · GRADIENTS THROUGH SAMPLES (G4) -->
+
+<section class="slide sec-v5 opener break" id="g-open" data-section="5 · Reparameterisation">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 5 of 9 · goal G4</p>
+      <h2>Gradients through random samples: the reparameterisation trick</h2>
+      <p class="why">We can estimate the KL to a mixture by sampling from $q$. To <b>minimise</b> it we need its gradient with respect to $q$'s parameters, and a random draw seems to have none.</p>
+    </div>
+    <ol class="route-mini"><li class="done" style="--c:var(--x)"><span class="dot">✓</span>Recap: Bayes, and why the evidence is hard</li><li class="done" style="--c:var(--z)"><span class="dot">✓</span>KL divergence: how far is q from p?</li><li class="done" style="--c:var(--dec)"><span class="dot">✓</span>Fitting q by gradient descent</li><li class="done" style="--c:var(--loss)"><span class="dot">✓</span>No formula for KL? Monte Carlo</li><li class="now" style="--c:var(--enc)"><span class="dot">5</span>Gradients through samples</li><li class="todo" style="--c:var(--z)"><span class="dot">6</span>The ELBO</li><li class="todo" style="--c:var(--dec)"><span class="dot">7</span>VI for the coin</li><li class="todo" style="--c:var(--x)"><span class="dot">8</span>Linear regression: correlated weights</li><li class="todo" style="--c:var(--enc)"><span class="dot">9</span>Neural networks and the VAE</li></ol>
+  </div>
+</section>
+
+<section class="slide sec-v5" id="g-graph1" data-section="5 · Reparameterisation">
+  <p class="kicker">The original formulation, as a computational graph</p>
+  <h2>The loss depends on loc and scale only through a random draw</h2>
+  <div class="body">
+    <svg viewBox="0 0 1100 330" class="diagram" role="img" aria-label="vik-graph-sample"><defs><marker id="vik-graph-sample-ah-6B7280" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6B7280"/></marker><marker id="vik-graph-sample-ah-BE123C" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#BE123C"/></marker></defs><g data-b="1"><rect x="35.0" y="58.0" width="150" height="64" rx="10" fill="#F1E5FC" stroke="#8B2CDE" stroke-width="2.2"/><foreignObject x="-270.0" y="70.4" width="760" height="48.4" overflow="visible"><div class="fo" style="font-size:22px;color:#8B2CDE;font-weight:400;text-align:center;height:35.2px;line-height:35.2px">$\text{loc}$</div></foreignObject><rect x="35.0" y="198.0" width="150" height="64" rx="10" fill="#F1E5FC" stroke="#8B2CDE" stroke-width="2.2"/><foreignObject x="-270.0" y="210.4" width="760" height="48.4" overflow="visible"><div class="fo" style="font-size:22px;color:#8B2CDE;font-weight:400;text-align:center;height:35.2px;line-height:35.2px">$\text{scale}$</div></foreignObject><rect x="275.0" y="125.0" width="230" height="70" rx="10" fill="#F1E5FC" stroke="#8B2CDE" stroke-width="2.2"/><foreignObject x="10.0" y="140.4" width="760" height="48.4" overflow="visible"><div class="fo" style="font-size:22px;color:#8B2CDE;font-weight:400;text-align:center;height:35.2px;line-height:35.2px">$q = \N(\text{loc}, \text{scale})$</div></foreignObject><circle cx="660" cy="160" r="62" fill="#FCEFD9" stroke="#AA4E08" stroke-width="2.4" stroke-dasharray="5 3"/><foreignObject x="280.0" y="141.5" width="760" height="48.4" overflow="visible"><div class="fo" style="font-size:22px;color:#AA4E08;font-weight:400;text-align:center;height:35.2px;line-height:35.2px">$\theta_s$</div></foreignObject><foreignObject x="280.0" y="229.2" width="760" height="50.6" overflow="visible"><div class="fo" style="font-size:23px;color:#AA4E08;font-weight:400;text-align:center;height:36.8px;line-height:36.8px">$\theta_s \sim q$</div></foreignObject><rect x="840.0" y="125.0" width="200" height="70" rx="10" fill="#FDE2E7" stroke="#BE123C" stroke-width="2.2"/><foreignObject x="560.0" y="140.4" width="760" height="48.4" overflow="visible"><div class="fo" style="font-size:22px;color:#BE123C;font-weight:400;text-align:center;height:35.2px;line-height:35.2px">$\text{loss}$</div></foreignObject><foreignObject x="560.0" y="208.5" width="760" height="48.4" overflow="visible"><div class="fo" style="font-size:22px;color:#6B7280;font-weight:400;text-align:center;height:35.2px;line-height:35.2px">$\tfrac1S\textstyle\sum_s \log\frac{q(\theta_s)}{p(\theta_s)}$</div></foreignObject><path d="M186,100 L274,140" fill="none" stroke="#6B7280" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#vik-graph-sample-ah-6B7280)"/><path d="M186,220 L274,180" fill="none" stroke="#6B7280" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#vik-graph-sample-ah-6B7280)"/><path d="M506,160 L596,160" fill="none" stroke="#6B7280" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#vik-graph-sample-ah-6B7280)"/><path d="M724,160 L838,160" fill="none" stroke="#6B7280" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#vik-graph-sample-ah-6B7280)"/><rect x="20" y="292" width="26" height="22" rx="5" fill="#F1E5FC" stroke="#8B2CDE" stroke-width="2"/><text x="56" y="309" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="20" font-weight="500" fill="#6B7280" text-anchor="start">deterministic</text><circle cx="214" cy="303" r="12" fill="#FCEFD9" stroke="#AA4E08" stroke-width="2" stroke-dasharray="4 3"/><text x="234" y="309" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="20" font-weight="500" fill="#6B7280" text-anchor="start">random draw</text></g><g data-b="2"><path d="M838,130 L726,130" fill="none" stroke="#BE123C" stroke-width="2.8" stroke-linejoin="round" marker-end="url(#vik-graph-sample-ah-BE123C)"/><path d="M598,130 L508,130" fill="none" stroke="#BE123C" stroke-width="2.8" stroke-linejoin="round" stroke-dasharray="5 4" marker-end="url(#vik-graph-sample-ah-BE123C)"/><path d="M539,116 L567,144 M567,116 L539,144" stroke="#BE123C" stroke-width="4" stroke-linecap="round"/><text x="553" y="96" font-family="'Avenir Next', 'Avenir', 'Segoe UI', sans-serif" font-size="21" font-weight="650" fill="#BE123C" text-anchor="middle">blocked</text><foreignObject x="440.0" y="284.5" width="640" height="48.4" overflow="visible"><div class="fo" style="font-size:22px;color:#BE123C;font-weight:650;text-align:center;height:35.2px;line-height:35.2px">gradients reach $\theta_s$, but a draw is not a function of loc and scale</div></foreignObject></g></svg>
+  </div>
+  <p class="q" data-b="2">Backpropagation needs a derivative at every node. "Draw a sample" has none: the path is blocked.</p>
+  <p class="src">PML notebook, cell 48 (reparam.001) · PML Lecture 23 at 35:26–37:46</p>
+  <aside class="notes">
+    <p>Squares are deterministic functions: we know how their output changes with their input. The dashed circle is a random draw: run it twice with the same loc and scale and you get different θ_s.</p>
+    <p>What is "the derivative of a sample with respect to loc"? As drawn, the question has no answer: the sampler is a black box that hands back a number.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v5" id="g-code" data-section="5 · Reparameterisation">
+  <p class="kicker">The same, in code <span class="nbref">▶ N5</span></p>
+  <h2>torch agrees: <code>sample()</code> cuts the graph</h2>
+  <div class="body">
+    <pre class="code" style="font-size:19px;width:1000px;margin:0 auto"><span class="line">loc = torch.tensor(<span class="n">2.0</span>, requires_grad=<span class="k">True</span>)</span>
+<span class="line">scale = torch.tensor(<span class="n">0.5</span>, requires_grad=<span class="k">True</span>)</span>
+<span class="line">q = dist.Normal(loc, scale)</span>
+<span class="line" data-hl="2">s = q.sample()</span>
+<span class="line" data-hl="2">s.backward()</span>
+<span class="line" data-b="2"><span class="c"># RuntimeError: element 0 of tensors does not require grad</span></span>
+<span class="line" data-b="2"><span class="c">#               and does not have a grad_fn</span></span></pre>
+    <div class="callout plain" style="width:1000px;margin:16px auto 0;font-size:21px" data-b="3">The sample <code>s</code> is a plain number with no history. Any loss built from it, like <code>kl_via_sampling</code>, gives no gradient to loc or scale.</div>
+  </div>
+  <p class="q" data-b="3">So we cannot yet train $q$ on the Monte Carlo KL. We need the randomness to sit somewhere else.</p>
+  <p class="src">PML notebook, cell 39 · PML Lecture 24 at 9:27–10:15</p>
+  <aside class="notes">
+    <p>torch is right to refuse: sample() draws with torch.no_grad(). The value of s does depend on loc and scale, but not through any operation autograd recorded.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v5" id="g-graph2" data-section="5 · Reparameterisation">
+  <p class="kicker">The reparameterised formulation</p>
+  <h2>Draw the noise from a fixed $\N(0, 1)$; then shift and stretch it</h2>
+  <div class="body">
+    <div class="mathblock" style="font-size:28px;margin:0 0 4px">$$\varepsilon \sim \N(0, 1), \qquad z = \text{loc} + \text{scale}\cdot\varepsilon \quad\Longrightarrow\quad z \sim \N(\text{loc},\ \text{scale}^2)$$</div>
+    <svg viewBox="0 0 1100 330" class="diagram" role="img" aria-label="vik-graph-reparam"><defs><marker id="vik-graph-reparam-ah-6B7280" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6B7280"/></marker><marker id="vik-graph-reparam-ah-BE123C" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#BE123C"/></marker></defs><g data-b="1"><rect x="35.0" y="38.0" width="150" height="64" rx="10" fill="#F1E5FC" stroke="#8B2CDE" stroke-width="2.2"/><foreignObject x="-270.0" y="50.4" width="760" height="48.4" overflow="visible"><div class="fo" style="font-size:22px;color:#8B2CDE;font-weight:400;text-align:center;height:35.2px;line-height:35.2px">$\text{loc}$</div></foreignObject><rect x="35.0" y="148.0" width="150" height="64" rx="10" fill="#F1E5FC" stroke="#8B2CDE" stroke-width="2.2"/><foreignObject x="-270.0" y="160.4" width="760" height="48.4" overflow="visible"><div class="fo" style="font-size:22px;color:#8B2CDE;font-weight:400;text-align:center;height:35.2px;line-height:35.2px">$\text{scale}$</div></foreignObject><circle cx="110" cy="280" r="40" fill="#FCEFD9" stroke="#AA4E08" stroke-width="2.4" stroke-dasharray="5 3"/><foreignObject x="-270.0" y="261.5" width="760" height="48.4" overflow="visible"><div class="fo" style="font-size:22px;color:#AA4E08;font-weight:400;text-align:center;height:35.2px;line-height:35.2px">$\varepsilon$</div></foreignObject><foreignObject x="172.0" y="234.5" width="760" height="48.4" overflow="visible"><div class="fo" style="font-size:22px;color:#AA4E08;font-weight:400;text-align:left;height:35.2px;line-height:35.2px">$\varepsilon \sim \N(0, 1)$</div></foreignObject><rect x="355.0" y="122.0" width="330" height="76" rx="10" fill="#FCEFD9" stroke="#AA4E08" stroke-width="2.2"/><foreignObject x="140.0" y="139.5" width="760" height="50.6" overflow="visible"><div class="fo" style="font-size:23px;color:#AA4E08;font-weight:400;text-align:center;height:36.8px;line-height:36.8px">$z = \text{loc} + \text{scale}\cdot\varepsilon$</div></foreignObject><rect x="840.0" y="125.0" width="200" height="70" rx="10" fill="#FDE2E7" stroke="#BE123C" stroke-width="2.2"/><foreignObject x="560.0" y="140.4" width="760" height="48.4" overflow="visible"><div class="fo" style="font-size:22px;color:#BE123C;font-weight:400;text-align:center;height:35.2px;line-height:35.2px">$\text{loss}$</div></foreignObject><foreignObject x="560.0" y="208.5" width="760" height="48.4" overflow="visible"><div class="fo" style="font-size:22px;color:#6B7280;font-weight:400;text-align:center;height:35.2px;line-height:35.2px">$\tfrac1S\textstyle\sum_s \log\frac{q(z_s)}{p(z_s)}$</div></foreignObject><path d="M186,78 L354,140" fill="none" stroke="#6B7280" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#vik-graph-reparam-ah-6B7280)"/><path d="M186,180 L354,165" fill="none" stroke="#6B7280" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#vik-graph-reparam-ah-6B7280)"/><path d="M152,280 L380,280 L430,200" fill="none" stroke="#6B7280" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#vik-graph-reparam-ah-6B7280)"/><path d="M686,160 L838,160" fill="none" stroke="#6B7280" stroke-width="2.4" stroke-linejoin="round" marker-end="url(#vik-graph-reparam-ah-6B7280)"/></g><g data-b="2"><path d="M838,128 L688,128" fill="none" stroke="#BE123C" stroke-width="3" stroke-linejoin="round" marker-end="url(#vik-graph-reparam-ah-BE123C)"/><path d="M356,128 L188,62" fill="none" stroke="#BE123C" stroke-width="3" stroke-linejoin="round" marker-end="url(#vik-graph-reparam-ah-BE123C)"/><path d="M356,150 L188,194" fill="none" stroke="#BE123C" stroke-width="3" stroke-linejoin="round" marker-end="url(#vik-graph-reparam-ah-BE123C)"/><foreignObject x="268.0" y="37.2" width="760" height="50.6" overflow="visible"><div class="fo" style="font-size:23px;color:#BE123C;font-weight:400;text-align:left;height:36.8px;line-height:36.8px">$\partial z/\partial\,\text{loc} = 1$</div></foreignObject><foreignObject x="196.0" y="201.2" width="760" height="50.6" overflow="visible"><div class="fo" style="font-size:23px;color:#BE123C;font-weight:400;text-align:left;height:36.8px;line-height:36.8px">$\partial z/\partial\,\text{scale} = \varepsilon$</div></foreignObject><foreignObject x="540.0" y="272.5" width="520" height="48.4" overflow="visible"><div class="fo" style="font-size:22px;color:#BE123C;font-weight:650;text-align:center;height:35.2px;line-height:35.2px">$\varepsilon$ is just an input, like a data point</div></foreignObject></g></svg>
+  </div>
+  <p class="q"><span class="exref" style="margin:0 8px 0 0">✎</span>Before the next click: what are $\partial z/\partial\,\text{loc}$ and $\partial z/\partial\,\text{scale}$?</p>
+  <p class="src">PML notebook, cells 43–45 and 49 (reparam.002) · PML Lecture 23 at 38:53–41:33</p>
+  <aside class="notes">
+    <p>Same distribution for z, different graph. The randomness now enters as an input, ε, which does not depend on any parameter. Everything between the parameters and the loss is a deterministic function, so backpropagation goes straight through.</p>
+    <p>Second click shows the answers: 1, and ε itself. Then check in code on the next slide.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v5" id="g-ex" data-section="5 · Reparameterisation">
+  <p class="kicker">Check the exercise in code <span class="nbref">▶ N5</span></p>
+  <h2>Now the draw has a gradient: $\partial z/\partial\,\text{loc} = 1$, $\partial z/\partial\,\text{scale} = \varepsilon$</h2>
+  <div class="body">
+    <pre class="code" style="font-size:19px;width:1000px;margin:0 auto"><span class="line">torch.manual_seed(<span class="n">42</span>)</span>
+<span class="line">loc = torch.tensor(<span class="n">2.0</span>, requires_grad=<span class="k">True</span>)</span>
+<span class="line">scale = torch.tensor(<span class="n">0.5</span>, requires_grad=<span class="k">True</span>)</span>
+<span class="line" data-hl="=1">eps = dist.Normal(<span class="n">0.</span>, <span class="n">1.</span>).sample()   <span class="c"># randomness that does not depend on loc or scale</span></span>
+<span class="line" data-hl="=1">z = loc + scale * eps                <span class="c"># the reparameterised draw</span></span>
+<span class="line" data-hl="2">z.backward()</span>
+<span class="line" data-b="2">loc.grad, scale.grad, eps            <span class="c"># 1.0000, 0.3367, 0.3367</span></span></pre>
+  </div>
+  <p class="q" data-b="2">The gradient with respect to scale is the noise that was drawn. Different draw, different gradient: noisy but unbiased.</p>
+  <p class="src">PML notebook, cell 44 · PML Lecture 24 at 11:02–13:26</p>
+  <aside class="notes">
+    <p>With seed 42 the first standard-normal draw is ε = 0.3367. Averaged over many draws, the gradient of E[f(z)] is E[f′(z)] for loc and E[f′(z) ε] for scale: exactly what averaging these per-draw gradients estimates.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v5" id="g-rsample" data-section="5 · Reparameterisation">
+  <p class="kicker">You do not have to write it yourself <span class="nbref">▶ N5</span></p>
+  <h2><code>rsample</code> is a reparameterised sample</h2>
+  <div class="body">
+    <div class="codewalk" style="grid-template-columns:1.3fr 1fr">
+      <pre class="code" style="font-size:16px"><span class="line"><span class="c"># torch/distributions/normal.py</span></span>
+<span class="line"><span class="k">def</span> <span class="f">rsample</span>(self, sample_shape=torch.Size()):</span>
+<span class="line">    shape = self._extended_shape(sample_shape)</span>
+<span class="line" data-hl="=1">    eps = _standard_normal(shape, dtype=self.loc.dtype,</span>
+<span class="line" data-hl="=1">                           device=self.loc.device)</span>
+<span class="line" data-hl="=1">    <span class="k">return</span> self.loc + eps * self.scale</span>
+<span class="line"></span>
+<span class="line" data-hl="=2">z = dist.Normal(loc, scale).rsample()</span>
+<span class="line" data-hl="=2">z.backward()        <span class="c"># loc.grad = 1.0000, scale.grad = 0.3367</span></span></pre>
+      <div class="notes-col">
+        <p class="small" data-b="=1">The same three lines as ours, inside torch.</p>
+        <p class="small" data-b="2">Same seed, same numbers as our hand-made version.</p>
+        <table class="work" style="font-size:19px" data-b="3">
+          <tr><th>family</th><th><code>has_rsample</code></th></tr>
+          <tr><td>Normal</td><td>True</td></tr>
+          <tr><td>Beta</td><td>True</td></tr>
+          <tr><td>Poisson</td><td>False</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">Continuous families with a smooth sampler have one (the Beta's goes through Gamma draws). Counts cannot be shifted and stretched.</p>
+  <p class="src">PML notebook, cells 46–47 · PML Lecture 24 at 14:15–18:18</p>
+  <aside class="notes">
+    <p>The notebook prints this source with inspect.getsource(dist.Normal.rsample) and checks has_rsample for three families.</p>
+    <p>Beta.rsample is reparameterised through Dirichlet/Gamma sampling with implicit gradients; that is why the coin's Beta q in Part 7 can be trained. A Poisson draw is an integer: a small change in its rate either leaves it unchanged or makes it jump, so there is no useful derivative.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v5" id="g-fit" data-section="5 · Reparameterisation">
+  <p class="kicker">Goal G4: fit a Gaussian to the mixture <span class="nbref">▶ N5</span></p>
+  <h2>Change <code>sample</code> to <code>rsample</code>, and the Monte Carlo KL trains</h2>
+  <div class="body">
+    <pre class="code" style="font-size:16px;width:1080px;margin:0 auto 10px"><span class="line"><span class="k">def</span> <span class="f">kl_loss</span>(q, n_samples=<span class="n">5000</span>):</span>
+<span class="line" data-hl="1">    sample_set = q.rsample([n_samples])                       <span class="c"># reparameterised</span></span>
+<span class="line">    <span class="k">return</span> torch.mean(q.log_prob(sample_set) - p_s.log_prob(sample_set))</span>
+<span class="line">history = fit(TrainableNormal(loc=<span class="n">6.0</span>, scale=<span class="n">0.1</span>), kl_loss, steps=<span class="n">1500</span>, lr=<span class="n">0.05</span>)</span></pre>
+    <img class="fig" src="figures/data/vik-g4-fit.svg" style="width:820px;margin:0 auto" data-b="2">
+  </div>
+  <p class="q" data-b="2">From $\N(6, 0.1^2)$ to $\N(0.43, 0.73^2)$: one Gaussian across both bumps, Monte Carlo KL about 0.049.</p>
+  <p class="src">PML notebook, cells 50–58 (kl_qp_mg.gif) · PML Lecture 24 at 20:03–21:51</p>
+  <aside class="notes">
+    <p>The PML run ended at N(0.43, 0.72²); ours at N(0.43, 0.73²). The right panel is the Monte Carlo KL on a log axis: it falls from about 50 and then fluctuates, because each step uses a fresh set of draws.</p>
+    <p>Here the two bumps overlap, so the best single Gaussian sits across both. Compare Part 2, where with well-separated bumps reverse KL picked one.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v5" id="g-live" data-section="5 · Reparameterisation">
+  <p class="kicker">Watch it</p>
+  <h2>Press play: 200 reparameterised draws per step</h2>
+  <div class="body">
+    <div class="vw interactive" data-widget="chase" data-mode="mc" data-mix="0.5,0.5|-0.2,1|0.4,0.5" data-xlo="-3" data-xhi="8" data-init="6,0.1" data-steps="1500" data-draws="200" data-lr="0.05">
+      <div class="col" style="gap:10px">
+        <canvas width="640" height="250"></canvas>
+        <canvas width="640" height="170"></canvas>
+      </div>
+      <div class="vw-side">
+        <div class="vw-btns"><button data-a="play">play</button><button data-a="reset">reset</button></div>
+        <p class="vw-read">step <b class="ch-step">0</b> of 1,500</p>
+        <p class="vw-big">$q = \N($<span class="ch-m">6.00</span>, <span class="ch-s">0.10</span>$^2)$</p>
+        <p class="vw-read">Monte Carlo $\KL(q\,\|\,p) \approx$ <b class="ch-kl">—</b></p>
+        <div class="lg"><span><i class="fill" style="--c:var(--x);--f:var(--x-t)"></i>mixture $p$</span><span><i style="--c:var(--enc)"></i>$q$</span><span><i style="--c:var(--loss)"></i>KL estimate (log scale)</span></div>
+      </div>
+    </div>
+  </div>
+  <p class="q">Each step: draw $\varepsilon$, form $z = \text{loc} + \text{scale}\cdot\varepsilon$, average $\log q(z) - \log p(z)$, and follow its gradient.</p>
+  <aside class="notes">
+    <p>The browser version: 200 standard-normal draws per step, the gradient of the Monte Carlo KL through z = loc + scale·ε written out by hand (the mixture's d log p/dz is a weighted sum over its two components), Adam with learning rate 0.05, softplus scale.</p>
+    <p>It ends within Monte Carlo noise of the notebook's N(0.43, 0.73²). The KL readout is a 200-draw estimate, so it wobbles around the notebook's 5,000-draw value of 0.049; the loss curve never settles to a line for the same reason, and that is harmless. Print and PDF show the end state.</p>
+  </aside>
+</section>
+
+
+<!-- ===================================================================== VI LECTURE · PART 6 · THE ELBO -->
+
+<section class="slide sec-v6 opener break" id="e-open" data-section="6 · The ELBO">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 6 of 9</p>
+      <h2>The ELBO: a loss we can compute without the posterior</h2>
+      <p class="why">Parts 2–5 fitted $q$ to targets we could evaluate. The posterior is not one of them: we cannot evaluate $p(\theta\mid D)$, only $p(D\mid\theta)\,p(\theta)$. Three short algebra steps fix this.</p>
+    </div>
+    <ol class="route-mini"><li class="done" style="--c:var(--x)"><span class="dot">✓</span>Recap: Bayes, and why the evidence is hard</li><li class="done" style="--c:var(--z)"><span class="dot">✓</span>KL divergence: how far is q from p?</li><li class="done" style="--c:var(--dec)"><span class="dot">✓</span>Fitting q by gradient descent</li><li class="done" style="--c:var(--loss)"><span class="dot">✓</span>No formula for KL? Monte Carlo</li><li class="done" style="--c:var(--enc)"><span class="dot">✓</span>Gradients through samples</li><li class="now" style="--c:var(--z)"><span class="dot">6</span>The ELBO</li><li class="todo" style="--c:var(--dec)"><span class="dot">7</span>VI for the coin</li><li class="todo" style="--c:var(--x)"><span class="dot">8</span>Linear regression: correlated weights</li><li class="todo" style="--c:var(--enc)"><span class="dot">9</span>Neural networks and the VAE</li></ol>
+  </div>
+</section>
+
+<section class="slide sec-v6" id="e-catch" data-section="6 · The ELBO">
+  <p class="kicker">The catch</p>
+  <h2>The KL we want to minimise contains the posterior itself</h2>
+  <div class="body">
+    <div class="mathblock big">$$\KL\big(q(\theta)\,\|\,p(\theta\mid D)\big) = \E_{\theta\sim q}\big[\log q(\theta) - \hl{\log p(\theta\mid D)}\big]$$</div>
+    <div class="row" style="justify-content:center;gap:22px;margin-top:10px" data-b="2">
+      <div class="callout plain" style="width:470px">We can draw $\theta$ from $q$ and evaluate $\log q(\theta)$: we chose $q$.</div>
+      <div class="callout loss" style="width:470px">$\log p(\theta\mid D)$ needs the evidence $p(D)$: the very integral from Part 1.</div>
+    </div>
+  </div>
+  <p class="q" data-b="2">"If we could evaluate the posterior, we would not need $q$." So rewrite the KL using what we can evaluate.</p>
+  <p class="src">PML Lecture 23 at 47:15–48:55 · Lecture 24 at 23:44</p>
+  <aside class="notes">
+    <p>Everything so far used a target whose log-density we could compute at any point: a Gaussian, a mixture. The posterior's log-density is log p(D | θ) + log p(θ) − log p(D), and the last term is the problem.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v6" id="e-sub" data-section="6 · The ELBO">
+  <p class="kicker">Step 1 of 3 <span class="exref">✎ try it first</span></p>
+  <h2>Substitute Bayes' rule for the posterior</h2>
+  <div class="body">
+    <div class="deriv-prev mathblock">$$\KL\big(q(\theta)\,\|\,p(\theta\mid D)\big) = \E_q\big[\log q(\theta) - \log p(\theta\mid D)\big]$$</div>
+    <div class="mathblock" data-b="2">$$p(\theta\mid D) = \frac{p(D, \theta)}{p(D)} \quad\Longrightarrow\quad \log p(\theta\mid D) = \log p(D, \theta) - \log p(D)$$</div>
+    <div class="mathblock big" data-b="3">$$\KL = \E_q\big[\log q(\theta) - \log p(D, \theta) + \log p(D)\big]$$</div>
+  </div>
+  <p class="q" data-b="3">$p(D, \theta) = p(D\mid\theta)\,p(\theta)$ is the joint: prior times likelihood, which we <b>can</b> evaluate.</p>
+  <p class="src">PML Variational-Inference slides, "Evidence Lower Bound" 1–2 · PML Lecture 23 at 48:55–50:44</p>
+  <aside class="notes">
+    <p>Give students a minute to do the substitution in their notebooks before clicking. Log of a quotient is a difference of logs.</p>
+    <p>For the coin, log p(D, θ) = log Beta(θ; 5, 3) + 17 log θ + 13 log(1 − θ): Part 7's log_joint.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v6" id="e-out" data-section="6 · The ELBO">
+  <p class="kicker">Step 2 of 3</p>
+  <h2>The evidence does not depend on $\theta$, so it comes out of the average</h2>
+  <div class="body">
+    <div class="deriv-prev mathblock">$$\KL = \E_q\big[\log q(\theta) - \log p(D, \theta) + \log p(D)\big]$$</div>
+    <div class="mathblock big" data-b="2">$$\KL = \E_q\big[\log q(\theta) - \log p(D, \theta)\big] + \log p(D)$$</div>
+    <div class="callout plain why" style="margin:12px auto 0;width:960px" data-b="2">The average of a constant is that constant: $\E_q[\log p(D)] = \log p(D)$.</div>
+    <div class="mathblock" style="font-size:30px" data-b="3">$$\log p(D) = \underbrace{\E_q\big[\log p(D, \theta) - \log q(\theta)\big]}_{\text{call this }\ELBO(q)} + \KL\big(q(\theta)\,\|\,p(\theta\mid D)\big)$$</div>
+  </div>
+  <p class="q" data-b="3">Rearranged: the evidence splits into a part we can compute and the KL we want to shrink.</p>
+  <p class="src">PML Variational-Inference slides, "Evidence Lower Bound" 2 · PML Lecture 23 at 50:44–52:18</p>
+  <aside class="notes">
+    <p>The last line is an identity: it holds for every q, good or bad. Moving log p(D) to the left and flipping signs gives it.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v6" id="e-bound" data-section="6 · The ELBO">
+  <p class="kicker">Step 3 of 3</p>
+  <h2>KL $\ge 0$, so the ELBO is a lower bound on the log evidence</h2>
+  <div class="body">
+    <div class="deriv-prev mathblock">$$\log p(D) = \ELBO(q) + \KL\big(q(\theta)\,\|\,p(\theta\mid D)\big)$$</div>
+    <div class="mathblock big" data-b="2">$$\log p(D) \;\ge\; \ELBO(q) = \E_{\theta\sim q}\big[\log p(D, \theta) - \log q(\theta)\big]$$</div>
+    <div class="row" style="justify-content:center;gap:22px;margin-top:10px" data-b="3">
+      <div class="callout plain" style="width:460px">$\log p(D)$ is a fixed number: it does not depend on $q$.</div>
+      <div class="callout enc" style="width:460px">So <b>raising the ELBO lowers the KL</b>, by exactly the same amount.</div>
+    </div>
+  </div>
+  <p class="q" data-b="3">Maximise the ELBO, which needs only draws from $q$ and the joint. No evidence, no posterior.</p>
+  <p class="src">PML Variational-Inference slides, "Evidence Lower Bound" 3 · PML Lecture 23 at 52:18–53:55</p>
+  <aside class="notes">
+    <p>ELBO = Evidence Lower BOund. Equality holds exactly when the KL is zero, that is when q is the posterior.</p>
+    <p>It is an expectation under q, so Part 4's Monte Carlo estimates it, and Part 5's rsample gives its gradient. Every tool is now in place.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v6" id="e-picture" data-section="6 · The ELBO">
+  <p class="kicker">The picture, with the coin's numbers <span class="nbref">▶ N6</span></p>
+  <h2>For every $q$: ELBO + KL $= \log p(D) = −21.397$</h2>
+  <div class="body">
+    <div class="row" style="gap:28px">
+      <img class="fig" src="figures/data/vik-elbo-qs.svg" style="width:500px">
+      <table class="work" style="font-size:20px">
+        <tr><th>$q$</th><th>ELBO</th><th>KL</th><th>ELBO + KL</th></tr>
+        <tr><td>$\mathrm{Beta}(10, 10)$</td><td>−22.020</td><td>0.623</td><td>−21.397</td></tr>
+        <tr data-b="2"><td>$\mathrm{Beta}(30, 20)$</td><td>−21.449</td><td>0.051</td><td>−21.397</td></tr>
+        <tr data-b="3"><td>$\mathrm{Beta}(22, 16)$, the posterior</td><td>−21.397</td><td>0.000</td><td>−21.397</td></tr>
+      </table>
+    </div>
+  </div>
+  <p class="q" data-b="3">The bracket's total never moves. A better $q$ moves the line between ELBO and KL to the right.</p>
+  <p class="src">PML Variational-Inference slides, "Evidence Lower Bound" 3 (kl-elbo.png) · PML Lecture 23 at 53:55–56:27</p>
+  <aside class="notes">
+    <p>Notebook N6: the ELBO by Monte Carlo (200,000 draws from each q), the KL by torch's Beta–Beta formula, the evidence by Part 1's formula. The sums agree to three decimals.</p>
+    <p>Beta(30, 20) has nearly the right mean but is a little narrow, so its KL is small but not zero. Only the posterior itself reaches the bound.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v6" id="e-live" data-section="6 · The ELBO">
+  <p class="kicker">Try it</p>
+  <h2>Move $q = \mathrm{Beta}(\alpha, \beta)$: the ELBO and KL trade, the total stays put</h2>
+  <div class="body">
+    <div class="vw interactive" data-widget="coinelbo" data-heads="17" data-tails="13" data-pa="5" data-pb="3">
+      <canvas width="560" height="330"></canvas>
+      <div class="vw-side">
+        <label class="sl">$\alpha$<input type="range" min="1" max="60" step="0.1" value="10"><b class="ce-a">10.0</b></label>
+        <label class="sl">$\beta$<input type="range" min="1" max="60" step="0.1" value="10"><b class="ce-b">10.0</b></label>
+        <p class="vw-read">$\ELBO(q) = $ <b class="ce-elbo">—</b> · $\KL = $ <b class="ce-kl">—</b></p>
+        <div class="numline vf-line ce-line">
+          <div class="nl-track"></div>
+          <div class="nl-mark ce-mark-elbo" style="left:40%;--c:var(--dec)"><b>ELBO</b><span class="ce-elbo">—</span></div>
+          <div class="nl-mark ce-mark-lpx" style="left:80%;--c:var(--x)"><b>$\log p(D)$</b><span class="ce-lpx">—</span></div>
+          <div class="nl-gap" style="left:40%;width:40%"><span>KL <span class="ce-kl">—</span></span></div>
+        </div>
+        <div class="vf-ends"><span class="ce-lo">—</span><span class="ce-hi">—</span></div>
+        <div class="lg"><span><i class="fill" style="--c:var(--x);--f:var(--x-t)"></i>posterior $\mathrm{Beta}(22, 16)$</span><span><i style="--c:var(--enc)"></i>$q$</span></div>
+      </div>
+    </div>
+  </div>
+  <p class="q">Find the $q$ that closes the gap. The ELBO can tell you when you are there, without ever knowing the posterior.</p>
+  <aside class="notes">
+    <p>The widget computes the ELBO exactly, on a 2,000-point grid over θ, from the joint p(D, θ) only. The KL readout is log p(D) − ELBO, with log p(D) from the formula; the posterior curve is drawn for reference only.</p>
+    <p>Things to try: α = β = 1 (uniform q): the KL is about 10 and the ELBO marker runs off the left end. Then α = 22, β = 16: the gap closes. Print and PDF show q = Beta(10, 10), as in the first row of the previous table.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v6" id="e-forms" data-section="6 · The ELBO">
+  <p class="kicker">Two ways to write the same ELBO</p>
+  <h2>What the code computes, and what the VAE lecture will use</h2>
+  <div class="body">
+    <div class="mathblock big">$$\ELBO(q) = \E_q\big[\log p(D, \theta) - \log q(\theta)\big]$$</div>
+    <div class="mathblock" data-b="2">$$= \E_q\big[\log p(D\mid\theta) + \log p(\theta) - \log q(\theta)\big]$$</div>
+    <div class="mathblock big" data-b="3">$$= \underbrace{\E_q\big[\log p(D\mid\theta)\big]}_{\text{fit the data}} \;-\; \underbrace{\KL\big(q(\theta)\,\|\,p(\theta)\big)}_{\text{stay close to the prior}}$$</div>
+  </div>
+  <p class="q" data-b="3">The first form is what we will code for the coin. The second is the VAE's loss, with the prior $\N(0, I)$ and Part 2's Gaussian KL.</p>
+  <aside class="notes">
+    <p>Split the log joint into likelihood plus prior, and group the prior with log q: E_q[log q − log p(θ)] is the KL from q to the prior. Note it is the prior here, not the posterior: both terms are computable.</p>
+    <p>Reading: the first term rewards q for putting mass on θ's that explain the data; the second penalises it for straying from the prior. Maximum likelihood is the first term alone with q a point mass.</p>
+  </aside>
+</section>
+
+
+<!-- ===================================================================== VI LECTURE · PART 7 · WORKED EXAMPLE: THE COIN -->
+
+<section class="slide sec-v7 opener break" id="c-open" data-section="7 · The coin">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 7 of 9 · worked example</p>
+      <h2>Variational inference for the coin, start to finish</h2>
+      <p class="why">Part 1's coin: prior $\mathrm{Beta}(5, 3)$, 17 heads in 30. We know the answer, $\mathrm{Beta}(22, 16)$ and $\log p(D) = −21.40$, so we can check every step. VI will use only the joint.</p>
+    </div>
+    <ol class="route-mini"><li class="done" style="--c:var(--x)"><span class="dot">✓</span>Recap: Bayes, and why the evidence is hard</li><li class="done" style="--c:var(--z)"><span class="dot">✓</span>KL divergence: how far is q from p?</li><li class="done" style="--c:var(--dec)"><span class="dot">✓</span>Fitting q by gradient descent</li><li class="done" style="--c:var(--loss)"><span class="dot">✓</span>No formula for KL? Monte Carlo</li><li class="done" style="--c:var(--enc)"><span class="dot">✓</span>Gradients through samples</li><li class="done" style="--c:var(--z)"><span class="dot">✓</span>The ELBO</li><li class="now" style="--c:var(--dec)"><span class="dot">7</span>VI for the coin</li><li class="todo" style="--c:var(--x)"><span class="dot">8</span>Linear regression: correlated weights</li><li class="todo" style="--c:var(--enc)"><span class="dot">9</span>Neural networks and the VAE</li></ol>
+  </div>
+</section>
+
+<section class="slide sec-v7" id="c-model" data-section="7 · The coin">
+  <p class="kicker">The model, as functions <span class="nbref">▶ N7</span></p>
+  <h2>All VI needs from the model is $\log p(D, \theta)$ at any $\theta$</h2>
+  <div class="body">
+    <div class="codewalk" style="grid-template-columns:1.35fr 1fr">
+      <pre class="code" style="font-size:17px"><span class="line" data-hl="=1">prior = dist.Beta(<span class="n">5.</span>, <span class="n">3.</span>)</span>
+<span class="line"></span>
+<span class="line" data-hl="=2"><span class="k">def</span> <span class="f">log_likelihood</span>(theta):          <span class="c"># 17 heads, 13 tails</span></span>
+<span class="line" data-hl="=2">    <span class="k">return</span> <span class="n">17</span> * torch.log(theta) + <span class="n">13</span> * torch.log1p(-theta)</span>
+<span class="line"></span>
+<span class="line" data-hl="=3"><span class="k">def</span> <span class="f">log_joint</span>(theta):</span>
+<span class="line" data-hl="=3">    <span class="k">return</span> log_likelihood(theta) + prior.log_prob(theta)</span>
+<span class="line"></span>
+<span class="line" data-hl="4">true_posterior = dist.Beta(<span class="n">5</span> + <span class="n">17</span>, <span class="n">3</span> + <span class="n">13</span>)   <span class="c"># only to check</span></span></pre>
+      <div class="notes-col">
+        <p class="small" data-b="=1"><b>Prior</b> $\log p(\theta)$: torch's Beta has <code>log_prob</code>.</p>
+        <p class="small" data-b="=2"><b>Likelihood</b> $\log p(D\mid\theta)$: the sum over tosses of $\log\theta$ or $\log(1-\theta)$. It works on a whole batch of $\theta$'s at once.</p>
+        <p class="small" data-b="=3"><b>Joint</b> $\log p(D, \theta)$: the unnormalised log posterior, what the ELBO uses.</p>
+        <p class="small" data-b="4"><b>The true posterior</b> is never used by VI. We keep it to check the answer.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="4">No evidence anywhere: the model is a prior and a likelihood, as in any Bayesian model.</p>
+  <p class="src">PML notebook, cells 62–65 · PML Lecture 24 at 30:14–37:42 · companion: <code>vu.Coin</code></p>
+  <aside class="notes">
+    <p>The PML notebook writes the likelihood with dist.Bernoulli(theta).log_prob(data).sum(); the counts form here is the same number and handles a batch of thetas. In the companion notebook these are coin.log_likelihood and coin.log_joint (with a clamp, because a Beta draw can underflow to exactly 0).</p>
+  </aside>
+</section>
+
+<section class="slide sec-v7" id="c-which" data-section="7 · The coin">
+  <p class="kicker">Which family for $q$?</p>
+  <h2>$\theta$ lives in $[0, 1]$, so let $q$ be a $\mathrm{Beta}(\alpha, \beta)$</h2>
+  <div class="body">
+    <div class="steps2">
+      <div class="callout dec"><h3>$q = \mathrm{Beta}(\alpha, \beta)$</h3><p class="small" style="margin:0">Right support, two parameters, and an <code>rsample</code> (Part 5). Here it even contains the true posterior, so VI can be exact.</p></div>
+      <div class="callout plain" data-b="2"><h3>$q = \N(\mu, \sigma^2)$?</h3><p class="small" style="margin:0">It puts mass below 0 and above 1, where $\log p(D\mid\theta)$ is undefined. The fix is to fit a Normal to $\mathrm{logit}(\theta)$ instead: automatic differentiation VI (ADVI) does this for every constrained parameter.</p></div>
+    </div>
+    <p class="small" style="text-align:center;margin-top:18px" data-b="3">Parameters $\psi = (\alpha, \beta)$, both kept positive with softplus, as the scale was in Part 3.</p>
+  </div>
+  <p class="q" data-b="3">In general the family will not contain the posterior; VI then finds the closest member. Here we get to see it hit the target.</p>
+  <p class="src">PML Lecture 24 at 31:50–32:37 and 47:15–48:04</p>
+  <aside class="notes">
+    <p>The choice of family is the modelling decision in VI. Too simple and the KL cannot reach zero; too rich and it is hard to sample or to optimise.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v7" id="c-negelbo" data-section="7 · The coin">
+  <p class="kicker">The loss: minus the ELBO, by Monte Carlo <span class="nbref">▶ N7</span></p>
+  <h2><code>neg_elbo</code>: four lines, one per term of the formula</h2>
+  <div class="body">
+    <div class="mathblock" style="font-size:27px">$$-\ELBO(q) \approx -\frac1S\sum_{s=1}^{S}\big[\log p(D, \theta_s) - \log q(\theta_s)\big], \qquad \theta_s \sim q \text{ (reparameterised)}$$</div>
+    <div class="codewalk" style="grid-template-columns:1.4fr 1fr;margin-top:4px">
+      <pre class="code" style="font-size:16.5px"><span class="line"><span class="k">def</span> <span class="f">neg_elbo</span>(log_joint_fn, q, n_mc_samples=<span class="n">100</span>):</span>
+<span class="line" data-hl="=1">    theta = q.rsample([n_mc_samples])     <span class="c"># draws from q, with gradients</span></span>
+<span class="line" data-hl="=2">    log_q_theta = q.log_prob(theta)</span>
+<span class="line" data-hl="=2">    log_joint = log_joint_fn(theta)</span>
+<span class="line" data-hl="=3">    <span class="k">return</span> -(log_joint - log_q_theta).mean()</span></pre>
+      <div class="notes-col">
+        <p class="small" data-b="=1"><code>rsample</code>, not <code>sample</code>, so the loss can be differentiated with respect to $\alpha$ and $\beta$.</p>
+        <p class="small" data-b="=2">Evaluate $\log q$ and $\log p(D, \theta)$ at the same 100 draws.</p>
+        <p class="small" data-b="3">Average, and flip the sign: optimisers minimise.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">Compare Part 4's <code>kl_via_sampling</code>: the same code, with the joint in place of the target density.</p>
+  <p class="src">PML notebook, cells 66–67 · PML Lecture 24 at 38:29–40:57</p>
+  <aside class="notes">
+    <p>This is the PML notebook's function, unchanged. Its minimum over q is −log p(D) = 21.397, reached when q is the posterior.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v7" id="c-score" data-section="7 · The coin">
+  <p class="kicker">Score two guesses <span class="nbref">▶ N7</span></p>
+  <h2>A bad $q$ scores in the hundreds; the posterior scores exactly $-\log p(D)$</h2>
+  <div class="body">
+    <table class="work" style="font-size:22px;margin:0 auto">
+      <tr><th>$q$</th><th><code>neg_elbo</code></th><th></th></tr>
+      <tr><td>$\mathrm{Beta}(0.1, 2)$: almost all mass near 0</td><td>239.38</td><td>PML runs: 218.88, 188.33</td></tr>
+      <tr data-b="2"><td>$\mathrm{Beta}(22, 16)$: the true posterior</td><td><b>21.397</b></td><td>$= -\log p(D)$, every run</td></tr>
+    </table>
+    <div class="callout plain" style="width:980px;margin:18px auto 0;font-size:21px" data-b="3">Why exact? When $q$ is the posterior, $\log p(D, \theta) - \log q(\theta) = \log p(D)$ for <b>every</b> $\theta$. Each of the 100 draws gives the same number, so the estimate has no noise at all.</div>
+  </div>
+  <p class="q" data-b="3">The first is a Monte Carlo estimate and changes from run to run. The second is the bound itself.</p>
+  <p class="src">PML notebook, cells 68–69 (both versions of the notebook) · PML Lecture 24 at 40:57–41:46</p>
+  <aside class="notes">
+    <p>Beta(0.1, 2) puts most draws at θ extremely close to 0, where 17 log θ is hugely negative; a few draws dominate the average, so the estimate varies a lot between runs. Ours used seed 0.</p>
+    <p>The zero-variance property at the optimum is worth stating: the closer q is to the posterior, the less noisy the ELBO estimate.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v7" id="c-train" data-section="7 · The coin">
+  <p class="kicker">Train it <span class="nbref">▶ N7</span></p>
+  <h2>From $\mathrm{Beta}(45, 45)$ to $\mathrm{Beta}(22.6, 16.4)$ in 3,000 steps</h2>
+  <div class="body">
+    <pre class="code" style="font-size:16.5px;width:1080px;margin:0 auto 10px"><span class="line">q_beta = TrainableBeta(alpha=<span class="n">45.0</span>, beta=<span class="n">45.0</span>)        <span class="c"># the PML notebook's starting point</span></span>
+<span class="line">history = fit(q_beta, <span class="k">lambda</span> q: neg_elbo(log_joint, q), steps=<span class="n">3000</span>, lr=<span class="n">0.05</span>)</span>
+<span class="line" data-b="2">q_beta    <span class="c"># TrainableBeta(alpha=22.56, beta=16.43);  true posterior: Beta(22, 16)</span></span></pre>
+    <img class="fig" src="figures/data/vik-coin-vi.svg" style="width:860px;margin:0 auto" data-b="2">
+  </div>
+  <p class="q" data-b="2">VI recovered the posterior from the joint alone, and $-\ELBO$ settled at $21.40 = -\log p(D)$.</p>
+  <p class="src">PML notebook, cells 70–71 · PML Lecture 24 at 41:46–42:32</p>
+  <aside class="notes">
+    <p>The remaining error, 22.6 vs 22 and 16.4 vs 16, is Monte Carlo noise in the gradient with 100 draws per step; it shrinks with more draws or a decaying learning rate. The mean of the fitted q is within 0.001 of the posterior mean.</p>
+    <p>Right panel: −ELBO per step (grey) and its running average (red), against −log p(D) (dashed). It cannot go below the dashed line, except by Monte Carlo noise.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v7" id="c-live" data-section="7 · The coin">
+  <p class="kicker">Watch it</p>
+  <h2>Press play: gradient ascent on the coin's ELBO</h2>
+  <div class="body">
+    <div class="vw interactive" data-widget="coinelbo" data-heads="17" data-tails="13" data-pa="5" data-pb="3">
+      <canvas width="560" height="330"></canvas>
+      <div class="vw-side">
+        <div class="vw-btns"><button data-a="play">play: fit from Beta(45, 45)</button></div>
+        <label class="sl">$\alpha$<input type="range" min="1" max="60" step="0.1" value="45"><b class="ce-a">45.0</b></label>
+        <label class="sl">$\beta$<input type="range" min="1" max="60" step="0.1" value="45"><b class="ce-b">45.0</b></label>
+        <p class="vw-read">step <b class="ce-step">0</b> · $\ELBO = $ <b class="ce-elbo">—</b> · $\KL = $ <b class="ce-kl">—</b></p>
+        <div class="numline vf-line ce-line">
+          <div class="nl-track"></div>
+          <div class="nl-mark ce-mark-elbo" style="left:40%;--c:var(--dec)"><b>ELBO</b><span class="ce-elbo">—</span></div>
+          <div class="nl-mark ce-mark-lpx" style="left:80%;--c:var(--x)"><b>$\log p(D)$</b><span class="ce-lpx">—</span></div>
+          <div class="nl-gap" style="left:40%;width:40%"><span>KL <span class="ce-kl">—</span></span></div>
+        </div>
+        <div class="vf-ends"><span class="ce-lo">—</span><span class="ce-hi">—</span></div>
+      </div>
+    </div>
+  </div>
+  <p class="q">The bracket closes as $q$ lands on the posterior: the ELBO meets $\log p(D)$ and the KL goes to zero.</p>
+  <aside class="notes">
+    <p>The browser version uses the exact ELBO on a grid and Adam (learning rate 0.05) in softplus coordinates, 3,000 steps; without Monte Carlo noise it lands on Beta(22.0, 16.0). The sliders move with it; you can also drag them to restart from anywhere.</p>
+    <p>The starting point, Beta(45, 45), already has a small KL (0.63): both curves sit near θ = 0.5–0.6. Most of the training is spent fixing the width and the small shift. Print and PDF show the end of the fit.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v7" id="c-pyro" data-section="7 · The coin">
+  <p class="kicker">The same in Pyro (optional) <span class="nbref">▶ N7</span></p>
+  <h2>A model, a guide, and <code>SVI</code> with <code>Trace_ELBO</code></h2>
+  <div class="body">
+    <div class="codewalk" style="grid-template-columns:1.4fr 1fr">
+      <pre class="code" style="font-size:15.5px"><span class="line" data-hl="=1"><span class="k">def</span> <span class="f">model</span>(data):</span>
+<span class="line" data-hl="=1">    theta = pyro.sample(<span class="n">"theta"</span>, dist.Beta(<span class="n">5.</span>, <span class="n">3.</span>))</span>
+<span class="line" data-hl="=1">    <span class="k">with</span> pyro.plate(<span class="n">"data"</span>, len(data)):</span>
+<span class="line" data-hl="=1">        pyro.sample(<span class="n">"obs"</span>, dist.Bernoulli(theta), obs=data)</span>
+<span class="line"></span>
+<span class="line" data-hl="=2"><span class="k">def</span> <span class="f">guide</span>(data):</span>
+<span class="line" data-hl="=2">    a = pyro.param(<span class="n">"alpha_q"</span>, torch.tensor(<span class="n">45.</span>), constraint=positive)</span>
+<span class="line" data-hl="=2">    b = pyro.param(<span class="n">"beta_q"</span>, torch.tensor(<span class="n">45.</span>), constraint=positive)</span>
+<span class="line" data-hl="=2">    pyro.sample(<span class="n">"theta"</span>, dist.Beta(a, b))</span>
+<span class="line"></span>
+<span class="line" data-hl="=3">svi = SVI(model, guide, Adam({<span class="n">"lr"</span>: <span class="n">0.05</span>}), loss=Trace_ELBO())</span>
+<span class="line" data-hl="=3"><span class="k">for</span> step <span class="k">in</span> range(<span class="n">8000</span>): svi.step(data)</span></pre>
+      <div class="notes-col">
+        <p class="small" data-b="=1"><b>Model</b>: prior and likelihood, as sampling statements.</p>
+        <p class="small" data-b="=2"><b>Guide</b>: our $q$, with learnable $\alpha$, $\beta$. The names must match the model's.</p>
+        <p class="small" data-b="3"><b>SVI</b> builds <code>neg_elbo</code> for us. The PML run ended near $\alpha \approx 22.9$, $\beta \approx 16.7$.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">Probabilistic programming languages automate exactly what we wrote by hand.</p>
+  <p class="src">PML notebook, cells 72–77 · PML Lecture 24 at 42:32–45:41</p>
+  <aside class="notes">
+    <p>Pyro is not installed in the course environment, so the companion notebook's cell is guarded and prints the PML run's result. pip install pyro-ppl to run it.</p>
+    <p>Trace_ELBO runs the guide to draw θ, runs the model with that θ to score log p(D, θ), and subtracts log q(θ): our neg_elbo with one draw per step by default.</p>
+  </aside>
+</section>
+
+
+<!-- ===================================================================== VI LECTURE · PART 8 · WORKED EXAMPLE: LINEAR REGRESSION (G6) -->
+
+<section class="slide sec-v8 opener break" id="l-open" data-section="8 · Linear regression">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 8 of 9 · worked example · goal G6</p>
+      <h2>Two weights at once: VI for linear regression</h2>
+      <p class="why">The same <code>neg_elbo</code>, now with a 2-D $\theta$ and a 2-D Gaussian $q$. Bayesian linear regression has an exact posterior, so once more we can check the answer. If time is short, this part is homework: notebook N8.</p>
+    </div>
+    <ol class="route-mini"><li class="done" style="--c:var(--x)"><span class="dot">✓</span>Recap: Bayes, and why the evidence is hard</li><li class="done" style="--c:var(--z)"><span class="dot">✓</span>KL divergence: how far is q from p?</li><li class="done" style="--c:var(--dec)"><span class="dot">✓</span>Fitting q by gradient descent</li><li class="done" style="--c:var(--loss)"><span class="dot">✓</span>No formula for KL? Monte Carlo</li><li class="done" style="--c:var(--enc)"><span class="dot">✓</span>Gradients through samples</li><li class="done" style="--c:var(--z)"><span class="dot">✓</span>The ELBO</li><li class="done" style="--c:var(--dec)"><span class="dot">✓</span>VI for the coin</li><li class="now" style="--c:var(--x)"><span class="dot">8</span>Linear regression: correlated weights</li><li class="todo" style="--c:var(--enc)"><span class="dot">9</span>Neural networks and the VAE</li></ol>
+  </div>
+</section>
+
+<section class="slide sec-v8" id="l-model" data-section="8 · Linear regression">
+  <p class="kicker">The model, and the only new line <span class="nbref">▶ N8</span></p>
+  <h2>$y = 3x + 4 + \text{noise}$, and a Gaussian $q$ over (intercept, slope)</h2>
+  <div class="body">
+    <div class="codewalk" style="grid-template-columns:1.4fr 1fr">
+      <pre class="code" style="font-size:16px"><span class="line" data-hl="=1">x = torch.linspace(-<span class="n">5</span>, <span class="n">5</span>, n_points)</span>
+<span class="line" data-hl="=1">y = <span class="n">3</span> * x + <span class="n">4</span> + <span class="n">5</span> * torch.randn(n_points)</span>
+<span class="line" data-hl="=1">prior = dist.MultivariateNormal(torch.zeros(<span class="n">2</span>), torch.eye(<span class="n">2</span>))</span>
+<span class="line"></span>
+<span class="line" data-hl="=2"><span class="k">def</span> <span class="f">log_joint</span>(theta):                  <span class="c"># theta: [n, 2]</span></span>
+<span class="line" data-hl="=2">    mean = theta[:, :<span class="n">1</span>] + theta[:, <span class="n">1</span>:] * x</span>
+<span class="line" data-hl="=2">    log_lik = dist.Normal(mean, <span class="n">5.</span>).log_prob(y).sum(-<span class="n">1</span>)</span>
+<span class="line" data-hl="=2">    <span class="k">return</span> log_lik + prior.log_prob(theta)</span>
+<span class="line"></span>
+<span class="line" data-hl="=3"><span class="k">def</span> <span class="f">neg_elbo</span>(q, n=<span class="n">100</span>):</span>
+<span class="line" data-hl="=3">    theta = q.rsample([n])</span>
+<span class="line" data-hl="=3">    <span class="k">return</span> -(log_joint(theta) - q.log_prob(theta)).mean()</span></pre>
+      <div class="notes-col">
+        <p class="small" data-b="=1">The PML notebook's data: noise of scale 5, prior $\theta\sim\N(0, I)$.</p>
+        <p class="small" data-b="=2">Each row of <code>theta</code> is one line; the likelihood scores it on every point.</p>
+        <p class="small" data-b="3">The coin's <code>neg_elbo</code>, unchanged. Two choices of $q$: a <b>diagonal</b> Gaussian (two means, two widths) or a <b>full</b> one, $\Sigma = LL^\top$ (one more number, the tilt).</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">Nothing about VI changed. Only the model's <code>log_joint</code> and the shape of $q$.</p>
+  <p class="src">PML notebook, cells 78–82 · PML Lecture 24 at 56:55–57:47</p>
+  <aside class="notes">
+    <p>In the companion notebook the model is vu.LinReg, and q is vu.TrainableGaussian2D(full=False or True), each trained with vu.fit for 2,000 steps. The likelihood uses the true noise scale, 5, so that the exact posterior is available to compare.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v8" id="l-20" data-section="8 · Linear regression">
+  <p class="kicker">20 points <span class="nbref">▶ N8</span></p>
+  <h2>Both $q$'s land on the exact posterior, and give a band of lines</h2>
+  <div class="body">
+    <div class="row" style="gap:22px">
+    <img class="fig" src="figures/data/vik-linreg-vi-20.svg" style="width:780px">
+    <table class="work" style="font-size:18px" data-b="2">
+      <tr><th></th><th>intercept</th><th>slope</th></tr>
+      <tr><td>exact<br>mean, sd</td><td>2.55, 0.745</td><td>3.49, 0.346</td></tr>
+      <tr><td>full $q$<br>by VI</td><td>2.53, 0.718</td><td>3.50, 0.340</td></tr>
+    </table>
+    </div>
+  </div>
+  <p class="q" data-b="2">The intercept is pulled from 4 towards the prior's 0: with 20 noisy points, the prior still matters.</p>
+  <p class="src">PML notebook, cells 83–86 · PML Lecture 24 at 57:47–1:01:57</p>
+  <aside class="notes">
+    <p>Left: the exact posterior (blue contours) with the diagonal (purple) and full (teal) q's. They overlap because x is centred on zero: then intercept and slope are uncorrelated in the posterior (exact ρ = 0.00), and a diagonal q loses nothing. The full q's fitted correlation, 0.10, is optimisation noise.</p>
+    <p>Right: 1,000 lines drawn from q; the band is ±2 sd of their predictions. This is epistemic uncertainty only (about θ), not the noise in y.</p>
+    <p>Exercise for the notebook: shift x to [0, 10]. Intercept and slope become strongly correlated, and the diagonal q shrinks, as in Part 3's 2-D example.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v8" id="l-200" data-section="8 · Linear regression">
+  <p class="kicker">200 points <span class="nbref">▶ N8</span></p>
+  <h2>Ten times the data: the posterior, and the band, shrink</h2>
+  <div class="body">
+    <div class="row" style="gap:22px">
+    <img class="fig" src="figures/data/vik-linreg-vi-200.svg" style="width:780px">
+    <table class="work" style="font-size:18px" data-b="2">
+      <tr><th></th><th>intercept</th><th>slope</th></tr>
+      <tr><td>exact<br>mean, sd</td><td>3.46, 0.333</td><td>2.80, 0.121</td></tr>
+      <tr><td>full $q$<br>by VI</td><td>3.45, 0.327</td><td>2.80, 0.120</td></tr>
+    </table>
+    </div>
+  </div>
+  <p class="q" data-b="2">The widths fall two to three times, and the intercept moves close to 4: now the data dominate the prior.</p>
+  <p class="src">PML notebook, cells 87–89 · PML Lecture 24 at 1:01:57–1:05:09</p>
+  <aside class="notes">
+    <p>Note the axes on the left panel are much tighter than on the previous slide. The intercept sd falls from 0.745 to 0.333, the slope's from 0.346 to 0.121.</p>
+    <p>VI's widths are slightly smaller than the exact ones in both cases: the mild under-dispersion of KL(q‖p), plus Monte Carlo noise in the fit.</p>
+  </aside>
+</section>
+
+
+<!-- ===================================================================== VI LECTURE · PART 9 · NEURAL NETWORKS, THE VAE, RECAP -->
+
+<section class="slide sec-v9 opener break" id="a-open" data-section="9 · Towards the VAE">
+  <div class="break-grid">
+    <div>
+      <p class="kicker">Part 9 of 9</p>
+      <h2>Neural networks, and the VAE in one slide</h2>
+      <p class="why">What changes when $\theta$ has millions of entries, and how the same ELBO becomes the loss of a variational autoencoder.</p>
+    </div>
+    <ol class="route-mini"><li class="done" style="--c:var(--x)"><span class="dot">✓</span>Recap: Bayes, and why the evidence is hard</li><li class="done" style="--c:var(--z)"><span class="dot">✓</span>KL divergence: how far is q from p?</li><li class="done" style="--c:var(--dec)"><span class="dot">✓</span>Fitting q by gradient descent</li><li class="done" style="--c:var(--loss)"><span class="dot">✓</span>No formula for KL? Monte Carlo</li><li class="done" style="--c:var(--enc)"><span class="dot">✓</span>Gradients through samples</li><li class="done" style="--c:var(--z)"><span class="dot">✓</span>The ELBO</li><li class="done" style="--c:var(--dec)"><span class="dot">✓</span>VI for the coin</li><li class="done" style="--c:var(--x)"><span class="dot">✓</span>Linear regression: correlated weights</li><li class="now" style="--c:var(--enc)"><span class="dot">9</span>Neural networks and the VAE</li></ol>
+  </div>
+</section>
+
+<section class="slide sec-v9" id="a-nn" data-section="9 · Towards the VAE">
+  <p class="kicker">Millions of parameters</p>
+  <h2>For a neural network, $q$ is one Gaussian per weight: mean-field</h2>
+  <div class="body">
+    <div class="steps2">
+      <div class="callout plain"><h3>Full covariance</h3><p class="small" style="margin:0">One mean per weight, plus a correlation for every pair. A million weights: about $5\times 10^{11}$ numbers. Impossible to store, let alone fit.</p></div>
+      <div class="callout enc" data-b="2"><h3>Mean-field</h3><p class="small" style="margin:0">$q(\theta) = \prod_i \N(\theta_i\mid\mu_i, \sigma_i^2)$: two numbers per weight. Cheap, and <code>rsample</code> is one line, as in Part 5.</p></div>
+    </div>
+    <p class="small" style="text-align:center;margin-top:18px" data-b="3">The price is Part 3's 2-D picture: no correlations, and $\KL(q\|p)$ makes each width too narrow. Bayesian neural networks trained this way tend to be over-confident.</p>
+  </div>
+  <p class="q" data-b="3">MCMC remains the gold standard for small networks; mean-field VI is what scales.</p>
+  <p class="src">PML Variational-Inference slides, "Neural Networks" · PML Lecture 24 at 49:02–50:39 and 52:50–56:04</p>
+  <aside class="notes">
+    <p>A full covariance for d weights has d(d + 1)/2 entries; for d = 10⁶ that is 5 × 10¹¹. Mean-field has 2d.</p>
+    <p>One training step: draw ε for every weight, set θ = μ + σ·ε, run the network on a minibatch, and backpropagate the negative ELBO to every μ and σ. This is Bayes by Backprop (Blundell et al., 2015).</p>
+  </aside>
+</section>
+
+<section class="slide sec-v9" id="a-vae" data-section="9 · Towards the VAE">
+  <p class="kicker">Where this goes next lecture</p>
+  <h2>The VAE: one posterior per image, predicted by an encoder</h2>
+  <div class="body">
+    <div class="row top" style="gap:28px">
+      <table class="work vocab3" style="width:520px">
+        <tr><th>today</th><th>in the VAE</th></tr>
+        <tr><td>$\theta$, what we infer</td><td>$z$, an image's code</td></tr>
+        <tr><td>$D$, the data</td><td>$x$, one image</td></tr>
+        <tr><td>prior $p(\theta)$</td><td>$p(z) = \N(0, I)$</td></tr>
+        <tr><td>likelihood $p(D\mid\theta)$</td><td>the decoder $p(x\mid z)$</td></tr>
+        <tr><td>$q(\theta)$, one fit</td><td>$q(z\mid x) = \N\big(\mu(x), \sigma(x)^2\big)$, from an encoder</td></tr>
+      </table>
+      <div class="col grow">
+        <p class="small" data-b="2">Every image has its own posterior. Fitting a $q$ per image would be slow, so a network <b>predicts</b> $q$'s parameters from $x$: amortised inference.</p>
+        <div class="mathblock left" style="font-size:22px" data-b="3">$$-\ELBO = -\E_{q(z\mid x)}\big[\log p(x\mid z)\big] + \KL\big(q(z\mid x)\,\|\,\N(0, I)\big)$$</div>
+        <p class="small" data-b="3">The second form from Part 6. The KL is Part 2's Gaussian formula; the expectation uses $z = \mu + \sigma\cdot\varepsilon$ from Part 5.</p>
+      </div>
+    </div>
+  </div>
+  <p class="q" data-b="3">Nothing new is needed: a VAE is today's ELBO, with a decoder for the likelihood and an encoder for $q$.</p>
+  <p class="src">PML Lecture 25 (VAEs) at 44:00–51:13 and 1:06:27–1:08:05</p>
+  <aside class="notes">
+    <p>Point to each piece and name the part of today's lecture it came from. The reconstruction term is −E_q[log p(x | z)]: with a Gaussian decoder it is a squared error. The KL term is ½ Σ(σ² + μ² − 1 − log σ²), the formula from Part 2 with p = N(0, 1).</p>
+    <p>The decoder's weights are trained by maximising the same ELBO, so a VAE learns the model and the approximate posterior together.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v9" id="a-recap" data-section="9 · Towards the VAE">
+  <p class="kicker">Today on one page</p>
+  <h2>From Bayes' rule to a loss we can train</h2>
+  <div class="body">
+    <div class="chain">
+      <span>Bayes: posterior $\propto$ likelihood $\times$ prior</span><span class="arrow">→</span>
+      <span>the evidence $p(D)$ is intractable</span><span class="arrow">→</span>
+      <span>propose a simple $q$</span><span class="arrow">→</span>
+      <span data-b="2">measure closeness: $\KL(q\|p)$</span><span class="arrow" data-b="2">→</span>
+      <span data-b="2">fit $q$ by gradient descent</span><span class="arrow" data-b="2">→</span>
+      <span data-b="3">no formula? Monte Carlo</span><span class="arrow" data-b="3">→</span>
+      <span data-b="3">gradients through draws: <code>rsample</code></span><span class="arrow" data-b="4">→</span>
+      <span data-b="4">the ELBO needs only the joint</span><span class="arrow" data-b="4">→</span>
+      <span data-b="4">the coin: VI recovers $\mathrm{Beta}(22, 16)$</span>
+    </div>
+    <div class="row" style="justify-content:center;gap:22px;margin-top:22px" data-b="5">
+      <div class="stat wide"><b>$\log p(D) = \ELBO + \KL$</b><span>for every $q$; the KL is $\ge 0$</span></div>
+      <div class="stat wide"><b>$z = \mu + \sigma\cdot\varepsilon$</b><span>a random draw with a gradient</span></div>
+    </div>
+  </div>
+  <p class="q" data-b="5">Two lines to remember. The VAE lecture uses both on its first slide.</p>
+  <aside class="notes">
+    <p>Walk the chain once, quickly, naming the slide or notebook section for each box. The notebook is the reference: N1 to N8 run end to end in about 30 seconds on a laptop.</p>
+  </aside>
+</section>
+
+<section class="slide sec-v9" id="a-exit" data-section="9 · Towards the VAE">
+  <p class="kicker">Exit questions</p>
+  <h2>Five questions</h2>
+  <div class="body">
+    <ol class="exitq tight">
+      <li>Why can we not just compute $p(\theta\mid D)$ for a neural network? <span class="ans" data-b="2">The evidence is an integral over millions of weights with no formula. A grid is impossible, and sampling the prior wastes almost every draw: for two weights, the best 10 of 15,000 draws already carried 95% of the estimate.</span></li>
+      <li>Why does VI minimise $\KL(q\|p)$ rather than $\KL(p\|q)$, and what is the price? <span class="ans" data-b="2">A KL averages under its first argument, and we can draw from $q$ but not from the posterior. The price: $q$ seeks a mode and comes out too narrow.</span></li>
+      <li>Why does <code>q.sample()</code> break training, and what does <code>rsample</code> do instead? <span class="ans" data-b="2">A sample has no gradient path. <code>rsample</code> draws $\varepsilon\sim\N(0, 1)$ and returns $\text{loc} + \text{scale}\cdot\varepsilon$, whose gradients are 1 and $\varepsilon$.</span></li>
+      <li>$\log p(D) = \ELBO(q) + \,?$ <span class="ans" data-b="2">$\KL\big(q\,\|\,p(\theta\mid D)\big) \ge 0$. Since $\log p(D)$ does not depend on $q$, raising the ELBO lowers the KL, and the ELBO needs only $p(D, \theta)$.</span></li>
+      <li>For the coin, what does <code>neg_elbo</code> return at $q = \mathrm{Beta}(22, 16)$, and why is it the same on every run? <span class="ans" data-b="2">21.397 $= -\log p(D)$. At the posterior, $\log p(D, \theta) - \log q(\theta) = \log p(D)$ for every $\theta$, so every draw gives the same number.</span></li>
+    </ol>
+  </div>
+  <aside class="notes">
+    <p>Ask them cold, one at a time; the answers come up together on the second click.</p>
+  </aside>
+</section>
+
+</main>
+<script>window.MATH_MACROS = {"\\cx": "\\textcolor{##245EDB}{#1}", "\\cenc": "\\textcolor{##8B2CDE}{#1}", "\\cdec": "\\textcolor{##0F766E}{#1}", "\\cz": "\\textcolor{##AA4E08}{#1}", "\\closs": "\\textcolor{##BE123C}{#1}", "\\cdisc": "\\textcolor{##334155}{#1}", "\\N": "\\mathcal{N}", "\\KL": "\\mathrm{KL}", "\\E": "\\mathbb{E}", "\\ELBO": "\\mathrm{ELBO}", "\\eps": "\\varepsilon", "\\hl": "\\colorbox{##FFF1B8}{$\\displaystyle #1$}"};</script>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="vendor/katex/contrib/auto-render.min.js"></script>
+<script src="deck/widgets.js"></script>
+<script src="deck/deck.js"></script>
+</body>
+</html>
