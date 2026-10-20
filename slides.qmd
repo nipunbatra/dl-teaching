@@ -67,6 +67,16 @@ receptive fields, computational accounting, modern blocks, and transfer.
 [Sources and teaching choices](interactives/cnn/sources.html) ·
 [PyTorch companion](interactives/cnn/tiny_cnn.py)
 
+## Generative modelling
+
+Making images from random numbers: first by training a generator against a learned judge, then by
+learning to remove noise a little at a time. Every figure and number comes from small models trained for the lecture.
+
+| Part | Lecture | Resources |
+|:--|:--|:--|
+| GANs | **GANs: Learn the Judge, Not the Likelihood** — two networks, the D and G steps, why G's gradient flows through D, the minimax and non-saturating losses, mode collapse and conditioning | [▤ Interactive lecture](interactives/generative-modelling-i-gans/index.html?reading) · [▶ Present](interactives/generative-modelling-i-gans/index.html) · [▤ PDF · 37 pages](interactives/generative-modelling-i-gans/generative-modelling-i-gans.pdf) · [▤ Every click · 96 pages](interactives/generative-modelling-i-gans/generative-modelling-i-gans-builds.pdf) |
+| Diffusion | **From Noise to Images: Denoising Diffusion** — corrupt a digit step by step, train a network to predict the noise, sample backwards, the ELBO behind the loss, U-Nets and Transformers, guidance, and diffusion for text | [▤ Interactive lecture](interactives/generative-modelling-ii/index.html?reading) · [▶ Present](interactives/generative-modelling-ii/index.html) · [▤ PDF · 96 pages](interactives/generative-modelling-ii/generative-modelling-ii.pdf) · [▤ Every click · 271 pages](interactives/generative-modelling-ii/generative-modelling-ii-builds.pdf) |
+
 <!-- Future deck catalog retained in source and intentionally hidden from the
 student-facing page until the corresponding lectures are taught.
 
